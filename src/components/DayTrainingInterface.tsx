@@ -1,0 +1,221 @@
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { Button } from './ui/button';
+import { LMSContent } from './LMSSection';
+import { ListenAndResponse } from './ListenAndResponse';
+
+interface DayTrainingInterfaceProps {
+  questionType: string;
+  skill: string;
+  onClose: () => void;
+  lmsContents?: LMSContent[];
+}
+
+export function DayTrainingInterface({ questionType, skill, onClose, lmsContents = [] }: DayTrainingInterfaceProps) {
+  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const levels = [1, 2, 3, 4, 5, 6];
+  
+  // Days 1-5 for levels 1-5, Days 1-10 for level 6
+  const days = selectedLevel === 6 
+    ? ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']
+    : ['01', '02', '03', '04', '05'];
+  
+  // Filter LMS contents for current skill, question type, and level
+  const getContentForDay = (day: string) => {
+    return lmsContents.filter(content => 
+      content.skill === skill &&
+      content.questionType === questionType &&
+      content.level === selectedLevel &&
+      content.day === day
+    );
+  };
+
+  // Check if day is enabled (only Level 1, DAY 01 for Listen and Response)
+  const isDayEnabled = (day: string) => {
+    if (questionType === 'Listen and Response') {
+      return selectedLevel === 1 && day === '01';
+    }
+    // For other question types, check if there's uploaded content
+    return getContentForDay(day).length > 0;
+  };
+
+  const handleDayClick = (day: string) => {
+    // Special handling for Listen and Response
+    if (questionType === 'Listen and Response' && selectedLevel === 1 && day === '01') {
+      setSelectedDay(day);
+      return;
+    }
+    
+    const dayContents = getContentForDay(day);
+    if (dayContents.length > 0) {
+      alert(`DAY ${day} 학습을 시작합니다.\n업로드된 자료: ${dayContents.length}개`);
+    } else {
+      alert(`DAY ${day}에 업로드된 자료가 없습니다.\nLMS 탭에서 자료를 업로드해주세요.`);
+    }
+  };
+
+  // If a day is selected for Listen and Response, show the component
+  if (selectedDay && questionType === 'Listen and Response') {
+    // Get LMS contents for this specific day and level
+    const dayContents = lmsContents.filter(content => 
+      content.skill === skill &&
+      content.questionType === questionType &&
+      content.level === selectedLevel &&
+      content.day === selectedDay
+    );
+
+    return (
+      <ListenAndResponse
+        level={selectedLevel}
+        day={`DAY ${selectedDay}`}
+        onBack={() => setSelectedDay(null)}
+        lmsContents={dayContents}
+      />
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-50 z-50">
+      {/* Pink Header */}
+      <div 
+        className="px-8 py-6 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(to right, #e91e63, #c2185b)'
+        }}
+      >
+        {/* Decorative circles - left side */}
+        <div 
+          className="absolute left-16 top-1/2 -translate-y-1/2 w-32 h-32 rounded-full"
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            filter: 'blur(2px)'
+          }}
+        />
+        <div 
+          className="absolute left-32 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            filter: 'blur(1px)'
+          }}
+        />
+        
+        {/* Decorative circle - center */}
+        <div 
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full"
+          style={{
+            background: 'rgba(255, 255, 255, 0.12)',
+            filter: 'blur(1.5px)'
+          }}
+        />
+        
+        {/* Decorative circles - right side */}
+        <div 
+          className="absolute right-16 top-1/2 -translate-y-1/2 w-40 h-40 rounded-full"
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            filter: 'blur(2px)'
+          }}
+        />
+        <div 
+          className="absolute right-32 top-0 -translate-y-1/2 w-24 h-24 rounded-full"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            filter: 'blur(1px)'
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Back button */}
+          <button 
+            onClick={onClose}
+            className="flex items-center gap-2 text-white mb-4 hover:opacity-80 transition-opacity"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="text-sm font-['Inter',_sans-serif]">돌아가기</span>
+          </button>
+
+          {/* Title */}
+          <h1 className="text-white text-3xl mb-1 font-['Inter',_sans-serif] font-bold tracking-wide">
+            스터디 허브 토플 Level {selectedLevel}
+          </h1>
+          
+          {/* Subtitle */}
+          <p className="text-white/90 font-['Inter',_sans-serif]">
+            {questionType} 프로그램
+          </p>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex">
+        {/* Left Sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 min-h-screen p-6">
+          {/* Section Title */}
+          <h2 className="text-gray-700 mb-4">{questionType}</h2>
+          
+          {/* Levels List */}
+          <div className="space-y-1">
+            {levels.map(level => (
+              <div 
+                key={level}
+                onClick={() => setSelectedLevel(level)}
+                className={`px-4 py-2.5 text-sm rounded cursor-pointer transition-colors ${
+                  selectedLevel === level 
+                    ? 'bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Level {level}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Main Content */}
+        <div className="flex-1 p-8 overflow-y-auto max-h-screen">
+          {/* Instruction */}
+          <h2 className="text-gray-800 text-lg mb-6">
+            학습할 DAY를 선택해주세요
+          </h2>
+
+          {/* Days Container - Single Pink Box */}
+          <div className="bg-[#fce4ec] rounded-2xl border border-[#f8bbd0] overflow-hidden">
+            {days.map((day, dayIndex) => {
+              const dayContents = getContentForDay(day);
+              const hasContent = dayContents.length > 0;
+              const isLast = dayIndex === days.length - 1;
+              
+              return (
+                <div
+                  key={day}
+                  onClick={() => handleDayClick(day)}
+                  className={`px-6 py-4 flex items-center justify-between cursor-pointer transition-all bg-white ${
+                    !isLast ? 'border-b border-[#f8bbd0]' : ''
+                  } hover:bg-gray-50`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-700 font-semibold">DAY {day}</span>
+                    {hasContent && (
+                      <span className="text-xs bg-[#e91e63] text-white px-2 py-1 rounded-full font-semibold">
+                        {dayContents.length}개 자료
+                      </span>
+                    )}
+                    {!isDayEnabled(day) && (
+                      <Lock className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
+                  <ChevronRight 
+                    className="w-5 h-5"
+                    style={{ color: '#e91e63' }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

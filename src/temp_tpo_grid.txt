@@ -1,0 +1,24 @@
+        {/* TPO Cards Grid - COMPLETELY REWRITTEN */}
+        <div className="w-full py-4 md:py-8">
+          <div className="w-full px-3 md:px-8">
+            <div className="w-full max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {getTestNumbers().map((number, index) => {
+                  const testData = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
+                  return (
+                    <TPOCard 
+                      key={number} 
+                      number={number}
+                      isLocked={isContentLocked(index, 3)}
+                      onUnlockClick={() => setActiveTab('Pricing')}
+                      testData={testData}
+                      onStartTest={(section) => {
+                        alert(`Starting ${section} for TPO ${number}`);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
