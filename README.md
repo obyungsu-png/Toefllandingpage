@@ -1,7 +1,7 @@
 
-  # TOEFL Landing Page (복사)
+  # TOEFL Allmyexam
 
-  This is a code bundle for TOEFL Landing Page (복사). The original project is available at https://www.figma.com/design/Kc8tw3AqEy9IMpFnyTTFUr/TOEFL-Landing-Page--%EB%B3%B5%EC%82%AC-.
+  This is a code bundle for TOEFL Allmyexam. The original project is available at https://www.figma.com/design/Kc8tw3AqEy9IMpFnyTTFUr/TOEFL-Allmyexam.
 
   ## Running the code
 

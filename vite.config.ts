@@ -1,10 +1,11 @@
 
   import { defineConfig } from 'vite';
-  import react from '@vitejs/plugin-react-swc';
+  import react from '@vitejs/plugin-react';
+  import tailwindcss from '@tailwindcss/vite';
   import path from 'path';
 
   export default defineConfig({
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
@@ -19,7 +20,6 @@
         'input-otp@1.4.2': 'input-otp',
         'figma:asset/f0cb6fbcd7264092b068d09a76465a605c5d621f.png': path.resolve(__dirname, './src/assets/f0cb6fbcd7264092b068d09a76465a605c5d621f.png'),
         'figma:asset/ed9fdb8833f8c1eb612bf8b6d17cb69d75bb755f.png': path.resolve(__dirname, './src/assets/ed9fdb8833f8c1eb612bf8b6d17cb69d75bb755f.png'),
-        'figma:asset/e5d6c5d700b0d9ec7f38509a1cf87b1e05b9c336.png': path.resolve(__dirname, './src/assets/e5d6c5d700b0d9ec7f38509a1cf87b1e05b9c336.png'),
         'figma:asset/e5742b7862d7abe00fe8e304ef5b58aa0b6ae7ec.png': path.resolve(__dirname, './src/assets/e5742b7862d7abe00fe8e304ef5b58aa0b6ae7ec.png'),
         'figma:asset/e17945b43c2743639bcbfa961f9b9c7b697fb93e.png': path.resolve(__dirname, './src/assets/e17945b43c2743639bcbfa961f9b9c7b697fb93e.png'),
         'figma:asset/db57c3312386f02546e87bd69c52bd7c8ccf17e0.png': path.resolve(__dirname, './src/assets/db57c3312386f02546e87bd69c52bd7c8ccf17e0.png'),
@@ -30,7 +30,6 @@
         'figma:asset/a893942edd107c981f6099cb5f377b968e6e5a32.png': path.resolve(__dirname, './src/assets/a893942edd107c981f6099cb5f377b968e6e5a32.png'),
         'figma:asset/a71b28147ebac8a118893f23f167e5cc4828ff8d.png': path.resolve(__dirname, './src/assets/a71b28147ebac8a118893f23f167e5cc4828ff8d.png'),
         'figma:asset/a46daf78e44986fc846d20ebe5f22f157d44e0b9.png': path.resolve(__dirname, './src/assets/a46daf78e44986fc846d20ebe5f22f157d44e0b9.png'),
-        'figma:asset/9c050da46760c2d25ce4f0b3cbfaa4e8ef7220e4.png': path.resolve(__dirname, './src/assets/9c050da46760c2d25ce4f0b3cbfaa4e8ef7220e4.png'),
         'figma:asset/8b35efa9f817161ac6e1896bb66d8010374d8d93.png': path.resolve(__dirname, './src/assets/8b35efa9f817161ac6e1896bb66d8010374d8d93.png'),
         'figma:asset/8b2a5cc0865044f065ee7287b66832b84e1696db.png': path.resolve(__dirname, './src/assets/8b2a5cc0865044f065ee7287b66832b84e1696db.png'),
         'figma:asset/87b5ac43797c8eb788ebce8e397499eb2b0bea1b.png': path.resolve(__dirname, './src/assets/87b5ac43797c8eb788ebce8e397499eb2b0bea1b.png'),

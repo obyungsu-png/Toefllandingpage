@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, ExternalLink, Play, Image as ImageIcon, FileText, ChevronRight, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 
@@ -46,25 +45,20 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
   ].filter(tab => tab.available);
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <>
           {/* Backdrop with blur */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 bg-black/70 backdrop-blur-md z-[9998]"
+            style={{ animation: 'fadeIn 0.3s ease-out' }}
             onClick={onClose}
           />
 
           {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ animation: 'scaleIn 0.3s ease-out' }}
             onClick={onClose}
           >
             <div
@@ -77,60 +71,38 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
               {/* Header with glassmorphism effect */}
               <div className="relative bg-gradient-to-br from-[#005f61] via-[#2d7a7c] to-[#1e6b73] text-white p-8 overflow-hidden">
                 {/* Animated background shapes */}
-                <motion.div
-                  animate={{
-                    rotate: [0, 360],
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    duration: 20,
-                    repeat: Infinity,
-                    ease: 'linear'
-                  }}
+                <div
                   className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+                  style={{ animation: 'slowRotate 20s linear infinite' }}
                 />
-                <motion.div
-                  animate={{
-                    rotate: [360, 0],
-                    scale: [1, 1.3, 1]
-                  }}
-                  transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: 'linear'
-                  }}
+                <div
                   className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#f39c12]/20 rounded-full blur-3xl"
+                  style={{ animation: 'slowRotate 15s linear infinite reverse' }}
                 />
 
                 {/* Close button */}
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
+                <button
                   onClick={onClose}
-                  className="absolute top-6 right-6 text-white hover:bg-white/20 rounded-full p-2 transition-all backdrop-blur-sm z-10"
+                  className="absolute top-6 right-6 text-white hover:bg-white/20 rounded-full p-2 transition-all backdrop-blur-sm z-10 hover:scale-110 hover:rotate-90 active:scale-90"
                 >
                   <X className="w-6 h-6" />
-                </motion.button>
+                </button>
 
-                {/* Title with animation */}
+                {/* Title */}
                 <div className="relative z-10">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
+                  <div
                     className="flex items-center gap-2 mb-2"
+                    style={{ animation: 'fadeInUp 0.4s ease-out 0.1s both' }}
                   >
                     <Sparkles className="w-6 h-6 text-[#f39c12]" />
                     <span className="text-sm font-medium text-[#f39c12] tracking-wide">FEATURED</span>
-                  </motion.div>
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+                  </div>
+                  <h2
                     className="text-3xl md:text-4xl font-bold pr-12 leading-tight"
+                    style={{ animation: 'fadeInUp 0.4s ease-out 0.2s both' }}
                   >
                     {ad.title}
-                  </motion.h2>
+                  </h2>
                 </div>
               </div>
 
@@ -138,15 +110,12 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
               {tabs.length > 1 && (
                 <div className="border-b border-gray-200 bg-gray-50/50 backdrop-blur-sm sticky top-0 z-20">
                   <div className="flex px-6">
-                    {tabs.map((tab, index) => {
+                    {tabs.map((tab) => {
                       const Icon = tab.icon;
                       const isActive = activeTab === tab.id;
                       return (
-                        <motion.button
+                        <button
                           key={tab.id}
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 + index * 0.1 }}
                           onClick={() => setActiveTab(tab.id)}
                           className={`relative flex items-center gap-2 px-6 py-4 font-medium transition-all ${
                             isActive
@@ -159,13 +128,11 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
                           
                           {/* Active indicator */}
                           {isActive && (
-                            <motion.div
-                              layoutId="activeTab"
-                              className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#e67e22] to-[#f39c12]"
-                              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                            <div
+                              className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#e67e22] to-[#f39c12] transition-all"
                             />
                           )}
-                        </motion.button>
+                        </button>
                       );
                     })}
                   </div>
@@ -174,138 +141,105 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
 
               {/* Content Area with scroll */}
               <div className="overflow-y-auto max-h-[calc(90vh-280px)]">
-                <AnimatePresence mode="wait">
-                  {/* Video Tab */}
-                  {activeTab === 'video' && embedUrl && (
-                    <motion.div
-                      key="video"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-6"
-                    >
-                      <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black aspect-video">
-                        <iframe
-                          className="absolute top-0 left-0 w-full h-full"
-                          src={embedUrl}
-                          title={ad.title}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    </motion.div>
-                  )}
+                {/* Video Tab */}
+                {activeTab === 'video' && embedUrl && (
+                  <div
+                    className="p-6"
+                    style={{ animation: 'fadeIn 0.3s ease-out' }}
+                  >
+                    <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-black aspect-video">
+                      <iframe
+                        className="absolute top-0 left-0 w-full h-full"
+                        src={embedUrl}
+                        title={ad.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                )}
 
-                  {/* Image Tab */}
-                  {activeTab === 'image' && ad.imageUrl && (
-                    <motion.div
-                      key="image"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-6"
+                {/* Image Tab */}
+                {activeTab === 'image' && ad.imageUrl && (
+                  <div
+                    className="p-6"
+                    style={{ animation: 'fadeIn 0.3s ease-out' }}
+                  >
+                    <div
+                      className="relative rounded-2xl overflow-hidden shadow-2xl hover:scale-[1.02] transition-transform duration-300"
                     >
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative rounded-2xl overflow-hidden shadow-2xl"
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        className="w-full h-auto object-cover"
+                      />
+                      {/* Image overlay on hover */}
+                      <div
+                        className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-6 opacity-0 hover:opacity-100 transition-opacity"
                       >
-                        <img
-                          src={ad.imageUrl}
-                          alt={ad.title}
-                          className="w-full h-auto object-cover"
-                        />
-                        {/* Image overlay on hover */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileHover={{ opacity: 1 }}
-                          className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end p-6"
-                        >
-                          <p className="text-white font-medium">{ad.title}</p>
-                        </motion.div>
-                      </motion.div>
-                    </motion.div>
-                  )}
-
-                  {/* Text Tab */}
-                  {activeTab === 'text' && (
-                    <motion.div
-                      key="text"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-8 space-y-6"
-                    >
-                      {/* Content with decorative elements */}
-                      <div className="prose prose-lg max-w-none">
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                          className="relative"
-                        >
-                          {/* Decorative quote mark */}
-                          <div className="absolute -left-4 -top-2 text-6xl text-[#e67e22]/20 font-serif">"</div>
-                          
-                          <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap relative z-10">
-                            {ad.content}
-                          </p>
-                        </motion.div>
-
-                        {/* Additional info cards */}
-                        {(ad.videoUrl || ad.imageUrl) && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8"
-                          >
-                            {ad.videoUrl && (
-                              <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setActiveTab('video')}
-                                className="bg-gradient-to-br from-[#e67e22] to-[#f39c12] text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all"
-                              >
-                                <Play className="w-8 h-8 mb-2" />
-                                <h3 className="font-bold mb-1">동영상 보기</h3>
-                                <p className="text-sm text-white/90">자세한 내용을 확인하세요</p>
-                              </motion.button>
-                            )}
-                            {ad.imageUrl && (
-                              <motion.button
-                                whileHover={{ scale: 1.05, y: -5 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setActiveTab('image')}
-                                className="bg-gradient-to-br from-[#005f61] to-[#2d7a7c] text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all"
-                              >
-                                <ImageIcon className="w-8 h-8 mb-2" />
-                                <h3 className="font-bold mb-1">사진 보기</h3>
-                                <p className="text-sm text-white/90">비주얼 콘텐츠 확인</p>
-                              </motion.button>
-                            )}
-                          </motion.div>
-                        )}
+                        <p className="text-white font-medium">{ad.title}</p>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                )}
+
+                {/* Text Tab */}
+                {activeTab === 'text' && (
+                  <div
+                    className="p-8 space-y-6"
+                    style={{ animation: 'fadeIn 0.3s ease-out' }}
+                  >
+                    {/* Content with decorative elements */}
+                    <div className="prose prose-lg max-w-none">
+                      <div className="relative" style={{ animation: 'fadeInUp 0.4s ease-out 0.2s both' }}>
+                        {/* Decorative quote mark */}
+                        <div className="absolute -left-4 -top-2 text-6xl text-[#e67e22]/20 font-serif">"</div>
+                        
+                        <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap relative z-10">
+                          {ad.content}
+                        </p>
+                      </div>
+
+                      {/* Additional info cards */}
+                      {(ad.videoUrl || ad.imageUrl) && (
+                        <div
+                          className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8"
+                          style={{ animation: 'fadeInUp 0.4s ease-out 0.4s both' }}
+                        >
+                          {ad.videoUrl && (
+                            <button
+                              onClick={() => setActiveTab('video')}
+                              className="bg-gradient-to-br from-[#e67e22] to-[#f39c12] text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 active:scale-95 text-left"
+                            >
+                              <Play className="w-8 h-8 mb-2" />
+                              <h3 className="font-bold mb-1">동영상 보기</h3>
+                              <p className="text-sm text-white/90">자세한 내용을 확인하세요</p>
+                            </button>
+                          )}
+                          {ad.imageUrl && (
+                            <button
+                              onClick={() => setActiveTab('image')}
+                              className="bg-gradient-to-br from-[#005f61] to-[#2d7a7c] text-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 active:scale-95 text-left"
+                            >
+                              <ImageIcon className="w-8 h-8 mb-2" />
+                              <h3 className="font-bold mb-1">사진 보기</h3>
+                              <p className="text-sm text-white/90">비주얼 콘텐츠 확인</p>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Footer with CTA */}
               <div className="border-t border-gray-200 p-6 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex flex-col md:flex-row gap-3 justify-between items-center">
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-sm text-gray-600"
-                  >
+                  <p className="text-sm text-gray-600">
                     💡 더 많은 정보가 필요하신가요?
-                  </motion.p>
+                  </p>
                   
                   <div className="flex gap-3 w-full md:w-auto">
                     <Button
@@ -316,11 +250,7 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
                       닫기
                     </Button>
                     {ad.buttonAction && (
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex-1 md:flex-none"
-                      >
+                      <div className="flex-1 md:flex-none hover:scale-105 active:scale-95 transition-transform">
                         <Button
                           onClick={() => {
                             if (ad.buttonAction?.startsWith('http')) {
@@ -330,31 +260,24 @@ export function AdModal({ ad, isOpen, onClose }: AdModalProps) {
                           className="w-full bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22] shadow-lg hover:shadow-xl rounded-xl relative overflow-hidden group"
                         >
                           {/* Button shine effect */}
-                          <motion.div
+                          <div
                             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                            animate={{
-                              x: ['-200%', '200%']
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              repeatDelay: 1
-                            }}
+                            style={{ animation: 'shimmer 3s infinite' }}
                           />
                           <span className="relative flex items-center gap-2">
                             {ad.buttonText || '더 알아보기'}
                             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                           </span>
                         </Button>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

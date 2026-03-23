@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Plus, Edit, Trash2, Search, User, Calendar, BarChart3, AlertTriangle, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+// motion removed - using CSS animations
 import { PersonalResultsDashboard, VocabularyResult, TPOResult, TestResult, TrainingResult } from './PersonalResultsDashboard';
 
 export interface Student {
@@ -256,13 +256,10 @@ export function StudentManagement({
       </div>
 
       {/* Add/Edit Student Form */}
-      <AnimatePresence>
+      <>
         {showAddForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-white rounded-lg shadow-md border border-gray-200 p-6"
+          <div
+            className="bg-white rounded-lg shadow-md border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
           >
             <h3 className="font-bold text-lg mb-4">
               {editingStudent ? '학생 정보 수정' : '새 학생 추가'}
@@ -312,9 +309,9 @@ export function StudentManagement({
                 </Button>
               </div>
             </form>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Search and Filter */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
@@ -474,13 +471,10 @@ export function StudentManagement({
                 </div>
 
                 {/* Detailed Scores */}
-                <AnimatePresence>
+                <>
                   {isExpanded && studentScores.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="border-t border-gray-200 bg-gray-50"
+                    <div
+                      className="border-t border-gray-200 bg-gray-50 animate-[fadeSlideUp_0.3s_ease-out]"
                     >
                       <div className="p-6">
                         <h4 className="font-bold text-sm text-gray-700 mb-4 flex items-center gap-2">
@@ -558,9 +552,9 @@ export function StudentManagement({
                           ))}
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
+                </>
               </div>
             );
           })

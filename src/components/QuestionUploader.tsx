@@ -1,324 +1,764 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { Upload, X, Check } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Upload } from 'lucide-react';
 
-interface ParsedQuestion {
-  type: 'fillblanks' | 'readnotice' | 'readpassage';
-  title?: string;
-  content: string;
-  blanks?: Array<{ id: number; word: string; position: number; context: string }>;
-  notice?: {
-    title: string;
-    subtitle?: string;
-    body: string;
-  };
-  question?: string;
+export interface TPOQuestion {
+  id: string;
+  questionNumber: number | string;
+  questionText: string;
+  questionType: string;
   options?: string[];
-  correctAnswer?: string;
+  correctAnswer?: string | string[];
+  explanation?: string;
+  audioUrl?: string;
+  videoUrl?: string;
+  imageUrl?: string;
+  passageText?: string;
+  duration?: number;
+  difficulty?: '쉬움' | '보통' | '어려움';
+  blanks?: Array<{
+    answer: string;
+    maxLength: number;
+  }>;
+  avatar1ImageUrl?: string;
+  avatar2ImageUrl?: string;
+  words?: string[];
 }
 
-export function QuestionUploader() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [htmlContent, setHtmlContent] = useState('');
-  const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestion[]>([]);
-  const [previewMode, setPreviewMode] = useState(false);
+interface QuestionUploadFormProps {
+  testType: 'TPO' | 'Test' | 'Training';
+  testNumber: number;
+  section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
+  questionTypes: string[];
+  onSubmit: (question: TPOQuestion) => void;
+  onCancel: () => void;
+}
 
-  const parseHTML = (html: string): ParsedQuestion[] => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const questions: ParsedQuestion[] = [];
+export function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSubmit, onCancel }: QuestionUploadFormProps) {
+  const [formData, setFormData] = useState({
+    questionNumber: 1,
+    questionText: '',
+    questionType: questionTypes[0],
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    explanation: '',
+    passageText: '',
+    audioFile: null as File | null,
+    audioUrl: '',
+    videoFile: null as File | null,
+    videoUrl: '',
+    imageFile: null as File | null,
+    imageUrl: '',
+    duration: 0,
+    difficulty: '보통' as '쉬움' | '보통' | '어려움',
+    blanks: [] as Array<{ answer: string; maxLength: number }>
+  });
 
-    // Parse Fill Blanks questions
-    const fillBlanksElements = doc.querySelectorAll('fillblanks, .fillblanks, [data-type="fillblanks"]');
-    fillBlanksElements.forEach((element) => {
-      const title = element.querySelector('title, .title, h1, h2')?.textContent || 'Fill in the missing letters in the paragraph.';
-      const paragraph = element.querySelector('paragraph, .paragraph, p')?.innerHTML || '';
-      
-      const blanks: Array<{ id: number; word: string; position: number; context: string }> = [];
-      let blankId = 1;
-      
-      // Parse blanks from HTML like: some text <blank word="at">...</blank> more text
-      const blankElements = element.querySelectorAll('blank, .blank, [data-blank]');
-      blankElements.forEach((blank) => {
-        const word = blank.getAttribute('word') || blank.getAttribute('data-word') || blank.textContent?.trim() || '';
-        if (word) {
-          blanks.push({
-            id: blankId++,
-            word,
-            position: blankId - 1,
-            context: ''
-          });
-        }
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-      questions.push({
-        type: 'fillblanks',
-        title,
-        content: paragraph,
-        blanks
-      });
-    });
+    const question: TPOQuestion = {
+      id: `q-${Date.now()}`,
+      questionNumber: formData.questionNumber,
+      questionText: formData.questionText,
+      questionType: formData.questionType,
+      options: formData.options.filter(o => o.trim() !== ''),
+      correctAnswer: formData.correctAnswer,
+      explanation: formData.explanation,
+      passageText: formData.passageText || undefined,
+      duration: formData.duration || undefined,
+      difficulty: formData.difficulty,
+      blanks: formData.blanks
+    };
 
-    // Parse Read Notice questions
-    const readNoticeElements = doc.querySelectorAll('readnotice, .readnotice, [data-type="readnotice"]');
-    readNoticeElements.forEach((element) => {
-      const noticeTitle = element.querySelector('noticetitle, .notice-title, .title')?.textContent || 'Notice';
-      const noticeSubtitle = element.querySelector('noticesubtitle, .notice-subtitle, .subtitle')?.textContent || '';
-      const noticeBody = element.querySelector('noticebody, .notice-body, .body, p')?.textContent || '';
-      const question = element.querySelector('question, .question')?.textContent || 'What type of business issued the notice?';
-      
-      const options: string[] = [];
-      const optionElements = element.querySelectorAll('option, .option, li');
-      optionElements.forEach((opt) => {
-        const optText = opt.textContent?.trim();
-        if (optText) options.push(optText);
-      });
-
-      const correctAnswer = element.querySelector('answer, .answer, [data-correct]')?.textContent?.trim() || '';
-
-      questions.push({
-        type: 'readnotice',
-        notice: {
-          title: noticeTitle,
-          subtitle: noticeSubtitle,
-          body: noticeBody
-        },
-        question,
-        options,
-        correctAnswer
-      });
-    });
-
-    // Parse Read Academic Passage questions
-    const readPassageElements = doc.querySelectorAll('readpassage, .readpassage, [data-type="readpassage"]');
-    readPassageElements.forEach((element) => {
-      const title = element.querySelector('title, .title, h1, h2')?.textContent || 'Read an academic passage.';
-      const passage = element.querySelector('passage, .passage, article, p')?.textContent || '';
-      const question = element.querySelector('question, .question')?.textContent || '';
-      
-      const options: string[] = [];
-      const optionElements = element.querySelectorAll('option, .option, li');
-      optionElements.forEach((opt) => {
-        const optText = opt.textContent?.trim();
-        if (optText) options.push(optText);
-      });
-
-      const correctAnswer = element.querySelector('answer, .answer, [data-correct]')?.textContent?.trim() || '';
-
-      questions.push({
-        type: 'readpassage',
-        title,
-        content: passage,
-        question,
-        options,
-        correctAnswer
-      });
-    });
-
-    return questions;
-  };
-
-  const handleParse = () => {
-    try {
-      const parsed = parseHTML(htmlContent);
-      if (parsed.length === 0) {
-        toast.error('未能解析任何问题。请检查HTML格式。');
-        return;
-      }
-      setParsedQuestions(parsed);
-      setPreviewMode(true);
-      toast.success(`成功解析 ${parsed.length} 个问题！`);
-    } catch (error) {
-      toast.error('解析失败，请检查HTML格式。');
-      console.error(error);
+    // Handle URL inputs or file uploads (URL takes priority)
+    if (formData.audioUrl.trim()) {
+      question.audioUrl = formData.audioUrl.trim();
+    } else if (formData.audioFile) {
+      question.audioUrl = URL.createObjectURL(formData.audioFile);
     }
+    
+    if (formData.videoUrl.trim()) {
+      question.videoUrl = formData.videoUrl.trim();
+    } else if (formData.videoFile) {
+      question.videoUrl = URL.createObjectURL(formData.videoFile);
+    }
+    
+    if (formData.imageUrl.trim()) {
+      question.imageUrl = formData.imageUrl.trim();
+    } else if (formData.imageFile) {
+      question.imageUrl = URL.createObjectURL(formData.imageFile);
+    }
+
+    onSubmit(question);
   };
-
-  const handleSave = () => {
-    // Here you would save the parsed questions to your state management or database
-    // For now, we'll just show a success message and log to console
-    console.log('Saving questions:', parsedQuestions);
-    toast.success('问题已保存！');
-    setIsOpen(false);
-    setHtmlContent('');
-    setParsedQuestions([]);
-    setPreviewMode(false);
-  };
-
-  const handleReset = () => {
-    setHtmlContent('');
-    setParsedQuestions([]);
-    setPreviewMode(false);
-  };
-
-  const exampleHTML = `<!-- Fill Blanks 示例 -->
-<fillblanks>
-  <title>Fill in the missing letters in the paragraph.</title>
-  <paragraph>
-    We know from drawings that have been preserved in caves for over 10,000 years 
-    that early humans performed dances as a group activity. We might think 
-    th<blank word="at"></blank> prehistoric peo<blank word="ple"></blank> 
-    concentrated o<blank word="n"></blank> on ba<blank word="sic"></blank> survival.
-  </paragraph>
-</fillblanks>
-
-<!-- Read Notice 示例 -->
-<readnotice>
-  <noticetitle>Municipal Charter</noticetitle>
-  <noticesubtitle>Sign up for paperless billing statements today.</noticesubtitle>
-  <noticebody>
-    Safe, convenient, easy. Enroll in paperless billing to receive 
-    monthly savings account statements in an electronic PDF document. 
-    Access your Municipal Charter account through the mobile app and 
-    select account preferences in the upper right-hand corner to enroll.
-  </noticebody>
-  <question>What type of business issued the notice?</question>
-  <option>An Internet provider</option>
-  <option>A computer company</option>
-  <option>A paper company</option>
-  <option>A bank</option>
-  <answer>A bank</answer>
-</readnotice>`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="border-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          上传题目
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Upload className="w-5 h-5 text-blue-600" />
-            TOEFL 问题上传系统
-          </DialogTitle>
-          <DialogDescription>
-            上传和解析 TOEFL 练习题，支持填空题、阅读公告和学术阅读等多种题型。
-          </DialogDescription>
-        </DialogHeader>
-        
-        {!previewMode ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block mb-2 font-medium text-gray-700">
-                粘贴HTML格式的问题内容：
-              </label>
-              <Textarea
-                value={htmlContent}
-                onChange={(e) => setHtmlContent(e.target.value)}
-                placeholder="在此粘贴HTML格式的问题..."
-                className="min-h-[400px] font-mono text-sm"
-              />
-            </div>
-            
-            <details className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <summary className="cursor-pointer font-medium text-gray-700 hover:text-blue-600">
-                查看HTML格式示例
-              </summary>
-              <pre className="mt-3 text-xs bg-white p-3 rounded border border-gray-200 overflow-x-auto">
-                {exampleHTML}
-              </pre>
-            </details>
+    <div
+      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
+    >
+      <h3 className="text-xl font-medium text-gray-800 mb-4">
+        Add {section} Question - {testType} {testNumber}
+      </h3>
 
-            <div className="flex gap-2 justify-end pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
-                取消
-              </Button>
-              <Button 
-                onClick={handleParse}
-                disabled={!htmlContent.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                解析问题
-              </Button>
-            </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Question Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question Number
+              {formData.questionType === 'Complete Words' && (
+                <span className="ml-2 text-xs text-orange-600 font-normal">
+                  (빈칸넣기 1-10번은 하나의 문제로 입력)
+                </span>
+              )}
+            </label>
+            {formData.questionType === 'Complete Words' ? (
+              <input
+                type="text"
+                value="1-10"
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+              />
+            ) : (
+              <input
+                type="number"
+                min="1"
+                value={formData.questionNumber}
+                onChange={(e) => setFormData({ ...formData, questionNumber: parseInt(e.target.value) || 1 })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                required
+              />
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-              <Check className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-green-800">解析成功！</p>
-                <p className="text-sm text-green-700 mt-1">
-                  成功解析了 {parsedQuestions.length} 个问题
+
+          {/* Question Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+            <select
+              value={formData.questionType}
+              onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            >
+              {questionTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Passage Text (for Reading) */}
+        {section === 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passage Text
+              {formData.questionType === 'Complete Words' && (
+                <span className="ml-2 text-xs text-blue-600 font-normal">
+                  (빈칸넣기: 빈칸 위치에 [정답:최대길이] 형식으로 입력하세요. 예: mi[ght:3])
+                </span>
+              )}
+            </label>
+            {formData.questionType === 'Complete Words' && (
+              <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm font-medium text-orange-800 mb-1">
+                  📝 빈칸넣기 문제 입력 방법
                 </p>
+                <p className="text-xs text-orange-700">
+                  • 1-10번 문제는 하나의 지문에 10개 빈칸을 모두 포함하여 입력합니다<br/>
+                  • 지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요<br/>
+                  • 예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  • 반드시 10개의 빈칸을 입력해야 합니다
+                </p>
+              </div>
+            )}
+            <textarea
+              value={formData.passageText}
+              onChange={(e) => {
+                setFormData({ ...formData, passageText: e.target.value });
+                
+                // Auto-parse blanks for Complete Words questions
+                if (formData.questionType === 'Complete Words') {
+                  const blankRegex = /\[([^:\]]+):(\d+)\]/g;
+                  const blanks: Array<{ answer: string; maxLength: number }> = [];
+                  let match;
+                  
+                  while ((match = blankRegex.exec(e.target.value)) !== null) {
+                    blanks.push({
+                      answer: match[1],
+                      maxLength: parseInt(match[2])
+                    });
+                  }
+                  
+                  setFormData(prev => ({ ...prev, blanks }));
+                }
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+              rows={8}
+              placeholder={formData.questionType === 'Complete Words' 
+                ? "예시: We mi[ght:3] think th[at:2] early humans performed dances..."
+                : "Enter the reading passage here..."}
+            />
+            {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-800 mb-2">
+                  감지된 빈칸: {formData.blanks.length}개
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.blanks.map((blank, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Audio Upload (for Listening/Speaking) */}
+        {(section === 'Listening' || section === 'Speaking') && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Audio File</label>
+            <input
+              type="text"
+              value={formData.audioUrl}
+              onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="파일 선택 또는 파일 URL"
+            />
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setFormData({ ...formData, audioFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Video Upload */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Video File (Optional)</label>
+          <input
+            type="text"
+            value={formData.videoUrl}
+            onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            placeholder="파일 선택 또는 파일 URL 입력"
+          />
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+          />
+        </div>
+
+        {/* Image Upload (for Speaking) */}
+        {section === 'Speaking' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Image File (Optional)</label>
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="파일 선택 또는 파일 URL 입력"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Question Text */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+          <textarea
+            value={formData.questionText}
+            onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            rows={3}
+            required
+            placeholder="Enter the question..."
+          />
+        </div>
+
+        {/* Answer Options */}
+        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
+              <div className="space-y-2">
+                {formData.options.map((option, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...formData.options];
+                      newOptions[index] = e.target.value;
+                      setFormData({ ...formData, options: newOptions });
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                    placeholder={`Option ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
-              {parsedQuestions.map((q, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-500">
-                      问题 #{index + 1}
-                    </span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                      {q.type === 'fillblanks' ? '填空题' : 
-                       q.type === 'readnotice' ? '阅读公告' : '学术阅读'}
-                    </span>
-                  </div>
-                  
-                  {q.type === 'fillblanks' && (
-                    <div>
-                      <p className="font-medium text-gray-900 mb-2">{q.title}</p>
-                      <p className="text-sm text-gray-600 mb-2">空格数量: {q.blanks?.length || 0}</p>
-                      <div className="text-sm text-gray-500 bg-gray-50 p-2 rounded">
-                        {q.blanks?.map(b => b.word).join(', ')}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {q.type === 'readnotice' && (
-                    <div>
-                      <p className="font-medium text-gray-900 mb-1">{q.notice?.title}</p>
-                      {q.notice?.subtitle && (
-                        <p className="text-sm text-gray-600 mb-2">{q.notice.subtitle}</p>
-                      )}
-                      <p className="font-medium text-gray-800 mt-3 mb-2">{q.question}</p>
-                      <div className="text-sm text-gray-600">
-                        选项数量: {q.options?.length || 0}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {q.type === 'readpassage' && (
-                    <div>
-                      <p className="font-medium text-gray-900 mb-2">{q.title}</p>
-                      <p className="font-medium text-gray-800 mb-2">{q.question}</p>
-                      <div className="text-sm text-gray-600">
-                        选项数量: {q.options?.length || 0}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2 justify-end pt-4 border-t">
-              <Button variant="outline" onClick={handleReset}>
-                <X className="w-4 h-4 mr-2" />
-                重新上传
-              </Button>
-              <Button 
-                onClick={handleSave}
-                className="bg-green-600 hover:bg-green-700 text-white"
+            {/* Correct Answer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+              <select
+                value={formData.correctAnswer}
+                onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                required
               >
-                <Check className="w-4 h-4 mr-2" />
-                保存问题
-              </Button>
+                <option value="">Select correct answer...</option>
+                {formData.options.filter(o => o.trim() !== '').map((option, index) => (
+                  <option key={index} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
+          </>
+        )}
+
+        {/* Duration (for Speaking/Writing) */}
+        {(section === 'Speaking' || section === 'Writing') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+            <input
+              type="number"
+              min="0"
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="e.g., 45, 60, 300"
+            />
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+
+        {/* Explanation */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
+          <textarea
+            value={formData.explanation}
+            onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            rows={3}
+            placeholder="Explain the correct answer..."
+          />
+        </div>
+
+        {/* Difficulty Level */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+          <select
+            value={formData.difficulty}
+            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as '쉬움' | '보통' | '어려움' })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+          >
+            <option value="쉬움">쉬움</option>
+            <option value="보통">보통</option>
+            <option value="어려움">어려움</option>
+          </select>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex gap-3 justify-end pt-4 border-t">
+          <Button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-300 text-gray-700 hover:bg-gray-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Question
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+interface QuestionEditFormProps {
+  testType: 'TPO' | 'Test' | 'Training';
+  testNumber: number;
+  section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
+  questionTypes: string[];
+  question: TPOQuestion;
+  onSubmit: (question: TPOQuestion) => void;
+  onCancel: () => void;
+}
+
+export function QuestionEditForm({ testType, testNumber, section, questionTypes, question, onSubmit, onCancel }: QuestionEditFormProps) {
+  const [formData, setFormData] = useState({
+    questionNumber: question.questionNumber,
+    questionText: question.questionText,
+    questionType: question.questionType,
+    options: question.options || ['', '', '', ''],
+    correctAnswer: question.correctAnswer || '',
+    explanation: question.explanation || '',
+    passageText: question.passageText || '',
+    audioFile: null as File | null,
+    audioUrl: question.audioUrl || '',
+    videoFile: null as File | null,
+    videoUrl: question.videoUrl || '',
+    imageFile: null as File | null,
+    imageUrl: question.imageUrl || '',
+    duration: question.duration || 0,
+    difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
+    blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const updatedQuestion: TPOQuestion = {
+      id: question.id,
+      questionNumber: formData.questionNumber,
+      questionText: formData.questionText,
+      questionType: formData.questionType,
+      options: formData.options.filter(o => o.trim() !== ''),
+      correctAnswer: formData.correctAnswer,
+      explanation: formData.explanation,
+      passageText: formData.passageText || undefined,
+      duration: formData.duration || undefined,
+      difficulty: formData.difficulty,
+      blanks: formData.blanks
+    };
+
+    // Handle URL inputs or file uploads (URL takes priority)
+    if (formData.audioUrl.trim()) {
+      updatedQuestion.audioUrl = formData.audioUrl.trim();
+    } else if (formData.audioFile) {
+      updatedQuestion.audioUrl = URL.createObjectURL(formData.audioFile);
+    } else if (question.audioUrl) {
+      updatedQuestion.audioUrl = question.audioUrl;
+    }
+
+    if (formData.videoUrl.trim()) {
+      updatedQuestion.videoUrl = formData.videoUrl.trim();
+    } else if (formData.videoFile) {
+      updatedQuestion.videoUrl = URL.createObjectURL(formData.videoFile);
+    } else if (question.videoUrl) {
+      updatedQuestion.videoUrl = question.videoUrl;
+    }
+
+    if (formData.imageUrl.trim()) {
+      updatedQuestion.imageUrl = formData.imageUrl.trim();
+    } else if (formData.imageFile) {
+      updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile);
+    } else if (question.imageUrl) {
+      updatedQuestion.imageUrl = question.imageUrl;
+    }
+
+    onSubmit(updatedQuestion);
+  };
+
+  return (
+    <div
+      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
+    >
+      <h3 className="text-xl font-medium text-gray-800 mb-4">
+        Edit {section} Question - {testType} {testNumber}
+      </h3>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Same fields as Upload Form but with existing values */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Question Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question Number
+              {formData.questionType === 'Complete Words' && (
+                <span className="ml-2 text-xs text-orange-600 font-normal">
+                  (빈칸넣기 1-10번은 하나의 문제로 입력)
+                </span>
+              )}
+            </label>
+            {formData.questionType === 'Complete Words' ? (
+              <input
+                type="text"
+                value="1-10"
+                disabled
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+              />
+            ) : (
+              <input
+                type="number"
+                min="1"
+                value={formData.questionNumber}
+                onChange={(e) => setFormData({ ...formData, questionNumber: parseInt(e.target.value) || 1 })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                required
+              />
+            )}
+          </div>
+
+          {/* Question Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+            <select
+              value={formData.questionType}
+              onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            >
+              {questionTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Passage Text (for Reading) */}
+        {section === 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passage Text
+              {formData.questionType === 'Complete Words' && (
+                <span className="ml-2 text-xs text-blue-600 font-normal">
+                  (빈칸넣기: 빈칸 위치에 [정답:최대길이] 형식으로 입력하세요. 예: mi[ght:3])
+                </span>
+              )}
+            </label>
+            {formData.questionType === 'Complete Words' && (
+              <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm font-medium text-orange-800 mb-1">
+                  📝 빈칸넣기 문제 입력 방법
+                </p>
+                <p className="text-xs text-orange-700">
+                  • 1-10번 문제는 하나의 지문에 10개 빈칸을 모두 포함하여 입력합니다<br/>
+                  • 지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요<br/>
+                  • 예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  • 반드시 10개의 빈칸을 입력해야 합니다
+                </p>
+              </div>
+            )}
+            <textarea
+              value={formData.passageText}
+              onChange={(e) => {
+                setFormData({ ...formData, passageText: e.target.value });
+                
+                // Auto-parse blanks for Complete Words questions
+                if (formData.questionType === 'Complete Words') {
+                  const blankRegex = /\[([^:\]]+):(\d+)\]/g;
+                  const blanks: Array<{ answer: string; maxLength: number }> = [];
+                  let match;
+                  
+                  while ((match = blankRegex.exec(e.target.value)) !== null) {
+                    blanks.push({
+                      answer: match[1],
+                      maxLength: parseInt(match[2])
+                    });
+                  }
+                  
+                  setFormData(prev => ({ ...prev, blanks }));
+                }
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+              rows={8}
+              placeholder={formData.questionType === 'Complete Words' 
+                ? "예시: We mi[ght:3] think th[at:2] early humans performed dances..."
+                : "Enter the reading passage here..."}
+            />
+            {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-800 mb-2">
+                  감지된 빈칸: {formData.blanks.length}개
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.blanks.map((blank, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Audio Upload (for Listening/Speaking) */}
+        {(section === 'Listening' || section === 'Speaking') && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Audio File</label>
+            <input
+              type="text"
+              value={formData.audioUrl}
+              onChange={(e) => setFormData({ ...formData, audioUrl: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="파일 선택 또는 파일 URL"
+            />
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setFormData({ ...formData, audioFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Video Upload */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Video File (Optional)</label>
+          <input
+            type="text"
+            value={formData.videoUrl}
+            onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            placeholder="파일 선택 또는 파일 URL 입력"
+          />
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+          />
+        </div>
+
+        {/* Image Upload (for Speaking) */}
+        {section === 'Speaking' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Image File (Optional)</label>
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="파일 선택 또는 파일 URL 입력"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Question Text */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+          <textarea
+            value={formData.questionText}
+            onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            rows={3}
+            required
+            placeholder="Enter the question..."
+          />
+        </div>
+
+        {/* Answer Options */}
+        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
+              <div className="space-y-2">
+                {formData.options.map((option, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOptions = [...formData.options];
+                      newOptions[index] = e.target.value;
+                      setFormData({ ...formData, options: newOptions });
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                    placeholder={`Option ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Correct Answer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
+              <select
+                value={formData.correctAnswer}
+                onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                required
+              >
+                <option value="">Select correct answer...</option>
+                {formData.options.filter(o => o.trim() !== '').map((option, index) => (
+                  <option key={index} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
+
+        {/* Duration (for Speaking/Writing) */}
+        {(section === 'Speaking' || section === 'Writing') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
+            <input
+              type="number"
+              min="0"
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="e.g., 45, 60, 300"
+            />
+          </div>
+        )}
+
+        {/* Explanation */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
+          <textarea
+            value={formData.explanation}
+            onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            rows={3}
+            placeholder="Explain the correct answer..."
+          />
+        </div>
+
+        {/* Difficulty Level */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+          <select
+            value={formData.difficulty}
+            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as '쉬움' | '보통' | '어려움' })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+          >
+            <option value="쉬움">쉬움</option>
+            <option value="보통">보통</option>
+            <option value="어려움">어려움</option>
+          </select>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex gap-3 justify-end pt-4 border-t">
+          <Button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-300 text-gray-700 hover:bg-gray-400"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Save Changes
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

@@ -7,10 +7,10 @@ export function AboutToefl() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
-            为什么选择我们的平台？
+            Why Choose Our Platform?
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            专业、高效、全面的TOEFL备考解决方案
+            A professional, efficient, and comprehensive TOEFL preparation solution
           </p>
         </div>
         
@@ -19,9 +19,9 @@ export function AboutToefl() {
             <div className="bg-gradient-to-r from-blue-500 to-cyan-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl shadow-lg">
               🎯
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">精准定位</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Precise Targeting</h3>
             <p className="text-gray-600">
-              基于大数据分析的智能诊断系统，精准识别你的薄弱环节，提供个性化的学习方案
+              AI-powered diagnostic system based on big data analysis to pinpoint your weaknesses and provide personalized study plans
             </p>
           </Card>
           
@@ -29,9 +29,9 @@ export function AboutToefl() {
             <div className="bg-gradient-to-r from-green-500 to-emerald-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl shadow-lg">
               📈
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">高效提升</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Efficient Improvement</h3>
             <p className="text-gray-600">
-              科学的学习路径和方法，平均提分25+，让你在最短时间内达到目标分数
+              Scientific learning paths and methods with an average score improvement of 25+, helping you reach your target score in the shortest time
             </p>
           </Card>
           
@@ -39,9 +39,9 @@ export function AboutToefl() {
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl shadow-lg">
               🏆
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">权威认证</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Official & Authentic</h3>
             <p className="text-gray-600">
-              使用官方TPO真题，完全模拟真实考试环境，确保你的练习效果和考试体验一致
+              Using official TPO practice tests with a fully simulated real exam environment to ensure your practice matches the actual test experience
             </p>
           </Card>
         </div>
@@ -49,11 +49,11 @@ export function AboutToefl() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div>
             <div className="bg-white rounded-2xl shadow-xl p-8 border">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">学习进度追踪</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Study Progress Tracking</h3>
               
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">阅读 Reading</span>
+                  <span className="text-gray-700">Reading</span>
                   <span className="text-blue-600 font-semibold">85%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -61,7 +61,7 @@ export function AboutToefl() {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">听力 Listening</span>
+                  <span className="text-gray-700">Listening</span>
                   <span className="text-green-600 font-semibold">78%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -69,7 +69,7 @@ export function AboutToefl() {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">口语 Speaking</span>
+                  <span className="text-gray-700">Speaking</span>
                   <span className="text-purple-600 font-semibold">72%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -77,7 +77,7 @@ export function AboutToefl() {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">写作 Writing</span>
+                  <span className="text-gray-700">Writing</span>
                   <span className="text-orange-600 font-semibold">68%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -87,7 +87,7 @@ export function AboutToefl() {
               
               <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
                 <p className="text-blue-700 font-medium">
-                  🎯 继续努力！预计再练习2周可达到目标分数105分
+                  Keep it up! Estimated 2 more weeks of practice to reach your target score of 105
                 </p>
               </div>
             </div>
@@ -95,7 +95,7 @@ export function AboutToefl() {
           
           <div className="space-y-8">
             <h3 className="text-2xl font-bold text-gray-900">
-              全面的学习支持
+              Comprehensive Learning Support
             </h3>
             
             <div className="space-y-6">
@@ -104,8 +104,8 @@ export function AboutToefl() {
                   <span className="text-blue-600 text-xl">📝</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">详细解析</h4>
-                  <p className="text-gray-600">每道题目都配有详细的解题思路和技巧分析，帮你理解题目背后的逻辑</p>
+                  <h4 className="font-semibold text-gray-900 mb-2">Detailed Explanations</h4>
+                  <p className="text-gray-600">Every question comes with detailed solution analysis and strategy tips to help you understand the logic behind each problem</p>
                 </div>
               </div>
               
@@ -114,8 +114,8 @@ export function AboutToefl() {
                   <span className="text-green-600 text-xl">📊</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">学习报告</h4>
-                  <p className="text-gray-600">智能生成个人学习报告，追踪进度，调整学习策略</p>
+                  <h4 className="font-semibold text-gray-900 mb-2">Study Reports</h4>
+                  <p className="text-gray-600">AI-generated personalized study reports to track progress and adjust learning strategies</p>
                 </div>
               </div>
               
@@ -124,8 +124,8 @@ export function AboutToefl() {
                   <span className="text-purple-600 text-xl">🎯</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">高效动力</h4>
-                  <p className="text-gray-600">科学的练习安排和目标设定，保持学习动力和效率</p>
+                  <h4 className="font-semibold text-gray-900 mb-2">Effective Motivation</h4>
+                  <p className="text-gray-600">Scientific practice scheduling and goal setting to maintain learning momentum and efficiency</p>
                 </div>
               </div>
             </div>

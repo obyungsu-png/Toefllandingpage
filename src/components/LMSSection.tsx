@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Image as ImageIcon, FileCheck, Trash2, Settings, BookOpen, Book, Users, ChevronDown, ChevronRight, Edit, Megaphone } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+// motion removed - using CSS animations
 import { SubscriptionManagement } from './SubscriptionManagement';
 import { ContentManagement, TPOTest } from './ContentManagement';
 import { VocabularyManagement, VocabularyDay } from './VocabularyManagement';
@@ -350,10 +350,8 @@ export function LMSSection({
 
             {/* Upload Form */}
             {showUploadForm && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6"
+              <div
+                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6 animate-[fadeSlideUp_0.3s_ease-out]"
               >
                 <h3 className="text-xl font-medium text-gray-800 mb-4">Upload New Content - {activeSkill}</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -544,7 +542,7 @@ export function LMSSection({
                     </Button>
                   </div>
                 </form>
-              </motion.div>
+              </div>
             )}
 
             {/* Content List */}
@@ -633,21 +631,15 @@ export function LMSSection({
                               </button>
 
                               {/* Group Contents */}
-                              <AnimatePresence>
+                              <>
                                 {!isCollapsed && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="overflow-hidden"
+                                  <div
+                                    className="overflow-hidden animate-[fadeIn_0.2s_ease-out]"
                                   >
                                     <div className="p-3 space-y-2 bg-white">
                                       {contents.map((content) => (
-                                        <motion.div
+                                        <div
                                           key={content.id}
-                                          initial={{ opacity: 0 }}
-                                          animate={{ opacity: 1 }}
                                           className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
                                           <div className="flex items-center gap-3 flex-1">
@@ -687,12 +679,12 @@ export function LMSSection({
                                               <Trash2 className="w-4 h-4" />
                                             </Button>
                                           </div>
-                                        </motion.div>
+                                        </div>
                                       ))}
                                     </div>
-                                  </motion.div>
+                                  </div>
                                 )}
-                              </AnimatePresence>
+                              </>
                             </div>
                           );
                         })}
@@ -751,14 +743,11 @@ export function LMSSection({
       </div>
 
       {/* Edit Content Modal */}
-      <AnimatePresence>
+      <>
         {editingContent && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            <div
+              className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-[scaleIn_0.2s_ease-out]"
             >
               <div className="p-6">
                 <h3 className="text-xl font-medium text-gray-800 mb-4">Edit Content</h3>
@@ -875,10 +864,10 @@ export function LMSSection({
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

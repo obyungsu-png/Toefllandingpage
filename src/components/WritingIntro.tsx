@@ -1,3 +1,5 @@
+import { MobileFooter } from './MobileFooter';
+
 interface WritingIntroProps {
   onBack?: () => void;
   onNext: () => void;
@@ -9,17 +11,17 @@ export function WritingIntro({ onBack, onNext, onHome, onVolumeClick }: WritingI
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Top Header */}
-      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-4 md:px-8 shadow-lg">
         <div className="flex items-center">
           <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-xl md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={onHome}
           >
             *toefl ibt
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="md:flex items-center gap-3 hidden">
           {/* Volume Button */}
           {onVolumeClick && (
             <button 
@@ -61,18 +63,18 @@ export function WritingIntro({ onBack, onNext, onHome, onVolumeClick }: WritingI
 
       {/* Tab */}
       <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
-          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
+        <div className="px-4 md:px-8 py-3">
+          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block text-sm md:text-base">
             Writing
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
-        <div className="max-w-4xl px-8">
-          <h2 className="text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Writing</h2>
-          <div className="w-24 h-1 bg-gray-300 mb-8"></div>
+      <div className="flex-1 overflow-auto bg-white flex items-center justify-center pb-20 md:pb-8">
+        <div className="max-w-4xl px-4 md:px-8">
+          <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] text-gray-800 mb-6 md:mb-8">Writing</h2>
+          <div className="w-20 md:w-24 h-1 bg-gray-300 mb-6 md:mb-8"></div>
           
           <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
             <p>
@@ -106,6 +108,15 @@ export function WritingIntro({ onBack, onNext, onHome, onVolumeClick }: WritingI
           </div>
         </div>
       </div>
+
+      {/* Mobile Footer */}
+      <MobileFooter 
+        onBack={onBack}
+        onHome={onHome} 
+        onNext={onNext}
+        showBack={!!onBack}
+        nextLabel="Begin"
+      />
     </div>
   );
 }

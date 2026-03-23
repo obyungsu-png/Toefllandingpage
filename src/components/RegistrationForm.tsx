@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, User, Lock, Shield, Smartphone, Cloud, Laptop, Phone } from 'lucide-react';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface RegistrationFormProps {
   onClose: () => void;
@@ -54,50 +55,54 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
       return;
     }
 
-    // Check if user already exists
-    const existingUsers = JSON.parse(localStorage.getItem('toefl_users') || '[]');
-    const userExists = existingUsers.some((user: any) => 
-      user.phoneNumber === phoneNumber || user.username === username
-    );
+    // Call server API for registration
+    const doRegister = async () => {
+      try {
+        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+        const response = await fetch(`${baseUrl}/users/register`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumber,
+            username,
+            password
+          })
+        });
 
-    if (userExists) {
-      alert('This phone number or username is already registered!');
-      return;
-    }
+        // Read response as text first to check format
+        const responseText = await response.text();
+        console.log('Registration response:', responseText);
 
-    // Save user data to localStorage
-    const newUser = {
-      phoneNumber,
-      username,
-      password,
-      registeredAt: new Date().toISOString()
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response:', responseText);
+          alert('Server returned invalid response. Please try again or contact support.');
+          return;
+        }
+
+        if (!response.ok) {
+          alert(data.error || 'Registration failed');
+          return;
+        }
+
+        alert(`Registration Successful!\n\nPhone: ${phoneNumber}\nUsername: ${username}\n\nYou can now log in with your credentials.`);
+        
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
+        onClose();
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('Failed to connect to server. Please try again.');
+      }
     };
 
-    existingUsers.push(newUser);
-    localStorage.setItem('toefl_users', JSON.stringify(existingUsers));
-
-    // Also add to CMS students list
-    const cmsStudents = JSON.parse(localStorage.getItem('cms_students') || '[]');
-    const newCMSStudent = {
-      id: `student_${Date.now()}`,
-      name: username,
-      email: phoneNumber, // Using phone number as email for now
-      enrolledDate: new Date().toISOString(),
-      phoneNumber: phoneNumber,
-      registeredVia: 'registration_form'
-    };
-    cmsStudents.push(newCMSStudent);
-    localStorage.setItem('cms_students', JSON.stringify(cmsStudents));
-    
-    // Dispatch custom event to notify App.tsx about the new student
-    window.dispatchEvent(new Event('cms_students_updated'));
-
-    alert(`Registration Successful!\n\nPhone: ${phoneNumber}\nUsername: ${username}\n\nYou can now log in with your credentials.`);
-    
-    if (onRegisterSuccess) {
-      onRegisterSuccess();
-    }
-    onClose();
+    doRegister();
   };
 
   return (

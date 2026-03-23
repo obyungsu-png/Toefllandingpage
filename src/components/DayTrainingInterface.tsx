@@ -79,21 +79,21 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
     <div className="fixed inset-0 bg-gray-50 z-50">
       {/* Pink Header */}
       <div 
-        className="px-8 py-6 relative overflow-hidden"
+        className="px-3 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6 relative overflow-hidden"
         style={{
           background: 'linear-gradient(to right, #e91e63, #c2185b)'
         }}
       >
         {/* Decorative circles - left side */}
         <div 
-          className="absolute left-16 top-1/2 -translate-y-1/2 w-32 h-32 rounded-full"
+          className="absolute left-8 sm:left-16 top-1/2 -translate-y-1/2 w-20 sm:w-24 lg:w-32 h-20 sm:h-24 lg:h-32 rounded-full"
           style={{
             background: 'rgba(255, 255, 255, 0.1)',
             filter: 'blur(2px)'
           }}
         />
         <div 
-          className="absolute left-32 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full"
+          className="absolute left-16 sm:left-24 lg:left-32 top-1/2 -translate-y-1/2 w-12 sm:w-16 lg:w-20 h-12 sm:h-16 lg:h-20 rounded-full"
           style={{
             background: 'rgba(255, 255, 255, 0.08)',
             filter: 'blur(1px)'
@@ -130,19 +130,19 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
           {/* Back button */}
           <button 
             onClick={onClose}
-            className="flex items-center gap-2 text-white mb-4 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-1 sm:gap-2 text-white mb-2 sm:mb-4 hover:opacity-80 transition-opacity"
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm font-['Inter',_sans-serif]">돌아가기</span>
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-xs sm:text-sm font-['Inter',_sans-serif]">돌아가기</span>
           </button>
 
           {/* Title */}
-          <h1 className="text-white text-3xl mb-1 font-['Inter',_sans-serif] font-bold tracking-wide">
+          <h1 className="text-white text-lg sm:text-2xl lg:text-3xl mb-1 font-['Inter',_sans-serif] font-bold tracking-wide">
             스터디 허브 토플 Level {selectedLevel}
           </h1>
           
           {/* Subtitle */}
-          <p className="text-white/90 font-['Inter',_sans-serif]">
+          <p className="text-white/90 text-sm sm:text-base font-['Inter',_sans-serif]">
             {questionType} 프로그램
           </p>
         </div>
@@ -151,9 +151,9 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
       {/* Main Content Area */}
       <div className="flex">
         {/* Left Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-screen p-6">
+        <div className="w-32 sm:w-48 lg:w-64 bg-white border-r border-gray-200 min-h-screen p-3 sm:p-4 lg:p-6">
           {/* Section Title */}
-          <h2 className="text-gray-700 mb-4">{questionType}</h2>
+          <h2 className="text-gray-700 mb-3 sm:mb-4 text-xs sm:text-sm lg:text-base">{questionType}</h2>
           
           {/* Levels List */}
           <div className="space-y-1">
@@ -161,7 +161,7 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
               <div 
                 key={level}
                 onClick={() => setSelectedLevel(level)}
-                className={`px-4 py-2.5 text-sm rounded cursor-pointer transition-colors ${
+                className={`px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm rounded cursor-pointer transition-colors ${
                   selectedLevel === level 
                     ? 'bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white'
                     : 'text-gray-700 hover:bg-gray-100'
@@ -174,14 +174,14 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
         </div>
 
         {/* Right Main Content */}
-        <div className="flex-1 p-8 overflow-y-auto max-h-screen">
+        <div className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto max-h-screen">
           {/* Instruction */}
-          <h2 className="text-gray-800 text-lg mb-6">
+          <h2 className="text-gray-800 text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 lg:mb-6">
             학습할 DAY를 선택해주세요
           </h2>
 
           {/* Days Container - Single Pink Box */}
-          <div className="bg-[#fce4ec] rounded-2xl border border-[#f8bbd0] overflow-hidden">
+          <div className="bg-[#fce4ec] rounded-xl sm:rounded-2xl border border-[#f8bbd0] overflow-hidden">
             {days.map((day, dayIndex) => {
               const dayContents = getContentForDay(day);
               const hasContent = dayContents.length > 0;
@@ -191,23 +191,23 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
                 <div
                   key={day}
                   onClick={() => handleDayClick(day)}
-                  className={`px-6 py-4 flex items-center justify-between cursor-pointer transition-all bg-white ${
+                  className={`px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 lg:py-4 flex items-center justify-between cursor-pointer transition-all bg-white ${
                     !isLast ? 'border-b border-[#f8bbd0]' : ''
                   } hover:bg-gray-50`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-700 font-semibold">DAY {day}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-gray-700 font-semibold text-xs sm:text-sm lg:text-base">DAY {day}</span>
                     {hasContent && (
-                      <span className="text-xs bg-[#e91e63] text-white px-2 py-1 rounded-full font-semibold">
+                      <span className="text-[10px] sm:text-xs bg-[#e91e63] text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold">
                         {dayContents.length}개 자료
                       </span>
                     )}
                     {!isDayEnabled(day) && (
-                      <Lock className="w-4 h-4 text-gray-400" />
+                      <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                     )}
                   </div>
                   <ChevronRight 
-                    className="w-5 h-5"
+                    className="w-4 h-4 sm:w-5 sm:h-5"
                     style={{ color: '#e91e63' }}
                   />
                 </div>

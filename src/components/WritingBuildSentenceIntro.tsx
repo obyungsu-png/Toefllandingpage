@@ -1,3 +1,6 @@
+import { MobileFooter } from './MobileFooter';
+import { useState, useEffect } from 'react';
+
 interface WritingBuildSentenceIntroProps {
   onBack: () => void;
   onNext: () => void;
@@ -6,6 +9,15 @@ interface WritingBuildSentenceIntroProps {
 }
 
 export function WritingBuildSentenceIntro({ onBack, onNext, onHome, onVolumeClick }: WritingBuildSentenceIntroProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Top Header */}
@@ -83,6 +95,15 @@ export function WritingBuildSentenceIntro({ onBack, onNext, onHome, onVolumeClic
           </div>
         </div>
       </div>
+
+      {/* Mobile Footer */}
+      {isMobile && (
+        <MobileFooter 
+          onNext={onNext} 
+          onBack={onBack}
+          onHome={onHome}
+        />
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Plus, Edit2, Trash2, Save, X, Image as ImageIcon, Video, FileText, ExternalLink } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+// motion removed - using CSS animations
 import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
@@ -233,13 +233,11 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
         </div>
 
         {/* Edit/Create Form */}
-        <AnimatePresence>
+        <>
           {isEditing && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+            <div
               className="bg-white rounded-xl border-2 border-gray-200 p-6 mb-6 shadow-lg"
+              style={{ animation: 'fadeInDown 0.3s ease-out' }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold" style={{ color: themeColor }}>
@@ -460,9 +458,9 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
                   </Button>
                 </div>
               </form>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Ads List */}
         <div className="space-y-4">
@@ -478,10 +476,8 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
             </div>
           ) : (
             ads.map((ad) => (
-              <motion.div
+              <div
                 key={ad.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
                 className={`bg-white rounded-xl border-2 p-6 shadow-sm hover:shadow-md transition-all ${
                   ad.isActive ? 'border-green-200' : 'border-gray-200 opacity-60'
                 }`}
@@ -565,7 +561,7 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))
           )}
         </div>

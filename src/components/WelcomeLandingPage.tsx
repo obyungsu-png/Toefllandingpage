@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { motion } from 'framer-motion';
+// motion removed - using CSS animations
 
 interface WelcomeLandingPageProps {
   onStartPractice: () => void;
@@ -98,84 +98,54 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
           {/* Right Images */}
           <div className="md:hidden flex justify-center mb-8">
             {/* Mobile Single Image */}
-            <motion.div 
+            <div 
               className="rounded-lg overflow-hidden shadow-lg w-full max-w-[400px] h-[250px]"
-              animate={{ 
-                y: [0, -15, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+              style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img 
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
                 alt="Graduation ceremony"
                 className="w-full h-full object-cover"
               />
-            </motion.div>
+            </div>
           </div>
 
           <div className="hidden md:grid flex-none w-[500px] grid-cols-2 gap-4">
             {/* Top Left Image */}
-            <motion.div 
+            <div 
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
-              animate={{ 
-                y: [0, -15, 0],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+              style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img 
                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop" 
                 alt="Students studying together"
                 className="w-full h-full object-cover"
               />
-            </motion.div>
+            </div>
             
             {/* Top Right Image - spans 2 rows */}
-            <motion.div 
+            <div 
               className="rounded-lg overflow-hidden shadow-lg row-span-2 h-[380px]"
-              animate={{ 
-                y: [0, -20, 0],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5
-              }}
+              style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
               <img 
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
                 alt="Graduation ceremony"
                 className="w-full h-full object-cover"
               />
-            </motion.div>
+            </div>
             
             {/* Bottom Left Image */}
-            <motion.div 
+            <div 
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
-              animate={{ 
-                y: [0, -12, 0],
-              }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1
-              }}
+              style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
               <img 
                 src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop" 
                 alt="Online learning"
                 className="w-full h-full object-cover"
               />
-            </motion.div>
+            </div>
           </div>
         </div>
       </main>

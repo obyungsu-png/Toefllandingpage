@@ -501,57 +501,58 @@ export function IntonationMatcher({
       </div>
 
       {/* Sentence Box */}
-      <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-6 mb-6 border-l-4 border-pink-500 shadow-lg">
-        <div className="flex items-start gap-4">
-          <Volume2 className="w-8 h-8 text-pink-600 flex-shrink-0 mt-1" />
+      <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6 border-l-4 border-pink-500 shadow-lg">
+        <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+          <Volume2 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-pink-600 flex-shrink-0 mt-0.5 sm:mt-1" />
           <div>
-            <div className="text-sm text-pink-600 font-semibold mb-2">Practice Sentence</div>
-            <p className="text-2xl font-bold text-gray-800">{nativeText}</p>
+            <div className="text-xs sm:text-sm text-pink-600 font-semibold mb-1 sm:mb-2">Practice Sentence</div>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-800">{nativeText}</p>
           </div>
         </div>
       </div>
 
       {/* Visualization */}
-      <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-2xl p-6 mb-6 shadow-2xl">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-pink-500 shadow-lg shadow-pink-500/50"></div>
-            <span className="text-white font-semibold">Native Speaker Intonation</span>
+      <div className="bg-gradient-to-br from-[#1e1e2e] to-[#2a2a3e] rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6 shadow-2xl">
+        <div className="mb-3 sm:mb-4 md:mb-6">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-pink-500 shadow-lg shadow-pink-500/50"></div>
+            <span className="text-white font-semibold text-xs sm:text-sm md:text-base">Native Speaker Intonation</span>
           </div>
-          <div className="bg-black/30 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+          <div className="bg-black/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 backdrop-blur-sm border border-white/10">
             <canvas ref={nativeCanvasRef} width={800} height={120} className="w-full h-auto" />
           </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50 animate-pulse"></div>
-            <span className="text-white font-semibold">Your Intonation</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+            <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50 animate-pulse"></div>
+            <span className="text-white font-semibold text-xs sm:text-sm md:text-base">Your Intonation</span>
           </div>
-          <div className="bg-black/30 rounded-xl p-4 backdrop-blur-sm border border-white/10 min-h-[152px] flex items-center justify-center">
+          <div className="bg-black/30 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 backdrop-blur-sm border border-white/10 min-h-[120px] sm:min-h-[152px] flex items-center justify-center">
             {userPitchData.length > 0 ? (
               <canvas ref={userCanvasRef} width={800} height={120} className="w-full h-auto" />
             ) : (
-              <p className="text-gray-400 text-sm">녹음을 시작하면 여기에 음성 패턴이 표시됩니다</p>
+              <p className="text-gray-400 text-xs sm:text-sm text-center px-2">녹음을 시작하면 여기에 음성 패턴이 표시됩니다</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
         <Button
           onClick={playNative}
           disabled={isPlayingNative}
-          className="py-6 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-pink-500/30 transition-all duration-300 disabled:opacity-50"
+          className="py-3 sm:py-4 md:py-6 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg rounded-lg sm:rounded-xl shadow-lg shadow-pink-500/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-1 sm:gap-2"
         >
-          <Play className="w-5 h-5 mr-2" />
-          {isPlayingNative ? 'Playing...' : 'Play Native'}
+          <Play className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">{isPlayingNative ? 'Playing...' : 'Play Native'}</span>
+          <span className="sm:hidden">Play</span>
         </Button>
 
         <Button
           onClick={toggleRecording}
-          className={`py-6 font-bold text-lg rounded-xl shadow-lg transition-all duration-300 ${
+          className={`py-3 sm:py-4 md:py-6 font-bold text-xs sm:text-sm md:text-base lg:text-lg rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 ${
             isRecording
               ? 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-rose-500/30 animate-pulse'
               : 'bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-rose-500/30'
@@ -559,13 +560,15 @@ export function IntonationMatcher({
         >
           {isRecording ? (
             <>
-              <Square className="w-5 h-5 mr-2" />
-              Stop Recording
+              <Square className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Stop Recording</span>
+              <span className="sm:hidden">Stop</span>
             </>
           ) : (
             <>
-              <Mic className="w-5 h-5 mr-2" />
-              Start Recording
+              <Mic className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">Start Recording</span>
+              <span className="sm:hidden">Record</span>
             </>
           )}
         </Button>
@@ -573,46 +576,47 @@ export function IntonationMatcher({
         <Button
           onClick={startDemoRecording}
           disabled={isRecording}
-          className="py-6 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300 disabled:opacity-50"
+          className="py-3 sm:py-4 md:py-6 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg rounded-lg sm:rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-1 sm:gap-2"
         >
-          <TestTube className="w-5 h-5 mr-2" />
-          Demo Mode
+          <TestTube className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+          <span className="hidden sm:inline">Demo Mode</span>
+          <span className="sm:hidden">Demo</span>
         </Button>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-2xl p-6 mb-6 shadow-lg">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-6 h-6 text-white" />
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6 shadow-lg">
+          <div className="flex items-start gap-2 sm:gap-3 md:gap-4">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="text-lg font-bold text-yellow-800 mb-2">마이크 사용 불가</h4>
-              <p className="text-yellow-700 mb-4">{error}</p>
-              <div className="bg-white/60 rounded-lg p-4 border border-yellow-200 mb-4">
-                <p className="text-sm font-semibold text-yellow-900 mb-2">💡 해결 방법:</p>
-                <ul className="text-sm text-yellow-800 space-y-2">
-                  <li className="flex items-start gap-2">
+              <h4 className="text-sm sm:text-base md:text-lg font-bold text-yellow-800 mb-1 sm:mb-2">마이크 사용 불가</h4>
+              <p className="text-xs sm:text-sm md:text-base text-yellow-700 mb-2 sm:mb-3 md:mb-4">{error}</p>
+              <div className="bg-white/60 rounded-lg p-2 sm:p-3 md:p-4 border border-yellow-200 mb-2 sm:mb-3 md:mb-4">
+                <p className="text-xs sm:text-sm font-semibold text-yellow-900 mb-1 sm:mb-2">💡 해결 방법:</p>
+                <ul className="text-[10px] sm:text-xs md:text-sm text-yellow-800 space-y-1 sm:space-y-2">
+                  <li className="flex items-start gap-1 sm:gap-2">
                     <span className="text-yellow-600 font-bold">1.</span>
                     <span><strong>"Demo Mode"</strong> 버튼을 클릭하여 마이크 없이 테스트하세요</span>
                   </li>
-                  <li className="flex items-start gap-2">
+                  <li className="flex items-start gap-1 sm:gap-2">
                     <span className="text-yellow-600 font-bold">2.</span>
                     <span>또는 브라우저 주소창 왼쪽 🔒를 클릭하여 마이크 권한을 허용하세요</span>
                   </li>
                 </ul>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3 flex-wrap">
                 <button
                   onClick={startDemoRecording}
-                  className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg"
+                  className="px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold text-xs sm:text-sm rounded-lg transition-colors duration-200 shadow-lg"
                 >
                   🧪 Demo Mode로 시작하기
                 </button>
                 <button
                   onClick={() => setError(null)}
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors duration-200"
                 >
                   확인
                 </button>
@@ -624,14 +628,14 @@ export function IntonationMatcher({
 
       {/* Score Panel */}
       {matchScore !== null && (
-        <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-8 shadow-xl border-2 border-emerald-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl border-2 border-emerald-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full mb-4 shadow-md">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm font-semibold text-emerald-700">Your Intonation Match Score</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/80 rounded-full mb-2 sm:mb-3 md:mb-4 shadow-md">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+              <span className="text-xs sm:text-sm font-semibold text-emerald-700">Your Intonation Match Score</span>
             </div>
             
-            <div className={`text-7xl font-black mb-4 bg-gradient-to-r ${
+            <div className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r ${
               matchScore >= 75 
                 ? 'from-emerald-600 to-teal-600' 
                 : matchScore >= 50 
@@ -642,7 +646,7 @@ export function IntonationMatcher({
             </div>
             
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="h-2 bg-gray-200 rounded-full w-64">
+              <div className="h-2 bg-gray-200 rounded-full w-48 sm:w-56 md:w-64">
                 <div 
                   className={`h-2 rounded-full transition-all duration-1000 ${
                     matchScore >= 75 

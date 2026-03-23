@@ -37,6 +37,201 @@ async function initializeStorage() {
 // Initialize storage on startup
 initializeStorage();
 
+// Initialize sample TPO and Test data
+async function initializeSampleData() {
+  try {
+    // Check if sample data already exists
+    const existingTPO1 = await kv.get('tpo:1');
+    const existingTest1 = await kv.get('test:1');
+    
+    if (!existingTPO1) {
+      // Create sample TPO 1
+      const sampleTPO1 = {
+        id: 'tpo-1',
+        testNumber: 1,
+        testType: 'TPO',
+        year: 2024,
+        month: 3,
+        isOfficial: true,
+        dateMemo: 'Sample TPO for demonstration',
+        sections: [
+          {
+            id: 'reading-1',
+            sectionType: 'Reading',
+            instructions: 'Read the passage and answer the questions.',
+            totalTime: 3600,
+            questions: [
+              {
+                id: 'r1-q1',
+                questionNumber: 1,
+                questionText: 'What is the main idea of the passage?',
+                questionType: 'Multiple Choice',
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                correctAnswer: 'Option A',
+                explanation: 'This is the correct answer because...',
+                difficulty: '보통'
+              }
+            ]
+          },
+          {
+            id: 'listening-1',
+            sectionType: 'Listening',
+            instructions: 'Listen to the audio and answer the questions.',
+            totalTime: 2400,
+            questions: [
+              {
+                id: 'l1-q1',
+                questionNumber: 1,
+                questionText: 'What did the speaker mainly discuss?',
+                questionType: 'Multiple Choice',
+                options: ['Topic A', 'Topic B', 'Topic C', 'Topic D'],
+                correctAnswer: 'Topic A',
+                difficulty: '보통'
+              }
+            ]
+          }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await kv.set('tpo:1', sampleTPO1);
+      console.log('✅ Created sample TPO 1');
+    }
+    
+    // Create sample TPO 2
+    const existingTPO2 = await kv.get('tpo:2');
+    if (!existingTPO2) {
+      const sampleTPO2 = {
+        id: 'tpo-2',
+        testNumber: 2,
+        testType: 'TPO',
+        year: 2024,
+        month: 4,
+        isOfficial: true,
+        dateMemo: 'Sample TPO 2 for demonstration',
+        sections: [
+          {
+            id: 'reading-2',
+            sectionType: 'Reading',
+            instructions: 'Read the passage and answer the questions.',
+            totalTime: 3600,
+            questions: [
+              {
+                id: 'r2-q1',
+                questionNumber: 1,
+                questionText: 'Which of the following best describes the passage?',
+                questionType: 'Multiple Choice',
+                options: ['Description A', 'Description B', 'Description C', 'Description D'],
+                correctAnswer: 'Description B',
+                explanation: 'The passage indicates that...',
+                difficulty: '보통'
+              }
+            ]
+          },
+          {
+            id: 'speaking-2',
+            sectionType: 'Speaking',
+            instructions: 'Speak your response.',
+            totalTime: 1200,
+            questions: [
+              {
+                id: 's2-q1',
+                questionNumber: 1,
+                questionText: 'Do you prefer studying alone or in a group?',
+                questionType: 'Independent Task',
+                duration: 45,
+                difficulty: '보통'
+              }
+            ]
+          }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await kv.set('tpo:2', sampleTPO2);
+      console.log('✅ Created sample TPO 2');
+    }
+    
+    if (!existingTest1) {
+      // Create sample Test 1
+      const sampleTest1 = {
+        id: 'test-1',
+        testNumber: 1,
+        testType: 'Test',
+        year: 2024,
+        month: 6,
+        isOfficial: true,
+        dateMemo: 'Sample Real Test for demonstration',
+        sections: [
+          {
+            id: 'reading-t1',
+            sectionType: 'Reading',
+            instructions: 'Read the passage and answer the questions.',
+            totalTime: 3600,
+            questions: [
+              {
+                id: 'rt1-q1',
+                questionNumber: 1,
+                questionText: 'According to the passage, what is the primary purpose?',
+                questionType: 'Multiple Choice',
+                options: ['Purpose A', 'Purpose B', 'Purpose C', 'Purpose D'],
+                correctAnswer: 'Purpose A',
+                explanation: 'The passage clearly states...',
+                difficulty: '보통'
+              }
+            ]
+          },
+          {
+            id: 'writing-t1',
+            sectionType: 'Writing',
+            instructions: 'Write your essay response.',
+            totalTime: 1800,
+            questions: [
+              {
+                id: 'wt1-q1',
+                questionNumber: 1,
+                questionText: 'Do you agree or disagree with the following statement?',
+                questionType: 'Essay',
+                difficulty: '보통'
+              }
+            ]
+          }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await kv.set('test:1', sampleTest1);
+      console.log('✅ Created sample Test 1');
+    }
+  } catch (error) {
+    console.error('❌ Error initializing sample data:', error);
+  }
+}
+
+// Initialize sample data on startup
+initializeSampleData();
+
+// Retry helper for transient network errors
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 500): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isTransient = err instanceof TypeError && 
+        (String(err).includes('connection reset') || 
+         String(err).includes('connection error') ||
+         String(err).includes('SendRequest'));
+      if (!isTransient || attempt === retries) throw err;
+      console.log(`⚠️ Transient error on attempt ${attempt}/${retries}, retrying in ${delayMs}ms...`);
+      await new Promise(r => setTimeout(r, delayMs * attempt));
+    }
+  }
+  throw new Error('withRetry: unreachable');
+}
+
 // Helper function to normalize text (remove line breaks, trim whitespace, normalize case)
 function normalizeText(text: string): string {
   if (!text) return "";
@@ -72,7 +267,39 @@ const getWordsPerDay = (tabType: string): number => {
   if (tabType === 'custom' || tabType === 'etymology') {
     return 999999; // Effectively unlimited - no restriction on words per day
   }
-  return 40; // TOEFL tabs use 40 words per day
+  if (tabType === 'toefl-hard') {
+    return 60; // vol.2 uses 60 words per day
+  }
+  return 40; // toefl-easy default (only used for legacy index-based fallback)
+};
+
+// Helper function to check if a tab uses dayNumber-based storage (unlimited words per day)
+const isDayNumberTab = (tabType: string): boolean => {
+  return tabType === 'custom' || tabType === 'etymology' || tabType === 'toefl-easy';
+};
+
+// Auto-migrate toefl-easy words from index-based to dayNumber-based storage
+const migrateToeflEasyWords = async (words: any[]): Promise<any[]> => {
+  if (words.length === 0) return words;
+  
+  // Check if migration is needed (words without dayNumber)
+  const needsMigration = words.some(w => !w.dayNumber);
+  if (!needsMigration) return words;
+  
+  console.log(`[MIGRATION] Migrating ${words.length} toefl-easy words to dayNumber-based storage`);
+  
+  const LEGACY_WORDS_PER_DAY = 40;
+  const migratedWords = words.map((word, index) => {
+    if (word.dayNumber) return word; // Already has dayNumber
+    const dayNum = Math.floor(index / LEGACY_WORDS_PER_DAY) + 1;
+    return { ...word, dayNumber: dayNum };
+  });
+  
+  // Save migrated words
+  await kv.set('vocabulary_words_toefl-easy', migratedWords);
+  console.log(`[MIGRATION] Migration complete. Words distributed across ${Math.ceil(words.length / LEGACY_WORDS_PER_DAY)} days`);
+  
+  return migratedWords;
 };
 
 // Enable logger
@@ -109,10 +336,15 @@ app.get("/make-server-e46cd33a/vocabulary/:tabType", async (c) => {
     let words;
     
     try {
-      words = await kv.get(key);
+      words = await withRetry(() => kv.get(key));
     } catch (kvError) {
       console.error(`[GET VOCABULARY] KV Store error:`, kvError);
       words = null;
+    }
+    
+    // Auto-migrate toefl-easy if needed
+    if (tabType === 'toefl-easy' && words && words.length > 0) {
+      words = await migrateToeflEasyWords(words);
     }
     
     console.log(`[GET VOCABULARY] Tab: ${tabType}, Total words: ${words ? words.length : 0}`);
@@ -129,14 +361,24 @@ app.get("/make-server-e46cd33a/vocabulary/:tabType/:day", async (c) => {
     const tabType = c.req.param("tabType");
     const day = parseInt(c.req.param("day"));
     const key = `vocabulary_words_${tabType}`;
-    const allWords = await kv.get(key) || [];
+    let allWords = await withRetry(() => kv.get(key)) || [];
     
-    // Calculate day words (40 words per day)
-    const startIndex = (day - 1) * getWordsPerDay(tabType);
-    const endIndex = startIndex + getWordsPerDay(tabType);
-    const dayWords = allWords.slice(startIndex, endIndex);
+    // Auto-migrate toefl-easy if needed
+    if (tabType === 'toefl-easy') {
+      allWords = await migrateToeflEasyWords(allWords);
+    }
     
-    return c.json({ words: dayWords });
+    if (isDayNumberTab(tabType)) {
+      // For dayNumber-based tabs, filter by dayNumber field
+      const dayWords = allWords.filter((w: any) => w.dayNumber === day);
+      return c.json({ words: dayWords });
+    } else {
+      // For index-based tabs (toefl-hard), use slice
+      const startIndex = (day - 1) * getWordsPerDay(tabType);
+      const endIndex = startIndex + getWordsPerDay(tabType);
+      const dayWords = allWords.slice(startIndex, endIndex);
+      return c.json({ words: dayWords });
+    }
   } catch (error) {
     console.error("Error fetching vocabulary words for day:", error);
     return c.json({ error: "Failed to fetch vocabulary words", details: error.message }, 500);
@@ -152,13 +394,13 @@ app.post("/make-server-e46cd33a/vocabulary/:tabType", async (c) => {
     
     const allWords = await kv.get(key) || [];
     
-    // For custom and etymology tabs, add dayNumber to the word
-    if (tabType === 'custom' || tabType === 'etymology') {
+    // For dayNumber-based tabs (custom, etymology, toefl-easy), add dayNumber to the word
+    if (isDayNumberTab(tabType)) {
       const wordWithDay = { ...word, dayNumber: day };
       allWords.push(wordWithDay);
       console.log(`[ADD WORD] Added word to ${tabType}, DAY ${day}: ${word.english}`);
     } else {
-      // For TOEFL tabs, use index-based insertion (original logic)
+      // For index-based tabs (toefl-hard), use index-based insertion
       const insertIndex = (day - 1) * getWordsPerDay(tabType);
       allWords.splice(insertIndex, 0, word);
       
@@ -188,14 +430,13 @@ app.put("/make-server-e46cd33a/vocabulary/:tabType", async (c) => {
     const allWords = await kv.get(key) || [];
     
     // Search in ALL words, not just the specific day
-    // This is because the client shuffles words for display
     const wordIndex = allWords.findIndex(w => 
       wordsMatch(w, oldWord)
     );
     
     if (wordIndex !== -1) {
-      // For custom and etymology tabs, preserve or add dayNumber
-      if (tabType === 'custom' || tabType === 'etymology') {
+      // For dayNumber-based tabs, preserve or add dayNumber
+      if (isDayNumberTab(tabType)) {
         allWords[wordIndex] = { ...newWord, dayNumber: day };
       } else {
         allWords[wordIndex] = newWord;
@@ -257,7 +498,7 @@ app.get("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
   try {
     const tabType = c.req.param("tabType");
     const key = `vocabulary_days_${tabType}`;
-    const days = await kv.get(key);
+    const days = await withRetry(() => kv.get(key));
     
     // If no days exist, initialize with default 50 days
     if (!days || days.length === 0) {
@@ -326,16 +567,21 @@ app.delete("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
     const wordsKey = `vocabulary_words_${tabType}`;
     
     const days = await kv.get(daysKey) || [];
-    const words = await kv.get(wordsKey) || [];
+    let words = await kv.get(wordsKey) || [];
     
     const dayIndex = days.findIndex(d => d.id === dayId);
     if (dayIndex === -1) {
       return c.json({ error: "Day not found" }, 404);
     }
     
-    // Remove words for this day (40 words starting at dayIndex * 40)
-    const startIndex = dayIndex * getWordsPerDay(tabType);
-    words.splice(startIndex, getWordsPerDay(tabType));
+    if (isDayNumberTab(tabType)) {
+      // For dayNumber-based tabs, remove words with matching dayNumber
+      words = words.filter((w: any) => w.dayNumber !== dayId);
+    } else {
+      // For index-based tabs, remove words by index range
+      const startIndex = dayIndex * getWordsPerDay(tabType);
+      words.splice(startIndex, getWordsPerDay(tabType));
+    }
     
     // Remove the day
     const updatedDays = days.filter(d => d.id !== dayId);
@@ -357,17 +603,19 @@ app.delete("/make-server-e46cd33a/vocabulary-clear-day/:tabType", async (c) => {
     const { day } = await c.req.json();
     const wordsKey = `vocabulary_words_${tabType}`;
     
-    const words = await kv.get(wordsKey) || [];
+    let words = await kv.get(wordsKey) || [];
     
-    // Calculate the range for this day's words
-    const startIndex = (day - 1) * getWordsPerDay(tabType);
-    const endIndex = startIndex + getWordsPerDay(tabType);
-    
-    console.log(`[CLEAR DAY] Clearing words for day ${day} in ${tabType} (indices ${startIndex}-${endIndex})`);
+    console.log(`[CLEAR DAY] Clearing words for day ${day} in ${tabType}`);
     console.log(`[CLEAR DAY] Total words before: ${words.length}`);
     
-    // Remove the words for this day
-    words.splice(startIndex, getWordsPerDay(tabType));
+    if (isDayNumberTab(tabType)) {
+      // For dayNumber-based tabs, filter out words with matching dayNumber
+      words = words.filter((w: any) => w.dayNumber !== day);
+    } else {
+      // For index-based tabs, remove words by index range
+      const startIndex = (day - 1) * getWordsPerDay(tabType);
+      words.splice(startIndex, getWordsPerDay(tabType));
+    }
     
     console.log(`[CLEAR DAY] Total words after: ${words.length}`);
     
@@ -460,8 +708,8 @@ app.post("/make-server-e46cd33a/vocabulary-bulk/:tabType", async (c) => {
     
     let allWords = await kv.get(key) || [];
     
-    // For custom and etymology tabs, add dayNumber to each word and just append
-    if (tabType === 'custom' || tabType === 'etymology') {
+    // For dayNumber-based tabs (custom, etymology, toefl-easy), add dayNumber to each word and just append
+    if (isDayNumberTab(tabType)) {
       if (replaceExisting) {
         // Remove existing words for this day
         allWords = allWords.filter((w: any) => w.dayNumber !== targetDay);
@@ -473,7 +721,7 @@ app.post("/make-server-e46cd33a/vocabulary-bulk/:tabType", async (c) => {
       
       console.log(`[BULK UPLOAD] ${tabType}: Added ${wordsWithDay.length} words to DAY ${targetDay}`);
     } else {
-      // For TOEFL tabs, use index-based insertion
+      // For index-based tabs (toefl-hard), use index-based insertion
       if (replaceExisting) {
         // Replace all words for the target day
         const dayStart = (targetDay - 1) * getWordsPerDay(tabType);
@@ -517,8 +765,8 @@ app.post("/make-server-e46cd33a/vocabulary-bulk-multi/:tabType", async (c) => {
     let allWords = await kv.get(key) || [];
     let totalUploaded = 0;
     
-    if (tabType === 'custom' || tabType === 'etymology') {
-      // For custom and etymology, add dayNumber field to each word
+    if (isDayNumberTab(tabType)) {
+      // For dayNumber-based tabs (custom, etymology, toefl-easy), add dayNumber field to each word
       for (const [dayStr, dayWords] of Object.entries(wordsByDay)) {
         const day = parseInt(dayStr);
         
@@ -540,7 +788,7 @@ app.post("/make-server-e46cd33a/vocabulary-bulk-multi/:tabType", async (c) => {
         console.log(`[BULK-MULTI] ${tabType} DAY ${day}: uploaded ${wordsWithDay.length} words`);
       }
     } else {
-      // For TOEFL tabs, use index-based insertion
+      // For index-based tabs (toefl-hard), use index-based insertion
       for (const [dayStr, dayWords] of Object.entries(wordsByDay)) {
         const day = parseInt(dayStr);
         const dayStart = (day - 1) * getWordsPerDay(tabType);
@@ -728,115 +976,200 @@ app.get('/make-server-e46cd33a/advertisements/active', async (c) => {
   }
 });
 
-// ===========================================
-// LMS CONTENTS ENDPOINTS
-// ===========================================
+// ==============================================
+// TPO/Test Data Management Routes
+// ==============================================
 
-// Save LMS contents
-app.post('/make-server-e46cd33a/lms-contents', async (c) => {
-  try {
-    const contents = await c.req.json();
-    await kv.set('lms-contents', contents);
-    console.log('✅ LMS contents saved');
-    return c.json({ success: true });
-  } catch (error) {
-    console.error('Error saving LMS contents:', error);
-    return c.json({ error: 'Failed to save LMS contents' }, 500);
-  }
-});
-
-// Get LMS contents
-app.get('/make-server-e46cd33a/lms-contents', async (c) => {
-  try {
-    const contents = await kv.get('lms-contents');
-    return c.json(contents || []);
-  } catch (error) {
-    console.error('Error loading LMS contents:', error);
-    return c.json({ error: 'Failed to load LMS contents' }, 500);
-  }
-});
-
-// ===========================================
-// TPO TESTS ENDPOINTS
-// ===========================================
-
-// Save TPO tests
-app.post('/make-server-e46cd33a/tpo-tests', async (c) => {
-  try {
-    const tests = await c.req.json();
-    await kv.set('tpo-tests', tests);
-    console.log('✅ TPO tests saved');
-    return c.json({ success: true });
-  } catch (error) {
-    console.error('Error saving TPO tests:', error);
-    return c.json({ error: 'Failed to save TPO tests' }, 500);
-  }
-});
-
-// Get TPO tests
+// Get all TPO tests metadata (list)
 app.get('/make-server-e46cd33a/tpo-tests', async (c) => {
   try {
-    const tests = await kv.get('tpo-tests');
-    return c.json(tests || []);
+    const tests = await kv.getByPrefix('tpo:');
+    return c.json(tests);
   } catch (error) {
     console.error('Error loading TPO tests:', error);
     return c.json({ error: 'Failed to load TPO tests' }, 500);
   }
 });
 
-// ===========================================
-// TEST TESTS ENDPOINTS
-// ===========================================
-
-// Save Test tests
-app.post('/make-server-e46cd33a/test-tests', async (c) => {
+// Get specific TPO test by number
+app.get('/make-server-e46cd33a/tpo-tests/:number', async (c) => {
   try {
-    const tests = await c.req.json();
-    await kv.set('test-tests', tests);
-    console.log('✅ Test tests saved');
-    return c.json({ success: true });
+    const number = c.req.param('number');
+    const test = await kv.get(`tpo:${number}`);
+    if (!test) {
+      return c.json({ error: 'Test not found' }, 404);
+    }
+    return c.json(test);
   } catch (error) {
-    console.error('Error saving Test tests:', error);
-    return c.json({ error: 'Failed to save Test tests' }, 500);
+    console.error('Error loading TPO test:', error);
+    return c.json({ error: 'Failed to load TPO test' }, 500);
   }
 });
 
-// Get Test tests
+// Save TPO test
+app.post('/make-server-e46cd33a/tpo-tests', async (c) => {
+  try {
+    const test = await c.req.json();
+    await kv.set(`tpo:${test.testNumber}`, test);
+    return c.json({ success: true, test });
+  } catch (error) {
+    console.error('Error saving TPO test:', error);
+    return c.json({ error: 'Failed to save TPO test' }, 500);
+  }
+});
+
+// Get all Real tests metadata (list)
 app.get('/make-server-e46cd33a/test-tests', async (c) => {
   try {
-    const tests = await kv.get('test-tests');
-    return c.json(tests || []);
+    const tests = await kv.getByPrefix('test:');
+    return c.json(tests);
   } catch (error) {
-    console.error('Error loading Test tests:', error);
-    return c.json({ error: 'Failed to load Test tests' }, 500);
+    console.error('Error loading Real tests:', error);
+    return c.json({ error: 'Failed to load Real tests' }, 500);
   }
 });
 
-// ===========================================
-// REPORTS ENDPOINTS
-// ===========================================
-
-// Save Reports
-app.post('/make-server-e46cd33a/reports', async (c) => {
+// Get specific Real test by number
+app.get('/make-server-e46cd33a/test-tests/:number', async (c) => {
   try {
-    const reports = await c.req.json();
-    await kv.set('reports', reports);
-    console.log('✅ Reports saved');
+    const number = c.req.param('number');
+    const test = await kv.get(`test:${number}`);
+    if (!test) {
+      return c.json({ error: 'Test not found' }, 404);
+    }
+    return c.json(test);
+  } catch (error) {
+    console.error('Error loading Real test:', error);
+    return c.json({ error: 'Failed to load Real test' }, 500);
+  }
+});
+
+// Save Real test
+app.post('/make-server-e46cd33a/test-tests', async (c) => {
+  try {
+    const test = await c.req.json();
+    await kv.set(`test:${test.testNumber}`, test);
+    return c.json({ success: true, test });
+  } catch (error) {
+    console.error('Error saving Real test:', error);
+    return c.json({ error: 'Failed to save Real test' }, 500);
+  }
+});
+
+// Delete TPO test
+app.delete('/make-server-e46cd33a/tpo-tests/:number', async (c) => {
+  try {
+    const number = c.req.param('number');
+    await kv.del(`tpo:${number}`);
     return c.json({ success: true });
   } catch (error) {
-    console.error('Error saving reports:', error);
-    return c.json({ error: 'Failed to save reports' }, 500);
+    console.error('Error deleting TPO test:', error);
+    return c.json({ error: 'Failed to delete TPO test' }, 500);
   }
 });
 
-// Get Reports
-app.get('/make-server-e46cd33a/reports', async (c) => {
+// Delete Real test
+app.delete('/make-server-e46cd33a/real-tests/:number', async (c) => {
   try {
-    const reports = await kv.get('reports');
-    return c.json(reports || []);
+    const number = c.req.param('number');
+    await kv.del(`test:${number}`);
+    return c.json({ success: true });
   } catch (error) {
-    console.error('Error loading reports:', error);
-    return c.json({ error: 'Failed to load reports' }, 500);
+    console.error('Error deleting Real test:', error);
+    return c.json({ error: 'Failed to delete Real test' }, 500);
+  }
+});
+
+// User registration endpoint
+app.post('/make-server-e46cd33a/users/register', async (c) => {
+  try {
+    const { phoneNumber, username, password } = await c.req.json();
+
+    // Validate inputs
+    if (!phoneNumber || !username || !password) {
+      return c.json({ error: 'All fields are required' }, 400);
+    }
+
+    // Check if user already exists
+    const existingUser = await kv.get(`user:phone:${phoneNumber}`);
+    if (existingUser) {
+      return c.json({ error: 'Phone number already registered' }, 400);
+    }
+
+    const existingUsername = await kv.get(`user:username:${username}`);
+    if (existingUsername) {
+      return c.json({ error: 'Username already taken' }, 400);
+    }
+
+    // Create user object
+    const user = {
+      id: `user_${Date.now()}`,
+      phoneNumber,
+      username,
+      password, // Note: In production, you should hash passwords
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save user
+    await kv.set(`user:phone:${phoneNumber}`, user);
+    await kv.set(`user:username:${username}`, user);
+    await kv.set(`user:id:${user.id}`, user);
+
+    console.log('✅ User registered:', username);
+    return c.json({ 
+      success: true, 
+      user: { 
+        id: user.id, 
+        phoneNumber: user.phoneNumber, 
+        username: user.username 
+      } 
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return c.json({ error: 'Registration failed' }, 500);
+  }
+});
+
+// User login endpoint
+app.post('/make-server-e46cd33a/users/login', async (c) => {
+  try {
+    const { username, phoneNumber, password, loginMethod } = await c.req.json();
+
+    // Validate inputs
+    if (!password || (!username && !phoneNumber)) {
+      return c.json({ error: 'Invalid credentials' }, 400);
+    }
+
+    // Find user
+    let user;
+    if (loginMethod === 'phone' && phoneNumber) {
+      user = await kv.get(`user:phone:${phoneNumber}`);
+    } else if (loginMethod === 'username' && username) {
+      user = await kv.get(`user:username:${username}`);
+    }
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Verify password
+    if (user.password !== password) {
+      return c.json({ error: 'Incorrect password' }, 401);
+    }
+
+    console.log('✅ User logged in:', user.username);
+    return c.json({ 
+      success: true, 
+      user: { 
+        id: user.id, 
+        phoneNumber: user.phoneNumber, 
+        username: user.username 
+      } 
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return c.json({ error: 'Login failed' }, 500);
   }
 });
 

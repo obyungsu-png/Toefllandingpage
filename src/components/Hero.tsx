@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { motion } from 'framer-motion';
+// motion removed - using CSS animations
 
 interface HeroProps {
   onStartLearning: () => void;
@@ -21,29 +21,29 @@ export function Hero({ onStartLearning }: HeroProps) {
           <div className="space-y-8">
             <div className="space-y-6">
               <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                托福TPO
+                TOEFL TPO
                 <br />
                 <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  在线模考练习平台
+                  Online Practice Platform
                 </span>
               </h1>
               
               <div className="space-y-4 text-lg text-gray-700">
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>托福TPO1-75在线模考练习</span>
+                  <span>TOEFL TPO 1-75 Online Practice Tests</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>听说读写四大分项18种题型练习</span>
+                  <span>18 Question Types Across All Four Sections</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span>真实模考1:1还原机考界面功能</span>
+                  <span>1:1 Realistic Exam Interface Simulation</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span>详文/解析/学习报告/高效动力题解</span>
+                  <span>Detailed Explanations / Study Reports / Smart Analytics</span>
                 </div>
               </div>
             </div>
@@ -54,40 +54,32 @@ export function Hero({ onStartLearning }: HeroProps) {
                 className="text-lg px-8 py-6 bg-gradient-to-r from-orange-400 to-yellow-400 hover:from-orange-500 hover:to-yellow-500 text-white shadow-lg"
                 onClick={onStartLearning}
               >
-                开始学习
+                Start Learning
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-blue-500 text-blue-600 hover:bg-blue-50">
-                免费试用
+                Free Trial
               </Button>
             </div>
             
             <div className="grid grid-cols-3 gap-6 pt-4">
               <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-blue-600 mb-1">75套</div>
-                <div className="text-sm text-gray-600">TPO真题</div>
+                <div className="text-2xl font-bold text-blue-600 mb-1">75</div>
+                <div className="text-sm text-gray-600">TPO Tests</div>
               </div>
               <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                <div className="text-2xl font-bold text-green-600 mb-1">18种</div>
-                <div className="text-sm text-gray-600">题型练习</div>
+                <div className="text-2xl font-bold text-green-600 mb-1">18</div>
+                <div className="text-sm text-gray-600">Question Types</div>
               </div>
               <div className="text-center bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg">
                 <div className="text-2xl font-bold text-orange-600 mb-1">1:1</div>
-                <div className="text-sm text-gray-600">还原机考</div>
+                <div className="text-sm text-gray-600">Exam Simulation</div>
               </div>
             </div>
           </div>
           
           <div className="relative">
-            <motion.div 
-              className="bg-white rounded-2xl shadow-2xl p-6 border"
-              animate={{ 
-                y: [0, -15, 0],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+            <div 
+              className="bg-white rounded-2xl shadow-2xl p-6 border animate-[float_5s_ease-in-out_infinite]"
             >
               {/* Mock TOEFL Interface */}
               <div className="space-y-4">
@@ -96,14 +88,14 @@ export function Hero({ onStartLearning }: HeroProps) {
                     <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium">
                       TOEFL iBT
                     </div>
-                    <span className="text-sm text-gray-500">真实机考界面</span>
+                    <span className="text-sm text-gray-500">Real Exam Interface</span>
                   </div>
-                  <div className="text-sm text-gray-500">剩余时间: 54:32</div>
+                  <div className="text-sm text-gray-500">Time Remaining: 54:32</div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex items-center space-x-4 text-sm">
-                    <span className="text-gray-500">题目:</span>
+                    <span className="text-gray-500">Tests:</span>
                     <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">TPO 1</span>
                     <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">TPO 25</span>
                     <span className="bg-green-100 text-green-700 px-2 py-1 rounded">TPO 47</span>
@@ -113,27 +105,27 @@ export function Hero({ onStartLearning }: HeroProps) {
                   </div>
                   
                   <div className="grid grid-cols-6 gap-2 text-xs">
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">听力</div>
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">阅读</div>
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">口语</div>
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">写作</div>
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">词汇</div>
-                    <div className="bg-gray-100 p-2 rounded text-center font-medium">机经预测</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Listening</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Reading</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Speaking</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Writing</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Vocab</div>
+                    <div className="bg-gray-100 p-2 rounded text-center font-medium">Predictions</div>
                   </div>
                   
                   {Array.from({ length: 8 }, (_, i) => (
                     <div key={i} className="grid grid-cols-6 gap-2 text-xs">
                       <div className="bg-orange-100 text-orange-700 p-2 rounded text-center">TPO {i + 1}</div>
-                      <div className="bg-blue-100 text-blue-700 p-2 rounded text-center">练习中</div>
-                      <div className="bg-green-100 text-green-700 p-2 rounded text-center">已完成</div>
-                      <div className="bg-purple-100 text-purple-700 p-2 rounded text-center">未开始</div>
-                      <div className="bg-red-100 text-red-700 p-2 rounded text-center">已完成</div>
-                      <div className="bg-pink-100 text-pink-700 p-2 rounded text-center">机经预测</div>
+                      <div className="bg-blue-100 text-blue-700 p-2 rounded text-center">In Progress</div>
+                      <div className="bg-green-100 text-green-700 p-2 rounded text-center">Completed</div>
+                      <div className="bg-purple-100 text-purple-700 p-2 rounded text-center">Not Started</div>
+                      <div className="bg-red-100 text-red-700 p-2 rounded text-center">Completed</div>
+                      <div className="bg-pink-100 text-pink-700 p-2 rounded text-center">Predictions</div>
                     </div>
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,0 +1,67 @@
+.gap-input, .m2-gap-input {
+  display: inline-block;
+  background-color: #d8d8d8;
+  border: none;
+  border-radius: 3px;
+  background-image: linear-gradient(to right, #333 0%, #333 60%, transparent 60%, transparent 100%);
+  background-size: 20px 2px;
+  background-position: left bottom 3px;
+  background-repeat: repeat-x;
+  font-family: inherit;
+  color: #000000;
+  padding: 0 2px;
+  margin: 0 1px;
+  outline: none;
+  text-align: left;
+  font-weight: inherit;
+  font-size: inherit;
+  letter-spacing: 4px;
+  height: 1.6em;
+  vertical-align: baseline;
+  transition: width 0.2s ease, background-color 0.2s;
+  box-sizing: border-box;
+  line-height: inherit;
+  min-width: 20px;
+}
+
+.gap-input.filled, .m2-gap-input.filled {
+  background-image: none;
+  background-color: #d8d8d8;
+  font-weight: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-align: left;
+  padding: 0 2px;
+  margin: 0 1px;
+  border-radius: 3px;
+  cursor: pointer;
+  box-sizing: border-box;
+  color: #000000;
+  line-height: inherit;
+  min-width: 0;
+}
+
+.gap-input:focus, .m2-gap-input:focus {
+  background-color: #ccc;
+}
+
+.gap-input::selection, .m2-gap-input::selection {
+  background: #888;
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .gap-input, .m2-gap-input {
+    letter-spacing: 3px;
+    height: 1.5em;
+    padding: 0 1px;
+    margin: 0 0.5px;
+    background-size: 16px 1.5px;
+    background-position: left bottom 2px;
+  }
+  .gap-input.filled, .m2-gap-input.filled {
+    letter-spacing: normal;
+    padding: 0 1px;
+    margin: 0 0.5px;
+  }
+}

@@ -8,7 +8,7 @@ import imgImage1 from "figma:asset/e17945b43c2743639bcbfa961f9b9c7b697fb93e.png"
 import imgImage2 from "figma:asset/7615d3db1985346bf3765462a56a60209586cceb.png";
 import searchIcon from 'figma:asset/ab6582843d6eb491acced5759e69c588ae59039e.png';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
-import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock } from 'lucide-react';
+import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { QuestionUploader } from './components/QuestionUploader';
 import { TrainingSection } from './components/TrainingSection';
@@ -25,74 +25,19 @@ import { VolumeControl, useVolumeControl } from './components/VolumeControl';
 import { SATWord, generateSATWordsForDay } from './components/vocaWordSets';
 import { VocabularyDay } from './components/VocabularyManagement';
 import { Student, VocabularyScore } from './components/StudentManagement';
-import { ListeningM2Q1 } from './components/ListeningM2Q1';
-import { ListeningM2Q2 } from './components/ListeningM2Q2';
-import { ListeningM2Q3 } from './components/ListeningM2Q3';
-import { ListeningM2Q4 } from './components/ListeningM2Q4';
-import { ListeningM2Q5 } from './components/ListeningM2Q5';
-import { ListeningM2Q6 } from './components/ListeningM2Q6';
-import { ListeningM2Q7 } from './components/ListeningM2Q7';
-import { ListeningM2Q8 } from './components/ListeningM2Q8';
-import { ListeningM2Q9 } from './components/ListeningM2Q9';
-import { ListeningM2Q10 } from './components/ListeningM2Q10';
-import { ListeningM2Q11 } from './components/ListeningM2Q11';
-import { ListeningM2Q12 } from './components/ListeningM2Q12';
-import { ListeningM2Q13 } from './components/ListeningM2Q13';
-import { ListeningM2Q14 } from './components/ListeningM2Q14';
-import { ListeningM2Q15 } from './components/ListeningM2Q15';
-import { ListeningM2Q16 } from './components/ListeningM2Q16';
-import { ListeningM2Announcement } from './components/ListeningM2Announcement';
-import { ListeningM2Lecture } from './components/ListeningM2Lecture';
-import { ListeningM2End } from './components/ListeningM2End';
-import { ListeningM2Conversation } from './components/ListeningM2Conversation';
-import { WritingIntro } from './components/WritingIntro';
-import { WritingBuildSentenceIntro } from './components/WritingBuildSentenceIntro';
-import { WritingBuildSentenceQ1 } from './components/WritingBuildSentenceQ1';
-import { WritingBuildSentenceQ2 } from './components/WritingBuildSentenceQ2';
-import { WritingBuildSentenceQ3 } from './components/WritingBuildSentenceQ3';
-import { WritingBuildSentenceQ4 } from './components/WritingBuildSentenceQ4';
-import { WritingBuildSentenceQ5 } from './components/WritingBuildSentenceQ5';
-import { WritingBuildSentenceQ6 } from './components/WritingBuildSentenceQ6';
-import { WritingBuildSentenceQ7 } from './components/WritingBuildSentenceQ7';
-import { WritingBuildSentenceQ8 } from './components/WritingBuildSentenceQ8';
-import { WritingBuildSentenceQ9 } from './components/WritingBuildSentenceQ9';
-import { WritingBuildSentenceQ10 } from './components/WritingBuildSentenceQ10';
-import { WritingEmailIntro } from './components/WritingEmailIntro';
-import { WritingEmailQ1 } from './components/WritingEmailQ1';
-import { WritingAcademicDiscussionIntro } from './components/WritingAcademicDiscussionIntro';
-import { WritingAcademicDiscussionQ2 } from './components/WritingAcademicDiscussionQ2';
-import { WritingEnd } from './components/WritingEnd';
-import { SpeakingIntro } from './components/SpeakingIntro';
-import { SpeakingListenRepeatIntro } from './components/SpeakingListenRepeatIntro';
-import { SpeakingQ1 } from './components/SpeakingQ1';
-import { SpeakingQ2Prep } from './components/SpeakingQ2Prep';
-import { SpeakingQ2Record } from './components/SpeakingQ2Record';
-import { SpeakingQ3Prep } from './components/SpeakingQ3Prep';
-import { SpeakingQ3Record } from './components/SpeakingQ3Record';
-import { SpeakingQ4Prep } from './components/SpeakingQ4Prep';
-import { SpeakingQ4Record } from './components/SpeakingQ4Record';
-import { SpeakingQ5Prep } from './components/SpeakingQ5Prep';
-import { SpeakingQ5Record } from './components/SpeakingQ5Record';
-import { SpeakingQ6Prep } from './components/SpeakingQ6Prep';
-import { SpeakingQ6Record } from './components/SpeakingQ6Record';
-import { SpeakingQ7Prep } from './components/SpeakingQ7Prep';
-import { SpeakingQ7Record } from './components/SpeakingQ7Record';
-import { SpeakingTakeInterviewIntro } from './components/SpeakingTakeInterviewIntro';
-import { SpeakingInterviewIntro } from './components/SpeakingInterviewIntro';
-import { SpeakingQ8Prep } from './components/SpeakingQ8Prep';
-import { SpeakingQ8Record } from './components/SpeakingQ8Record';
-import { SpeakingQ9Prep } from './components/SpeakingQ9Prep';
-import { SpeakingQ9Record } from './components/SpeakingQ9Record';
-import { SpeakingQ10Prep } from './components/SpeakingQ10Prep';
-import { SpeakingQ10Record } from './components/SpeakingQ10Record';
-import { SpeakingQ11Prep } from './components/SpeakingQ11Prep';
-import { SpeakingQ11Record } from './components/SpeakingQ11Record';
+import { ListeningM1Wrapper, M1Screen } from './components/ListeningM1Screens';
+import { ListeningM2Wrapper, M2Screen } from './components/ListeningM2Wrapper';
+import { WritingSectionWrapper, WritingScreen } from './components/WritingSectionWrapper';
+import { SpeakingSectionWrapper, SpeakingScreen } from './components/SpeakingSectionWrapper';
+import { MobileQuestionNav } from './components/MobileQuestionNav';
+
 import { TPOCard } from './components/TPOCard';
 import { TestCard } from './components/TestCard';
 import { LandingPage } from './components/LandingPage';
 import { LoginForm } from './components/LoginForm';
 import { RegistrationForm } from './components/RegistrationForm';
 import { LoginPopup } from './components/LoginPopup';
+import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 import { HistorySection, TestResult } from './components/HistorySection';
 import { ShareConfig } from './components/ShareSettings';
@@ -101,8 +46,8 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
-type TPORange = 'TPO 75-66' | 'TPO 65-56' | 'TPO 55-46' | 'TPO 45-36' | 'TPO 35-26' | 'TPO 25-16' | 'TPO 15-6' | 'TPO 5-1';
-type TestSetRange = '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
+type TPORange = 'TPO 1-5';
+type TestSetRange = '1-5';
 type TestBankType = 'tpo' | 'real';
 
 function AppContent() {
@@ -112,7 +57,63 @@ function AppContent() {
   
   // Volume control
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
-  
+
+  // Set document title and favicon on mount
+  useEffect(() => {
+    document.title = 'AllMyExam - TOEFL';
+
+    // Generate favicon: teal rounded square + white lightning bolt
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Rounded square background with gradient (#00cfe8 → #00a5b8)
+      const r = 14;
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(64 - r, 0);
+      ctx.quadraticCurveTo(64, 0, 64, r);
+      ctx.lineTo(64, 64 - r);
+      ctx.quadraticCurveTo(64, 64, 64 - r, 64);
+      ctx.lineTo(r, 64);
+      ctx.quadraticCurveTo(0, 64, 0, 64 - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 64, 64);
+      grad.addColorStop(0, '#00cfe8');
+      grad.addColorStop(1, '#00a5b8');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Bold white lightning bolt (thicker, sharper shape)
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(36, 6);
+      ctx.lineTo(18, 34);
+      ctx.lineTo(29, 34);
+      ctx.lineTo(24, 58);
+      ctx.lineTo(46, 28);
+      ctx.lineTo(35, 28);
+      ctx.lineTo(40, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link') as HTMLLinkElement;
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.type = 'image/png';
+      link.href = canvas.toDataURL('image/png');
+    }
+  }, []);
+
   // Landing page state
   const [showLandingPage, setShowLandingPage] = useState(false);
   const [showWelcomePage, setShowWelcomePage] = useState(true);
@@ -136,8 +137,8 @@ function AppContent() {
   
   const [activeTab, setActiveTab] = useState<TabType>('TPO');
   const [activeSkill, setActiveSkill] = useState<SkillType>('Reading');
-  const [activeTPORange, setActiveTPORange] = useState<TPORange>('TPO 75-66');
-  const [activeTestSetRange, setActiveTestSetRange] = useState<TestSetRange>('1-4');
+  const [activeTPORange, setActiveTPORange] = useState<TPORange>('TPO 1-5');
+  const [activeTestSetRange, setActiveTestSetRange] = useState<TestSetRange>('1-5');
   const [testBankType, setTestBankType] = useState<TestBankType>('tpo');
   const [showToelfTest, setShowToeflTest] = useState(false);
   const [currentTest, setCurrentTest] = useState<{ tpoNumber: number; section: string } | null>(null);
@@ -190,7 +191,9 @@ function AppContent() {
   // Show login popup on initial load if not logged in and on a protected tab
   useEffect(() => {
     const protectedTabs: TabType[] = ['TPO', 'Real Test', 'Question Types', 'Training', 'History'];
-    if (!isLoggedIn && protectedTabs.includes(activeTab)) {
+    // Allow vocabulary training without login
+    const isVocabularyPath = location.pathname.includes('/vocabulary');
+    if (!isLoggedIn && protectedTabs.includes(activeTab) && !isVocabularyPath) {
       setShowLoginPopup(true);
     }
   }, []); // Only run on mount
@@ -222,78 +225,20 @@ function AppContent() {
   const [showModule2Question18, setShowModule2Question18] = useState(false);
   const [showModule2Question19, setShowModule2Question19] = useState(false);
   const [showModule2Question20, setShowModule2Question20] = useState(false);
+  const [showEndModule2, setShowEndModule2] = useState(false);
   const [blankAnswers, setBlankAnswers] = useState<{ [key: number]: string }>({});
   
   // Listening section states
   const [showReadingIntro, setShowReadingIntro] = useState(false);
-  const [showListeningIntro, setShowListeningIntro] = useState(false);
-  const [showListeningModule1Intro, setShowListeningModule1Intro] = useState(false);
-  const [showListeningQuestion1, setShowListeningQuestion1] = useState(false);
-  const [showListeningQuestion2, setShowListeningQuestion2] = useState(false);
-  const [showListeningQuestion3, setShowListeningQuestion3] = useState(false);
-  const [showListeningQuestion4, setShowListeningQuestion4] = useState(false);
-  const [showListeningQuestion5, setShowListeningQuestion5] = useState(false);
-  const [showListeningQuestion6, setShowListeningQuestion6] = useState(false);
-  const [showListeningQuestion7, setShowListeningQuestion7] = useState(false);
-  const [showListeningQuestion8, setShowListeningQuestion8] = useState(false);
-  const [showListeningModule2Intro, setShowListeningModule2Intro] = useState(false);
-  const [showListeningConversation, setShowListeningConversation] = useState(false);
-  const [showListeningQuestion9, setShowListeningQuestion9] = useState(false);
-  const [showListeningQuestion10, setShowListeningQuestion10] = useState(false);
-  const [showListeningConversation2, setShowListeningConversation2] = useState(false);
-  const [showListeningQuestion11, setShowListeningQuestion11] = useState(false);
-  const [showListeningQuestion12, setShowListeningQuestion12] = useState(false);
-  const [showListeningAnnouncement, setShowListeningAnnouncement] = useState(false);
-  const [showListeningQuestion13, setShowListeningQuestion13] = useState(false);
-  const [showListeningQuestion14, setShowListeningQuestion14] = useState(false);
-  const [showListeningPodcast, setShowListeningPodcast] = useState(false);
-  const [showListeningQuestion15, setShowListeningQuestion15] = useState(false);
-  const [showListeningQuestion16, setShowListeningQuestion16] = useState(false);
-  const [showListeningQuestion17, setShowListeningQuestion17] = useState(false);
-  const [showListeningQuestion18, setShowListeningQuestion18] = useState(false);
-  const [showListeningEndModule1, setShowListeningEndModule1] = useState(false);
-  const [showListeningModule2, setShowListeningModule2] = useState(false);
-  const [showListeningM2Q1, setShowListeningM2Q1] = useState(false);
-  const [showListeningM2Q2, setShowListeningM2Q2] = useState(false);
-  const [showListeningM2Q3, setShowListeningM2Q3] = useState(false);
-  const [showListeningM2Q4, setShowListeningM2Q4] = useState(false);
-  const [showListeningM2Q5, setShowListeningM2Q5] = useState(false);
-  const [showListeningM2Q6, setShowListeningM2Q6] = useState(false);
-  const [showListeningM2Q7, setShowListeningM2Q7] = useState(false);
-  const [showListeningM2Q8, setShowListeningM2Q8] = useState(false);
-  const [showListeningM2Q9, setShowListeningM2Q9] = useState(false);
-  const [showListeningM2Q10, setShowListeningM2Q10] = useState(false);
-  const [showListeningM2Q11, setShowListeningM2Q11] = useState(false);
-  const [showListeningM2Q12, setShowListeningM2Q12] = useState(false);
-  const [showListeningM2Q13, setShowListeningM2Q13] = useState(false);
-  const [showListeningM2Q14, setShowListeningM2Q14] = useState(false);
-  const [showListeningM2Q15, setShowListeningM2Q15] = useState(false);
-  const [showListeningM2Q16, setShowListeningM2Q16] = useState(false);
-  const [showListeningM2Announcement, setShowListeningM2Announcement] = useState(false);
-  const [showListeningM2Lecture, setShowListeningM2Lecture] = useState(false);
-  const [showListeningM2End, setShowListeningM2End] = useState(false);
-  const [showListeningM2Conversation, setShowListeningM2Conversation] = useState(false);
+  // Listening M1: single state replaces ~27 individual show* states
+  const [activeListeningM1Screen, setActiveListeningM1Screen] = useState<M1Screen | null>(null);
+  // Listening M2: single state replaces ~20 individual show* states
+  const [activeListeningM2Screen, setActiveListeningM2Screen] = useState<M2Screen | null>(null);
   const [showVolumeModal, setShowVolumeModal] = useState(false);
   const [volume, setVolume] = useState(75);
   
-  // Writing section states
-  const [showWritingIntro, setShowWritingIntro] = useState(false);
-  const [showWritingBuildSentenceIntro, setShowWritingBuildSentenceIntro] = useState(false);
-  const [showWritingBuildSentenceQ1, setShowWritingBuildSentenceQ1] = useState(false);
-  const [showWritingBuildSentenceQ2, setShowWritingBuildSentenceQ2] = useState(false);
-  const [showWritingBuildSentenceQ3, setShowWritingBuildSentenceQ3] = useState(false);
-  const [showWritingBuildSentenceQ4, setShowWritingBuildSentenceQ4] = useState(false);
-  const [showWritingBuildSentenceQ5, setShowWritingBuildSentenceQ5] = useState(false);
-  const [showWritingBuildSentenceQ6, setShowWritingBuildSentenceQ6] = useState(false);
-  const [showWritingBuildSentenceQ7, setShowWritingBuildSentenceQ7] = useState(false);
-  const [showWritingBuildSentenceQ8, setShowWritingBuildSentenceQ8] = useState(false);
-  const [showWritingBuildSentenceQ9, setShowWritingBuildSentenceQ9] = useState(false);
-  const [showWritingBuildSentenceQ10, setShowWritingBuildSentenceQ10] = useState(false);
-  const [showWritingEmailIntro, setShowWritingEmailIntro] = useState(false);
-  const [showWritingEmailQ1, setShowWritingEmailQ1] = useState(false);
-  const [showWritingAcademicDiscussionIntro, setShowWritingAcademicDiscussionIntro] = useState(false);
-  const [showWritingAcademicDiscussionQ2, setShowWritingAcademicDiscussionQ2] = useState(false);
-  const [showWritingEnd, setShowWritingEnd] = useState(false);
+  // Writing: single state replaces ~17 individual show* states
+  const [activeWritingScreen, setActiveWritingScreen] = useState<WritingScreen | null>(null);
   const [module2BlankAnswers, setModule2BlankAnswers] = useState<{ [key: number]: string }>({});
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [selectedAnswer2, setSelectedAnswer2] = useState<string | null>(null);
@@ -306,38 +251,20 @@ function AppContent() {
   const [selectedAnswer9, setSelectedAnswer9] = useState<string | null>(null);
   const [selectedAnswer10, setSelectedAnswer10] = useState<string | null>(null);
   
-  // Speaking section states
-  const [showSpeakingIntro, setShowSpeakingIntro] = useState(false);
-  const [showSpeakingListenRepeatIntro, setShowSpeakingListenRepeatIntro] = useState(false);
-  const [showSpeakingQ1, setShowSpeakingQ1] = useState(false);
-  const [showSpeakingQ2Prep, setShowSpeakingQ2Prep] = useState(false);
-  const [showSpeakingQ2Record, setShowSpeakingQ2Record] = useState(false);
-  const [showSpeakingQ3Prep, setShowSpeakingQ3Prep] = useState(false);
-  const [showSpeakingQ3Record, setShowSpeakingQ3Record] = useState(false);
-  const [showSpeakingQ4Prep, setShowSpeakingQ4Prep] = useState(false);
-  const [showSpeakingQ4Record, setShowSpeakingQ4Record] = useState(false);
-  const [showSpeakingQ5Prep, setShowSpeakingQ5Prep] = useState(false);
-  const [showSpeakingQ5Record, setShowSpeakingQ5Record] = useState(false);
-  const [showSpeakingQ6Prep, setShowSpeakingQ6Prep] = useState(false);
-  const [showSpeakingQ6Record, setShowSpeakingQ6Record] = useState(false);
-  const [showSpeakingQ7Prep, setShowSpeakingQ7Prep] = useState(false);
-  const [showSpeakingQ7Record, setShowSpeakingQ7Record] = useState(false);
-  const [showSpeakingTakeInterviewIntro, setShowSpeakingTakeInterviewIntro] = useState(false);
-  const [showSpeakingInterviewIntro, setShowSpeakingInterviewIntro] = useState(false);
-  const [showSpeakingQ8Prep, setShowSpeakingQ8Prep] = useState(false);
-  const [showSpeakingQ8Record, setShowSpeakingQ8Record] = useState(false);
-  const [showSpeakingQ9Prep, setShowSpeakingQ9Prep] = useState(false);
-  const [showSpeakingQ9Record, setShowSpeakingQ9Record] = useState(false);
-  const [showSpeakingQ10Prep, setShowSpeakingQ10Prep] = useState(false);
-  const [showSpeakingQ10Record, setShowSpeakingQ10Record] = useState(false);
-  const [showSpeakingQ11Prep, setShowSpeakingQ11Prep] = useState(false);
-  const [showSpeakingQ11Record, setShowSpeakingQ11Record] = useState(false);
+  // Speaking: single state replaces ~26 individual show* states
+  const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
   
   // LMS Content State
   const [lmsContents, setLmsContents] = useState<LMSContent[]>([]);
   const [tpoTests, setTpoTests] = useState<TPOTest[]>([]);
   const [testTests, setTestTests] = useState<TPOTest[]>([]); // Separate state for Test page
   const [reports, setReports] = useState<TestResult[]>([]); // Reports state
+  
+  // Question Types & Training Config State (persisted to Supabase)
+  const [questionTypesConfig, setQuestionTypesConfig] = useState<any>(null);
+  const [trainingConfig, setTrainingConfig] = useState<any>(null);
+  const [trainingResults, setTrainingResults] = useState<any[]>([]);
+  const [questionTypesResults, setQuestionTypesResults] = useState<any[]>([]);
   
   // Advertisement State
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
@@ -352,9 +279,87 @@ function AppContent() {
   
   // Loading state for Supabase data
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataLoadedSuccessfully, setDataLoadedSuccessfully] = useState(false);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Mobile question navigation state - tracks if user is currently solving a question
+  const [isInQuestionMode, setIsInQuestionMode] = useState(false);
+  
+  // Track whether user is in question mode (solving questions from Wrapper components)
+  useEffect(() => {
+    const inQuestion = !!(
+      activeListeningM1Screen ||
+      activeListeningM2Screen ||
+      activeWritingScreen ||
+      activeSpeakingScreen ||
+      showReadingSection ||
+      showReadingIntro ||
+      showModule1Intro ||
+      showModule1Details ||
+      showFillBlanksTest ||
+      showReadNoticeTest ||
+      showReadNoticeTest2 ||
+      showSocialMediaTest ||
+      showSocialMediaTest2 ||
+      showSocialMediaTest3 ||
+      showModule1Question16 ||
+      showModule1Question17 ||
+      showModule1Question18 ||
+      showModule1Question19 ||
+      showModule1Question20 ||
+      showEndModule1 ||
+      showModule2 ||
+      showModule2FillBlanks ||
+      showModule2Question11 ||
+      showModule2Question12 ||
+      showModule2Question13 ||
+      showModule2Question14 ||
+      showModule2Question15 ||
+      showModule2Question16 ||
+      showModule2Question17 ||
+      showModule2Question18 ||
+      showModule2Question19 ||
+      showModule2Question20 ||
+      showEndModule2
+    );
+    setIsInQuestionMode(inQuestion);
+  }, [
+    activeListeningM1Screen, 
+    activeListeningM2Screen, 
+    activeWritingScreen, 
+    activeSpeakingScreen, 
+    showReadingSection, 
+    showReadingIntro,
+    showModule1Intro, 
+    showModule1Details, 
+    showFillBlanksTest, 
+    showReadNoticeTest, 
+    showReadNoticeTest2, 
+    showSocialMediaTest, 
+    showSocialMediaTest2,
+    showSocialMediaTest3,
+    showModule1Question16,
+    showModule1Question17,
+    showModule1Question18,
+    showModule1Question19,
+    showModule1Question20,
+    showEndModule1,
+    showModule2,
+    showModule2FillBlanks,
+    showModule2Question11,
+    showModule2Question12,
+    showModule2Question13,
+    showModule2Question14,
+    showModule2Question15,
+    showModule2Question16,
+    showModule2Question17,
+    showModule2Question18,
+    showModule2Question19,
+    showModule2Question20,
+    showEndModule2
+  ]);
   
   // Share Configuration State
   const [shareConfig, setShareConfig] = useState<ShareConfig>({
@@ -364,97 +369,8 @@ function AppContent() {
     autoSend: false
   });
   
-  // Test Results History State - with sample data for testing
-  const [testResults, setTestResults] = useState<TestResult[]>([
-    {
-      id: '1',
-      type: 'TPO',
-      category: 'Reading',
-      testName: 'TPO 75 - Reading',
-      date: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-      score: 85,
-      totalQuestions: 10,
-      correctAnswers: 8,
-      wrongAnswers: [
-        {
-          questionId: 'q3',
-          questionText: 'What is the main idea of paragraph 3?',
-          userAnswer: 'B',
-          correctAnswer: 'C',
-          explanation: 'Paragraph 3 focuses on the historical context...'
-        },
-        {
-          questionId: 'q7',
-          questionText: 'According to the passage, which of the following is true?',
-          userAnswer: 'A',
-          correctAnswer: 'D',
-          explanation: 'The passage states that...'
-        }
-      ],
-      timeSpent: 1200
-    },
-    {
-      id: '2',
-      type: 'Training',
-      category: 'Reading',
-      testName: 'Fill in the Blanks',
-      date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      score: 70,
-      totalQuestions: 10,
-      correctAnswers: 7,
-      wrongAnswers: [
-        {
-          questionId: 'q2',
-          questionText: 'Choose the correct word to fill the blank.',
-          userAnswer: 'however',
-          correctAnswer: 'therefore',
-          explanation: 'The context requires a cause-effect transition.'
-        },
-        {
-          questionId: 'q5',
-          questionText: 'Select the appropriate transition word.',
-          userAnswer: 'moreover',
-          correctAnswer: 'nevertheless',
-          explanation: 'This sentence shows contrast, not addition.'
-        },
-        {
-          questionId: 'q9',
-          questionText: 'Fill in the blank with the best word.',
-          userAnswer: 'increase',
-          correctAnswer: 'decrease',
-          explanation: 'The passage indicates a reduction.'
-        }
-      ],
-      timeSpent: 600
-    },
-    {
-      id: '3',
-      type: 'Vocabulary',
-      category: 'Vocabulary',
-      testName: 'DAY 1 단어 테스트',
-      date: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
-      score: 95,
-      totalQuestions: 40,
-      correctAnswers: 38,
-      wrongAnswers: [
-        {
-          questionId: 'q12',
-          questionText: 'ambiguous',
-          userAnswer: 'clear',
-          correctAnswer: '모호한',
-          explanation: ''
-        },
-        {
-          questionId: 'q28',
-          questionText: 'arbitrary',
-          userAnswer: '필수적인',
-          correctAnswer: '임의적인',
-          explanation: ''
-        }
-      ],
-      timeSpent: 480
-    }
-  ]);
+  // Test Results History State - loaded from Supabase
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   
   // Vocabulary State - Initialize with 2000 words (50 days × 40 words)
   const [vocabularyWords, setVocabularyWords] = useState<SATWord[]>(() => {
@@ -478,36 +394,58 @@ function AppContent() {
   const [students, setStudents] = useState<Student[]>([]);
   const [vocabularyScores, setVocabularyScores] = useState<VocabularyScore[]>([]);
 
-  // Load students from localStorage on mount and listen for changes
+  // Save students to Supabase whenever they change
   useEffect(() => {
-    const loadStudents = () => {
-      const cmsStudents = JSON.parse(localStorage.getItem('cms_students') || '[]');
-      setStudents(cmsStudents);
-    };
-
-    // Initial load
-    loadStudents();
-
-    // Listen for storage changes (from registration form in other tabs)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'cms_students') {
-        loadStudents();
+    if (isLoadingData || !dataLoadedSuccessfully) return;
+    if (students.length === 0) return;
+    
+    const saveStudents = async () => {
+      try {
+        await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/students`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(students)
+          }
+        );
+        console.log('💾 Saved Students to Supabase');
+      } catch (error) {
+        console.error('❌ Error saving Students:', error);
       }
     };
+    
+    saveStudents();
+  }, [students, isLoadingData, dataLoadedSuccessfully]);
 
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  // Save students to localStorage whenever they change (but don't dispatch event to avoid loop)
+  // Save test results to Supabase whenever they change
   useEffect(() => {
-    if (students.length > 0) {
-      localStorage.setItem('cms_students', JSON.stringify(students));
-    }
-  }, [students]);
+    if (isLoadingData || !dataLoadedSuccessfully) return;
+    
+    const saveTestResults = async () => {
+      try {
+        await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/test-results`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(testResults)
+          }
+        );
+        console.log('💾 Saved Test Results to Supabase');
+      } catch (error) {
+        console.error('❌ Error saving Test Results:', error);
+      }
+    };
+    
+    saveTestResults();
+  }, [testResults, isLoadingData, dataLoadedSuccessfully]);
 
   // Footer auto-hide on scroll
   useEffect(() => {
@@ -548,14 +486,11 @@ function AppContent() {
       return;
     }
     
-    // Login check for protected tabs
-    const protectedTabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
-    if (!isLoggedIn && protectedTabs.includes(tab)) {
-      setShowLoginPopup(true);
-      return;
-    }
-    
+    // Always switch tab and close auth forms (consistent with desktop nav behavior)
     setActiveTab(tab);
+    setShowLoginForm(false);
+    setShowRegistrationForm(false);
+    
     const tabRoutes: Record<TabType, string> = {
       'TPO': '/tpo-tests',
       'Test': '/test',
@@ -565,6 +500,14 @@ function AppContent() {
       'TOEFL Prep': '/admin'
     };
     navigate(tabRoutes[tab]);
+    
+    // Login check for protected tabs - show popup after tab change
+    const protectedTabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
+    // Allow vocabulary training without login
+    const isVocabularyPath = location.pathname.includes('/vocabulary');
+    if (!isLoggedIn && protectedTabs.includes(tab) && !isVocabularyPath) {
+      setShowLoginPopup(true);
+    }
   };
   
   // Handle password verification
@@ -582,6 +525,60 @@ function AppContent() {
   };
   
   // Load data from Supabase on mount
+  // Retry-enabled fetch for cold start resilience
+  const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, baseDelay = 2000): Promise<Response> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutMs = attempt === 1 ? 15000 : 12000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (err: any) {
+        const label = url.split('/').pop();
+        const isAbort = err?.name === 'AbortError' || (err instanceof DOMException && err.code === 20);
+        if (isAbort) {
+          console.warn(`⚠️ ${label} attempt ${attempt}/${retries} timed out, retrying...`);
+        } else {
+          const errMsg = err?.message || String(err || 'unknown error');
+          console.warn(`⚠️ ${label} attempt ${attempt}/${retries} failed: ${errMsg}`);
+        }
+        if (attempt === retries) throw err;
+        await new Promise(r => setTimeout(r, baseDelay * attempt));
+      }
+    }
+    throw new Error('fetchWithRetry: unreachable');
+  };
+
+  // Warm up edge function and wait until it responds
+  const warmUpServer = async (baseUrl: string, headers: Record<string, string>) => {
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutMs = 10000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const res = await fetch(`${baseUrl}/health`, { headers, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          console.log(`✅ Edge Function warm-up succeeded on attempt ${attempt}`);
+          await new Promise(r => setTimeout(r, attempt > 1 ? 1000 : 300));
+          return true;
+        }
+        console.warn(`⚠️ Warm-up attempt ${attempt}/4: server responded with status ${res.status}`);
+      } catch (err: any) {
+        const isAbort = err?.name === 'AbortError' || (err instanceof DOMException && err.code === 20);
+        const reason = isAbort ? 'Request timed out' : (err?.message || String(err));
+        console.log(`🔄 Warm-up attempt ${attempt}/4: ${reason}`);
+      }
+      if (attempt < 4) {
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+      }
+    }
+    console.warn('⚠️ Edge Function warm-up exhausted after 4 attempts, proceeding anyway');
+    return false;
+  };
+
   useEffect(() => {
     const loadDataFromSupabase = async () => {
       try {
@@ -590,78 +587,68 @@ function AppContent() {
         const headers = { 'Authorization': `Bearer ${publicAnonKey}` };
         const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
         
-        // Use Promise.allSettled so one failure doesn't block others
-        const [lmsResult, tpoResult, testResult, adsResult, reportsResult] = await Promise.allSettled([
-          fetch(`${baseUrl}/lms-contents`, { headers }),
-          fetch(`${baseUrl}/tpo-tests`, { headers }),
-          fetch(`${baseUrl}/test-tests`, { headers }),
-          fetch(`${baseUrl}/advertisements`, { headers }),
-          fetch(`${baseUrl}/reports`, { headers }),
+        // Step 1: Warm up the edge function before firing data requests
+        await warmUpServer(baseUrl, headers);
+        
+        // Step 2: Fetch data sequentially in pairs to avoid overwhelming a cold-started server
+        const fetchJson = async (endpoint: string) => {
+          const res = await fetchWithRetry(`${baseUrl}/${endpoint}`, { headers });
+          if (!res.ok) throw new Error(`${endpoint}: ${res.status}`);
+          return res.json();
+        };
+
+        let anySuccess = false;
+
+        // Batch 1a: First pair
+        const batch1a = await Promise.allSettled([
+          fetchJson('lms-contents'),
+          fetchJson('tpo-tests'),
         ]);
+        // Batch 1b: Second pair (staggered to reduce load)
+        const batch1b = await Promise.allSettled([
+          fetchJson('test-tests'),
+          fetchJson('advertisements'),
+        ]);
+        const batch1 = [...batch1a, ...batch1b];
         
-        // Load LMS Contents
-        if (lmsResult.status === 'fulfilled' && lmsResult.value.ok) {
-          try {
-            const lmsData = await lmsResult.value.json();
-            if (lmsData && Array.isArray(lmsData)) {
-              setLmsContents(lmsData);
-              console.log('✅ Loaded LMS contents from Supabase:', lmsData.length);
-            }
-          } catch (e) { console.error('❌ Error parsing LMS data:', e); }
+        if (batch1[0].status === 'fulfilled') { const d = batch1[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
+        if (batch1[1].status === 'fulfilled') { const d = batch1[1].value; if (Array.isArray(d)) { setTpoTests(d); anySuccess = true; console.log('✅ Loaded TPO tests:', d.length); } }
+        if (batch1[2].status === 'fulfilled') { const d = batch1[2].value; if (Array.isArray(d)) { setTestTests(d); anySuccess = true; console.log('✅ Loaded Test tests:', d.length); } }
+        if (batch1[3].status === 'fulfilled') { const d = batch1[3].value; if (Array.isArray(d)) { setAdvertisements(d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
+
+        // Batch 2: User data
+        const batch2 = await Promise.allSettled([
+          fetchJson('reports'),
+          fetchJson('students'),
+          fetchJson('test-results'),
+          fetchJson('question-types-config'),
+        ]);
+
+        if (batch2[0].status === 'fulfilled') { const d = batch2[0].value; if (Array.isArray(d)) { setReports(d); anySuccess = true; console.log('✅ Loaded Reports:', d.length); } }
+        if (batch2[1].status === 'fulfilled') { const d = batch2[1].value; if (Array.isArray(d)) { setStudents(d); anySuccess = true; console.log('✅ Loaded Students:', d.length); } }
+        if (batch2[2].status === 'fulfilled') { const d = batch2[2].value; if (Array.isArray(d)) { setTestResults(d); anySuccess = true; console.log('✅ Loaded Test Results:', d.length); } }
+        if (batch2[3].status === 'fulfilled') { const d = batch2[3].value; if (d) { setQuestionTypesConfig(d); anySuccess = true; console.log('✅ Loaded Question Types Config'); } }
+
+        // Mark success early so the UI is not blocked by batch 3
+        if (anySuccess) {
+          setDataLoadedSuccessfully(true);
         } else {
-          console.warn('⚠️ Failed to fetch LMS contents');
+          console.error('❌ All data fetches failed - save effects will be suppressed to prevent data loss');
         }
-        
-        // Load TPO Tests
-        if (tpoResult.status === 'fulfilled' && tpoResult.value.ok) {
-          try {
-            const tpoData = await tpoResult.value.json();
-            if (tpoData && Array.isArray(tpoData)) {
-              setTpoTests(tpoData);
-              console.log('✅ Loaded TPO tests from Supabase:', tpoData.length);
-            }
-          } catch (e) { console.error('❌ Error parsing TPO data:', e); }
-        } else {
-          console.warn('⚠️ Failed to fetch TPO tests');
-        }
-        
-        // Load Test Tests
-        if (testResult.status === 'fulfilled' && testResult.value.ok) {
-          try {
-            const testData = await testResult.value.json();
-            if (testData && Array.isArray(testData)) {
-              setTestTests(testData);
-              console.log('✅ Loaded Test tests from Supabase:', testData.length);
-            }
-          } catch (e) { console.error('❌ Error parsing Test data:', e); }
-        } else {
-          console.warn('⚠️ Failed to fetch Test tests');
-        }
-        
-        // Load Advertisements
-        if (adsResult.status === 'fulfilled' && adsResult.value.ok) {
-          try {
-            const adsData = await adsResult.value.json();
-            if (adsData && Array.isArray(adsData)) {
-              setAdvertisements(adsData);
-              console.log('✅ Loaded Advertisements from Supabase:', adsData.length);
-            }
-          } catch (e) { console.error('❌ Error parsing Ads data:', e); }
-        } else {
-          console.warn('⚠️ Failed to fetch Advertisements');
-        }
-        
-        // Load Reports
-        if (reportsResult.status === 'fulfilled' && reportsResult.value.ok) {
-          try {
-            const reportsData = await reportsResult.value.json();
-            if (reportsData && Array.isArray(reportsData)) {
-              setReports(reportsData);
-              console.log('✅ Loaded Reports from Supabase:', reportsData.length);
-            }
-          } catch (e) { console.error('❌ Error parsing Reports data:', e); }
-        } else {
-          console.warn('⚠️ Failed to fetch Reports');
+
+        // Batch 3: Training & results (sequential to avoid overwhelming edge function)
+        // These are non-critical - loaded after UI is already interactive
+        try {
+          const tc = await fetchJson('training-config').catch(() => null);
+          if (tc) { setTrainingConfig(tc); console.log('✅ Loaded Training Config'); }
+
+          const tr = await fetchJson('training-results').catch(() => null);
+          if (Array.isArray(tr)) { setTrainingResults(tr); console.log('✅ Loaded Training Results:', tr.length); }
+
+          const qtr = await fetchJson('question-types-results').catch(() => null);
+          if (Array.isArray(qtr)) { setQuestionTypesResults(qtr); console.log('✅ Loaded Question Types Results:', qtr.length); }
+        } catch (e) {
+          // Batch 3 (training/results) failed - non-critical, silently continue
         }
         
       } catch (error) {
@@ -676,7 +663,7 @@ function AppContent() {
 
   // Save LMS contents to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData) return; // Don't save during initial load
+    if (isLoadingData || !dataLoadedSuccessfully) return; // Don't save during initial load or if load failed
     
     const saveToSupabase = async () => {
       try {
@@ -698,11 +685,11 @@ function AppContent() {
     };
     
     saveToSupabase();
-  }, [lmsContents, isLoadingData]);
+  }, [lmsContents, isLoadingData, dataLoadedSuccessfully]);
 
   // Save TPO tests to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData) return;
+    if (isLoadingData || !dataLoadedSuccessfully) return;
     
     const saveToSupabase = async () => {
       try {
@@ -724,11 +711,11 @@ function AppContent() {
     };
     
     saveToSupabase();
-  }, [tpoTests, isLoadingData]);
+  }, [tpoTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Test tests to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData) return;
+    if (isLoadingData || !dataLoadedSuccessfully) return;
     
     const saveToSupabase = async () => {
       try {
@@ -750,11 +737,11 @@ function AppContent() {
     };
     
     saveToSupabase();
-  }, [testTests, isLoadingData]);
+  }, [testTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Reports to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData) return;
+    if (isLoadingData || !dataLoadedSuccessfully) return;
     
     const saveToSupabase = async () => {
       try {
@@ -776,7 +763,99 @@ function AppContent() {
     };
     
     saveToSupabase();
-  }, [reports, isLoadingData]);
+  }, [reports, isLoadingData, dataLoadedSuccessfully]);
+
+  // Save Question Types Config to Supabase (debounced 1s)
+  useEffect(() => {
+    if (isLoadingData || !dataLoadedSuccessfully || !questionTypesConfig) return;
+    
+    const timer = setTimeout(async () => {
+      try {
+        await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/question-types-config`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(questionTypesConfig)
+          }
+        );
+        console.log('💾 Saved Question Types Config to Supabase');
+      } catch (error) {
+        console.error('❌ Error saving Question Types Config:', error);
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [questionTypesConfig, isLoadingData, dataLoadedSuccessfully]);
+
+  // Save Training Config to Supabase (debounced 1s)
+  useEffect(() => {
+    if (isLoadingData || !dataLoadedSuccessfully || !trainingConfig) return;
+    
+    const timer = setTimeout(async () => {
+      try {
+        await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-config`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(trainingConfig)
+          }
+        );
+        console.log('💾 Saved Training Config to Supabase');
+      } catch (error) {
+        console.error('❌ Error saving Training Config:', error);
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [trainingConfig, isLoadingData, dataLoadedSuccessfully]);
+
+  // Save Training Result to Supabase (single append)
+  const saveTrainingResultToSupabase = async (result: any) => {
+    try {
+      await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-results`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(result)
+        }
+      );
+      console.log('💾 Saved Training Result to Supabase');
+    } catch (error) {
+      console.error('❌ Error saving Training Result:', error);
+    }
+  };
+
+  // Save Question Types Result to Supabase (single append)
+  const saveQuestionTypesResultToSupabase = async (result: any) => {
+    try {
+      await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/question-types-results`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(result)
+        }
+      );
+      console.log('💾 Saved Question Types Result to Supabase');
+    } catch (error) {
+      console.error('❌ Error saving Question Types Result:', error);
+    }
+  };
 
   // LMS Handlers
   const handleAddLMSContent = (content: LMSContent) => {
@@ -792,26 +871,105 @@ function AppContent() {
   };
 
   // TPO Test Handlers
-  const handleAddTest = (test: TPOTest) => {
-    if (test.testType === 'Test') {
-      setTestTests([...testTests, test]);
-    } else {
-      setTpoTests([...tpoTests, test]);
+  const handleAddTest = async (test: TPOTest) => {
+    try {
+      const endpoint = test.testType === 'Test' ? 'test-tests' : 'tpo-tests';
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify(test)
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save test: ${response.status}`);
+      }
+      
+      // Update local state after successful server save
+      if (test.testType === 'Test') {
+        setTestTests([...testTests, test]);
+      } else {
+        setTpoTests([...tpoTests, test]);
+      }
+      
+      console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
+    } catch (error) {
+      console.error('❌ Error saving test:', error);
+      alert('테스트 저장 중 오류가 발생했습니다.');
     }
   };
 
-  const handleUpdateTest = (updatedTest: TPOTest) => {
-    if (updatedTest.testType === 'Test') {
-      setTestTests(testTests.map(t => t.id === updatedTest.id ? updatedTest : t));
-    } else {
-      setTpoTests(tpoTests.map(t => t.id === updatedTest.id ? updatedTest : t));
+  const handleUpdateTest = async (updatedTest: TPOTest) => {
+    try {
+      const endpoint = updatedTest.testType === 'Test' ? 'test-tests' : 'tpo-tests';
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`
+          },
+          body: JSON.stringify(updatedTest)
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update test: ${response.status}`);
+      }
+      
+      // Update local state after successful server save
+      if (updatedTest.testType === 'Test') {
+        setTestTests(testTests.map(t => t.id === updatedTest.id ? updatedTest : t));
+      } else {
+        setTpoTests(tpoTests.map(t => t.id === updatedTest.id ? updatedTest : t));
+      }
+      
+      console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
+    } catch (error) {
+      console.error('❌ Error updating test:', error);
+      alert('테스트 업데이트 중 오류가 발생했습니다.');
     }
   };
 
-  const handleDeleteTest = (id: string) => {
-    // Try to delete from both arrays (one will match)
-    setTpoTests(tpoTests.filter(t => t.id !== id));
-    setTestTests(testTests.filter(t => t.id !== id));
+  const handleDeleteTest = async (id: string) => {
+    try {
+      // Find the test to determine its type and number
+      const testToDelete = [...tpoTests, ...testTests].find(t => t.id === id);
+      if (!testToDelete) {
+        console.warn('Test not found for deletion');
+        return;
+      }
+      
+      const endpoint = testToDelete.testType === 'Test' ? 'real-tests' : 'tpo-tests';
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}/${testToDelete.testNumber}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete test: ${response.status}`);
+      }
+      
+      // Update local state after successful server deletion
+      setTpoTests(tpoTests.filter(t => t.id !== id));
+      setTestTests(testTests.filter(t => t.id !== id));
+      
+      console.log(`✅ Deleted ${testToDelete.testType} ${testToDelete.testNumber} from server`);
+    } catch (error) {
+      console.error('❌ Error deleting test:', error);
+      alert('테스트 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   // Clean up any Test type data that was created by the old TPO -> Test copy logic
@@ -964,6 +1122,34 @@ function AppContent() {
     setTestResults([newResult, ...testResults]); // Add to beginning for latest first
   };
 
+  // Training Result Handler - saves to both local state and Supabase
+  const handleAddTrainingResult = (result: any) => {
+    const newResult = {
+      id: Date.now().toString(),
+      ...result,
+      savedAt: new Date().toISOString(),
+      source: 'training'
+    };
+    setTrainingResults(prev => [newResult, ...prev]);
+    saveTrainingResultToSupabase(newResult);
+    // Also save to test results for unified history
+    handleAddTestResult(result);
+  };
+
+  // Question Types Result Handler - saves to both local state and Supabase
+  const handleAddQuestionTypesResult = (result: any) => {
+    const newResult = {
+      id: Date.now().toString(),
+      ...result,
+      savedAt: new Date().toISOString(),
+      source: 'questionTypes'
+    };
+    setQuestionTypesResults(prev => [newResult, ...prev]);
+    saveQuestionTypesResultToSupabase(newResult);
+    // Also save to test results for unified history
+    handleAddTestResult(result);
+  };
+
   const handleRetryWrongAnswers = (result: TestResult) => {
     // TODO: Implement retry logic - will redirect to appropriate test with only wrong questions
     console.log('Retry wrong answers for:', result);
@@ -977,7 +1163,23 @@ function AppContent() {
   };
 
   const skills: SkillType[] = ['Listening', 'Reading', 'Writing', 'Speaking'];
-  const tpoRanges: TPORange[] = ['TPO 75-66', 'TPO 65-56', 'TPO 55-46', 'TPO 45-36', 'TPO 35-26', 'TPO 25-16', 'TPO 15-6', 'TPO 5-1'];
+  const tpoRanges: TPORange[] = ['TPO 1-5'];
+
+  // Helper function to get current test data
+  const getCurrentTestData = (): TPOTest | null => {
+    if (!currentTest) return null;
+    
+    const tests = testBankType === 'tpo' ? tpoTests : testTests;
+    return tests.find(t => t.testNumber === currentTest.tpoNumber) || null;
+  };
+
+  // Helper function to get current section data
+  const getCurrentSectionData = (sectionType: 'Reading' | 'Listening' | 'Speaking' | 'Writing') => {
+    const testData = getCurrentTestData();
+    if (!testData) return null;
+    
+    return testData.sections.find(s => s.sectionType === sectionType) || null;
+  };
 
   // Get test numbers based on selected range
   const getTestNumbers = () => {
@@ -1024,91 +1226,56 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Test');
-                }
-              }}
-            >
+        <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
+          <div className="flex items-center shrink-0">
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(false); setShowFillBlanksTest(false); setShowReadingSection(false); setShowToeflTest(false); if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Test'); } }}>
               *toefl ibt
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
+              <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Volume</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
             </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
+            <button className="hidden sm:flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(true); }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
             </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowReadNoticeTest2(false);
-                setShowSocialMediaTest(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
+            <button className="flex items-center gap-1 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors" onClick={() => { setShowReadNoticeTest2(false); setShowSocialMediaTest(true); }}>
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Next</span>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
             </button>
           </div>
         </div>
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 12 of 20
-              </div>
+          <div className="px-3 sm:px-8 py-2 sm:py-3">
+            <div className="flex gap-4 sm:gap-8">
+              <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
+              <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">Question 12 of 20</div>
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-hidden bg-white border border-black">
-          <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black py-8 text-center">Read a notice.</h1>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read a notice.</h1>
           
           <ResizableReadingLayout
+            passageTitle="Read a notice."
+            passageSummary={<><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
+            questionInfo="2/2"
+            onBack={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(true); }}
+            onPrev={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(true); }}
+            onNext={() => { setShowReadNoticeTest2(false); setShowSocialMediaTest(true); }}
+            onSubmit={() => { setShowReadNoticeTest2(false); setShowSocialMediaTest(true); }}
             leftContent={
-              <div className="border-[3px] border-black p-6 ml-12">
-                <div className="border-2 border-black p-6">
-                  <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-black text-center mb-6">Municipal Charter</h2>
-                  <p className="text-center font-['Inter',_sans-serif] font-bold text-black mb-6">Sign up for paperless billing statements today.</p>
-                  
-                  <p className="font-['Inter',_sans-serif] leading-relaxed text-black">
+              <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6 ml-0 md:ml-4 lg:ml-12">
+                <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                  <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-black text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
+                  <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-bold text-black mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
+                  <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed text-black">
                   Safe, convenient, easy. Enroll in paperless billing to receive monthly savings account statements in an electronic PDF document. Access your Municipal Charter account through the mobile app and select account preferences in the upper right-hand corner to enroll.
                   </p>
                 </div>
@@ -1116,39 +1283,47 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">How can customers enroll in paperless billing?</h3>
-                
-                <div className="space-y-6">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">How can customers enroll in paperless billing?</h3>
+                <div className="space-y-4 md:space-y-4 lg:space-y-6">
                   {answerOptions2.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option2-${index}`}
-                          name="business-type-2"
-                          value={option}
-                          checked={selectedAnswer2 === option}
-                          onChange={() => handleAnswerSelect2(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                            selectedAnswer2 === option
-                              ? 'border-[#0d9488]'
-                              : 'border-black'
-                          }`}
-                        />
-                        {selectedAnswer2 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option2-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`option2-${index}`}
+                      name="business-type-2"
+                      value={option}
+                      checked={selectedAnswer2 === option}
+                      onChange={() => handleAnswerSelect2(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </>
             }
           />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(true);
+          }}
+          onHome={() => {
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Test');
+            }
+          }}
+          onNext={() => {
+            setShowReadNoticeTest2(false);
+            setShowSocialMediaTest(true);
+          }}
+        />
       </div>
     );
   };
@@ -1193,7 +1368,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -1232,8 +1407,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -1245,54 +1420,54 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-hidden bg-white border border-black">
-          <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black py-8 text-center">Read a social media post.</h1>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
           
           <ResizableReadingLayout
             leftContent={
-              <div className="flex-shrink-0 relative" style={{ width: '580px', height: '680px', marginLeft: '-15px' }}>
+              <div className="relative w-full">
                 {/* Outer gray border */}
-                <div className="absolute inset-0 bg-[#B3B3B3] border border-black rounded-xl">
+                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
                   {/* Inner white container */}
-                  <div className="absolute left-4 top-4 right-4 bottom-4 bg-white border border-black rounded-lg">
+                  <div className="bg-white border border-black rounded-lg">
                     {/* Header */}
-                    <div className="bg-[#0A5E63] h-11 rounded-t-lg flex items-center px-4 relative justify-between">
+                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
                       {/* Left side - Camera icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
                         <circle cx="12" cy="12" r="3" fill="white"/>
                       </svg>
                       
                       {/* Center - Search bar */}
-                      <div className="flex-1 mx-4 h-7 bg-[#004D4F] rounded-full flex items-center px-3">
+                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
                         <div className="flex-1"></div>
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <circle cx="11" cy="11" r="8"/>
                           <path d="M21 21l-4.35-4.35"/>
                         </svg>
                       </div>
                       
                       {/* Right side - Message icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
                       </svg>
                     </div>
 
                     {/* Content */}
-                    <div className="flex flex-col" style={{ height: 'calc(100% - 44px)' }}>
-                      <div className="p-5">
+                    <div className="flex flex-col min-h-[300px]">
+                      <div className="p-3 md:p-5">
                         {/* Profile */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-10 h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="white">
+                        <div className="flex items-center gap-2 mb-3 md:mb-4">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
                               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                           </div>
-                          <span className="font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
+                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                         </div>
 
                         {/* Post content */}
-                        <div className="space-y-3 font-['Inter',_sans-serif] font-normal leading-relaxed">
+                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
                           <p>
                             Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
                           </p>
@@ -1306,16 +1481,16 @@ function AppContent() {
                       </div>
 
                       {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-4 mt-auto">
-                        <div className="flex items-center gap-6 text-gray-600 justify-end">
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
+                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Like</span>
                           </button>
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
@@ -1325,50 +1500,54 @@ function AppContent() {
                     </div>
                   </div>
                 </div>
-
-                {/* Decorative borders */}
-                <div className="absolute" style={{ left: '1px', top: '1px', width: '580px', height: '680px', border: '2px solid black', borderRadius: '12px', pointerEvents: 'none' }}></div>
-                
-                {/* Corner dots */}
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', top: '11px' }}></div>
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', bottom: '9px' }}></div>
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-lg font-['Inter',_sans-serif] font-bold text-black mb-10">What is the main purpose of the post?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What is the main purpose of the post?</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions3.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option3-${index}`}
-                          name="social-media-purpose"
-                          value={option}
-                          checked={selectedAnswer3 === option}
-                          onChange={() => handleAnswerSelect3(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                            selectedAnswer3 === option
-                              ? 'border-[#0d9488]'
-                              : 'border-black'
-                          }`}
-                        />
-                        {selectedAnswer3 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option3-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`option3-${index}`}
+                      name="social-media-purpose"
+                      value={option}
+                      checked={selectedAnswer3 === option}
+                      onChange={() => handleAnswerSelect3(option)}
+                      label={option}
+                      size="sm"
+                    />
                   ))}
                 </div>
               </>
             }
           />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(true);
+          }}
+          onHome={() => {
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Test');
+            }
+          }}
+          onNext={() => {
+            setShowSocialMediaTest(false);
+            setShowSocialMediaTest2(true);
+          }}
+        />
       </div>
     );
   };
@@ -1413,7 +1592,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -1452,8 +1631,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -1465,54 +1644,54 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-hidden bg-white border border-black">
-          <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black py-8 text-center">Read a social media post.</h1>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
           
           <ResizableReadingLayout
             leftContent={
-              <div className="flex-shrink-0 relative" style={{ width: '580px', height: '680px', marginLeft: '-15px' }}>
+              <div className="relative w-full">
                 {/* Outer gray border */}
-                <div className="absolute inset-0 bg-[#B3B3B3] border border-black rounded-xl">
+                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
                   {/* Inner white container */}
-                  <div className="absolute left-4 top-4 right-4 bottom-4 bg-white border border-black rounded-lg">
+                  <div className="bg-white border border-black rounded-lg">
                     {/* Header */}
-                    <div className="bg-[#0A5E63] h-11 rounded-t-lg flex items-center px-4 relative justify-between">
+                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
                       {/* Left side - Camera icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
                         <circle cx="12" cy="12" r="3" fill="white"/>
                       </svg>
                       
                       {/* Center - Search bar */}
-                      <div className="flex-1 mx-4 h-7 bg-[#004D4F] rounded-full flex items-center px-3">
+                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
                         <div className="flex-1"></div>
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <circle cx="11" cy="11" r="8"/>
                           <path d="M21 21l-4.35-4.35"/>
                         </svg>
                       </div>
                       
                       {/* Right side - Message icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
                       </svg>
                     </div>
 
                     {/* Content */}
-                    <div className="flex flex-col" style={{ height: 'calc(100% - 44px)' }}>
-                      <div className="p-5">
+                    <div className="flex flex-col min-h-[300px]">
+                      <div className="p-3 md:p-5">
                         {/* Profile */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-10 h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="white">
+                        <div className="flex items-center gap-2 mb-3 md:mb-4">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
                               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                           </div>
-                          <span className="font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
+                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                         </div>
 
                         {/* Post content */}
-                        <div className="space-y-3 font-['Inter',_sans-serif] font-normal leading-relaxed">
+                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
                           <p>
                             Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
                           </p>
@@ -1526,16 +1705,16 @@ function AppContent() {
                       </div>
 
                       {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-4 mt-auto">
-                        <div className="flex items-center gap-6 text-gray-600 justify-end">
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
+                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Like</span>
                           </button>
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
@@ -1545,55 +1724,60 @@ function AppContent() {
                     </div>
                   </div>
                 </div>
-
-                {/* Decorative borders */}
-                <div className="absolute" style={{ left: '1px', top: '1px', width: '580px', height: '680px', border: '2px solid black', borderRadius: '12px', pointerEvents: 'none' }}></div>
-                
-                {/* Corner dots */}
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', top: '11px' }}></div>
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', bottom: '9px' }}></div>
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-lg font-['Inter',_sans-serif] font-bold text-black mb-10">What reason is given for the popularity of the Thompson family's stall?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What reason is given for the popularity of the Thompson family's stall?</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions4.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option4-${index}`}
-                          name="thompson-popularity"
-                          value={option}
-                          checked={selectedAnswer4 === option}
-                          onChange={() => handleAnswerSelect4(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                            selectedAnswer4 === option
-                              ? 'border-[#0d9488]'
-                              : 'border-black'
-                          }`}
-                        />
-                        {selectedAnswer4 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option4-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`option4-${index}`}
+                      name="thompson-popularity"
+                      value={option}
+                      checked={selectedAnswer4 === option}
+                      onChange={() => handleAnswerSelect4(option)}
+                      label={option}
+                      size="sm"
+                    />
                   ))}
                 </div>
               </>
             }
           />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(true);
+          }}
+          onHome={() => {
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Test');
+            }
+          }}
+          onNext={() => {
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest3(true);
+          }}
+        />
       </div>
     );
   };
 
-  // Read Social Media Test Screen Component (Question 15)
+  // Read Social Media Test Screen Component (Question 15 - duplicate of Q14)
   const ReadSocialMediaTest3Screen = () => {
     const correctAnswer5 = "To get freshly baked bread and pastries before they are gone";
     const answerOptions5 = [
@@ -1633,7 +1817,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -1672,8 +1856,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -1685,54 +1869,54 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-hidden bg-white border border-black">
-          <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black py-8 text-center">Read a social media post.</h1>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
           
           <ResizableReadingLayout
             leftContent={
-              <div className="flex-shrink-0 relative" style={{ width: '580px', height: '680px', marginLeft: '-15px' }}>
+              <div className="relative w-full">
                 {/* Outer gray border */}
-                <div className="absolute inset-0 bg-[#B3B3B3] border border-black rounded-xl">
+                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
                   {/* Inner white container */}
-                  <div className="absolute left-4 top-4 right-4 bottom-4 bg-white border border-black rounded-lg">
+                  <div className="bg-white border border-black rounded-lg">
                     {/* Header */}
-                    <div className="bg-[#0A5E63] h-11 rounded-t-lg flex items-center px-4 relative justify-between">
+                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
                       {/* Left side - Camera icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
                         <circle cx="12" cy="12" r="3" fill="white"/>
                       </svg>
                       
                       {/* Center - Search bar */}
-                      <div className="flex-1 mx-4 h-7 bg-[#004D4F] rounded-full flex items-center px-3">
+                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
                         <div className="flex-1"></div>
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                           <circle cx="11" cy="11" r="8"/>
                           <path d="M21 21l-4.35-4.35"/>
                         </svg>
                       </div>
                       
                       {/* Right side - Message icon */}
-                      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
+                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
                       </svg>
                     </div>
 
                     {/* Content */}
-                    <div className="flex flex-col" style={{ height: 'calc(100% - 44px)' }}>
-                      <div className="p-5">
+                    <div className="flex flex-col min-h-[300px]">
+                      <div className="p-3 md:p-5">
                         {/* Profile */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-10 h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="white">
+                        <div className="flex items-center gap-2 mb-3 md:mb-4">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
                               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                             </svg>
                           </div>
-                          <span className="font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
+                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                         </div>
 
                         {/* Post content */}
-                        <div className="space-y-3 font-['Inter',_sans-serif] font-normal leading-relaxed">
+                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
                           <p>
                             Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
                           </p>
@@ -1746,16 +1930,16 @@ function AppContent() {
                       </div>
 
                       {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-4 mt-auto">
-                        <div className="flex items-center gap-6 text-gray-600 justify-end">
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
+                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Like</span>
                           </button>
-                          <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
+                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
                             <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
@@ -1765,830 +1949,101 @@ function AppContent() {
                     </div>
                   </div>
                 </div>
-
-                {/* Decorative borders */}
-                <div className="absolute" style={{ left: '1px', top: '1px', width: '580px', height: '680px', border: '2px solid black', borderRadius: '12px', pointerEvents: 'none' }}></div>
-                
-                {/* Corner dots */}
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', top: '11px' }}></div>
-                <div className="absolute w-3 h-3 bg-black rounded-full" style={{ left: '285px', bottom: '9px' }}></div>
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-lg font-['Inter',_sans-serif] font-bold text-black mb-10">Why do customers go to the bakery stall early?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">Why do customers go to the bakery stall early?</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions5.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option5-${index}`}
-                          name="bakery-early"
-                          value={option}
-                          checked={selectedAnswer5 === option}
-                          onChange={() => handleAnswerSelect5(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                            selectedAnswer5 === option
-                              ? 'border-[#0d9488]'
-                              : 'border-black'
-                          }`}
-                        />
-                        {selectedAnswer5 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option5-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`option5-${index}`}
+                      name="bakery-stall-q15"
+                      value={option}
+                      checked={selectedAnswer5 === option}
+                      onChange={() => handleAnswerSelect5(option)}
+                      label={option}
+                      size="sm"
+                    />
                   ))}
                 </div>
               </>
             }
           />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(true);
+          }}
+          onHome={() => {
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Test');
+            }
+          }}
+          onNext={() => {
+            setShowSocialMediaTest3(false);
+            setShowModule1Question16(true);
+          }}
+        />
       </div>
     );
   };
 
-  // [Removed: MirrorTest Screen Components 16-20 - Using Module1Question16-20 instead]
-
-  // OLD Module 1 - Question 16 - TO BE REMOVED
-  const _OldModule1Question16Screen_REMOVE = () => {
-    const correctAnswer6 = "Research on animal cognition";
-    
-    const answerOptions6 = [
-      "Stages of early childhood development",
-      "Research on animal cognition",
-      "Differences between apes, elephants, and dolphins",
-      "Recent experiments on fish"
-    ];
-
-    const handleAnswerSelect6 = (answer: string) => {
-      setSelectedAnswer6(answer);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowMirrorTest(false);
-                setShowSocialMediaTest3(false);
-                setShowSocialMediaTest2(false);
-                setShowSocialMediaTest(false);
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowMirrorTest(false);
-                setShowSocialMediaTest3(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowMirrorTest(false);
-                setShowMirrorTest2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 16 of 20
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-10 text-center">The Mirror Test</h1>
-            
-            <div className="flex gap-16 items-start pl-0">
-              {/* Left side - Passage */}
-              <div className="flex-1 max-w-xl">
-                <div className="space-y-4 font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                  <p>
-                    Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                  </p>
-                  <p>
-                    For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                  </p>
-                  <p>
-                    Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                  </p>
-                </div>
-              </div>
-
-              {/* Right side - Question */}
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8">What is the passage mainly about?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions6.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option6-${index}`}
-                          name="mirror-main-idea"
-                          value={option}
-                          checked={selectedAnswer6 === option}
-                          onChange={() => handleAnswerSelect6(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer6 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option6-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // OLD Mirror Test Screen Component (Question 17 - Vocabulary) - TO BE REMOVED
-  const _OldMirrorTest2Screen_REMOVE = () => {
-    const correctAnswer7 = "accomplishment";
-    
-    const answerOptions7 = [
-      "accomplishment",
-      "distance",
-      "weight",
-      "discovery"
-    ];
-
-    const handleAnswerSelect7 = (answer: string) => {
-      setSelectedAnswer7(answer);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowMirrorTest2(false);
-                setShowSocialMediaTest3(false);
-                setShowSocialMediaTest2(false);
-                setShowSocialMediaTest(false);
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowMirrorTest2(false);
-                setShowMirrorTest(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowMirrorTest2(false);
-                setShowMirrorTest3(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 17 of 20
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-10 text-center">The Mirror Test</h1>
-            
-            <div className="flex gap-16 items-start pl-0">
-              {/* Left side - Passage with highlighted word */}
-              <div className="flex-1 max-w-xl">
-                <div className="space-y-4 font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                  <p>
-                    Very young children cannot recognize themselves in a mirror; they usually achieve this <span className="bg-[#0A5E63] text-white px-1">milestone</span> around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                  </p>
-                  <p>
-                    For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                  </p>
-                  <p>
-                    Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                  </p>
-                </div>
-              </div>
-
-              {/* Right side - Question */}
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8">The word "milestone" in the first sentence is closest in meaning to</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions7.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option7-${index}`}
-                          name="milestone-meaning"
-                          value={option}
-                          checked={selectedAnswer7 === option}
-                          onChange={() => handleAnswerSelect7(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer7 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option7-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // OLD Mirror Test Screen Component (Question 18) - TO BE REMOVED
-  const _OldMirrorTest3Screen_REMOVE = () => {
-    const correctAnswer8 = "It helped them determine whether the animals recognized themselves.";
-    
-    const answerOptions8 = [
-      "It made it possible to track the animals' movements.",
-      "It helped them determine whether the animals recognized themselves.",
-      "It made it easier to tell the animals apart.",
-      "It showed whether some animals can detect color differences."
-    ];
-
-    const handleAnswerSelect8 = (answer: string) => {
-      setSelectedAnswer8(answer);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowMirrorTest3(false);
-                setShowSocialMediaTest3(false);
-                setShowSocialMediaTest2(false);
-                setShowSocialMediaTest(false);
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowMirrorTest3(false);
-                setShowMirrorTest2(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowMirrorTest3(false);
-                setShowMirrorTest4(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 18 of 20
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-10 text-center">The Mirror Test</h1>
-            
-            <div className="flex gap-16 items-start pl-0">
-              {/* Left side - Passage */}
-              <div className="flex-1 max-w-xl">
-                <div className="space-y-4 font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                  <p>
-                    Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                  </p>
-                  <p>
-                    For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                  </p>
-                  <p>
-                    Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                  </p>
-                </div>
-              </div>
-
-              {/* Right side - Question */}
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8">Why did scientists put colored marks on animals' bodies?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions8.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option8-${index}`}
-                          name="colored-marks-reason"
-                          value={option}
-                          checked={selectedAnswer8 === option}
-                          onChange={() => handleAnswerSelect8(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer8 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option8-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // OLD Mirror Test Screen Component (Question 19) - TO BE REMOVED
-  const _OldMirrorTest4Screen_REMOVE = () => {
-    const correctAnswer9 = "They can recognize themselves in mirrors.";
-    
-    const answerOptions9 = [
-      "They can recognize themselves in mirrors.",
-      "They are highly intelligent animals.",
-      "They possess qualities in common with apes.",
-      "They understand certain signs from other animals."
-    ];
-
-    const handleAnswerSelect9 = (answer: string) => {
-      setSelectedAnswer9(answer);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowMirrorTest4(false);
-                setShowMirrorTest3(false);
-                setShowMirrorTest2(false);
-                setShowMirrorTest(false);
-                setShowSocialMediaTest3(false);
-                setShowSocialMediaTest2(false);
-                setShowSocialMediaTest(false);
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowMirrorTest4(false);
-                setShowMirrorTest3(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowMirrorTest4(false);
-                setShowMirrorTest5(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 19 of 20
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-16 text-center">The Mirror Test</h1>
-            
-            <div className="flex gap-20 items-start pl-0">
-              {/* Left side - Passage */}
-              <div className="flex-1">
-                <div className="space-y-6 font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                  <p>
-                    Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                  </p>
-                  <p>
-                    For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                  </p>
-                  <p>
-                    Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                  </p>
-                </div>
-              </div>
-
-              {/* Right side - Question */}
-              <div className="w-[500px]">
-                <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8">According to the passage, all of the following are true about elephants EXCEPT:</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions9.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option9-${index}`}
-                          name="elephant-except"
-                          value={option}
-                          checked={selectedAnswer9 === option}
-                          onChange={() => handleAnswerSelect9(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer9 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option9-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // OLD Mirror Test Screen Component (Question 20) - TO BE REMOVED  
-  const _OldMirrorTest5Screen_REMOVE = () => {
-    const correctAnswer10 = "To suggest that a wide range of animals may possess self-awareness";
-    
-    const answerOptions10 = [
-      "To suggest that a wide range of animals may possess self-awareness",
-      "To imply that ocean animals are highly intelligent",
-      "To demonstrate a flaw in a recent experiment",
-      "To provide an example of an animal that does not recognize itself"
-    ];
-
-    const handleAnswerSelect10 = (answer: string) => {
-      setSelectedAnswer10(answer);
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowMirrorTest5(false);
-                setShowMirrorTest4(false);
-                setShowMirrorTest3(false);
-                setShowMirrorTest2(false);
-                setShowMirrorTest(false);
-                setShowSocialMediaTest3(false);
-                setShowSocialMediaTest2(false);
-                setShowSocialMediaTest(false);
-                setShowReadNoticeTest2(false);
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowMirrorTest5(false);
-                setShowMirrorTest4(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowMirrorTest5(false);
-                setShowModule1Question16(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 20 of 20
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-16 text-center">The Mirror Test</h1>
-            
-            <div className="flex gap-20 items-start pl-0">
-              {/* Left side - Passage */}
-              <div className="flex-1">
-                <div className="space-y-6 font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                  <p>
-                    Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                  </p>
-                  <p>
-                    For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                  </p>
-                  <p>
-                    Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                  </p>
-                </div>
-              </div>
-
-              {/* Right side - Question */}
-              <div className="w-[500px]">
-                <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8">Why does the author mention cleaner fish?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions10.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option10-${index}`}
-                          name="cleaner-fish"
-                          value={option}
-                          checked={selectedAnswer10 === option}
-                          onChange={() => handleAnswerSelect10(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer10 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option10-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // [Dead block 1 removed - 5 old _Old*_REMOVE screen components deleted]
 
   // Module 1 - Question 16 (The Mirror Test - Main Idea)
   const Module1Question16Screen = () => {
     const [selectedAnswer16, setSelectedAnswer16] = useState<string | null>(null);
     const [zoom16, setZoom16] = useState(1);
-    const correctAnswer = "Animals may have more self-awareness than humans previously believed.";
-
-    const answerOptions = [
-      "The mirror test is the only way to measure self-awareness.",
-      "Only great apes can recognize themselves in mirrors.",
-      "Animals may have more self-awareness than humans previously believed.",
-      "Fish are more intelligent than elephants and dolphins."
-    ];
+    
+    // Get dynamic question data from CMS
+    const sectionData = getCurrentSectionData('Reading');
+    const academicQuestion = sectionData?.questions.find(q => 
+      q.questionType?.includes('Academic Reading')
+    );
+    
+    // Parse CMS data if available
+    let passageData = null;
+    let currentQuestionIndex = 0;
+    if (academicQuestion?.passageText) {
+      try {
+        passageData = JSON.parse(academicQuestion.passageText);
+      } catch (e) {
+        console.error('Failed to parse academic reading data:', e);
+      }
+    }
+    
+    // Use CMS data if available, otherwise fall back to hardcoded data
+    const passageTitle = passageData?.title || "The Mirror Test";
+    const passageText = passageData?.passage || `Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?\n\nFor many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.\n\nApes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.`;
+    
+    const currentQuestion = passageData?.questions?.[currentQuestionIndex] || {
+      questionText: "Which of the following best states a main idea of the passage?",
+      options: [
+        "The mirror test is the only way to measure self-awareness.",
+        "Only great apes can recognize themselves in mirrors.",
+        "Animals may have more self-awareness than humans previously believed.",
+        "Fish are more intelligent than elephants and dolphins."
+      ],
+      correctAnswer: "Animals may have more self-awareness than humans previously believed."
+    };
+    
+    const correctAnswer = currentQuestion.correctAnswer;
+    const answerOptions = currentQuestion.options;
 
     const handleWheel16 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -2619,7 +2074,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -2671,54 +2126,35 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
             <ResizableReadingLayout
               zoom={zoom16}
               onWheel={handleWheel16}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
-                    <p>
-                      Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                    </p>
-                    
-                    <p>
-                      For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                    </p>
-                    
-                    <p>
-                      Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                    </p>
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    {passageText}
                   </div>
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-3">Which of the following best states a main idea of the passage?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3">{currentQuestion.questionText}</h3>
                 
-                  <div className="space-y-5">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module1-q16-option-${index}`}
-                            name="module1-q16"
-                            value={option}
-                            checked={selectedAnswer16 === option}
-                            onChange={() => setSelectedAnswer16(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer16 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module1-q16-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module1-q16-option-${index}`}
+                        name="module1-q16"
+                        value={option}
+                        checked={selectedAnswer16 === option}
+                        onChange={() => setSelectedAnswer16(option)}
+                        label={option}
+                        size="sm"
+                      />
                     ))}
                   </div>
                 </>
@@ -2726,6 +2162,33 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(true);
+          }}
+          onHome={() => {
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Question16(false);
+            setShowModule1Question17(true);
+          }}
+        />
       </div>
     );
   };
@@ -2770,7 +2233,7 @@ function AppContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -2816,15 +2279,15 @@ function AppContent() {
           </div>
         </div>
 
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
             <ResizableReadingLayout
               zoom={zoom17}
               onWheel={handleWheel17}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                     <p>
                       Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
                     </p>
@@ -2841,29 +2304,20 @@ function AppContent() {
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-6">According to the passage, what is true about the mirror test?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">According to the passage, what is true about the mirror test?</h3>
                 
-                  <div className="space-y-5">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module1-q17-option-${index}`}
-                            name="module1-q17"
-                            value={option}
-                            checked={selectedAnswer17 === option}
-                            onChange={() => setSelectedAnswer17(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer17 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module1-q17-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module1-q17-option-${index}`}
+                        name="module1-q17"
+                        value={option}
+                        checked={selectedAnswer17 === option}
+                        onChange={() => setSelectedAnswer17(option)}
+                        label={option}
+                        size="sm"
+                      />
                     ))}
                   </div>
                 </>
@@ -2871,6 +2325,34 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Question17(false);
+            setShowModule1Question16(true);
+          }}
+          onHome={() => {
+            setShowModule1Question17(false);
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Question17(false);
+            setShowModule1Question18(true);
+          }}
+        />
       </div>
     );
   };
@@ -2915,7 +2397,7 @@ function AppContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -2961,15 +2443,15 @@ function AppContent() {
           </div>
         </div>
 
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
             <ResizableReadingLayout
               zoom={zoom18}
               onWheel={handleWheel18}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                     <p>
                       Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
                     </p>
@@ -2986,29 +2468,20 @@ function AppContent() {
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-6">Which animals besides great apes have shown signs of self-recognition?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">Which animals besides great apes have shown signs of self-recognition?</h3>
                 
-                  <div className="space-y-5">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module1-q18-option-${index}`}
-                            name="module1-q18"
-                            value={option}
-                            checked={selectedAnswer18 === option}
-                            onChange={() => setSelectedAnswer18(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer18 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module1-q18-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module1-q18-option-${index}`}
+                        name="module1-q18"
+                        value={option}
+                        checked={selectedAnswer18 === option}
+                        onChange={() => setSelectedAnswer18(option)}
+                        label={option}
+                        size="sm"
+                      />
                     ))}
                   </div>
                 </>
@@ -3016,6 +2489,35 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Question18(false);
+            setShowModule1Question17(true);
+          }}
+          onHome={() => {
+            setShowModule1Question18(false);
+            setShowModule1Question17(false);
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Question18(false);
+            setShowModule1Question19(true);
+          }}
+        />
       </div>
     );
   };
@@ -3060,7 +2562,7 @@ function AppContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -3106,15 +2608,15 @@ function AppContent() {
           </div>
         </div>
 
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
             <ResizableReadingLayout
               zoom={zoom19}
               onWheel={handleWheel19}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                     <p>
                       Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
                     </p>
@@ -3131,29 +2633,20 @@ function AppContent() {
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-6">What is the significance of the cleaner fish experiment?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">What is the significance of the cleaner fish experiment?</h3>
                 
-                  <div className="space-y-5">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module1-q19-option-${index}`}
-                            name="module1-q19"
-                            value={option}
-                            checked={selectedAnswer19 === option}
-                            onChange={() => setSelectedAnswer19(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer19 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module1-q19-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module1-q19-option-${index}`}
+                        name="module1-q19"
+                        value={option}
+                        checked={selectedAnswer19 === option}
+                        onChange={() => setSelectedAnswer19(option)}
+                        label={option}
+                        size="sm"
+                      />
                     ))}
                   </div>
                 </>
@@ -3161,6 +2654,36 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Question19(false);
+            setShowModule1Question18(true);
+          }}
+          onHome={() => {
+            setShowModule1Question19(false);
+            setShowModule1Question18(false);
+            setShowModule1Question17(false);
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Question19(false);
+            setShowModule1Question20(true);
+          }}
+        />
       </div>
     );
   };
@@ -3205,7 +2728,7 @@ function AppContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -3251,15 +2774,15 @@ function AppContent() {
           </div>
         </div>
 
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
             <ResizableReadingLayout
               zoom={zoom20}
               onWheel={handleWheel20}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                     <p>
                       Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
                     </p>
@@ -3276,29 +2799,20 @@ function AppContent() {
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-6">According to the passage, when do children typically recognize themselves in a mirror?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">According to the passage, when do children typically recognize themselves in a mirror?</h3>
                 
-                  <div className="space-y-5">
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module1-q20-option-${index}`}
-                            name="module1-q20"
-                            value={option}
-                            checked={selectedAnswer20 === option}
-                            onChange={() => setSelectedAnswer20(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer20 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module1-q20-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module1-q20-option-${index}`}
+                        name="module1-q20"
+                        value={option}
+                        checked={selectedAnswer20 === option}
+                        onChange={() => setSelectedAnswer20(option)}
+                        label={option}
+                        size="sm"
+                      />
                     ))}
                   </div>
                 </>
@@ -3306,6 +2820,37 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Question20(false);
+            setShowModule1Question19(true);
+          }}
+          onHome={() => {
+            setShowModule1Question20(false);
+            setShowModule1Question19(false);
+            setShowModule1Question18(false);
+            setShowModule1Question17(false);
+            setShowModule1Question16(false);
+            setShowSocialMediaTest3(false);
+            setShowSocialMediaTest2(false);
+            setShowSocialMediaTest(false);
+            setShowReadNoticeTest2(false);
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Question20(false);
+            setShowEndModule1(true);
+          }}
+        />
       </div>
     );
   };
@@ -3366,6 +2911,25 @@ function AppContent() {
             </p>
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowEndModule1(false);
+            setShowModule1Question20(true);
+          }}
+          onHome={() => {
+            setShowEndModule1(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowEndModule1(false);
+            setShowModule2(true);
+          }}
+        />
       </div>
     );
   };
@@ -3393,7 +2957,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -3434,153 +2998,315 @@ function AppContent() {
             </p>
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2(false);
+            setShowEndModule1(true);
+          }}
+          onHome={() => {
+            setShowModule2(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2(false);
+            setShowModule2FillBlanks(true);
+          }}
+        />
       </div>
     );
   };
 
   // Module 2 - Fill in the Blanks (Questions 1-10)
   const Module2FillBlanksScreen = () => {
-    const handleBlankChange = (blankNumber: number, value: string) => {
-      setModule2BlankAnswers(prev => ({
-        ...prev,
-        [blankNumber]: value
-      }));
+    const [m2InputValues, setM2InputValues] = React.useState<Record<number, string>>({});
+    const [m2FilledInputs, setM2FilledInputs] = React.useState<Record<number, boolean>>({});
+    const { isOpen: isM2FBVolumeOpen, buttonRef: m2FBVolumeButtonRef, toggleVolume: toggleM2FBVolume, closeVolume: closeM2FBVolume } = useVolumeControl();
+
+    const CHAR_UNIT_WIDTH = 20;
+    const isMobileM2FB = typeof window !== 'undefined' && window.innerWidth < 640;
+
+    const m2Inputs = [
+      { id: 0, maxLength: 1 },  // is
+      { id: 1, maxLength: 2 },  // into
+      { id: 2, maxLength: 4 },  // regions
+      { id: 3, maxLength: 2 },  // with
+      { id: 4, maxLength: 3 },  // roles
+      { id: 5, maxLength: 2 },  // its
+      { id: 6, maxLength: 2 },  // part
+      { id: 7, maxLength: 4 },  // involved
+      { id: 8, maxLength: 5 },  // cognitive
+      { id: 9, maxLength: 2 },  // such
+    ];
+
+    const handleM2InputChange = (id: number, value: string) => {
+      setM2InputValues(prev => ({ ...prev, [id]: value }));
+      if (value.length >= m2Inputs[id].maxLength) {
+        setM2FilledInputs(prev => ({ ...prev, [id]: true }));
+      } else {
+        setM2FilledInputs(prev => ({ ...prev, [id]: false }));
+      }
+      if (value.length === m2Inputs[id].maxLength) {
+        const nextId = id + 1;
+        if (nextId < m2Inputs.length) {
+          setTimeout(() => {
+            const nextInput = document.querySelector(`input[data-input-id="m2-${nextId}"]`) as HTMLInputElement;
+            if (nextInput) nextInput.focus();
+          }, 0);
+        }
+      }
+    };
+
+    const handleM2Focus = (id: number) => {
+      const value = m2InputValues[id] || '';
+      if (value.length < m2Inputs[id].maxLength) {
+        setM2FilledInputs(prev => ({ ...prev, [id]: false }));
+      }
+    };
+
+    const handleM2Blur = (id: number) => {
+      if (m2InputValues[id] && m2InputValues[id].length > 0) {
+        setM2FilledInputs(prev => ({ ...prev, [id]: true }));
+      }
+    };
+
+    const handleM2KeyPress = (e: React.KeyboardEvent, id: number) => {
+      if (e.key === 'Enter') {
+        (e.target as HTMLInputElement).blur();
+      }
+    };
+
+    const getM2TextWidth = (text: string): number => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return text.length * 14;
+      context.font = "1.25rem 'Inter', sans-serif";
+      const metrics = context.measureText(text);
+      return Math.ceil(metrics.width) + 4;
+    };
+
+    const getM2InputWidth = (id: number): string => {
+      const value = m2InputValues[id] || '';
+      const maxLen = m2Inputs[id].maxLength;
+      if (value.length >= maxLen) {
+        return `${getM2TextWidth(value)}px`;
+      }
+      const mobileOffset = isMobileM2FB ? CHAR_UNIT_WIDTH : 0;
+      return `${maxLen * CHAR_UNIT_WIDTH - mobileOffset}px`;
     };
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowModule2FillBlanks(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowModule2FillBlanks(false);
-                setShowModule2Question11(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Questions 1-10 of 20
+        <div className="flex-1 flex flex-col overflow-auto">
+          {/* Header */}
+          <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
+            <div className="flex items-center min-w-0 shrink">
+              <div 
+                className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate"
+                onClick={() => {
+                  setShowModule2FillBlanks(false);
+                  if (testBankType === 'tpo') {
+                    setActiveTab('TPO');
+                  } else {
+                    setActiveTab('Real Test');
+                  }
+                }}
+              >
+                *toefl ibt
               </div>
             </div>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button 
+                ref={m2FBVolumeButtonRef as React.RefObject<HTMLButtonElement>}
+                className={`flex items-center gap-1.5 sm:gap-3 border rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 transition-colors ${
+                  isM2FBVolumeOpen 
+                    ? 'bg-white border-white text-[#1e6b73]' 
+                    : 'bg-[#0A6068] border-white text-white hover:bg-[#084d52]'
+                }`}
+                onClick={toggleM2FBVolume}
+              >
+                <span className="font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Volume</span>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill={isM2FBVolumeOpen ? '#1e6b73' : 'white'}>
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+              </button>
+              <button 
+                className="flex items-center gap-1.5 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  setShowModule2FillBlanks(false);
+                  setShowModule2Question11(true);
+                }}
+              >
+                <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068">
+                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto px-4">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black mb-12 text-center">Fill in the missing letters in the paragraph.</h1>
-            
-            <div className="p-0">
-              <p className="font-['Inter',_sans-serif] leading-relaxed text-black text-lg">
-                The human brain is a complex organ responsible for controlling all bodily functions and enabling thought, emotion, 
-                and memory. It i<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[1] || ''}
-                  onChange={(e) => handleBlankChange(1, e.target.value)}
-                  maxLength={1}
-                /> divided in<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[2] || ''}
-                  onChange={(e) => handleBlankChange(2, e.target.value)}
-                  maxLength={2}
-                /> several reg<input 
-                  type="text" 
-                  className="inline-block w-16 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[3] || ''}
-                  onChange={(e) => handleBlankChange(3, e.target.value)}
-                  maxLength={4}
-                />, each wi<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[4] || ''}
-                  onChange={(e) => handleBlankChange(4, e.target.value)}
-                  maxLength={2}
-                /> specific ro<input 
-                  type="text" 
-                  className="inline-block w-12 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[5] || ''}
-                  onChange={(e) => handleBlankChange(5, e.target.value)}
-                  maxLength={3}
-                />. The cerebrum, i<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[6] || ''}
-                  onChange={(e) => handleBlankChange(6, e.target.value)}
-                  maxLength={2}
-                /> largest pa<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[7] || ''}
-                  onChange={(e) => handleBlankChange(7, e.target.value)}
-                  maxLength={2}
-                />, is 
-                invo<input 
-                  type="text" 
-                  className="inline-block w-16 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[8] || ''}
-                  onChange={(e) => handleBlankChange(8, e.target.value)}
-                  maxLength={4}
-                /> in higher cogn<input 
-                  type="text" 
-                  className="inline-block w-20 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[9] || ''}
-                  onChange={(e) => handleBlankChange(9, e.target.value)}
-                  maxLength={5}
-                /> functions su<input 
-                  type="text" 
-                  className="inline-block w-8 mx-1 px-1 border-b-2 border-gray-400 focus:border-[#1e6b73] focus:outline-none bg-gray-100 text-center"
-                  value={module2BlankAnswers[10] || ''}
-                  onChange={(e) => handleBlankChange(10, e.target.value)}
-                  maxLength={2}
-                /> as reasoning, planning, and language. The cerebellum coordinates 
-                movement and balance, while the brainstem controls vital bodily functions like breathing and heart rate. Together, 
-                they enable the brain to perform its various tasks.
-              </p>
+          {/* Navigation tabs */}
+          <div className="bg-white border-b border-gray-300 shrink-0">
+            <div className="px-3 sm:px-8 py-2 sm:py-3">
+              <div className="flex gap-4 sm:gap-8">
+                <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">
+                  Reading
+                </div>
+                <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+                  Question 1-10
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 bg-white overflow-auto">
+            <div className="p-4 sm:p-5 md:p-12 pt-8 sm:pt-16 md:pt-24 flex flex-col items-center">
+              <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black font-bold font-['Inter',_sans-serif] text-center px-2">
+                Fill in the missing letters in the paragraph.
+              </h1>
+
+              <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                The human brain is a complex organ responsible for controlling all bodily functions and enabling thought, emotion, and memory. It i<input
+                  type="text"
+                  data-input-id="m2-0"
+                  className={`m2-gap-input ${m2FilledInputs[0] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[0].maxLength}
+                  value={m2InputValues[0] || ''}
+                  onChange={(e) => handleM2InputChange(0, e.target.value)}
+                  onFocus={() => handleM2Focus(0)}
+                  onBlur={() => handleM2Blur(0)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 0)}
+                  style={{ width: getM2InputWidth(0) }}
+                /> divided in<input
+                  type="text"
+                  data-input-id="m2-1"
+                  className={`m2-gap-input ${m2FilledInputs[1] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[1].maxLength}
+                  value={m2InputValues[1] || ''}
+                  onChange={(e) => handleM2InputChange(1, e.target.value)}
+                  onFocus={() => handleM2Focus(1)}
+                  onBlur={() => handleM2Blur(1)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 1)}
+                  style={{ width: getM2InputWidth(1) }}
+                /> several reg<input
+                  type="text"
+                  data-input-id="m2-2"
+                  className={`m2-gap-input ${m2FilledInputs[2] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[2].maxLength}
+                  value={m2InputValues[2] || ''}
+                  onChange={(e) => handleM2InputChange(2, e.target.value)}
+                  onFocus={() => handleM2Focus(2)}
+                  onBlur={() => handleM2Blur(2)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 2)}
+                  style={{ width: getM2InputWidth(2) }}
+                />, each wi<input
+                  type="text"
+                  data-input-id="m2-3"
+                  className={`m2-gap-input ${m2FilledInputs[3] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[3].maxLength}
+                  value={m2InputValues[3] || ''}
+                  onChange={(e) => handleM2InputChange(3, e.target.value)}
+                  onFocus={() => handleM2Focus(3)}
+                  onBlur={() => handleM2Blur(3)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 3)}
+                  style={{ width: getM2InputWidth(3) }}
+                /> specific ro<input
+                  type="text"
+                  data-input-id="m2-4"
+                  className={`m2-gap-input ${m2FilledInputs[4] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[4].maxLength}
+                  value={m2InputValues[4] || ''}
+                  onChange={(e) => handleM2InputChange(4, e.target.value)}
+                  onFocus={() => handleM2Focus(4)}
+                  onBlur={() => handleM2Blur(4)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 4)}
+                  style={{ width: getM2InputWidth(4) }}
+                />. The cerebrum, i<input
+                  type="text"
+                  data-input-id="m2-5"
+                  className={`m2-gap-input ${m2FilledInputs[5] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[5].maxLength}
+                  value={m2InputValues[5] || ''}
+                  onChange={(e) => handleM2InputChange(5, e.target.value)}
+                  onFocus={() => handleM2Focus(5)}
+                  onBlur={() => handleM2Blur(5)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 5)}
+                  style={{ width: getM2InputWidth(5) }}
+                /> largest pa<input
+                  type="text"
+                  data-input-id="m2-6"
+                  className={`m2-gap-input ${m2FilledInputs[6] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[6].maxLength}
+                  value={m2InputValues[6] || ''}
+                  onChange={(e) => handleM2InputChange(6, e.target.value)}
+                  onFocus={() => handleM2Focus(6)}
+                  onBlur={() => handleM2Blur(6)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 6)}
+                  style={{ width: getM2InputWidth(6) }}
+                />, is invo<input
+                  type="text"
+                  data-input-id="m2-7"
+                  className={`m2-gap-input ${m2FilledInputs[7] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[7].maxLength}
+                  value={m2InputValues[7] || ''}
+                  onChange={(e) => handleM2InputChange(7, e.target.value)}
+                  onFocus={() => handleM2Focus(7)}
+                  onBlur={() => handleM2Blur(7)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 7)}
+                  style={{ width: getM2InputWidth(7) }}
+                /> in higher cogn<input
+                  type="text"
+                  data-input-id="m2-8"
+                  className={`m2-gap-input ${m2FilledInputs[8] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[8].maxLength}
+                  value={m2InputValues[8] || ''}
+                  onChange={(e) => handleM2InputChange(8, e.target.value)}
+                  onFocus={() => handleM2Focus(8)}
+                  onBlur={() => handleM2Blur(8)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 8)}
+                  style={{ width: getM2InputWidth(8) }}
+                /> functions su<input
+                  type="text"
+                  data-input-id="m2-9"
+                  className={`m2-gap-input ${m2FilledInputs[9] ? 'filled' : ''}`}
+                  maxLength={m2Inputs[9].maxLength}
+                  value={m2InputValues[9] || ''}
+                  onChange={(e) => handleM2InputChange(9, e.target.value)}
+                  onFocus={() => handleM2Focus(9)}
+                  onBlur={() => handleM2Blur(9)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 9)}
+                  style={{ width: getM2InputWidth(9) }}
+                /> as reasoning, planning, and language. The cerebellum coordinates movement and balance, while the brainstem controls vital bodily functions like breathing and heart rate. Together, they enable the brain to perform its various tasks.
+              </div>
             </div>
           </div>
         </div>
+        
+        <VolumeControl isOpen={isM2FBVolumeOpen} onClose={closeM2FBVolume} buttonRef={m2FBVolumeButtonRef} />
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2FillBlanks(false);
+            setShowModule2(true);
+          }}
+          onHome={() => {
+            setShowModule2FillBlanks(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2FillBlanks(false);
+            setShowModule2Question11(true);
+          }}
+        />
       </div>
     );
   };
@@ -3600,148 +3326,121 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowModule2Question11(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
+        <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
+          <div className="flex items-center shrink-0">
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowModule2Question11(false); if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Real Test'); } }}>
               *toefl ibt
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
+              <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Volume</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
             </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowModule2Question11(false);
-                setShowModule2FillBlanks(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <button className="flex items-center gap-1 sm:gap-2 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors" onClick={() => { setShowModule2Question11(false); setShowModule2FillBlanks(true); }}>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="white"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+              <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Back</span>
             </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowModule2Question11(false);
-                setShowModule2Question12(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
+            <button className="flex items-center gap-1 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors" onClick={() => { setShowModule2Question11(false); setShowModule2Question12(true); }}>
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Next</span>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
             </button>
           </div>
         </div>
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 11 of 20
-              </div>
+          <div className="px-3 sm:px-8 py-2 sm:py-3">
+            <div className="flex gap-4 sm:gap-8">
+              <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
+              <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">Question 11 of 20</div>
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">Read an email.</h2>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read an email.</h1>
           
-            <ResizableReadingLayout
-              showDivider={true}
-              leftPadding="pl-2 pr-6"
-              leftContent={
-                <div className="w-[580px] ml-0 border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
-                  {/* Email Header Fields */}
+          <ResizableReadingLayout
+            passageTitle="Read an email."
+            passageSummary={<><strong>Art Workshop Reservation Confirmation</strong><br/>From: artforeveryone@dmail.com</>}
+            questionInfo="1/2"
+            onBack={() => { setShowModule2Question11(false); setShowModule2FillBlanks(true); }}
+            onNext={() => { setShowModule2Question11(false); setShowModule2Question12(true); }}
+            onSubmit={() => { setShowModule2Question11(false); setShowModule2Question12(true); }}
+            leftContent={
+              <div className="relative w-full">
+                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">edward56L@dmail.com</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">To:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">edward56L@dmail.com</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">artforeveryone@dmail.com</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">From:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">artforeveryone@dmail.com</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Date:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">10/09/2025</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Date:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">10/09/2025</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">Art Workshop Reservation Confirmation</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Subject:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">Art Workshop Reservation Confirmation</div>
                     </div>
                   </div>
-                  
-                  {/* Email Body */}
-                  <div className="p-6 bg-white border-4 border-[#1e6b73] m-2 max-h-[400px] overflow-y-auto">
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">Dear Ms. Edwards,</p>
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">
+                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Dear Ms. Edwards,</p>
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">
                       The reservation for the art workshop that you made on September 10th has been confirmed. The workshop will take place on September 20th at 3:00 PM. All necessary arts supplies will be provided, but please bring your own apron or smock.
                     </p>
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">Best regards,</p>
-                    <p className="font-['Inter',_sans-serif] text-base">Laura Bennett</p>
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Best regards,</p>
+                    <p className="font-['Inter',_sans-serif] text-sm sm:text-base">Laura Bennett</p>
                   </div>
-                </div>
-              }
-              rightContent={
-                <div className="flex-1 max-w-xl">
-                  <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">When is the date of the art workshop?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q11-option-${index}`}
-                          name="module2-q11"
-                          value={option}
-                          checked={selectedAnswer11 === option}
-                          onChange={() => setSelectedAnswer11(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer11 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q11-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
                 </div>
               </div>
             }
-            />
-          </div>
+            rightContent={
+              <>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">When is the date of the art workshop?</h3>
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
+                  {answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`module2-q11-option-${index}`}
+                      name="module2-q11"
+                      value={option}
+                      checked={selectedAnswer11 === option}
+                      onChange={() => setSelectedAnswer11(option)}
+                      label={option}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              </>
+            }
+          />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question11(false);
+            setShowModule2FillBlanks(true);
+          }}
+          onHome={() => {
+            setShowModule2Question11(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question11(false);
+            setShowModule2Question12(true);
+          }}
+        />
       </div>
     );
   };
@@ -3779,7 +3478,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -3818,8 +3517,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -3831,78 +3530,93 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">Read an email.</h2>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read an email.</h1>
           
-            <ResizableReadingLayout
-              showDivider={true}
-              leftPadding="pl-2 pr-6"
-              leftContent={
-                <div className="w-[580px] ml-0 border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
+          <ResizableReadingLayout
+            passageTitle="Read an email."
+            passageSummary={<><strong>Art Workshop Reservation Confirmation</strong><br/>From: artforeveryone@dmail.com</>}
+            questionInfo="2/2"
+            onBack={() => { setShowModule2Question12(false); setShowModule2Question11(true); }}
+            onPrev={() => { setShowModule2Question12(false); setShowModule2Question11(true); }}
+            onNext={() => { setShowModule2Question12(false); setShowModule2Question13(true); }}
+            onSubmit={() => { setShowModule2Question12(false); setShowModule2Question13(true); }}
+            leftContent={
+              <div className="relative w-full">
+                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">edward56L@dmail.com</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">To:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">edward56L@dmail.com</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">artforeveryone@dmail.com</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">From:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">artforeveryone@dmail.com</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Date:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">10/09/2025</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Date:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">10/09/2025</div>
                     </div>
                     <div className="flex border-b-2 border-[#1e6b73]">
-                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
-                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">Art Workshop Reservation Confirmation</div>
+                      <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Subject:</div>
+                      <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">Art Workshop Reservation Confirmation</div>
                     </div>
                   </div>
                   
                   {/* Email Body */}
-                  <div className="p-6 bg-white border-4 border-[#1e6b73] m-2 max-h-[400px] overflow-y-auto">
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">Dear Ms. Edwards,</p>
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">
+                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Dear Ms. Edwards,</p>
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">
                       The reservation for the art workshop that you made on September 10th has been confirmed. The workshop will take place on September 20th at 3:00 PM. All necessary arts supplies will be provided, but please bring your own apron or smock.
                     </p>
-                    <p className="font-['Inter',_sans-serif] mb-4 text-base">Best regards,</p>
-                    <p className="font-['Inter',_sans-serif] text-base">Laura Bennett</p>
+                    <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Best regards,</p>
+                    <p className="font-['Inter',_sans-serif] text-sm sm:text-base">Laura Bennett</p>
                   </div>
-                </div>
-              }
-              rightContent={
-                <div className="flex-1 max-w-xl">
-                  <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">What should Ms. Edwards bring to the workshop?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q12-option-${index}`}
-                          name="module2-q12"
-                          value={option}
-                          checked={selectedAnswer12 === option}
-                          onChange={() => setSelectedAnswer12(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer12 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q12-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
                 </div>
               </div>
             }
-            />
-          </div>
+            rightContent={
+              <>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What should Ms. Edwards bring to the workshop?</h3>
+                
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
+                  {answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`module2-q12-option-${index}`}
+                      name="module2-q12"
+                      value={option}
+                      checked={selectedAnswer12 === option}
+                      onChange={() => setSelectedAnswer12(option)}
+                      label={option}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              </>
+            }
+          />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question12(false);
+            setShowModule2Question11(true);
+          }}
+          onHome={() => {
+            setShowModule2Question12(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question12(false);
+            setShowModule2Question13(true);
+          }}
+        />
       </div>
     );
   };
@@ -3940,7 +3654,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -3979,8 +3693,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -3992,83 +3706,98 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">Read an email.</h2>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
           
-            <ResizableReadingLayout
-              showDivider={false}
-              leftPadding="pl-2 pr-6"
-              leftContent={
-                <div className="w-[580px] ml-0 border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
+          <ResizableReadingLayout
+            passageTitle="Read an email."
+            passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
+            questionInfo="1/3"
+            onBack={() => { setShowModule2Question13(false); setShowModule2Question12(true); }}
+            onPrev={() => { setShowModule2Question13(false); setShowModule2Question12(true); }}
+            onNext={() => { setShowModule2Question13(false); setShowModule2Question14(true); }}
+            onSubmit={() => { setShowModule2Question13(false); setShowModule2Question14(true); }}
+            leftContent={
+              <div className="relative w-full">
+                <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#9d5a2f]">
                       <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
                       <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">nguyenbooklover@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
+                    </div>
                   </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
+                  
+                  {/* Email Body */}
+                  <div className="p-3 md:p-5 bg-white border-2 md:border-4 border-[#9d5a2f] m-1 md:m-2 max-h-[450px] overflow-y-auto text-sm md:text-base">
+                    <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      We're excited to invite you—and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      This celebration, exclusively for our valued members and their guests, will include guided tours, live fitness demonstrations, and complimentary refreshments. It's the perfect chance to experience our community-focused approach to wellness and introduce others to a space designed for all fitness levels.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      Bring your friends and family! We're offering a special one-day-only discount on memberships for all attendees.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      For questions or to RSVP, contact our customer service team at 555-1234.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-2">Warm regards,</p>
+                    <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
-                  </div>
-                </div>
-                
-                {/* Email Body */}
-                <div className="p-5 bg-white border-4 border-[#9d5a2f] m-2 max-h-[450px] overflow-y-auto text-base">
-                  <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    We're excited to invite you—and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    This celebration, exclusively for our valued members and their guests, will include guided tours, live fitness demonstrations, and complimentary refreshments. It's the perfect chance to experience our community-focused approach to wellness and introduce others to a space designed for all fitness levels.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    Bring your friends and family! We're offering a special one-day-only discount on memberships for all attendees.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    For questions or to RSVP, contact our customer service team at 555-1234.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-2">Warm regards,</p>
-                  <p className="font-['Inter',_sans-serif]">John Parker</p>
                 </div>
               </div>
             }
             rightContent={
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">What is the main purpose of the email?</h3>
+              <>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What is the main purpose of the email?</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q13-option-${index}`}
-                          name="module2-q13"
-                          value={option}
-                          checked={selectedAnswer13 === option}
-                          onChange={() => setSelectedAnswer13(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer13 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q13-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q13-option-${index}`}
+                      name="module2-q13"
+                      value={option}
+                      checked={selectedAnswer13 === option}
+                      onChange={() => setSelectedAnswer13(option)}
+                      label={option}
+                      size="sm"
+                    />
                   ))}
                 </div>
-              </div>
+              </>
             }
-            />
-          </div>
+          />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question13(false);
+            setShowModule2Question12(true);
+          }}
+          onHome={() => {
+            setShowModule2Question13(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question13(false);
+            setShowModule2Question14(true);
+          }}
+        />
       </div>
     );
   };
@@ -4106,7 +3835,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4145,8 +3874,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -4158,97 +3887,112 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">Read an email.</h2>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
           
-            <ResizableReadingLayout
-              showDivider={false}
-              leftPadding="pl-2 pr-6"
-              leftContent={
-                <div className="w-[580px] ml-0 border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
+          <ResizableReadingLayout
+            passageTitle="Read an email."
+            passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
+            questionInfo="2/3"
+            onBack={() => { setShowModule2Question14(false); setShowModule2Question13(true); }}
+            onPrev={() => { setShowModule2Question14(false); setShowModule2Question13(true); }}
+            onNext={() => { setShowModule2Question14(false); setShowModule2Question15(true); }}
+            onSubmit={() => { setShowModule2Question14(false); setShowModule2Question15(true); }}
+            leftContent={
+              <div className="relative w-full">
+                <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#9d5a2f]">
                       <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
                       <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">nguyenbooklover@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
+                    </div>
                   </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
+                  
+                  {/* Email Body */}
+                  <div className="p-3 md:p-5 bg-white border-2 md:border-4 border-[#9d5a2f] m-1 md:m-2 max-h-[450px] overflow-y-auto text-sm md:text-base">
+                    <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      We're excited to invite you—and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      This celebration, exclusively for our valued members and their guests, will include guided tours, live fitness demonstrations, and complimentary refreshments. It's the perfect chance to experience our community-focused approach to wellness and introduce others to a space designed for all fitness levels.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      Bring your friends and family! We're offering a special one-day-only discount on memberships for all attendees.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-3">
+                      For questions or to RSVP, contact our customer service team at 555-1234.
+                    </p>
+                    <p className="font-['Inter',_sans-serif] mb-2">Warm regards,</p>
+                    <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
-                  </div>
-                </div>
-                
-                {/* Email Body */}
-                <div className="p-5 bg-white border-4 border-[#9d5a2f] m-2 max-h-[450px] overflow-y-auto text-base">
-                  <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    We're excited to invite you—and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    This celebration, exclusively for our valued members and their guests, will include guided tours, live fitness demonstrations, and complimentary refreshments. It's the perfect chance to experience our community-focused approach to wellness and introduce others to a space designed for all fitness levels.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    Bring your friends and family! We're offering a special one-day-only discount on memberships for all attendees.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-3">
-                    For questions or to RSVP, contact our customer service team at 555-1234.
-                  </p>
-                  <p className="font-['Inter',_sans-serif] mb-2">Warm regards,</p>
-                  <p className="font-['Inter',_sans-serif]">John Parker</p>
                 </div>
               </div>
             }
             rightContent={
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">What can be inferred about Ms. Nguyen's relationship with the fitness center?</h3>
+              <>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What can be inferred about Ms. Nguyen's relationship with the fitness center?</h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q14-option-${index}`}
-                          name="module2-q14"
-                          value={option}
-                          checked={selectedAnswer14 === option}
-                          onChange={() => setSelectedAnswer14(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer14 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q14-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q14-option-${index}`}
+                      name="module2-q14"
+                      value={option}
+                      checked={selectedAnswer14 === option}
+                      onChange={() => setSelectedAnswer14(option)}
+                      label={option}
+                      size="sm"
+                    />
                   ))}
                 </div>
-              </div>
+              </>
             }
-            />
-          </div>
+          />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question14(false);
+            setShowModule2Question13(true);
+          }}
+          onHome={() => {
+            setShowModule2Question14(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question14(false);
+            setShowModule2Question15(true);
+          }}
+        />
       </div>
     );
   };
 
-  // Module 2 - Question 15 (Email - Target audience)
+  // Module 2 - Question 15 (Email - Bakery stall question duplicate of Module 1 Q15)
   const Module2Question15Screen = () => {
     const [selectedAnswer15, setSelectedAnswer15] = useState<string | null>(null);
-    const correctAnswer = "Community members of all fitness levels";
+    const correctAnswer = "To get freshly baked bread and pastries before they are gone";
 
     const answerOptions = [
-      "Expert personal trainers",
-      "Top-tier athletes",
-      "Existing fitness-center members",
-      "Community members of all fitness levels"
+      "To get the free samples given in mornings",
+      "To get freshly baked bread and pastries before they are gone",
+      "To meet the famous baker",
+      "To take advantage of early morning discounts"
     ];
 
     return (
@@ -4272,7 +4016,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4311,8 +4055,8 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
+          <div className="px-3 md:px-8 py-3">
+            <div className="flex gap-4 md:gap-8">
               <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
@@ -4324,36 +4068,41 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">Read an email.</h2>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
           
-            <ResizableReadingLayout
-            showDivider={false}
-            leftPadding="pl-2 pr-6"
+          <ResizableReadingLayout
+            passageTitle="Read an email."
+            passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
+            questionInfo="3/3"
+            onBack={() => { setShowModule2Question15(false); setShowModule2Question14(true); }}
+            onPrev={() => { setShowModule2Question15(false); setShowModule2Question14(true); }}
+            onNext={() => { setShowModule2Question15(false); setShowModule2Question16(true); }}
+            onSubmit={() => { setShowModule2Question15(false); setShowModule2Question16(true); }}
             leftContent={
-              <div className="w-[580px] ml-0 border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
-                {/* Email Header Fields */}
-                <div className="bg-white">
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">nguyenbooklover@dmail.com</div>
+              <div className="relative w-full">
+                <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
+                  {/* Email Header Fields */}
+                  <div className="bg-white">
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">To:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">nguyenbooklover@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
+                    </div>
+                    <div className="flex border-b-2 border-[#9d5a2f]">
+                      <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
+                      <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
+                    </div>
                   </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">From:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">part.gymworkers@dmail.com</div>
-                  </div>
-                  <div className="flex border-b-2 border-[#9d5a2f]">
-                    <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-base">Subject:</div>
-                    <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
-                  </div>
-                </div>
-                
-                {/* Email Body */}
-                <div className="p-5 bg-white border-4 border-[#9d5a2f] m-2 max-h-[450px] overflow-y-auto text-base">
-                  <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
+                  
+                  {/* Email Body */}
+                  <div className="p-3 md:p-5 bg-white border-2 md:border-4 border-[#9d5a2f] m-1 md:m-2 max-h-[450px] overflow-y-auto text-sm md:text-base">
+                    <p className="font-['Inter',_sans-serif] mb-3">Dear Ms. Nguyen,</p>
                     <p className="font-['Inter',_sans-serif] mb-3">
-                      We're excited to invite you���and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
+                      We're excited to invite you—and your friends and family—to the grand opening of our new branch at 25 Orchid Street, happening next Monday. This event is a great opportunity to explore our state-of-the-art facility, featuring top-tier equipment, energizing group classes, and expert personal training.
                     </p>
                     <p className="font-['Inter',_sans-serif] mb-3">
                       This celebration, exclusively for our valued members and their guests, will include guided tours, live fitness demonstrations, and complimentary refreshments. It's the perfect chance to experience our community-focused approach to wellness and introduce others to a space designed for all fitness levels.
@@ -4367,40 +4116,50 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif] mb-2">Warm regards,</p>
                     <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
-              </div>
-            }
-            rightContent={
-              <div className="flex-1 max-w-xl">
-                <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">The new fitness center is intended for use by which of the following groups of people?</h3>
-                
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q15-option-${index}`}
-                          name="module2-q15"
-                          value={option}
-                          checked={selectedAnswer15 === option}
-                          onChange={() => setSelectedAnswer15(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer15 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q15-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
                 </div>
               </div>
             }
-            />
-          </div>
+            rightContent={
+              <>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">Why do customers go to the bakery stall early?</h3>
+                
+                <div className="space-y-3 md:space-y-4 lg:space-y-6">
+                  {answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`module2-q15-option-${index}`}
+                      name="module2-q15"
+                      value={option}
+                      checked={selectedAnswer15 === option}
+                      onChange={() => setSelectedAnswer15(option)}
+                      label={option}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              </>
+            }
+          />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question15(false);
+            setShowModule2Question14(true);
+          }}
+          onHome={() => {
+            setShowModule2Question15(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question15(false);
+            setShowModule2Question16(true);
+          }}
+        />
       </div>
     );
   };
@@ -4447,7 +4206,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4499,15 +4258,22 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
             <ResizableReadingLayout
               zoom={zoom16}
               onWheel={handleWheel16}
+              passageTitle="The Paradox of Choice"
+              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              questionInfo="1/5"
+              onBack={() => { setShowModule2Question16(false); setShowModule2Question15(true); }}
+              onPrev={() => { setShowModule2Question16(false); setShowModule2Question15(true); }}
+              onNext={() => { setShowModule2Question16(false); setShowModule2Question17(true); }}
+              onSubmit={() => { setShowModule2Question16(false); setShowModule2Question17(true); }}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                     <p>
                       The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                     </p>
@@ -4528,25 +4294,15 @@ function AppContent() {
                 
                   <div className="space-y-5">
                     {answerOptions.map((option, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="relative flex-shrink-0">
-                          <input
-                            type="radio"
-                            id={`module2-q16-option-${index}`}
-                            name="module2-q16"
-                            value={option}
-                            checked={selectedAnswer16 === option}
-                            onChange={() => setSelectedAnswer16(option)}
-                            className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                          />
-                          {selectedAnswer16 === option && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                          )}
-                        </div>
-                        <label htmlFor={`module2-q16-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                          {option}
-                        </label>
-                      </div>
+                      <RadioOption
+                        key={index}
+                        id={`module2-q16-option-${index}`}
+                        name="module2-q16"
+                        value={option}
+                        checked={selectedAnswer16 === option}
+                        onChange={() => setSelectedAnswer16(option)}
+                        label={option}
+                      />
                     ))}
                   </div>
                 </>
@@ -4554,6 +4310,25 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question16(false);
+            setShowModule2Question15(true);
+          }}
+          onHome={() => {
+            setShowModule2Question16(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question16(false);
+            setShowModule2Question17(true);
+          }}
+        />
       </div>
     );
   };
@@ -4591,7 +4366,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4643,13 +4418,20 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
             <ResizableReadingLayout
+              passageTitle="The Paradox of Choice"
+              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              questionInfo="2/5"
+              onBack={() => { setShowModule2Question17(false); setShowModule2Question16(true); }}
+              onPrev={() => { setShowModule2Question17(false); setShowModule2Question16(true); }}
+              onNext={() => { setShowModule2Question17(false); setShowModule2Question18(true); }}
+              onSubmit={() => { setShowModule2Question17(false); setShowModule2Question18(true); }}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -4670,25 +4452,15 @@ function AppContent() {
                 
                 <div className="space-y-5">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q17-option-${index}`}
-                          name="module2-q17"
-                          value={option}
-                          checked={selectedAnswer17 === option}
-                          onChange={() => setSelectedAnswer17(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer17 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q17-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q17-option-${index}`}
+                      name="module2-q17"
+                      value={option}
+                      checked={selectedAnswer17 === option}
+                      onChange={() => setSelectedAnswer17(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </div>
@@ -4696,6 +4468,25 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question17(false);
+            setShowModule2Question16(true);
+          }}
+          onHome={() => {
+            setShowModule2Question17(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question17(false);
+            setShowModule2Question18(true);
+          }}
+        />
       </div>
     );
   };
@@ -4733,7 +4524,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4785,13 +4576,20 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
             <ResizableReadingLayout
+              passageTitle="The Paradox of Choice"
+              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              questionInfo="3/5"
+              onBack={() => { setShowModule2Question18(false); setShowModule2Question17(true); }}
+              onPrev={() => { setShowModule2Question18(false); setShowModule2Question17(true); }}
+              onNext={() => { setShowModule2Question18(false); setShowModule2Question19(true); }}
+              onSubmit={() => { setShowModule2Question18(false); setShowModule2Question19(true); }}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -4812,25 +4610,15 @@ function AppContent() {
                 
                 <div className="space-y-5">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q18-option-${index}`}
-                          name="module2-q18"
-                          value={option}
-                          checked={selectedAnswer18 === option}
-                          onChange={() => setSelectedAnswer18(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer18 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q18-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q18-option-${index}`}
+                      name="module2-q18"
+                      value={option}
+                      checked={selectedAnswer18 === option}
+                      onChange={() => setSelectedAnswer18(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </div>
@@ -4838,6 +4626,25 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question18(false);
+            setShowModule2Question17(true);
+          }}
+          onHome={() => {
+            setShowModule2Question18(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question18(false);
+            setShowModule2Question19(true);
+          }}
+        />
       </div>
     );
   };
@@ -4875,7 +4682,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -4927,13 +4734,20 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
             <ResizableReadingLayout
+              passageTitle="The Paradox of Choice"
+              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              questionInfo="4/5"
+              onBack={() => { setShowModule2Question19(false); setShowModule2Question18(true); }}
+              onPrev={() => { setShowModule2Question19(false); setShowModule2Question18(true); }}
+              onNext={() => { setShowModule2Question19(false); setShowModule2Question20(true); }}
+              onSubmit={() => { setShowModule2Question19(false); setShowModule2Question20(true); }}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -4954,25 +4768,15 @@ function AppContent() {
                 
                 <div className="space-y-5">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q19-option-${index}`}
-                          name="module2-q19"
-                          value={option}
-                          checked={selectedAnswer19 === option}
-                          onChange={() => setSelectedAnswer19(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer19 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q19-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q19-option-${index}`}
+                      name="module2-q19"
+                      value={option}
+                      checked={selectedAnswer19 === option}
+                      onChange={() => setSelectedAnswer19(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </div>
@@ -4980,6 +4784,25 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question19(false);
+            setShowModule2Question18(true);
+          }}
+          onHome={() => {
+            setShowModule2Question19(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question19(false);
+            setShowModule2Question20(true);
+          }}
+        />
       </div>
     );
   };
@@ -5017,7 +4840,7 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -5042,8 +4865,20 @@ function AppContent() {
             <button 
               className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
               onClick={() => {
-                // End of Module 2
-                console.log("End of Module 2");
+                setShowModule2Question20(false);
+                // Save reading result to history
+                handleAddTestResult({
+                  type: 'TPO',
+                  category: 'Reading',
+                  testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`,
+                  date: new Date().toISOString(),
+                  score: 0,
+                  totalQuestions: 20,
+                  correctAnswers: 0,
+                  wrongAnswers: [],
+                  timeSpent: 0,
+                });
+                setShowEndModule2(true);
               }}
             >
               <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Submit</span>
@@ -5069,13 +4904,20 @@ function AppContent() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+        <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-center mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
             <ResizableReadingLayout
+              passageTitle="The Paradox of Choice"
+              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              questionInfo="5/5"
+              onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
+              onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
+              onNext={() => { setShowModule2Question20(false); handleAddTestResult({ type: 'TPO', category: 'Reading', testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); handleAddTestResult({ type: 'TPO', category: 'Reading', testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
               leftContent={
                 <>
-                  <div className="space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -5096,25 +4938,15 @@ function AppContent() {
                 
                 <div className="space-y-5">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`module2-q20-option-${index}`}
-                          name="module2-q20"
-                          value={option}
-                          checked={selectedAnswer20 === option}
-                          onChange={() => setSelectedAnswer20(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswer20 === option && option === correctAnswer && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`module2-q20-option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`module2-q20-option-${index}`}
+                      name="module2-q20"
+                      value={option}
+                      checked={selectedAnswer20 === option}
+                      onChange={() => setSelectedAnswer20(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </div>
@@ -5122,6 +4954,151 @@ function AppContent() {
             />
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule2Question20(false);
+            setShowModule2Question19(true);
+          }}
+          onHome={() => {
+            setShowModule2Question20(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule2Question20(false);
+            setShowEndModule2(true);
+          }}
+        />
+      </div>
+    );
+  };
+
+  // End of Module 2 Screen - Reading Complete, transition to Listening
+  const EndModule2Screen = () => {
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        {/* Header */}
+        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+          <div className="flex items-center">
+            <div 
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                setShowEndModule2(false);
+                if (testBankType === 'tpo') {
+                  setActiveTab('TPO');
+                } else {
+                  setActiveTab('Test');
+                }
+              }}
+            >
+              *toefl ibt
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* View Results Button */}
+            <button 
+              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+              onClick={() => {
+                setShowEndModule2(false);
+                setActiveTab('History');
+              }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+                <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zM5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z"/>
+              </svg>
+              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">View Results</span>
+            </button>
+            {/* Continue to Listening Button */}
+            <button 
+              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+              onClick={() => {
+                setShowEndModule2(false);
+                setActiveListeningM1Screen('intro');
+              }}
+            >
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Continue to Listening</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab */}
+        <div className="bg-white border-b border-gray-300">
+          <div className="px-8 py-3">
+            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
+              Reading
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
+          <div className="max-w-lg mx-auto text-center px-6">
+            <div className="w-20 h-20 mx-auto mb-6 bg-[#e6f5f5] rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-[#1e6b73]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4"/>
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-4">Reading Section Complete!</h1>
+            <p className="text-lg font-['Inter',_sans-serif] text-gray-600 mb-8">
+              You have completed all 20 reading questions. Your results have been saved and can be reviewed in the History tab.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                className="flex items-center justify-center gap-2 bg-[#1e6b73] text-white rounded-lg px-6 py-3 hover:bg-[#165b62] transition-colors font-['Inter',_sans-serif] font-semibold"
+                onClick={() => {
+                  setShowEndModule2(false);
+                  setActiveListeningM1Screen('intro');
+                }}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 12h.01M8 12a4 4 0 014-4"/>
+                </svg>
+                Continue to Listening Section
+              </button>
+              <button 
+                className="flex items-center justify-center gap-2 bg-white border-2 border-[#1e6b73] text-[#1e6b73] rounded-lg px-6 py-3 hover:bg-gray-50 transition-colors font-['Inter',_sans-serif] font-semibold"
+                onClick={() => {
+                  setShowEndModule2(false);
+                  setActiveTab('History');
+                }}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                View Results in History
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowEndModule2(false);
+            setShowModule2Question20(true);
+          }}
+          onHome={() => {
+            setShowEndModule2(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Test');
+            }
+          }}
+          onNext={() => {
+            setShowEndModule2(false);
+            setActiveListeningM1Screen('intro');
+          }}
+          nextLabel="Listening"
+        />
       </div>
     );
   };
@@ -5131,10 +5108,10 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
         {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 setShowReadingIntro(false);
                 if (testBankType === 'tpo') {
@@ -5150,13 +5127,13 @@ function AppContent() {
           
           {/* Begin Button */}
           <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
             onClick={() => {
               setShowReadingIntro(false);
               setShowModule1Intro(true);
             }}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>
@@ -5165,44 +5142,44 @@ function AppContent() {
 
         {/* Tab */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
+          <div className="px-4 sm:px-8 py-2 sm:py-3">
+            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block text-sm sm:text-base">
               Reading
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-4xl px-8 py-12">
-            <h2 className="text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
-            <div className="w-24 h-1 bg-gray-300 mb-8"></div>
+        <div className="flex-1 overflow-auto bg-white flex items-start sm:items-center justify-center">
+          <div className="max-w-4xl px-4 sm:px-8 py-6 sm:py-12">
+            <h2 className="hidden sm:block text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
+            <div className="hidden sm:block w-24 h-1 bg-gray-300 mb-8"></div>
             
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
+            <div className="space-y-4 sm:space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base">
               <p>
                 In the reading section, you will answer 35–48 questions to demonstrate how well you understand academic and non-academic texts in English. There are three types of tasks.
               </p>
 
-              <div className="my-8">
-                <table className="w-full border border-black">
+              <div className="my-4 sm:my-8">
+                <table className="w-full border border-black text-sm sm:text-base">
                   <thead>
                     <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Description</th>
+                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
+                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Description</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Complete the Words</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Complete the Words</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
                     </tr>
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
                     </tr>
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -5210,3417 +5187,28 @@ function AppContent() {
             </div>
           </div>
         </div>
-      </div>
-    );
-  };
-
-  // Listening Section Introduction Screen
-  const ListeningIntroScreen = () => {
-    useEffect(() => {
-      // Speak the instructions using British voice
-      if ('speechSynthesis' in window) {
-        const text = "In the listening section, you will answer 35 to 45 questions to demonstrate how well you understand spoken English. There are three types of tasks: Listen and Choose a Response, Conversations, and Lectures. You will not be able to return to previous questions.";
         
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Get available voices and find a British voice
-        const setVoice = () => {
-          const voices = window.speechSynthesis.getVoices();
-          
-          // Try to find British English voice (female or male)
-          const britishVoice = voices.find(voice => 
-            voice.lang === 'en-GB' || voice.lang === 'en-UK'
-          );
-          
-          utterance.voice = britishVoice || voices[0];
-          utterance.lang = 'en-GB';
-          utterance.rate = 0.9;
-          
-          window.speechSynthesis.speak(utterance);
-        };
-        
-        if (window.speechSynthesis.getVoices().length > 0) {
-          setVoice();
-        } else {
-          window.speechSynthesis.onvoiceschanged = setVoice;
-        }
-      }
-      
-      return () => {
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.cancel();
-        }
-      };
-    }, []);
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningIntro(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              ref={volumeButtonRef}
-              onClick={toggleVolume}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border border-[#0A6068] hover:bg-gray-50' 
-                  : 'bg-[#0A6068] border border-white hover:bg-[#084d52]'
-              }`}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#0A6068]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Begin Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningIntro(false);
-                setShowListeningModule1Intro(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-4xl">
-            <h2 className="text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Listening Section</h2>
-            <div className="w-24 h-1 bg-gray-300 mb-8"></div>
-            
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              <p>
-                In the listening section, you will answer 35–45 questions to demonstrate how well you understand spoken English. There are three types of tasks.
-              </p>
-
-              <div className="my-8">
-                <table className="w-full border border-black">
-                  <thead>
-                    <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Listen and Choose a Response</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Select the best response to the question or statement.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Conversations</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about short conversations.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Announcements and Academic Talks</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about announcements and academic talks.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <p>
-                You WILL NOT be able to return to previous questions.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+        <MobileQuestionNav 
+          onHome={() => {
+            setShowReadingIntro(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowReadingIntro(false);
+            setShowModule1Intro(true);
+          }}
+          hideBack={true}
+        />
       </div>
     );
   };
 
-  // Listening Module 1 Introduction Screen
-  const ListeningModule1IntroScreen = () => {
-    useEffect(() => {
-      // Speak the instructions using British voice
-      if ('speechSynthesis' in window) {
-        const text = "Module 1. You can use Next to move to the next question. The first task is Listen and Choose a Response. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.";
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Get available voices and find a British voice
-        const setVoice = () => {
-          const voices = window.speechSynthesis.getVoices();
-          
-          // Try to find British English voice (female or male)
-          const britishVoice = voices.find(voice => 
-            voice.lang === 'en-GB' || voice.lang === 'en-UK'
-          );
-          
-          utterance.voice = britishVoice || voices[0];
-          utterance.lang = 'en-GB';
-          utterance.rate = 0.9;
-          
-          window.speechSynthesis.speak(utterance);
-        };
-        
-        if (window.speechSynthesis.getVoices().length > 0) {
-          setVoice();
-        } else {
-          window.speechSynthesis.onvoiceschanged = setVoice;
-        }
-      }
-      
-      return () => {
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.cancel();
-        }
-      };
-    }, []);
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningModule1Intro(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              ref={volumeButtonRef}
-              onClick={toggleVolume}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border border-[#0A6068] hover:bg-gray-50' 
-                  : 'bg-[#0A6068] border border-white hover:bg-[#084d52]'
-              }`}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#0A6068]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningModule1Intro(false);
-                setShowListeningIntro(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Begin Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningModule1Intro(false);
-                setShowListeningQuestion1(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-['Inter',_sans-serif] font-bold text-black mb-8">Module 1</h1>
-            
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              <p className="text-lg">
-                In an actual test, the clock will show you how much time you have to complete each question.
-              </p>
-
-              <p className="text-lg">
-                You can use <strong>Next</strong> to move to the next question.
-              </p>
-
-              <p className="text-lg">
-                The first task is <strong>Listen and Choose a Response</strong>. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
-      </div>
-    );
-  };
-
-  // Listening Question 1 Screen
-  const ListeningQuestion1Screen = () => {
-    const [selectedAnswerL1, setSelectedAnswerL1] = useState<string | null>(null);
-
-    const answerOptions = [
-      "As a matter of fact, I was returning a book.",
-      "Yes, you can find it in the reference section.",
-      "I don't think I'll have enough time to do that.",
-      "Actually, I think I can get there a little earlier."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion1(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              ref={volumeButtonRef}
-              onClick={toggleVolume}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border border-[#0A6068] hover:bg-gray-50' 
-                  : 'bg-[#0A6068] border border-white hover:bg-[#084d52]'
-              }`}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#0A6068]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion1(false);
-                setShowListeningModule1Intro(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion1(false);
-                setShowListeningQuestion2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 1 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/559710b6fff885c2420dd98060822dbf40037a0f.png" 
-                    alt="Professional woman"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q1-option-${index}`}
-                          name="listening-q1"
-                          value={option}
-                          checked={selectedAnswerL1 === option}
-                          onChange={() => setSelectedAnswerL1(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL1 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q1-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
-      </div>
-    );
-  };
-
-  // Listening Question 2 Screen
-  const ListeningQuestion2Screen = () => {
-    const [selectedAnswerL2, setSelectedAnswerL2] = useState<string | null>(null);
-
-    const answerOptions = [
-      "I nearly missed the bus.",
-      "Every 30 minutes.",
-      "I can help you find it.",
-      "I'll take the subway instead."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion2(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              ref={volumeButtonRef}
-              onClick={toggleVolume}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border border-[#0A6068] hover:bg-gray-50' 
-                  : 'bg-[#0A6068] border border-white hover:bg-[#084d52]'
-              }`}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#0A6068]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion2(false);
-                setShowListeningQuestion1(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion2(false);
-                setShowListeningQuestion3(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 2 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/e6e44b102681fb9e4b0935b0297fb5945a6c9025.png" 
-                    alt="Professional man"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q2-option-${index}`}
-                          name="listening-q2"
-                          value={option}
-                          checked={selectedAnswerL2 === option}
-                          onChange={() => setSelectedAnswerL2(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL2 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q2-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
-      </div>
-    );
-  };
-
-  // Listening Question 3 Screen
-  const ListeningQuestion3Screen = () => {
-    const [selectedAnswerL3, setSelectedAnswerL3] = useState<string | null>(null);
-
-    const answerOptions = [
-      "Yes, you're allowed to do that.",
-      "Use the convenient chat feature.",
-      "No, I don't mind.",
-      "They provide good service."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion3(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              ref={volumeButtonRef}
-              onClick={toggleVolume}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border border-[#0A6068] hover:bg-gray-50' 
-                  : 'bg-[#0A6068] border border-white hover:bg-[#084d52]'
-              }`}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#0A6068]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion3(false);
-                setShowListeningQuestion2(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion3(false);
-                setShowListeningQuestion4(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 3 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png" 
-                    alt="Professional woman"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q3-option-${index}`}
-                          name="listening-q3"
-                          value={option}
-                          checked={selectedAnswerL3 === option}
-                          onChange={() => setSelectedAnswerL3(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL3 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q3-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
-      </div>
-    );
-  };
-
-  // Listening Question 4 Screen
-  const ListeningQuestion4Screen = () => {
-    const [selectedAnswerL4, setSelectedAnswerL4] = useState<string | null>(null);
-
-    const answerOptions = [
-      "Oh, that's too early.",
-      "How about tomorrow night then?",
-      "She arrived this afternoon.",
-      "No, that's not necessary."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion4(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion4(false);
-                setShowListeningQuestion3(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion4(false);
-                setShowListeningQuestion5(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 4 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/106c05c8ba610dce0c795a9263ccd84ed5cd1ad7.png" 
-                    alt="Professional woman"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q4-option-${index}`}
-                          name="listening-q4"
-                          value={option}
-                          checked={selectedAnswerL4 === option}
-                          onChange={() => setSelectedAnswerL4(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL4 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q4-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 5 Screen
-  const ListeningQuestion5Screen = () => {
-    const [selectedAnswerL5, setSelectedAnswerL5] = useState<string | null>(null);
-
-    const answerOptions = [
-      "No, it's my package.",
-      "It's just around the corner!",
-      "I think he's come home already.",
-      "Let's check the schedule online."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion5(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion5(false);
-                setShowListeningQuestion4(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion5(false);
-                setShowListeningQuestion6(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 5 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/87f17a73bd8b0e1ebeb8ca5d5f1270d6c6199407.png" 
-                    alt="Professional man"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q5-option-${index}`}
-                          name="listening-q5"
-                          value={option}
-                          checked={selectedAnswerL5 === option}
-                          onChange={() => setSelectedAnswerL5(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL5 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q5-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 6 Screen
-  const ListeningQuestion6Screen = () => {
-    const [selectedAnswerL6, setSelectedAnswerL6] = useState<string | null>(null);
-
-    const answerOptions = [
-      "I can help you with that.",
-      "You don't need any more information.",
-      "You have a lot of questions, don't you?",
-      "You haven't given me your number yet."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion6(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion6(false);
-                setShowListeningQuestion5(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion6(false);
-                setShowListeningQuestion7(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 6 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/024ebf1fdfffc719b343309ab50a05ed0dccca60.png" 
-                    alt="Professional woman"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q6-option-${index}`}
-                          name="listening-q6"
-                          value={option}
-                          checked={selectedAnswerL6 === option}
-                          onChange={() => setSelectedAnswerL6(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL6 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q6-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 7 Screen
-  const ListeningQuestion7Screen = () => {
-    const [selectedAnswerL7, setSelectedAnswerL7] = useState<string | null>(null);
-
-    const answerOptions = [
-      "Yes, there is a major power outage.",
-      "Yes, it's under renovation.",
-      "Yes, it's closed all day on Sunday.",
-      "Yes, they're having a huge sale."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion7(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion7(false);
-                setShowListeningQuestion6(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion7(false);
-                setShowListeningQuestion8(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 7 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/6088c89895169cfa510855d17be58c1aff14624b.png" 
-                    alt="Professional woman"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q7-option-${index}`}
-                          name="listening-q7"
-                          value={option}
-                          checked={selectedAnswerL7 === option}
-                          onChange={() => setSelectedAnswerL7(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL7 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q7-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 8 Screen
-  const ListeningQuestion8Screen = () => {
-    const [selectedAnswerL8, setSelectedAnswerL8] = useState<string | null>(null);
-
-    const answerOptions = [
-      "I overslept.",
-      "No, not very well.",
-      "Have you asked your professor?",
-      "I forgot to look."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion8(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion8(false);
-                setShowListeningQuestion7(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion8(false);
-                setShowListeningModule2Intro(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 8 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/4c55e2f8f9b3c54696a79ebe79ec1909ee5eb814.png" 
-                    alt="Professional man"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q8-option-${index}`}
-                          name="listening-q8"
-                          value={option}
-                          checked={selectedAnswerL8 === option}
-                          onChange={() => setSelectedAnswerL8(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL8 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q8-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Module 2 Intro Screen - Conversation, Announcement, and Academic Talk
-  const ListeningModule2IntroScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningModule2Intro(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningModule2Intro(false);
-                setShowListeningQuestion8(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Begin Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningModule2Intro(false);
-                setShowListeningConversation(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex items-start justify-center p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-4xl w-full">
-            <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8">
-              Conversation, Announcement, and Academic Talk
-            </h1>
-            
-            <div className="space-y-6">
-              <p className="text-gray-700 font-['Inter',_sans-serif] text-lg leading-relaxed">
-                You will listen only one time and then answer questions.
-              </p>
-              
-              <p className="text-gray-700 font-['Inter',_sans-serif] text-lg leading-relaxed">
-                In an actual test, the clock will indicate how much time you have to answer.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Conversation Screen
-  const ListeningConversationScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningConversation(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningConversation(false);
-                setShowListeningModule2Intro(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningConversation(false);
-                setShowListeningQuestion9(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
-          <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
-            Listen to a conversation.
-          </h1>
-          
-          {/* Conversation Image */}
-          <div className="flex-1 flex justify-center items-center">
-            <div className="w-96 h-96 flex items-center justify-center">
-              <ImageWithFallback 
-                src="figma:asset/8ab5a0faa349e01b474fec2471b80ae5d15ee9c2.png" 
-                alt="Two people having a conversation"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 9 Screen
-  const ListeningQuestion9Screen = () => {
-    const [selectedAnswerL9, setSelectedAnswerL9] = useState<string | null>(null);
-
-    const answerOptions = [
-      "See a play",
-      "Change her clothes",
-      "Go shopping",
-      "Eat dinner"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion9(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion9(false);
-                setShowListeningConversation(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion9(false);
-                setShowListeningQuestion10(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 9 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/6afae4c5ed26e9701533630f2d06ae8fbfc84e8a.png" 
-                    alt="Two people talking"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What does the woman imply that she was about to do?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q9-option-${index}`}
-                          name="listening-q9"
-                          value={option}
-                          checked={selectedAnswerL9 === option}
-                          onChange={() => setSelectedAnswerL9(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL9 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q9-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 10 Screen
-  const ListeningQuestion10Screen = () => {
-    const [selectedAnswerL10, setSelectedAnswerL10] = useState<string | null>(null);
-
-    const answerOptions = [
-      "He forgot what the woman wanted him to buy.",
-      "He forgot about the timing of their plans.",
-      "He forgot what they were going to eat for dinner.",
-      "He forgot to buy salmon and salad at the supermarket."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion10(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion10(false);
-                setShowListeningQuestion9(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion10(false);
-                setShowListeningConversation2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 10 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/ce0ff74f78d369c8fda983844c33ae9d0523ceb8.png" 
-                    alt="Two people talking"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">Why does the man say "I'd forget my head if it wasn't screwed on"?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q10-option-${index}`}
-                          name="listening-q10"
-                          value={option}
-                          checked={selectedAnswerL10 === option}
-                          onChange={() => setSelectedAnswerL10(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL10 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q10-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Conversation 2 Screen
-  const ListeningConversation2Screen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningConversation2(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningConversation2(false);
-                setShowListeningQuestion10(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningConversation2(false);
-                setShowListeningQuestion11(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
-          <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
-            Listen to a conversation.
-          </h1>
-          
-          {/* Conversation Image */}
-          <div className="flex-1 flex justify-center items-center">
-            <div className="w-96 h-96 flex items-center justify-center">
-              <ImageWithFallback 
-                src="figma:asset/8a3602403236fbaf317e334c954d119fb2258219.png" 
-                alt="Two people having a conversation"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 11 Screen
-  const ListeningQuestion11Screen = () => {
-    const [selectedAnswerL11, setSelectedAnswerL11] = useState<string | null>(null);
-
-    const answerOptions = [
-      "An air-conditioner is leaking.",
-      "A room is too hot.",
-      "An elevator needs maintenance.",
-      "A window will not open."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion11(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion11(false);
-                setShowListeningConversation2(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion11(false);
-                setShowListeningQuestion12(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 11 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/13659b077a6a6ad6e26a1ad0fdd7981f1a18954f.png" 
-                    alt="Two people talking"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">Why did the woman call a technician?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q11-option-${index}`}
-                          name="listening-q11"
-                          value={option}
-                          checked={selectedAnswerL11 === option}
-                          onChange={() => setSelectedAnswerL11(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL11 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q11-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 12 Screen
-  const ListeningQuestion12Screen = () => {
-    const [selectedAnswerL12, setSelectedAnswerL12] = useState<string | null>(null);
-
-    const answerOptions = [
-      "Finish an assignment early",
-      "Wait for a service agent",
-      "Open a door",
-      "Take a break early"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion12(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion12(false);
-                setShowListeningQuestion11(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion12(false);
-                setShowListeningAnnouncement(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 12 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/47697f6ab52bf594bc282812f5dd72d75a3bf242.png" 
-                    alt="Two people talking"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What does the woman suggest the man do?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q12-option-${index}`}
-                          name="listening-q12"
-                          value={option}
-                          checked={selectedAnswerL12 === option}
-                          onChange={() => setSelectedAnswerL12(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL12 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q12-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Announcement Screen
-  const ListeningAnnouncementScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningAnnouncement(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningAnnouncement(false);
-                setShowListeningQuestion12(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningAnnouncement(false);
-                setShowListeningQuestion13(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
-          <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
-            Listen to an announcement in a classroom.
-          </h1>
-          
-          {/* Announcement Image */}
-          <div className="flex-1 flex justify-center items-center">
-            <div className="w-96 h-96 flex items-center justify-center">
-              <ImageWithFallback 
-                src="figma:asset/a1c69f0392872fa2e403399482f99b4b6e513854.png" 
-                alt="Instructor making an announcement"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 13 Screen
-  const ListeningQuestion13Screen = () => {
-    const [selectedAnswerL13, setSelectedAnswerL13] = useState<string | null>(null);
-
-    const answerOptions = [
-      "A guest lecture",
-      "A different location for a class",
-      "Requirements for a class",
-      "A new university science course"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion13(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion13(false);
-                setShowListeningAnnouncement(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion13(false);
-                setShowListeningQuestion14(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 13 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/fb06c2fe27d261fd1b71284022aecb3403ddb56e.png" 
-                    alt="Instructor"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What is the announcement about?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q13-option-${index}`}
-                          name="listening-q13"
-                          value={option}
-                          checked={selectedAnswerL13 === option}
-                          onChange={() => setSelectedAnswerL13(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL13 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q13-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 14 Screen
-  const ListeningQuestion14Screen = () => {
-    const [selectedAnswerL14, setSelectedAnswerL14] = useState<string | null>(null);
-
-    const answerOptions = [
-      "To encourage students to read her work",
-      "To indicate why she was invited to the university",
-      "To compare her to other invited experts",
-      "To explain why students should arrive early"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion14(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion14(false);
-                setShowListeningQuestion13(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion14(false);
-                setShowListeningPodcast(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 14 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/efcab72f017251c00131ff0a1420fc0c66f12fd8.png" 
-                    alt="Instructor"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">Why does the professor mention Dr. Palmer's popularity?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q14-option-${index}`}
-                          name="listening-q14"
-                          value={option}
-                          checked={selectedAnswerL14 === option}
-                          onChange={() => setSelectedAnswerL14(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL14 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q14-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Podcast Screen
-  const ListeningPodcastScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningPodcast(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningPodcast(false);
-                setShowListeningQuestion14(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningPodcast(false);
-                setShowListeningQuestion15(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
-          <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
-            Listen to a talk on a podcast about psychology.
-          </h1>
-          
-          {/* Podcast Image */}
-          <div className="flex-1 flex justify-center items-center">
-            <div className="w-96 h-96 flex items-center justify-center">
-              <ImageWithFallback 
-                src="figma:asset/66701e530788c1c664d05a246d0567f5889c51d3.png" 
-                alt="Woman in purple sweater"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 15 Screen
-  const ListeningQuestion15Screen = () => {
-    const [selectedAnswerL15, setSelectedAnswerL15] = useState<string | null>(null);
-
-    const answerOptions = [
-      "How psychologists study attention",
-      "How to keep the mind focused",
-      "Two types of fascination",
-      "The benefits of hard fascination"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion15(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion15(false);
-                setShowListeningPodcast(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion15(false);
-                setShowListeningQuestion16(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 15 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/4e77653c981388d7af50fd23fa950dabf10c0022.png" 
-                    alt="Woman in purple sweater"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What is the topic of the talk?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q15-option-${index}`}
-                          name="listening-q15"
-                          value={option}
-                          checked={selectedAnswerL15 === option}
-                          onChange={() => setSelectedAnswerL15(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL15 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q15-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 16 Screen
-  const ListeningQuestion16Screen = () => {
-    const [selectedAnswerL16, setSelectedAnswerL16] = useState<string | null>(null);
-
-    const answerOptions = [
-      "To compare different types of movies",
-      "To introduce a concept in psychology",
-      "To explain how movies affect emotions",
-      "To encourage listeners to watch more movies"
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion16(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion16(false);
-                setShowListeningQuestion15(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion16(false);
-                setShowListeningQuestion17(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 16 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/09ba679e2cd7019b60211c3199dc7fa58f690120.png" 
-                    alt="Woman in purple sweater"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">Why does the speaker mention a movie?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q16-option-${index}`}
-                          name="listening-q16"
-                          value={option}
-                          checked={selectedAnswerL16 === option}
-                          onChange={() => setSelectedAnswerL16(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL16 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q16-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 17 Screen
-  const ListeningQuestion17Screen = () => {
-    const [selectedAnswerL17, setSelectedAnswerL17] = useState<string | null>(null);
-
-    const answerOptions = [
-      "It is similar to her experience watching a good movie.",
-      "Her mind has space for thoughts unrelated to nature.",
-      "She needs to put in special effort to stay focused on flowers and trees.",
-      "She gets mental fatigue from her mind engaging in hard fascination."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion17(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion17(false);
-                setShowListeningQuestion16(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion17(false);
-                setShowListeningQuestion18(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 17 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/54932e093e04cac6cac7aaabab49b2c98893a14f.png" 
-                    alt="Woman in purple sweater"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What does the speaker say about her walk in the park?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q17-option-${index}`}
-                          name="listening-q17"
-                          value={option}
-                          checked={selectedAnswerL17 === option}
-                          onChange={() => setSelectedAnswerL17(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL17 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[14px] h-[14px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q17-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Question 18 Screen
-  const ListeningQuestion18Screen = () => {
-    const [selectedAnswerL18, setSelectedAnswerL18] = useState<string | null>(null);
-
-    const answerOptions = [
-      "It is involved in soft fascination.",
-      "It leads to irritability and stress.",
-      "It is easily tired from overuse.",
-      "Its effect is unknown to psychologists."
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningQuestion18(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button 
-              className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => setShowVolumeModal(true)}
-            >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningQuestion18(false);
-                setShowListeningQuestion17(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningQuestion18(false);
-                setShowListeningEndModule1(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Listening
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 18 of 18
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-8 overflow-auto bg-white border border-black">
-          <div className="max-w-5xl ml-auto mr-[12%]">
-            <div className="flex gap-16 items-start mt-12">
-              {/* Left side - Image */}
-              <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                  <ImageWithFallback 
-                    src="figma:asset/1ea056cdd00efe83fc60681cea24b852bd1755a6.png" 
-                    alt="Woman in purple sweater"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Options */}
-              <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-xl font-semibold font-['Inter',_sans-serif] text-gray-800 mb-6">What does the speaker say about Default Mode Network?</h2>
-                <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`listening-q18-option-${index}`}
-                          name="listening-q18"
-                          value={option}
-                          checked={selectedAnswerL18 === option}
-                          onChange={() => setSelectedAnswerL18(option)}
-                          className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black`}
-                        />
-                        {selectedAnswerL18 === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`listening-q18-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening End of Module 1 Screen
-  const ListeningEndModule1Screen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningEndModule1(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningEndModule1(false);
-                setShowListeningQuestion18(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningEndModule1(false);
-                setShowListeningModule2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex items-center justify-center p-12 overflow-auto bg-white">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-['Inter',_sans-serif] font-bold text-black mb-8">
-              End of Module 1
-            </h1>
-            
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              <p className="text-lg">This is the end of Module 1 of the Listening section.</p>
-              
-              <p className="text-lg">You will now begin Module 2.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Listening Module 2 Screen
-  const ListeningModule2Screen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowListeningModule2(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowListeningModule2(false);
-                setShowListeningEndModule1(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
-            </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowListeningModule2(false);
-                setShowListeningM2Q1(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab with Section title */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Listening
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 flex items-center justify-center p-12 overflow-auto bg-white">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-['Inter',_sans-serif] font-bold text-black mb-8">
-              Module 2
-            </h1>
-            
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              <p className="text-lg">In an actual test, the clock will show you how much time you have to complete each question.</p>
-              
-              <p className="text-lg">
-                You can use <strong>Next</strong> to move to the next question.
-              </p>
-              
-              <p className="text-lg">
-                The first task is <strong>Listen and Choose a Response</strong>. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // [EXTRACTED] Listening M1 screens → /components/ListeningM1Screens.tsx
+  // [Dead block 2 fully removed - Listening M1 inline screens deleted, now in /components/ListeningM1Screens.tsx]
 
   // Volume Modal Component
   const VolumeModal = () => {
@@ -8699,8 +5287,15 @@ function AppContent() {
 
   // Read Notice Test Screen Component
   const ReadNoticeTestScreen = () => {
-    const correctAnswer = "A bank";
-    const answerOptions = [
+    // Get dynamic question data from CMS
+    const sectionData = getCurrentSectionData('Reading');
+    const dailyLifeQuestion = sectionData?.questions.find(q => 
+      q.questionType?.includes('Read in Daily Life') || q.questionType?.includes('Practical Reading') || q.questionType?.includes('Functional Text')
+    );
+    
+    // Use CMS data if available, otherwise fall back to hardcoded data
+    const correctAnswer = dailyLifeQuestion?.correctAnswer || "A bank";
+    const answerOptions = dailyLifeQuestion?.options || [
       "An Internet provider",
       "A computer company", 
       "A paper company",
@@ -8714,90 +5309,64 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
+        <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
+          <div className="flex items-center shrink-0">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight"
               onClick={() => {
                 setShowReadNoticeTest(false);
                 setShowFillBlanksTest(false);
                 setShowReadingSection(false);
                 setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
+                if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Real Test'); }
               }}
             >
               *toefl ibt
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Volume Button */}
-            <button className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
+              <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Volume</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
             </button>
-            
-            {/* Back Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowReadNoticeTest(false);
-                setShowFillBlanksTest(true);
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-              </svg>
+            <button className="hidden sm:flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors" onClick={() => { setShowReadNoticeTest(false); setShowFillBlanksTest(true); }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
               <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
             </button>
-            
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowReadNoticeTest(false);
-                setShowReadNoticeTest2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
+            <button className="flex items-center gap-1 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors" onClick={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}>
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs sm:text-base">Next</span>
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
             </button>
           </div>
         </div>
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 11 of 20
-              </div>
+          <div className="px-3 sm:px-8 py-2 sm:py-3">
+            <div className="flex gap-4 sm:gap-8">
+              <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
+              <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">Question 11 of 20</div>
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-hidden bg-white border border-black">
-          <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-black py-8 text-center">Read a notice.</h1>
+        <div className="flex-1 overflow-auto bg-white border border-black">
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read a notice.</h1>
           
           <ResizableReadingLayout
+            passageTitle="Read a notice."
+            passageSummary={<><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
+            questionInfo="1/1"
+            onBack={() => { setShowReadNoticeTest(false); setShowFillBlanksTest(true); }}
+            onNext={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}
+            onSubmit={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}
             leftContent={
-              <div className="border-[3px] border-black p-6 ml-12">
-                <div className="border-2 border-black p-6">
-                  <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-center mb-6">Municipal Charter</h2>
-                  <p className="text-center font-['Inter',_sans-serif] font-medium mb-6">Sign up for paperless billing statements today.</p>
-                  
-                  <p className="font-['Inter',_sans-serif] leading-relaxed">
+              <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6 ml-0 md:ml-4 lg:ml-12">
+                <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                  <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
+                  <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-medium mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
+                  <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed">
                     Safe, convenient, easy. Enroll in paperless billing to receive 
                     monthly savings account statements in an electronic PDF 
                     document. Access your Municipal Charter account through 
@@ -8809,35 +5378,46 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-2xl font-['Inter',_sans-serif] font-bold text-black mb-10">What type of business issued the notice?</h3>
-                
-                <div className="space-y-6">
+                <h3 className="text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-6 sm:mb-10">What type of business issued the notice?</h3>
+                <div className="space-y-5 sm:space-y-6">
                   {answerOptions.map((option, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="relative flex-shrink-0">
-                        <input
-                          type="radio"
-                          id={`option-${index}`}
-                          name="business-type"
-                          value={option}
-                          checked={selectedAnswer === option}
-                          onChange={() => handleAnswerSelect(option)}
-                          className="w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] border-black"
-                        />
-                        {selectedAnswer === option && (
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18px] h-[18px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                        )}
-                      </div>
-                      <label htmlFor={`option-${index}`} className="font-['Inter',_sans-serif] text-black cursor-pointer leading-relaxed text-lg">
-                        {option}
-                      </label>
-                    </div>
+                    <RadioOption
+                      key={index}
+                      id={`option-${index}`}
+                      name="business-type"
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => handleAnswerSelect(option)}
+                      label={option}
+                    />
                   ))}
                 </div>
               </>
             }
           />
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(true);
+          }}
+          onHome={() => {
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowReadNoticeTest(false);
+            setShowReadNoticeTest2(true);
+          }}
+        />
       </div>
     );
   };
@@ -8846,31 +5426,118 @@ function AppContent() {
   const FillBlanksTestScreen = () => {
     const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
     const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
+    const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
     
     const CHAR_UNIT_WIDTH = 20; // CSS background-size의 가로 폭과 일치
+    const isMobileFB = typeof window !== 'undefined' && window.innerWidth < 640;
     
-    const inputs = [
-      { id: 0, maxLength: 3 }, // might
-      { id: 1, maxLength: 2 }, // that
-      { id: 2, maxLength: 3 }, // people
-      { id: 3, maxLength: 2 }, // only
-      { id: 4, maxLength: 3 }, // basic
-      { id: 5, maxLength: 4 }, // However
-      { id: 6, maxLength: 1 }, // is
-      { id: 7, maxLength: 2 }, // from
-      { id: 8, maxLength: 3 }, // record
-      { id: 9, maxLength: 4 }, // dance
-    ];
+    // Get dynamic question data from CMS
+    const sectionData = getCurrentSectionData('Reading');
+    const fillBlanksQuestion = sectionData?.questions.find(q => 
+      q.questionType?.includes('Complete Words') || q.questionType?.includes('Fill in the Blanks') || q.questionType?.includes('Cloze Test')
+    );
+    
+    // Debug logging
+    React.useEffect(() => {
+      console.log('🔍 FillBlanksTest Debug:', {
+        currentTest,
+        testBankType,
+        testData: getCurrentTestData(),
+        sectionData,
+        fillBlanksQuestion,
+        hasPassageText: !!fillBlanksQuestion?.passageText,
+        hasBlanks: !!fillBlanksQuestion?.blanks
+      });
+    }, []);
+    
+    // Use CMS data if available, otherwise fall back to hardcoded data
+    const inputs = fillBlanksQuestion?.blanks 
+      ? fillBlanksQuestion.blanks.map((blank, idx) => ({
+          id: idx,
+          maxLength: blank.maxLength,
+          answer: blank.answer
+        }))
+      : [
+        { id: 0, maxLength: 3, answer: 'ght' }, // might
+        { id: 1, maxLength: 2, answer: 'at' }, // that
+        { id: 2, maxLength: 3, answer: 'ple' }, // people
+        { id: 3, maxLength: 2, answer: 'ly' }, // only
+        { id: 4, maxLength: 3, answer: 'sic' }, // basic
+        { id: 5, maxLength: 4, answer: 'ever' }, // However
+        { id: 6, maxLength: 1, answer: 's' }, // is
+        { id: 7, maxLength: 2, answer: 'om' }, // from
+        { id: 8, maxLength: 3, answer: 'ord' }, // record
+        { id: 9, maxLength: 4, answer: 'nces' }, // dances
+      ];
+    
+    const questionText = fillBlanksQuestion?.questionText || 'Fill in the missing letters in the paragraph.';
+    const passageText = fillBlanksQuestion?.passageText || '';
+
+    // Helper function to render passage with input fields
+    const renderPassageWithInputs = () => {
+      if (!passageText) {
+        // Return hardcoded default passage
+        return null; // Will use existing JSX below
+      }
+      
+      // Parse passage text with [0], [1], etc. markers
+      const parts: any[] = [];
+      let key = 0;
+      
+      // Find all [N] markers and split text
+      const regex = /\[(\d+)\]/g;
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = regex.exec(passageText)) !== null) {
+        const inputId = parseInt(match[1]);
+        const beforeText = passageText.substring(lastIndex, match.index);
+        
+        if (beforeText) {
+          parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
+        }
+        
+        parts.push(
+          <input
+            key={`input-${inputId}`}
+            type="text"
+            data-input-id={inputId}
+            className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
+            maxLength={inputs[inputId]?.maxLength || 5}
+            value={inputValues[inputId] || ''}
+            onChange={(e) => handleInputChange(inputId, e.target.value)}
+            onFocus={() => handleFocus(inputId)}
+            onBlur={() => handleBlur(inputId)}
+            onKeyPress={(e) => handleKeyPress(e, inputId)}
+            style={{ width: getInputWidth(inputId) }}
+          />
+        );
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < passageText.length) {
+        parts.push(<span key={`text-${key++}`}>{passageText.substring(lastIndex)}</span>);
+      }
+      
+      return parts;
+    };
 
     const handleInputChange = (id: number, value: string) => {
       setInputValues(prev => ({ ...prev, [id]: value }));
       
+      // Mark as filled when all characters are entered
+      if (value.length >= inputs[id].maxLength) {
+        setFilledInputs(prev => ({ ...prev, [id]: true }));
+      } else {
+        setFilledInputs(prev => ({ ...prev, [id]: false }));
+      }
+      
       // Auto-focus next input when current input reaches maxLength
       if (value.length === inputs[id].maxLength) {
-        // Find next input index
         const nextId = id + 1;
         if (nextId < inputs.length) {
-          // Focus next input after a small delay to ensure state update
           setTimeout(() => {
             const nextInput = document.querySelector(`input[data-input-id="${nextId}"]`) as HTMLInputElement;
             if (nextInput) {
@@ -8882,7 +5549,11 @@ function AppContent() {
     };
 
     const handleFocus = (id: number) => {
-      setFilledInputs(prev => ({ ...prev, [id]: false }));
+      // Keep filled state if input is already fully filled
+      const value = inputValues[id] || '';
+      if (value.length < inputs[id].maxLength) {
+        setFilledInputs(prev => ({ ...prev, [id]: false }));
+      }
     };
 
     const handleBlur = (id: number) => {
@@ -8901,75 +5572,108 @@ function AppContent() {
     const getTextWidth = (text: string): number => {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
-      if (!context) return text.length * 25; // fallback increased
+      if (!context) return text.length * 14;
       
-      // Match the actual font used in the inputs
-      context.font = "bold 1.5rem 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+      // Match the actual paragraph font (normal weight, not bold)
+      context.font = "1.25rem 'Inter', sans-serif";
       const metrics = context.measureText(text);
       
-      // Add more padding to ensure full text visibility (increased from 8 to 24)
-      return Math.ceil(metrics.width) + 24;
+      // Minimal extra space for natural text flow
+      return Math.ceil(metrics.width) + 4;
+    };
+
+    // Calculate input width: keep full size while typing, shrink only when fully filled
+    const getInputWidth = (id: number): string => {
+      const value = inputValues[id] || '';
+      const maxLen = inputs[id].maxLength;
+      if (value.length >= maxLen) {
+        // Fully filled: shrink to fit actual text width
+        return `${getTextWidth(value)}px`;
+      }
+      // Empty or partially filled: maintain full dashed width
+      // On mobile, subtract one dash unit to compensate for rendering difference
+      const mobileOffset = isMobileFB ? CHAR_UNIT_WIDTH : 0;
+      return `${maxLen * CHAR_UNIT_WIDTH - mobileOffset}px`;
     };
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowFillBlanksTest(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
-                } else {
-                  setActiveTab('Real Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowFillBlanksTest(false);
-                setShowReadNoticeTest(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation tabs with question number */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="flex gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-                Reading
-              </div>
-              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 1-10
+        {/* Content layout */}
+        <div className="flex-1 flex flex-col overflow-auto">
+          {/* Header */}
+          <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
+            <div className="flex items-center min-w-0 shrink">
+              <div 
+                className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate"
+                onClick={() => {
+                  setShowFillBlanksTest(false);
+                  setShowReadingSection(false);
+                  setShowToeflTest(false);
+                  if (testBankType === 'tpo') {
+                    setActiveTab('TPO');
+                  } else {
+                    setActiveTab('Real Test');
+                  }
+                }}
+              >
+                *toefl ibt
               </div>
             </div>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Volume Button */}
+              <button 
+                ref={fbVolumeButtonRef as React.RefObject<HTMLButtonElement>}
+                className={`flex items-center gap-1.5 sm:gap-3 border rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 transition-colors ${
+                  isFBVolumeOpen 
+                    ? 'bg-white border-white text-[#1e6b73]' 
+                    : 'bg-[#0A6068] border-white text-white hover:bg-[#084d52]'
+                }`}
+                onClick={toggleFBVolume}
+              >
+                <span className="font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Volume</span>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill={isFBVolumeOpen ? '#1e6b73' : 'white'}>
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+              </button>
+              
+              {/* Next Button */}
+              <button 
+                className="flex items-center gap-1.5 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  setShowFillBlanksTest(false);
+                  setShowReadNoticeTest(true);
+                }}
+              >
+                <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068">
+                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Main content */}
-        <div className="flex-1 p-5 md:p-12 overflow-auto bg-white flex flex-col items-center justify-center">
-          <h1 className="mb-12 md:mb-16 text-2xl md:text-[2rem] text-black font-['Segoe_UI',_Tahoma,_Geneva,_Verdana,_sans-serif]">
+          {/* Navigation tabs - same width as header & content */}
+          <div className="bg-white border-b border-gray-300 shrink-0">
+            <div className="px-3 sm:px-8 py-2 sm:py-3">
+              <div className="flex gap-4 sm:gap-8">
+                <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">
+                  Reading
+                </div>
+                <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+                  Question 1-10
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 bg-white overflow-auto">
+            <div className="p-4 sm:p-5 md:p-12 pt-8 sm:pt-16 md:pt-24 flex flex-col items-center">
+          <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black font-bold font-['Inter',_sans-serif] text-center px-2">
             Fill in the missing letters in the paragraph.
           </h1>
 
-          <div className="max-w-[900px] text-xl md:text-[1.5rem] leading-relaxed md:leading-[1.8] text-[#333] font-['Segoe_UI',_Tahoma,_Geneva,_Verdana,_sans-serif] px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+          <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
             We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi<input
               type="text"
               data-input-id="0"
@@ -8980,11 +5684,7 @@ function AppContent() {
               onFocus={() => handleFocus(0)}
               onBlur={() => handleBlur(0)}
               onKeyPress={(e) => handleKeyPress(e, 0)}
-              style={{
-                width: inputValues[0] && inputValues[0].length > 0
-                  ? `${getTextWidth(inputValues[0])}px`
-                  : `${inputs[0].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(0) }}
             /> think th<input
               type="text"
               data-input-id="1"
@@ -8995,11 +5695,7 @@ function AppContent() {
               onFocus={() => handleFocus(1)}
               onBlur={() => handleBlur(1)}
               onKeyPress={(e) => handleKeyPress(e, 1)}
-              style={{
-                width: inputValues[1] && inputValues[1].length > 0
-                  ? `${getTextWidth(inputValues[1])}px`
-                  : `${inputs[1].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(1) }}
             /> prehistoric peo<input
               type="text"
               data-input-id="2"
@@ -9010,11 +5706,7 @@ function AppContent() {
               onFocus={() => handleFocus(2)}
               onBlur={() => handleBlur(2)}
               onKeyPress={(e) => handleKeyPress(e, 2)}
-              style={{
-                width: inputValues[2] && inputValues[2].length > 0
-                  ? `${getTextWidth(inputValues[2])}px`
-                  : `${inputs[2].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(2) }}
             /> concentrated on<input
               type="text"
               data-input-id="3"
@@ -9025,11 +5717,7 @@ function AppContent() {
               onFocus={() => handleFocus(3)}
               onBlur={() => handleBlur(3)}
               onKeyPress={(e) => handleKeyPress(e, 3)}
-              style={{
-                width: inputValues[3] && inputValues[3].length > 0
-                  ? `${getTextWidth(inputValues[3])}px`
-                  : `${inputs[3].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(3) }}
             /> on ba<input
               type="text"
               data-input-id="4"
@@ -9040,11 +5728,7 @@ function AppContent() {
               onFocus={() => handleFocus(4)}
               onBlur={() => handleBlur(4)}
               onKeyPress={(e) => handleKeyPress(e, 4)}
-              style={{
-                width: inputValues[4] && inputValues[4].length > 0
-                  ? `${getTextWidth(inputValues[4])}px`
-                  : `${inputs[4].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(4) }}
             /> survival. How<input
               type="text"
               data-input-id="5"
@@ -9055,11 +5739,7 @@ function AppContent() {
               onFocus={() => handleFocus(5)}
               onBlur={() => handleBlur(5)}
               onKeyPress={(e) => handleKeyPress(e, 5)}
-              style={{
-                width: inputValues[5] && inputValues[5].length > 0
-                  ? `${getTextWidth(inputValues[5])}px`
-                  : `${inputs[5].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(5) }}
             />, it i<input
               type="text"
               data-input-id="6"
@@ -9070,11 +5750,7 @@ function AppContent() {
               onFocus={() => handleFocus(6)}
               onBlur={() => handleBlur(6)}
               onKeyPress={(e) => handleKeyPress(e, 6)}
-              style={{
-                width: inputValues[6] && inputValues[6].length > 0
-                  ? `${getTextWidth(inputValues[6])}px`
-                  : `${inputs[6].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(6) }}
             /> clear fr<input
               type="text"
               data-input-id="7"
@@ -9085,11 +5761,7 @@ function AppContent() {
               onFocus={() => handleFocus(7)}
               onBlur={() => handleBlur(7)}
               onKeyPress={(e) => handleKeyPress(e, 7)}
-              style={{
-                width: inputValues[7] && inputValues[7].length > 0
-                  ? `${getTextWidth(inputValues[7])}px`
-                  : `${inputs[7].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(7) }}
             /> the rec<input
               type="text"
               data-input-id="8"
@@ -9100,11 +5772,7 @@ function AppContent() {
               onFocus={() => handleFocus(8)}
               onBlur={() => handleBlur(8)}
               onKeyPress={(e) => handleKeyPress(e, 8)}
-              style={{
-                width: inputValues[8] && inputValues[8].length > 0
-                  ? `${getTextWidth(inputValues[8])}px`
-                  : `${inputs[8].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(8) }}
             /> that dan<input
               type="text"
               data-input-id="9"
@@ -9115,67 +5783,36 @@ function AppContent() {
               onFocus={() => handleFocus(9)}
               onBlur={() => handleBlur(9)}
               onKeyPress={(e) => handleKeyPress(e, 9)}
-              style={{
-                width: inputValues[9] && inputValues[9].length > 0
-                  ? `${getTextWidth(inputValues[9])}px`
-                  : `${inputs[9].maxLength * CHAR_UNIT_WIDTH}px`
-              }}
+              style={{ width: getInputWidth(9) }}
             /> was important to them.
           </div>
+            </div>
+          </div>
         </div>
-
-        <style>{`
-          .gap-input {
-            display: inline-block;
-            background-color: #d8d8d8;
-            border: none;
-            border-radius: 3px;
-            background-image: linear-gradient(to right, #333 0%, #333 60%, transparent 60%, transparent 100%);
-            background-size: 20px 2px;
-            background-position: left bottom 3px;
-            background-repeat: repeat-x;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #000000;
-            padding: 0 8px;
-            margin: 0;
-            outline: none;
-            text-align: center;
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: 4px;
-            height: 1.6em;
-            vertical-align: baseline;
-            transition: width 0.2s ease, background-color 0.2s;
-            box-sizing: border-box;
-            line-height: 1.6;
-            min-width: 30px;
-          }
-
-          .gap-input.filled {
-            background-image: none;
-            background-color: #d8d8d8;
-            font-weight: 600;
-            font-size: 1.5rem;
-            letter-spacing: normal;
-            text-align: center;
-            padding: 0 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            box-sizing: border-box;
-            color: #000000;
-            line-height: 1.6;
-            min-width: 30px;
-          }
-
-          .gap-input:focus {
-            background-color: #ccc;
-          }
-
-          .gap-input::selection {
-            background: #888;
-            color: white;
-          }
-        `}</style>
+        
+        {/* Volume Control Dropdown */}
+        <VolumeControl isOpen={isFBVolumeOpen} onClose={closeFBVolume} buttonRef={fbVolumeButtonRef} />
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowFillBlanksTest(false);
+            setShowModule1Details(true);
+          }}
+          onHome={() => {
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowFillBlanksTest(false);
+            setShowReadNoticeTest(true);
+          }}
+        />
       </div>
     );
   };
@@ -9185,10 +5822,10 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
@@ -9204,13 +5841,13 @@ function AppContent() {
           </div>
           {/* Begin Button */}
           <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
             onClick={() => {
               setShowReadingSection(false);
               setShowModule1Intro(true);
             }}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>
@@ -9219,45 +5856,45 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
+          <div className="px-4 sm:px-8 py-2 sm:py-3">
+            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
               Reading
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-4xl">
-            <h2 className="text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
-            <div className="w-24 h-1 bg-gray-300 mb-8"></div>
+        <div className="flex-1 overflow-auto bg-white flex items-start sm:items-center justify-center">
+          <div className="max-w-4xl px-4 sm:px-8 py-6 sm:py-12">
+            <h2 className="hidden sm:block text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
+            <div className="hidden sm:block w-24 h-1 bg-gray-300 mb-8"></div>
             
-            <div className="space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
+            <div className="space-y-4 sm:space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base">
               <p>
                 In the reading section, you will answer 35–48 questions to demonstrate how well you 
                 understand academic and non-academic texts in English. There are three types of tasks.
               </p>
 
-              <div className="my-8">
-                <table className="w-full border border-black">
+              <div className="my-4 sm:my-8">
+                <table className="w-full border border-black text-sm sm:text-base">
                   <thead>
                     <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
-                      <th className="border border-black px-6 py-3 text-left font-['Inter',_sans-serif]">Description</th>
+                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
+                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Description</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Complete the Words</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Complete the Words</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
                     </tr>
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
                     </tr>
                     <tr>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
-                      <td className="border border-black px-6 py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
+                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -9265,6 +5902,23 @@ function AppContent() {
             </div>
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onHome={() => {
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowReadingSection(false);
+            setShowModule1Intro(true);
+          }}
+          hideBack={true}
+        />
       </div>
     );
   };
@@ -9274,10 +5928,10 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 setShowModule1Intro(false);
                 setShowReadingSection(false);
@@ -9294,13 +5948,13 @@ function AppContent() {
           </div>
           {/* Begin Button */}
           <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
             onClick={() => {
               setShowModule1Intro(false);
               setShowFillBlanksTest(true);
             }}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>
@@ -9309,33 +5963,54 @@ function AppContent() {
 
         {/* Navigation tabs */}
         <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
+          <div className="px-4 sm:px-8 py-2 sm:py-3">
+            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
               Reading
             </div>
           </div>
         </div>
 
         {/* Main content - Centered */}
-        <div className="flex-1 flex items-center justify-center bg-white p-12">
+        <div className="flex-1 flex items-start sm:items-center justify-center bg-white p-6 sm:p-12 pt-8 sm:pt-12">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl font-['Inter',_sans-serif] font-bold text-black mb-8">Module 1</h1>
+            <h1 className="text-2xl sm:text-4xl font-['Inter',_sans-serif] font-bold text-black mb-4 sm:mb-8">Module 1</h1>
             
-            <div className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed space-y-6">
-              <p className="text-lg">
+            <div className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed space-y-4 sm:space-y-6">
+              <p className="text-base sm:text-lg">
                 The clock will show you how much time you have to complete Module 1.
               </p>
               
-              <p className="text-lg">
+              <p className="text-base sm:text-lg">
                 You can use <strong>Next</strong> and <strong>Back</strong> to move to the next question or return to previous questions within the same module.
               </p>
 
-              <p className="text-lg">
+              <p className="text-base sm:text-lg">
                 You WILL NOT be able to return to Module 1 once you have begun Module 2.
               </p>
             </div>
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onBack={() => {
+            setShowModule1Intro(false);
+            setShowReadingIntro(true);
+          }}
+          onHome={() => {
+            setShowModule1Intro(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Intro(false);
+            setShowFillBlanksTest(true);
+          }}
+        />
       </div>
     );
   };
@@ -9413,6 +6088,25 @@ function AppContent() {
             </div>
           </div>
         </div>
+        
+        <MobileQuestionNav 
+          onHome={() => {
+            setShowModule1Details(false);
+            setShowModule1Intro(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              setActiveTab('TPO');
+            } else {
+              setActiveTab('Real Test');
+            }
+          }}
+          onNext={() => {
+            setShowModule1Details(false);
+            setShowFillBlanksTest(true);
+          }}
+          hideBack
+        />
       </div>
     );
   };
@@ -9517,34 +6211,78 @@ function AppContent() {
   const TPOCard = ({ number }: { number: number }) => {
     const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
-    const handleStartTest = (section: string) => {
+    const startSection = (section: string) => {
       setCurrentTest({ tpoNumber: number, section });
       setTestBankType('tpo');
-      
-      // If Listening section, show Listening intro
-      if (section === 'Listening') {
-        setShowListeningIntro(true);
-      } else if (section === 'Reading') {
-        // Show Reading Section intro
-        setShowReadingIntro(true);
-      } else if (section === 'Writing') {
-        // Show Writing Section intro
-        setShowWritingIntro(true);
-      } else if (section === 'Speaking') {
-        // Show Speaking Section intro
-        setShowSpeakingIntro(true);
-      } else {
-        setShowToeflTest(true);
-      }
+      if (section === 'Listening') setActiveListeningM1Screen('intro');
+      else if (section === 'Reading') setShowReadingIntro(true);
+      else if (section === 'Writing') setActiveWritingScreen('intro');
+      else if (section === 'Speaking') setActiveSpeakingScreen('intro');
+      else setShowToeflTest(true);
     };
+
+    const handleStartTest = (section: string) => {
+      localStorage.removeItem(`tpo_progress_tpo_${number}_${section}`);
+      startSection(section);
+    };
+
+    const handleContinueTest = (section: string) => {
+      const saved = localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
+      if (!saved) {
+        alert('저장된 진행 상황이 없습니다. Start를 눌러 새로 시작하세요.');
+        return;
+      }
+      startSection(section);
+    };
+
+    const hasSavedProgress = (section: string) => !!localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
 
     const hoverBgClass = 'bg-gradient-to-r from-[#e3f2fd] to-[#bbdefb] shadow-md';
     const defaultBgClass = 'bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100';
     const buttonHoverClass = 'bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white shadow-md transform scale-105';
+    const continueHoverClass = 'bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white shadow-md transform scale-105';
+
+    const renderSectionRow = (sectionName: string, sectionType: string, isLast = false) => (
+      <div
+        className={`h-20 relative ${isLast ? 'rounded-b-[12px]' : 'rounded-[8px]'} shrink-0 w-full cursor-pointer transition-all duration-300 ${
+          hoveredSection === sectionName.toLowerCase() ? hoverBgClass : defaultBgClass
+        }`}
+        onMouseEnter={() => setHoveredSection(sectionName.toLowerCase())}
+        onMouseLeave={() => setHoveredSection(null)}
+      >
+        <div className="relative size-full">
+          <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
+            <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
+              <p>{sectionName}</p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {hasSavedProgress(sectionType) && (
+                <div
+                  className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
+                    hoveredSection === sectionName.toLowerCase() ? continueHoverClass : 'bg-[#E6F7F5] text-[#0D9488] hover:bg-[#CCEFEC]'
+                  }`}
+                  onClick={() => handleContinueTest(sectionType)}
+                >
+                  <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Continue</p>
+                </div>
+              )}
+              <div
+                className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
+                  hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
+                }`}
+                onClick={() => handleStartTest(sectionType)}
+              >
+                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Start</p>
+              </div>
+            </div>
+            {!isLast && <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 right-3" />}
+          </div>
+        </div>
+      </div>
+    );
 
     return (
       <div className="bg-white rounded-[12px] shadow-lg border border-gray-200 w-full max-w-[268px] transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] h-16 relative rounded-t-[12px] shadow-md">
           <div className="absolute box-border content-stretch flex items-center justify-start left-0 px-4 py-0 right-0 top-0">
             <div className="basis-0 content-stretch flex flex-col grow h-16 items-start justify-start min-h-px min-w-px relative shrink-0">
@@ -9554,109 +6292,10 @@ function AppContent() {
             </div>
           </div>
         </div>
-
-        {/* Reading Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'reading' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('reading')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Reading</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'reading' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Reading')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Listening Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'listening' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('listening')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Listening</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'listening' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Listening')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Writing Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'writing' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('writing')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Writing</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'writing' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Writing')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Speaking Section */}
-        <div 
-          className={`h-20 relative rounded-b-[12px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'speaking' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('speaking')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Speaking</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'speaking' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Speaking')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {renderSectionRow('Reading', 'Reading')}
+        {renderSectionRow('Listening', 'Listening')}
+        {renderSectionRow('Writing', 'Writing')}
+        {renderSectionRow('Speaking', 'Speaking', true)}
       </div>
     );
   };
@@ -9665,18 +6304,71 @@ function AppContent() {
     const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
     const handleStartTest = (section: string) => {
+      localStorage.removeItem(`tpo_progress_real_${number}_${section}`);
       setCurrentTest({ tpoNumber: number, section });
       setTestBankType('real');
       setShowToeflTest(true);
     };
 
+    const handleContinueTest = (section: string) => {
+      const saved = localStorage.getItem(`tpo_progress_real_${number}_${section}`);
+      if (!saved) {
+        alert('저장된 진행 상황이 없습니다. Start를 눌러 새로 시작하세요.');
+        return;
+      }
+      setCurrentTest({ tpoNumber: number, section });
+      setTestBankType('real');
+      setShowToeflTest(true);
+    };
+
+    const hasSavedProgress = (section: string) => !!localStorage.getItem(`tpo_progress_real_${number}_${section}`);
+
     const hoverBgClass = 'bg-gradient-to-r from-[#e3f2fd] to-[#bbdefb] shadow-md';
     const defaultBgClass = 'bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100';
     const buttonHoverClass = 'bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white shadow-md transform scale-105';
+    const continueHoverClass = 'bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white shadow-md transform scale-105';
+
+    const renderSectionRow = (sectionName: string, sectionType: string, isLast = false) => (
+      <div
+        className={`h-20 relative ${isLast ? 'rounded-b-[12px]' : 'rounded-[8px]'} shrink-0 w-full cursor-pointer transition-all duration-300 ${
+          hoveredSection === sectionName.toLowerCase() ? hoverBgClass : defaultBgClass
+        }`}
+        onMouseEnter={() => setHoveredSection(sectionName.toLowerCase())}
+        onMouseLeave={() => setHoveredSection(null)}
+      >
+        <div className="relative size-full">
+          <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
+            <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
+              <p>{sectionName}</p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {hasSavedProgress(sectionType) && (
+                <div
+                  className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
+                    hoveredSection === sectionName.toLowerCase() ? continueHoverClass : 'bg-[#E6F7F5] text-[#0D9488] hover:bg-[#CCEFEC]'
+                  }`}
+                  onClick={() => handleContinueTest(sectionType)}
+                >
+                  <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Continue</p>
+                </div>
+              )}
+              <div
+                className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
+                  hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
+                }`}
+                onClick={() => handleStartTest(sectionType)}
+              >
+                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Start</p>
+              </div>
+            </div>
+            {!isLast && <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 right-3" />}
+          </div>
+        </div>
+      </div>
+    );
 
     return (
       <div className="bg-white rounded-[12px] shadow-lg border border-gray-200 w-full max-w-[268px] transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] h-16 relative rounded-t-[12px] shadow-md">
           <div className="absolute box-border content-stretch flex items-center justify-start left-0 px-4 py-0 right-0 top-0">
             <div className="basis-0 content-stretch flex flex-col grow h-16 items-start justify-start min-h-px min-w-px relative shrink-0">
@@ -9686,109 +6378,10 @@ function AppContent() {
             </div>
           </div>
         </div>
-
-        {/* Reading Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'reading' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('reading')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Reading</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'reading' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Reading')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Listening Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'listening' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('listening')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Listening</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'listening' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Listening')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Writing Section */}
-        <div 
-          className={`h-20 relative rounded-[8px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'writing' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('writing')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Writing</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'writing' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Writing')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-              <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 w-[232px]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Speaking Section */}
-        <div 
-          className={`h-20 relative rounded-b-[12px] shrink-0 w-full cursor-pointer transition-all duration-300 ${
-            hoveredSection === 'speaking' ? hoverBgClass : defaultBgClass
-          }`}
-          onMouseEnter={() => setHoveredSection('speaking')}
-          onMouseLeave={() => setHoveredSection(null)}
-        >
-          <div className="relative size-full">
-            <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-                <p>Speaking</p>
-              </div>
-              <div 
-                className={`flex items-center justify-center h-[30px] rounded-[15px] w-20 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === 'speaking' ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest('Speaking')}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[12px] text-center">Start Test</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {renderSectionRow('Reading', 'Reading')}
+        {renderSectionRow('Listening', 'Listening')}
+        {renderSectionRow('Writing', 'Writing')}
+        {renderSectionRow('Speaking', 'Speaking', true)}
       </div>
     );
   };
@@ -9853,1034 +6446,85 @@ function AppContent() {
       {showModule2Question19 && <Module2Question19Screen />}
       {showModule2Question20 && <Module2Question20Screen />}
       
-      {/* Listening Section Screens */}
-      {showListeningIntro && <ListeningIntroScreen />}
-      {showListeningModule1Intro && <ListeningModule1IntroScreen />}
-      {showListeningQuestion1 && <ListeningQuestion1Screen />}
-      {showListeningQuestion2 && <ListeningQuestion2Screen />}
-      {showListeningQuestion3 && <ListeningQuestion3Screen />}
-      {showListeningQuestion4 && <ListeningQuestion4Screen />}
-      {showListeningQuestion5 && <ListeningQuestion5Screen />}
-      {showListeningQuestion6 && <ListeningQuestion6Screen />}
-      {showListeningQuestion7 && <ListeningQuestion7Screen />}
-      {showListeningQuestion8 && <ListeningQuestion8Screen />}
-      {showListeningModule2Intro && <ListeningModule2IntroScreen />}
-      {showListeningConversation && <ListeningConversationScreen />}
-      {showListeningQuestion9 && <ListeningQuestion9Screen />}
-      {showListeningQuestion10 && <ListeningQuestion10Screen />}
-      {showListeningConversation2 && <ListeningConversation2Screen />}
-      {showListeningQuestion11 && <ListeningQuestion11Screen />}
-      {showListeningQuestion12 && <ListeningQuestion12Screen />}
-      {showListeningAnnouncement && <ListeningAnnouncementScreen />}
-      {showListeningQuestion13 && <ListeningQuestion13Screen />}
-      {showListeningQuestion14 && <ListeningQuestion14Screen />}
-      {showListeningPodcast && <ListeningPodcastScreen />}
-      {showListeningQuestion15 && <ListeningQuestion15Screen />}
-      {showListeningQuestion16 && <ListeningQuestion16Screen />}
-      {showListeningQuestion17 && <ListeningQuestion17Screen />}
-      {showListeningQuestion18 && <ListeningQuestion18Screen />}
-      {showListeningEndModule1 && <ListeningEndModule1Screen />}
-      {showListeningModule2 && <ListeningModule2Screen />}
-      {showListeningM2Q1 && (
-        <ListeningM2Q1
-          onBack={() => {
-            setShowListeningM2Q1(false);
-            setShowListeningModule2(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q1(false);
-            setShowListeningM2Q2(true);
-          }}
+      {/* End of Module 2 / Reading Complete Screen */}
+      {showEndModule2 && <EndModule2Screen />}
+      
+      {/* Listening Section - M1 Wrapper */}
+      {activeListeningM1Screen && (
+        <ListeningM1Wrapper
+          initialScreen={activeListeningM1Screen}
           onHome={() => {
-            setShowListeningM2Q1(false);
+            setActiveListeningM1Screen(null);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
-              setActiveTab('Real Test');
+              setActiveTab('Test');
             }
           }}
-          onVolumeClick={() => setShowVolumeModal(true)}
+          onComplete={() => {
+            setActiveListeningM1Screen(null);
+            setActiveListeningM2Screen('q1');
+          }}
         />
       )}
-      {showListeningM2Q2 && (
-        <ListeningM2Q2
-          onBack={() => {
-            setShowListeningM2Q2(false);
-            setShowListeningM2Q1(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q2(false);
-            setShowListeningM2Q3(true);
-          }}
+      {/* Listening Section - M2 Wrapper */}
+      {activeListeningM2Screen && (
+        <ListeningM2Wrapper
+          initialScreen={activeListeningM2Screen}
           onHome={() => {
-            setShowListeningM2Q2(false);
+            setActiveListeningM2Screen(null);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
-              setActiveTab('Real Test');
+              setActiveTab('Test');
             }
           }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q3 && (
-        <ListeningM2Q3
-          onBack={() => {
-            setShowListeningM2Q3(false);
-            setShowListeningM2Q2(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q3(false);
-            setShowListeningM2Q4(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q3(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
+          onComplete={() => {
+            setActiveListeningM2Screen(null);
+            // Listening complete - next section can be added later
           }}
           onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q4 && (
-        <ListeningM2Q4
-          onBack={() => {
-            setShowListeningM2Q4(false);
-            setShowListeningM2Q3(true);
+          onBackToM1={() => {
+            setActiveListeningM2Screen(null);
+            setActiveListeningM1Screen('module2-intro');
           }}
-          onNext={() => {
-            setShowListeningM2Q4(false);
-            setShowListeningM2Q5(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q4(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q5 && (
-        <ListeningM2Q5
-          onBack={() => {
-            setShowListeningM2Q5(false);
-            setShowListeningM2Q4(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q5(false);
-            setShowListeningM2Q6(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q5(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q6 && (
-        <ListeningM2Q6
-          onBack={() => {
-            setShowListeningM2Q6(false);
-            setShowListeningM2Q5(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q6(false);
-            setShowListeningM2Q7(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q6(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q7 && (
-        <ListeningM2Q7
-          onBack={() => {
-            setShowListeningM2Q7(false);
-            setShowListeningM2Q6(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q7(false);
-            setShowListeningM2Q8(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q7(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q8 && (
-        <ListeningM2Q8
-          onBack={() => {
-            setShowListeningM2Q8(false);
-            setShowListeningM2Q7(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q8(false);
-            setShowListeningM2Conversation(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q8(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Conversation && (
-        <ListeningM2Conversation
-          onBack={() => {
-            setShowListeningM2Conversation(false);
-            setShowListeningM2Q8(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Conversation(false);
-            setShowListeningM2Q9(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Conversation(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q9 && (
-        <ListeningM2Q9
-          onBack={() => {
-            setShowListeningM2Q9(false);
-            setShowListeningM2Conversation(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q9(false);
-            setShowListeningM2Q10(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q9(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q10 && (
-        <ListeningM2Q10
-          onBack={() => {
-            setShowListeningM2Q10(false);
-            setShowListeningM2Q9(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q10(false);
-            setShowListeningM2Announcement(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q10(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Announcement && (
-        <ListeningM2Announcement
-          onBack={() => {
-            setShowListeningM2Announcement(false);
-            setShowListeningM2Q10(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Announcement(false);
-            setShowListeningM2Q11(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Announcement(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q11 && (
-        <ListeningM2Q11
-          onBack={() => {
-            setShowListeningM2Q11(false);
-            setShowListeningM2Announcement(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q11(false);
-            setShowListeningM2Q12(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q11(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q12 && (
-        <ListeningM2Q12
-          onBack={() => {
-            setShowListeningM2Q12(false);
-            setShowListeningM2Q11(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q12(false);
-            setShowListeningM2Lecture(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q12(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Lecture && (
-        <ListeningM2Lecture
-          onBack={() => {
-            setShowListeningM2Lecture(false);
-            setShowListeningM2Q12(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Lecture(false);
-            setShowListeningM2Q13(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Lecture(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q13 && (
-        <ListeningM2Q13
-          onBack={() => {
-            setShowListeningM2Q13(false);
-            setShowListeningM2Lecture(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q13(false);
-            setShowListeningM2Q14(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q13(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q14 && (
-        <ListeningM2Q14
-          onBack={() => {
-            setShowListeningM2Q14(false);
-            setShowListeningM2Q13(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q14(false);
-            setShowListeningM2Q15(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q14(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q15 && (
-        <ListeningM2Q15
-          onBack={() => {
-            setShowListeningM2Q15(false);
-            setShowListeningM2Q14(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q15(false);
-            setShowListeningM2Q16(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q15(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2Q16 && (
-        <ListeningM2Q16
-          onBack={() => {
-            setShowListeningM2Q16(false);
-            setShowListeningM2Q15(true);
-          }}
-          onNext={() => {
-            setShowListeningM2Q16(false);
-            setShowListeningM2End(true);
-          }}
-          onHome={() => {
-            setShowListeningM2Q16(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-        />
-      )}
-      {showListeningM2End && (
-        <ListeningM2End
-          onBack={() => {
-            setShowListeningM2End(false);
-            setShowListeningM2Q16(true);
-          }}
-          onNext={() => {
-            setShowListeningM2End(false);
-            // Next section - can be added later
-          }}
-          onHome={() => {
-            setShowListeningM2End(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onVolumeClick={() => setShowVolumeModal(true)}
         />
       )}
 
-      {/* Writing Section Components */}
-      {showWritingIntro && (
-        <WritingIntro
-          onNext={() => {
-            setShowWritingIntro(false);
-            setShowWritingBuildSentenceIntro(true);
-          }}
+      {/* Writing Section Wrapper */}
+      {activeWritingScreen && (
+        <WritingSectionWrapper
+          initialScreen={activeWritingScreen}
           onHome={() => {
-            setShowWritingIntro(false);
+            setActiveWritingScreen(null);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
-              setActiveTab('Real Test');
+              setActiveTab('Test');
             }
           }}
-        />
-      )}
-      {showWritingBuildSentenceIntro && (
-        <WritingBuildSentenceIntro
-          onBack={() => {
-            setShowWritingBuildSentenceIntro(false);
-            setShowWritingIntro(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceIntro(false);
-            setShowWritingBuildSentenceQ1(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceIntro(false);
+          onComplete={() => {
+            setActiveWritingScreen(null);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ1 && (
-        <WritingBuildSentenceQ1
-          onBack={() => {
-            setShowWritingBuildSentenceQ1(false);
-            setShowWritingBuildSentenceIntro(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ1(false);
-            setShowWritingBuildSentenceQ2(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ1(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ2 && (
-        <WritingBuildSentenceQ2
-          onBack={() => {
-            setShowWritingBuildSentenceQ2(false);
-            setShowWritingBuildSentenceQ1(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ2(false);
-            setShowWritingBuildSentenceQ3(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ2(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ3 && (
-        <WritingBuildSentenceQ3
-          onBack={() => {
-            setShowWritingBuildSentenceQ3(false);
-            setShowWritingBuildSentenceQ2(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ3(false);
-            setShowWritingBuildSentenceQ4(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ3(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ4 && (
-        <WritingBuildSentenceQ4
-          onBack={() => {
-            setShowWritingBuildSentenceQ4(false);
-            setShowWritingBuildSentenceQ3(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ4(false);
-            setShowWritingBuildSentenceQ5(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ4(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ5 && (
-        <WritingBuildSentenceQ5
-          onBack={() => {
-            setShowWritingBuildSentenceQ5(false);
-            setShowWritingBuildSentenceQ4(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ5(false);
-            setShowWritingBuildSentenceQ6(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ5(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ6 && (
-        <WritingBuildSentenceQ6
-          onBack={() => {
-            setShowWritingBuildSentenceQ6(false);
-            setShowWritingBuildSentenceQ5(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ6(false);
-            setShowWritingBuildSentenceQ7(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ6(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ7 && (
-        <WritingBuildSentenceQ7
-          onBack={() => {
-            setShowWritingBuildSentenceQ7(false);
-            setShowWritingBuildSentenceQ6(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ7(false);
-            setShowWritingBuildSentenceQ8(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ7(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ8 && (
-        <WritingBuildSentenceQ8
-          onBack={() => {
-            setShowWritingBuildSentenceQ8(false);
-            setShowWritingBuildSentenceQ7(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ8(false);
-            setShowWritingBuildSentenceQ9(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ8(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ9 && (
-        <WritingBuildSentenceQ9
-          onBack={() => {
-            setShowWritingBuildSentenceQ9(false);
-            setShowWritingBuildSentenceQ8(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ9(false);
-            setShowWritingBuildSentenceQ10(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ9(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingBuildSentenceQ10 && (
-        <WritingBuildSentenceQ10
-          onBack={() => {
-            setShowWritingBuildSentenceQ10(false);
-            setShowWritingBuildSentenceQ9(true);
-          }}
-          onNext={() => {
-            setShowWritingBuildSentenceQ10(false);
-            setShowWritingEmailIntro(true);
-          }}
-          onHome={() => {
-            setShowWritingBuildSentenceQ10(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingEmailIntro && (
-        <WritingEmailIntro
-          onNext={() => {
-            setShowWritingEmailIntro(false);
-            setShowWritingEmailQ1(true);
-          }}
-          onHome={() => {
-            setShowWritingEmailIntro(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingEmailQ1 && (
-        <WritingEmailQ1
-          onBack={() => {
-            setShowWritingEmailQ1(false);
-            setShowWritingEmailIntro(true);
-          }}
-          onNext={() => {
-            setShowWritingEmailQ1(false);
-            setShowWritingAcademicDiscussionIntro(true);
-          }}
-          onHome={() => {
-            setShowWritingEmailQ1(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingAcademicDiscussionIntro && (
-        <WritingAcademicDiscussionIntro
-          onBegin={() => {
-            setShowWritingAcademicDiscussionIntro(false);
-            setShowWritingAcademicDiscussionQ2(true);
-          }}
-          onHome={() => {
-            setShowWritingAcademicDiscussionIntro(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingAcademicDiscussionQ2 && (
-        <WritingAcademicDiscussionQ2
-          onBack={() => {
-            setShowWritingAcademicDiscussionQ2(false);
-            setShowWritingAcademicDiscussionIntro(true);
-          }}
-          onNext={() => {
-            setShowWritingAcademicDiscussionQ2(false);
-            setShowWritingEnd(true);
-          }}
-          onHome={() => {
-            setShowWritingAcademicDiscussionQ2(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-        />
-      )}
-      {showWritingEnd && (
-        <WritingEnd
-          onNext={() => {
-            setShowWritingEnd(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
-            }
-          }}
-          onHome={() => {
-            setShowWritingEnd(false);
-            if (testBankType === 'tpo') {
-              setActiveTab('TPO');
-            } else {
-              setActiveTab('Real Test');
+              setActiveTab('Test');
             }
           }}
         />
       )}
 
-      {/* Speaking Section */}
-      {showSpeakingIntro && (
-        <SpeakingIntro
-          onNext={() => {
-            setShowSpeakingIntro(false);
-            setShowSpeakingListenRepeatIntro(true);
-          }}
-          onLogoClick={() => {
-            setShowSpeakingIntro(false);
-            // Reset to landing page - all states are already false
-          }}
-        />
-      )}
-
-      {showSpeakingListenRepeatIntro && (
-        <SpeakingListenRepeatIntro
-          onNext={() => {
-            setShowSpeakingListenRepeatIntro(false);
-            setShowSpeakingQ1(true);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-          onLogoClick={() => {
-            setShowSpeakingListenRepeatIntro(false);
-            // Reset to landing page - all states are already false
-          }}
-        />
-      )}
-
-      {showSpeakingQ1 && (
-        <SpeakingQ1
-          onNext={() => {
-            setShowSpeakingQ1(false);
-            setShowSpeakingQ2Prep(true);
-          }}
+      {/* Speaking Section Wrapper */}
+      {activeSpeakingScreen && (
+        <SpeakingSectionWrapper
+          initialScreen={activeSpeakingScreen}
           onHome={() => {
-            setShowSpeakingQ1(false);
+            setActiveSpeakingScreen(null);
           }}
-        />
-      )}
-
-      {showSpeakingQ2Prep && (
-        <SpeakingQ2Prep
-          onNext={() => {
-            setShowSpeakingQ2Prep(false);
-            setShowSpeakingQ2Record(true);
+          onComplete={() => {
+            setActiveSpeakingScreen(null);
+            // Speaking complete - navigate to next section
           }}
-          onHome={() => {
-            setShowSpeakingQ2Prep(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ2Record && (
-        <SpeakingQ2Record
-          onNext={() => {
-            setShowSpeakingQ2Record(false);
-            setShowSpeakingQ3Prep(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ2Record(false);
-          }}
-        />
-      )}
-
-      {showSpeakingQ3Prep && (
-        <SpeakingQ3Prep
-          onNext={() => {
-            setShowSpeakingQ3Prep(false);
-            setShowSpeakingQ3Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ3Prep(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ3Record && (
-        <SpeakingQ3Record
-          onNext={() => {
-            setShowSpeakingQ3Record(false);
-            setShowSpeakingQ4Prep(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ3Record(false);
-          }}
-        />
-      )}
-
-      {showSpeakingQ4Prep && (
-        <SpeakingQ4Prep
-          onNext={() => {
-            setShowSpeakingQ4Prep(false);
-            setShowSpeakingQ4Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ4Prep(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ4Record && (
-        <SpeakingQ4Record
-          onNext={() => {
-            setShowSpeakingQ4Record(false);
-            setShowSpeakingQ5Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ4Record(false);
-          }}
-        />
-      )}
-
-      {showSpeakingQ5Record && (
-        <SpeakingQ5Record
-          onNext={() => {
-            setShowSpeakingQ5Record(false);
-            setShowSpeakingQ6Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ5Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ6Record && (
-        <SpeakingQ6Record
-          onNext={() => {
-            setShowSpeakingQ6Record(false);
-            setShowSpeakingQ7Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ6Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ7Record && (
-        <SpeakingQ7Record
-          onNext={() => {
-            setShowSpeakingQ7Record(false);
-            setShowSpeakingTakeInterviewIntro(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ7Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingTakeInterviewIntro && (
-        <SpeakingTakeInterviewIntro
-          onNext={() => {
-            setShowSpeakingTakeInterviewIntro(false);
-            setShowSpeakingInterviewIntro(true);
-          }}
-          onHome={() => {
-            setShowSpeakingTakeInterviewIntro(false);
-          }}
-        />
-      )}
-
-      {showSpeakingInterviewIntro && (
-        <SpeakingInterviewIntro
-          onNext={() => {
-            setShowSpeakingInterviewIntro(false);
-            setShowSpeakingQ8Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingInterviewIntro(false);
-          }}
-        />
-      )}
-
-      {showSpeakingQ8Record && (
-        <SpeakingQ8Record
-          onNext={() => {
-            setShowSpeakingQ8Record(false);
-            setShowSpeakingQ9Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ8Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ9Record && (
-        <SpeakingQ9Record
-          onNext={() => {
-            setShowSpeakingQ9Record(false);
-            setShowSpeakingQ10Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ9Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ10Record && (
-        <SpeakingQ10Record
-          onNext={() => {
-            setShowSpeakingQ10Record(false);
-            setShowSpeakingQ11Record(true);
-          }}
-          onHome={() => {
-            setShowSpeakingQ10Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
-        />
-      )}
-
-      {showSpeakingQ11Record && (
-        <SpeakingQ11Record
-          onNext={() => {
-            setShowSpeakingQ11Record(false);
-            // Speaking section complete - navigate to next section
-          }}
-          onHome={() => {
-            setShowSpeakingQ11Record(false);
-          }}
-          onVolumeClick={toggleVolume}
-          isVolumeOpen={isVolumeOpen}
-          volumeButtonRef={volumeButtonRef}
         />
       )}
       
@@ -10895,7 +6539,7 @@ function AppContent() {
           {/* Logo */}
           <div className="flex items-center">
             <div 
-              className="text-xl md:text-3xl font-['Inter',_sans-serif] font-bold text-[#005f61] tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 // Always go to LMS page
                 setShowLandingPage(false);
@@ -10904,8 +6548,15 @@ function AppContent() {
                 handleTabChange('TOEFL Prep');
               }}
             >
-              <span className="hidden md:inline">TOEFL Prep</span>
-              <span className="md:hidden">TOEFL</span>
+              <div className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg shadow-md" style={{ backgroundColor: '#00bcd4' }}>
+                <Zap className="w-5 h-5 md:w-6 md:h-6 text-white fill-white" strokeWidth={0} />
+              </div>
+              <span className="hidden md:inline text-xl md:text-2xl font-extrabold tracking-tight" style={{ color: '#005f61' }}>
+                AllMyExam<span style={{ color: '#00bcd4' }}>-TOEFL</span>
+              </span>
+              <span className="md:hidden text-base font-extrabold tracking-tight" style={{ color: '#005f61' }}>
+                AME<span style={{ color: '#00bcd4' }}>-T</span>
+              </span>
             </div>
           </div>
           
@@ -10921,6 +6572,8 @@ function AppContent() {
                   onClick={() => {
                     // Check if login is required for this tab
                     const requiresLogin = ['TPO', 'Test', 'Real Test', 'Question Types', 'Training', 'History'].includes(tab);
+                    // Allow vocabulary training without login
+                    const isVocabularyPath = location.pathname.includes('/vocabulary');
                     
                     // Always switch tab and close auth forms
                     setActiveTab(tab);
@@ -10928,7 +6581,7 @@ function AppContent() {
                     setShowRegistrationForm(false);
                     
                     // Show login popup if login is required and user is not logged in
-                    if (requiresLogin && !isLoggedIn) {
+                    if (requiresLogin && !isLoggedIn && !isVocabularyPath) {
                       setShowLoginPopup(true);
                     }
                   }}
@@ -11022,7 +6675,6 @@ function AppContent() {
                   // Logout: Reset login state
                   setIsLoggedIn(false);
                   setLoggedInUserName('');
-                  localStorage.removeItem('toefl_current_user');
                   setShowLoginForm(false);
                   setShowRegistrationForm(false);
                 }}
@@ -11103,7 +6755,10 @@ function AppContent() {
           lmsContents={lmsContents}
           onTrainingStateChange={setIsInTrainingMode}
           advertisements={advertisements}
-          onSaveResult={handleAddTestResult}
+          onSaveResult={handleAddQuestionTypesResult}
+          savedConfig={questionTypesConfig}
+          onSaveConfig={setQuestionTypesConfig}
+          practiceResults={questionTypesResults}
         />
       )}
 
@@ -11177,7 +6832,7 @@ function AppContent() {
                       <h4 className="text-[#2d5a5d] mb-2">Inference Questions</h4>
                       <p className="text-xs text-gray-600 mb-4">내용 추론</p>
                       <button className="w-full bg-[#3b5998] text-white py-2.5 px-4 rounded-lg hover:bg-[#2d4373] transition-colors">
-                        훈련 시작
+                        훈��� 시작
                       </button>
                     </div>
 
@@ -11401,10 +7056,10 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setCurrentTest={setCurrentTest}
           setTestBankType={setTestBankType}
-          setShowListeningIntro={setShowListeningIntro}
+          setShowListeningIntro={(v: any) => { if (v) setActiveListeningM1Screen('intro'); }}
           setShowReadingIntro={setShowReadingIntro}
-          setShowWritingIntro={setShowWritingIntro}
-          setShowSpeakingIntro={setShowSpeakingIntro}
+          setShowWritingIntro={(v: any) => { if (v) setActiveWritingScreen('intro'); }}
+          setShowSpeakingIntro={(v: any) => { if (v) setActiveSpeakingScreen('intro'); }}
           setShowToeflTest={setShowToeflTest}
           TPOCard={TPOCard}
           TestCard={TestCard}
@@ -11422,10 +7077,10 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setCurrentTest={setCurrentTest}
           setTestBankType={setTestBankType}
-          setShowListeningIntro={setShowListeningIntro}
+          setShowListeningIntro={(v: any) => { if (v) setActiveListeningM1Screen('intro'); }}
           setShowReadingIntro={setShowReadingIntro}
-          setShowWritingIntro={setShowWritingIntro}
-          setShowSpeakingIntro={setShowSpeakingIntro}
+          setShowWritingIntro={(v: any) => { if (v) setActiveWritingScreen('intro'); }}
+          setShowSpeakingIntro={(v: any) => { if (v) setActiveSpeakingScreen('intro'); }}
           setShowToeflTest={setShowToeflTest}
           TestCard={TestCard}
           advertisements={advertisements}
@@ -11443,6 +7098,10 @@ function AppContent() {
           lmsContents={lmsContents}
           tpoTests={[...tpoTests, ...testTests]}
           advertisements={advertisements}
+          onSaveResult={handleAddTrainingResult}
+          savedConfig={trainingConfig}
+          onSaveConfig={setTrainingConfig}
+          practiceResults={trainingResults}
         />
       )}
 
@@ -11450,9 +7109,56 @@ function AppContent() {
         <HistorySection 
           themeColor="#005f61"
           results={testResults}
+          tpoTests={[...tpoTests, ...testTests]}
           onRetryWrongAnswers={(result) => {
             console.log('Retrying wrong answers:', result);
             // Logic to retry wrong answers
+          }}
+          onRestartTest={(result, startFresh) => {
+            console.log(`Restart test: ${result.testName}, startFresh: ${startFresh}`);
+            
+            // Parse test number and section from result
+            const tpoMatch = result.testName.match(/TPO\s+(\d+)/i);
+            const testMatch = result.testName.match(/Test\s+(\d+)/i);
+            const tpoNumber = tpoMatch ? parseInt(tpoMatch[1]) : testMatch ? parseInt(testMatch[1]) : null;
+            
+            if (!tpoNumber) {
+              console.error('Could not parse test number from:', result.testName);
+              toast.error('테스트 번호를 찾을 수 없습니다.');
+              return;
+            }
+            
+            const section = result.category || 'Reading';
+            const testType = result.type === 'TPO' ? 'tpo' : 'real';
+            
+            // Clear progress if starting fresh
+            if (startFresh) {
+              localStorage.removeItem('test_progress_reading');
+              localStorage.removeItem('test_progress_listening_m1');
+              localStorage.removeItem('test_progress_listening_m2');
+              localStorage.removeItem('test_progress_writing');
+              localStorage.removeItem('test_progress_speaking');
+            }
+            
+            // Set current test and navigate to the appropriate section
+            setCurrentTest({ tpoNumber, section });
+            setTestBankType(testType);
+            
+            // Navigate to the appropriate screen based on section
+            if (section === 'Reading') {
+              setShowReadingIntro(true);
+            } else if (section === 'Listening') {
+              setActiveListeningM1Screen('intro');
+            } else if (section === 'Writing') {
+              setActiveWritingScreen('intro');
+            } else if (section === 'Speaking') {
+              setActiveSpeakingScreen('intro');
+            }
+            
+            // Switch to Test tab to show the test
+            handleTabChange('Test');
+            
+            toast.success(startFresh ? '처음부터 새로 시작합니다!' : '저장된 위치에서 계속 진행합니다!');
           }}
           onViewDetail={(result) => {
             console.log('Viewing detail:', result);
@@ -11460,7 +7166,7 @@ function AppContent() {
           }}
           shareConfig={shareConfig}
           onShareConfigChange={setShareConfig}
-          studentName="张伟"
+          studentName={loggedInUserName || 'Student'}
           advertisements={advertisements}
         />
       )}
@@ -11497,7 +7203,7 @@ function AppContent() {
       )}
 
       {/* Bottom Navigation - Mobile */}
-      {isMobile && (
+      {isMobile && !isInQuestionMode && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
           <div className="grid grid-cols-5 h-16">
             <button
@@ -11605,6 +7311,7 @@ function AppContent() {
 }
 
 // Wrap AppContent with BrowserRouter
+// Force rebuild - cache fix
 export default function App() {
   return (
     <BrowserRouter>

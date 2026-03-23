@@ -42,30 +42,30 @@ export function TrainingInterface({ questionType, level, onClose }: TrainingInte
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#e91e63] to-[#c2185b] px-8 py-8">
+      <div className="bg-gradient-to-r from-[#e91e63] to-[#c2185b] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <button 
           onClick={onClose}
-          className="text-white hover:text-gray-200 mb-4 text-sm"
+          className="text-white hover:text-gray-200 mb-2 sm:mb-4 text-xs sm:text-sm"
         >
           ← 돌아가기
         </button>
-        <h1 className="text-white text-3xl mb-2">
+        <h1 className="text-white text-lg sm:text-2xl lg:text-3xl mb-1 sm:mb-2">
           스터디 허브 토플 Level {selectedLesson || level}
         </h1>
-        <p className="text-white/90 text-lg">
+        <p className="text-white/90 text-sm sm:text-base lg:text-lg">
           발아쓰기&쉐도잉 프로그램
         </p>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <div className="w-48 bg-gray-50 border-r border-gray-200 overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-gray-700 mb-3">Activities & Games</h2>
+        <div className="w-32 sm:w-40 lg:w-48 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+          <div className="p-2 sm:p-3 lg:p-4">
+            <h2 className="text-gray-700 mb-2 sm:mb-3 text-xs sm:text-sm lg:text-base">Activities & Games</h2>
             
             {/* Level dropdown indicator - emphasized */}
-            <div className="mb-3 px-4 py-3 bg-gradient-to-r from-[#e91e63] to-[#c2185b] border-2 border-[#c2185b] rounded-lg text-white shadow-md">
-              <div className="text-center text-base">Level {selectedLesson || level}</div>
+            <div className="mb-2 sm:mb-3 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 bg-gradient-to-r from-[#e91e63] to-[#c2185b] border-2 border-[#c2185b] rounded-lg text-white shadow-md">
+              <div className="text-center text-xs sm:text-sm lg:text-base">Level {selectedLesson || level}</div>
             </div>
             
             {/* Lessons list - changed to Level */}
@@ -74,7 +74,7 @@ export function TrainingInterface({ questionType, level, onClose }: TrainingInte
                 <div 
                   key={lesson}
                   onClick={() => setSelectedLesson(lesson)}
-                  className={`px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                  className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded cursor-pointer transition-colors ${
                     selectedLesson === lesson 
                       ? 'bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white' 
                       : 'text-gray-700 hover:bg-gray-100'
@@ -89,8 +89,8 @@ export function TrainingInterface({ questionType, level, onClose }: TrainingInte
 
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto bg-white">
-          <div className="p-8">
-            <h2 className="text-gray-700 text-lg mb-6">
+          <div className="p-3 sm:p-6 lg:p-8">
+            <h2 className="text-gray-700 text-sm sm:text-base lg:text-lg mb-3 sm:mb-4 lg:mb-6">
               학습할 DAY를 선택해주세요
             </h2>
             

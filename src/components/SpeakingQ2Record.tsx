@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/7a0cd411d1aa2aee86fbf4038fb67da2a409101c.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ2RecordProps {
   onNext: () => void;
   onHome: () => void;
+  imageUrl?: string; // CMS-managed image URL
 }
 
-export function SpeakingQ2Record({ onNext, onHome }: SpeakingQ2RecordProps) {
+export function SpeakingQ2Record({ onNext, onHome, imageUrl }: SpeakingQ2RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
@@ -71,6 +73,19 @@ export function SpeakingQ2Record({ onNext, onHome }: SpeakingQ2RecordProps) {
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           </button>
+          
+          {/* Next Button */}
+          {onNext && (
+            <button 
+              onClick={onNext}
+              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -99,8 +114,8 @@ export function SpeakingQ2Record({ onNext, onHome }: SpeakingQ2RecordProps) {
         
         {/* Image */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
+          <ImageWithFallback 
+            src={imageUrl || speakingImage} 
             alt="Speaking scene" 
             className="border-2 border-black w-96 h-96 object-cover"
           />

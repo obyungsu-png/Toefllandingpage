@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
+// motion removed - using CSS animations
+import { FillBlanksEditor } from './FillBlanksEditor';
+import { ReadDailyLifeTemplates, DailyLifeTemplate } from './ReadDailyLifeTemplates';
+import { AcademicReadingBuilder } from './AcademicReadingBuilder';
+import { TPOOverview } from './TPOOverview';
+import { TPODetailView } from './TPODetailView';
+import { QuestionUploadForm, QuestionEditForm } from './QuestionUploader';
 
 export interface TPOQuestion {
   id: string;
-  questionNumber: number;
+  questionNumber: number | string; // Support "1-10" format for fill-in-blanks
   questionText: string;
   questionType: string;
   options?: string[];
@@ -22,6 +28,10 @@ export interface TPOQuestion {
     answer: string;
     maxLength: number;
   }>;
+  // For "Build Sentence" (문장 배열) questions
+  avatar1ImageUrl?: string; // Question person avatar
+  avatar2ImageUrl?: string; // Answer person avatar
+  words?: string[]; // Words to arrange
 }
 
 export interface TPOSection {
@@ -35,21 +45,31 @@ export interface TPOSection {
 export interface TPOTest {
   id: string;
   testNumber: number;
-  testType: 'TPO' | 'Test';
+  testType: 'TPO' | 'Test' | 'Training';
   sections: TPOSection[];
+  year?: number;
+  month?: number;
+  isOfficial?: boolean;
+  dateMemo?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 interface ContentManagementProps {
-  tests: TPOTest[];
+  tests?: TPOTest[];
+  tpoTests?: TPOTest[];
   onAddTest: (test: TPOTest) => void;
   onUpdateTest: (test: TPOTest) => void;
   onDeleteTest: (id: string) => void;
 }
 
-export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest }: ContentManagementProps) {
-  const [activeTestType, setActiveTestType] = useState<'TPO' | 'Test'>('TPO');
+export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpdateTest, onDeleteTest }: ContentManagementProps) {
+  const tests = testsProp || tpoTests || [];
+  
+  // View mode: 'overview' | 'detail' | 'edit'
+  const [viewMode, setViewMode] = useState<'overview' | 'detail' | 'edit'>('overview');
+  
+  const [activeTestType, setActiveTestType] = useState<'TPO' | 'Test' | 'Training'>('TPO');
   const [selectedTestNumber, setSelectedTestNumber] = useState<number>(1);
   const [selectedSection, setSelectedSection] = useState<'Reading' | 'Listening' | 'Speaking' | 'Writing'>('Reading');
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -57,6 +77,82 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<TPOQuestion | null>(null);
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
+  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
+  const [isOfficial, setIsOfficial] = useState(false);
+  const [dateMemo, setDateMemo] = useState<string>('');
+  const [showFillBlanksBuilder, setShowFillBlanksBuilder] = useState(false);
+  const [showDailyLifeBuilder, setShowDailyLifeBuilder] = useState(false);
+  const [showAcademicReadingBuilder, setShowAcademicReadingBuilder] = useState(false);
+  const [savedDailyLifeTemplates, setSavedDailyLifeTemplates] = useState<DailyLifeTemplate[]>([]);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    type: 'question' | 'test';
+    id: string;
+    name: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  // Sync year/month/official/dateMemo when test selection changes
+  useEffect(() => {
+    const test = tests?.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+    if (test) {
+      setSelectedYear(test.year);
+      setSelectedMonth(test.month);
+      setIsOfficial(test.isOfficial || false);
+      setDateMemo(test.dateMemo || '');
+    } else {
+      setSelectedYear(undefined);
+      setSelectedMonth(undefined);
+      setIsOfficial(false);
+      setDateMemo('');
+    }
+  }, [activeTestType, selectedTestNumber, tests]);
+
+  // Helper: Get all tests organized by type
+  const getAllTestsOrganized = () => {
+    const organized: { [key: string]: TPOSection[] } = {};
+    
+    tests.forEach(test => {
+      const key = `${test.testType}${test.testNumber}`;
+      organized[key] = test.sections;
+    });
+    
+    return organized;
+  };
+
+  // Helper: Create new test
+  const handleCreateTest = (testType: 'TPO' | 'Test' | 'Training', testNumber: number) => {
+    const newTest: TPOTest = {
+      id: `${testType.toLowerCase()}-${testNumber}`,
+      testType: testType,
+      testNumber: testNumber,
+      sections: [
+        { id: `${testType}-${testNumber}-reading`, sectionType: 'Reading', questions: [] },
+        { id: `${testType}-${testNumber}-listening`, sectionType: 'Listening', questions: [] },
+        { id: `${testType}-${testNumber}-writing`, sectionType: 'Writing', questions: [] },
+        { id: `${testType}-${testNumber}-speaking`, sectionType: 'Speaking', questions: [] },
+      ],
+    };
+    
+    onAddTest(newTest);
+  };
+
+  // Helper: Delete test
+  const handleDeleteTest = (testType: string, testNumber: number) => {
+    const test = tests.find(t => t.testType === testType && t.testNumber === testNumber);
+    if (test) {
+      onDeleteTest(test.id);
+    }
+  };
+
+  // Helper: Get current section questions
+  const getCurrentSectionQuestions = (): TPOQuestion[] => {
+    const test = tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+    if (!test) return [];
+    
+    const section = test.sections.find(s => s.sectionType === selectedSection);
+    return section?.questions || [];
+  };
 
   // Question type categorization
   const questionTypes = {
@@ -109,6 +205,38 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
     return tests?.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
   };
 
+  const handleBuilderSave = (question: TPOQuestion) => {
+    let test = getExistingTest();
+    if (!test) {
+      test = {
+        id: `${activeTestType}-${selectedTestNumber}-${Date.now()}`,
+        testNumber: selectedTestNumber,
+        testType: activeTestType,
+        sections: [],
+        year: selectedYear,
+        month: selectedMonth,
+        isOfficial: isOfficial,
+        dateMemo: dateMemo || undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    let section = test.sections.find(s => s.sectionType === 'Reading');
+    if (!section) {
+      section = { id: `section-Reading-${Date.now()}`, sectionType: 'Reading', questions: [], instructions: '', totalTime: 0 };
+      test.sections.push(section);
+    }
+    section.questions.push(question);
+    test.updatedAt = new Date();
+    if (getExistingTest()) {
+      onUpdateTest(test);
+    } else {
+      onAddTest(test);
+    }
+    setShowFillBlanksBuilder(false);
+    setShowDailyLifeBuilder(false);
+  };
+
   const getTestStats = (test: TPOTest) => {
     const stats = {
       Reading: 0,
@@ -145,11 +273,103 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
+      {/* Header with View Toggle */}
       <div className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] rounded-lg p-4 md:p-6 text-white">
-        <h2 className="text-xl md:text-2xl mb-1 md:mb-2">Content Management System</h2>
-        <p className="text-white/90 text-sm md:text-base">Upload and manage TPO and Test content</p>
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h2 className="text-xl md:text-2xl mb-1">Content Management System</h2>
+            <p className="text-white/90 text-sm md:text-base">Upload and manage TPO and Test content</p>
+          </div>
+          
+          {/* View Mode Toggle */}
+          <div className="flex gap-2 bg-white/10 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('overview')}
+              className={`px-3 md:px-4 py-2 rounded text-sm font-medium transition-all flex items-center gap-2 ${
+                viewMode === 'overview'
+                  ? 'bg-white text-[#2d7a7c]'
+                  : 'text-white/80 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden md:inline">Overview</span>
+            </button>
+            <button
+              onClick={() => setViewMode('edit')}
+              className={`px-3 md:px-4 py-2 rounded text-sm font-medium transition-all flex items-center gap-2 ${
+                viewMode === 'edit'
+                  ? 'bg-white text-[#2d7a7c]'
+                  : 'text-white/80 hover:text-white'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span className="hidden md:inline">Classic</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Overview Mode */}
+      {viewMode === 'overview' && (
+        <TPOOverview
+          allTests={getAllTestsOrganized()}
+          onSelectTest={(testType, testNumber) => {
+            setActiveTestType(testType as 'TPO' | 'Test' | 'Training');
+            setSelectedTestNumber(testNumber);
+            setViewMode('detail');
+          }}
+          onCreateTest={handleCreateTest}
+          onDeleteTest={handleDeleteTest}
+        />
+      )}
+
+      {/* Detail Mode */}
+      {viewMode === 'detail' && (
+        <TPODetailView
+          testType={activeTestType}
+          testNumber={selectedTestNumber}
+          sections={tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber)?.sections || []}
+          onBack={() => setViewMode('overview')}
+          onAddQuestion={(section) => {
+            setSelectedSection(section);
+            setViewMode('edit');
+            setShowUploadForm(true);
+          }}
+          onEditQuestion={(question) => {
+            setEditingQuestion(question);
+            setViewMode('edit');
+            setShowUploadForm(true);
+          }}
+          onDeleteQuestion={(questionId) => {
+            setDeleteConfirmation({
+              type: 'question',
+              id: questionId,
+              name: `Question ${questionId}`,
+              onConfirm: () => {
+                const test = tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+                if (test) {
+                  const updatedSections = test.sections.map(section => {
+                    return {
+                      ...section,
+                      questions: section.questions.filter(q => q.id !== questionId)
+                    };
+                  });
+                  
+                  onUpdateTest({ ...test, sections: updatedSections });
+                }
+              }
+            });
+          }}
+          onPreviewQuestion={(question) => {
+            setPreviewQuestion(question);
+          }}
+        />
+      )}
+
+      {/* Classic Edit Mode - existing UI */}
+      {viewMode === 'edit' && (
+        <>
+      {/* Original Header removed - now using global header above */}
 
       {/* Test Type Selection */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 md:p-6">
@@ -186,17 +406,20 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
           {/* Test Number */}
           <div>
             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Test Number</label>
-            <select
+            <input
+              type="number"
+              min="1"
+              max={activeTestType === 'TPO' ? 200 : 100}
               value={selectedTestNumber}
-              onChange={(e) => setSelectedTestNumber(parseInt(e.target.value))}
+              onChange={(e) => {
+                const num = parseInt(e.target.value);
+                if (!isNaN(num) && num > 0) {
+                  setSelectedTestNumber(num);
+                }
+              }}
+              placeholder={`Enter ${activeTestType} number`}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
-            >
-              {Array.from({ length: activeTestType === 'TPO' ? 75 : 20 }, (_, i) => i + 1).map(num => (
-                <option key={num} value={num}>
-                  {activeTestType} {num}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Section */}
@@ -212,6 +435,104 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
               <option value="Speaking">Speaking</option>
               <option value="Writing">Writing</option>
             </select>
+          </div>
+        </div>
+
+        {/* Year / Month / Official Tag */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h4 className="font-medium text-gray-700 mb-3 text-xs md:text-sm">Test Metadata (for filtering)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+            {/* Year */}
+            <div>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Year</label>
+              <select
+                value={selectedYear || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedYear(val ? parseInt(val) : undefined);
+                  const test = getExistingTest();
+                  if (test) {
+                    const updatedTest = { ...test, year: val ? parseInt(val) : undefined, updatedAt: new Date() };
+                    onUpdateTest(updatedTest);
+                  }
+                }}
+                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
+              >
+                <option value="">Not Set</option>
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Month */}
+            <div>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Month</label>
+              <select
+                value={selectedMonth || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedMonth(val ? parseInt(val) : undefined);
+                  const test = getExistingTest();
+                  if (test) {
+                    const updatedTest = { ...test, month: val ? parseInt(val) : undefined, updatedAt: new Date() };
+                    onUpdateTest(updatedTest);
+                  }
+                }}
+                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
+              >
+                <option value="">Not Set</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ({m})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Official Tag */}
+            <div>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Official Test</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const newVal = !isOfficial;
+                  setIsOfficial(newVal);
+                  const test = getExistingTest();
+                  if (test) {
+                    const updatedTest = { ...test, isOfficial: newVal, updatedAt: new Date() };
+                    onUpdateTest(updatedTest);
+                  }
+                }}
+                className={`w-full px-3 md:px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${
+                  isOfficial
+                    ? 'bg-gradient-to-r from-[#d35400] to-[#e67e22] text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {isOfficial ? 'Official' : 'Not Official'}
+              </button>
+            </div>
+
+            {/* Date Memo */}
+            <div>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">날짜 메모</label>
+              <input
+                type="text"
+                value={dateMemo}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDateMemo(val);
+                  const test = getExistingTest();
+                  if (test) {
+                    const updatedTest = { ...test, dateMemo: val || undefined, updatedAt: new Date() };
+                    onUpdateTest(updatedTest);
+                  }
+                }}
+                placeholder="예: 3/15 시험, 다음주 토요일..."
+                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
+              />
+            </div>
           </div>
         </div>
 
@@ -234,7 +555,7 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
       </div>
 
       {/* Upload Button */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Button
           onClick={() => setShowUploadForm(!showUploadForm)}
           className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22] shadow-lg"
@@ -249,10 +570,81 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
           <Upload className="w-5 h-5 mr-2" />
           Bulk Upload Questions (JSON)
         </Button>
+        {selectedSection === 'Reading' && (
+          <>
+            <Button
+              onClick={() => { 
+                setShowAcademicReadingBuilder(!showAcademicReadingBuilder); 
+                setShowFillBlanksBuilder(false); 
+                setShowDailyLifeBuilder(false); 
+              }}
+              className={`shadow-lg ${showAcademicReadingBuilder ? 'bg-orange-600 text-white' : 'bg-orange-500 text-white hover:bg-orange-600'}`}
+            >
+              <BookOpen className="w-5 h-5 mr-2" />
+              Academic Reading Builder
+            </Button>
+            <Button
+              onClick={() => { setShowFillBlanksBuilder(!showFillBlanksBuilder); setShowDailyLifeBuilder(false); setShowAcademicReadingBuilder(false); }}
+              className={`shadow-lg ${showFillBlanksBuilder ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'}`}
+            >
+              <FileText className="w-5 h-5 mr-2" />
+              Fill Blanks Builder
+            </Button>
+            <Button
+              onClick={() => { setShowDailyLifeBuilder(!showDailyLifeBuilder); setShowFillBlanksBuilder(false); setShowAcademicReadingBuilder(false); }}
+              className={`shadow-lg ${showDailyLifeBuilder ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+            >
+              <Book className="w-5 h-5 mr-2" />
+              Daily Life Builder
+            </Button>
+          </>
+        )}
       </div>
 
+      {/* Fill Blanks Builder */}
+      <>
+        {showFillBlanksBuilder && selectedSection === 'Reading' && (
+          <div style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+            <FillBlanksEditor
+              onSave={handleBuilderSave}
+              testType={activeTestType}
+              testNumber={selectedTestNumber}
+            />
+          </div>
+        )}
+      </>
+
+      {/* Daily Life Builder */}
+      <>
+        {showDailyLifeBuilder && selectedSection === 'Reading' && (
+          <div style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+            <ReadDailyLifeTemplates
+              onSave={handleBuilderSave}
+              testType={activeTestType}
+              testNumber={selectedTestNumber}
+              savedTemplates={savedDailyLifeTemplates}
+              onSaveTemplate={(t) => setSavedDailyLifeTemplates(prev => [...prev, t])}
+              onDeleteTemplate={(id) => setSavedDailyLifeTemplates(prev => prev.filter(t => t.id !== id))}
+            />
+          </div>
+        )}
+      </>
+
+      {/* Academic Reading Builder */}
+      <>
+        {showAcademicReadingBuilder && selectedSection === 'Reading' && (
+          <div style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+            <AcademicReadingBuilder
+              onSave={handleBuilderSave}
+              testType={activeTestType}
+              testNumber={selectedTestNumber}
+            />
+          </div>
+        )}
+      </>
+
       {/* Upload Form */}
-      <AnimatePresence>
+      <>
         {showUploadForm && !editingQuestion && (
           <QuestionUploadForm
             testType={activeTestType}
@@ -270,6 +662,10 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
                   testNumber: selectedTestNumber,
                   testType: activeTestType,
                   sections: [],
+                  year: selectedYear,
+                  month: selectedMonth,
+                  isOfficial: isOfficial,
+                  dateMemo: dateMemo || undefined,
                   createdAt: new Date(),
                   updatedAt: new Date()
                 };
@@ -346,6 +742,10 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
                   testNumber: selectedTestNumber,
                   testType: activeTestType,
                   sections: [],
+                  year: selectedYear,
+                  month: selectedMonth,
+                  isOfficial: isOfficial,
+                  dateMemo: dateMemo || undefined,
                   createdAt: new Date(),
                   updatedAt: new Date()
                 };
@@ -379,7 +779,7 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
             onCancel={() => setShowBulkUploadForm(false)}
           />
         )}
-      </AnimatePresence>
+      </>
 
       {/* Existing Questions List */}
       {getExistingTest() && (
@@ -404,10 +804,8 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
             return (
               <div className="space-y-3">
                 {section.questions.map((question, index) => (
-                  <motion.div
+                  <div
                     key={question.id}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
                     className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex-1">
@@ -460,20 +858,28 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
                         size="sm" 
                         className="bg-red-500 text-white hover:bg-red-600"
                         onClick={() => {
-                          const updatedTest = { ...test };
-                          const sectionIndex = updatedTest.sections.findIndex(s => s.sectionType === selectedSection);
-                          if (sectionIndex !== -1) {
-                            updatedTest.sections[sectionIndex].questions = 
-                              updatedTest.sections[sectionIndex].questions.filter(q => q.id !== question.id);
-                            updatedTest.updatedAt = new Date();
-                            onUpdateTest(updatedTest);
-                          }
+                          setDeleteConfirmation({
+                            type: 'question',
+                            id: question.id,
+                            name: `Q${question.questionNumber}: ${question.questionText.substring(0, 50)}...`,
+                            onConfirm: () => {
+                              const updatedTest = { ...test };
+                              const sectionIndex = updatedTest.sections.findIndex(s => s.sectionType === selectedSection);
+                              if (sectionIndex !== -1) {
+                                updatedTest.sections[sectionIndex].questions = 
+                                  updatedTest.sections[sectionIndex].questions.filter(q => q.id !== question.id);
+                                updatedTest.updatedAt = new Date();
+                                onUpdateTest(updatedTest);
+                              }
+                              setDeleteConfirmation(null);
+                            }
+                          });
                         }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             );
@@ -481,72 +887,40 @@ export function ContentManagement({ tests, onAddTest, onUpdateTest, onDeleteTest
         </div>
       )}
 
-      {/* All Tests Overview */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-        <h3 className="font-medium text-gray-800 mb-4">All Uploaded Tests</h3>
-        
-        {!tests || tests.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Book className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-            <p>No tests uploaded yet</p>
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              {deleteConfirmation.type === 'test' ? '테스트 삭제 확인' : '문제 삭제 확인'}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {deleteConfirmation.type === 'test' 
+                ? `정말로 "${deleteConfirmation.name}"을(를) 삭제하시겠습니까? 이 테스트의 모든 문제가 함께 삭제됩니다.`
+                : `정말로 "${deleteConfirmation.name}"을(를) 삭제하시겠습니까?`
+              }
+              <br />
+              <span className="text-red-600 font-medium mt-2 block">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmation(null)}
+              >
+                취소
+              </Button>
+              <Button
+                className="bg-red-500 text-white hover:bg-red-600"
+                onClick={deleteConfirmation.onConfirm}
+              >
+                삭제
+              </Button>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tests
-              .filter(t => t.testType === activeTestType)
-              .sort((a, b) => a.testNumber - b.testNumber)
-              .map(test => {
-                const stats = getTestStats(test);
-                const totalQuestions = Object.values(stats).reduce((a, b) => a + b, 0);
-                
-                return (
-                  <motion.div
-                    key={test.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-gray-800">
-                          {test.testType} {test.testNumber}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {totalQuestions} total questions
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-red-500 text-white hover:bg-red-600"
-                        onClick={() => onDeleteTest(test.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-1 text-blue-600">
-                        <Book className="w-4 h-4" />
-                        <span>R: {stats.Reading}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-green-600">
-                        <Headphones className="w-4 h-4" />
-                        <span>L: {stats.Listening}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-orange-600">
-                        <Mic className="w-4 h-4" />
-                        <span>S: {stats.Speaking}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-purple-600">
-                        <PenTool className="w-4 h-4" />
-                        <span>W: {stats.Writing}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
+      </>
+      )}
     </div>
   );
 }
@@ -571,8 +945,11 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     explanation: '',
     passageText: '',
     audioFile: null as File | null,
+    audioUrl: '',
     videoFile: null as File | null,
+    videoUrl: '',
     imageFile: null as File | null,
+    imageUrl: '',
     duration: 0,
     difficulty: '보통' as '쉬움' | '보통' | '어려움',
     blanks: [] as Array<{ answer: string; maxLength: number }>
@@ -595,14 +972,22 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       blanks: formData.blanks
     };
 
-    // Handle file uploads (in a real app, you'd upload to a server)
-    if (formData.audioFile) {
+    // Handle URL inputs or file uploads (URL takes priority)
+    if (formData.audioUrl.trim()) {
+      question.audioUrl = formData.audioUrl.trim();
+    } else if (formData.audioFile) {
       question.audioUrl = URL.createObjectURL(formData.audioFile);
     }
-    if (formData.videoFile) {
+    
+    if (formData.videoUrl.trim()) {
+      question.videoUrl = formData.videoUrl.trim();
+    } else if (formData.videoFile) {
       question.videoUrl = URL.createObjectURL(formData.videoFile);
     }
-    if (formData.imageFile) {
+    
+    if (formData.imageUrl.trim()) {
+      question.imageUrl = formData.imageUrl.trim();
+    } else if (formData.imageFile) {
       question.imageUrl = URL.createObjectURL(formData.imageFile);
     }
 
@@ -610,11 +995,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6"
+    <div
+      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
     >
       <h3 className="text-xl font-medium text-gray-800 mb-4">
         Add {section} Question - {testType} {testNumber}
@@ -871,7 +1253,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </Button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }
 
@@ -935,11 +1317,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6"
+    <div
+      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
     >
       <h3 className="text-xl font-medium text-gray-800 mb-4">
         Edit {section} Question - {testType} {testNumber}
@@ -1196,7 +1575,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </Button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }
 
@@ -1262,11 +1641,8 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6"
+    <div
+      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
     >
       <h3 className="text-xl font-medium text-gray-800 mb-4">
         Bulk Upload {section} Questions - {testType} {testNumber}
@@ -1303,6 +1679,6 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
           </Button>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

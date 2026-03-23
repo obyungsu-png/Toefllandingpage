@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { ChevronDown, GraduationCap, Users, Briefcase, Handshake, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,23 +10,27 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
   return (
     <div className="min-h-screen bg-[#EEF0FF] overflow-x-hidden">
+      <style>{`
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeSlideRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
+        @keyframes wave { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-10deg); } }
+        @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+      `}</style>
       {/* Top Banner */}
       {showBanner && (
-        <motion.div
-          initial={{ y: -100 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+        <div
           className="bg-[#EAFF5E] text-center py-3 px-5 relative z-50"
+          style={{ animation: 'slideDown 0.5s ease-out' }}
         >
           <p className="font-semibold text-sm">
             Platform updates coming January 2026{' '}
-            <motion.span
-              animate={{ rotate: [0, 15, -10, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+            <span
               className="inline-block origin-[70%_70%]"
+              style={{ animation: 'wave 1.5s infinite' }}
             >
               👋
-            </motion.span>{' '}
+            </span>{' '}
             <a href="#" className="underline">
               learn more
             </a>
@@ -38,7 +41,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <X size={20} />
           </button>
-        </motion.div>
+        </div>
       )}
 
       {/* Navigation */}
@@ -74,20 +77,16 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
       <section className="flex flex-col lg:flex-row py-10 lg:py-20 px-[5%] items-center min-h-[80vh] gap-10">
         {/* Left: Text Content */}
         <div className="flex-1 text-center lg:text-left">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+          <h1
             className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-black"
+            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.2s both' }}
           >
             Master English and unlock global opportunities
-          </motion.h1>
+          </h1>
           
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+          <p
             className="text-base md:text-lg leading-relaxed text-[#555] mb-10 max-w-2xl mx-auto lg:mx-0"
+            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.4s both' }}
           >
             <span className="md:hidden">
               Your gateway to international success. Recognized in 160+ countries worldwide.
@@ -100,13 +99,11 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
               <br />
               Recognized in 160+ countries worldwide. Comprehensive practice platform for real exam preparation.
             </span>
-          </motion.p>
+          </p>
           
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+          <div
             className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.6s both' }}
           >
             <button 
               onClick={onStartTest}
@@ -117,69 +114,58 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             <button className="bg-transparent text-[#2E336B] border border-[#2E336B] px-8 py-4 rounded font-bold text-sm uppercase tracking-wide hover:bg-[rgba(46,51,107,0.05)] hover:-translate-y-1 transition-all duration-300">
               Buy Study Materials
             </button>
-          </motion.div>
+          </div>
         </div>
 
         {/* Right: Image Grid */}
         <div className="flex-1 grid grid-cols-2 gap-4 w-full max-w-lg">
           {/* Image 1 */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+          <div
             className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
           >
-            <motion.img
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-              alt="Student Studying"
+            <img
+              src="https://images.unsplash.com/photo-1631061184412-b18f5fb1dc70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
+              alt="TOEFL Study Illustration"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ animation: 'floatY 6s ease-in-out infinite' }}
             />
-          </motion.div>
+          </div>
 
           {/* Image 2 (Tall) */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+          <div
             className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-2 group"
+            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
           >
-            <motion.img
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-              src="https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-              alt="Presentation"
+            <img
+              src="https://images.unsplash.com/photo-1649920442906-3c8ef428fb6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
+              alt="English Learning Illustration"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
             />
-          </motion.div>
+          </div>
 
           {/* Image 3 */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+          <div
             className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
           >
-            <motion.img
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-              alt="Group Discussion"
+            <img
+              src="https://images.unsplash.com/photo-1585984968562-1443b72fb0dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
+              alt="Study Group Illustration"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
             />
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="bg-white py-16 px-[5%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 border-t border-gray-200">
         {/* Feature 1 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
+        <div
           className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          style={{ animation: 'fadeSlideUp 0.8s ease-out 1s both' }}
         >
           <div className="text-4xl text-[#2E336B] mb-4">
             <GraduationCap size={40} />
@@ -192,14 +178,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             <span className="md:hidden">TPO 1-75 practice tests</span>
             <span className="hidden md:inline">Practice with complete TPO 1-75 tests and build real exam confidence.</span>
           </p>
-        </motion.div>
+        </div>
 
         {/* Feature 2 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
+        <div
           className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.2s both' }}
         >
           <div className="text-4xl text-[#2E336B] mb-4">
             <Users size={40} />
@@ -212,14 +196,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             <span className="md:hidden">TOEFL education solutions</span>
             <span className="hidden md:inline">Effective TOEFL education solutions to help students achieve their goals.</span>
           </p>
-        </motion.div>
+        </div>
 
         {/* Feature 3 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.4 }}
+        <div
           className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.4s both' }}
         >
           <div className="text-4xl text-[#2E336B] mb-4">
             <Briefcase size={40} />
@@ -232,14 +214,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             <span className="md:hidden">Teaching resources & tools</span>
             <span className="hidden md:inline">Comprehensive teaching resources and analytical tools for effective instruction.</span>
           </p>
-        </motion.div>
+        </div>
 
         {/* Feature 4 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.6 }}
+        <div
           className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.6s both' }}
         >
           <div className="text-4xl text-[#2E336B] mb-4">
             <Handshake size={40} />
@@ -252,7 +232,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             <span className="md:hidden">Study abroad support tools</span>
             <span className="hidden md:inline">All-in-one TOEFL learning support tools for study abroad preparation.</span>
           </p>
-        </motion.div>
+        </div>
       </section>
     </div>
   );

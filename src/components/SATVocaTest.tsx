@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { X, Check, ChevronRight, BookOpen, BarChart3, RotateCcw, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { WordFlashcard } from './WordFlashcard';
@@ -50,8 +49,94 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   const [showOnlyWrong, setShowOnlyWrong] = useState(false);
   const [detailedView, setDetailedView] = useState(false);
   
+  // Progress restoration state
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [savedProgress, setSavedProgress] = useState<any>(null);
+  const [progressLoaded, setProgressLoaded] = useState(false);
+  
+  // Auto-save configuration
+  const PROGRESS_KEY = 'sat_voca_test_progress';
+  const PROGRESS_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+  
+  // Helper: Save progress to localStorage
+  const saveProgress = () => {
+    if (testInfo.testType === 'flashcard' || showResults) return; // Don't save in flashcard mode or after completion
+    
+    try {
+      const progressData = {
+        currentQuestionIndex,
+        userAnswers,
+        questions,
+        testInfo,
+        showHint,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(progressData));
+      console.log('[SATVocaTest] 💾 Progress auto-saved');
+    } catch (err) {
+      console.warn('[SATVocaTest] Failed to save progress:', err);
+    }
+  };
+  
+  // Helper: Load progress from localStorage
+  const loadProgress = () => {
+    try {
+      const saved = localStorage.getItem(PROGRESS_KEY);
+      if (!saved) return null;
+      
+      const data = JSON.parse(saved);
+      const isExpired = Date.now() - data.savedAt > PROGRESS_TTL_MS;
+      
+      if (isExpired) {
+        localStorage.removeItem(PROGRESS_KEY);
+        console.log('[SATVocaTest] ⏰ Saved progress expired (7 days old)');
+        return null;
+      }
+      
+      console.log('[SATVocaTest] ✅ Found saved progress:', {
+        questionIndex: data.currentQuestionIndex,
+        totalQuestions: data.questions?.length,
+        answersCount: Object.keys(data.userAnswers || {}).length
+      });
+      
+      return data;
+    } catch (err) {
+      console.warn('[SATVocaTest] Failed to load progress:', err);
+      return null;
+    }
+  };
+  
+  // Helper: Clear progress from localStorage
+  const clearProgress = () => {
+    localStorage.removeItem(PROGRESS_KEY);
+    console.log('[SATVocaTest] 🗑️ Progress cleared');
+  };
+  
+  // Helper: Restore progress
+  const restoreProgress = () => {
+    if (!savedProgress) return;
+    
+    console.log('[SATVocaTest] 🔄 Restoring progress...');
+    setQuestions(savedProgress.questions);
+    setOriginalQuestions(savedProgress.questions);
+    setCurrentQuestionIndex(savedProgress.currentQuestionIndex);
+    setUserAnswers(savedProgress.userAnswers);
+    setShowHint(savedProgress.showHint || {});
+    setShowRestoreModal(false);
+    setSavedProgress(null);
+  };
+  
+  // Helper: Start fresh (ignore saved progress)
+  const startFresh = () => {
+    console.log('[SATVocaTest] 🆕 Starting fresh test');
+    clearProgress();
+    setShowRestoreModal(false);
+    setSavedProgress(null);
+  };
+  
   // Restart test from beginning
   const restartTest = () => {
+    clearProgress(); // Clear saved progress when restarting
     setQuestions(originalQuestions);
     setUserAnswers({});
     setCurrentQuestionIndex(0);
@@ -73,6 +158,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
       return;
     }
     
+    clearProgress(); // Clear saved progress when retrying
     // Reset state and use only wrong questions
     setQuestions(wrongQuestions);
     setUserAnswers({});
@@ -128,6 +214,17 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   // Generate questions on mount
   useEffect(() => {
     if (testInfo.testType === 'flashcard') return;
+
+    // Check for saved progress on first load
+    if (!progressLoaded) {
+      const saved = loadProgress();
+      if (saved) {
+        console.log('[SATVocaTest] Found saved progress, showing restore modal');
+        setSavedProgress(saved);
+        setShowRestoreModal(true);
+      }
+      setProgressLoaded(true);
+    }
 
     const generatedQuestions: Question[] = [];
     
@@ -268,6 +365,20 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
       setOriginalQuestions(generatedQuestions);
     }
   }, [testInfo]);
+  
+  // Auto-save progress whenever relevant state changes
+  useEffect(() => {
+    if (questions.length > 0 && !showResults && !showRestoreModal) {
+      saveProgress();
+    }
+  }, [currentQuestionIndex, userAnswers, showHint, questions]);
+  
+  // Clear progress when test is completed
+  useEffect(() => {
+    if (showResults) {
+      clearProgress();
+    }
+  }, [showResults]);
 
   // Generate options for multiple choice questions
   const generateOptions = (
@@ -545,11 +656,8 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
                 const isCorrect = userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
                 
                 return (
-                  <motion.div
+                  <div
                     key={question.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
                     className="border rounded-lg p-4"
                     style={{
                       borderColor: isCorrect ? '#4CAF50' : '#f44336',
@@ -585,7 +693,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
                         </p>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
@@ -641,14 +749,76 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
 
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-y-auto pb-24 md:pb-0">
+      {/* Restore Progress Modal */}
+      {showRestoreModal && savedProgress && (
+        <div className="fixed inset-0 z-[70] bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            style={{ animation: 'scaleIn 0.3s ease-out' }}
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: themeColor }}>
+                이전에 푸시던 시험이 있습니다
+              </h2>
+              <p className="text-gray-600 text-sm">
+                이어서 풀기를 선택하면 {savedProgress.currentQuestionIndex + 1}번 문제부터 계속할 수 있습니다.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">진행률</span>
+                <span className="font-medium" style={{ color: themeColor }}>
+                  {savedProgress.currentQuestionIndex + 1} / {savedProgress.questions?.length || 0} 문제
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">답변 완료</span>
+                <span className="font-medium text-green-600">
+                  {Object.keys(savedProgress.userAnswers || {}).length}개
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">저장 시간</span>
+                <span className="font-medium text-gray-700">
+                  {new Date(savedProgress.savedAt).toLocaleString('ko-KR', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={startFresh}
+                variant="outline"
+                className="flex-1"
+              >
+                새로 시작
+              </Button>
+              <Button
+                onClick={restoreProgress}
+                className="flex-1 text-white"
+                style={{ backgroundColor: themeColor }}
+              >
+                이어서 풀기
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Answer Feedback Overlay */}
       {answerFeedback && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          transition={{ duration: 0.3 }}
+        <div
           className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none"
+          style={{ animation: 'scaleIn 0.3s ease-out' }}
         >
           <div
             className="rounded-full w-48 h-48 flex items-center justify-center shadow-2xl"
@@ -657,24 +827,16 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
             }}
           >
             {answerFeedback === 'correct' ? (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200 }}
-              >
+              <div style={{ animation: 'scaleIn 0.3s ease-out' }}>
                 <Check className="w-32 h-32 text-white" strokeWidth={4} />
-              </motion.div>
+              </div>
             ) : (
-              <motion.div
-                initial={{ rotate: 0, scale: 0 }}
-                animate={{ rotate: 90, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200 }}
-              >
+              <div style={{ animation: 'scaleIn 0.3s ease-out' }}>
                 <X className="w-32 h-32 text-white" strokeWidth={4} />
-              </motion.div>
+              </div>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
 
       <div className="max-w-3xl mx-auto p-8">
@@ -699,12 +861,9 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
             </span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ backgroundColor: themeColor }}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ backgroundColor: themeColor, width: `${progress}%` }}
             />
           </div>
         </div>

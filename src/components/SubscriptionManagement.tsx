@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Calendar, DollarSign, AlertCircle, TrendingUp, Users, Download, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 export interface Subscription {
   id: string;
@@ -28,16 +29,43 @@ export function SubscriptionManagement() {
   });
 
   useEffect(() => {
-    // Load subscriptions from localStorage
-    const saved = localStorage.getItem('toefl_subscriptions');
-    if (saved) {
-      setSubscriptions(JSON.parse(saved));
-    }
+    // Load subscriptions from Supabase
+    const loadSubscriptions = async () => {
+      try {
+        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+        const response = await fetch(`${baseUrl}/subscriptions`, {
+          headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            setSubscriptions(data);
+            console.log('✅ Loaded subscriptions from Supabase:', data.length);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error loading subscriptions:', error);
+      }
+    };
+    loadSubscriptions();
   }, []);
 
-  const saveSubscriptions = (subs: Subscription[]) => {
+  const saveSubscriptions = async (subs: Subscription[]) => {
     setSubscriptions(subs);
-    localStorage.setItem('toefl_subscriptions', JSON.stringify(subs));
+    try {
+      const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+      await fetch(`${baseUrl}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${publicAnonKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subs)
+      });
+      console.log('💾 Saved subscriptions to Supabase');
+    } catch (error) {
+      console.error('❌ Error saving subscriptions:', error);
+    }
   };
 
   const handleAddSubscription = () => {

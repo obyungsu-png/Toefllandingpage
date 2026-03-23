@@ -1,4 +1,5 @@
 @custom-variant dark (&:is(.dark *));
+@import './fill-blanks.css';
 
 :root {
   --font-size: 16px;
@@ -207,8 +208,8 @@ html {
 
 /* Webkit browsers (Chrome, Safari, Edge) */
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
@@ -217,7 +218,7 @@ html {
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 3px;
+  border-radius: 1.5px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
@@ -228,4 +229,176 @@ html {
 .touch-manipulation {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* TOEFL Test Frame - Mobile responsive header, buttons & tabs
+   Targets all reading question screens (h-16 teal headers) globally */
+@media (max-width: 639px) {
+  /* Header bar: shrink height & padding */
+  .bg-\[\#1e6b73\].h-16 {
+    height: 3rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Logo text: shrink to text-sm */
+  .bg-\[\#1e6b73\].h-16 .text-2xl {
+    font-size: 0.875rem !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Button group: tighter gap */
+  .bg-\[\#1e6b73\].h-16 > .flex.items-center.gap-3 {
+    gap: 0.375rem !important;
+  }
+
+  /* All buttons inside the header: compact sizing */
+  .bg-\[\#1e6b73\].h-16 button {
+    padding: 0.375rem 0.5rem !important;
+    gap: 0.25rem !important;
+  }
+
+  /* Button text: text-xs */
+  .bg-\[\#1e6b73\].h-16 button > span {
+    font-size: 0.75rem !important;
+  }
+
+  /* Button icons: smaller */
+  .bg-\[\#1e6b73\].h-16 button > svg {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+  }
+
+  /* Navigation tab wrapper: compact padding (nested px-8 child) */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .px-8 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Navigation tab wrapper: compact padding (px-8 on border-b div itself) */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b.px-8 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Tab group: tighter gap */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .gap-8 {
+    gap: 1rem !important;
+  }
+
+  /* Reading tab label: text-sm */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .font-bold {
+    font-size: 0.875rem !important;
+  }
+
+  /* Question number label: text-xs */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .text-sm {
+    font-size: 0.75rem !important;
+  }
+
+  /* Hide Time / Show Time button text in tab bar */
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .gap-4 span {
+    font-size: 0.75rem !important;
+  }
+  .bg-\[\#1e6b73\].h-16 + .bg-white.border-b .gap-4 svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+}
+
+/* Fix radio button green dot centering on mobile.
+   The mt-0.5 on radio inputs shifts them down but the absolute-positioned
+   green dot centers relative to the parent, causing asymmetry. */
+@media (max-width: 639px) {
+  /* Remove the top margin from custom radio inputs so the green dot centers properly */
+  .relative.flex-shrink-0 > input[type="radio"].appearance-none {
+    margin-top: 0 !important;
+  }
+}
+
+/* Mobile: Remove borders from passage content inside expanded Questions tab view.
+   The passage emails/notices have heavy borders that look cluttered in the small
+   collapsed/expanded passage area on mobile. */
+@media (max-width: 639px) {
+  .mobile-expanded-passage *:not(input):not(button) {
+    border-color: transparent !important;
+  }
+}
+
+/* ===== CSS Animations (replacing motion/react) ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 500px; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes slowRotate {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  to { transform: rotate(360deg) scale(1); }
+}
+
+/* Mobile: Make all scrollbars thin */
+@media (max-width: 639px) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.4);
+    border-radius: 1.5px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.6);
+  }
 }

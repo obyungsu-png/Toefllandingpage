@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Plus, Edit, Trash2, Search, BookOpen, Save, X, Check, Pencil, Upload, Download, FileText, ChevronDown, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+// motion removed - using CSS animations
 import { SATWord } from './vocaWordSets';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
@@ -63,6 +63,7 @@ export function VocabularyManagement({
   const [editingDayName, setEditingDayName] = useState('');
   const [newDayName, setNewDayName] = useState('');
   const [editingWord, setEditingWord] = useState<SATWord | null>(null);
+  const [editingWordIndex, setEditingWordIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<SATWord>({
     english: '',
     korean: '',
@@ -70,6 +71,8 @@ export function VocabularyManagement({
     synonyms: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addFormRef = useRef<HTMLDivElement>(null);
+  const editFormRef = useRef<HTMLDivElement>(null);
 
   // Supabase state management
   const [words, setWords] = useState<SATWord[]>([]);
@@ -88,6 +91,81 @@ export function VocabularyManagement({
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
 
   const serverUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+
+  // Cache configuration
+  const CACHE_VERSION = 'v1';
+  const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+  // Cache helper functions
+  const getCacheKey = (type: string) => `vocab_cache_${CACHE_VERSION}_${type}`;
+  
+  const loadFromCache = (type: string) => {
+    try {
+      const cached = localStorage.getItem(getCacheKey(type));
+      if (!cached) return null;
+      
+      const data = JSON.parse(cached);
+      const isExpired = Date.now() - data.timestamp > CACHE_TTL_MS;
+      
+      if (isExpired) {
+        localStorage.removeItem(getCacheKey(type));
+        return null;
+      }
+      
+      console.log(`[VocabularyManagement] ✅ Loaded from cache: ${type} (${data.words?.length || 0} words, ${data.days?.length || 0} days)`);
+      return data;
+    } catch (err) {
+      console.warn('[VocabularyManagement] Cache load failed:', err);
+      return null;
+    }
+  };
+  
+  const saveToCache = (type: string, words: SATWord[], days: VocabularyDay[]) => {
+    try {
+      const data = {
+        words,
+        days,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(getCacheKey(type), JSON.stringify(data));
+      console.log(`[VocabularyManagement] 💾 Saved to cache: ${type}`);
+    } catch (err) {
+      console.warn('[VocabularyManagement] Cache save failed:', err);
+    }
+  };
+
+  // Retry helper for transient network errors (cold start, etc.)
+  const fetchWithRetry = async (url: string, options: RequestInit, retries = 5, delayMs = 2000): Promise<Response> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          console.warn(`[VocabularyManagement] Fetch attempt ${attempt}/${retries} timed out, retrying in ${delayMs * attempt}ms...`);
+        } else {
+          console.warn(`[VocabularyManagement] Fetch attempt ${attempt}/${retries} failed (${err.message}), retrying in ${delayMs * attempt}ms...`);
+        }
+        if (attempt === retries) throw err;
+        await new Promise(r => setTimeout(r, delayMs * attempt));
+      }
+    }
+    throw new Error('fetchWithRetry: unreachable');
+  };
+
+  // Warm up the edge function on mount to reduce cold start issues
+  const serverWarmedUp = useRef(false);
+  useEffect(() => {
+    if (!serverWarmedUp.current) {
+      serverWarmedUp.current = true;
+      fetch(`${serverUrl}/health`, {
+        headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+      }).catch(() => {});
+    }
+  }, []);
 
   // Toggle day expansion
   const toggleDayExpansion = (dayId: number) => {
@@ -109,19 +187,33 @@ export function VocabularyManagement({
 
   const fetchVocabularyData = async () => {
     try {
-      setLoading(true);
       setError(null);
 
-      console.log(`[VocabularyManagement] Fetching data for tab: ${activeTab}`);
+      // Step 1: Try to load from cache first for instant display
+      const cachedData = loadFromCache(activeTab);
+      if (cachedData) {
+        console.log(`[VocabularyManagement] 🚀 Using cached data for instant display: ${activeTab}`);
+        setWords(cachedData.words || []);
+        setDays(cachedData.days || []);
+        setLoading(false); // Show cached data immediately
+      } else {
+        setLoading(true);
+      }
+
+      // Step 2: Fetch fresh data from server in background
+      console.log(`[VocabularyManagement] 🔄 Fetching fresh data from server: ${activeTab}`);
       console.log(`[VocabularyManagement] Server URL: ${serverUrl}/vocabulary/${activeTab}`);
 
-      // Fetch words
-      const wordsResponse = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
-        headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const headers = {
+        'Authorization': `Bearer ${publicAnonKey}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Fetch words and days in parallel with retry for cold start resilience
+      const [wordsResponse, daysResponse] = await Promise.all([
+        fetchWithRetry(`${serverUrl}/vocabulary/${activeTab}`, { headers }),
+        fetchWithRetry(`${serverUrl}/vocabulary-days/${activeTab}`, { headers })
+      ]);
 
       if (!wordsResponse.ok) {
         const errorText = await wordsResponse.text();
@@ -129,25 +221,26 @@ export function VocabularyManagement({
         throw new Error(`Failed to fetch vocabulary words: ${wordsResponse.status} ${errorText}`);
       }
 
-      const wordsData = await wordsResponse.json();
-      console.log(`[VocabularyManagement] Fetched ${wordsData.words?.length || 0} words for ${activeTab}`);
-      setWords(wordsData.words || []);
-
-      // Fetch days
-      const daysResponse = await fetch(`${serverUrl}/vocabulary-days/${activeTab}`, {
-        headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
       if (!daysResponse.ok) {
-        throw new Error('Failed to fetch vocabulary days');
+        const errorText = await daysResponse.text();
+        console.error(`[VocabularyManagement] Failed to fetch days. Status: ${daysResponse.status}, Response: ${errorText}`);
+        throw new Error(`Failed to fetch vocabulary days: ${daysResponse.status} ${errorText}`);
       }
 
+      const wordsData = await wordsResponse.json();
       const daysData = await daysResponse.json();
-      console.log(`[VocabularyManagement] Fetched ${daysData.days?.length || 0} days for ${activeTab}`);
-      setDays(daysData.days || []);
+      
+      const freshWords = wordsData.words || [];
+      const freshDays = daysData.days || [];
+      
+      console.log(`[VocabularyManagement] ✅ Fetched fresh data: ${freshWords.length} words, ${freshDays.length} days for ${activeTab}`);
+      
+      // Step 3: Update UI with fresh data
+      setWords(freshWords);
+      setDays(freshDays);
+      
+      // Step 4: Save to cache for next time
+      saveToCache(activeTab, freshWords, freshDays);
 
     } catch (err) {
       console.error('Error fetching vocabulary data:', err);
@@ -167,12 +260,12 @@ export function VocabularyManagement({
     }
   };
 
-  // Group words by day (40 words per day for vol.1, 60 words per day for vol.2) - Use stored order without shuffling
+  // Group words by day - Use stored order without shuffling
   const wordsByDay = useMemo(() => {
     const grouped: { [key: number]: SATWord[] } = {};
     
-    // For custom and etymology tabs, use dayNumber field
-    if (activeTab === 'custom' || activeTab === 'etymology') {
+    // For custom, etymology, and toefl-easy tabs, use dayNumber field (unlimited words per day)
+    if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
       // Initialize all days with empty arrays
       for (let day = 1; day <= days.length; day++) {
         grouped[day] = [];
@@ -187,8 +280,8 @@ export function VocabularyManagement({
         grouped[dayNum].push(word);
       });
     } else {
-      // For TOEFL tabs, use index-based grouping
-      const wordsPerDay = activeTab === 'toefl-hard' ? 60 : 40;
+      // For toefl-hard tab, use index-based grouping (60 words per day)
+      const wordsPerDay = 60;
       const totalDays = Math.ceil(words.length / wordsPerDay);
       
       for (let day = 1; day <= Math.max(totalDays, days.length); day++) {
@@ -202,6 +295,9 @@ export function VocabularyManagement({
   }, [words, days, activeTab]);
 
   const currentDayWords = wordsByDay[selectedDay] || [];
+
+  // Helper to get the display name for the selected day
+  const selectedDayName = days.find(d => d.id === selectedDay)?.name || `DAY ${selectedDay}`;
 
   // Filter words by search query
   const filteredWords = useMemo(() => {
@@ -313,10 +409,14 @@ export function VocabularyManagement({
     }
   };
 
-  const startEdit = (word: SATWord) => {
+  const startEdit = (word: SATWord, index?: number) => {
     setEditingWord(word);
+    setEditingWordIndex(index ?? null);
     setFormData({ ...word });
-    setShowAddForm(true);
+    setShowAddForm(false);
+    setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   };
 
   const resetForm = () => {
@@ -327,6 +427,7 @@ export function VocabularyManagement({
       synonyms: ''
     });
     setEditingWord(null);
+    setEditingWordIndex(null);
     setShowAddForm(false);
   };
 
@@ -429,7 +530,7 @@ export function VocabularyManagement({
   };
 
   const handleClearAllDayWords = async () => {
-    if (!confirm(`DAY ${selectedDay}의 모든 단어(${currentDayWords.length}개)를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+    if (!confirm(`${selectedDayName}의 모든 단어(${currentDayWords.length}개)를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
       return;
     }
 
@@ -449,7 +550,7 @@ export function VocabularyManagement({
 
       const data = await response.json();
       setWords(data.words);
-      alert(`DAY ${selectedDay}의 모든 단어가 삭제되었습니다.`);
+      alert(`${selectedDayName}의 모든 단어가 삭제되었습니다.`);
     } catch (error) {
       console.error('Error clearing day words:', error);
       alert('DAY 단어 삭제 중 오류가 발생했습니다.');
@@ -561,8 +662,8 @@ export function VocabularyManagement({
         // Normalize all words before uploading
         const normalizedWords = parsedWords.map(word => normalizeWord(word));
 
-        // For custom and etymology tabs, upload all words to the selected day without splitting
-        if (activeTab === 'custom' || activeTab === 'etymology') {
+        // For custom, etymology, and toefl-easy tabs, upload all words to the selected day without splitting
+        if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
           // No limit - upload all words to the target day
           const response = await fetch(`${serverUrl}/vocabulary-bulk/${activeTab}`, {
             method: 'POST',
@@ -689,11 +790,10 @@ export function VocabularyManagement({
             return;
           }
           
-          // No limit for custom and etymology, 40 for vol.1, 60 for vol.2
+          // No limit for custom, etymology, toefl-easy; 60 for vol.2
           const wordsPerDay = 
-            activeTab === 'custom' || activeTab === 'etymology' ? 10000 :
-            activeTab === 'toefl-hard' ? 60 : 
-            40;
+            activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' ? 10000 :
+            60;
           
           // Distribute words
           let wordIndex = 0;
@@ -794,7 +894,7 @@ export function VocabularyManagement({
 
   // Normalize existing data in the database (admin function)
   const handleNormalizeData = async () => {
-    if (!confirm(`현재 탭(${activeTab})의 모든 단어를 정규화하시겠습니까? 이 작업은 줄바꿈 문자와 불필요한 공백을 제거합니다.`)) {
+    if (!confirm(`Normalize all words in the current tab (${activeTab})? This will remove line breaks and unnecessary spaces.`)) {
       return;
     }
 
@@ -1011,6 +1111,9 @@ export function VocabularyManagement({
             onClick={() => {
               resetForm();
               setShowAddForm(true);
+              setTimeout(() => {
+                addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 100);
             }}
             className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22] shadow-lg"
           >
@@ -1020,17 +1123,15 @@ export function VocabularyManagement({
         </div>
       </div>
 
-      {/* Add/Edit Form */}
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6"
+      {/* Add Form (only for adding new words, not editing) */}
+      <>
+        {showAddForm && !editingWord && (
+          <div
+            ref={addFormRef}
+            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
           >
             <h3 className="text-xl font-medium text-gray-800 mb-4">
-              {editingWord ? `단어 수정 - DAY ${selectedDay}` : `단어 추가 - DAY ${selectedDay}`}
+              {`단어 추가 - ${selectedDayName}`}
             </h3>
 
             <div className="space-y-4">
@@ -1099,26 +1200,23 @@ export function VocabularyManagement({
                 </Button>
                 <Button
                   type="button"
-                  onClick={editingWord ? handleUpdateWord : handleAddWord}
+                  onClick={handleAddWord}
                   className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {editingWord ? '수정' : '추가'}
+                  추가
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Add/Edit Day Form */}
-      <AnimatePresence>
+      <>
         {showAddDayForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6"
+          <div
+            className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
           >
             <h3 className="text-xl font-medium text-gray-800 mb-4">
               {editingDayId ? `날짜 수정` : `날짜 추가`}
@@ -1163,45 +1261,46 @@ export function VocabularyManagement({
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Words List */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3 sm:p-6">
         <div 
-          className="flex items-center justify-between mb-4 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
           onClick={() => toggleDayExpansion(selectedDay)}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {expandedDays.has(selectedDay) ? (
-              <ChevronDown className="w-5 h-5 text-gray-600" />
+              <ChevronDown className="w-5 h-5 text-gray-600 shrink-0" />
             ) : (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-gray-600 shrink-0" />
             )}
-            <h3 className="text-xl font-medium text-gray-800">
-              DAY {selectedDay} 단어 목록
-              <span className="ml-2 text-sm text-gray-600">
-                {activeTab === 'custom' || activeTab === 'etymology' 
-                  ? `(${currentDayWords.length}개)`
-                  : `(${currentDayWords.length}/${activeTab === 'toefl-hard' ? 60 : 40}개)`
+            <h3 className="text-base sm:text-xl font-medium text-gray-800 truncate">
+              {selectedDayName} 단어 목록
+              <span className="ml-2 text-xs sm:text-sm text-gray-600">
+                {activeTab === 'toefl-hard'
+                  ? `(${currentDayWords.length}/60개)`
+                  : `(${currentDayWords.length}개)`
                 }
               </span>
             </h3>
           </div>
-          <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 sm:gap-3 pl-7 sm:pl-0" onClick={(e) => e.stopPropagation()}>
             {currentDayWords.length > 0 && (
               <Button
                 size="sm"
                 onClick={handleClearAllDayWords}
-                className="bg-red-500 text-white hover:bg-red-600"
+                className="bg-red-500 text-white hover:bg-red-600 text-xs sm:text-sm shrink-0"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                DAY 전체 생략
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">DAY 전체 삭제</span>
+                <span className="sm:hidden">전체 삭제</span>
               </Button>
             )}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <BookOpen className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
+              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span>총 {currentDayWords.length}개 단어</span>
             </div>
           </div>
@@ -1219,59 +1318,168 @@ export function VocabularyManagement({
             ) : (
               <div className="space-y-3">
             {filteredWords.map((word, index) => (
-              <motion.div
-                key={`${word.english}-${index}`}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-[#2d7a7c] text-white rounded-full text-sm font-bold">
-                        {index + 1}
-                      </span>
-                      <h4 className="text-xl font-bold text-gray-800">{word.english}</h4>
-                      <span className="text-lg text-gray-600">{word.korean}</span>
+              <div key={`${word.english}-${index}`}>
+                <div
+                  className={`border rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition-colors animate-[fadeIn_0.3s_ease-out] ${editingWordIndex === index ? 'border-[#2d7a7c] bg-teal-50/30' : 'border-gray-200'}`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-[#2d7a7c] text-white rounded-full text-xs sm:text-sm font-bold shrink-0">
+                          {index + 1}
+                        </span>
+                        <h4 className="text-base sm:text-xl font-bold text-gray-800 break-all">{word.english}</h4>
+                        <span className="text-sm sm:text-lg text-gray-600 break-all">{word.korean}</span>
+                        {/* Mobile action buttons inline */}
+                        <div className="flex gap-1.5 sm:hidden ml-auto">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => editingWordIndex === index ? resetForm() : startEdit(word, index)}
+                            className={`h-7 w-7 p-0 ${editingWordIndex === index ? "border-gray-400 text-gray-500 hover:bg-gray-100" : "border-blue-500 text-blue-500 hover:bg-blue-50"}`}
+                          >
+                            {editingWordIndex === index ? <X className="w-3.5 h-3.5" /> : <Edit className="w-3.5 h-3.5" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-red-500 text-white hover:bg-red-600 h-7 w-7 p-0"
+                            onClick={() => handleDeleteWord(word)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {word.definition && (
+                        <p className="text-xs sm:text-sm text-gray-700 mb-2 pl-0 sm:pl-16">
+                          <span className="font-medium">영영풀이:</span> {word.definition}
+                        </p>
+                      )}
+                      
+                      {word.synonyms && (
+                        <p className="text-xs sm:text-sm text-gray-600 pl-0 sm:pl-16">
+                          <span className="font-medium">동의어:</span>{' '}
+                          {word.synonyms.split(',').map((syn, i) => (
+                            <span key={i} className="inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-700 rounded mr-1 mb-1 text-xs sm:text-sm">
+                              {syn.trim()}
+                            </span>
+                          ))}
+                        </p>
+                      )}
                     </div>
                     
-                    {word.definition && (
-                      <p className="text-sm text-gray-700 mb-2 pl-16">
-                        <span className="font-medium">영영풀이:</span> {word.definition}
-                      </p>
-                    )}
-                    
-                    {word.synonyms && (
-                      <p className="text-sm text-gray-600 pl-16">
-                        <span className="font-medium">동의어:</span>{' '}
-                        {word.synonyms.split(',').map((syn, i) => (
-                          <span key={i} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded mr-1 mb-1">
-                            {syn.trim()}
-                          </span>
-                        ))}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEdit(word)}
-                      className="border-blue-500 text-blue-500 hover:bg-blue-50"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="bg-red-500 text-white hover:bg-red-600"
-                      onClick={() => handleDeleteWord(word)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {/* Desktop action buttons */}
+                    <div className="hidden sm:flex gap-2 ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editingWordIndex === index ? resetForm() : startEdit(word, index)}
+                        className={editingWordIndex === index ? "border-gray-400 text-gray-500 hover:bg-gray-100" : "border-blue-500 text-blue-500 hover:bg-blue-50"}
+                      >
+                        {editingWordIndex === index ? <X className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-red-500 text-white hover:bg-red-600"
+                        onClick={() => handleDeleteWord(word)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
+
+                {/* Inline Edit Form - appears right below the word being edited */}
+                <>
+                  {editingWord && editingWordIndex === index && (
+                    <div
+                      ref={editFormRef}
+                      className="overflow-hidden animate-[fadeSlideUp_0.2s_ease-out]"
+                    >
+                      <div className="bg-white rounded-b-lg shadow-lg border border-t-0 border-[#2d7a7c] p-6 -mt-1">
+                        <h3 className="text-lg font-medium text-gray-800 mb-4">
+                          {`단어 수정 - ${selectedDayName}`}
+                        </h3>
+
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              영어 단어 <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.english}
+                              onChange={(e) => setFormData({ ...formData, english: e.target.value })}
+                              placeholder="예: accomplish"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              한글 뜻 <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.korean}
+                              onChange={(e) => setFormData({ ...formData, korean: e.target.value })}
+                              placeholder="예: 성취하다"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              영영풀이 (Definition)
+                            </label>
+                            <textarea
+                              value={formData.definition}
+                              onChange={(e) => setFormData({ ...formData, definition: e.target.value })}
+                              placeholder="예: to succeed in doing or completing something"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                              rows={3}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              동의어 (쉼표로 구분)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.synonyms}
+                              onChange={(e) => setFormData({ ...formData, synonyms: e.target.value })}
+                              placeholder="예: achieve, complete, fulfill"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                            />
+                          </div>
+
+                          <div className="flex gap-3 justify-end pt-4 border-t">
+                            <Button
+                              type="button"
+                              onClick={resetForm}
+                              className="bg-gray-300 text-gray-700 hover:bg-gray-400"
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              취소
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={handleUpdateWord}
+                              className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
+                            >
+                              <Save className="w-4 h-4 mr-2" />
+                              수정
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              </div>
             ))}
               </div>
             )}
@@ -1357,13 +1565,10 @@ export function VocabularyManagement({
       </div>
 
       {/* Bulk Upload Form */}
-      <AnimatePresence>
+      <>
         {showBulkUpload && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-lg shadow-lg border-2 border-[#005f61] p-6"
+          <div
+            className="bg-white rounded-lg shadow-lg border-2 border-[#005f61] p-6 animate-[fadeSlideUp_0.3s_ease-out]"
           >
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-xl font-medium text-gray-800">
@@ -1479,7 +1684,7 @@ export function VocabularyManagement({
                 />
                 <p className="text-xs text-gray-600 mt-2">
                   <strong>팁:</strong> Excel/Word에서 복사한 내용을 그대로 붙여넣을 수 있습니다. 
-                  {bulkUploadMode === 'multi-day' && ' 각 DAY 시작 전에 \"DAY 1\", \"DAY 2\" 등으로 표시하세요.'}
+                  {bulkUploadMode === 'multi-day' && ' 각 DAY 시작 전에 \"DAY 1\", \"DAY 2\" 등으�� 표시하세요.'}
                 </p>
               </div>
 
@@ -1533,18 +1738,15 @@ export function VocabularyManagement({
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Upload Guide */}
-      <AnimatePresence>
+      <>
         {showUploadGuide && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-lg shadow-lg border-2 border-[#e67e22] p-6"
+          <div
+            className="bg-white rounded-lg shadow-lg border-2 border-[#e67e22] p-6 animate-[fadeSlideUp_0.3s_ease-out]"
           >
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-xl font-medium text-gray-800">
@@ -1674,18 +1876,18 @@ advocate	옹호하다	to support	support, promote</pre>
                     <p className="text-sm text-blue-700 font-bold mb-2">🚀 3. DAY 범위 자동 분배 (NEW!):</p>
                     <p className="text-xs text-blue-600 mb-2">
                       DAY 10-DAY 20 형식으로 범위를 지정하면 자동 분배
-                      {activeTab === 'toefl-hard' ? ' (vol.2: 60개씩)' : ' (40개씩)'}
+                      {activeTab === 'toefl-hard' ? ' (vol.2: 60개씩)' : activeTab === 'toefl-easy' ? ' (제한 없음)' : ' (제한 없음)'}
                     </p>
                     <pre className="text-xs font-mono text-gray-700 bg-gray-50 p-2 rounded">DAY 10-DAY 20
 accomplish\t성취하다\tto succeed in doing\tachieve, complete
 accurate\t정확한\tcorrect in all details\tprecise, exact
 adapt\t적응하다\tto adjust\tadjust, modify
-(... {activeTab === 'toefl-hard' ? '600' : '400'}개 단어 ...)</pre>
+(... {activeTab === 'toefl-hard' ? '600' : '500'}개 단어 ...)</pre>
                     <p className="text-xs text-blue-600 mt-2">
-                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '600개 단어를 자동으로 DAY 10부터 DAY 20까지 60개씩 분배합니다.' : '400개 단어를 자동으로 DAY 10부터 DAY 20까지 40개씩 분배합니다.'}
+                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '600개 단어를 자동으로 DAY 10부터 DAY 20까지 60개씩 분배합니다.' : '단어를 자동으로 DAY 10부터 DAY 20까지 분배합니다.'}
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      💡 단어가 {activeTab === 'toefl-hard' ? '60' : '40'}개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.
+                      💡 {activeTab === 'toefl-hard' ? '단어가 60개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.' : 'DAY당 단어 수 제한 없이 자유롭게 입력할 수 있습니다.'}
                     </p>
                   </div>
                   
@@ -1709,7 +1911,7 @@ advocate\t옹호하다\tto support\tsupport, promote</pre>
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
                     💡 <strong>팁 2:</strong> 대량의 단어를 연속된 DAY에 한번에 넣으려면 "DAY 10-DAY 20" 형식을 사용하세요. 
-                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 60개씩 분배됩니다!' : ' 자동으로 40개씩 분배됩니다!'}
+                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 60개씩 분배됩니다!' : ' DAY당 제한 없이 자유롭게 분배됩니다!'}
                   </p>
                 </div>
               </div>
@@ -1763,9 +1965,9 @@ advocate\t옹호하다\tto support\tsupport, promote</pre>
                 </Button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

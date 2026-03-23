@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 
-type TestSetRange = '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
+type TestSetRange = '1-5';
+type YearFilter = 'all' | '2024' | '2025' | '2026';
+type MonthFilter = 'all' | 'jan-mar' | 'apr-jun' | 'jul-sep' | 'oct-dec';
 
 interface TPOTest {
   id: string;
   testNumber: number;
   testType: 'TPO' | 'Test';
+  year?: number;
+  month?: number;
+  isOfficial?: boolean;
   reading?: {
     passages: any[];
     questions: any[];
@@ -27,7 +32,7 @@ interface TestPageProps {
   setActiveTab: (tab: string) => void;
   setCurrentTest: (test: { tpoNumber: number; section: string }) => void;
   setTestBankType: (type: string) => void;
-  setShowListeningIntro: (show: boolean) => void;
+  setShowListeningIntro: (show: boolean | string) => void;
   setShowReadingIntro: (show: boolean) => void;
   setShowWritingIntro: (show: boolean) => void;
   setShowSpeakingIntro: (show: boolean) => void;
@@ -54,30 +59,94 @@ export function TestPage({
   advertisements
 }: TestPageProps) {
   
-  const getTestNumbers = (): number[] => {
-    const rangeMap: { [key in TestSetRange]: number[] } = {
-      '1-4': [1, 2, 3, 4],
-      '5-8': [5, 6, 7, 8],
-      '9-12': [9, 10, 11, 12],
-      '13-16': [13, 14, 15, 16],
-      '17-20': [17, 18, 19, 20]
-    };
-    return rangeMap[activeTestSetRange] || [1, 2, 3, 4];
+  const [yearFilter, setYearFilter] = useState<YearFilter>('all');
+  const [monthFilter, setMonthFilter] = useState<MonthFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4; // 한 페이지에 4개씩 표시
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [yearFilter, monthFilter]);
+
+  const allTestNumbers = useMemo(() => {
+    // Dynamically generate test numbers based on actual Test data
+    const maxTestNumber = testTests.reduce((max, test) => {
+      if (test.testType === 'Test' && test.testNumber > max) {
+        return test.testNumber;
+      }
+      return max;
+    }, 0);
+    
+    // Generate array [1, 2, 3, ..., maxTestNumber]
+    return Array.from({ length: maxTestNumber }, (_, i) => i + 1);
+  }, [testTests]);
+
+  const getFilteredTestNumbers = (): number[] => {
+    let numbers = allTestNumbers;
+
+    if (yearFilter !== 'all' || monthFilter !== 'all') {
+      numbers = numbers.filter(num => {
+        const testData = testTests.find(t => t.testNumber === num);
+        
+        if (yearFilter !== 'all') {
+          const y = parseInt(yearFilter);
+          if (!testData?.year || testData.year !== y) return false;
+        }
+
+        if (monthFilter !== 'all' && testData?.month) {
+          const m = testData.month;
+          if (monthFilter === 'jan-mar' && (m < 1 || m > 3)) return false;
+          if (monthFilter === 'apr-jun' && (m < 4 || m > 6)) return false;
+          if (monthFilter === 'jul-sep' && (m < 7 || m > 9)) return false;
+          if (monthFilter === 'oct-dec' && (m < 10 || m > 12)) return false;
+        } else if (monthFilter !== 'all' && !testData?.month) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    return numbers;
   };
 
-  // Get active advertisements for Test page
+  const filteredNumbers = getFilteredTestNumbers();
+
   const activeAds = advertisements?.filter(ad => 
     ad.isActive && ad.locations?.includes('Test')
   ) || [];
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
 
-  // Debug logging
-  console.log('🔍 TestPage - All advertisements:', advertisements);
-  console.log('🔍 TestPage - Active ads for Test:', activeAds);
-  console.log('🔍 TestPage - Display ad:', displayAd);
-
-  // State to manage ad modal visibility
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+
+  const yearOptions: { value: YearFilter; label: string }[] = [
+    { value: 'all', label: '전체' },
+    { value: '2024', label: '2024' },
+    { value: '2025', label: '2025' },
+    { value: '2026', label: '2026' },
+  ];
+
+  const monthOptions: { value: MonthFilter; label: string }[] = [
+    { value: 'all', label: '전체' },
+    { value: 'jan-mar', label: '1-3월' },
+    { value: 'apr-jun', label: '4-6월' },
+    { value: 'jul-sep', label: '7-9월' },
+    { value: 'oct-dec', label: '10-12월' },
+  ];
+
+  const FilterPill = ({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) => (
+    <button
+      className={`px-4 md:px-5 py-1.5 md:py-2 rounded-full font-semibold text-xs md:text-sm transition-all duration-200 whitespace-nowrap ${
+        active
+          ? 'bg-[#e67e22] text-white shadow-md'
+          : 'bg-[#f5f5f5] text-gray-500 border border-gray-200 hover:bg-gray-100'
+      }`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="bg-white relative shrink-0 w-full shadow-sm pb-24 md:pb-0">
@@ -95,7 +164,6 @@ export function TestPage({
         <div className="border-b border-gray-200">
           <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-3 md:py-4">
             <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3 md:p-4 flex flex-col md:flex-row items-center gap-3 md:gap-4">
-              {/* Left Image - Hidden on mobile */}
               {displayAd.imageUrl && (
                 <div className="hidden md:block shrink-0 w-24 h-24 rounded-lg overflow-hidden">
                   <img 
@@ -105,14 +173,10 @@ export function TestPage({
                   />
                 </div>
               )}
-              
-              {/* Right Content */}
               <div className="flex-1 flex flex-col md:flex-row items-center justify-between gap-3 w-full">
                 <div className="flex-1 text-center md:text-left">
                   <h3 className="text-[#2d5a5d] mb-1 text-sm md:text-base font-bold">{displayAd.title}</h3>
-                  <p className="text-gray-600 text-xs md:text-sm">
-                    {displayAd.content}
-                  </p>
+                  <p className="text-gray-600 text-xs md:text-sm">{displayAd.content}</p>
                 </div>
                 {displayAd.buttonText && (
                   <Button
@@ -128,30 +192,35 @@ export function TestPage({
         </div>
       )}
 
-      {/* Test Sets Section */}
+      {/* Filter Section */}
       <div className="border-b border-gray-200">
-        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
-            <span className="text-sm md:text-lg font-bold text-[#2d5a5d]">Test Sets:</span>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {[
-                { range: '1-4' as TestSetRange, start: 1, end: 4 },
-                { range: '5-8' as TestSetRange, start: 5, end: 8 },
-                { range: '9-12' as TestSetRange, start: 9, end: 12 },
-                { range: '13-16' as TestSetRange, start: 13, end: 16 },
-                { range: '17-20' as TestSetRange, start: 17, end: 20 }
-              ].map((group, index) => (
-                <button 
-                  key={group.range}
-                  className={`px-3 md:px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all duration-300 transform hover:scale-105 shadow-sm min-w-[55px] md:min-w-[60px] flex-shrink-0 ${
-                    activeTestSetRange === group.range 
-                      ? 'bg-gradient-to-r from-[#d35400] to-[#e67e22] text-white shadow-md' 
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                  }`}
-                  onClick={() => setActiveTestSetRange(group.range)}
-                >
-                  {group.range}
-                </button>
+        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-5 space-y-4">
+          {/* Row 1: Year */}
+          <div className="flex items-center gap-4 md:gap-5">
+            <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-12">Year</span>
+            <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+              {yearOptions.map(opt => (
+                <FilterPill
+                  key={opt.value}
+                  active={yearFilter === opt.value}
+                  label={opt.label}
+                  onClick={() => setYearFilter(opt.value)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Row 2: Month */}
+          <div className="flex items-center gap-4 md:gap-5">
+            <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-12">Month</span>
+            <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+              {monthOptions.map(opt => (
+                <FilterPill
+                  key={opt.value}
+                  active={monthFilter === opt.value}
+                  label={opt.label}
+                  onClick={() => setMonthFilter(opt.value)}
+                />
               ))}
             </div>
           </div>
@@ -161,109 +230,101 @@ export function TestPage({
       {/* Test Cards Grid */}
       <div className="!w-full py-4 md:py-8">
         <div className="!w-full md:max-w-7xl md:mx-auto px-3 md:px-8">
-          <div className="flex flex-col items-center md:items-stretch md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 !w-full">
-            {getTestNumbers().map((number, index) => {
-              const testData = testTests.find(t => t.testNumber === number);
-              
-              const handleStartTest = (section: string) => {
-                setCurrentTest({ tpoNumber: number, section });
-                setTestBankType('test');
+          {filteredNumbers.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium">No tests found</p>
+              <p className="text-sm mt-1">Try adjusting your filters or search query.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6 !w-full">
+              {filteredNumbers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((number, index) => {
+                const testData = testTests.find(t => t.testNumber === number);
                 
-                if (section === 'Listening') {
-                  setShowListeningIntro(true);
-                } else if (section === 'Reading') {
-                  setShowReadingIntro(true);
-                } else if (section === 'Writing') {
-                  setShowWritingIntro(true);
-                } else if (section === 'Speaking') {
-                  setShowSpeakingIntro(true);
-                } else {
-                  setShowToeflTest(true);
-                }
-              };
-              
-              return (
-                <div key={number} className="w-full max-w-full">
-                  <TestCard 
-                    number={number}
-                    isLocked={isContentLocked(index, 3)}
-                    onUnlockClick={() => setActiveTab('Pricing')}
-                    testData={testData}
-                    onStartTest={handleStartTest}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                const handleStartTest = (section: string) => {
+                  setCurrentTest({ tpoNumber: number, section });
+                  setTestBankType('test');
+                  
+                  if (section === 'Listening') {
+                    setShowListeningIntro(true);
+                  } else if (section === 'Reading') {
+                    setShowReadingIntro(true);
+                  } else if (section === 'Writing') {
+                    setShowWritingIntro(true);
+                  } else if (section === 'Speaking') {
+                    setShowSpeakingIntro(true);
+                  } else {
+                    setShowToeflTest(true);
+                  }
+                };
+                
+                return (
+                  <div key={number} className="w-full max-w-full">
+                    <TestCard 
+                      number={number}
+                      isLocked={isContentLocked(index, 3)}
+                      onUnlockClick={() => setActiveTab('Pricing')}
+                      testData={testData}
+                      onStartTest={handleStartTest}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Pagination */}
-      <div className="pb-12">
-        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8">
-          <div className="flex items-center justify-center gap-2">
-            <button 
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={activeTestSetRange === '1-4'}
-              onClick={() => {
-                const ranges: TestSetRange[] = ['1-4', '5-8', '9-12', '13-16', '17-20'];
-                const currentIndex = ranges.indexOf(activeTestSetRange);
-                if (currentIndex > 0) {
-                  setActiveTestSetRange(ranges[currentIndex - 1]);
-                }
-              }}
+      {filteredNumbers.length > itemsPerPage && (
+        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-6">
+          <div className="flex justify-center items-center gap-2">
+            <button
+              className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                currentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md'
+              }`}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
             >
-              &lt; Previous
+              이전
             </button>
             
-            {[
-              { range: '1-4' as TestSetRange, page: 1 },
-              { range: '5-8' as TestSetRange, page: 2 },
-              { range: '9-12' as TestSetRange, page: 3 },
-              { range: '13-16' as TestSetRange, page: 4 },
-              { range: '17-20' as TestSetRange, page: 5 }
-            ].map((item) => (
+            {Array.from({ length: Math.ceil(filteredNumbers.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
               <button
-                key={item.range}
-                className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 min-w-[40px] ${
-                  activeTestSetRange === item.range
-                    ? 'bg-gradient-to-r from-[#d35400] to-[#e67e22] text-white shadow-md'
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                key={pageNum}
+                className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                  currentPage === pageNum
+                    ? 'bg-[#e67e22] text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                onClick={() => setActiveTestSetRange(item.range)}
+                onClick={() => setCurrentPage(pageNum)}
               >
-                {item.page}
+                {pageNum}
               </button>
             ))}
-
-            <button 
-              className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={activeTestSetRange === '17-20'}
-              onClick={() => {
-                const ranges: TestSetRange[] = ['1-4', '5-8', '9-12', '13-16', '17-20'];
-                const currentIndex = ranges.indexOf(activeTestSetRange);
-                if (currentIndex < ranges.length - 1) {
-                  setActiveTestSetRange(ranges[currentIndex + 1]);
-                }
-              }}
+            
+            <button
+              className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                currentPage * itemsPerPage >= filteredNumbers.length
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md'
+              }`}
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredNumbers.length / itemsPerPage), prev + 1))}
+              disabled={currentPage * itemsPerPage >= filteredNumbers.length}
             >
-              Next &gt;
+              다음
             </button>
           </div>
+        </div>
+      )}
 
-          {/* Page info */}
-          <div className="text-center mt-4">
+      {/* Info */}
+      <div className="pb-12">
+        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8">
+          <div className="text-center">
             <p className="text-sm text-gray-600 font-['Inter',_sans-serif]">
-              Page {(() => {
-                switch (activeTestSetRange) {
-                  case '1-4': return 1;
-                  case '5-8': return 2;
-                  case '9-12': return 3;
-                  case '13-16': return 4;
-                  case '17-20': return 5;
-                  default: return 1;
-                }
-              })()} of 5 • Showing Real Test {activeTestSetRange} • Total: 20 Real Tests Available
+              Showing Test 1-{allTestNumbers.length} • Total: {allTestNumbers.length} Real Tests Available
             </p>
           </div>
         </div>

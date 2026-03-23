@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight, Zap } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
-import { motion } from "motion/react";
+// motion removed - using CSS animations
 import { TrainingInterface } from "./TrainingInterface";
 import { DayTrainingInterface } from "./DayTrainingInterface";
 import { LMSContent } from "./LMSSection";
 import { SATVocaPage } from "./SATVocaPage";
+import { TemplateMastery } from "./TemplateMastery";
 
 // Question Type Card Component
 function QuestionTypeCard({ 
@@ -30,28 +31,24 @@ function QuestionTypeCard({
   const Icon = type.icon;
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="rounded-xl transition-all duration-300"
+      className="rounded-xl transition-all duration-300 cursor-pointer"
       style={{
         backgroundColor: isHovered ? '#E8E8E8' : '#FFFFFF',
         boxShadow: isHovered ? '0 8px 20px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.08)',
-        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
+        transform: isHovered ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)'
       }}
-      whileHover={{ scale: 1.02, y: -3 }}
     >
       <div className="p-6 text-center">
         {/* Icon */}
-        <motion.div 
+        <div 
           className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
           style={{ backgroundColor: isHovered ? '#f5f5f5' : '#e5e5e5' }}
         >
           <Icon className="w-7 h-7" style={{ color: '#2d7a7c' }} />
-        </motion.div>
+        </div>
         
         {/* Title */}
         <h3 className="mb-1.5" style={{ color: '#000', fontWeight: 700 }}>
@@ -133,7 +130,7 @@ function QuestionTypeCard({
           </Button>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -174,7 +171,10 @@ export function QuestionTypesSection({
   lmsContents = [],
   onTrainingStateChange,
   advertisements,
-  onSaveResult
+  onSaveResult,
+  savedConfig,
+  onSaveConfig,
+  practiceResults = []
 }: { 
   activeSkill: 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
   setActiveSkill: (skill: 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary') => void;
@@ -182,6 +182,9 @@ export function QuestionTypesSection({
   onTrainingStateChange?: (isTraining: boolean) => void;
   advertisements?: Advertisement[];
   onSaveResult?: (result: any) => void;
+  savedConfig?: any;
+  onSaveConfig?: (config: any) => void;
+  practiceResults?: any[];
 }) {
   const skills: ('Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary')[] = ['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary'];
   const currentQuestionTypes = questionTypesBySkill[activeSkill];
@@ -190,6 +193,33 @@ export function QuestionTypesSection({
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [selectedQuestionType, setSelectedQuestionType] = useState<string>('');
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [showTemplateMastery, setShowTemplateMastery] = useState(false);
+
+  // Guard to prevent auto-save before config is restored
+  const isInitialized = useRef(false);
+
+  // Restore saved config on mount
+  useEffect(() => {
+    if (savedConfig) {
+      if (savedConfig.activeSkill && setActiveSkill) {
+        setActiveSkill(savedConfig.activeSkill);
+      }
+      if (savedConfig.selectedLevel) setSelectedLevel(savedConfig.selectedLevel);
+    }
+    // Mark as initialized after restore
+    const timer = setTimeout(() => { isInitialized.current = true; }, 100);
+    return () => clearTimeout(timer);
+  }, []); // Only run on mount
+
+  // Auto-save config when key settings change (only after initialization)
+  useEffect(() => {
+    if (!isInitialized.current || !onSaveConfig) return;
+    onSaveConfig({
+      activeSkill,
+      selectedLevel,
+      lastUpdated: new Date().toISOString()
+    });
+  }, [activeSkill, selectedLevel]);
 
   // Get active advertisements for QuestionTypes page
   const activeAds = advertisements?.filter(ad => 
@@ -249,6 +279,15 @@ export function QuestionTypesSection({
     );
   }
 
+  // Show Template Mastery full-screen
+  if (showTemplateMastery) {
+    return (
+      <TemplateMastery 
+        onBack={() => setShowTemplateMastery(false)} 
+      />
+    );
+  }
+
   // Show SAT Voca Page for Vocabulary skill
   if (activeSkill === 'Vocabulary') {
     return <SATVocaPage testType="SAT" onBack={() => setActiveSkill('Reading')} onSaveResult={onSaveResult} />;
@@ -303,35 +342,56 @@ export function QuestionTypesSection({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-medium text-gray-800 mb-2">TOEFL Question Types</h1>
-          <p className="text-gray-600">다양한 문제 유형별로 체계적인 훈련을 받으세요.</p>
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-xl md:text-2xl font-medium text-gray-800 mb-1 md:mb-2">TOEFL Question Types</h1>
+          <p className="text-sm md:text-base text-gray-600">다양한 문제 유형별로 체계적인 훈련을 받으세요.</p>
         </div>
 
-        {/* Skills Navigation */}
-        <div className="mb-6">
-          <div className="flex gap-3 flex-wrap">
-            {skills.map((skill) => (
-              <button
-                key={skill}
-                className={`px-6 py-3 rounded-lg font-bold text-sm transition-all duration-300 transform hover:scale-105 shadow-md ${
-                  activeSkill === skill
-                    ? 'bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm'
-                }`}
-                onClick={() => setActiveSkill(skill)}
-              >
-                {skill}
-              </button>
-            ))}
+        {/* Skills Navigation + Template Mastery */}
+        <div className="mb-4 md:mb-6">
+          <div className="flex gap-1.5 md:gap-3 items-center">
+            {/* Skill Tabs */}
+            <div className="grid grid-cols-5 gap-1.5 md:flex md:gap-3 flex-1 min-w-0">
+              {skills.map((skill) => (
+                <button
+                  key={skill}
+                  className={`px-1 md:px-6 py-2 md:py-3 rounded-lg font-bold text-[11px] md:text-sm transition-all duration-300 shadow-md text-center ${
+                    activeSkill === skill
+                      ? 'bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm'
+                  }`}
+                  onClick={() => setActiveSkill(skill)}
+                >
+                  {skill}
+                </button>
+              ))}
+            </div>
+
+            {/* Template Mastery Button - Desktop */}
+            <button
+              onClick={() => setShowTemplateMastery(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition-all duration-300 shadow-md bg-gradient-to-r from-[#005f61] to-[#00838f] text-white hover:from-[#004d4f] hover:to-[#006d75] whitespace-nowrap"
+            >
+              <Zap className="w-4 h-4" />
+              템플릿 뽀개기
+            </button>
           </div>
+
+          {/* Template Mastery Button - Mobile */}
+          <button
+            onClick={() => setShowTemplateMastery(true)}
+            className="md:hidden w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-xs transition-all duration-300 shadow-md bg-gradient-to-r from-[#005f61] to-[#00838f] text-white active:scale-[0.98]"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            토플 템플릿 뽀개기 - Writing & Speaking 템플릿 암기 훈련
+          </button>
         </div>
 
         {/* Skill Description */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-medium text-[#2d5a5d] mb-3">{activeSkill} Question Types</h2>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-medium text-[#2d5a5d] mb-2 md:mb-3">{activeSkill} Question Types</h2>
           <p className="text-gray-700 leading-relaxed">
             {activeSkill === 'Reading' && '학술적 지문을 읽고 이해하는 능력을 평가합니다.'}
             {activeSkill === 'Listening' && '강의와 대화를 듣고 이해하는 능력을 평가합니다.'}

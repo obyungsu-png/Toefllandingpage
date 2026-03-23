@@ -322,28 +322,28 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
     return (
       <div className="min-h-screen bg-white">
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
+        <div className="max-w-4xl mx-auto px:3 sm:px-4 md:px-8 py-4 sm:py-6 lg:py-8">
           {/* Back Button */}
           <button
             onClick={onBack}
-            className="text-gray-600 hover:text-gray-800 mb-6 text-sm flex items-center gap-2"
+            className="text-gray-600 hover:text-gray-800 mb-3 sm:mb-4 lg:mb-6 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             돌아가기
           </button>
 
           {/* Breadcrumb */}
-          <div className="text-gray-500 mb-6 text-sm md:text-base">
+          <div className="text-gray-500 mb-3 sm:mb-4 lg:mb-6 text-xs sm:text-sm md:text-base">
             Part 1 &gt; {day}
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-white border-2 border-gray-200 rounded-xl p-4 md:p-6 mb-6">
-            <div className="text-center text-sm md:text-base">
+          <div className="bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 lg:mb-6">
+            <div className="text-center text-xs sm:text-sm md:text-base">
               <span className="font-bold">문항 : {currentQuestion}/{totalQuestions}</span>
-              <span className="mx-2">|</span>
+              <span className="mx-1 sm:mx-2">|</span>
               <span>맞은 개수 : {correctCount}</span>
-              <span className="mx-2">|</span>
+              <span className="mx-1 sm:mx-2">|</span>
               <span>정답률 : {accuracy}%</span>
             </div>
           </div>
@@ -401,28 +401,28 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
   return (
     <div className="min-h-screen bg-white">
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-4xl mx-auto px:3 sm:px-4 md:px-8 py-4 sm:py-6 lg:py-8">
         {/* Back Button */}
         <button
           onClick={onBack}
-          className="text-gray-600 hover:text-gray-800 mb-6 text-sm flex items-center gap-2"
+          className="text-gray-600 hover:text-gray-800 mb-3 sm:mb-4 lg:mb-6 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
           돌아가기
         </button>
 
         {/* Breadcrumb */}
-        <div className="text-gray-500 mb-6 text-sm md:text-base">
+        <div className="text-gray-500 mb-3 sm:mb-4 lg:mb-6 text-xs sm:text-sm md:text-base">
           Part 1 &gt; {day}
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white border-2 border-gray-200 rounded-xl p-4 md:p-6 mb-6">
-          <div className="text-center text-sm md:text-base">
+        <div className="bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 lg:mb-6">
+          <div className="text-center text-xs sm:text-sm md:text-base">
             <span className="font-bold">문항 : {currentQuestion}/{totalQuestions}</span>
-            <span className="mx-2">|</span>
+            <span className="mx-1 sm:mx-2">|</span>
             <span>맞은 개수 : {correctCount}</span>
-            <span className="mx-2">|</span>
+            <span className="mx-1 sm:mx-2">|</span>
             <span>정답률 : {accuracy}%</span>
           </div>
         </div>
@@ -430,22 +430,22 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
         {!showResult ? (
           <>
             {/* Question Area */}
-            <div className="bg-gray-50 rounded-xl p-6 md:p-8 mb-6">
-              <p className="text-gray-700 text-lg md:text-xl mb-6">
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 lg:p-8 mb-3 sm:mb-4 lg:mb-6">
+              <p className="text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">
                 {currentQ.audio}
               </p>
 
               {/* Audio Player Section */}
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+              <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 lg:mb-6 shadow-sm">
                 {/* Play Button and Speed Control */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <button
                     onClick={() => isPlaying ? stopAudio() : playAudio()}
-                    className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-[#e91e63] to-[#c2185b] rounded-2xl flex items-center justify-center hover:opacity-90 transition-all shadow-lg"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-r from-[#e91e63] to-[#c2185b] rounded-xl sm:rounded-2xl flex items-center justify-center hover:opacity-90 transition-all shadow-lg"
                   >
                     {isPlaying ? (
                       <svg 
-                        className="w-8 h-8 md:w-10 md:h-10 text-white" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white" 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
@@ -453,7 +453,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
                       </svg>
                     ) : (
                       <svg 
-                        className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white ml-1" 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
@@ -464,7 +464,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
 
                   <button
                     onClick={cycleSpeed}
-                    className="px-3 md:px-4 py-2 md:py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-sm md:text-base font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-xs sm:text-sm md:text-base font-semibold"
                   >
                     x {playbackSpeed.toFixed(1)}
                   </button>
@@ -478,18 +478,18 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between mt-2 text-xs md:text-sm text-gray-500">
+                  <div className="flex justify-between mt-2 text-[10px] sm:text-xs md:text-sm text-gray-500">
                     <span>00:00</span>
                     <span>00:{Math.ceil((currentQ.correctAnswer.length / 15) / playbackSpeed).toString().padStart(2, '0')}</span>
                   </div>
                 </div>
 
                 {/* Additional Info */}
-                <div className="mt-4 flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="mt-3 sm:mt-4 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                   </svg>
-                  <span className="text-gray-600 text-sm md:text-base">업로드된 오디오 파일</span>
+                  <span className="text-gray-600 text-xs sm:text-sm md:text-base">업로드된 오디오 파일</span>
                 </div>
               </div>
 
@@ -498,7 +498,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
                 placeholder="answer"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#e91e63] text-base md:text-lg resize-none"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#e91e63] text-sm sm:text-base md:text-lg resize-none"
                 rows={3}
               />
             </div>
@@ -507,7 +507,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
             <Button
               onClick={handleCheckAnswer}
               disabled={!userAnswer.trim()}
-              className="w-full py-6 bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white text-lg md:text-xl font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 sm:py-5 lg:py-6 bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white text-base sm:text-lg md:text-xl font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               정답 확인하기
             </Button>
@@ -515,21 +515,21 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
         ) : (
           <>
             {/* Result Section */}
-            <div className="bg-gray-50 rounded-xl p-6 md:p-8 mb-6">
-              <p className="text-gray-700 text-lg md:text-xl mb-6">
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 lg:p-8 mb-3 sm:mb-4 lg:mb-6">
+              <p className="text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 lg:mb-6">
                 {currentQ.audio}
               </p>
 
               {/* Audio Player Section */}
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 lg:mb-6 shadow-sm">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <button
                     onClick={() => isPlaying ? stopAudio() : playAudio()}
-                    className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-[#e91e63] to-[#c2185b] rounded-2xl flex items-center justify-center hover:opacity-90 transition-all shadow-lg"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 bg-gradient-to-r from-[#e91e63] to-[#c2185b] rounded-xl sm:rounded-2xl flex items-center justify-center hover:opacity-90 transition-all shadow-lg"
                   >
                     {isPlaying ? (
                       <svg 
-                        className="w-8 h-8 md:w-10 md:h-10 text-white" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white" 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
@@ -537,7 +537,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
                       </svg>
                     ) : (
                       <svg 
-                        className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white ml-1" 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
@@ -548,7 +548,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
 
                   <button
                     onClick={cycleSpeed}
-                    className="px-3 md:px-4 py-2 md:py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-sm md:text-base font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-xs sm:text-sm md:text-base font-semibold"
                   >
                     x {playbackSpeed.toFixed(1)}
                   </button>
@@ -561,68 +561,68 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <div className="flex justify-between mt-2 text-xs md:text-sm text-gray-500">
+                  <div className="flex justify-between mt-2 text-[10px] sm:text-xs md:text-sm text-gray-500">
                     <span>00:00</span>
                     <span>00:{Math.ceil((currentQ.correctAnswer.length / 15) / playbackSpeed).toString().padStart(2, '0')}</span>
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="mt-3 sm:mt-4 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                   </svg>
-                  <span className="text-gray-600 text-sm md:text-base">업로드된 오디오 파일</span>
+                  <span className="text-gray-600 text-xs sm:text-sm md:text-base">업로드된 오디오 파일</span>
                 </div>
               </div>
             </div>
 
             {/* Divider */}
-            <div className="h-1 bg-gray-300 rounded-full mb-6"></div>
+            <div className="h-1 bg-gray-300 rounded-full mb-3 sm:mb-4 lg:mb-6"></div>
 
             {/* Correct Answer */}
-            <div className="mb-6">
-              <h3 className="text-[#e91e63] font-bold text-lg md:text-xl mb-3">정답</h3>
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-start gap-3">
-                <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
-                <p className="text-gray-800 text-base md:text-lg">
+            <div className="mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-[#e91e63] font-bold text-base sm:text-lg md:text-xl mb-2 sm:mb-3">정답</h3>
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0 mt-0.5 sm:mt-1" />
+                <p className="text-gray-800 text-sm sm:text-base md:text-lg">
                   {currentQ.correctAnswer}
                 </p>
               </div>
             </div>
 
             {/* Divider */}
-            <div className="h-1 bg-gray-300 rounded-full mb-6"></div>
+            <div className="h-1 bg-gray-300 rounded-full mb-3 sm:mb-4 lg:mb-6"></div>
 
             {/* User Answer */}
-            <div className="mb-6">
-              <h3 className="text-[#e91e63] font-bold text-lg md:text-xl mb-3">내가 쓴 답</h3>
-              <div className={`border-2 rounded-lg p-4 flex items-start gap-3 ${
+            <div className="mb-3 sm:mb-4 lg:mb-6">
+              <h3 className="text-[#e91e63] font-bold text-base sm:text-lg md:text-xl mb-2 sm:mb-3">내가 쓴 답</h3>
+              <div className={`border-2 rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3 ${
                 isCorrectAnswer 
                   ? 'bg-green-50 border-green-200' 
                   : 'bg-red-50 border-red-200'
               }`}>
                 {isCorrectAnswer ? (
-                  <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0 mt-0.5 sm:mt-1" />
                 ) : (
-                  <X className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0 mt-0.5 sm:mt-1" />
                 )}
-                <p className="text-gray-800 text-base md:text-lg flex-1">
+                <p className="text-gray-800 text-sm sm:text-base md:text-lg flex-1">
                   {userAnswer || '(답변 없음)'}
                 </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Button
                 onClick={handleRetry}
-                className="py-6 bg-white border-2 border-[#e91e63] text-[#e91e63] text-lg md:text-xl font-bold rounded-xl hover:bg-pink-50 transition-all"
+                className="py-4 sm:py-5 lg:py-6 bg-white border-2 border-[#e91e63] text-[#e91e63] text-sm sm:text-base md:text-lg lg:text-xl font-bold rounded-xl hover:bg-pink-50 transition-all"
               >
                 받아쓰기 다시하기
               </Button>
               <Button
                 onClick={handleNext}
-                className="py-6 bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white text-lg md:text-xl font-bold rounded-xl hover:opacity-90 transition-all"
+                className="py-4 sm:py-5 lg:py-6 bg-gradient-to-r from-[#e91e63] to-[#c2185b] text-white text-sm sm:text-base md:text-lg lg:text-xl font-bold rounded-xl hover:opacity-90 transition-all"
               >
                 쉐도잉
               </Button>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, User, Lock, Shield, Smartphone, Cloud, MessageCircle, Laptop, Phone } from 'lucide-react';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface LoginFormProps {
   onClose: () => void;
@@ -48,43 +49,61 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
       return;
     }
 
-    // Get registered users from localStorage
-    const existingUsers = JSON.parse(localStorage.getItem('toefl_users') || '[]');
-    
-    if (existingUsers.length === 0) {
-      alert('No registered users found. Please register first!');
-      return;
-    }
+    // Call server API for login
+    const doLogin = async () => {
+      try {
+        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+        const response = await fetch(`${baseUrl}/users/login`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: loginMethod === 'username' ? username : undefined,
+            phoneNumber: loginMethod === 'phone' ? phoneNumber : undefined,
+            password,
+            loginMethod
+          })
+        });
 
-    // Find user based on login method
-    let user;
-    if (loginMethod === 'username') {
-      user = existingUsers.find((u: any) => u.username === username && u.password === password);
-      if (!user) {
-        alert('Invalid username or password!');
+        // Read response as text first to check format
+        const responseText = await response.text();
+        console.log('Login response:', responseText);
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response:', responseText);
+          alert('Server returned invalid response. Please try again or contact support.');
+          generateCaptcha();
+          setCaptchaInput('');
+          return;
+        }
+
+        if (!response.ok) {
+          alert(data.error || 'Login failed');
+          generateCaptcha();
+          setCaptchaInput('');
+          return;
+        }
+
+        // Login successful
+        alert(`Login Successful!\n\nWelcome back, ${data.user.username}!`);
+        
+        if (onLoginSuccess) {
+          onLoginSuccess(data.user.username);
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Failed to connect to server. Please try again.');
         generateCaptcha();
         setCaptchaInput('');
-        return;
       }
-    } else {
-      user = existingUsers.find((u: any) => u.phoneNumber === phoneNumber && u.password === password);
-      if (!user) {
-        alert('Invalid phone number or password!');
-        generateCaptcha();
-        setCaptchaInput('');
-        return;
-      }
-    }
+    };
 
-    // Login successful
-    alert(`Login Successful!\n\nWelcome back, ${user.username}!`);
-    
-    // Save current logged-in user
-    localStorage.setItem('toefl_current_user', JSON.stringify(user));
-    
-    if (onLoginSuccess) {
-      onLoginSuccess(user.username);
-    }
+    doLogin();
   };
 
   return (

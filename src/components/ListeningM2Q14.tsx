@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { MobileFooter } from './MobileFooter';
+import { RadioOption } from './RadioOption';
 
 interface ListeningM2Q14Props {
   onBack: () => void;
@@ -81,55 +83,75 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick }: Listen
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          
-          <div className="flex gap-16 items-start justify-center pl-12 mt-12">
-            {/* Left side - Image */}
-            <div className="flex-shrink-0">
-              <div className="w-96 h-96 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-                <svg className="w-24 h-24 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
+          {/* Mobile: Image -> Question -> Options */}
+          <div className="md:hidden flex flex-col items-center">
+            <div className="w-48 h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center mb-6">
+              <svg className="w-20 h-20 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            </div>
+            
+            <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
+              According to the professor, how is this concept calculated?
+            </h2>
+            
+            <div className="w-full max-w-2xl px-8">
+              <div className="space-y-5">
+                {answerOptions.map((option, index) => (
+                  <RadioOption
+                    key={index}
+                    id={`m2-q14-option-${index}`}
+                    name="m2-q14"
+                    value={option}
+                    checked={selectedAnswer === option}
+                    onChange={() => setSelectedAnswer(option)}
+                    label={option}
+                    labelClassName="text-lg"
+                  />
+                ))}
               </div>
             </div>
+          </div>
 
-            {/* Right side - Options */}
-            <div className="flex-1 max-w-xl mt-8">
-              <h2 className="font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-lg">Why does the speaker mention developed and developing countries?</h2>
-              <div className="space-y-6">
-                {answerOptions.map((option, index) => (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className="relative flex-shrink-0">
-                      <input
-                        type="radio"
-                        id={`m2-q14-option-${index}`}
-                        name="m2-q14"
-                        value={option}
-                        checked={selectedAnswer === option}
-                        onChange={() => setSelectedAnswer(option)}
-                        className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                          selectedAnswer === option
-                            ? 'border-[#0d9488]'
-                            : 'border-black'
-                        }`}
-                      />
-                      {selectedAnswer === option && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18px] h-[18px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                      )}
-                    </div>
-                    <label htmlFor={`m2-q14-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                      {option}
-                    </label>
-                  </div>
-                ))}
+          {/* Desktop: Original layout */}
+          <div className="hidden md:block">
+            <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
+              <div className="flex-shrink-0">
+                <div className="w-96 h-96 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                  <svg className="w-24 h-24 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1 max-w-xl mt-8">
+                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">According to the professor, how is this concept calculated?</h2>
+                <div className="space-y-6">
+                  {answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`m2-q14-option-${index}`}
+                      name="m2-q14"
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => setSelectedAnswer(option)}
+                      label={option}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileFooter onBack={onBack} onHome={onHome} onNext={onNext} />
     </div>
   );
 }

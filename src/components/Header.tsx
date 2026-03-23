@@ -11,30 +11,30 @@ export function Header() {
               <span className="text-xl font-bold">TOEFL</span>
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900">助你冲刺120</div>
-              <div className="text-sm text-gray-500">在线模考练习平台</div>
+              <div className="text-xl font-bold text-gray-900">Aim for 120</div>
+              <div className="text-sm text-gray-500">Online Practice Platform</div>
             </div>
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#tpo" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-              TPO模考
+              TPO Practice
             </a>
             <a href="#sections" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-              四大分项
+              Test Sections
             </a>
             <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-              学习功能
+              Features
             </a>
             <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-              关于我们
+              About Us
             </a>
           </nav>
           
           <div className="flex items-center space-x-4">
             <QuestionUploader />
             <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
-              登录注册
+              Login / Register
             </Button>
           </div>
         </div>

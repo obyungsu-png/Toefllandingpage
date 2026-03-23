@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import { Send, MessageCircle, Mail, CheckCircle, Settings, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner@2.0.3';
@@ -32,16 +31,15 @@ export function ShareSettings({
 
   const handleSave = () => {
     onSave(formData);
-    toast.success('공유 설정이 저장되었습니다!');
+    toast.success('Share settings saved!');
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+      <div
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        style={{ animation: 'fadeIn 0.3s ease-out' }}
       >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
@@ -52,10 +50,10 @@ export function ShareSettings({
               </div>
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: themeColor }}>
-                  결과 공유 설정
+                  Result Sharing Settings
                 </h2>
                 <p className="text-sm text-gray-600">
-                  시험 결과를 자동으로 공유할 수 있습니다
+                  Automatically share test results with parents
                 </p>
               </div>
             </div>
@@ -76,9 +74,9 @@ export function ShareSettings({
               <div className="flex items-start gap-3">
                 <Send className="w-6 h-6 text-blue-600 mt-1" />
                 <div>
-                  <h3 className="font-bold text-gray-800 mb-1">자동 전송</h3>
+                  <h3 className="font-bold text-gray-800 mb-1">Auto Send</h3>
                   <p className="text-sm text-gray-600">
-                    시험 완료 시 결과를 자동으로 전송합니다
+                    Automatically send results when a test is completed
                   </p>
                 </div>
               </div>
@@ -96,17 +94,15 @@ export function ShareSettings({
 
           {/* Minimum Score Filter */}
           {formData.autoSend && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+            <div
               className="bg-yellow-50 rounded-xl p-4 border border-yellow-200"
             >
               <label className="block mb-2">
                 <span className="text-sm font-bold text-gray-700">
-                  최소 점수 설정 (선택사항)
+                  Minimum Score Threshold (Optional)
                 </span>
                 <p className="text-xs text-gray-600 mt-1">
-                  설정한 점수 이상일 때만 전송합니다. 미설정 시 모든 결과를 전송합니다.
+                  Only send when the score is above the set threshold. If not set, all results will be sent.
                 </p>
               </label>
               <div className="flex items-center gap-3">
@@ -119,12 +115,12 @@ export function ShareSettings({
                     ...formData, 
                     minScore: e.target.value ? parseInt(e.target.value) : undefined 
                   })}
-                  placeholder="예: 70"
+                  placeholder="e.g. 70"
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <span className="text-gray-600 font-medium">점 이상</span>
+                <span className="text-gray-600 font-medium">or above</span>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* WeChat Settings */}
@@ -135,8 +131,8 @@ export function ShareSettings({
                   <MessageCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800">WeChat (위챗) 공유</h3>
-                  <p className="text-sm text-gray-600">위챗 ID로 결과를 전송합니다</p>
+                  <h3 className="font-bold text-gray-800">WeChat Sharing</h3>
+                  <p className="text-sm text-gray-600">Send results via WeChat ID</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -151,30 +147,26 @@ export function ShareSettings({
             </div>
 
             {formData.wechatEnabled && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-3"
-              >
+              <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    위챗 ID
+                    WeChat ID
                   </label>
                   <input
                     type="text"
                     value={formData.wechatId || ''}
                     onChange={(e) => setFormData({ ...formData, wechatId: e.target.value })}
-                    placeholder="예: parent_wechat_123"
+                    placeholder="e.g. parent_wechat_123"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
                 <div className="bg-green-50 rounded-lg p-3 text-sm text-gray-700">
                   <p className="flex items-start gap-2">
                     <span className="text-green-600 mt-0.5">ℹ️</span>
-                    <span>위챗 API 연동이 필요합니다. 현재는 시뮬레이션 모드로 작동합니다.</span>
+                    <span>WeChat API integration required. Currently running in simulation mode.</span>
                   </p>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
 
@@ -186,8 +178,8 @@ export function ShareSettings({
                   <Mail className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800">SMS (문자) 전송</h3>
-                  <p className="text-sm text-gray-600">부모님께 문자로 결과를 전송합니다</p>
+                  <h3 className="font-bold text-gray-800">SMS Notification</h3>
+                  <p className="text-sm text-gray-600">Send results to parents via SMS</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -202,42 +194,38 @@ export function ShareSettings({
             </div>
 
             {formData.smsEnabled && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-3"
-              >
+              <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    부모님 성함
+                    Parent Name
                   </label>
                   <input
                     type="text"
                     value={formData.parentName || ''}
                     onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    placeholder="예: 홍길동"
+                    placeholder="e.g. John Smith"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    부모님 전화번호
+                    Parent Phone Number
                   </label>
                   <input
                     type="tel"
                     value={formData.parentPhone || ''}
                     onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                    placeholder="예: 010-1234-5678"
+                    placeholder="e.g. +1-234-567-8900"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3 text-sm text-gray-700">
                   <p className="flex items-start gap-2">
                     <span className="text-purple-600 mt-0.5">ℹ️</span>
-                    <span>SMS API 연동이 필요합니다. 현재는 시뮬레이션 모드로 작동합니다.</span>
+                    <span>SMS API integration required. Currently running in simulation mode.</span>
                   </p>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
 
@@ -246,23 +234,23 @@ export function ShareSettings({
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
               <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
-                전송 메시지 미리보기
+                Message Preview
               </h4>
               <div className="bg-white rounded-lg p-4 border border-gray-300 font-mono text-sm">
                 <p className="text-gray-800">
-                  {formData.parentName ? `[${formData.parentName}님]` : '[부모님]'}
+                  {formData.parentName ? `[${formData.parentName}]` : '[Parent]'}
                 </p>
                 <p className="text-gray-800 mt-2">
-                  학생의 토플 테스트 결과가 나왔습니다.
+                  Your child's TOEFL test results are ready.
                 </p>
                 <p className="text-gray-600 mt-2">
-                  테스트: TPO 75 - Reading<br />
-                  점수: 85점<br />
-                  정답률: 8/10 (80%)<br />
-                  날짜: 2024.12.22 15:30
+                  Test: TPO 75 - Reading<br />
+                  Score: 85<br />
+                  Accuracy: 8/10 (80%)<br />
+                  Date: 2024.12.22 15:30
                 </p>
                 <p className="text-gray-600 mt-2">
-                  - 托福TPO 在线모考练습평台
+                  - TOEFL TPO Online Practice Platform
                 </p>
               </div>
             </div>
@@ -276,17 +264,17 @@ export function ShareSettings({
             onClick={onClose}
             className="flex-1"
           >
-            취소
+            Cancel
           </Button>
           <Button
             onClick={handleSave}
             className="flex-1 text-white"
             style={{ backgroundColor: themeColor }}
           >
-            저장하기
+            Save
           </Button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

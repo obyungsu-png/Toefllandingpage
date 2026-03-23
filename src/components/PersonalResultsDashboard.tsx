@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
 import { 
   Calendar, 
   TrendingUp, 
@@ -238,21 +237,16 @@ export function PersonalResultsDashboard({
 
         {/* Overall Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className="rounded-xl p-6 shadow-lg text-white"
             style={{ backgroundColor: themeColor }}
           >
             <Award className="w-8 h-8 mb-3 opacity-80" />
             <p className="text-sm opacity-90 mb-1">종합 평균 점수</p>
             <p className="text-4xl font-bold">{monthlyStats.overallAvg}%</p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+          <div
             className="bg-white rounded-xl p-6 shadow-lg border-2"
             style={{ borderColor: themeColor }}
           >
@@ -261,12 +255,9 @@ export function PersonalResultsDashboard({
             <p className="text-4xl font-bold" style={{ color: themeColor }}>
               {monthlyStats.totalTests}
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+          <div
             className="bg-white rounded-xl p-6 shadow-lg border-2"
             style={{ borderColor: themeColor }}
           >
@@ -277,12 +268,9 @@ export function PersonalResultsDashboard({
               <span className="text-xl">h</span> {monthlyStats.totalTime % 60}
               <span className="text-xl">m</span>
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+          <div
             className="bg-white rounded-xl p-6 shadow-lg border-2"
             style={{ borderColor: themeColor }}
           >
@@ -291,7 +279,7 @@ export function PersonalResultsDashboard({
             <p className="text-4xl font-bold" style={{ color: themeColor }}>
               {monthlyStats.totalTests > 0 ? '활발' : '시작'}
             </p>
-          </motion.div>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -407,11 +395,8 @@ function OverviewTab({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {categories.map((category, index) => (
-          <motion.div
+          <div
             key={category.label}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.1 }}
             className="border-2 rounded-xl p-6"
             style={{ borderColor: category.color }}
           >
@@ -436,15 +421,12 @@ function OverviewTab({
 
             {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${category.avg}%` }}
-                transition={{ duration: 1, delay: index * 0.1 + 0.3 }}
-                className="h-full rounded-full"
-                style={{ backgroundColor: category.color }}
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{ backgroundColor: category.color, width: `${category.avg}%` }}
               />
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -485,11 +467,8 @@ function VocabularyTab({ results, themeColor }: { results: VocabularyResult[]; t
       ) : (
         <div className="space-y-4">
           {results.map((result, index) => (
-            <motion.div
+            <div
               key={result.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
               className="border-2 rounded-xl p-6 hover:shadow-lg transition-shadow"
               style={{ borderColor: '#e5e7eb' }}
             >
@@ -568,7 +547,7 @@ function VocabularyTab({ results, themeColor }: { results: VocabularyResult[]; t
                   }}
                 />
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -604,11 +583,8 @@ function TPOTab({ results, themeColor }: { results: TPOResult[]; themeColor: str
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedResults).map(([tpoName, tpoResults], index) => (
-            <motion.div
+            <div
               key={tpoName}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="border-2 rounded-xl p-6"
               style={{ borderColor: themeColor }}
             >
@@ -660,7 +636,7 @@ function TPOTab({ results, themeColor }: { results: TPOResult[]; themeColor: str
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -695,11 +671,8 @@ function TestTab({ results, themeColor }: { results: TestResult[]; themeColor: s
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedResults).map(([category, categoryResults], index) => (
-            <motion.div
+            <div
               key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="border-2 rounded-xl p-6"
               style={{ borderColor: '#F59E0B' }}
             >
@@ -762,7 +735,7 @@ function TestTab({ results, themeColor }: { results: TestResult[]; themeColor: s
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -797,11 +770,8 @@ function TrainingTab({ results, themeColor }: { results: TrainingResult[]; theme
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedResults).map(([trainingType, trainingResults], index) => (
-            <motion.div
+            <div
               key={trainingType}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
               className="border-2 rounded-xl p-6"
               style={{ borderColor: '#8B5CF6' }}
             >
@@ -869,7 +839,7 @@ function TrainingTab({ results, themeColor }: { results: TrainingResult[]; theme
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

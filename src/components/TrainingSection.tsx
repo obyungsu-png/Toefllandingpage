@@ -1,8 +1,8 @@
 import { Button } from "./ui/button";
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { BookOpen, Target, BarChart3, Upload, CheckCircle } from "lucide-react";
-import { motion } from "motion/react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router";
+import { BookOpen, Target, BarChart3, Upload, CheckCircle, Zap, Flame, Sparkles, Hash, ArrowRight, Play } from "lucide-react";
+// motion removed - using CSS animations
 import { AdBanner } from './AdBanner';
 import { AdModal } from './AdModal';
 import { Advertisement } from './AdManagement';
@@ -35,6 +35,9 @@ const questionTypesBySubject = {
     { id: 'independent-task', name: 'Independent Task', icon: BookOpen, description: '독립형 말하기 과제' },
     { id: 'integrated-read', name: 'Integrated (Read)', icon: BarChart3, description: '읽기 통합형 과제' },
     { id: 'integrated-listen', name: 'Integrated (Listen)', icon: BookOpen, description: '듣기 통합형 과제' }
+  ],
+  'Vocabulary': [
+    { id: 'word-practice', name: 'Word Practice', icon: BookOpen, description: '단어 암기 및 복습' }
   ]
 };
 
@@ -47,8 +50,12 @@ interface TrainingSectionProps {
   onStartTest?: (testInfo: any) => void;
   setActiveTab?: (tab: string) => void;
   lmsContents?: LMSContent[];
-  tpoTests?: TPOTest[]; // Add TPO tests data for difficulty-based filtering
+  tpoTests?: TPOTest[];
   advertisements?: any[];
+  onSaveResult?: (result: any) => void;
+  savedConfig?: any;
+  onSaveConfig?: (config: any) => void;
+  practiceResults?: any[];
 }
 
 export function TrainingSection({ 
@@ -57,7 +64,11 @@ export function TrainingSection({
   setActiveTab = () => {},
   lmsContents = [],
   tpoTests = [],
-  advertisements = []
+  advertisements = [],
+  onSaveResult,
+  savedConfig,
+  onSaveConfig,
+  practiceResults = []
 }: TrainingSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +79,92 @@ export function TrainingSection({
   const [selectedQuestionCount, setSelectedQuestionCount] = useState('10문제');
   const [showTrainingInterface, setShowTrainingInterface] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  
+  // Year/Month filters for Training
+  type YearFilter = 'all' | '2024' | '2025' | '2026';
+  type MonthFilter = 'all' | 'jan-mar' | 'apr-jun' | 'jul-sep' | 'oct-dec';
+  const [yearFilter, setYearFilter] = useState<YearFilter>('all');
+  const [monthFilter, setMonthFilter] = useState<MonthFilter>('all');
+
+  // Guard to prevent auto-save before config is restored
+  const isInitialized = useRef(false);
+
+  // Restore saved config on mount
+  useEffect(() => {
+    if (savedConfig) {
+      if (savedConfig.selectedSubject) setSelectedSubject(savedConfig.selectedSubject);
+      if (savedConfig.selectedDifficulty) setSelectedDifficulty(savedConfig.selectedDifficulty);
+      if (savedConfig.selectedQuestionCount) setSelectedQuestionCount(savedConfig.selectedQuestionCount);
+      if (savedConfig.yearFilter) setYearFilter(savedConfig.yearFilter);
+      if (savedConfig.monthFilter) setMonthFilter(savedConfig.monthFilter);
+    }
+    // Mark as initialized after restore (even if no savedConfig)
+    const timer = setTimeout(() => { isInitialized.current = true; }, 100);
+    return () => clearTimeout(timer);
+  }, []); // Only run on mount
+
+  // Auto-save config when key settings change (only after initialization)
+  useEffect(() => {
+    if (!isInitialized.current || !onSaveConfig) return;
+    onSaveConfig({
+      selectedSubject,
+      selectedDifficulty,
+      selectedQuestionCount,
+      yearFilter,
+      monthFilter,
+      lastUpdated: new Date().toISOString()
+    });
+  }, [selectedSubject, selectedDifficulty, selectedQuestionCount, yearFilter, monthFilter]);
+
+  const yearOptions: { value: YearFilter; label: string }[] = [
+    { value: 'all', label: '전체' },
+    { value: '2024', label: '2024' },
+    { value: '2025', label: '2025' },
+    { value: '2026', label: '2026' },
+  ];
+
+  const monthOptions: { value: MonthFilter; label: string }[] = [
+    { value: 'all', label: '전체' },
+    { value: 'jan-mar', label: '1-3월' },
+    { value: 'apr-jun', label: '4-6월' },
+    { value: 'jul-sep', label: '7-9월' },
+    { value: 'oct-dec', label: '10-12월' },
+  ];
+
+  const FilterPill = ({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) => (
+    <button
+      className={`px-4 md:px-5 py-1.5 md:py-2 rounded-full font-semibold text-xs md:text-sm transition-all duration-200 whitespace-nowrap ${
+        active
+          ? 'bg-[#e67e22] text-white shadow-md'
+          : 'bg-[#f5f5f5] text-gray-500 border border-gray-200 hover:bg-gray-100'
+      }`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+
+  // Filter tpoTests based on year/month selections
+  const getFilteredTests = (): TPOTest[] => {
+    if (yearFilter === 'all' && monthFilter === 'all') return tpoTests;
+    
+    return tpoTests.filter(test => {
+      if (yearFilter !== 'all') {
+        const y = parseInt(yearFilter);
+        if (!test.year || test.year !== y) return false;
+      }
+      if (monthFilter !== 'all' && test.month) {
+        const m = test.month;
+        if (monthFilter === 'jan-mar' && (m < 1 || m > 3)) return false;
+        if (monthFilter === 'apr-jun' && (m < 4 || m > 6)) return false;
+        if (monthFilter === 'jul-sep' && (m < 7 || m > 9)) return false;
+        if (monthFilter === 'oct-dec' && (m < 10 || m > 12)) return false;
+      } else if (monthFilter !== 'all' && !test.month) {
+        return false;
+      }
+      return true;
+    });
+  };
   
   const themeColor = '#2d7a7c';
   
@@ -99,14 +196,18 @@ export function TrainingSection({
   // Update URL when subject changes
   const handleSubjectChange = (subject: string) => {
     setSelectedSubject(subject);
-    const subjectRoutes: Record<string, string> = {
-      'Reading': '/specialized-training/reading',
-      'Listening': '/specialized-training/listening',
-      'Writing': '/specialized-training/writing',
-      'Speaking': '/specialized-training/speaking',
-      'Vocabulary': '/specialized-training/vocabulary'
-    };
-    navigate(subjectRoutes[subject] || '/specialized-training');
+    try {
+      const subjectRoutes: Record<string, string> = {
+        'Reading': '/specialized-training/reading',
+        'Listening': '/specialized-training/listening',
+        'Writing': '/specialized-training/writing',
+        'Speaking': '/specialized-training/speaking',
+        'Vocabulary': '/specialized-training/vocabulary'
+      };
+      navigate(subjectRoutes[subject] || '/specialized-training');
+    } catch (e) {
+      console.warn('Navigation failed:', e);
+    }
   };
 
   // Filter uploaded training files
@@ -119,16 +220,17 @@ export function TrainingSection({
     return uploadedTrainingFiles.filter(file => file.subcategory === typeId).length;
   };
 
-  // Get questions by difficulty from TPO tests
+  // Get questions by difficulty from TPO tests (filtered by year/month)
   const getQuestionsByDifficulty = (
     subject: string,
     questionTypeName: string,
     difficulty: '쉬움' | '보통' | '어려움'
   ): TPOQuestion[] => {
     const allQuestions: TPOQuestion[] = [];
+    const filteredTests = getFilteredTests();
     
-    // Iterate through all TPO tests
-    tpoTests.forEach(test => {
+    // Iterate through filtered TPO tests
+    filteredTests.forEach(test => {
       // Find section matching the subject
       const section = test.sections.find(s => s.sectionType === subject);
       if (section) {
@@ -161,12 +263,14 @@ export function TrainingSection({
 
   // Handle start training - modified to show interface for Listen and Response
   const handleStartTraining = () => {
+    if (!selectedQuestionType) return;
+    
     // If "Listen and Response" is selected, show the training interface
     if (selectedQuestionType.id === 'detail' && selectedQuestionType.name === 'Listen and Response') {
       setShowTrainingInterface(true);
     } else {
-      // For other types, use the original behavior
-      onStartTest({
+      // For other types, save result and use the original behavior
+      const testInfo = {
         title: `${selectedSubject} ${selectedQuestionType.name} 전문훈련`,
         type: selectedSubject,
         source: "전문훈련",
@@ -174,7 +278,16 @@ export function TrainingSection({
         questionCount: selectedQuestionCount,
         trainingType: selectedQuestionType.id,
         date: new Date().toISOString().split('T')[0]
-      });
+      };
+      onStartTest(testInfo);
+      // Save result to Supabase
+      if (onSaveResult) {
+        onSaveResult({
+          ...testInfo,
+          completedAt: new Date().toISOString(),
+          status: 'started'
+        });
+      }
     }
   };
 
@@ -251,14 +364,14 @@ export function TrainingSection({
           
           {/* Tabs for Subject Selection */}
           <div className="flex gap-2 border-b-2 border-gray-200">
-            {['Reading', 'Listening', 'Writing', 'Speaking'].map((subject) => (
+            {['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary'].map((subject) => (
               <button
                 key={subject}
                 onClick={() => {
                   handleSubjectChange(subject);
                   setSelectedQuestionType(null);
                 }}
-                className={`px-3 sm:px-6 py-3 font-bold transition-all text-sm sm:text-base ${
+                className={`px-2 sm:px-4 md:px-6 py-3 font-bold transition-all text-xs sm:text-sm md:text-base ${
                   selectedSubject === subject
                     ? 'border-b-4 -mb-0.5'
                     : 'text-gray-500 hover:text-gray-700'
@@ -274,22 +387,54 @@ export function TrainingSection({
           </div>
         </div>
 
+        {/* ===== Year/Month Filter ===== */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow">
+          <div className="space-y-3">
+            {/* Row 1: Year */}
+            <div className="flex items-center gap-4 md:gap-5">
+              <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-14">Year</span>
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+                {yearOptions.map(opt => (
+                  <FilterPill
+                    key={opt.value}
+                    active={yearFilter === opt.value}
+                    label={opt.label}
+                    onClick={() => setYearFilter(opt.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2: Month */}
+            <div className="flex items-center gap-4 md:gap-5">
+              <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-14">Month</span>
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+                {monthOptions.map(opt => (
+                  <FilterPill
+                    key={opt.value}
+                    active={monthFilter === opt.value}
+                    label={opt.label}
+                    onClick={() => setMonthFilter(opt.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ===== STEP 2: 문제 유형 선택 ===== */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow">
           <h2 className="text-sm text-[#2d5a5d] mb-3 font-medium">문제 유형 선택</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {questionTypesBySubject[selectedSubject]?.map((type, index) => {
+            {(questionTypesBySubject[selectedSubject as keyof typeof questionTypesBySubject] || [])?.map((type, index) => {
               const uploadedCount = getUploadedCountForType(type.id);
               const Icon = type.icon;
               const isSelected = selectedQuestionType?.id === type.id;
               
               return (
-                <motion.button
+                <button
                   key={type.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   onClick={() => setSelectedQuestionType(type)}
                   className={`p-4 rounded-lg border-2 transition-all duration-300 text-left relative ${
                     isSelected
@@ -324,7 +469,7 @@ export function TrainingSection({
                       </span>
                     </div>
                   )}
-                </motion.button>
+                </button>
               );
             })}
           </div>
@@ -332,40 +477,43 @@ export function TrainingSection({
 
         {/* ===== STEP 3 & 4: 난이도 및 문제 수 선택 (문제 유형이 선택되었을 때만 표시) ===== */}
         {selectedQuestionType && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow"
+          <div
+            className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm"
+            style={{ animation: 'fadeInUp 0.25s ease-out' }}
           >
-            <h2 className="text-sm text-[#2d5a5d] mb-4 font-medium">3. 훈련 설정</h2>
-            
-            <div className="space-y-4">
+            {/* Header */}
+            <div className="border-b border-gray-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-gray-800">{selectedSubject} · {selectedQuestionType.name}</h2>
+            </div>
+
+            <div className="space-y-5 p-5">
               {/* 난이도 선택 */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-2">난이도</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['쉬움', '보통', '어려움'].map((difficulty) => {
-                    const stats = selectedQuestionType ? getDifficultyStats(selectedSubject, selectedQuestionType.name) : { '쉬움': 0, '보통': 0, '어려움': 0 };
-                    const questionCount = stats[difficulty as '쉬움' | '보통' | '어려움'];
-                    
+                <p className="mb-2.5 text-xs font-medium text-gray-500">난이도</p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {([
+                    { key: '쉬움' as const, label: 'Easy', sub: '쉬움' },
+                    { key: '보통' as const, label: 'Normal', sub: '보통' },
+                    { key: '어려움' as const, label: 'Hard', sub: '어려움' },
+                  ]).map((d) => {
+                    const stats = getDifficultyStats(selectedSubject, selectedQuestionType.name);
+                    const questionCount = stats[d.key];
+                    const isActive = selectedDifficulty === d.key;
+
                     return (
                       <button
-                        key={difficulty}
-                        onClick={() => setSelectedDifficulty(difficulty as '쉬움' | '보통' | '어려움')}
-                        className={`p-3 rounded-lg border-2 transition-all duration-300 ${
-                          selectedDifficulty === difficulty
-                            ? 'border-[#2d7a7c] bg-[#2d7a7c]/10 text-[#2d7a7c]'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-[#2d7a7c]/50'
+                        key={d.key}
+                        onClick={() => setSelectedDifficulty(d.key)}
+                        className={`rounded-lg border px-3 py-3 text-center transition-colors ${
+                          isActive
+                            ? 'border-[#2d7a7c] bg-[#f0f9f9] text-[#2d7a7c]'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
                       >
-                        {selectedDifficulty === difficulty && (
-                          <CheckCircle className="w-4 h-4 mx-auto mb-1 text-[#2d7a7c]" />
-                        )}
-                        <div className="text-sm font-medium">{difficulty}</div>
+                        <p className={`text-sm font-semibold ${isActive ? 'text-[#2d7a7c]' : 'text-gray-700'}`}>{d.label}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{d.sub}</p>
                         {questionCount > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {questionCount}문제 사용 가능
-                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1">{questionCount}문제</p>
                         )}
                       </button>
                     );
@@ -375,59 +523,59 @@ export function TrainingSection({
 
               {/* 문제 수 선택 */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-2">문제 수</label>
-                <div className="grid grid-cols-4 gap-3">
-                  {['5문제', '10문제', '15문제', '20문제'].map((count) => (
-                    <button
-                      key={count}
-                      onClick={() => setSelectedQuestionCount(count)}
-                      className={`p-3 rounded-lg border-2 transition-all duration-300 ${
-                        selectedQuestionCount === count
-                          ? 'border-[#2d7a7c] bg-[#2d7a7c]/10 text-[#2d7a7c]'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-[#2d7a7c]/50'
-                      }`}
-                    >
-                      {selectedQuestionCount === count && (
-                        <CheckCircle className="w-4 h-4 mx-auto mb-1 text-[#2d7a7c]" />
-                      )}
-                      <div className="text-sm font-medium">{count}</div>
-                    </button>
-                  ))}
+                <p className="mb-2.5 text-xs font-medium text-gray-500">문제 수</p>
+                <div className="flex gap-2">
+                  {[
+                    { value: '5문제', num: 5 },
+                    { value: '10문제', num: 10 },
+                    { value: '15문제', num: 15 },
+                    { value: '20문제', num: 20 },
+                  ].map((c) => {
+                    const isActive = selectedQuestionCount === c.value;
+                    return (
+                      <button
+                        key={c.value}
+                        onClick={() => setSelectedQuestionCount(c.value)}
+                        className={`flex-1 rounded-lg border px-2 py-2.5 text-center transition-colors ${
+                          isActive
+                            ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-gray-700'}`}>{c.num}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* 선택 요약 */}
-              <div className="bg-gradient-to-r from-[#2d7a7c]/10 to-[#1e6b73]/10 rounded-lg p-4 border border-[#2d7a7c]/30">
-                <h3 className="text-sm font-medium text-[#2d5a5d] mb-2">선택한 설정</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
-                  <div>
-                    <span className="text-xs text-gray-500">과목</span>
-                    <p className="font-medium">{selectedSubject}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">문제 유형</span>
-                    <p className="font-medium">{selectedQuestionType.name}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">난이도</span>
-                    <p className="font-medium">{selectedDifficulty}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">문제 수</span>
-                    <p className="font-medium">{selectedQuestionCount}</p>
-                  </div>
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-gray-50 px-4 py-3">
+                {[
+                  selectedSubject,
+                  selectedQuestionType.name,
+                  selectedDifficulty,
+                  selectedQuestionCount,
+                  ...((yearFilter !== 'all' || monthFilter !== 'all') ? [
+                    `${yearFilter !== 'all' ? yearFilter : 'All'} / ${monthFilter !== 'all' ? monthOptions.find(o => o.value === monthFilter)?.label : 'All'}`
+                  ] : [])
+                ].map((tag, i) => (
+                  <span key={i} className="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs text-gray-600 border border-gray-200">
+                    {tag}
+                  </span>
+                ))}
               </div>
 
               {/* 시작 버튼 */}
-              <Button
+              <button
                 onClick={handleStartTraining}
-                className="w-full py-4 bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#005f61] hover:to-[#004d56] transition-all duration-300 shadow-md transform hover:scale-105"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557]"
               >
-                훈련 시작하기
-              </Button>
+                <Play className="h-4 w-4 fill-white" />
+                <span className="text-sm font-semibold">Start Training</span>
+              </button>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* ===== EMPTY STATE ===== */}

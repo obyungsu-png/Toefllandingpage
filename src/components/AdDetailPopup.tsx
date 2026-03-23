@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { X, ExternalLink, Play } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Advertisement } from './AdManagement';
@@ -40,26 +39,20 @@ export function AdDetailPopup({ ad, isOpen, onClose }: AdDetailPopupProps) {
   const embedUrl = ad.videoUrl ? getEmbedUrl(ad.videoUrl) : null;
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
         <>
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             onClick={onClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
           />
 
           {/* Popup */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            <div
               className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
+              style={{ animation: 'fadeIn 0.3s ease-out' }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -182,10 +175,10 @@ export function AdDetailPopup({ ad, isOpen, onClose }: AdDetailPopupProps) {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

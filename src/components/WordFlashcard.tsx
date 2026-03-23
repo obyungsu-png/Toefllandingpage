@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+// motion removed - using CSS animations
 import { ChevronLeft, ChevronRight, X, Volume2 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -188,32 +188,25 @@ export function WordFlashcard({
             </span>
           </div>
           <div className="h-2 md:h-3 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ backgroundColor: themeColor }}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ backgroundColor: themeColor, width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Flashcard - Fixed Height to prevent shake */}
         <div className="flex-1 mb-4 md:mb-8 flex items-center" style={{ perspective: '1500px', minHeight: '400px' }}>
-          <motion.div
+          <div
             className="relative w-full h-full cursor-pointer"
             onClick={handleFlip}
-            animate={{ rotateY: isFlipped ? 180 : 0 }}
-            transition={{ 
-              duration: 0.5,
-              ease: [0.25, 0.46, 0.45, 0.94],
-              type: 'tween'
-            }}
             style={{ 
               transformStyle: 'preserve-3d',
               transformOrigin: 'center center',
               willChange: 'transform',
-              height: '500px'
+              height: '500px',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              transition: 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
             }}
           >
             {/* Front Side - English Word */}
@@ -269,7 +262,7 @@ export function WordFlashcard({
               
               <p className="text-gray-400 text-xs md:text-sm mt-4 md:mt-6 font-medium">클릭하여 뒤집기</p>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Navigation */}

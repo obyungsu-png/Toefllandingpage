@@ -1,3 +1,6 @@
+import { MobileFooter } from './MobileFooter';
+import { useState, useEffect } from 'react';
+
 interface WritingEmailIntroProps {
   onNext: () => void;
   onHome: () => void;
@@ -5,6 +8,15 @@ interface WritingEmailIntroProps {
 }
 
 export function WritingEmailIntro({ onNext, onHome, onVolumeClick }: WritingEmailIntroProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Top Header */}
@@ -84,6 +96,15 @@ export function WritingEmailIntro({ onNext, onHome, onVolumeClick }: WritingEmai
           </div>
         </div>
       </div>
+
+      {/* Mobile Footer */}
+      {isMobile && (
+        <MobileFooter 
+          onNext={onNext}
+          onHome={onHome}
+          showBack={false}
+        />
+      )}
     </div>
   );
 }

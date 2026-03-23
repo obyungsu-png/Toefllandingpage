@@ -1,4 +1,5 @@
-import imgLecture from 'figma:asset/9c050da46760c2d25ce4f0b3cbfaa4e8ef7220e4.png';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { MobileFooter } from './MobileFooter';
 
 interface ListeningM2LectureProps {
   onBack: () => void;
@@ -21,7 +22,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick }: Li
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:flex hidden">
           {/* Volume Button */}
           <button 
             className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
@@ -59,7 +60,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick }: Li
 
       {/* Tab */}
       <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
+        <div className="px-4 md:px-8 py-3">
           <div className="flex gap-8">
             <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
               Listening
@@ -69,22 +70,25 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick }: Li
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">
+          <h2 className="text-xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 md:mb-8 text-center">
             Listen to a talk in an environmental science class.
           </h2>
           
           {/* Placeholder Image */}
-          <div className="flex justify-center mt-12">
-            <div className="w-96 h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-              <svg className="w-24 h-24 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <div className="flex justify-center mt-6 md:mt-12">
+            <div className="w-64 h-64 md:w-96 md:h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+              <svg className="w-16 h-16 md:w-24 md:h-24 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
               </svg>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Footer */}
+      <MobileFooter onBack={onBack} onHome={onHome} onNext={onNext} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { MobileFooter } from './MobileFooter';
 
 interface WritingEmailQ1Props {
   onBack: () => void;
@@ -14,6 +15,15 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
   const [hideTime, setHideTime] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
   const [showTimeDialog, setShowTimeDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showPassage, setShowPassage] = useState(true);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -116,67 +126,97 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
         </div>
       </div>
 
+      {/* Mobile Tabs for Passage/Response */}
+      {isMobile && (
+        <div className="bg-white border-b border-gray-300 flex">
+          <button
+            onClick={() => setShowPassage(true)}
+            className={`flex-1 px-4 py-3 font-semibold text-sm ${
+              showPassage
+                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
+                : 'text-gray-500'
+            }`}
+          >
+            Passage
+          </button>
+          <button
+            onClick={() => setShowPassage(false)}
+            className={`flex-1 px-4 py-3 font-semibold text-sm ${
+              !showPassage
+                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
+                : 'text-gray-500'
+            }`}
+          >
+            Response
+          </button>
+        </div>
+      )}
+
       {/* Main content - Split view */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
         {/* Left side - Instructions */}
-        <div className="w-1/3 p-8 overflow-auto bg-gray-50 border-r border-gray-300">
+        <div className={`md:w-1/3 p-4 md:p-8 overflow-auto bg-gray-50 border-b md:border-b-0 md:border-r border-gray-300 ${
+          isMobile ? (showPassage ? 'block' : 'hidden') : 'block'
+        }`}>
           <div className="max-w-2xl">
-            <p className="text-gray-800 mb-6 leading-relaxed">
+            <p className="text-sm md:text-base text-gray-800 mb-4 md:mb-6 leading-relaxed">
               A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.
             </p>
             
-            <p className="text-gray-800 font-bold mb-4">
+            <p className="text-sm md:text-base text-gray-800 font-bold mb-3 md:mb-4">
               Write an email to the editor of the magazine. In your email, do the following.
             </p>
             
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-3">
+            <ul className="space-y-2 md:space-y-3 mb-4 md:mb-6">
+              <li className="flex items-start gap-2 md:gap-3">
                 <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-gray-800">Tell the editor what you like about the new magazine.</span>
+                <span className="text-sm md:text-base text-gray-800">Tell the editor what you like about the new magazine.</span>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start gap-2 md:gap-3">
                 <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-gray-800">Describe the problem you experienced.</span>
+                <span className="text-sm md:text-base text-gray-800">Describe the problem you experienced.</span>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start gap-2 md:gap-3">
                 <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-gray-800">Ask about the status of your submissions.</span>
+                <span className="text-sm md:text-base text-gray-800">Ask about the status of your submissions.</span>
               </li>
             </ul>
             
-            <p className="text-gray-800">
+            <p className="text-sm md:text-base text-gray-800">
               Write as much as you can and in complete sentences.
             </p>
           </div>
         </div>
 
         {/* Right side - Email composition */}
-        <div className="w-2/3 p-8 overflow-auto bg-white">
+        <div className={`md:w-2/3 p-4 md:p-8 overflow-auto bg-white ${
+          isMobile ? (!showPassage ? 'block' : 'hidden') : 'block'
+        }`}>
           <div className="mb-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-6">Your Response:</h3>
+            <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Your Response:</h3>
             
             <div className="mb-4">
-              <div className="text-gray-700 mb-2">
+              <div className="text-sm md:text-base text-gray-700 mb-2">
                 <span className="font-bold">To:</span> editor@sunshinepoetymagazine.com
               </div>
-              <div className="text-gray-700 mb-6">
+              <div className="text-sm md:text-base text-gray-700 mb-4 md:mb-6">
                 <span className="font-bold">Subject:</span> Problem using submission form
               </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 bg-[#1e6b73] text-white rounded hover:bg-[#0A6068] transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-300">
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1e6b73] text-white text-sm rounded hover:bg-[#0A6068] transition-colors">
                   Cut
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Paste
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Undo
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Redo
                 </button>
               </div>
@@ -185,11 +225,11 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
                 onClick={() => setHideWordCount(!hideWordCount)}
                 className="flex items-center gap-2 text-[#1e6b73] hover:text-[#0A6068] transition-colors"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                 </svg>
-                <span className="font-['Inter',_sans-serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
-                {!hideWordCount && <span className="ml-2 text-gray-700">{wordCount}</span>}
+                <span className="text-sm font-['Inter',_sans-serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
+                {!hideWordCount && <span className="ml-2 text-gray-700 text-sm">{wordCount}</span>}
               </button>
             </div>
 
@@ -197,7 +237,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
             <textarea
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
-              className="w-full h-96 p-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
+              className="w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Start typing your email here..."
             />
           </div>
@@ -245,6 +285,14 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
           </div>
         </div>
       )}
+
+      {/* Mobile Footer */}
+      <MobileFooter
+        onBack={onBack}
+        onNext={handleNextClick}
+        onHome={onHome}
+        onVolumeClick={onVolumeClick}
+      />
     </div>
   );
 }

@@ -719,21 +719,21 @@ export function PronunciationAnalyzer({
   return (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-xl p-6">
-        <h3 className="text-slate-700 font-bold text-lg mb-3 flex items-center gap-2">
-          <span className="text-2xl">🎙️</span>
+      <div className="bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6">
+        <h3 className="text-slate-700 font-bold text-sm sm:text-base md:text-lg mb-2 sm:mb-3 flex items-center gap-2">
+          <span className="text-xl sm:text-2xl">🎙️</span>
           발음 분석 방법
         </h3>
-        <ol className="text-slate-600 space-y-2 text-sm">
-          <li className="flex gap-2">
+        <ol className="text-slate-600 space-y-1 sm:space-y-2 text-xs sm:text-sm">
+          <li className="flex gap-1.5 sm:gap-2">
             <span className="font-semibold text-slate-700">1.</span>
             <span>원어민 발음을 들어보세요</span>
           </li>
-          <li className="flex gap-2">
+          <li className="flex gap-1.5 sm:gap-2">
             <span className="font-semibold text-slate-700">2.</span>
             <span>녹음 버튼을 눌러 똑같이 따라 말해보세요</span>
           </li>
-          <li className="flex gap-2">
+          <li className="flex gap-1.5 sm:gap-2">
             <span className="font-semibold text-slate-700">3.</span>
             <span>내 발음을 다시 듣고 비교해보세요</span>
           </li>
@@ -741,71 +741,71 @@ export function PronunciationAnalyzer({
       </div>
 
       {/* Text to pronounce */}
-      <div className="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-        <p className="text-gray-900 text-xl md:text-2xl text-center font-medium leading-relaxed">
+      <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 shadow-sm">
+        <p className="text-gray-900 text-base sm:text-lg md:text-xl lg:text-2xl text-center font-medium leading-relaxed">
           {nativeText}
         </p>
       </div>
 
-      {/* Control Buttons */}
-      <div className="space-y-3">
+      {/* Controls */}
+      <div className="space-y-2 sm:space-y-3">
         {/* Main Action Buttons Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
           {/* Play Native - Modern Blue */}
           <Button
             onClick={playNativeAudio}
             disabled={isRecording}
-            className="py-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+            className="py-4 sm:py-5 md:py-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 sm:gap-2 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm md:text-base"
           >
-            <Play className="w-6 h-6" />
-            <span className="text-sm">원어민 듣기</span>
+            <Play className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span>원어민 듣기</span>
           </Button>
 
-          {/* Record / Stop - Modern Purple/Violet */}
+          {/* Record/Stop - Pink/Rose */}
           <Button
             onClick={isRecording ? stopRecording : handleRecordClick}
-            className={`py-6 font-semibold rounded-xl flex flex-col items-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 ${
+            className={`py-4 sm:py-5 md:py-6 font-semibold rounded-lg sm:rounded-xl flex flex-col items-center gap-1 sm:gap-2 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm md:text-base ${
               isRecording 
                 ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 animate-pulse' 
-                : 'bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700'
+                : 'bg-gradient-to-r from-rose-400 to-pink-500 text-white hover:from-rose-500 hover:to-pink-600'
             }`}
           >
             {isRecording ? (
               <>
-                <Square className="w-6 h-6" />
-                <span className="text-sm">녹음 중지</span>
+                <Square className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span>녹음 중지</span>
               </>
             ) : (
               <>
-                <Mic className="w-6 h-6" />
-                <span className="text-sm">내 발음 녹음</span>
+                <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span>내 발음 녹음</span>
               </>
             )}
           </Button>
 
-          {/* Play User - Modern Slate Gray */}
+          {/* Play My Recording - Slate Gray */}
           <Button
             onClick={playUserAudio}
             disabled={!hasRecorded || isRecording}
-            className="py-6 bg-gradient-to-r from-slate-600 to-gray-700 text-white font-semibold rounded-xl hover:from-slate-700 hover:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+            className="py-4 sm:py-5 md:py-6 bg-gradient-to-r from-slate-600 to-gray-700 text-white font-semibold rounded-lg sm:rounded-xl hover:from-slate-700 hover:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 sm:gap-2 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm md:text-base"
           >
-            <Play className="w-6 h-6" />
-            <span className="text-sm">내 발음 듣기</span>
+            <Play className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span>내 발음 듣기</span>
           </Button>
         </div>
 
         {/* Navigation Buttons Row */}
         {hasRecorded && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <Button
               onClick={resetRecording}
-              className="py-4 bg-white border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-400 flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all duration-200"
+              className="py-3 sm:py-4 bg-white border-2 border-slate-300 text-slate-700 font-semibold rounded-lg sm:rounded-xl hover:bg-slate-50 hover:border-slate-400 flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm hover:shadow-md transition-all duration-200 text-xs sm:text-sm md:text-base"
             >
-              <RotateCcw className="w-5 h-5" />
-              이전
+              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
+              다시하기
             </Button>
             <Button
-              className="py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-700 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+              className="py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-lg sm:rounded-xl hover:from-emerald-600 hover:to-teal-700 flex items-center justify-center gap-1.5 sm:gap-2 shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm md:text-base"
             >
               다음 문제
             </Button>
@@ -815,65 +815,55 @@ export function PronunciationAnalyzer({
 
       {/* Feedback Display */}
       {feedbackLevel && hasRecorded && (
-        <div className={`p-6 rounded-xl text-center space-y-4 shadow-md border-2 ${
+        <div className={`p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl text-center space-y-2 sm:space-y-3 md:space-y-4 shadow-md border-2 ${
           feedbackLevel === 'great' 
             ? 'bg-emerald-50 border-emerald-200'
             : feedbackLevel === 'okay'
-            ? 'bg-amber-50 border-amber-200'
-            : 'bg-blue-50 border-blue-200'
+            ? 'bg-blue-50 border-blue-200'
+            : 'bg-orange-50 border-orange-200'
         }`}>
           {/* Emoji & Title */}
-          <div className="space-y-2">
-            <div className="text-5xl">
+          <div className="space-y-1 sm:space-y-2">
+            <div className="text-3xl sm:text-4xl md:text-5xl">
               {feedbackLevel === 'great' ? '🎉' : feedbackLevel === 'okay' ? '👍' : '💪'}
             </div>
-            <h3 className={`text-2xl font-bold ${
+            <h3 className={`text-lg sm:text-xl md:text-2xl font-bold ${
               feedbackLevel === 'great' 
                 ? 'text-emerald-700'
                 : feedbackLevel === 'okay'
-                ? 'text-amber-700'
-                : 'text-blue-700'
+                ? 'text-blue-700'
+                : 'text-orange-700'
             }`}>
-              {feedbackLevel === 'great' ? 'Excellent!' : feedbackLevel === 'okay' ? "Good Job!" : 'Keep Going!'}
+              {feedbackLevel === 'great' ? 'Great Job!' : feedbackLevel === 'okay' ? "That's Okay!" : 'Cheer Up!'}
             </h3>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">
+              {feedbackLevel === 'great' && '완벽해요! 원어민 발음과 매우 유사합니다'}
+              {feedbackLevel === 'okay' && '좋아요! 조금만 더 연습하면 완벽합니다'}
+              {feedbackLevel === 'cheer' && '괜찮아요! 계속 연습하면 점점 나아질 거예요'}
+            </p>
           </div>
-          
+
           {/* Score Badge */}
           <div className="flex items-center justify-center">
-            <div className={`rounded-lg py-3 px-8 ${
+            <div className={`rounded-lg py-2 sm:py-3 px-4 sm:px-6 md:px-8 ${
               feedbackLevel === 'great'
                 ? 'bg-emerald-100 border border-emerald-300'
                 : feedbackLevel === 'okay'
-                ? 'bg-amber-100 border border-amber-300'
-                : 'bg-blue-100 border border-blue-300'
+                ? 'bg-blue-100 border border-blue-300'
+                : 'bg-orange-100 border border-orange-300'
             }`}>
-              <div className={`text-4xl font-bold ${
+              <div className={`text-2xl sm:text-3xl md:text-4xl font-bold ${
                 feedbackLevel === 'great'
                   ? 'text-emerald-600'
                   : feedbackLevel === 'okay'
-                  ? 'text-amber-600'
-                  : 'text-blue-600'
+                  ? 'text-blue-600'
+                  : 'text-orange-600'
               }`}>
                 {matchScore}
               </div>
               <div className="text-xs font-semibold text-gray-600 mt-1">점수</div>
             </div>
           </div>
-          
-          {/* Message */}
-          <p className={`text-sm font-medium ${
-            feedbackLevel === 'great' 
-              ? 'text-emerald-700'
-              : feedbackLevel === 'okay'
-              ? 'text-amber-700'
-              : 'text-blue-700'
-          }`}>
-            {feedbackLevel === 'great' 
-              ? '훌륭해요! 원어민처럼 발음하셨어요!'
-              : feedbackLevel === 'okay'
-              ? '잘하셨어요! 조금만 더 연습하면 완벽합니다!'
-              : '좋아요! 꾸준히 연습하면 더 나아질 거예요!'}
-          </p>
           
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -882,8 +872,8 @@ export function PronunciationAnalyzer({
                 feedbackLevel === 'great'
                   ? 'bg-emerald-500'
                   : feedbackLevel === 'okay'
-                  ? 'bg-amber-500'
-                  : 'bg-blue-500'
+                  ? 'bg-blue-500'
+                  : 'bg-orange-500'
               }`}
               style={{ width: `${matchScore}%` }}
             />

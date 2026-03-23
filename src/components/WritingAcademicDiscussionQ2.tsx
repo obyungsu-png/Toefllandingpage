@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { MobileFooter } from './MobileFooter';
 
 interface WritingAcademicDiscussionQ2Props {
   onBack: () => void;
@@ -14,6 +15,8 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
   const [hideTime, setHideTime] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
   const [showTimeDialog, setShowTimeDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'passage' | 'response'>('passage');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,6 +36,15 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
     const words = response.trim().split(/\s+/).filter(word => word.length > 0);
     setWordCount(words.length);
   }, [response]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -117,45 +129,73 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
       </div>
 
       {/* Main content - Split view */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
+        {/* Mobile Tab Navigation */}
+        {isMobile && (
+          <div className="flex border-b border-gray-300 bg-white">
+            <button
+              onClick={() => setActiveTab('passage')}
+              className={`flex-1 py-3 text-sm font-semibold transition-all ${
+                activeTab === 'passage'
+                  ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
+                  : 'text-gray-500'
+              }`}
+            >
+              Passage
+            </button>
+            <button
+              onClick={() => setActiveTab('response')}
+              className={`flex-1 py-3 text-sm font-semibold transition-all ${
+                activeTab === 'response'
+                  ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
+                  : 'text-gray-500'
+              }`}
+            >
+              Response
+            </button>
+          </div>
+        )}
+
         {/* Left side - Instructions and Professor's context */}
-        <div className="w-1/3 p-8 overflow-auto bg-white border-r border-gray-300">
-          <div className="space-y-6">
-            <p className="text-gray-800 leading-relaxed">
+        <div className={`md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300 ${
+          isMobile ? (activeTab === 'passage' ? 'block' : 'hidden') : 'block'
+        }`}>
+          <div className="space-y-4 md:space-y-6">
+            <p className="text-sm md:text-base text-gray-800 leading-relaxed">
               Your professor is teaching a class on social studies. Write a post responding to the professor's question.
             </p>
 
             <div>
-              <p className="text-gray-900 mb-3">
+              <p className="text-sm md:text-base text-gray-900 mb-2 md:mb-3">
                 In your response, you should do the following.
               </p>
-              <ul className="space-y-2 ml-6">
+              <ul className="space-y-1 md:space-y-2 ml-4 md:ml-6">
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-gray-800">Express and support your opinion.</span>
+                  <span className="text-sm md:text-base text-gray-800">Express and support your opinion.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-gray-800">Make a contribution to the discussion in your own words.</span>
+                  <span className="text-sm md:text-base text-gray-800">Make a contribution to the discussion in your own words.</span>
                 </li>
               </ul>
             </div>
 
-            <p className="text-gray-800">
+            <p className="text-sm md:text-base text-gray-800">
               An effective response will contain at least 100 words.
             </p>
 
             {/* Professor's detailed discussion */}
-            <div className="mt-8 pt-6 border-t border-gray-300">
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-3">
-                  <svg className="w-20 h-20 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-300">
+              <div className="flex flex-col items-center mb-4 md:mb-6">
+                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 md:mb-3">
+                  <svg className="w-12 h-12 md:w-20 md:h-20 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <p className="font-bold text-gray-900">Dr. Achebe</p>
+                <p className="font-bold text-sm md:text-base text-gray-900">Dr. Achebe</p>
               </div>
-              <p className="text-gray-800 leading-relaxed">
+              <p className="text-sm md:text-base text-gray-800 leading-relaxed">
                 Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?
               </p>
             </div>
@@ -163,31 +203,33 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
         </div>
 
         {/* Right side - Students' responses and writing area */}
-        <div className="w-2/3 p-8 overflow-auto bg-gray-50">
-          <div className="space-y-6 mb-8">
+        <div className={`md:w-2/3 p-4 md:p-8 overflow-auto bg-gray-50 ${
+          isMobile ? (activeTab === 'response' ? 'block' : 'hidden') : 'block'
+        }`}>
+          <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
             {/* Student 1 */}
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <svg className="w-10 h-10 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <svg className="w-7 h-7 md:w-10 md:h-10 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-gray-800 leading-relaxed">
+                <p className="text-sm md:text-base text-gray-800 leading-relaxed">
                   Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.
                 </p>
               </div>
             </div>
 
             {/* Student 2 */}
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <svg className="w-10 h-10 text-yellow-700" fill="currentColor" viewBox="0 0 20 20">
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <svg className="w-7 h-7 md:w-10 md:h-10 text-yellow-700" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-gray-800 leading-relaxed">
+                <p className="text-sm md:text-base text-gray-800 leading-relaxed">
                   I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.
                 </p>
               </div>
@@ -195,22 +237,22 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
           </div>
 
           {/* Your Response section */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Your Response:</h3>
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-3 md:mb-4">Your Response:</h3>
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-300">
-              <div className="flex items-center gap-2">
-                <button className="px-4 py-2 bg-[#1e6b73] text-white rounded hover:bg-[#0A6068] transition-colors">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-300">
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1e6b73] text-white text-sm rounded hover:bg-[#0A6068] transition-colors">
                   Cut
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Paste
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Undo
                 </button>
-                <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                <button className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors">
                   Redo
                 </button>
               </div>
@@ -219,11 +261,11 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
                 onClick={() => setHideWordCount(!hideWordCount)}
                 className="flex items-center gap-2 text-[#1e6b73] hover:text-[#0A6068] transition-colors"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                 </svg>
-                <span className="font-['Inter',_sans-serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
-                {!hideWordCount && <span className="ml-2 text-gray-700">{wordCount}</span>}
+                <span className="text-sm font-['Inter',_sans-serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
+                {!hideWordCount && <span className="ml-2 text-gray-700 text-sm">{wordCount}</span>}
               </button>
             </div>
 
@@ -231,7 +273,7 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
             <textarea
               value={response}
               onChange={(e) => setResponse(e.target.value)}
-              className="w-full h-72 p-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
+              className="w-full h-48 md:h-72 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Write your response here..."
             />
           </div>
@@ -279,6 +321,14 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
           </div>
         </div>
       )}
+
+      {/* Mobile Footer */}
+      <MobileFooter
+        onBack={onBack}
+        onNext={handleNextClick}
+        onHome={onHome}
+        onVolumeClick={onVolumeClick}
+      />
     </div>
   );
 }

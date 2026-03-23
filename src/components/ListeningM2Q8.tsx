@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { MobileFooter } from './MobileFooter';
+import { RadioOption } from './RadioOption';
 
 interface ListeningM2Q8Props {
   onBack: () => void;
@@ -82,55 +84,75 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick }: Listeni
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-8 overflow-auto bg-white border border-black">
+      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-          
-          <div className="flex gap-16 items-start justify-center pl-12 mt-12">
-            {/* Left side - Image */}
-            <div className="flex-shrink-0">
-              <div className="w-96 h-96 bg-white rounded-lg overflow-hidden">
-                <ImageWithFallback 
-                  src="figma:asset/fb7d932d80383e94686e353563862f76efb88657.png" 
-                  alt="Man in pink shirt with glasses"
-                  className="w-full h-full object-contain"
-                />
+          {/* Mobile: Image -> Question -> Options */}
+          <div className="md:hidden flex flex-col items-center">
+            <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
+              <ImageWithFallback 
+                src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
+                alt="Woman in yellow blazer"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            
+            <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
+              Choose the best response.
+            </h2>
+            
+            <div className="w-full max-w-2xl px-8">
+              <div className="space-y-5">
+                {answerOptions.map((option, index) => (
+                  <RadioOption
+                    key={index}
+                    id={`m2-q8-option-${index}`}
+                    name="m2-q8"
+                    value={option}
+                    checked={selectedAnswer === option}
+                    onChange={() => setSelectedAnswer(option)}
+                    label={option}
+                    labelClassName="text-lg"
+                  />
+                ))}
               </div>
             </div>
+          </div>
 
-            {/* Right side - Options */}
-            <div className="flex-1 max-w-xl mt-8">
-              <div className="space-y-6">
-                {answerOptions.map((option, index) => (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className="relative flex-shrink-0">
-                      <input
-                        type="radio"
-                        id={`m2-q8-option-${index}`}
-                        name="m2-q8"
-                        value={option}
-                        checked={selectedAnswer === option}
-                        onChange={() => setSelectedAnswer(option)}
-                        className={`w-5 h-5 mt-0.5 appearance-none rounded-full cursor-pointer border-[2px] ${
-                          selectedAnswer === option
-                            ? 'border-[#0d9488]'
-                            : 'border-black'
-                        }`}
-                      />
-                      {selectedAnswer === option && (
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] bg-[#0d9488] rounded-full pointer-events-none"></div>
-                      )}
-                    </div>
-                    <label htmlFor={`m2-q8-option-${index}`} className="font-['Inter',_sans-serif] text-gray-800 cursor-pointer leading-relaxed text-lg">
-                      {option}
-                    </label>
-                  </div>
-                ))}
+          {/* Desktop: Original layout */}
+          <div className="hidden md:block">
+            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
+            <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
+              <div className="flex-shrink-0">
+                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
+                  <ImageWithFallback 
+                    src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
+                    alt="Woman in yellow blazer"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+              <div className="flex-1 max-w-xl mt-8">
+                <div className="space-y-6">
+                  {answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`m2-q8-option-${index}`}
+                      name="m2-q8"
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => setSelectedAnswer(option)}
+                      label={option}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation */}
+      <MobileFooter onBack={onBack} onHome={onHome} onNext={onNext} />
     </div>
   );
 }
