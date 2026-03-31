@@ -140,7 +140,7 @@ export function WritingBuildSentenceQ7({
               </div>
             </div>
 
-            <div className="flex items-start gap-4 md:gap-6">
+            <div className="flex items-end gap-4 md:gap-6">
               <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
                 {avatar2ImageUrl ? (
                   <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
@@ -153,7 +153,7 @@ export function WritingBuildSentenceQ7({
                 )}
               </div>
               
-              <div className="flex-1 overflow-x-auto">
+              <div className="flex-1 overflow-x-auto pb-2">
                 <div className="flex flex-wrap items-end gap-2">
                   {sentenceSlots.map((word, index) => (
                     <div
