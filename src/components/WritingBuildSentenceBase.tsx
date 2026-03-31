@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
 
@@ -40,6 +40,7 @@ export function WritingBuildSentenceBase({
   const [showTime, setShowTime] = useState<boolean>(true);
   const [draggedWord, setDraggedWord] = useState<string | null>(null);
   const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
+  const draggedWordRef = useRef<string | null>(null);
 
   useEffect(() => {
     setSentenceSlots(Array(slotCount).fill(null));
@@ -101,10 +102,19 @@ export function WritingBuildSentenceBase({
       e.preventDefault();
       return;
     }
+    draggedWordRef.current = word;
     setDraggedWord(word);
     setDragOverSlotIndex(null);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', word);
+  };
+
+  const handleDragEnter = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+
+    if (sentenceSlots[index] === null) {
+      setDragOverSlotIndex(index);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -120,8 +130,9 @@ export function WritingBuildSentenceBase({
     e.preventDefault();
     setDragOverSlotIndex(null);
 
-    const droppedWord = draggedWord || e.dataTransfer.getData('text/plain');
+    const droppedWord = draggedWordRef.current || draggedWord || e.dataTransfer.getData('text/plain');
     if (!droppedWord || sentenceSlots[index] !== null || !canUseWord(droppedWord)) {
+      draggedWordRef.current = null;
       setDraggedWord(null);
       return;
     }
@@ -129,10 +140,12 @@ export function WritingBuildSentenceBase({
     const newSlots = [...sentenceSlots];
     newSlots[index] = index === 0 ? capitalizeFirst(droppedWord) : droppedWord;
     setSentenceSlots(newSlots);
+    draggedWordRef.current = null;
     setDraggedWord(null);
   };
 
   const handleDragEnd = () => {
+    draggedWordRef.current = null;
     setDraggedWord(null);
     setDragOverSlotIndex(null);
   };
@@ -251,11 +264,12 @@ export function WritingBuildSentenceBase({
               </div>
 
               <div className="flex-1 overflow-x-auto">
-                <div className="flex flex-wrap items-end gap-1.5 md:gap-2">
+                <div className={`flex flex-wrap items-end ${isComplete ? 'gap-0.5 md:gap-1' : 'gap-1.5 md:gap-2'}`}>
                   {sentenceSlots.map((word, index) => (
                     <div
                       key={index}
                       onClick={() => word ? handleSlotClick(index) : undefined}
+                      onDragEnter={(e) => handleDragEnter(e, index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragLeave={() => {
                         if (dragOverSlotIndex === index) {
@@ -263,14 +277,14 @@ export function WritingBuildSentenceBase({
                         }
                       }}
                       onDrop={(e) => handleDrop(e, index)}
-                      className={`relative inline-flex flex-col transition-colors ${word ? 'cursor-pointer' : ''}`}
+                      className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
                       style={{
                         minWidth: word ? '0px' : getEmptySlotWidth(),
                         width: word ? 'fit-content' : getEmptySlotWidth(),
                         paddingBottom: '4px'
                       }}
                     >
-                      <div className={`rounded-sm px-2 py-1 text-center ${dragOverSlotIndex === index && !word ? 'bg-[#eef4f3]' : ''}`}>
+                      <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === index && !word ? 'bg-[#eef4f3]' : ''}`}>
                         <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">
                           {word || ''}
                         </span>
@@ -295,10 +309,10 @@ export function WritingBuildSentenceBase({
                     draggable={!isSelected}
                     onDragStart={(e) => handleDragStart(e, word)}
                     onDragEnd={handleDragEnd}
-                    className={`border px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
+                    className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
                       isSelected
-                        ? 'border-[#cfd4dc] bg-[#e5e7eb] text-[#6b7280] cursor-default'
-                        : 'border-[#e7e0d3] bg-white text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
+                        ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
+                        : 'bg-[#f5f2ea] text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
                     }`}
                   >
                     <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
