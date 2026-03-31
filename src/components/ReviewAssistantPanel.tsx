@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, ClipboardList, FileText, Languages, MessageSquareText, Sparkles, Volume2 } from 'lucide-react';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
@@ -143,6 +143,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
+  const dictationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const theme = PANEL_THEME[section];
 
   const dictationExercise = useMemo(() => buildDictationExercise(variant), [variant]);
@@ -165,6 +166,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
     utterance.lang = 'en-US';
     window.speechSynthesis.speak(utterance);
   };
+
+  const normalizeDictationValue = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  const isDictationCorrect = (index: number) => normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
   const renderDictation = () => (
     <div className="space-y-4">
@@ -189,16 +194,44 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
             <div key={`${segment}-${index}`} className="contents">
               <span>{segment}</span>
               {index < dictationExercise.blanks.length && (
-                <input
-                  value={dictationInputs[index] || ''}
-                  onChange={(event) => {
-                    const next = [...dictationInputs];
-                    next[index] = event.target.value;
-                    setDictationInputs(next);
-                    setDictationChecked(false);
-                  }}
-                  className="w-24 border-b-2 border-[#94a3b8] px-1 py-0.5 text-center outline-none"
-                />
+                <span className="inline-flex flex-col items-start gap-1 align-bottom">
+                  <span className="inline-flex items-center gap-2">
+                    <input
+                      ref={(element) => {
+                        dictationInputRefs.current[index] = element;
+                      }}
+                      value={dictationInputs[index] || ''}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        const next = [...dictationInputs];
+                        next[index] = nextValue;
+                        setDictationInputs(next);
+                        setDictationChecked(false);
+
+                        if (
+                          index < dictationExercise.blanks.length - 1 &&
+                          normalizeDictationValue(nextValue).length >= normalizeDictationValue(dictationExercise.blanks[index]).length
+                        ) {
+                          dictationInputRefs.current[index + 1]?.focus();
+                          dictationInputRefs.current[index + 1]?.select();
+                        }
+                      }}
+                      className={`border-b-2 bg-transparent px-1 py-0.5 text-center outline-none ${
+                        dictationChecked
+                          ? isDictationCorrect(index)
+                            ? 'border-green-500 text-green-700'
+                            : 'border-red-500 text-red-600'
+                          : 'border-[#94a3b8] text-[#1f2937]'
+                      }`}
+                      style={{ width: `${Math.max(dictationExercise.blanks[index].length * 11, 72)}px` }}
+                    />
+                    {dictationChecked && (
+                      <span className={`text-xs font-semibold ${isDictationCorrect(index) ? 'text-green-600' : 'text-red-500'}`}>
+                        {isDictationCorrect(index) ? '맞음' : `정답: ${dictationExercise.blanks[index]}`}
+                      </span>
+                    )}
+                  </span>
+                </span>
               )}
             </div>
           ))}
@@ -213,9 +246,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
           >
             정답 확인
           </button>
-          {dictationChecked && (
-            <p className="text-xs text-[#64748b]">정답: {dictationExercise.fullSentence}</p>
-          )}
+          {dictationChecked && <p className="text-xs text-[#64748b]">틀린 칸은 빨간색, 맞은 칸은 초록색으로 표시됩니다.</p>}
         </div>
       </div>
     </div>
