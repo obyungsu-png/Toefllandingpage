@@ -312,7 +312,7 @@ export function WritingBuildSentenceBase({
                     className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
                       isSelected
                         ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
-                        : 'bg-[#f5f2ea] text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
+                        : 'bg-transparent text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
                     }`}
                   >
                     <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
