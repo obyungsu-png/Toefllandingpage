@@ -3,6 +3,7 @@ import speakingImage from 'figma:asset/8b35efa9f817161ac6e1896bb66d8010374d8d93.
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
+import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ4RecordProps {
   onNext: () => void;
@@ -45,11 +46,6 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl }: SpeakingQ4RecordP
       return () => clearInterval(timer);
     }
   }, [isRecording, timeRemaining, onNext]);
-
-  const formatTime = (seconds: number) => {
-    const secs = seconds % 60;
-    return `00:00:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -112,22 +108,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl }: SpeakingQ4RecordP
         
         {/* Response Time Box */}
         <div className="flex justify-center">
-          <div className="w-80">
-            <div className="bg-gray-600 text-white text-center py-2 rounded-t-lg">
-              <span className="font-bold text-lg">RESPONSE TIME</span>
-            </div>
-            <div className="bg-white border-2 border-gray-600 rounded-b-lg py-4 flex items-center justify-center gap-3">
-              {isRecording && (
-                <svg className="w-6 h-6 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                </svg>
-              )}
-              <span className="text-3xl font-bold text-gray-900">
-                {formatTime(timeRemaining)}
-              </span>
-            </div>
-          </div>
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
         </div>
       </div>
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
