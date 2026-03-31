@@ -114,18 +114,18 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
                 </div>
               )}
               <div 
-                className="flex items-center justify-center h-[18px] sm:h-[22px] md:h-[26px] lg:h-[28px] rounded-[9px] sm:rounded-[11px] md:rounded-[13px] lg:rounded-[14px] px-1.5 sm:px-2 md:px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
-                onClick={() => handleReviewClick(sectionType)}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[7px] sm:text-[9px] md:text-[10px] lg:text-[11px] text-center">Review</p>
-              </div>
-              <div 
                 className={`flex items-center justify-center h-[18px] sm:h-[22px] md:h-[26px] lg:h-[28px] rounded-[9px] sm:rounded-[11px] md:rounded-[13px] lg:rounded-[14px] px-1.5 sm:px-2 md:px-3 transition-all duration-300 cursor-pointer shadow-sm ${
                   hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
                 }`}
                 onClick={() => handleSectionClick(sectionType)}
               >
                 <p className="font-['Inter',_sans-serif] font-bold text-[7px] sm:text-[9px] md:text-[10px] lg:text-[11px] text-center">Start</p>
+              </div>
+              <div 
+                className="flex items-center justify-center h-[18px] sm:h-[22px] md:h-[26px] lg:h-[28px] rounded-[9px] sm:rounded-[11px] md:rounded-[13px] lg:rounded-[14px] px-1.5 sm:px-2 md:px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
+                onClick={() => handleReviewClick(sectionType)}
+              >
+                <p className="font-['Inter',_sans-serif] font-bold text-[7px] sm:text-[9px] md:text-[10px] lg:text-[11px] text-center">Review</p>
               </div>
             </div>
             {!isLast && <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-2 sm:left-3 right-2 sm:right-3" />}

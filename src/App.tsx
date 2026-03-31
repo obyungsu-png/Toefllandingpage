@@ -6486,18 +6486,18 @@ function AppContent() {
                 </div>
               )}
               <div
-                className="flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
-                onClick={() => handleReviewTest(sectionType)}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Review</p>
-              </div>
-              <div
                 className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
                   hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
                 }`}
                 onClick={() => handleStartTest(sectionType)}
               >
                 <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Start</p>
+              </div>
+              <div
+                className="flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
+                onClick={() => handleReviewTest(sectionType)}
+              >
+                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Review</p>
               </div>
             </div>
             {!isLast && <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 right-3" />}

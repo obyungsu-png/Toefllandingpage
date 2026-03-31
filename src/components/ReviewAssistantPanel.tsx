@@ -321,16 +321,25 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
           </div>
         )}
 
-        <div className="rounded-[28px] border bg-white px-4 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.18)]" style={{ borderColor: theme.border }}>
+        <div className="flex flex-wrap gap-3">
           {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab((current) => current === tab ? null : tab)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${activeTab === tab ? 'text-white' : 'text-[#475569]'}`}
-              style={{ backgroundColor: activeTab === tab ? theme.accent : '#f1f5f9' }}
+              className={`group relative overflow-hidden rounded-[20px] border px-4 py-3 text-sm font-semibold shadow-[0_14px_30px_rgba(15,23,42,0.12)] transition-all duration-200 ${
+                activeTab === tab
+                  ? 'text-white -translate-y-0.5'
+                  : 'bg-white text-[#475569] hover:-translate-y-0.5 hover:text-[#1f2937]'
+              }`}
+              style={{
+                borderColor: activeTab === tab ? theme.accent : theme.border,
+                background: activeTab === tab
+                  ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`
+                  : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+              }}
             >
-              {tab === '템프릿' ? '템플릿' : tab}
+              <span className="relative z-10">{tab === '템프릿' ? '템플릿' : tab}</span>
             </button>
           ))}
         </div>
