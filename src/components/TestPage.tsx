@@ -25,6 +25,7 @@ interface TPOTest {
 
 interface TestPageProps {
   isMobile: boolean;
+  isLoading?: boolean;
   activeTestSetRange: TestSetRange;
   setActiveTestSetRange: (range: TestSetRange) => void;
   testTests: TPOTest[];
@@ -44,6 +45,7 @@ interface TestPageProps {
 
 export function TestPage({
   isMobile,
+  isLoading = false,
   activeTestSetRange,
   setActiveTestSetRange,
   testTests,
@@ -234,8 +236,17 @@ export function TestPage({
         <div className="!w-full md:max-w-7xl md:mx-auto px-3 md:px-8">
           {filteredNumbers.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-lg font-medium">No tests found</p>
-              <p className="text-sm mt-1">Try adjusting your filters or search query.</p>
+              {isLoading ? (
+                <>
+                  <p className="text-lg font-medium">Loading tests...</p>
+                  <p className="text-sm mt-1">Fetching the latest test list.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-medium">No tests found</p>
+                  <p className="text-sm mt-1">Try adjusting your filters or search query.</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6 !w-full">

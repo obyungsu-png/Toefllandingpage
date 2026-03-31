@@ -51,6 +51,7 @@ type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary'
 type TPORange = 'TPO 1-5';
 type TestSetRange = '1-5';
 type TestBankType = 'tpo' | 'test' | 'training';
+type DeferredDataKey = 'history' | 'questionTypes' | 'training' | 'admin';
 
 function AppContent() {
   // React Router hooks
@@ -282,12 +283,25 @@ function AppContent() {
   const [passwordInput, setPasswordInput] = useState('');
   const [isPasswordCorrect, setIsPasswordCorrect] = useState(false);
   const TOEFL_PREP_PASSWORD = 'sw21qa00';
+  const APP_CACHE_VERSION = 'v1';
+  const APP_CACHE_TTL_MS = 30 * 60 * 1000;
   
   // Advertisements are loaded in the main loadDataFromSupabase useEffect below
   
   // Loading state for Supabase data
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [dataLoadedSuccessfully, setDataLoadedSuccessfully] = useState(false);
+  const [deferredLoadStatus, setDeferredLoadStatus] = useState<Record<DeferredDataKey, 'idle' | 'loading' | 'loaded'>>({
+    history: 'idle',
+    questionTypes: 'idle',
+    training: 'idle',
+    admin: 'idle'
+  });
+  const skipReportsSaveRef = React.useRef(false);
+  const skipStudentsSaveRef = React.useRef(false);
+  const skipTestResultsSaveRef = React.useRef(false);
+  const skipQuestionTypesConfigSaveRef = React.useRef(false);
+  const skipTrainingConfigSaveRef = React.useRef(false);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
@@ -404,7 +418,7 @@ function AppContent() {
 
   // Save students to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully) return;
+    if (isLoadingData || !dataLoadedSuccessfully || consumeInitialSyncSkip(skipStudentsSaveRef)) return;
     if (students.length === 0) return;
     
     const saveStudents = async () => {
@@ -431,7 +445,7 @@ function AppContent() {
 
   // Save test results to Supabase whenever they change
   useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully) return;
+    if (isLoadingData || !dataLoadedSuccessfully || consumeInitialSyncSkip(skipTestResultsSaveRef)) return;
     
     const saveTestResults = async () => {
       try {
@@ -531,6 +545,42 @@ function AppContent() {
       setPasswordInput('');
     }
   };
+
+  const getAppCacheKey = (key: string) => `app_cache_${APP_CACHE_VERSION}_${key}`;
+
+  const loadCachedData = <T,>(key: string): T | null => {
+    try {
+      const raw = localStorage.getItem(getAppCacheKey(key));
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.timestamp > APP_CACHE_TTL_MS) {
+        localStorage.removeItem(getAppCacheKey(key));
+        return null;
+      }
+
+      return parsed.data as T;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedData = (key: string, data: unknown) => {
+    try {
+      localStorage.setItem(
+        getAppCacheKey(key),
+        JSON.stringify({ data, timestamp: Date.now() })
+      );
+    } catch {
+      // Ignore cache write failures.
+    }
+  };
+
+  const consumeInitialSyncSkip = (ref: React.MutableRefObject<boolean>) => {
+    if (!ref.current) return false;
+    ref.current = false;
+    return true;
+  };
   
   // Load data from Supabase on mount
   // Retry-enabled fetch for cold start resilience
@@ -557,6 +607,18 @@ function AppContent() {
       }
     }
     throw new Error('fetchWithRetry: unreachable');
+  };
+
+  const getSupabaseRequestContext = () => ({
+    headers: { 'Authorization': `Bearer ${publicAnonKey}` },
+    baseUrl: `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`
+  });
+
+  const fetchSupabaseJson = async (endpoint: string) => {
+    const { headers, baseUrl } = getSupabaseRequestContext();
+    const res = await fetchWithRetry(`${baseUrl}/${endpoint}`, { headers });
+    if (!res.ok) throw new Error(`${endpoint}: ${res.status}`);
+    return res.json();
   };
 
   // Warm up edge function and wait until it responds
@@ -592,73 +654,57 @@ function AppContent() {
       try {
         setIsLoadingData(true);
         
-        const headers = { 'Authorization': `Bearer ${publicAnonKey}` };
-        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+        const { headers, baseUrl } = getSupabaseRequestContext();
+
+        const cachedTpoTests = loadCachedData<TPOTest[]>('tpo-tests');
+        const cachedTestTests = loadCachedData<TPOTest[]>('test-tests');
+        const cachedTrainingTests = loadCachedData<TPOTest[]>('training-tests');
+        const cachedAdvertisements = loadCachedData<Advertisement[]>('advertisements');
+
+        if (Array.isArray(cachedTpoTests)) {
+          setTpoTests(cachedTpoTests);
+          console.log('⚡ Loaded cached TPO tests:', cachedTpoTests.length);
+        }
+        if (Array.isArray(cachedTestTests)) {
+          setTestTests(cachedTestTests);
+          console.log('⚡ Loaded cached Test tests:', cachedTestTests.length);
+        }
+        if (Array.isArray(cachedTrainingTests)) {
+          setTrainingTests(cachedTrainingTests);
+        }
+        if (Array.isArray(cachedAdvertisements)) {
+          setAdvertisements(cachedAdvertisements);
+        }
         
-        // Step 1: Warm up the edge function before firing data requests
-        await warmUpServer(baseUrl, headers);
-        
-        // Step 2: Fetch data sequentially in pairs to avoid overwhelming a cold-started server
-        const fetchJson = async (endpoint: string) => {
-          const res = await fetchWithRetry(`${baseUrl}/${endpoint}`, { headers });
-          if (!res.ok) throw new Error(`${endpoint}: ${res.status}`);
-          return res.json();
-        };
+        // Best-effort warm-up only. Do not block critical list loading on it.
+        void warmUpServer(baseUrl, headers);
 
         let anySuccess = false;
 
-        // Batch 1a: First pair
+        // Batch 1a: TPO/Test lists first for faster initial rendering.
         const batch1a = await Promise.allSettled([
-          fetchJson('lms-contents'),
-          fetchJson('tpo-tests'),
+          fetchSupabaseJson('tpo-tests'),
+          fetchSupabaseJson('test-tests'),
+          fetchSupabaseJson('advertisements'),
         ]);
-        // Batch 1b: Second pair (staggered to reduce load)
+
+        if (batch1a[0].status === 'fulfilled') { const d = batch1a[0].value; if (Array.isArray(d)) { setTpoTests(d); saveCachedData('tpo-tests', d); anySuccess = true; console.log('✅ Loaded TPO tests:', d.length); } }
+        if (batch1a[1].status === 'fulfilled') { const d = batch1a[1].value; if (Array.isArray(d)) { setTestTests(d); saveCachedData('test-tests', d); anySuccess = true; console.log('✅ Loaded Test tests:', d.length); } }
+        if (batch1a[2].status === 'fulfilled') { const d = batch1a[2].value; if (Array.isArray(d)) { setAdvertisements(d); saveCachedData('advertisements', d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
+
+        // Batch 1b: Remaining public content after the main lists are available.
         const batch1b = await Promise.allSettled([
-          fetchJson('test-tests'),
-          fetchJson('training-tests'),
-          fetchJson('advertisements'),
+          fetchSupabaseJson('lms-contents'),
+          fetchSupabaseJson('training-tests'),
         ]);
-        const batch1 = [...batch1a, ...batch1b];
         
-        if (batch1[0].status === 'fulfilled') { const d = batch1[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
-        if (batch1[1].status === 'fulfilled') { const d = batch1[1].value; if (Array.isArray(d)) { setTpoTests(d); anySuccess = true; console.log('✅ Loaded TPO tests:', d.length); } }
-        if (batch1[2].status === 'fulfilled') { const d = batch1[2].value; if (Array.isArray(d)) { setTestTests(d); anySuccess = true; console.log('✅ Loaded Test tests:', d.length); } }
-        if (batch1[3].status === 'fulfilled') { const d = batch1[3].value; if (Array.isArray(d)) { setTrainingTests(d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
-        if (batch1[4].status === 'fulfilled') { const d = batch1[4].value; if (Array.isArray(d)) { setAdvertisements(d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
+        if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
+        if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
 
-        // Batch 2: User data
-        const batch2 = await Promise.allSettled([
-          fetchJson('reports'),
-          fetchJson('students'),
-          fetchJson('test-results'),
-          fetchJson('question-types-config'),
-        ]);
-
-        if (batch2[0].status === 'fulfilled') { const d = batch2[0].value; if (Array.isArray(d)) { setReports(d); anySuccess = true; console.log('✅ Loaded Reports:', d.length); } }
-        if (batch2[1].status === 'fulfilled') { const d = batch2[1].value; if (Array.isArray(d)) { setStudents(d); anySuccess = true; console.log('✅ Loaded Students:', d.length); } }
-        if (batch2[2].status === 'fulfilled') { const d = batch2[2].value; if (Array.isArray(d)) { setTestResults(d); anySuccess = true; console.log('✅ Loaded Test Results:', d.length); } }
-        if (batch2[3].status === 'fulfilled') { const d = batch2[3].value; if (d) { setQuestionTypesConfig(d); anySuccess = true; console.log('✅ Loaded Question Types Config'); } }
-
-        // Mark success early so the UI is not blocked by batch 3
         if (anySuccess) {
           setDataLoadedSuccessfully(true);
         } else {
           console.error('❌ All data fetches failed - save effects will be suppressed to prevent data loss');
-        }
-
-        // Batch 3: Training & results (sequential to avoid overwhelming edge function)
-        // These are non-critical - loaded after UI is already interactive
-        try {
-          const tc = await fetchJson('training-config').catch(() => null);
-          if (tc) { setTrainingConfig(tc); console.log('✅ Loaded Training Config'); }
-
-          const tr = await fetchJson('training-results').catch(() => null);
-          if (Array.isArray(tr)) { setTrainingResults(tr); console.log('✅ Loaded Training Results:', tr.length); }
-
-          const qtr = await fetchJson('question-types-results').catch(() => null);
-          if (Array.isArray(qtr)) { setQuestionTypesResults(qtr); console.log('✅ Loaded Question Types Results:', qtr.length); }
-        } catch (e) {
-          // Batch 3 (training/results) failed - non-critical, silently continue
         }
         
       } catch (error) {
@@ -670,6 +716,114 @@ function AppContent() {
     
     loadDataFromSupabase();
   }, []);
+
+  useEffect(() => {
+    const loadDeferredData = async () => {
+      let target: DeferredDataKey | null = null;
+
+      if (activeTab === 'History') {
+        target = 'history';
+      } else if (activeTab === 'Question Types') {
+        target = 'questionTypes';
+      } else if (activeTab === 'Training') {
+        target = 'training';
+      } else if (activeTab === 'TOEFL Prep' && isPasswordCorrect) {
+        target = 'admin';
+      }
+
+      if (!target || deferredLoadStatus[target] !== 'idle') {
+        return;
+      }
+
+      setDeferredLoadStatus(prev => ({ ...prev, [target!]: 'loading' }));
+
+      try {
+        let loadedAnything = false;
+
+        if (target === 'history') {
+          const [resultsRes, reportsRes] = await Promise.allSettled([
+            fetchSupabaseJson('test-results'),
+            fetchSupabaseJson('reports')
+          ]);
+
+          if (resultsRes.status === 'fulfilled' && Array.isArray(resultsRes.value)) {
+            skipTestResultsSaveRef.current = true;
+            setTestResults(resultsRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Test Results:', resultsRes.value.length);
+          }
+
+          if (reportsRes.status === 'fulfilled' && Array.isArray(reportsRes.value)) {
+            skipReportsSaveRef.current = true;
+            setReports(reportsRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Reports:', reportsRes.value.length);
+          }
+        }
+
+        if (target === 'questionTypes') {
+          const [configRes, resultsRes] = await Promise.allSettled([
+            fetchSupabaseJson('question-types-config'),
+            fetchSupabaseJson('question-types-results')
+          ]);
+
+          if (configRes.status === 'fulfilled' && configRes.value) {
+            skipQuestionTypesConfigSaveRef.current = true;
+            setQuestionTypesConfig(configRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Question Types Config');
+          }
+
+          if (resultsRes.status === 'fulfilled' && Array.isArray(resultsRes.value)) {
+            setQuestionTypesResults(resultsRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Question Types Results:', resultsRes.value.length);
+          }
+        }
+
+        if (target === 'training') {
+          const [configRes, resultsRes] = await Promise.allSettled([
+            fetchSupabaseJson('training-config'),
+            fetchSupabaseJson('training-results')
+          ]);
+
+          if (configRes.status === 'fulfilled' && configRes.value) {
+            skipTrainingConfigSaveRef.current = true;
+            setTrainingConfig(configRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Training Config');
+          }
+
+          if (resultsRes.status === 'fulfilled' && Array.isArray(resultsRes.value)) {
+            setTrainingResults(resultsRes.value);
+            loadedAnything = true;
+            console.log('✅ Loaded Training Results:', resultsRes.value.length);
+          }
+        }
+
+        if (target === 'admin') {
+          const studentsRes = await fetchSupabaseJson('students').catch(() => null);
+
+          if (Array.isArray(studentsRes)) {
+            skipStudentsSaveRef.current = true;
+            setStudents(studentsRes);
+            loadedAnything = true;
+            console.log('✅ Loaded Students:', studentsRes.length);
+          }
+        }
+
+        setDeferredLoadStatus(prev => ({
+          ...prev,
+          [target!]: loadedAnything ? 'loaded' : 'idle'
+        }));
+      } catch (error) {
+        console.error(`❌ Error loading deferred ${target} data:`, error);
+        setDeferredLoadStatus(prev => ({ ...prev, [target!]: 'idle' }));
+      }
+    };
+
+    void loadDeferredData();
+  }, [activeTab, deferredLoadStatus, isPasswordCorrect]);
 
   // Save LMS contents to Supabase whenever they change
   useEffect(() => {
@@ -803,7 +957,7 @@ function AppContent() {
 
   // Save Question Types Config to Supabase (debounced 1s)
   useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully || !questionTypesConfig) return;
+    if (isLoadingData || !dataLoadedSuccessfully || !questionTypesConfig || consumeInitialSyncSkip(skipQuestionTypesConfigSaveRef)) return;
     
     const timer = setTimeout(async () => {
       try {
@@ -829,7 +983,7 @@ function AppContent() {
 
   // Save Training Config to Supabase (debounced 1s)
   useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully || !trainingConfig) return;
+    if (isLoadingData || !dataLoadedSuccessfully || !trainingConfig || consumeInitialSyncSkip(skipTrainingConfigSaveRef)) return;
     
     const timer = setTimeout(async () => {
       try {
@@ -7320,6 +7474,7 @@ function AppContent() {
       {!showLoginForm && !showRegistrationForm && activeTab === 'TPO' && (
         <TPOPage
           isMobile={isMobile}
+          isLoading={isLoadingData && tpoTests.length === 0}
           activeTestSetRange={activeTestSetRange}
           setActiveTestSetRange={setActiveTestSetRange}
           tpoTests={tpoTests}
@@ -7342,6 +7497,7 @@ function AppContent() {
       {!showLoginForm && !showRegistrationForm && activeTab === 'Test' && (
         <TestPage
           isMobile={isMobile}
+          isLoading={isLoadingData && testTests.length === 0}
           activeTestSetRange={activeTestSetRange}
           setActiveTestSetRange={setActiveTestSetRange}
           testTests={testTests}
