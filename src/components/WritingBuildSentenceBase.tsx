@@ -291,13 +291,14 @@ export function WritingBuildSentenceBase({
                 return (
                   <button
                     key={`${word}-${index}`}
+                    type="button"
                     draggable={!isSelected}
                     onDragStart={(e) => handleDragStart(e, word)}
                     onDragEnd={handleDragEnd}
                     className={`border px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
                       isSelected
-                        ? 'border-[#d7ddd8] bg-[#ecefe9] text-[#8a8f87] cursor-default'
-                        : 'border-[#e7e0d3] bg-[#f5f2ea] text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#efe9dd]'
+                        ? 'border-[#cfd4dc] bg-[#e5e7eb] text-[#6b7280] cursor-default'
+                        : 'border-[#e7e0d3] bg-white text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
                     }`}
                   >
                     <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
