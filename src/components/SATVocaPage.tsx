@@ -421,6 +421,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     const ROWS_PER_COL = 30;
     const WORDS_PER_PAGE = ROWS_PER_COL * 2;
     const totalPages = Math.ceil(totalWords / WORDS_PER_PAGE);
+    const WORD_TABLE_FONT_SIZE = 22;
 
     const numColW = 500;
     const engColW = 2100;
@@ -512,12 +513,12 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         };
 
         const cells: TableCell[] = [
-          new TableCell({ width: { size: numColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: leftNum, size: 18, color: '888888' })] })], borders: cellBorders }),
-          new TableCell({ width: { size: engColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: getCol1(leftWord), size: 18, bold: true })] })], borders: cellBorders }),
-          new TableCell({ width: { size: korColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: isTest ? [new TextRun({ text: getCol2Test(leftWord), size: 18 })] : [new TextRun({ text: getCol2Answer(leftWord), size: 18, color: 'EA580C' })] })], borders: cellBorders }),
-          new TableCell({ width: { size: numColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: rightNum, size: 18, color: '888888' })] })], borders: cellBorders }),
-          new TableCell({ width: { size: engColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: getCol1(rightWord), size: 18, bold: true })] })], borders: cellBorders }),
-          new TableCell({ width: { size: korColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: isTest ? [new TextRun({ text: getCol2Test(rightWord), size: 18 })] : [new TextRun({ text: getCol2Answer(rightWord), size: 18, color: 'EA580C' })] })], borders: cellBorders }),
+          new TableCell({ width: { size: numColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: leftNum, size: WORD_TABLE_FONT_SIZE, color: '888888', bold: true })] })], borders: cellBorders }),
+          new TableCell({ width: { size: engColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: getCol1(leftWord), size: WORD_TABLE_FONT_SIZE, bold: true })] })], borders: cellBorders }),
+          new TableCell({ width: { size: korColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: isTest ? [new TextRun({ text: getCol2Test(leftWord), size: WORD_TABLE_FONT_SIZE, bold: true })] : [new TextRun({ text: getCol2Answer(leftWord), size: WORD_TABLE_FONT_SIZE, color: 'EA580C', bold: true })] })], borders: cellBorders }),
+          new TableCell({ width: { size: numColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: rightNum, size: WORD_TABLE_FONT_SIZE, color: '888888', bold: true })] })], borders: cellBorders }),
+          new TableCell({ width: { size: engColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: [new TextRun({ text: getCol1(rightWord), size: WORD_TABLE_FONT_SIZE, bold: true })] })], borders: cellBorders }),
+          new TableCell({ width: { size: korColW, type: WidthType.DXA }, margins: cellMargin, verticalAlign: 'center' as any, children: [new Paragraph({ children: isTest ? [new TextRun({ text: getCol2Test(rightWord), size: WORD_TABLE_FONT_SIZE, bold: true })] : [new TextRun({ text: getCol2Answer(rightWord), size: WORD_TABLE_FONT_SIZE, color: 'EA580C', bold: true })] })], borders: cellBorders }),
         ];
         tableRows.push(new TableRow({ children: cells }));
       }
