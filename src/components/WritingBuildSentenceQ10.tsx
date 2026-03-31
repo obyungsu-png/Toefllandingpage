@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
 
@@ -28,6 +28,29 @@ export function WritingBuildSentenceQ10({
   
   const [sentenceSlots, setSentenceSlots] = useState<(string | null)[]>([null, null, null, null]);
   const [availableWords, setAvailableWords] = useState<string[]>(availableWordsInitial);
+
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [showTime, setShowTime] = useState<boolean>(true);
+
+  // Timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   const capitalizeFirst = (word: string) => {
     return word.charAt(0).toUpperCase() + word.slice(1);
@@ -109,9 +132,24 @@ export function WritingBuildSentenceQ10({
       </div>
 
       <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
+        <div className="px-8 py-3 flex items-center justify-between">
           <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
             Writing | Question 10 of 10
+          </div>
+          
+          {/* Timer section */}
+          <div className="flex items-center gap-4">
+            {showTime && (
+              <div className="text-gray-700 font-['Inter',_sans-serif] font-semibold">
+                {formatTime(elapsedTime)}
+              </div>
+            )}
+            <button
+              onClick={() => setShowTime(!showTime)}
+              className="text-[#1e6b73] font-['Inter',_sans-serif] font-semibold hover:underline transition-all"
+            >
+              {showTime ? 'Hide Time' : 'Show Time'}
+            </button>
           </div>
         </div>
       </div>
