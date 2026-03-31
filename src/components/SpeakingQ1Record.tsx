@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
+// import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
