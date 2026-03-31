@@ -140,7 +140,7 @@ function getTrainingTitle(section: ReviewSection, variant: ReviewVariant) {
 
 export function ReviewAssistantPanel({ section, variant, contentKey, onStartTraining }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
-  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
   const theme = PANEL_THEME[section];
@@ -149,7 +149,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
 
   useEffect(() => {
-    setActiveTab(tabs[0]);
+    setActiveTab(null);
     setDictationInputs(Array(dictationExercise.blanks.length).fill(''));
     setDictationChecked(false);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
@@ -269,6 +269,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
   );
 
   const renderActiveTab = () => {
+    if (!activeTab) return null;
+
     if (activeTab === '받아쓰기') return renderDictation();
     if (activeTab === '단어') return renderWords();
     if (activeTab === '해석') {
@@ -296,22 +298,35 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
 
   return (
     <div className="fixed bottom-20 right-4 z-[90] w-[340px] sm:bottom-8 sm:right-8 sm:w-[380px]">
-      <div className="rounded-[28px] border bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]" style={{ borderColor: theme.border }}>
-        <div className="border-b px-4 py-3" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
-          <p className="text-sm font-bold" style={{ color: theme.accent }}>{section} Review</p>
-          <p className="mt-1 text-xs text-[#64748b]">문제를 풀면서 바로 참고할 수 있는 리뷰 패널입니다.</p>
-        </div>
+      <div className="space-y-3">
+        {activeTab && (
+          <div className="rounded-[28px] border bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]" style={{ borderColor: theme.border }}>
+            <div className="flex items-start justify-between gap-3 border-b px-4 py-3" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
+              <div>
+                <p className="text-sm font-bold" style={{ color: theme.accent }}>{section} Review</p>
+                <p className="mt-1 text-xs text-[#64748b]">{activeTab === '유형문제' ? '유형문제 훈련으로 연결됩니다.' : `${activeTab} 내용을 확인할 수 있습니다.`}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab(null)}
+                className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#475569] shadow-sm"
+              >
+                닫기
+              </button>
+            </div>
 
-        <div className="max-h-[420px] overflow-y-auto px-4 py-4">
-          {renderActiveTab()}
-        </div>
+            <div className="max-h-[420px] overflow-y-auto px-4 py-4">
+              {renderActiveTab()}
+            </div>
+          </div>
+        )}
 
-        <div className="flex flex-wrap gap-2 border-t px-4 py-3" style={{ borderColor: theme.border }}>
+        <div className="rounded-[28px] border bg-white px-4 py-3 shadow-[0_18px_40px_rgba(15,23,42,0.18)]" style={{ borderColor: theme.border }}>
           {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setActiveTab((current) => current === tab ? null : tab)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${activeTab === tab ? 'text-white' : 'text-[#475569]'}`}
               style={{ backgroundColor: activeTab === tab ? theme.accent : '#f1f5f9' }}
             >
