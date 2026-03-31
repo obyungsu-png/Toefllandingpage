@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SpeakingIntro } from './SpeakingIntro';
 import { SpeakingListenRepeatIntro } from './SpeakingListenRepeatIntro';
 import { SpeakingQ1 } from './SpeakingQ1';
+import { SpeakingQ1Record } from './SpeakingQ1Record';
 import { SpeakingQ2Prep } from './SpeakingQ2Prep';
 import { SpeakingQ2Record } from './SpeakingQ2Record';
 import { SpeakingQ3Prep } from './SpeakingQ3Prep';
@@ -38,7 +39,7 @@ import { TPOQuestion, TPOTest } from './ContentManagement';
 
 export type SpeakingScreen =
   | 'intro' | 'listen-repeat-intro'
-  | 'q1'
+  | 'q1' | 'q1-record'
   | 'q2-prep' | 'q2-record'
   | 'q3-prep' | 'q3-record'
   | 'q4-prep' | 'q4-record'
@@ -54,7 +55,7 @@ export type SpeakingScreen =
 
 const SPEAKING_SCREEN_ORDER: SpeakingScreen[] = [
   'intro', 'listen-repeat-intro',
-  'q1',
+  'q1', 'q1-record',
   'q2-prep', 'q2-record',
   'q3-prep', 'q3-record',
   'q4-prep', 'q4-record',
@@ -171,6 +172,7 @@ export function SpeakingSectionWrapper({
         <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} {...volumeProps} />
       )}
       {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} />}
+      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} />}
       {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(1)} />}
       {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(1)} />}
       {screen === 'q3-prep' && <SpeakingQ3Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(2)} />}

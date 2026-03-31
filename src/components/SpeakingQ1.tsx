@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { SpeakingStopOverlay } from './SpeakingStopOverlay';
-import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ1Props {
   onNext?: () => void;
@@ -15,14 +13,9 @@ interface SpeakingQ1Props {
 export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [showStopOverlay, setShowStopOverlay] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(8);
-  const hasStartedRecording = useRef(false);
 
   useEffect(() => {
     const textToRead = "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
-    let fallbackStartTimer: ReturnType<typeof setTimeout> | null = null;
 
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
@@ -65,18 +58,14 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
       if (voices.length > 0) {
         setVoice();
       }
-
       window.speechSynthesis.onvoiceschanged = setVoice;
-      utterance.onstart = () => setIsAudioPlaying(true);
 
+      utterance.onstart = () => setIsAudioPlaying(true);
       utterance.onend = () => {
         setIsAudioPlaying(false);
-        if (!hasStartedRecording.current) {
-          fallbackStartTimer = setTimeout(() => {
-            hasStartedRecording.current = true;
-            setIsRecording(true);
-          }, 1500);
-        }
+        setTimeout(() => {
+          onNext?.();
+        }, 500);
       };
 
       setTimeout(() => {
@@ -84,49 +73,19 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
       }, 500);
 
       return () => {
-        if (fallbackStartTimer) {
-          clearTimeout(fallbackStartTimer);
-        }
         window.speechSynthesis.cancel();
       };
     }
 
+    // Fallback: auto-advance after estimated reading time
     setIsAudioPlaying(true);
-    fallbackStartTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsAudioPlaying(false);
-      hasStartedRecording.current = true;
-      setIsRecording(true);
+      onNext?.();
     }, 4500);
 
-    return () => {
-      if (fallbackStartTimer) {
-        clearTimeout(fallbackStartTimer);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isRecording || timeRemaining <= 0) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsRecording(false);
-          setShowStopOverlay(true);
-          setTimeout(() => {
-            onNext?.();
-          }, 1500);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isRecording, timeRemaining, onNext]);
+    return () => clearTimeout(timer);
+  }, [onNext]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -174,9 +133,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
             <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
               Speaking
             </div>
-            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 1 of 11
-            </div>
           </div>
         </div>
       </div>
@@ -206,15 +162,12 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
                 <span className="text-xl font-semibold">Playing audio...</span>
               </div>
             )}
-
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
           </div>
         </div>
       </div>
 
       {/* Volume Control Dropdown */}
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
-      <SpeakingStopOverlay isOpen={showStopOverlay} />
       <MobileQuestionNav onNext={onNext} onHome={onHome} />
     </div>
   );

@@ -39,6 +39,7 @@ export function WritingBuildSentenceBase({
   const [timeRemaining, setTimeRemaining] = useState<number>(420);
   const [showTime, setShowTime] = useState<boolean>(true);
   const [draggedWord, setDraggedWord] = useState<string | null>(null);
+  const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setSentenceSlots(Array(slotCount).fill(null));
@@ -83,17 +84,6 @@ export function WritingBuildSentenceBase({
 
   const canUseWord = (word: string) => getUsedCount(word) < sourceWords.filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
 
-  const handleWordClick = (word: string) => {
-    const emptyIndex = sentenceSlots.findIndex(slot => slot === null);
-    if (emptyIndex === -1 || !canUseWord(word)) {
-      return;
-    }
-
-    const newSlots = [...sentenceSlots];
-    newSlots[emptyIndex] = emptyIndex === 0 ? capitalizeFirst(word) : word;
-    setSentenceSlots(newSlots);
-  };
-
   const handleSlotClick = (index: number) => {
     if (!sentenceSlots[index]) {
       return;
@@ -117,25 +107,39 @@ export function WritingBuildSentenceBase({
       return;
     }
     setDraggedWord(word);
+    setDragOverSlotIndex(null);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', word);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+
+    if (sentenceSlots[index] === null) {
+      setDragOverSlotIndex(index);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    if (!draggedWord || sentenceSlots[index] !== null || !canUseWord(draggedWord)) {
+    setDragOverSlotIndex(null);
+
+    const droppedWord = draggedWord || e.dataTransfer.getData('text/plain');
+    if (!droppedWord || sentenceSlots[index] !== null || !canUseWord(droppedWord)) {
       setDraggedWord(null);
       return;
     }
 
     const newSlots = [...sentenceSlots];
-    newSlots[index] = index === 0 ? capitalizeFirst(draggedWord) : draggedWord;
+    newSlots[index] = index === 0 ? capitalizeFirst(droppedWord) : droppedWord;
     setSentenceSlots(newSlots);
     setDraggedWord(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedWord(null);
+    setDragOverSlotIndex(null);
   };
 
   return (
@@ -252,26 +256,31 @@ export function WritingBuildSentenceBase({
               </div>
 
               <div className="flex-1 overflow-x-auto">
-                <div className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-wrap items-end gap-2 md:gap-3">
                   {sentenceSlots.map((word, index) => (
                     <div
                       key={index}
                       onClick={() => word ? handleSlotClick(index) : undefined}
-                      onDragOver={handleDragOver}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={() => {
+                        if (dragOverSlotIndex === index) {
+                          setDragOverSlotIndex(null);
+                        }
+                      }}
                       onDrop={(e) => handleDrop(e, index)}
-                      className={`relative inline-flex flex-col ${word ? 'cursor-pointer' : ''}`}
+                      className={`relative inline-flex flex-col transition-colors ${word ? 'cursor-pointer' : ''}`}
                       style={{
                         minWidth: getSlotWidth(word),
                         width: word ? 'auto' : getSlotWidth(word),
                         paddingBottom: '4px'
                       }}
                     >
-                      <div className="px-2 py-1 text-center">
-                        <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-gray-800 whitespace-nowrap">
+                      <div className={`rounded-sm px-2 py-1 text-center ${dragOverSlotIndex === index && !word ? 'bg-[#eef4f3]' : ''}`}>
+                        <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">
                           {word || ''}
                         </span>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-800"></div>
+                      <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === index && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
                     </div>
                   ))}
                   <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">.</span>
@@ -279,7 +288,7 @@ export function WritingBuildSentenceBase({
               </div>
             </div>
 
-            <div className="mt-8 md:mt-16 flex flex-wrap gap-3 md:gap-4 justify-center">
+            <div className="mt-8 md:mt-16 flex flex-wrap gap-2 md:gap-3 justify-center">
               {sourceWords.map((word, index) => {
                 const usedCount = getUsedCount(word);
                 const isSelected = getOccurrenceIndex(index) <= usedCount;
@@ -289,11 +298,11 @@ export function WritingBuildSentenceBase({
                     key={`${word}-${index}`}
                     draggable={!isSelected}
                     onDragStart={(e) => handleDragStart(e, word)}
-                    onClick={() => handleWordClick(word)}
-                    className={`px-4 py-2 md:px-6 md:py-3 transition-colors ${
+                    onDragEnd={handleDragEnd}
+                    className={`border px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
                       isSelected
-                        ? 'bg-gray-200 text-gray-500 rounded-md cursor-default'
-                        : 'bg-transparent hover:bg-gray-100 cursor-grab active:cursor-grabbing'
+                        ? 'border-[#d7ddd8] bg-[#ecefe9] text-[#8a8f87] cursor-default'
+                        : 'border-[#e7e0d3] bg-[#f5f2ea] text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#efe9dd]'
                     }`}
                   >
                     <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
