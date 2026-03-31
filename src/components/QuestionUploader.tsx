@@ -51,7 +51,9 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
     imageUrl: '',
     duration: 0,
     difficulty: '보통' as '쉬움' | '보통' | '어려움',
-    blanks: [] as Array<{ answer: string; maxLength: number }>
+    blanks: [] as Array<{ answer: string; maxLength: number }>,
+    avatar1ImageUrl: '',
+    avatar2ImageUrl: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,7 +70,9 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
       passageText: formData.passageText || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
-      blanks: formData.blanks
+      blanks: formData.blanks,
+      avatar1ImageUrl: formData.avatar1ImageUrl || undefined,
+      avatar2ImageUrl: formData.avatar2ImageUrl || undefined
     };
 
     // Handle URL inputs or file uploads (URL takes priority)
@@ -342,6 +346,49 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
           </div>
         )}
 
+        {/* Avatar Image URLs (for Writing Build Sentence questions) */}
+        {section === 'Writing' && (
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h4 className="text-sm font-semibold text-gray-700">Avatar Images (Build a Sentence)</h4>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Question Person Avatar (Image URL)</label>
+              <input
+                type="url"
+                value={formData.avatar1ImageUrl}
+                onChange={(e) => setFormData({ ...formData, avatar1ImageUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="https://example.com/avatar1.jpg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Person Avatar (Image URL)</label>
+              <input
+                type="url"
+                value={formData.avatar2ImageUrl}
+                onChange={(e) => setFormData({ ...formData, avatar2ImageUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="https://example.com/avatar2.jpg"
+              />
+            </div>
+            {(formData.avatar1ImageUrl || formData.avatar2ImageUrl) && (
+              <div className="flex gap-4 mt-2">
+                {formData.avatar1ImageUrl && (
+                  <div className="text-center">
+                    <img src={formData.avatar1ImageUrl} alt="Avatar 1" className="w-16 h-16 rounded-full object-cover border-2 border-[#1e6b73] mx-auto" />
+                    <span className="text-xs text-gray-500 mt-1">Question</span>
+                  </div>
+                )}
+                {formData.avatar2ImageUrl && (
+                  <div className="text-center">
+                    <img src={formData.avatar2ImageUrl} alt="Avatar 2" className="w-16 h-16 rounded-full object-cover border-2 border-[#1e6b73] mx-auto" />
+                    <span className="text-xs text-gray-500 mt-1">Answer</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Explanation */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
@@ -417,7 +464,9 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
     imageUrl: question.imageUrl || '',
     duration: question.duration || 0,
     difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
-    blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>
+    blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
+    avatar1ImageUrl: question.avatar1ImageUrl || '',
+    avatar2ImageUrl: question.avatar2ImageUrl || ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -434,7 +483,9 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
       passageText: formData.passageText || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
-      blanks: formData.blanks
+      blanks: formData.blanks,
+      avatar1ImageUrl: formData.avatar1ImageUrl || undefined,
+      avatar2ImageUrl: formData.avatar2ImageUrl || undefined
     };
 
     // Handle URL inputs or file uploads (URL takes priority)
@@ -712,6 +763,49 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               placeholder="e.g., 45, 60, 300"
             />
+          </div>
+        )}
+
+        {/* Avatar Image URLs (for Writing Build Sentence questions) */}
+        {section === 'Writing' && (
+          <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <h4 className="text-sm font-semibold text-gray-700">Avatar Images (Build a Sentence)</h4>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Question Person Avatar (Image URL)</label>
+              <input
+                type="url"
+                value={formData.avatar1ImageUrl}
+                onChange={(e) => setFormData({ ...formData, avatar1ImageUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="https://example.com/avatar1.jpg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Person Avatar (Image URL)</label>
+              <input
+                type="url"
+                value={formData.avatar2ImageUrl}
+                onChange={(e) => setFormData({ ...formData, avatar2ImageUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="https://example.com/avatar2.jpg"
+              />
+            </div>
+            {(formData.avatar1ImageUrl || formData.avatar2ImageUrl) && (
+              <div className="flex gap-4 mt-2">
+                {formData.avatar1ImageUrl && (
+                  <div className="text-center">
+                    <img src={formData.avatar1ImageUrl} alt="Avatar 1" className="w-16 h-16 rounded-full object-cover border-2 border-[#1e6b73] mx-auto" />
+                    <span className="text-xs text-gray-500 mt-1">Question</span>
+                  </div>
+                )}
+                {formData.avatar2ImageUrl && (
+                  <div className="text-center">
+                    <img src={formData.avatar2ImageUrl} alt="Avatar 2" className="w-16 h-16 rounded-full object-cover border-2 border-[#1e6b73] mx-auto" />
+                    <span className="text-xs text-gray-500 mt-1">Answer</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

@@ -13,7 +13,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
   const [wordCount, setWordCount] = useState(0);
   const [hideWordCount, setHideWordCount] = useState(false);
   const [hideTime, setHideTime] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(420); // 7 minutes in seconds
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showPassage, setShowPassage] = useState(true);
