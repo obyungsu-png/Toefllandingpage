@@ -192,7 +192,7 @@ export function WritingBuildSentenceQ1({
 
             {/* Man avatar and sentence building area */}
             <div className="flex items-end gap-4 md:gap-6">
-              <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
                 {avatar2ImageUrl ? (
                   <ImageWithFallback
                     src={avatar2ImageUrl}
@@ -209,7 +209,7 @@ export function WritingBuildSentenceQ1({
               </div>
               
               {/* Sentence construction area - each slot has its own underline */}
-              <div className="flex-1 overflow-x-auto pb-2">
+              <div className="flex-1 overflow-x-auto">
                 <div className="flex flex-wrap items-end gap-2">
                   {sentenceSlots.map((word, index) => (
                     <div
@@ -219,7 +219,7 @@ export function WritingBuildSentenceQ1({
                       style={{ 
                         minWidth: getSlotWidth(word), 
                         width: word ? 'auto' : getSlotWidth(word),
-                        paddingBottom: '8px'
+                        paddingBottom: '4px'
                       }}
                     >
                       {/* Word content */}
