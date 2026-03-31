@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { SpeakingStopOverlay } from './SpeakingStopOverlay';
+import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ1Props {
   onNext?: () => void;
@@ -12,24 +14,25 @@ interface SpeakingQ1Props {
 
 export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [showStopOverlay, setShowStopOverlay] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(8);
+  const hasStartedRecording = useRef(false);
 
   useEffect(() => {
-    // Text to read with British female voice
     const textToRead = "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
+    let fallbackStartTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Use Web Speech API to read the text
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
-      utterance.lang = 'en-GB'; // British English
+      utterance.lang = 'en-GB';
 
-      // Function to find and set the best British female voice
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        
-        // Priority list of British female voices
         const preferredVoices = [
           'Google UK English Female',
           'Microsoft Susan - English (United Kingdom)',
@@ -37,68 +40,93 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
           'Serena',
           'Stephanie'
         ];
-        
-        // Try to find a preferred voice
+
         let selectedVoice = voices.find(voice => 
           preferredVoices.some(preferred => voice.name.includes(preferred))
         );
-        
-        // If no preferred voice found, try any British female voice
+
         if (!selectedVoice) {
           selectedVoice = voices.find(voice => 
             voice.lang.includes('en-GB') && 
             (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
           );
         }
-        
-        // If still no voice found, use any British voice
+
         if (!selectedVoice) {
           selectedVoice = voices.find(voice => voice.lang.includes('en-GB'));
         }
-        
+
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
       };
 
-      // Set voice immediately if available
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
         setVoice();
       }
 
-      // Also set voice when voices are loaded (for some browsers)
       window.speechSynthesis.onvoiceschanged = setVoice;
+      utterance.onstart = () => setIsAudioPlaying(true);
 
-      // When speech ends, automatically move to next screen
       utterance.onend = () => {
-        if (onNext) {
-          setTimeout(() => {
-            onNext();
-          }, 500);
+        setIsAudioPlaying(false);
+        if (!hasStartedRecording.current) {
+          fallbackStartTimer = setTimeout(() => {
+            hasStartedRecording.current = true;
+            setIsRecording(true);
+          }, 1500);
         }
       };
 
-      // Start speaking after a short delay
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 500);
 
-      // Cleanup function
       return () => {
+        if (fallbackStartTimer) {
+          clearTimeout(fallbackStartTimer);
+        }
         window.speechSynthesis.cancel();
       };
-    } else {
-      // Fallback: auto advance after 5 seconds if speech synthesis is not available
-      if (onNext) {
-        const timer = setTimeout(() => {
-          onNext();
-        }, 5000);
-        
-        return () => clearTimeout(timer);
-      }
     }
-  }, [onNext]);
+
+    setIsAudioPlaying(true);
+    fallbackStartTimer = setTimeout(() => {
+      setIsAudioPlaying(false);
+      hasStartedRecording.current = true;
+      setIsRecording(true);
+    }, 4500);
+
+    return () => {
+      if (fallbackStartTimer) {
+        clearTimeout(fallbackStartTimer);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isRecording || timeRemaining <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsRecording(false);
+          setShowStopOverlay(true);
+          setTimeout(() => {
+            onNext?.();
+          }, 1500);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isRecording, timeRemaining, onNext]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -168,11 +196,25 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
               className="border-2 border-gray-400 w-96 h-96 object-cover"
             />
           </div>
+
+          <div className="mt-10 flex flex-col items-center gap-5">
+            {isAudioPlaying && (
+              <div className="flex items-center gap-3 text-[#148b8f]">
+                <svg className="h-8 w-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                </svg>
+                <span className="text-xl font-semibold">Playing audio...</span>
+              </div>
+            )}
+
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
+          </div>
         </div>
       </div>
 
       {/* Volume Control Dropdown */}
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
+      <SpeakingStopOverlay isOpen={showStopOverlay} />
       <MobileQuestionNav onNext={onNext} onHome={onHome} />
     </div>
   );
