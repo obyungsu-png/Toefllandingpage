@@ -1343,9 +1343,9 @@ function AppContent() {
   let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string } | null = null;
 
   if (isReviewMode) {
-    const isReadingVisible = showReadingIntro || showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showEndModule1 || showModule1Intro || showModule1Details || showModule2 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20 || showEndModule2;
+    const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
 
-    if (isReadingVisible) {
+    if (isReadingQuestionVisible) {
       activeReviewPanel = {
         section: 'Reading',
         variant: 'reading',
@@ -1353,27 +1353,36 @@ function AppContent() {
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
       const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
-      activeReviewPanel = {
-        section: 'Listening',
-        variant: 'listening',
-        contentKey: `listening-${screen}`,
-      };
+      if (screen.startsWith('q')) {
+        activeReviewPanel = {
+          section: 'Listening',
+          variant: 'listening',
+          contentKey: `listening-${screen}`,
+        };
+      }
     } else if (activeWritingScreen) {
       const screen = currentWritingReviewScreen || activeWritingScreen;
-      const variant: ReviewVariant = screen === 'intro' || screen === 'build-sentence-intro' || screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
-      activeReviewPanel = {
-        section: 'Writing',
-        variant,
-        contentKey: `writing-${screen}`,
-      };
+      const isWritingQuestionScreen = screen.startsWith('bs-q') || screen === 'email-q1' || screen === 'academic-q2';
+      if (isWritingQuestionScreen) {
+        const variant: ReviewVariant = screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
+        activeReviewPanel = {
+          section: 'Writing',
+          variant,
+          contentKey: `writing-${screen}`,
+        };
+      }
     } else if (activeSpeakingScreen) {
       const screen = currentSpeakingReviewScreen || activeSpeakingScreen;
-      const variant: ReviewVariant = screen === 'intro' || screen === 'listen-repeat-intro' || screen === 'q1' || screen === 'q1-record' ? 'speaking-repeat' : 'speaking-interview';
-      activeReviewPanel = {
-        section: 'Speaking',
-        variant,
-        contentKey: `speaking-${screen}`,
-      };
+      if (screen.startsWith('q')) {
+        const variant: ReviewVariant = screen === 'q1' || screen === 'q1-record' || screen === 'q2-prep' || screen === 'q2-record' || screen === 'q3-prep' || screen === 'q3-record' || screen === 'q4-prep' || screen === 'q4-record' || screen === 'q5-prep' || screen === 'q5-record' || screen === 'q6-prep' || screen === 'q6-record' || screen === 'q7-prep' || screen === 'q7-record'
+          ? 'speaking-repeat'
+          : 'speaking-interview';
+        activeReviewPanel = {
+          section: 'Speaking',
+          variant,
+          contentKey: `speaking-${screen}`,
+        };
+      }
     }
   }
 
