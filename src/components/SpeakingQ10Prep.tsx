@@ -1,52 +1,32 @@
 import { useState, useEffect } from 'react';
 import interviewerImage from 'figma:asset/a46daf78e44986fc846d20ebe5f22f157d44e0b9.png';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ10PrepProps {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick?: () => void;
+  isVolumeOpen?: boolean;
+  volumeButtonRef?: React.RefObject<HTMLButtonElement>;
+  imageUrl?: string;
 }
 
-export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick }: SpeakingQ10PrepProps) {
+export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ10PrepProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [prepTime, setPrepTime] = useState(4);
-  const [showPrepTimer, setShowPrepTimer] = useState(false);
   
   useEffect(() => {
-    // Simulate video playback for 3 seconds
     const videoTimer = setTimeout(() => {
       setIsVideoPlaying(true);
-      
-      // After video finishes, show prep timer
-      const prepStartTimer = setTimeout(() => {
-        setShowPrepTimer(true);
+
+      const nextTimer = setTimeout(() => {
+        onNext();
       }, 3000);
-      
-      return () => clearTimeout(prepStartTimer);
+
+      return () => clearTimeout(nextTimer);
     }, 1000);
     
     return () => clearTimeout(videoTimer);
-  }, []);
-
-  useEffect(() => {
-    if (showPrepTimer && prepTime > 0) {
-      const timer = setInterval(() => {
-        setPrepTime(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            // Auto advance to recording screen
-            setTimeout(() => {
-              onNext();
-            }, 500);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [showPrepTimer, prepTime, onNext]);
+  }, [onNext]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -64,11 +44,18 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick }: SpeakingQ10Pr
         <div className="flex items-center gap-3">
           {onVolumeClick && (
             <button 
-              className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+              ref={volumeButtonRef}
+              className={`flex items-center gap-3 rounded-lg px-5 py-2 border transition-colors ${
+                isVolumeOpen
+                  ? 'bg-white border-[#0A6068]'
+                  : 'bg-[#0A6068] border-white hover:bg-[#084d52]'
+              }`}
               onClick={onVolumeClick}
             >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
+              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${isVolumeOpen ? 'text-[#0A6068]' : 'text-white'}`}>
+                Volume
+              </span>
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
               </svg>
             </button>
@@ -99,12 +86,12 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick }: SpeakingQ10Pr
         {/* Interviewer Video */}
         <div className="flex justify-center mb-12">
           <div className="relative">
-            <img 
-              src={interviewerImage} 
-              alt="Interviewer" 
+            <ImageWithFallback
+              src={imageUrl || interviewerImage}
+              alt="Interviewer"
               className="border-4 border-gray-400 max-w-md"
             />
-            {isVideoPlaying && !showPrepTimer && (
+            {isVideoPlaying && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-black/50 rounded-full p-4">
                   <svg className="w-12 h-12 text-white animate-pulse" viewBox="0 0 24 24" fill="currentColor">
@@ -115,16 +102,8 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick }: SpeakingQ10Pr
             )}
           </div>
         </div>
-        
-        {/* Prep Timer */}
-        {showPrepTimer && (
-          <div className="text-center">
-            <div className="text-xl text-gray-700 mb-2">Preparation Time</div>
-            <div className="text-4xl font-bold text-[#1e6b73]">
-              00:00:0{prepTime}
-            </div>
-          </div>
-        )}
+
+        {isVideoPlaying && <div className="text-xl font-semibold text-[#1e6b73]">Playing audio...</div>}
       </div>
     </div>
   );

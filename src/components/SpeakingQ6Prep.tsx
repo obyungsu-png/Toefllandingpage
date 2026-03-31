@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/624a6b7dc8cfb75f631c120b5cf434ca61f8cecd.png';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ6PrepProps {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick?: () => void;
+  isVolumeOpen?: boolean;
+  volumeButtonRef?: React.RefObject<HTMLButtonElement>;
+  imageUrl?: string;
 }
 
-export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick }: SpeakingQ6PrepProps) {
+export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ6PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
@@ -42,11 +46,18 @@ export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick }: SpeakingQ6Prep
         <div className="flex items-center gap-3">
           {onVolumeClick && (
             <button 
-              className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+              ref={volumeButtonRef}
+              className={`flex items-center gap-3 rounded-3xl px-6 py-2 border-4 transition-colors ${
+                isVolumeOpen
+                  ? 'bg-white border-[#1e6b73]'
+                  : 'bg-[#0A6068] border-[#0A6068] hover:bg-[#084d52]'
+              }`}
               onClick={onVolumeClick}
             >
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
+              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${isVolumeOpen ? 'text-[#1e6b73]' : 'text-white'}`}>
+                Volume
+              </span>
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill={isVolumeOpen ? '#1e6b73' : 'white'}>
                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
               </svg>
             </button>
@@ -79,9 +90,9 @@ export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick }: SpeakingQ6Prep
         
         {/* Image - Square */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
-            alt="Speaking scene" 
+          <ImageWithFallback
+            src={imageUrl || speakingImage}
+            alt="Speaking scene"
             className="border-2 border-black w-96 h-96 object-cover"
           />
         </div>

@@ -6518,6 +6518,8 @@ function AppContent() {
       {activeSpeakingScreen && (
         <SpeakingSectionWrapper
           initialScreen={activeSpeakingScreen}
+          questions={getCurrentSectionData('Speaking')?.questions || []}
+          testData={getCurrentTestData()}
           onHome={() => {
             setActiveSpeakingScreen(null);
           }}

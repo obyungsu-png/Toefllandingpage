@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/2a387faeacd632f6736d88d2369b0263c8a292d4.png';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ5PrepProps {
   onNext: () => void;
@@ -7,9 +8,10 @@ interface SpeakingQ5PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
+  imageUrl?: string;
 }
 
-export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef }: SpeakingQ5PrepProps) {
+export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ5PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
@@ -88,9 +90,9 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         
         {/* Image - Square */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
-            alt="Speaking scene" 
+          <ImageWithFallback
+            src={imageUrl || speakingImage}
+            alt="Speaking scene"
             className="border-2 border-black w-96 h-96 object-cover"
           />
         </div>

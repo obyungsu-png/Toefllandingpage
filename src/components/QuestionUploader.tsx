@@ -27,6 +27,8 @@ export interface TPOQuestion {
   passageImageUrl?: string;
   passageTitle?: string;
   questionGroupId?: string;
+  translationNote?: string;
+  vocabularyNote?: string;
 }
 
 const GROUPED_LISTENING_TYPES = ['Short Conversation', 'Announcements', 'Academic Talk', 'Campus Conversation', 'Academic Lecture'];
@@ -63,6 +65,8 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
     options: ['', '', '', ''],
     correctAnswer: '',
     explanation: '',
+    translationNote: '',
+    vocabularyNote: '',
     passageText: '',
     audioFile: null as File | null,
     audioUrl: '',
@@ -133,6 +137,8 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
+      translationNote: formData.translationNote || undefined,
+      vocabularyNote: formData.vocabularyNote || undefined,
       passageText: formData.passageText || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
@@ -643,6 +649,31 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         </div>
         )}
 
+        {!isGrouped && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Translation / Interpretation</label>
+            <textarea
+              value={formData.translationNote}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="Korean translation or interpretation for annotated PDF..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vocabulary Notes</label>
+            <textarea
+              value={formData.vocabularyNote}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="Important words, meanings, and notes for annotated PDF..."
+            />
+          </div>
+        </div>
+        )}
+
         {/* Difficulty Level */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
@@ -697,6 +728,8 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
     options: question.options || ['', '', '', ''],
     correctAnswer: question.correctAnswer || '',
     explanation: question.explanation || '',
+    translationNote: question.translationNote || '',
+    vocabularyNote: question.vocabularyNote || '',
     passageText: question.passageText || '',
     audioFile: null as File | null,
     audioUrl: question.audioUrl || '',
@@ -728,6 +761,8 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
+      translationNote: formData.translationNote || undefined,
+      vocabularyNote: formData.vocabularyNote || undefined,
       passageText: formData.passageText || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
@@ -1130,6 +1165,31 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             rows={3}
             placeholder="Explain the correct answer..."
           />
+        </div>
+        )}
+
+        {!isGrouped && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Translation / Interpretation</label>
+            <textarea
+              value={formData.translationNote}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="Korean translation or interpretation for annotated PDF..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vocabulary Notes</label>
+            <textarea
+              value={formData.vocabularyNote}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="Important words, meanings, and notes for annotated PDF..."
+            />
+          </div>
         </div>
         )}
 

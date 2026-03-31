@@ -37,6 +37,8 @@ export interface TPOQuestion {
   passageImageUrl?: string;
   passageTitle?: string;
   questionGroupId?: string;
+  translationNote?: string;
+  vocabularyNote?: string;
 }
 
 export interface TPOSection {

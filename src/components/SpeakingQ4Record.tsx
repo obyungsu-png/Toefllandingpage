@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/8b35efa9f817161ac6e1896bb66d8010374d8d93.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 
 interface SpeakingQ4RecordProps {
   onNext: () => void;
   onHome: () => void;
+  imageUrl?: string;
 }
 
-export function SpeakingQ4Record({ onNext, onHome }: SpeakingQ4RecordProps) {
+export function SpeakingQ4Record({ onNext, onHome, imageUrl }: SpeakingQ4RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
-  const [timeRemaining, setTimeRemaining] = useState(10);
+  const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
+  const [showStopOverlay, setShowStopOverlay] = useState(false);
 
   useEffect(() => {
     // Start recording after 1 second
@@ -27,10 +31,11 @@ export function SpeakingQ4Record({ onNext, onHome }: SpeakingQ4RecordProps) {
         setTimeRemaining(prev => {
           if (prev <= 1) {
             clearInterval(timer);
-            // Auto advance to next question when time is up
+            setIsRecording(false);
+            setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
-            }, 500);
+            }, 1500);
             return 0;
           }
           return prev - 1;
@@ -42,9 +47,8 @@ export function SpeakingQ4Record({ onNext, onHome }: SpeakingQ4RecordProps) {
   }, [isRecording, timeRemaining, onNext]);
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `00:00:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -99,9 +103,9 @@ export function SpeakingQ4Record({ onNext, onHome }: SpeakingQ4RecordProps) {
         
         {/* Image */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
-            alt="Speaking scene" 
+          <ImageWithFallback
+            src={imageUrl || speakingImage}
+            alt="Speaking scene"
             className="border-2 border-black w-96 h-96 object-cover"
           />
         </div>
@@ -126,7 +130,8 @@ export function SpeakingQ4Record({ onNext, onHome }: SpeakingQ4RecordProps) {
           </div>
         </div>
       </div>
-      <VolumeControl isOpen={isOpen} onClose={closeVolume} />
+      <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
+      <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>
   );
 }

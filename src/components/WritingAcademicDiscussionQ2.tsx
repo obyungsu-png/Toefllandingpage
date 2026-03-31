@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { MobileFooter } from './MobileFooter';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+
+const fixedDiscussionPhoto = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face';
 
 interface WritingAcademicDiscussionQ2Props {
   onBack: () => void;
@@ -161,41 +164,39 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
           isMobile ? (activeTab === 'passage' ? 'block' : 'hidden') : 'block'
         }`}>
           <div className="space-y-4 md:space-y-6">
-            <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+            <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
               Your professor is teaching a class on social studies. Write a post responding to the professor's question.
             </p>
 
             <div>
-              <p className="text-sm md:text-base text-gray-900 mb-2 md:mb-3">
+              <p className="text-[15px] md:text-[17px] text-gray-900 mb-2 md:mb-3 font-semibold font-['Georgia',_serif]">
                 In your response, you should do the following.
               </p>
               <ul className="space-y-1 md:space-y-2 ml-4 md:ml-6">
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-sm md:text-base text-gray-800">Express and support your opinion.</span>
+                  <span className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">Express and support your opinion.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-sm md:text-base text-gray-800">Make a contribution to the discussion in your own words.</span>
+                  <span className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">Make a contribution to the discussion in your own words.</span>
                 </li>
               </ul>
             </div>
 
-            <p className="text-sm md:text-base text-gray-800">
+            <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
               An effective response will contain at least 100 words.
             </p>
 
             {/* Professor's detailed discussion */}
             <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-300">
               <div className="flex flex-col items-center mb-4 md:mb-6">
-                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 md:mb-3">
-                  <svg className="w-12 h-12 md:w-20 md:h-20 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
+                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 md:mb-3 border-4 border-[#1e6b73] shadow-sm">
+                  <ImageWithFallback src={fixedDiscussionPhoto} alt="Professor" className="w-full h-full object-cover" />
                 </div>
-                <p className="font-bold text-sm md:text-base text-gray-900">Dr. Achebe</p>
+                <p className="font-bold text-base md:text-lg text-gray-900 font-['Georgia',_serif]">Dr. Achebe</p>
               </div>
-              <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+              <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
                 Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?
               </p>
             </div>
@@ -203,33 +204,29 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
         </div>
 
         {/* Right side - Students' responses and writing area */}
-        <div className={`md:w-2/3 p-4 md:p-8 overflow-auto bg-gray-50 ${
+        <div className={`md:w-2/3 p-4 md:p-8 overflow-auto bg-[#f8f7f3] ${
           isMobile ? (activeTab === 'response' ? 'block' : 'hidden') : 'block'
         }`}>
           <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
             {/* Student 1 */}
-            <div className="flex items-start gap-3 md:gap-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <svg className="w-7 h-7 md:w-10 md:h-10 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
+            <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                <ImageWithFallback src={fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
-                <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+                <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
                   Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.
                 </p>
               </div>
             </div>
 
             {/* Student 2 */}
-            <div className="flex items-start gap-3 md:gap-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <svg className="w-7 h-7 md:w-10 md:h-10 text-yellow-700" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
+            <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                <ImageWithFallback src={fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
-                <p className="text-sm md:text-base text-gray-800 leading-relaxed">
+                <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
                   I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.
                 </p>
               </div>
@@ -237,8 +234,8 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
           </div>
 
           {/* Your Response section */}
-          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-3 md:mb-4">Your Response:</h3>
+          <div className="bg-white rounded-[24px] p-5 md:p-7 shadow-sm border border-[#ddd4c4]">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-3 md:mb-4 font-['Georgia',_serif]">Your Response:</h3>
 
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-300">
@@ -264,7 +261,7 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
                 <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                 </svg>
-                <span className="text-sm font-['Inter',_sans-serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
+                <span className="text-sm font-['Georgia',_serif] font-semibold">{hideWordCount ? 'Show' : 'Hide'} Word Count</span>
                 {!hideWordCount && <span className="ml-2 text-gray-700 text-sm">{wordCount}</span>}
               </button>
             </div>
@@ -273,7 +270,7 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
             <textarea
               value={response}
               onChange={(e) => setResponse(e.target.value)}
-              className="w-full h-48 md:h-72 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
+              className="w-full h-64 md:h-[30rem] p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Write your response here..."
             />
           </div>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/624a6b7dc8cfb75f631c120b5cf434ca61f8cecd.png';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 
 interface SpeakingQ6RecordProps {
   onNext: () => void;
@@ -7,11 +9,13 @@ interface SpeakingQ6RecordProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
+  imageUrl?: string;
 }
 
-export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef }: SpeakingQ6RecordProps) {
-  const [timeRemaining, setTimeRemaining] = useState(10);
+export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ6RecordProps) {
+  const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
+  const [showStopOverlay, setShowStopOverlay] = useState(false);
 
   useEffect(() => {
     // Start recording after 1 second
@@ -28,10 +32,11 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         setTimeRemaining(prev => {
           if (prev <= 1) {
             clearInterval(timer);
-            // Auto advance to next question when time is up
+            setIsRecording(false);
+            setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
-            }, 500);
+            }, 1500);
             return 0;
           }
           return prev - 1;
@@ -43,9 +48,8 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   }, [isRecording, timeRemaining, onNext]);
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `00:00:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -102,9 +106,9 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         
         {/* Image */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
-            alt="Speaking scene" 
+          <ImageWithFallback
+            src={imageUrl || speakingImage}
+            alt="Speaking scene"
             className="border-2 border-black w-96 h-96 object-cover"
           />
         </div>
@@ -129,6 +133,7 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           </div>
         </div>
       </div>
+      <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>
   );
 }
