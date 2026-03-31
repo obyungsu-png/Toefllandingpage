@@ -48,7 +48,7 @@ type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOE
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
 type TPORange = 'TPO 1-5';
 type TestSetRange = '1-5';
-type TestBankType = 'tpo' | 'real';
+type TestBankType = 'tpo' | 'test' | 'training';
 
 function AppContent() {
   // React Router hooks
@@ -258,6 +258,7 @@ function AppContent() {
   const [lmsContents, setLmsContents] = useState<LMSContent[]>([]);
   const [tpoTests, setTpoTests] = useState<TPOTest[]>([]);
   const [testTests, setTestTests] = useState<TPOTest[]>([]); // Separate state for Test page
+  const [trainingTests, setTrainingTests] = useState<TPOTest[]>([]);
   const [reports, setReports] = useState<TestResult[]>([]); // Reports state
   
   // Question Types & Training Config State (persisted to Supabase)
@@ -607,6 +608,7 @@ function AppContent() {
         // Batch 1b: Second pair (staggered to reduce load)
         const batch1b = await Promise.allSettled([
           fetchJson('test-tests'),
+          fetchJson('training-tests'),
           fetchJson('advertisements'),
         ]);
         const batch1 = [...batch1a, ...batch1b];
@@ -614,7 +616,8 @@ function AppContent() {
         if (batch1[0].status === 'fulfilled') { const d = batch1[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
         if (batch1[1].status === 'fulfilled') { const d = batch1[1].value; if (Array.isArray(d)) { setTpoTests(d); anySuccess = true; console.log('✅ Loaded TPO tests:', d.length); } }
         if (batch1[2].status === 'fulfilled') { const d = batch1[2].value; if (Array.isArray(d)) { setTestTests(d); anySuccess = true; console.log('✅ Loaded Test tests:', d.length); } }
-        if (batch1[3].status === 'fulfilled') { const d = batch1[3].value; if (Array.isArray(d)) { setAdvertisements(d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
+        if (batch1[3].status === 'fulfilled') { const d = batch1[3].value; if (Array.isArray(d)) { setTrainingTests(d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
+        if (batch1[4].status === 'fulfilled') { const d = batch1[4].value; if (Array.isArray(d)) { setAdvertisements(d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
 
         // Batch 2: User data
         const batch2 = await Promise.allSettled([
@@ -738,6 +741,32 @@ function AppContent() {
     
     saveToSupabase();
   }, [testTests, isLoadingData, dataLoadedSuccessfully]);
+
+  // Save Training tests to Supabase whenever they change
+  useEffect(() => {
+    if (isLoadingData || !dataLoadedSuccessfully) return;
+
+    const saveToSupabase = async () => {
+      try {
+        await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-tests`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(trainingTests)
+          }
+        );
+        console.log('💾 Saved Training tests to Supabase');
+      } catch (error) {
+        console.error('❌ Error saving Training tests:', error);
+      }
+    };
+
+    saveToSupabase();
+  }, [trainingTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Reports to Supabase whenever they change
   useEffect(() => {
@@ -870,10 +899,67 @@ function AppContent() {
     setLmsContents(lmsContents.filter(c => c.id !== id));
   };
 
+  const getTestEndpoint = (testType: TPOTest['testType']) => {
+    if (testType === 'TPO') return 'tpo-tests';
+    if (testType === 'Training') return 'training-tests';
+    return 'test-tests';
+  };
+
+  const upsertLocalTestState = (test: TPOTest) => {
+    if (test.testType === 'TPO') {
+      setTpoTests(prev => {
+        const hasExisting = prev.some(existing => existing.id === test.id);
+        return hasExisting ? prev.map(existing => existing.id === test.id ? test : existing) : [...prev, test];
+      });
+      return;
+    }
+
+    if (test.testType === 'Training') {
+      setTrainingTests(prev => {
+        const hasExisting = prev.some(existing => existing.id === test.id);
+        return hasExisting ? prev.map(existing => existing.id === test.id ? test : existing) : [...prev, test];
+      });
+      return;
+    }
+
+    setTestTests(prev => {
+      const hasExisting = prev.some(existing => existing.id === test.id);
+      return hasExisting ? prev.map(existing => existing.id === test.id ? test : existing) : [...prev, test];
+    });
+  };
+
+  const removeLocalTestState = (test: TPOTest) => {
+    if (test.testType === 'TPO') {
+      setTpoTests(prev => prev.filter(existing => existing.id !== test.id));
+      return;
+    }
+
+    if (test.testType === 'Training') {
+      setTrainingTests(prev => prev.filter(existing => existing.id !== test.id));
+      return;
+    }
+
+    setTestTests(prev => prev.filter(existing => existing.id !== test.id));
+  };
+
+  const getCurrentResultType = (): TestResult['type'] => {
+    if (testBankType === 'tpo') return 'TPO';
+    if (testBankType === 'training') return 'Training';
+    return 'Test';
+  };
+
+  const getCurrentTestLabel = () => {
+    const currentType = getCurrentResultType();
+    if (!currentTest?.tpoNumber) {
+      return currentType;
+    }
+    return `${currentType} ${currentTest.tpoNumber}`;
+  };
+
   // TPO Test Handlers
   const handleAddTest = async (test: TPOTest) => {
     try {
-      const endpoint = test.testType === 'Test' ? 'test-tests' : 'tpo-tests';
+      const endpoint = getTestEndpoint(test.testType);
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
         {
@@ -891,11 +977,7 @@ function AppContent() {
       }
       
       // Update local state after successful server save
-      if (test.testType === 'Test') {
-        setTestTests([...testTests, test]);
-      } else {
-        setTpoTests([...tpoTests, test]);
-      }
+      upsertLocalTestState(test);
       
       console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
@@ -906,7 +988,7 @@ function AppContent() {
 
   const handleUpdateTest = async (updatedTest: TPOTest) => {
     try {
-      const endpoint = updatedTest.testType === 'Test' ? 'test-tests' : 'tpo-tests';
+      const endpoint = getTestEndpoint(updatedTest.testType);
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
         {
@@ -924,11 +1006,7 @@ function AppContent() {
       }
       
       // Update local state after successful server save
-      if (updatedTest.testType === 'Test') {
-        setTestTests(testTests.map(t => t.id === updatedTest.id ? updatedTest : t));
-      } else {
-        setTpoTests(tpoTests.map(t => t.id === updatedTest.id ? updatedTest : t));
-      }
+      upsertLocalTestState(updatedTest);
       
       console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
@@ -940,13 +1018,13 @@ function AppContent() {
   const handleDeleteTest = async (id: string) => {
     try {
       // Find the test to determine its type and number
-      const testToDelete = [...tpoTests, ...testTests].find(t => t.id === id);
+      const testToDelete = [...tpoTests, ...testTests, ...trainingTests].find(t => t.id === id);
       if (!testToDelete) {
         console.warn('Test not found for deletion');
         return;
       }
       
-      const endpoint = testToDelete.testType === 'Test' ? 'real-tests' : 'tpo-tests';
+      const endpoint = getTestEndpoint(testToDelete.testType);
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}/${testToDelete.testNumber}`,
         {
@@ -962,8 +1040,7 @@ function AppContent() {
       }
       
       // Update local state after successful server deletion
-      setTpoTests(tpoTests.filter(t => t.id !== id));
-      setTestTests(testTests.filter(t => t.id !== id));
+      removeLocalTestState(testToDelete);
       
       console.log(`✅ Deleted ${testToDelete.testType} ${testToDelete.testNumber} from server`);
     } catch (error) {
@@ -1117,23 +1194,40 @@ function AppContent() {
   const handleAddTestResult = (result: Omit<TestResult, 'id'>) => {
     const newResult: TestResult = {
       id: Date.now().toString(),
+      bankType: result.bankType ?? (result.type === 'TPO' ? 'tpo' : result.type === 'Training' ? 'training' : 'test'),
+      testNumber: result.testNumber ?? currentTest?.tpoNumber,
       ...result
     };
-    setTestResults([newResult, ...testResults]); // Add to beginning for latest first
+    setTestResults(prev => [newResult, ...prev]); // Add to beginning for latest first
   };
 
   // Training Result Handler - saves to both local state and Supabase
   const handleAddTrainingResult = (result: any) => {
+    const normalizedResult: Omit<TestResult, 'id'> = {
+      type: 'Training',
+      category: result.category || result.type || 'Training',
+      testName: result.testName || result.title || 'Training',
+      testNumber: result.testNumber,
+      bankType: 'training',
+      trainingType: result.trainingType,
+      status: result.status || 'completed',
+      date: result.date || result.completedAt || new Date().toISOString(),
+      score: result.score ?? 0,
+      totalQuestions: result.totalQuestions ?? (parseInt(result.questionCount, 10) || 0),
+      correctAnswers: result.correctAnswers ?? 0,
+      wrongAnswers: Array.isArray(result.wrongAnswers) ? result.wrongAnswers : [],
+      timeSpent: result.timeSpent ?? 0,
+    };
     const newResult = {
       id: Date.now().toString(),
-      ...result,
+      ...normalizedResult,
       savedAt: new Date().toISOString(),
       source: 'training'
     };
     setTrainingResults(prev => [newResult, ...prev]);
     saveTrainingResultToSupabase(newResult);
     // Also save to test results for unified history
-    handleAddTestResult(result);
+    handleAddTestResult(normalizedResult);
   };
 
   // Question Types Result Handler - saves to both local state and Supabase
@@ -1169,7 +1263,11 @@ function AppContent() {
   const getCurrentTestData = (): TPOTest | null => {
     if (!currentTest) return null;
     
-    const tests = testBankType === 'tpo' ? tpoTests : testTests;
+    const tests = testBankType === 'tpo'
+      ? tpoTests
+      : testBankType === 'training'
+      ? trainingTests
+      : testTests;
     return tests.find(t => t.testNumber === currentTest.tpoNumber) || null;
   };
 
@@ -4868,9 +4966,11 @@ function AppContent() {
                 setShowModule2Question20(false);
                 // Save reading result to history
                 handleAddTestResult({
-                  type: 'TPO',
+                  type: getCurrentResultType(),
                   category: 'Reading',
-                  testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`,
+                  testName: `${getCurrentTestLabel()} - Reading`,
+                  testNumber: currentTest?.tpoNumber,
+                  bankType: testBankType,
                   date: new Date().toISOString(),
                   score: 0,
                   totalQuestions: 20,
@@ -4913,8 +5013,8 @@ function AppContent() {
               questionInfo="5/5"
               onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
               onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
-              onNext={() => { setShowModule2Question20(false); handleAddTestResult({ type: 'TPO', category: 'Reading', testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
-              onSubmit={() => { setShowModule2Question20(false); handleAddTestResult({ type: 'TPO', category: 'Reading', testName: `${currentTest?.tpoNumber ? 'TPO ' + currentTest.tpoNumber : 'Test'} - Reading`, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
+              onNext={() => { setShowModule2Question20(false); handleAddTestResult({ type: getCurrentResultType(), category: 'Reading', testName: `${getCurrentTestLabel()} - Reading`, testNumber: currentTest?.tpoNumber, bankType: testBankType, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); handleAddTestResult({ type: getCurrentResultType(), category: 'Reading', testName: `${getCurrentTestLabel()} - Reading`, testNumber: currentTest?.tpoNumber, bankType: testBankType, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
               leftContent={
                 <>
                   <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
@@ -6306,7 +6406,7 @@ function AppContent() {
     const handleStartTest = (section: string) => {
       localStorage.removeItem(`tpo_progress_real_${number}_${section}`);
       setCurrentTest({ tpoNumber: number, section });
-      setTestBankType('real');
+      setTestBankType('test');
       setShowToeflTest(true);
     };
 
@@ -6317,7 +6417,7 @@ function AppContent() {
         return;
       }
       setCurrentTest({ tpoNumber: number, section });
-      setTestBankType('real');
+      setTestBankType('test');
       setShowToeflTest(true);
     };
 
@@ -7098,7 +7198,7 @@ function AppContent() {
           }}
           setActiveTab={handleTabChange}
           lmsContents={lmsContents}
-          tpoTests={[...tpoTests, ...testTests]}
+          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
           advertisements={advertisements}
           onSaveResult={handleAddTrainingResult}
           savedConfig={trainingConfig}
@@ -7111,7 +7211,7 @@ function AppContent() {
         <HistorySection 
           themeColor="#005f61"
           results={testResults}
-          tpoTests={[...tpoTests, ...testTests]}
+          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
           onRetryWrongAnswers={(result) => {
             console.log('Retrying wrong answers:', result);
             // Logic to retry wrong answers
@@ -7120,9 +7220,33 @@ function AppContent() {
             console.log(`Restart test: ${result.testName}, startFresh: ${startFresh}`);
             
             // Parse test number and section from result
+            if (result.type === 'Training') {
+              const subject = result.category || 'Reading';
+
+              if (startFresh) {
+                localStorage.removeItem('test_progress_reading');
+                localStorage.removeItem('test_progress_listening_m1');
+                localStorage.removeItem('test_progress_listening_m2');
+                localStorage.removeItem('test_progress_writing');
+                localStorage.removeItem('test_progress_speaking');
+              }
+
+              handleTabChange('Training');
+              const trainingRoutes: Record<string, string> = {
+                Reading: '/specialized-training/reading',
+                Listening: '/specialized-training/listening',
+                Writing: '/specialized-training/writing',
+                Speaking: '/specialized-training/speaking',
+                Vocabulary: '/specialized-training/vocabulary'
+              };
+              navigate(trainingRoutes[subject] || '/specialized-training');
+              toast.success(startFresh ? '트레이닝을 처음부터 다시 시작합니다!' : '트레이닝으로 이동합니다!');
+              return;
+            }
+
             const tpoMatch = result.testName.match(/TPO\s+(\d+)/i);
             const testMatch = result.testName.match(/Test\s+(\d+)/i);
-            const tpoNumber = tpoMatch ? parseInt(tpoMatch[1]) : testMatch ? parseInt(testMatch[1]) : null;
+            const tpoNumber = result.testNumber ?? (tpoMatch ? parseInt(tpoMatch[1]) : testMatch ? parseInt(testMatch[1]) : null);
             
             if (!tpoNumber) {
               console.error('Could not parse test number from:', result.testName);
@@ -7131,7 +7255,7 @@ function AppContent() {
             }
             
             const section = result.category || 'Reading';
-            const testType = result.type === 'TPO' ? 'tpo' : 'real';
+            const testType = result.type === 'TPO' ? 'tpo' : 'test';
             
             // Clear progress if starting fresh
             if (startFresh) {
@@ -7158,7 +7282,7 @@ function AppContent() {
             }
             
             // Switch to Test tab to show the test
-            handleTabChange('Test');
+            handleTabChange(result.type === 'TPO' ? 'TPO' : 'Test');
             
             toast.success(startFresh ? '처음부터 새로 시작합니다!' : '저장된 위치에서 계속 진행합니다!');
           }}
@@ -7179,7 +7303,7 @@ function AppContent() {
           onAddContent={handleAddLMSContent}
           onUpdateContent={handleUpdateLMSContent}
           onDeleteContent={handleDeleteLMSContent}
-          tpoTests={[...tpoTests, ...testTests]}
+          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
           onAddTest={handleAddTest}
           onUpdateTest={handleUpdateTest}
           onDeleteTest={handleDeleteTest}

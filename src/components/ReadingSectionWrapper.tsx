@@ -18,7 +18,7 @@ export type ReadingScreen =
 
 interface ReadingSectionWrapperProps {
   initialScreen: ReadingScreen;
-  testBankType: 'tpo' | 'real';
+  testBankType: 'tpo' | 'test';
   onHome: () => void;
   onComplete: () => void;
 }

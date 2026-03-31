@@ -17,10 +17,10 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl }: SpeakingQ2RecordP
   const [showStopOverlay, setShowStopOverlay] = useState(false);
 
   useEffect(() => {
-    // Start recording after 1 second
+    // Give a short buffer between prompt audio and recording.
     const startTimer = setTimeout(() => {
       setIsRecording(true);
-    }, 1000);
+    }, 2000);
 
     return () => clearTimeout(startTimer);
   }, []);

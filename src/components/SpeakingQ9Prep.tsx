@@ -17,15 +17,16 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
   useEffect(() => {
     const videoTimer = setTimeout(() => {
       setIsVideoPlaying(true);
-
-      const nextTimer = setTimeout(() => {
-        onNext();
-      }, 3000);
-
-      return () => clearTimeout(nextTimer);
     }, 1000);
+
+    const nextTimer = setTimeout(() => {
+      onNext();
+    }, 5500);
     
-    return () => clearTimeout(videoTimer);
+    return () => {
+      clearTimeout(videoTimer);
+      clearTimeout(nextTimer);
+    };
   }, [onNext]);
 
   return (
@@ -103,7 +104,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           </div>
         </div>
 
-        {isVideoPlaying && <div className="text-xl font-semibold text-[#1e6b73]">Playing audio...</div>}
+        {isVideoPlaying && <div className="text-xl font-semibold text-[#1e6b73]">Playing audio. Recording will begin shortly...</div>}
       </div>
     </div>
   );

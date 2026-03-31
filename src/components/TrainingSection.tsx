@@ -264,6 +264,7 @@ export function TrainingSection({
   // Handle start training - modified to show interface for Listen and Response
   const handleStartTraining = () => {
     if (!selectedQuestionType) return;
+    const totalQuestions = parseInt(selectedQuestionCount, 10) || 0;
     
     // If "Listen and Response" is selected, show the training interface
     if (selectedQuestionType.id === 'detail' && selectedQuestionType.name === 'Listen and Response') {
@@ -272,20 +273,28 @@ export function TrainingSection({
       // For other types, save result and use the original behavior
       const testInfo = {
         title: `${selectedSubject} ${selectedQuestionType.name} 전문훈련`,
-        type: selectedSubject,
+        type: 'Training',
+        category: selectedSubject,
+        testName: `${selectedSubject} - ${selectedQuestionType.name} Training`,
         source: "전문훈련",
         difficulty: selectedDifficulty,
         questionCount: selectedQuestionCount,
+        totalQuestions,
+        correctAnswers: 0,
+        wrongAnswers: [],
+        score: 0,
+        timeSpent: 0,
+        bankType: 'training',
         trainingType: selectedQuestionType.id,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString(),
+        status: 'started'
       };
       onStartTest(testInfo);
       // Save result to Supabase
       if (onSaveResult) {
         onSaveResult({
           ...testInfo,
-          completedAt: new Date().toISOString(),
-          status: 'started'
+          completedAt: new Date().toISOString()
         });
       }
     }

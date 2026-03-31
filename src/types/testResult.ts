@@ -3,6 +3,10 @@ export interface TestResult {
   type: 'TPO' | 'Test' | 'Training' | 'Vocabulary' | 'Question Types';
   category?: string;
   testName: string;
+  testNumber?: number;
+  bankType?: 'tpo' | 'test' | 'training';
+  trainingType?: string;
+  status?: 'started' | 'in-progress' | 'completed';
   date: string;
   score: number;
   totalQuestions: number;

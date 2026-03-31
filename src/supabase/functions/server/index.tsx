@@ -977,6 +977,72 @@ app.get('/make-server-e46cd33a/advertisements/active', async (c) => {
 });
 
 // ==============================================
+// Shared JSON document routes
+// ==============================================
+
+const registerJsonDocumentRoutes = (path: string, storageKey: string) => {
+  app.get(path, async (c) => {
+    try {
+      const value = await kv.get(storageKey);
+      return c.json(value ?? []);
+    } catch (error) {
+      console.error(`Error loading ${storageKey}:`, error);
+      return c.json({ error: `Failed to load ${storageKey}` }, 500);
+    }
+  });
+
+  app.post(path, async (c) => {
+    try {
+      const payload = await c.req.json();
+      await kv.set(storageKey, payload);
+      return c.json({ success: true, data: payload });
+    } catch (error) {
+      console.error(`Error saving ${storageKey}:`, error);
+      return c.json({ error: `Failed to save ${storageKey}` }, 500);
+    }
+  });
+};
+
+const registerAppendableCollectionRoutes = (path: string, storageKey: string) => {
+  app.get(path, async (c) => {
+    try {
+      const value = await kv.get(storageKey);
+      return c.json(Array.isArray(value) ? value : []);
+    } catch (error) {
+      console.error(`Error loading ${storageKey}:`, error);
+      return c.json({ error: `Failed to load ${storageKey}` }, 500);
+    }
+  });
+
+  app.post(path, async (c) => {
+    try {
+      const payload = await c.req.json();
+      if (Array.isArray(payload)) {
+        await kv.set(storageKey, payload);
+        return c.json({ success: true, data: payload });
+      }
+
+      const existing = await kv.get(storageKey);
+      const nextValue = Array.isArray(existing) ? [payload, ...existing] : [payload];
+      await kv.set(storageKey, nextValue);
+      return c.json({ success: true, data: nextValue });
+    } catch (error) {
+      console.error(`Error saving ${storageKey}:`, error);
+      return c.json({ error: `Failed to save ${storageKey}` }, 500);
+    }
+  });
+};
+
+registerJsonDocumentRoutes('/make-server-e46cd33a/lms-contents', 'lms-contents');
+registerJsonDocumentRoutes('/make-server-e46cd33a/reports', 'reports');
+registerJsonDocumentRoutes('/make-server-e46cd33a/students', 'students');
+registerJsonDocumentRoutes('/make-server-e46cd33a/question-types-config', 'question-types-config');
+registerJsonDocumentRoutes('/make-server-e46cd33a/training-config', 'training-config');
+registerAppendableCollectionRoutes('/make-server-e46cd33a/test-results', 'test-results');
+registerAppendableCollectionRoutes('/make-server-e46cd33a/training-results', 'training-results');
+registerAppendableCollectionRoutes('/make-server-e46cd33a/question-types-results', 'question-types-results');
+
+// ==============================================
 // TPO/Test Data Management Routes
 // ==============================================
 
@@ -1056,6 +1122,44 @@ app.post('/make-server-e46cd33a/test-tests', async (c) => {
   }
 });
 
+// Get all Training tests metadata (list)
+app.get('/make-server-e46cd33a/training-tests', async (c) => {
+  try {
+    const tests = await kv.getByPrefix('training:');
+    return c.json(tests);
+  } catch (error) {
+    console.error('Error loading Training tests:', error);
+    return c.json({ error: 'Failed to load Training tests' }, 500);
+  }
+});
+
+// Get specific Training test by number
+app.get('/make-server-e46cd33a/training-tests/:number', async (c) => {
+  try {
+    const number = c.req.param('number');
+    const test = await kv.get(`training:${number}`);
+    if (!test) {
+      return c.json({ error: 'Test not found' }, 404);
+    }
+    return c.json(test);
+  } catch (error) {
+    console.error('Error loading Training test:', error);
+    return c.json({ error: 'Failed to load Training test' }, 500);
+  }
+});
+
+// Save Training test
+app.post('/make-server-e46cd33a/training-tests', async (c) => {
+  try {
+    const test = await c.req.json();
+    await kv.set(`training:${test.testNumber}`, test);
+    return c.json({ success: true, test });
+  } catch (error) {
+    console.error('Error saving Training test:', error);
+    return c.json({ error: 'Failed to save Training test' }, 500);
+  }
+});
+
 // Delete TPO test
 app.delete('/make-server-e46cd33a/tpo-tests/:number', async (c) => {
   try {
@@ -1077,6 +1181,30 @@ app.delete('/make-server-e46cd33a/real-tests/:number', async (c) => {
   } catch (error) {
     console.error('Error deleting Real test:', error);
     return c.json({ error: 'Failed to delete Real test' }, 500);
+  }
+});
+
+// Delete Test test
+app.delete('/make-server-e46cd33a/test-tests/:number', async (c) => {
+  try {
+    const number = c.req.param('number');
+    await kv.del(`test:${number}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting Test test:', error);
+    return c.json({ error: 'Failed to delete Test test' }, 500);
+  }
+});
+
+// Delete Training test
+app.delete('/make-server-e46cd33a/training-tests/:number', async (c) => {
+  try {
+    const number = c.req.param('number');
+    await kv.del(`training:${number}`);
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting Training test:', error);
+    return c.json({ error: 'Failed to delete Training test' }, 500);
   }
 });
 

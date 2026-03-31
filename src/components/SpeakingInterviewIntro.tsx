@@ -13,7 +13,7 @@ export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntr
 
   useEffect(() => {
     // Text to read
-    const textToRead = `You have volunteered for a research study about outdoor activities. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
+    const textToRead = `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
 
     // Use Web Speech API to read the text
     if ('speechSynthesis' in window) {
@@ -101,7 +101,7 @@ export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntr
       <div className="flex-1 flex flex-col items-center justify-start bg-white p-12 pt-16">
         <div className="max-w-4xl w-full">
           <p className="text-gray-900 text-2xl mb-12 leading-relaxed text-center">
-            You have volunteered for a research study about outdoor activities. You will have a short online interview with a researcher. The researcher will ask you some questions.
+            You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.
           </p>
           
           {/* Researcher Image */}

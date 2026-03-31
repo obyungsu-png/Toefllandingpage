@@ -18,8 +18,11 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
   const [showStopOverlay, setShowStopOverlay] = useState(false);
 
   useEffect(() => {
-    // Start recording immediately
-    setIsRecording(true);
+    const startTimer = setTimeout(() => {
+      setIsRecording(true);
+    }, 2000);
+
+    return () => clearTimeout(startTimer);
   }, []);
 
   useEffect(() => {
