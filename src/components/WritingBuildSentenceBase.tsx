@@ -94,12 +94,7 @@ export function WritingBuildSentenceBase({
     setSentenceSlots(newSlots);
   };
 
-  const getSlotWidth = (word: string | null) => {
-    if (!word) return '120px';
-    const baseWidth = 30;
-    const charWidth = 11;
-    return `${baseWidth + (word.length * charWidth)}px`;
-  };
+  const getEmptySlotWidth = () => '120px';
 
   const handleDragStart = (e: React.DragEvent, word: string) => {
     if (!canUseWord(word)) {
@@ -256,7 +251,7 @@ export function WritingBuildSentenceBase({
               </div>
 
               <div className="flex-1 overflow-x-auto">
-                <div className="flex flex-wrap items-end gap-2 md:gap-3">
+                <div className="flex flex-wrap items-end gap-1.5 md:gap-2">
                   {sentenceSlots.map((word, index) => (
                     <div
                       key={index}
@@ -270,8 +265,8 @@ export function WritingBuildSentenceBase({
                       onDrop={(e) => handleDrop(e, index)}
                       className={`relative inline-flex flex-col transition-colors ${word ? 'cursor-pointer' : ''}`}
                       style={{
-                        minWidth: getSlotWidth(word),
-                        width: word ? 'auto' : getSlotWidth(word),
+                        minWidth: word ? '0px' : getEmptySlotWidth(),
+                        width: word ? 'fit-content' : getEmptySlotWidth(),
                         paddingBottom: '4px'
                       }}
                     >
