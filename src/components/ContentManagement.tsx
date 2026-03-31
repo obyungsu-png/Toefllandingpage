@@ -32,6 +32,11 @@ export interface TPOQuestion {
   avatar1ImageUrl?: string; // Question person avatar
   avatar2ImageUrl?: string; // Answer person avatar
   words?: string[]; // Words to arrange
+  // For grouped Listening types (Short Conversation, Announcements, Academic Talk)
+  passageAudioUrl?: string;
+  passageImageUrl?: string;
+  passageTitle?: string;
+  questionGroupId?: string;
 }
 
 export interface TPOSection {

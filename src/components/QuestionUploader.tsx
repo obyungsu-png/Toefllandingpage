@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from './ui/button';
 import { Upload } from 'lucide-react';
 
@@ -23,6 +23,27 @@ export interface TPOQuestion {
   avatar1ImageUrl?: string;
   avatar2ImageUrl?: string;
   words?: string[];
+  passageAudioUrl?: string;
+  passageImageUrl?: string;
+  passageTitle?: string;
+  questionGroupId?: string;
+}
+
+const GROUPED_LISTENING_TYPES = ['Short Conversation', 'Announcements', 'Academic Talk', 'Campus Conversation', 'Academic Lecture'];
+
+function isGroupedListeningType(type: string): boolean {
+  return GROUPED_LISTENING_TYPES.includes(type);
+}
+
+function getDefaultPassageTitle(type: string): string {
+  switch (type) {
+    case 'Short Conversation': return 'Listen to a conversation.';
+    case 'Campus Conversation': return 'Listen to a conversation.';
+    case 'Announcements': return 'Listen to an announcement.';
+    case 'Academic Talk': return 'Listen to a talk.';
+    case 'Academic Lecture': return 'Listen to a lecture.';
+    default: return '';
+  }
 }
 
 interface QuestionUploadFormProps {
@@ -53,11 +74,56 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
     difficulty: '보통' as '쉬움' | '보통' | '어려움',
     blanks: [] as Array<{ answer: string; maxLength: number }>,
     avatar1ImageUrl: '',
-    avatar2ImageUrl: ''
+    avatar2ImageUrl: '',
+    passageAudioUrl: '',
+    passageAudioFile: null as File | null,
+    passageImageUrl: '',
+    passageImageFile: null as File | null,
+    passageTitle: '',
+    subQuestions: [{ questionText: '', options: ['', '', '', ''], correctAnswer: '', explanation: '', imageUrl: '' }] as Array<{ questionText: string; options: string[]; correctAnswer: string; explanation: string; imageUrl: string }>
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Grouped Listening type - submit multiple questions
+    if (section === 'Listening' && isGroupedListeningType(formData.questionType)) {
+      const groupId = `group-${Date.now()}`;
+      let passageAudio = '';
+      let passageImage = '';
+
+      if (formData.passageAudioUrl.trim()) {
+        passageAudio = formData.passageAudioUrl.trim();
+      } else if (formData.passageAudioFile) {
+        passageAudio = URL.createObjectURL(formData.passageAudioFile);
+      }
+
+      if (formData.passageImageUrl.trim()) {
+        passageImage = formData.passageImageUrl.trim();
+      } else if (formData.passageImageFile) {
+        passageImage = URL.createObjectURL(formData.passageImageFile);
+      }
+
+      formData.subQuestions.forEach((sq, index) => {
+        const question: TPOQuestion = {
+          id: `q-${Date.now()}-${index}`,
+          questionNumber: formData.questionNumber + index,
+          questionText: sq.questionText,
+          questionType: formData.questionType,
+          options: sq.options.filter(o => o.trim() !== ''),
+          correctAnswer: sq.correctAnswer,
+          explanation: sq.explanation || undefined,
+          imageUrl: sq.imageUrl || undefined,
+          questionGroupId: groupId,
+          passageAudioUrl: passageAudio || undefined,
+          passageImageUrl: passageImage || undefined,
+          passageTitle: formData.passageTitle || undefined,
+          difficulty: formData.difficulty,
+        };
+        onSubmit(question);
+      });
+      return;
+    }
 
     const question: TPOQuestion = {
       id: `q-${Date.now()}`,
@@ -97,6 +163,8 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
     onSubmit(question);
   };
 
+  const isGrouped = section === 'Listening' && isGroupedListeningType(formData.questionType);
+
   return (
     <div
       className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
@@ -110,10 +178,10 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
           {/* Question Number */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Question Number
+              {isGrouped ? 'Starting Question Number' : 'Question Number'}
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-orange-600 font-normal">
-                  (빈칸넣기 1-10번은 하나�?문제�?입력)
+                  (빈칸넣기 1-10번은 하나의 문제로 입력)
                 </span>
               )}
             </label>
@@ -141,7 +209,14 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
             <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
             <select
               value={formData.questionType}
-              onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setFormData({
+                  ...formData,
+                  questionType: newType,
+                  ...(isGroupedListeningType(newType) ? { passageTitle: getDefaultPassageTitle(newType) } : {})
+                });
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
             >
               {questionTypes.map(type => (
@@ -151,6 +226,168 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
           </div>
         </div>
 
+        {/* Listening Grouped Type: Passage Info + Sub-Questions */}
+        {isGrouped && (
+          <>
+            {/* Passage Information */}
+            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="text-sm font-semibold text-blue-800">🎧 Passage Information</h4>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Passage Title</label>
+                <input
+                  type="text"
+                  value={formData.passageTitle}
+                  onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="Listen to a conversation."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Passage Audio</label>
+                <input
+                  type="text"
+                  value={formData.passageAudioUrl}
+                  onChange={(e) => setFormData({ ...formData, passageAudioUrl: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="Audio URL"
+                />
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => setFormData({ ...formData, passageAudioFile: e.target.files?.[0] || null })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Passage Image</label>
+                <input
+                  type="text"
+                  value={formData.passageImageUrl}
+                  onChange={(e) => setFormData({ ...formData, passageImageUrl: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="Image URL"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFormData({ ...formData, passageImageFile: e.target.files?.[0] || null })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg mt-1"
+                />
+                {formData.passageImageUrl && (
+                  <img src={formData.passageImageUrl} alt="Preview" className="mt-2 w-32 h-auto rounded" />
+                )}
+              </div>
+            </div>
+
+            {/* Sub-Questions */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-gray-800">📝 Questions ({formData.subQuestions.length})</h4>
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    ...formData,
+                    subQuestions: [...formData.subQuestions, { questionText: '', options: ['', '', '', ''], correctAnswer: '', explanation: '', imageUrl: '' }]
+                  })}
+                  className="text-sm px-3 py-1 bg-[#2d7a7c] text-white rounded-lg hover:bg-[#1e6b73]"
+                >
+                  + Add Question
+                </button>
+              </div>
+
+              {formData.subQuestions.map((sq, sqIdx) => (
+                <div key={sqIdx} className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Question {formData.questionNumber + sqIdx}</span>
+                    {formData.subQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, subQuestions: formData.subQuestions.filter((_, i) => i !== sqIdx) })}
+                        className="text-xs text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <textarea
+                    value={sq.questionText}
+                    onChange={(e) => {
+                      const newSQ = [...formData.subQuestions];
+                      newSQ[sqIdx] = { ...newSQ[sqIdx], questionText: e.target.value };
+                      setFormData({ ...formData, subQuestions: newSQ });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    rows={2}
+                    placeholder="Question text..."
+                  />
+
+                  <input
+                    type="text"
+                    value={sq.imageUrl}
+                    onChange={(e) => {
+                      const newSQ = [...formData.subQuestions];
+                      newSQ[sqIdx] = { ...newSQ[sqIdx], imageUrl: e.target.value };
+                      setFormData({ ...formData, subQuestions: newSQ });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    placeholder="Question Image URL (optional)"
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {sq.options.map((opt, optIdx) => (
+                      <input
+                        key={optIdx}
+                        type="text"
+                        value={opt}
+                        onChange={(e) => {
+                          const newSQ = [...formData.subQuestions];
+                          const newOpts = [...newSQ[sqIdx].options];
+                          newOpts[optIdx] = e.target.value;
+                          newSQ[sqIdx] = { ...newSQ[sqIdx], options: newOpts };
+                          setFormData({ ...formData, subQuestions: newSQ });
+                        }}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        placeholder={`Option ${optIdx + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <select
+                    value={sq.correctAnswer}
+                    onChange={(e) => {
+                      const newSQ = [...formData.subQuestions];
+                      newSQ[sqIdx] = { ...newSQ[sqIdx], correctAnswer: e.target.value };
+                      setFormData({ ...formData, subQuestions: newSQ });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">Select correct answer...</option>
+                    {sq.options.filter(o => o.trim() !== '').map((opt, i) => (
+                      <option key={i} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+
+                  <textarea
+                    value={sq.explanation}
+                    onChange={(e) => {
+                      const newSQ = [...formData.subQuestions];
+                      newSQ[sqIdx] = { ...newSQ[sqIdx], explanation: e.target.value };
+                      setFormData({ ...formData, subQuestions: newSQ });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    rows={2}
+                    placeholder="Explanation (optional)"
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Passage Text (for Reading) */}
         {section === 'Reading' && (
           <div>
@@ -158,7 +395,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
               Passage Text
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-blue-600 font-normal">
-                  (빈칸넣기: 빈칸 위치�?[정답:최대길이] 형식으로 입력하세�? �? mi[ght:3])
+                  (빈칸넣기: 빈칸 위치�?[정답:최대길이] 형식으로 입력하세�? �? mi[ght:3])
                 </span>
               )}
             </label>
@@ -168,10 +405,10 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
                   📝 빈칸넣기 문제 입력 방법
                 </p>
                 <p className="text-xs text-orange-700">
-                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
-                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
-                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
-                  �?반드�?10개의 빈칸�?입력해야 합니�?
+                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
+                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
+                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  �?반드�?10개의 빈칸�?입력해야 합니�?
                 </p>
               </div>
             )}
@@ -205,12 +442,12 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm font-medium text-blue-800 mb-2">
-                  감지�?빈칸: {formData.blanks.length}�?
+                  감지�?빈칸: {formData.blanks.length}�?
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {formData.blanks.map((blank, idx) => (
                     <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}�?
+                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}�?
                     </span>
                   ))}
                 </div>
@@ -220,7 +457,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         )}
 
         {/* Audio Upload (for Listening/Speaking) */}
-        {(section === 'Listening' || section === 'Speaking') && (
+        {!isGrouped && (section === 'Listening' || section === 'Speaking') && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Audio File</label>
             <input
@@ -240,6 +477,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         )}
 
         {/* Video Upload */}
+        {!isGrouped && (
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Video File (Optional)</label>
           <input
@@ -278,6 +516,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         )}
 
         {/* Question Text */}
+        {!isGrouped && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
           <textarea
@@ -289,9 +528,10 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
             placeholder="Enter the question..."
           />
         </div>
+        )}
 
         {/* Answer Options */}
-        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+        {!isGrouped && (section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
@@ -390,6 +630,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         )}
 
         {/* Explanation */}
+        {!isGrouped && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
           <textarea
@@ -400,6 +641,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
             placeholder="Explain the correct answer..."
           />
         </div>
+        )}
 
         {/* Difficulty Level */}
         <div>
@@ -466,7 +708,13 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
     difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
     blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
     avatar1ImageUrl: question.avatar1ImageUrl || '',
-    avatar2ImageUrl: question.avatar2ImageUrl || ''
+    avatar2ImageUrl: question.avatar2ImageUrl || '',
+    passageAudioUrl: question.passageAudioUrl || '',
+    passageAudioFile: null as File | null,
+    passageImageUrl: question.passageImageUrl || '',
+    passageImageFile: null as File | null,
+    passageTitle: question.passageTitle || '',
+    questionGroupId: question.questionGroupId || ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -485,7 +733,11 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
       difficulty: formData.difficulty,
       blanks: formData.blanks,
       avatar1ImageUrl: formData.avatar1ImageUrl || undefined,
-      avatar2ImageUrl: formData.avatar2ImageUrl || undefined
+      avatar2ImageUrl: formData.avatar2ImageUrl || undefined,
+      passageAudioUrl: formData.passageAudioUrl || undefined,
+      passageImageUrl: formData.passageImageUrl || undefined,
+      passageTitle: formData.passageTitle || undefined,
+      questionGroupId: formData.questionGroupId || undefined
     };
 
     // Handle URL inputs or file uploads (URL takes priority)
@@ -513,8 +765,22 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
       updatedQuestion.imageUrl = question.imageUrl;
     }
 
+    // Handle passage audio/image for grouped listening types
+    if (formData.passageAudioUrl.trim()) {
+      updatedQuestion.passageAudioUrl = formData.passageAudioUrl.trim();
+    } else if (formData.passageAudioFile) {
+      updatedQuestion.passageAudioUrl = URL.createObjectURL(formData.passageAudioFile);
+    }
+    if (formData.passageImageUrl.trim()) {
+      updatedQuestion.passageImageUrl = formData.passageImageUrl.trim();
+    } else if (formData.passageImageFile) {
+      updatedQuestion.passageImageUrl = URL.createObjectURL(formData.passageImageFile);
+    }
+
     onSubmit(updatedQuestion);
   };
+
+  const isGrouped = section === 'Listening' && isGroupedListeningType(formData.questionType);
 
   return (
     <div
@@ -526,14 +792,55 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Same fields as Upload Form but with existing values */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Listening Passage Info (for grouped types in Edit) */}
+        {isGrouped && (
+          <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-semibold text-blue-800">Passage Information</h4>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Passage Title</label>
+              <input
+                type="text"
+                value={formData.passageTitle}
+                onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="Listen to a conversation."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Passage Audio URL</label>
+              <input
+                type="text"
+                value={formData.passageAudioUrl}
+                onChange={(e) => setFormData({ ...formData, passageAudioUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="Audio URL"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Passage Image URL</label>
+              <input
+                type="text"
+                value={formData.passageImageUrl}
+                onChange={(e) => setFormData({ ...formData, passageImageUrl: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                placeholder="Image URL"
+              />
+              {formData.passageImageUrl && (
+                <img src={formData.passageImageUrl} alt="Preview" className="mt-2 w-32 h-auto rounded" />
+              )}
+            </div>
+            {formData.questionGroupId && (
+              <div className="text-xs text-gray-500">Group ID: {formData.questionGroupId}</div>
+            )}
+          </div>
+        )}        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Question Number */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Question Number
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-orange-600 font-normal">
-                  (빈칸넣기 1-10번은 하나�?문제�?입력)
+                  (빈칸넣기 1-10번은 하나�?문제�?입력)
                 </span>
               )}
             </label>
@@ -578,7 +885,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
               Passage Text
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-blue-600 font-normal">
-                  (빈칸넣기: 빈칸 위치�?[정답:최대길이] 형식으로 입력하세�? �? mi[ght:3])
+                  (빈칸넣기: 빈칸 위치�?[정답:최대길이] 형식으로 입력하세�? �? mi[ght:3])
                 </span>
               )}
             </label>
@@ -588,10 +895,10 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
                   📝 빈칸넣기 문제 입력 방법
                 </p>
                 <p className="text-xs text-orange-700">
-                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
-                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
-                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
-                  �?반드�?10개의 빈칸�?입력해야 합니�?
+                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
+                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
+                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  �?반드�?10개의 빈칸�?입력해야 합니�?
                 </p>
               </div>
             )}
@@ -625,12 +932,12 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm font-medium text-blue-800 mb-2">
-                  감지�?빈칸: {formData.blanks.length}�?
+                  감지�?빈칸: {formData.blanks.length}�?
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {formData.blanks.map((blank, idx) => (
                     <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}�?
+                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}�?
                     </span>
                   ))}
                 </div>
@@ -640,7 +947,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
         )}
 
         {/* Audio Upload (for Listening/Speaking) */}
-        {(section === 'Listening' || section === 'Speaking') && (
+        {!isGrouped && (section === 'Listening' || section === 'Speaking') && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Audio File</label>
             <input
@@ -660,6 +967,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
         )}
 
         {/* Video Upload */}
+        {!isGrouped && (
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Video File (Optional)</label>
           <input
@@ -698,6 +1006,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
         )}
 
         {/* Question Text */}
+        {!isGrouped && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
           <textarea
@@ -709,9 +1018,10 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             placeholder="Enter the question..."
           />
         </div>
+        )}
 
         {/* Answer Options */}
-        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+        {!isGrouped && (section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
@@ -810,6 +1120,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
         )}
 
         {/* Explanation */}
+        {!isGrouped && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
           <textarea
@@ -820,6 +1131,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             placeholder="Explain the correct answer..."
           />
         </div>
+        )}
 
         {/* Difficulty Level */}
         <div>

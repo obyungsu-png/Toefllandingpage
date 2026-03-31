@@ -31,6 +31,9 @@ export function WritingBuildSentenceQ9({
 
   const [timeRemaining, setTimeRemaining] = useState<number>(420); // 7 minutes countdown
   const [showTime, setShowTime] = useState<boolean>(true);
+  const [draggedWord, setDraggedWord] = useState<string | null>(null);
+
+  const isComplete = sentenceSlots.every(slot => slot !== null);
 
   // Countdown timer effect
   useEffect(() => {
@@ -84,6 +87,27 @@ export function WritingBuildSentenceQ9({
     const baseWidth = 30;
     const charWidth = 11;
     return `${baseWidth + (word.length * charWidth)}px`;
+  };
+
+  const handleDragStart = (e: React.DragEvent, word: string) => {
+    setDraggedWord(word);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedWord && sentenceSlots[index] === null) {
+      const newSlots = [...sentenceSlots];
+      newSlots[index] = index === 0 ? capitalizeFirst(draggedWord) : draggedWord;
+      setSentenceSlots(newSlots);
+      setAvailableWords(availableWords.filter(w => w !== draggedWord));
+    }
+    setDraggedWord(null);
   };
 
   return (
@@ -169,7 +193,7 @@ export function WritingBuildSentenceQ9({
             Make an appropriate sentence.
           </h2>
           
-          <div className="space-y-8 md:space-y-12 mt-12 md:mt-24 px-2 md:pl-24 md:pr-8">
+          <div className="space-y-8 md:space-y-12 mt-16 md:mt-28 px-2 md:pl-12 md:pr-8">
             <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
               <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
                 {avatar1ImageUrl ? (
@@ -201,28 +225,45 @@ export function WritingBuildSentenceQ9({
               </div>
               
               <div className="flex-1 overflow-x-auto">
-                <div className="flex flex-wrap items-end gap-2">
-                  {sentenceSlots.map((word, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handleSlotClick(index)}
-                      className="relative inline-flex flex-col cursor-pointer"
-                      style={{ 
-                        minWidth: getSlotWidth(word), 
-                        width: word ? 'auto' : getSlotWidth(word),
-                        paddingBottom: '4px'
-                      }}
-                    >
-                      <div className="px-2 py-1 text-center">
-                        <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-gray-800 whitespace-nowrap">
-                          {word || ''}
-                        </span>
+                {isComplete ? (
+                  <div className="flex flex-wrap items-end gap-1">
+                    {sentenceSlots.map((word, index) => (
+                      <span
+                        key={index}
+                        onClick={() => handleSlotClick(index)}
+                        className="text-sm md:text-xl font-['Inter',_sans-serif] text-gray-800 cursor-pointer bg-gray-200 rounded px-1 py-0.5"
+                      >
+                        {word}
+                      </span>
+                    ))}
+                    <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800">.</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-end gap-2">
+                    {sentenceSlots.map((word, index) => (
+                      <div
+                        key={index}
+                        onClick={() => word ? handleSlotClick(index) : undefined}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className={`relative inline-flex flex-col ${word ? 'cursor-pointer' : ''}`}
+                        style={{ 
+                          minWidth: getSlotWidth(word), 
+                          width: word ? 'auto' : getSlotWidth(word),
+                          paddingBottom: '4px'
+                        }}
+                      >
+                        <div className={`px-2 py-1 text-center ${word ? 'bg-gray-200 rounded' : ''}`}>
+                          <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-gray-800 whitespace-nowrap">
+                            {word || ''}
+                          </span>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-800"></div>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-800"></div>
-                    </div>
-                  ))}
-                  <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">.</span>
-                </div>
+                    ))}
+                    <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">.</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -230,8 +271,10 @@ export function WritingBuildSentenceQ9({
               {availableWords.map((word, index) => (
                 <button
                   key={index}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, word)}
                   onClick={() => handleWordClick(word)}
-                  className="px-4 py-2 md:px-6 md:py-3 bg-transparent hover:bg-gray-100 transition-colors"
+                  className="px-4 py-2 md:px-6 md:py-3 bg-transparent hover:bg-gray-100 transition-colors cursor-grab active:cursor-grabbing"
                 >
                   <span className="text-sm md:text-lg font-['Inter',_sans-serif] text-gray-800">
                     {word}
