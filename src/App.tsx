@@ -40,6 +40,8 @@ import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 import { HistorySection, TestResult } from './components/HistorySection';
+import { ReviewAssistantPanel, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
+import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
 import { isContentLocked } from './utils/subscriptionUtils';
 import { projectId, publicAnonKey } from './utils/supabase/info';
@@ -253,6 +255,11 @@ function AppContent() {
   
   // Speaking: single state replaces ~26 individual show* states
   const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [reviewTrainingTitle, setReviewTrainingTitle] = useState<string | null>(null);
+  const [currentListeningReviewScreen, setCurrentListeningReviewScreen] = useState<M1Screen | M2Screen | null>(null);
+  const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
+  const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
   
   // LMS Content State
   const [lmsContents, setLmsContents] = useState<LMSContent[]>([]);
@@ -1290,6 +1297,85 @@ function AppContent() {
       default: return [1, 2, 3, 4];
     }
   };
+
+  const clearReviewContext = () => {
+    setReviewTrainingTitle(null);
+    setCurrentListeningReviewScreen(null);
+    setCurrentWritingReviewScreen(null);
+    setCurrentSpeakingReviewScreen(null);
+  };
+
+  const launchSection = (
+    testNumber: number,
+    section: string,
+    bankType: 'tpo' | 'test',
+    mode: 'start' | 'review' = 'start'
+  ) => {
+    clearReviewContext();
+    setIsReviewMode(mode === 'review');
+    setCurrentTest({ tpoNumber: testNumber, section });
+    setTestBankType(bankType);
+
+    if (section === 'Listening') {
+      setActiveListeningM2Screen(null);
+      setActiveListeningM1Screen('intro');
+      return;
+    }
+
+    if (section === 'Reading') {
+      setShowReadingIntro(true);
+      return;
+    }
+
+    if (section === 'Writing') {
+      setActiveWritingScreen('intro');
+      return;
+    }
+
+    if (section === 'Speaking') {
+      setActiveSpeakingScreen('intro');
+      return;
+    }
+
+    setShowToeflTest(true);
+  };
+
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string } | null = null;
+
+  if (isReviewMode) {
+    const isReadingVisible = showReadingIntro || showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showEndModule1 || showModule1Intro || showModule1Details || showModule2 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20 || showEndModule2;
+
+    if (isReadingVisible) {
+      activeReviewPanel = {
+        section: 'Reading',
+        variant: 'reading',
+        contentKey: `reading-${currentTest?.tpoNumber ?? 'none'}-${currentTest?.section ?? 'none'}`,
+      };
+    } else if (activeListeningM1Screen || activeListeningM2Screen) {
+      const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
+      activeReviewPanel = {
+        section: 'Listening',
+        variant: 'listening',
+        contentKey: `listening-${screen}`,
+      };
+    } else if (activeWritingScreen) {
+      const screen = currentWritingReviewScreen || activeWritingScreen;
+      const variant: ReviewVariant = screen === 'intro' || screen === 'build-sentence-intro' || screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
+      activeReviewPanel = {
+        section: 'Writing',
+        variant,
+        contentKey: `writing-${screen}`,
+      };
+    } else if (activeSpeakingScreen) {
+      const screen = currentSpeakingReviewScreen || activeSpeakingScreen;
+      const variant: ReviewVariant = screen === 'intro' || screen === 'listen-repeat-intro' || screen === 'q1' || screen === 'q1-record' ? 'speaking-repeat' : 'speaking-interview';
+      activeReviewPanel = {
+        section: 'Speaking',
+        variant,
+        contentKey: `speaking-${screen}`,
+      };
+    }
+  }
 
   // Show welcome landing page first
   if (showWelcomePage && location.pathname === '/') {
@@ -6308,31 +6394,64 @@ function AppContent() {
     );
   };
 
-  const TPOCard = ({ number }: { number: number }) => {
+  const TPOCard = ({
+    number,
+    onStartTest,
+    onReviewTest,
+    isLocked = false,
+    onUnlockClick,
+  }: {
+    number: number;
+    onStartTest?: (section: string) => void;
+    onReviewTest?: (section: string) => void;
+    isLocked?: boolean;
+    onUnlockClick?: () => void;
+  }) => {
     const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
-    const startSection = (section: string) => {
-      setCurrentTest({ tpoNumber: number, section });
-      setTestBankType('tpo');
-      if (section === 'Listening') setActiveListeningM1Screen('intro');
-      else if (section === 'Reading') setShowReadingIntro(true);
-      else if (section === 'Writing') setActiveWritingScreen('intro');
-      else if (section === 'Speaking') setActiveSpeakingScreen('intro');
-      else setShowToeflTest(true);
-    };
-
     const handleStartTest = (section: string) => {
+      if (isLocked && onUnlockClick) {
+        onUnlockClick();
+        return;
+      }
+
       localStorage.removeItem(`tpo_progress_tpo_${number}_${section}`);
-      startSection(section);
+      if (onStartTest) {
+        onStartTest(section);
+        return;
+      }
+
+      launchSection(number, section, 'tpo', 'start');
     };
 
     const handleContinueTest = (section: string) => {
+      if (isLocked && onUnlockClick) {
+        onUnlockClick();
+        return;
+      }
+
       const saved = localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
       if (!saved) {
         alert('저장된 진행 상황이 없습니다. Start를 눌러 새로 시작하세요.');
         return;
       }
-      startSection(section);
+
+      launchSection(number, section, 'tpo', 'start');
+    };
+
+    const handleReviewTest = (section: string) => {
+      if (isLocked && onUnlockClick) {
+        onUnlockClick();
+        return;
+      }
+
+      localStorage.removeItem(`tpo_progress_tpo_${number}_${section}`);
+      if (onReviewTest) {
+        onReviewTest(section);
+        return;
+      }
+
+      launchSection(number, section, 'tpo', 'review');
     };
 
     const hasSavedProgress = (section: string) => !!localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
@@ -6366,6 +6485,12 @@ function AppContent() {
                   <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Continue</p>
                 </div>
               )}
+              <div
+                className="flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
+                onClick={() => handleReviewTest(sectionType)}
+              >
+                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Review</p>
+              </div>
               <div
                 className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
                   hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
@@ -6553,8 +6678,11 @@ function AppContent() {
       {activeListeningM1Screen && (
         <ListeningM1Wrapper
           initialScreen={activeListeningM1Screen}
+          onScreenChange={setCurrentListeningReviewScreen}
           onHome={() => {
             setActiveListeningM1Screen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
@@ -6571,8 +6699,11 @@ function AppContent() {
       {activeListeningM2Screen && (
         <ListeningM2Wrapper
           initialScreen={activeListeningM2Screen}
+          onScreenChange={setCurrentListeningReviewScreen}
           onHome={() => {
             setActiveListeningM2Screen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
@@ -6581,6 +6712,8 @@ function AppContent() {
           }}
           onComplete={() => {
             setActiveListeningM2Screen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             // Listening complete - next section can be added later
           }}
           onVolumeClick={() => setShowVolumeModal(true)}
@@ -6595,8 +6728,11 @@ function AppContent() {
       {activeWritingScreen && (
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
+          onScreenChange={setCurrentWritingReviewScreen}
           onHome={() => {
             setActiveWritingScreen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
@@ -6605,6 +6741,8 @@ function AppContent() {
           }}
           onComplete={() => {
             setActiveWritingScreen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
@@ -6618,15 +6756,37 @@ function AppContent() {
       {activeSpeakingScreen && (
         <SpeakingSectionWrapper
           initialScreen={activeSpeakingScreen}
+          onScreenChange={setCurrentSpeakingReviewScreen}
           questions={getCurrentSectionData('Speaking')?.questions || []}
           testData={getCurrentTestData()}
           onHome={() => {
             setActiveSpeakingScreen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
           }}
           onComplete={() => {
             setActiveSpeakingScreen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
             // Speaking complete - navigate to next section
           }}
+        />
+      )}
+
+      {activeReviewPanel && (
+        <ReviewAssistantPanel
+          section={activeReviewPanel.section}
+          variant={activeReviewPanel.variant}
+          contentKey={activeReviewPanel.contentKey}
+          onStartTraining={setReviewTrainingTitle}
+        />
+      )}
+
+      {activeReviewPanel && reviewTrainingTitle && (
+        <ReviewTrainingOverlay
+          section={activeReviewPanel.section}
+          title={reviewTrainingTitle}
+          onClose={() => setReviewTrainingTitle(null)}
         />
       )}
       
@@ -7158,11 +7318,12 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setCurrentTest={setCurrentTest}
           setTestBankType={setTestBankType}
-          setShowListeningIntro={(v: any) => { if (v) setActiveListeningM1Screen('intro'); }}
-          setShowReadingIntro={setShowReadingIntro}
-          setShowWritingIntro={(v: any) => { if (v) setActiveWritingScreen('intro'); }}
-          setShowSpeakingIntro={(v: any) => { if (v) setActiveSpeakingScreen('intro'); }}
+          setShowListeningIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveListeningM1Screen('intro'); } }}
+          setShowReadingIntro={(v: boolean) => { if (v) { clearReviewContext(); setIsReviewMode(false); } setShowReadingIntro(v); }}
+          setShowWritingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveWritingScreen('intro'); } }}
+          setShowSpeakingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveSpeakingScreen('intro'); } }}
           setShowToeflTest={setShowToeflTest}
+          onReviewTest={(number, section) => launchSection(number, section, 'tpo', 'review')}
           TPOCard={TPOCard}
           TestCard={TestCard}
           advertisements={advertisements}
@@ -7179,11 +7340,12 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setCurrentTest={setCurrentTest}
           setTestBankType={setTestBankType}
-          setShowListeningIntro={(v: any) => { if (v) setActiveListeningM1Screen('intro'); }}
-          setShowReadingIntro={setShowReadingIntro}
-          setShowWritingIntro={(v: any) => { if (v) setActiveWritingScreen('intro'); }}
-          setShowSpeakingIntro={(v: any) => { if (v) setActiveSpeakingScreen('intro'); }}
+          setShowListeningIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveListeningM1Screen('intro'); } }}
+          setShowReadingIntro={(v: boolean) => { if (v) { clearReviewContext(); setIsReviewMode(false); } setShowReadingIntro(v); }}
+          setShowWritingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveWritingScreen('intro'); } }}
+          setShowSpeakingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveSpeakingScreen('intro'); } }}
           setShowToeflTest={setShowToeflTest}
+          onReviewTest={(number, section) => launchSection(number, section, 'test', 'review')}
           TestCard={TestCard}
           advertisements={advertisements}
         />

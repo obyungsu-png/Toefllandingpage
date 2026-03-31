@@ -37,6 +37,7 @@ interface TPOPageProps {
   setShowWritingIntro: (show: boolean) => void;
   setShowSpeakingIntro: (show: boolean) => void;
   setShowToeflTest: (show: boolean) => void;
+  onReviewTest?: (testNumber: number, section: string) => void;
   TPOCard: any;
   TestCard: any;
   advertisements?: Advertisement[];
@@ -56,6 +57,7 @@ export function TPOPage({
   setShowWritingIntro,
   setShowSpeakingIntro,
   setShowToeflTest,
+  onReviewTest,
   TPOCard,
   TestCard,
   advertisements
@@ -262,6 +264,15 @@ export function TPOPage({
                     setShowToeflTest(true);
                   }
                 };
+
+                const handleReviewTest = (section: string) => {
+                  if (onReviewTest) {
+                    onReviewTest(number, section);
+                    return;
+                  }
+
+                  handleStartTest(section);
+                };
                 
                 return (
                   <div key={number} className="w-full max-w-full">
@@ -273,6 +284,7 @@ export function TPOPage({
                         testData={tpoData}
                         customTitle={`TPO ${number}`}
                         onStartTest={handleStartTest}
+                        onReviewTest={handleReviewTest}
                       />
                     ) : (
                       <TPOCard 
@@ -281,6 +293,7 @@ export function TPOPage({
                         onUnlockClick={() => setActiveTab('Pricing')}
                         testData={tpoData}
                         onStartTest={handleStartTest}
+                        onReviewTest={handleReviewTest}
                       />
                     )}
                   </div>

@@ -35,6 +35,7 @@ interface ListeningM1WrapperProps {
   initialScreen: M1Screen;
   onHome: () => void;
   onComplete: () => void; // Called when Module2Intro → Next is clicked
+  onScreenChange?: (screen: M1Screen) => void;
 }
 
 // Question data for each Q screen
@@ -622,7 +623,7 @@ function Module2IntroScreen({
 // Main Wrapper Component
 // ============================================================================
 
-export function ListeningM1Wrapper({ initialScreen, onHome, onComplete }: ListeningM1WrapperProps) {
+export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreenChange }: ListeningM1WrapperProps) {
   const [currentScreen, setCurrentScreen] = useState<M1Screen>(initialScreen);
   
   // Auto-save progress
@@ -658,6 +659,10 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete }: Listen
       clearProgress();
     }
   }, [currentScreen]);
+
+  useEffect(() => {
+    onScreenChange?.(currentScreen);
+  }, [currentScreen, onScreenChange]);
 
   const currentIndex = SCREEN_ORDER.indexOf(currentScreen);
 

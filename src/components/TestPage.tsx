@@ -37,6 +37,7 @@ interface TestPageProps {
   setShowWritingIntro: (show: boolean) => void;
   setShowSpeakingIntro: (show: boolean) => void;
   setShowToeflTest: (show: boolean) => void;
+  onReviewTest?: (testNumber: number, section: string) => void;
   TestCard: any;
   advertisements?: Advertisement[];
 }
@@ -55,6 +56,7 @@ export function TestPage({
   setShowWritingIntro,
   setShowSpeakingIntro,
   setShowToeflTest,
+  onReviewTest,
   TestCard,
   advertisements
 }: TestPageProps) {
@@ -256,6 +258,15 @@ export function TestPage({
                     setShowToeflTest(true);
                   }
                 };
+
+                const handleReviewTest = (section: string) => {
+                  if (onReviewTest) {
+                    onReviewTest(number, section);
+                    return;
+                  }
+
+                  handleStartTest(section);
+                };
                 
                 return (
                   <div key={number} className="w-full max-w-full">
@@ -265,6 +276,7 @@ export function TestPage({
                       onUnlockClick={() => setActiveTab('Pricing')}
                       testData={testData}
                       onStartTest={handleStartTest}
+                      onReviewTest={handleReviewTest}
                     />
                   </div>
                 );

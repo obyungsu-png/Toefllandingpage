@@ -56,6 +56,7 @@ interface ListeningM2WrapperProps {
   onVolumeClick: () => void;
   /** Called when user clicks Back on Q1 (go back to M1) */
   onBackToM1?: () => void;
+  onScreenChange?: (screen: M2Screen) => void;
 }
 
 export function ListeningM2Wrapper({
@@ -64,6 +65,7 @@ export function ListeningM2Wrapper({
   onComplete,
   onVolumeClick,
   onBackToM1,
+  onScreenChange,
 }: ListeningM2WrapperProps) {
   const [screen, setScreen] = useState<M2Screen>(initialScreen);
   
@@ -101,6 +103,10 @@ export function ListeningM2Wrapper({
       clearProgress();
     }
   }, [screen]);
+
+  useEffect(() => {
+    onScreenChange?.(screen);
+  }, [onScreenChange, screen]);
 
   const goNext = () => {
     const idx = M2_SCREEN_ORDER.indexOf(screen);

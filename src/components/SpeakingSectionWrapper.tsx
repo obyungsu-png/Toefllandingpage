@@ -76,6 +76,7 @@ interface SpeakingSectionWrapperProps {
   onComplete: () => void;
   questions?: TPOQuestion[]; // Optional questions from CMS
   testData?: TPOTest | null;
+  onScreenChange?: (screen: SpeakingScreen) => void;
 }
 
 export function SpeakingSectionWrapper({
@@ -84,6 +85,7 @@ export function SpeakingSectionWrapper({
   onComplete,
   questions = [],
   testData = null,
+  onScreenChange,
 }: SpeakingSectionWrapperProps) {
   const [screen, setScreen] = useState<SpeakingScreen>(initialScreen);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
@@ -121,6 +123,10 @@ export function SpeakingSectionWrapper({
       clearProgress();
     }
   }, [screen]);
+
+  useEffect(() => {
+    onScreenChange?.(screen);
+  }, [onScreenChange, screen]);
 
   const goNext = () => {
     const idx = SPEAKING_SCREEN_ORDER.indexOf(screen);

@@ -47,12 +47,14 @@ interface WritingSectionWrapperProps {
   initialScreen: WritingScreen;
   onHome: () => void;
   onComplete: () => void;
+  onScreenChange?: (screen: WritingScreen) => void;
 }
 
 export function WritingSectionWrapper({
   initialScreen,
   onHome,
   onComplete,
+  onScreenChange,
 }: WritingSectionWrapperProps) {
   const [screen, setScreen] = useState<WritingScreen>(initialScreen);
   
@@ -89,6 +91,10 @@ export function WritingSectionWrapper({
       clearProgress();
     }
   }, [screen]);
+
+  useEffect(() => {
+    onScreenChange?.(screen);
+  }, [onScreenChange, screen]);
 
   const goNext = () => {
     const idx = WRITING_SCREEN_ORDER.indexOf(screen);
