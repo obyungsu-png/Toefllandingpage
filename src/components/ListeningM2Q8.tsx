@@ -88,13 +88,11 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick }: Listeni
         <div className="max-w-5xl mx-auto">
           {/* Mobile: Image -> Question -> Options */}
           <div className="md:hidden flex flex-col items-center">
-            <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
-              <ImageWithFallback 
-                src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
-                alt="Woman in yellow blazer"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <ImageWithFallback 
+              src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
+              alt="Woman in yellow blazer"
+              className="w-40 h-auto object-contain mb-6"
+            />
             
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
               Choose the best response.
@@ -123,13 +121,11 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick }: Listeni
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
             <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
               <div className="flex-shrink-0">
-                <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                  <ImageWithFallback 
-                    src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
-                    alt="Woman in yellow blazer"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                <ImageWithFallback 
+                  src="figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png" 
+                  alt="Woman in yellow blazer"
+                  className="w-80 h-auto object-contain"
+                />
               </div>
               <div className="flex-1 max-w-xl mt-8">
                 <div className="space-y-6">
