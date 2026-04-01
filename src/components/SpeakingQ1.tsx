@@ -17,8 +17,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
   useEffect(() => {
     const textToRead = "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
     let fallbackTimer: number | undefined;
-
-    let ttsStarted = false;
     let ttsEnded = false;
 
     if ('speechSynthesis' in window) {
@@ -66,7 +64,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
 
       utterance.onstart = () => {
         setIsAudioPlaying(true);
-        ttsStarted = true;
       };
       utterance.onend = () => {
         setIsAudioPlaying(false);
@@ -80,34 +77,25 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
         window.speechSynthesis.speak(utterance);
       }, 500);
 
-      // Fallback: 만약 TTS가 5초 내에 끝나지 않으면 강제로 onNext 호출
+      // Fallback: 만약 TTS가 8초 내에 끝나지 않으면 강제로 onNext 호출
       fallbackTimer = window.setTimeout(() => {
         if (!ttsEnded) {
           window.speechSynthesis.cancel();
           onNext?.();
         }
-      }, 5000);
+      }, 8000);
 
       return () => {
         window.speechSynthesis.cancel();
         if (fallbackTimer) clearTimeout(fallbackTimer);
       };
     } else {
-      // Fallback: TTS 미지원 환경에서도 5초 후 자동 진행
-      fallbackTimer = window.setTimeout(() => {
-        onNext?.();
-      }, 5000);
+      // Fallback: TTS 미지원 환경에서는 사용자 입력 대기 (자동 진행 없음)
+      setIsAudioPlaying(false);
       return () => {
         if (fallbackTimer) clearTimeout(fallbackTimer);
       };
     }
-    setIsAudioPlaying(true);
-    const timer = setTimeout(() => {
-      setIsAudioPlaying(false);
-      onNext?.();
-    }, 4500);
-
-    return () => clearTimeout(timer);
   }, [onNext]);
 
   return (
