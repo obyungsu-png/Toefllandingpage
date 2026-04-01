@@ -205,7 +205,55 @@ function getDummyQuestion(section: ReviewSection, questionType: string): TPOQues
     };
   }
 
-  // 객관식 샘플
+  // Writing 섹션 - 객관식 예제
+  if (section === 'Writing' && normalizeType(questionType).includes('multiple choice')) {
+    return {
+      id: 'dummy-writing-mc',
+      questionNumber: 1,
+      questionText: 'Which word would best complete the sentence: "The scholar argued that the research _____ further investigation."',
+      questionType,
+      options: [
+        'A. required',
+        'B. requiring',
+        'C. requirement',
+        'D. requires'
+      ],
+      correctAnswer: 'A. required',
+      explanation: 'The past participle "required" correctly completes the passive construction.',
+      difficulty: '보통',
+    };
+  }
+
+  // Writing 섹션 - 빈칸 채우기 예제
+  if (section === 'Writing' && normalizeType(questionType).includes('complete')) {
+    return {
+      id: 'dummy-writing-fill',
+      questionNumber: 1,
+      questionText: 'Though the conditions were not ideal, the expedition continued [onward:7].',
+      questionType,
+      blanks: [
+        { answer: 'onward', maxLength: 7 }
+      ],
+      explanation: '"Onward" is the correct completion that maintains the sentence meaning.',
+      difficulty: '보통',
+    };
+  }
+
+  // Writing 섹션 - 문장 구성 예제
+  if (section === 'Writing' && (normalizeType(questionType).includes('build') || normalizeType(questionType).includes('sentence'))) {
+    return {
+      id: 'dummy-writing-build',
+      questionNumber: 1,
+      questionText: 'Make an appropriate sentence.',
+      questionType,
+      words: ['was', 'the', 'conference', 'very', 'informative'],
+      correctAnswer: 'The conference was very informative',
+      explanation: '단어들을 올바른 순서로 배열하여 문법적으로 올바른 문장을 구성합니다.',
+      difficulty: '보통',
+    };
+  }
+
+  // 객관식 샘플 (Reading/Listening)
   if (questionType.includes('Read in Daily') || questionType.includes('Factual') || questionType.includes('Multiple Choice')) {
     return {
       id: 'dummy-mc',
@@ -246,13 +294,17 @@ function getDummyQuestion(section: ReviewSection, questionType: string): TPOQues
     };
   }
   // 서술형 샘플
-  if (questionType.includes('Open Response') || questionType.includes('Essay') || questionType.includes('Discussion')) {
+  if (questionType.includes('Open Response') || questionType.includes('Essay') || questionType.includes('Discussion') || questionType.includes('Email')) {
     return {
       id: 'dummy-open',
       questionNumber: 1,
-      questionText: 'Explain the importance of recycling in modern society.',
+      questionText: questionType.includes('Email')
+        ? 'Write an email to the professor explaining why you missed class.'
+        : 'Explain the importance of recycling in modern society.',
       questionType,
-      explanation: 'Recycling helps conserve resources and reduce pollution.',
+      explanation: questionType.includes('Email')
+        ? 'You should write a formal email with clear subject line and polite tone.'
+        : 'Recycling helps conserve resources and reduce pollution.',
       difficulty: '보통',
     };
   }
