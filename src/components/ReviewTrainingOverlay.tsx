@@ -176,7 +176,6 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   const [blankInputs, setBlankInputs] = useState<string[]>([]);
   const [sentenceAnswer, setSentenceAnswer] = useState('');
   const [writtenAnswer, setWrittenAnswer] = useState('');
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     setSelectedOptionIndex(null);

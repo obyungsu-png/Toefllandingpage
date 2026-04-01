@@ -212,8 +212,8 @@ export function QuestionReviewFull({
     return qs;
   })();
 
-  // Writing questions count
-  const writingQuestionCount = activeSection === 'Writing' ? 10 : 0;
+  // Writing questions count (1 per task: email vs academic discussion)
+  const writingQuestionCount = activeSection === 'Writing' ? 1 : 0;
   const writingConversations = sampleWritingConversations;
   
   // Speaking questions
@@ -342,8 +342,12 @@ export function QuestionReviewFull({
   const currentSpeakingQ = speakingQs[currentQuestionIndex] || speakingQs[0];
   const currentWritingConv = writingConversations[currentQuestionIndex % writingConversations.length];
 
-  // Module tabs: Writing uses Task1/Task2, Speaking uses Task1/Task2
-  const moduleLabel = (activeSection === 'Writing' || activeSection === 'Speaking') ? 'Task' : 'Module';
+  // Module tab label helper
+  const getModuleTabLabel = (mod: number) => {
+    if (activeSection === 'Writing') return mod === 1 ? 'Writing an Email' : 'Academic Discussion';
+    if (activeSection === 'Speaking') return `Task ${mod}`;
+    return `Module ${mod}`;
+  };
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
@@ -392,7 +396,7 @@ export function QuestionReviewFull({
                     : 'border-transparent text-gray-400 hover:text-gray-600'
                 }`}
               >
-                {moduleLabel} {mod}
+                {getModuleTabLabel(mod)}
               </button>
             ))}
           </div>
@@ -402,28 +406,10 @@ export function QuestionReviewFull({
         <div className="flex items-center justify-between mt-3">
           {/* Question Pills */}
           <div className="flex flex-wrap gap-1.5">
-            {activeSection === 'Writing' && writingPills.map((q, idx) => {
-              const isCurrent = idx === currentQuestionIndex;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
-                    isCurrent
-                      ? 'text-white shadow-lg scale-110'
-                      : q.isCorrect
-                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
-                      : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
-                  }`}
-                  style={{
-                    backgroundColor: isCurrent ? themeColor : undefined,
-                    borderColor: isCurrent ? themeColor : undefined
-                  }}
-                >
-                  Q{q.number}
-                </button>
-              );
-            })}
+            {activeSection === 'Writing' && (
+              // Writing has 1 essay question per task — no pill navigation needed
+              <span className="text-xs text-gray-400">1 question</span>
+            )}
             {activeSection === 'Speaking' && speakingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
               return (
@@ -706,99 +692,151 @@ export function QuestionReviewFull({
 
         {/* ===== WRITING CONTENT ===== */}
         {activeSection === 'Writing' && (
-          <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
-            <>
-              <div
-                key={`writing-${currentQuestionIndex}`}
-                className="animate-[fadeIn_0.2s_ease-out]"
-              >
-                <p className="text-sm text-gray-500 mb-6">
-                  Question {currentQuestionIndex + 1} of {totalQuestions}
-                </p>
-
-                {/* Conversation bubbles */}
-                <div className="space-y-8 mb-8">
-                  {currentWritingConv?.map((msg, msgIdx) => (
-                    <div key={msgIdx} className="flex items-start gap-4">
-                      <ImageWithFallback
-                        src={msg.avatar}
-                        alt={`Speaker ${msg.speaker}`}
-                        className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-gray-200"
-                      />
-                      <div className="flex-1">
-                        {msg.blanks ? (
-                          <p className="text-base text-gray-900 leading-loose">
-                            {msg.text}{' '}
-                            {msg.blanks.map((blank, bi) => (
-                              <span key={bi}>
-                                <span
-                                  className={`inline-block px-2 py-0.5 mx-0.5 rounded border-b-2 text-sm font-medium ${
-                                    blank.isCorrect
-                                      ? 'text-blue-600 border-blue-400 bg-blue-50'
-                                      : 'text-red-600 border-red-400 bg-red-50 line-through'
-                                  }`}
-                                >
-                                  {blank.isCorrect ? blank.word : blank.userWord || blank.word}
-                                </span>
-                                {!blank.isCorrect && (
-                                  <span className="inline-block px-2 py-0.5 mx-0.5 rounded border-b-2 text-sm font-medium text-emerald-600 border-emerald-400 bg-emerald-50">
-                                    {blank.word}
-                                  </span>
-                                )}
-                              </span>
-                            ))}
-                            {' ?'}
-                          </p>
-                        ) : (
-                          <p className="text-base text-gray-900">{msg.text}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+          <div className="flex-1 flex flex-col md:flex-row overflow-auto">
+            {/* ---- Writing 1: Writing an Email ---- */}
+            {activeModule === 1 && (
+              <>
+                {/* Left: Prompt */}
+                <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-base text-gray-800 leading-relaxed mb-4">
+                    A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.
+                  </p>
+                  <p className="text-base text-gray-800 font-bold mb-3">
+                    Write an email to the editor of the magazine. In your email, do the following.
+                  </p>
+                  <ul className="space-y-2 mb-4">
+                    <li className="flex items-start gap-2">
+                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                      <span className="text-base text-gray-800">Tell the editor what you like about the new magazine.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                      <span className="text-base text-gray-800">Describe the problem you experienced.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                      <span className="text-base text-gray-800">Ask about the status of your submissions.</span>
+                    </li>
+                  </ul>
+                  <p className="text-base text-gray-800">Write as much as you can and in complete sentences.</p>
                 </div>
-
-                {/* Answer Summary for Writing */}
-                <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-600">
-                      Correct words: <strong className="text-emerald-600">
-                        {currentWritingConv?.reduce((acc, msg) => acc + (msg.blanks?.filter(b => b.isCorrect).length || 0), 0) || 0}
-                      </strong> / {currentWritingConv?.reduce((acc, msg) => acc + (msg.blanks?.length || 0), 0) || 0}
-                    </span>
+                {/* Right: Email response area */}
+                <div className="md:w-2/3 p-4 md:p-8 overflow-auto bg-gray-50">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Your Response:</h3>
+                  <div className="mb-3 text-sm text-gray-700">
+                    <span className="font-bold">To:</span> editor@sunshinepoetymagazine.com
                   </div>
-                  <button
-                    onClick={() => toggleBookmark(`writing-${currentQuestionIndex}`)}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
-                  >
-                    {bookmarkedQuestions.has(`writing-${currentQuestionIndex}`) ? (
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    ) : (
-                      <StarOff className="w-4 h-4" />
-                    )}
-                    <span>{bookmarkedQuestions.has(`writing-${currentQuestionIndex}`) ? 'Bookmarked' : 'Bookmark'}</span>
-                  </button>
+                  <div className="mb-5 text-sm text-gray-700">
+                    <span className="font-bold">Subject:</span> Problem using submission form
+                  </div>
+                  <div className="bg-white border border-gray-300 rounded-lg p-4 min-h-48 text-sm text-gray-500 italic">
+                    {result.wrongAnswers[0]?.userAnswer || '(No written response stored)'}
+                  </div>
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => toggleBookmark('writing-email')}
+                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                    >
+                      {bookmarkedQuestions.has('writing-email') ? (
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      ) : (
+                        <StarOff className="w-4 h-4" />
+                      )}
+                      <span>{bookmarkedQuestions.has('writing-email') ? 'Bookmarked' : 'Bookmark'}</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </>
+              </>
+            )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pb-6">
-              <button
-                onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                ← Previous
-              </button>
-              <button
-                onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
-                disabled={currentQuestionIndex === totalQuestions - 1}
-                className="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                style={{ backgroundColor: themeColor }}
-              >
-                Next →
-              </button>
-            </div>
+            {/* ---- Writing 2: Academic Discussion ---- */}
+            {activeModule === 2 && (
+              <>
+                {/* Left: Professor prompt */}
+                <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-base text-gray-800 leading-relaxed mb-4 font-serif">
+                    Your professor is teaching a class on social studies. Write a post responding to the professor's question.
+                  </p>
+                  <div className="mb-4">
+                    <p className="text-base font-semibold text-gray-900 mb-2 font-serif">In your response, you should do the following.</p>
+                    <ul className="space-y-1 ml-4">
+                      <li className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                        <span className="text-base text-gray-800 font-serif">Express and support your opinion.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
+                        <span className="text-base text-gray-800 font-serif">Make a contribution to the discussion in your own words.</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <p className="text-base text-gray-800 mb-6 font-serif">An effective response will contain at least 100 words.</p>
+                  <div className="border-t border-gray-300 pt-6">
+                    <div className="flex flex-col items-center mb-4">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] mb-2">
+                        <ImageWithFallback
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face"
+                          alt="Professor"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="font-bold text-lg text-gray-900 font-serif">Dr. Achebe</p>
+                    </div>
+                    <p className="text-base text-gray-800 leading-relaxed font-serif">
+                      Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?
+                    </p>
+                  </div>
+                </div>
+                {/* Right: Student responses + user response */}
+                <div className="md:w-2/3 p-4 md:p-8 overflow-auto bg-[#f8f7f3]">
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                        <ImageWithFallback
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face"
+                          alt="Student 1"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-base text-gray-800 leading-relaxed font-serif">
+                        Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.
+                      </p>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                        <ImageWithFallback
+                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face"
+                          alt="Student 2"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-base text-gray-800 leading-relaxed font-serif">
+                        I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#ddd4c4]">
+                    <h3 className="text-xl font-bold text-gray-800 mb-3 font-serif">Your Response:</h3>
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 min-h-40 text-sm text-gray-500 italic font-serif">
+                      {result.wrongAnswers[1]?.userAnswer || '(No written response stored)'}
+                    </div>
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={() => toggleBookmark('writing-discussion')}
+                        className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                      >
+                        {bookmarkedQuestions.has('writing-discussion') ? (
+                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        ) : (
+                          <StarOff className="w-4 h-4" />
+                        )}
+                        <span>{bookmarkedQuestions.has('writing-discussion') ? 'Bookmarked' : 'Bookmark'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

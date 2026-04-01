@@ -138,16 +138,19 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
                 <thead>
                   <tr className="bg-[#B3A497]">
                     <th className="border-2 border-gray-400 px-4 py-3 text-left font-['Inter',_sans-serif] font-bold text-gray-800">Type of Task</th>
+                    <th className="border-2 border-gray-400 px-4 py-3 text-center font-['Inter',_sans-serif] font-bold text-gray-800">Questions</th>
                     <th className="border-2 border-gray-400 px-4 py-3 text-left font-['Inter',_sans-serif] font-bold text-gray-800">Description</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-white">
                     <td className="border-2 border-gray-400 px-4 py-3 font-['Inter',_sans-serif] text-gray-700">Listen and Repeat</td>
+                    <td className="border-2 border-gray-400 px-4 py-3 text-center font-['Inter',_sans-serif] font-bold text-gray-700">7</td>
                     <td className="border-2 border-gray-400 px-4 py-3 font-['Inter',_sans-serif] text-gray-700">Listen and repeat what you heard</td>
                   </tr>
                   <tr className="bg-white">
                     <td className="border-2 border-gray-400 px-4 py-3 font-['Inter',_sans-serif] text-gray-700">Take an Interview</td>
+                    <td className="border-2 border-gray-400 px-4 py-3 text-center font-['Inter',_sans-serif] font-bold text-gray-700">4</td>
                     <td className="border-2 border-gray-400 px-4 py-3 font-['Inter',_sans-serif] text-gray-700">Answer questions from the interviewer</td>
                   </tr>
                 </tbody>
