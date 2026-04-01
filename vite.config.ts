@@ -104,7 +104,6 @@
             'react-panels': ['react-resizable-panels'],
             'sonner': ['sonner'],
             'carousel': ['embla-carousel-react'],
-            'papaparse': ['papaparse'],
           }
         }
       }
