@@ -275,6 +275,9 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const [blankInputs, setBlankInputs] = useState<string[]>([]);
+  const [sentenceAnswer, setSentenceAnswer] = useState('');
+  const [writtenAnswer, setWrittenAnswer] = useState('');
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -287,9 +290,6 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   const fillInlineParts = useMemo(() => (current ? getFillInlineParts(current, fillBlankSpecs) : []), [current, fillBlankSpecs]);
   const isLast = currentIndex === questions.length - 1;
   const progress = ((currentIndex + 1) / (questions.length || 1)) * 100;
-  const [blankInputs, setBlankInputs] = useState<string[]>([]);
-  const [sentenceAnswer, setSentenceAnswer] = useState('');
-  const [writtenAnswer, setWrittenAnswer] = useState('');
 
   useEffect(() => {
     setSelectedOptionIndex(null);
@@ -312,11 +312,9 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
     );
   }
 
-  // 문제 유형별로 TrainingInterface와 동일하게 분기 렌더링
   const mode = current ? getTrainingMode(current, section, questionType) : 'open-response';
   const correctOptionIndex = getCorrectOptionIndex(current);
 
-  // 정답 체크 로직
   const objectiveResult = (() => {
     if (mode === 'multiple-choice') {
       return selectedOptionIndex === correctOptionIndex;
@@ -352,7 +350,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
       return;
     }
     setSelectedOptionIndex(null);
-    setBlankInputs(current?.blanks ? Array(current.blanks.length).fill('') : []);
+    setBlankInputs(Array(fillBlankSpecs.length).fill(''));
     setSentenceAnswer('');
     setWrittenAnswer('');
     setChecked(false);
@@ -360,250 +358,189 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   };
 
   return (
-    <div className={`fixed inset-0 z-[95] overflow-y-auto bg-gradient-to-br ${theme.bg}`}>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-8rem] top-[-7rem] h-72 w-72 rounded-full opacity-25 blur-3xl" style={{ backgroundColor: theme.card }} />
-        <div className="absolute bottom-[-8rem] right-[-6rem] h-80 w-80 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: theme.accent }} />
+    <div className={`fixed inset-0 z-[95] overflow-y-auto bg-white`}>
+      {/* Header */}
+      <div className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex-1 h-1.5 bg-gray-200 rounded-full max-w-xs overflow-hidden">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ width: `${progress}%`, backgroundColor: theme.card }}
+            />
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
-      <div className="relative flex min-h-screen items-center justify-center px-3 py-6 sm:px-6 sm:py-10">
-        <div className="relative w-full max-w-4xl rounded-[34px] border border-white/70 bg-white/88 p-4 shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl sm:p-6 lg:p-7">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-xs font-semibold text-[#334155] shadow-[0_10px_24px_rgba(15,23,42,0.10)] backdrop-blur sm:right-5 sm:top-5"
-          >
-            <X className="h-3.5 w-3.5" />
-            닫기
-          </button>
+      {/* Main Content */}
+      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-2xl">
+          {/* Question Number and Title */}
+          <div className="mb-8">
+            <div className="text-sm font-semibold text-gray-500 mb-2">Question {currentIndex + 1} of {questions.length}</div>
+            <h2 className="text-2xl font-bold text-gray-900">{current.questionText}</h2>
+          </div>
 
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-6">
-            <div className="rounded-[28px] border px-4 py-5 sm:px-5 sm:py-6" style={{ borderColor: theme.border, background: `linear-gradient(180deg, ${theme.soft} 0%, rgba(255,255,255,0.92) 100%)` }}>
-              <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ borderColor: theme.border, color: theme.accent, backgroundColor: '#ffffffcc' }}>
-                <Sparkles className="h-3.5 w-3.5" />
-                {section} Training
+          {/* Multiple Choice */}
+          {mode === 'multiple-choice' && (
+            <div className="space-y-3 mb-8">
+              {current.options?.map((option, index) => {
+                const isCorrect = checked && index === correctOptionIndex;
+                const isWrong = checked && selectedOptionIndex === index && index !== correctOptionIndex;
+                const isSelected = selectedOptionIndex === index;
+
+                return (
+                  <button
+                    key={`${current.id}-option-${index}`}
+                    type="button"
+                    onClick={() => !checked && setSelectedOptionIndex(index)}
+                    disabled={checked}
+                    className={`w-full text-left px-6 py-4 border-2 rounded-lg font-medium transition-all ${
+                      isCorrect
+                        ? 'border-green-500 bg-green-50 text-green-900'
+                        : isWrong
+                          ? 'border-red-500 bg-red-50 text-red-900'
+                          : isSelected
+                            ? 'border-blue-500 bg-blue-50 text-blue-900'
+                            : 'border-gray-300 bg-white text-gray-900 hover:border-gray-400'
+                    }`}
+                  >
+                    <span className="text-lg font-bold mr-4">{String.fromCharCode(65 + index)}.</span>
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Fill in Blanks */}
+          {mode === 'fill-blanks' && (
+            <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+              <div className="text-lg leading-relaxed text-gray-900">
+                {fillInlineParts.map((part, partIndex) => {
+                  if (part.type === 'text') {
+                    return <span key={`text-${partIndex}`}>{part.value}</span>;
+                  }
+
+                  const value = blankInputs[part.blankIndex] || '';
+                  const expectedLength = Math.max(part.maxLength, 2);
+                  const width = Math.max(expectedLength * 12, 40);
+                  const isCorrect = checked && normalizeAnswer(value) === normalizeAnswer(fillBlankSpecs[part.blankIndex]?.answer || '');
+
+                  return (
+                    <input
+                      key={`blank-${partIndex}`}
+                      value={value}
+                      disabled={checked}
+                      onChange={(event) => {
+                        const next = [...blankInputs];
+                        next[part.blankIndex] = event.target.value;
+                        setBlankInputs(next);
+                      }}
+                      className={`mx-1 inline-block px-2 py-1 bg-gray-300 border-b-2 text-gray-900 font-medium outline-none ${
+                        checked ? (isCorrect ? 'border-green-500 bg-green-100' : 'border-red-500 bg-red-100') : 'border-gray-400'
+                      }`}
+                      style={{ width: `${width}px` }}
+                    />
+                  );
+                })}
               </div>
+            </div>
+          )}
 
-              <h2 className="mt-4 max-w-[24rem] text-2xl font-bold leading-9 text-[#0f172a] sm:text-[1.9rem]">{title}</h2>
-              <p className="mt-3 text-sm leading-6 text-[#64748b]">비슷한 유형의 문제를 먼저 풀고 감각을 유지한 뒤 원래 문제로 돌아갑니다.</p>
-
-              <div className="mt-6 rounded-[24px] border bg-white/80 p-4" style={{ borderColor: theme.border }}>
-                <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[#0f172a]">
-                  <span>진행 상태</span>
-                  <span>{currentIndex + 1} / {questions.length}</span>
-                </div>
-
-                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
-                  <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${theme.card} 0%, ${theme.accent} 100%)` }} />
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {questions.map((_, index) => {
-                    const isCurrent = index === currentIndex;
-                    const isComplete = index < currentIndex || (checked && index === currentIndex && (mode === 'open-response' || objectiveResult));
-
-                    return (
-                      <div
-                        key={`step-${index}`}
-                        className={`rounded-2xl border px-3 py-3 text-center text-xs font-semibold transition-all ${
-                          isCurrent ? 'text-white shadow-[0_12px_28px_rgba(15,23,42,0.16)]' : isComplete ? 'bg-white text-[#0f172a]' : 'bg-white/55 text-[#64748b]'
-                        }`}
-                        style={{
-                          borderColor: isCurrent || isComplete ? theme.border : '#e2e8f0',
-                          background: isCurrent ? `linear-gradient(135deg, ${theme.card} 0%, ${theme.accent} 100%)` : undefined,
-                        }}
-                      >
-                        Q{index + 1}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {checked && selectedIndex === current.answerIndex ? (
-                <div className="mt-5 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-                  <CheckCircle2 className="h-4 w-4" />
-                  정답입니다. 같은 흐름으로 다음 문제까지 이어가면 됩니다.
-                </div>
-              ) : (
-                <div className="mt-5 rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-sm leading-6 text-[#64748b]">
-                  답을 고른 뒤 정답 확인을 누르면 해설이 바로 아래에 표시됩니다.
+          {/* Listen and Repeat / Open Response */}
+          {(mode === 'listen-repeat' || mode === 'open-response') && (
+            <div className="mb-8 space-y-4">
+              {(current.audioUrl || current.passageAudioUrl) && (
+                <div className="p-4 bg-gray-100 rounded-lg">
+                  <audio controls className="w-full" src={current.audioUrl || current.passageAudioUrl} />
                 </div>
               )}
+              <textarea
+                value={mode === 'listen-repeat' ? writtenAnswer : writtenAnswer}
+                onChange={(event) => setWrittenAnswer(event.target.value)}
+                disabled={checked}
+                className="w-full min-h-[200px] p-4 border-2 border-gray-300 rounded-lg text-gray-900 outline-none focus:border-blue-500"
+                placeholder={mode === 'listen-repeat' ? '들은 내용을 입력하세요' : '답변을 입력하세요'}
+              />
             </div>
+          )}
 
-            <div className="relative overflow-hidden rounded-[28px] border bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:p-6" style={{ borderColor: theme.border }}>
-              <div className="absolute right-[-3rem] top-[-4rem] h-36 w-36 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: theme.card }} />
-
-              <div className="relative">
-                <div>
-                  <div className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white" style={{ backgroundColor: theme.card }}>
-                    Question {currentIndex + 1}
-                  </div>
-                  <h3 className="mt-4 text-xl font-bold leading-8 text-[#0f172a] sm:text-[1.45rem]">{current.questionText}</h3>
-                </div>
-
-                {mode === 'multiple-choice' && (
-                  <div className="mt-6 space-y-3">
-                    {current.options?.map((option, index) => {
-                      const isCorrect = checked && index === correctOptionIndex;
-                      const isWrong = checked && selectedOptionIndex === index && index !== correctOptionIndex;
-
-                      return (
-                        <button
-                          key={`${current.id}-option-${index}`}
-                          type="button"
-                          onClick={() => !checked && setSelectedOptionIndex(index)}
-                          className={`w-full rounded-[22px] border px-4 py-4 text-left text-sm font-medium transition-all duration-200 sm:px-5 sm:py-4 ${
-                            isCorrect
-                              ? 'border-green-500 bg-green-50 text-green-700 shadow-[0_10px_28px_rgba(34,197,94,0.12)]'
-                              : isWrong
-                                ? 'border-red-400 bg-red-50 text-red-700 shadow-[0_10px_28px_rgba(248,113,113,0.12)]'
-                                : selectedOptionIndex === index
-                                  ? 'border-slate-400 bg-slate-50 text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.08)]'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <span>{option}</span>
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-[#64748b]">
-                              {String.fromCharCode(65 + index)}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {mode === 'fill-blanks' && (
-                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-[#f6f6f6] p-5 sm:p-6">
-                    <h4 className="mb-6 text-center text-2xl font-bold text-black">{current.questionText}</h4>
-                    <div className="text-[1.28rem] leading-[1.9] text-black whitespace-pre-wrap">
-                      {fillInlineParts.map((part, partIndex) => {
-                        if (part.type === 'text') {
-                          return <span key={`text-${partIndex}`}>{part.value}</span>;
-                        }
-
-                        const value = blankInputs[part.blankIndex] || '';
-                        const expectedLength = Math.max(part.maxLength, 2);
-                        const width = Math.max(expectedLength * 20, 44);
-                        const isCorrect = checked && normalizeAnswer(value) === normalizeAnswer(fillBlankSpecs[part.blankIndex]?.answer || '');
-
-                        return (
-                          <input
-                            key={`blank-${partIndex}`}
-                            value={value}
-                            disabled={checked}
-                            onChange={(event) => {
-                              const next = [...blankInputs];
-                              next[part.blankIndex] = event.target.value;
-                              setBlankInputs(next);
-                            }}
-                            className={`mx-1 inline-block h-[1.55em] rounded-[4px] bg-[#d8d8d8] px-1 align-baseline text-black outline-none ${
-                              checked ? (isCorrect ? 'ring-2 ring-green-400' : 'ring-2 ring-red-300') : ''
-                            }`}
-                            style={{ width: `${width}px` }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {mode === 'listen-repeat' && (
-                  <div className="mt-6 space-y-4 rounded-[24px] border border-slate-200 bg-[#f8f7ff] p-4 sm:p-5">
-                    {(current.audioUrl || current.passageAudioUrl) && (
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                          <Headphones className="h-4 w-4" />
-                          Audio
-                        </div>
-                        <audio controls className="w-full" src={current.audioUrl || current.passageAudioUrl} />
-                      </div>
-                    )}
-
-                    <textarea
-                      value={writtenAnswer}
-                      onChange={(event) => setWrittenAnswer(event.target.value)}
-                      disabled={checked}
-                      className="min-h-[180px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
-                      placeholder="들은 문장을 입력하거나, 말한 내용을 텍스트로 정리해 보세요"
-                    />
-                  </div>
-                )}
-
-                {mode === 'build-sentence' && (
-                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
-                    <div className="flex flex-wrap gap-2">
-                      {current.words?.map((word) => (
-                        <span key={`${current.id}-${word}`} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
-                          {word}
-                        </span>
-                      ))}
-                    </div>
-                    <textarea
-                      value={sentenceAnswer}
-                      onChange={(event) => setSentenceAnswer(event.target.value)}
-                      disabled={checked}
-                      className="mt-4 min-h-[140px] w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
-                      placeholder="단어를 조합해 문장을 완성해보세요"
-                    />
-                  </div>
-                )}
-
-                {mode === 'open-response' && (
-                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
-                    <textarea
-                      value={writtenAnswer}
-                      onChange={(event) => setWrittenAnswer(event.target.value)}
-                      disabled={checked}
-                      className="min-h-[220px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
-                      placeholder="실전처럼 바로 답변을 작성해보세요"
-                    />
-                  </div>
-                )}
-
-                {checked && (
-                  <div className="mt-6 rounded-[24px] border px-4 py-4 text-sm leading-6 text-slate-600" style={{ borderColor: theme.border, backgroundColor: theme.soft }}>
-                    {mode !== 'open-response' && mode !== 'listen-repeat' && (
-                      <p className={`font-semibold ${objectiveResult ? 'text-green-700' : 'text-red-700'}`}>
-                        {objectiveResult ? '정답입니다.' : '정답을 다시 확인해보세요.'}
-                      </p>
-                    )}
-                    {current.explanation && <p className={mode !== 'open-response' ? 'mt-2' : ''}>{current.explanation}</p>}
-                    {mode !== 'open-response' && mode !== 'listen-repeat' && !objectiveResult && getDisplayAnswer(current) && (
-                      <p className="mt-2 font-medium">정답: {getDisplayAnswer(current)}</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs leading-5 text-[#64748b]">정답 확인 후에는 다음 문제로 바로 넘어갈 수 있습니다.</p>
-                  {!checked ? (
-                    <button
-                      type="button"
-                      disabled={!canCheck}
-                      onClick={handleCheck}
-                      className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-                      style={{ backgroundColor: canCheck ? theme.card : '#cbd5e1' }}
-                    >
-                      {mode === 'open-response' ? '작성 완료' : '정답 확인'}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
-                      style={{ backgroundColor: theme.card }}
-                    >
-                      {isLast ? '원래 문제로 돌아가기' : '다음 문제'}
-                      {!isLast && <ArrowRight className="h-4 w-4" />}
-                    </button>
-                  )}
-                </div>
+          {/* Build Sentence */}
+          {mode === 'build-sentence' && (
+            <div className="mb-8 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {current.words?.map((word) => (
+                  <span
+                    key={`${current.id}-${word}`}
+                    className="px-3 py-2 bg-gray-200 rounded-full text-sm font-medium text-gray-900"
+                  >
+                    {word}
+                  </span>
+                ))}
               </div>
+              <textarea
+                value={sentenceAnswer}
+                onChange={(event) => setSentenceAnswer(event.target.value)}
+                disabled={checked}
+                className="w-full min-h-[150px] p-4 border-2 border-gray-300 rounded-lg text-gray-900 outline-none focus:border-blue-500"
+                placeholder="문장을 구성하세요"
+              />
             </div>
+          )}
+
+          {/* Feedback */}
+          {checked && (
+            <div className="mb-8 p-4 rounded-lg border-2" style={{
+              borderColor: objectiveResult ? '#10b981' : mode === 'open-response' ? '#6b7280' : '#ef4444',
+              backgroundColor: objectiveResult ? '#ecfdf5' : mode === 'open-response' ? '#f9fafb' : '#fef2f2'
+            }}>
+              {mode !== 'open-response' && (
+                <p style={{ color: objectiveResult ? '#065f46' : '#7c2d12' }} className="font-semibold mb-2">
+                  {objectiveResult ? '✓ 정답입니다' : '✗ 다시 확인해주세요'}
+                </p>
+              )}
+              {current.explanation && (
+                <p className="text-gray-700 text-sm leading-relaxed">{current.explanation}</p>
+              )}
+              {mode !== 'open-response' && !objectiveResult && getDisplayAnswer(current) && (
+                <p className="text-gray-700 text-sm mt-2 font-medium">정답: {getDisplayAnswer(current)}</p>
+              )}
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-4 justify-end mb-8">
+            {!checked ? (
+              <button
+                type="button"
+                disabled={!canCheck}
+                onClick={handleCheck}
+                className={`px-6 py-3 rounded-lg font-semibold text-white transition-all ${
+                  canCheck
+                    ? 'cursor-pointer hover:opacity-90'
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+                style={{ backgroundColor: theme.card }}
+              >
+                {mode === 'open-response' ? '완료' : '확인'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2 hover:opacity-90"
+                style={{ backgroundColor: theme.card }}
+              >
+                {isLast ? '완료' : '다음'}
+                {!isLast && <ArrowRight className="w-4 h-4" />}
+              </button>
+            )}
           </div>
         </div>
       </div>
