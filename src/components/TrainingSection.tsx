@@ -1,9 +1,8 @@
 import { Button } from "./ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { BookOpen, Target, BarChart3, Upload, CheckCircle, Zap, Flame, Sparkles, Hash, ArrowRight, Play } from "lucide-react";
+import { BookOpen, Target, BarChart3, Upload, CheckCircle, Zap, Play } from "lucide-react";
 // motion removed - using CSS animations
-import { AdBanner } from './AdBanner';
 import { AdModal } from './AdModal';
 import { Advertisement } from './AdManagement';
 import { TrainingInterface } from './TrainingInterface';
@@ -58,6 +57,13 @@ interface TrainingSectionProps {
   practiceResults?: any[];
 }
 
+interface ActiveTrainingSession {
+  subject: 'Reading' | 'Listening' | 'Writing' | 'Speaking' | 'Vocabulary';
+  questionType: string;
+  difficulty: '쉬움' | '보통' | '어려움';
+  questions: TPOQuestion[];
+}
+
 export function TrainingSection({ 
   uploadedFiles = [], 
   onStartTest = () => {},
@@ -78,7 +84,7 @@ export function TrainingSection({
   const [selectedDifficulty, setSelectedDifficulty] = useState<'쉬움' | '보통' | '어려움'>('보통');
   const [selectedQuestionCount, setSelectedQuestionCount] = useState('10문제');
   const [showTrainingInterface, setShowTrainingInterface] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<number>(1);
+  const [activeTrainingSession, setActiveTrainingSession] = useState<ActiveTrainingSession | null>(null);
   
   // Year/Month filters for Training
   type YearFilter = 'all' | '2024' | '2025' | '2026';
@@ -246,6 +252,22 @@ export function TrainingSection({
     return allQuestions;
   };
 
+  const getSampledQuestions = (
+    subject: string,
+    questionTypeName: string,
+    difficulty: '쉬움' | '보통' | '어려움',
+    requestedCount: number
+  ) => {
+    const pool = [...getQuestionsByDifficulty(subject, questionTypeName, difficulty)];
+
+    for (let index = pool.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [pool[index], pool[randomIndex]] = [pool[randomIndex], pool[index]];
+    }
+
+    return pool.slice(0, Math.min(requestedCount, pool.length));
+  };
+
   // Get statistics for difficulty levels
   const getDifficultyStats = (subject: string, questionTypeName: string) => {
     return {
@@ -255,58 +277,64 @@ export function TrainingSection({
     };
   };
 
-  // Handle level selection
-  const handleLevelSelect = (questionType: string, level: number) => {
-    setSelectedLevel(level);
-    setShowTrainingInterface(true);
-  };
-
-  // Handle start training - modified to show interface for Listen and Response
   const handleStartTraining = () => {
     if (!selectedQuestionType) return;
     const totalQuestions = parseInt(selectedQuestionCount, 10) || 0;
-    
-    // If "Listen and Response" is selected, show the training interface
-    if (selectedQuestionType.id === 'detail' && selectedQuestionType.name === 'Listen and Response') {
-      setShowTrainingInterface(true);
-    } else {
-      // For other types, save result and use the original behavior
-      const testInfo = {
-        title: `${selectedSubject} ${selectedQuestionType.name} 전문훈련`,
-        type: 'Training',
-        category: selectedSubject,
-        testName: `${selectedSubject} - ${selectedQuestionType.name} Training`,
-        source: "전문훈련",
-        difficulty: selectedDifficulty,
-        questionCount: selectedQuestionCount,
-        totalQuestions,
-        correctAnswers: 0,
-        wrongAnswers: [],
-        score: 0,
-        timeSpent: 0,
-        bankType: 'training',
-        trainingType: selectedQuestionType.id,
-        date: new Date().toISOString(),
-        status: 'started'
-      };
-      onStartTest(testInfo);
-      // Save result to Supabase
-      if (onSaveResult) {
-        onSaveResult({
-          ...testInfo,
-          completedAt: new Date().toISOString()
-        });
-      }
+    const sampledQuestions = getSampledQuestions(selectedSubject, selectedQuestionType.name, selectedDifficulty, totalQuestions);
+
+    if (sampledQuestions.length === 0) {
+      return;
+    }
+
+    setActiveTrainingSession({
+      subject: selectedSubject as ActiveTrainingSession['subject'],
+      questionType: selectedQuestionType.name,
+      difficulty: selectedDifficulty,
+      questions: sampledQuestions,
+    });
+    setShowTrainingInterface(true);
+
+    const testInfo = {
+      title: `${selectedSubject} ${selectedQuestionType.name} 전문훈련`,
+      type: 'Training',
+      category: selectedSubject,
+      testName: `${selectedSubject} - ${selectedQuestionType.name} Training`,
+      source: '전문훈련',
+      difficulty: selectedDifficulty,
+      questionCount: `${sampledQuestions.length}문제`,
+      totalQuestions: sampledQuestions.length,
+      correctAnswers: 0,
+      wrongAnswers: [],
+      score: 0,
+      timeSpent: 0,
+      bankType: 'training',
+      trainingType: selectedQuestionType.id,
+      date: new Date().toISOString(),
+      status: 'started'
+    };
+
+    onStartTest(testInfo);
+
+    if (onSaveResult) {
+      onSaveResult({
+        ...testInfo,
+        completedAt: new Date().toISOString()
+      });
     }
   };
 
   // Show training interface if active
-  if (showTrainingInterface) {
+  if (showTrainingInterface && activeTrainingSession) {
     return (
       <TrainingInterface
-        questionType={selectedQuestionType?.name || ''}
-        level={selectedLevel}
-        onClose={() => setShowTrainingInterface(false)}
+        subject={activeTrainingSession.subject}
+        questionType={activeTrainingSession.questionType}
+        difficulty={activeTrainingSession.difficulty}
+        questions={activeTrainingSession.questions}
+        onClose={() => {
+          setShowTrainingInterface(false);
+          setActiveTrainingSession(null);
+        }}
       />
     );
   }
@@ -466,9 +494,7 @@ export function TrainingSection({
                     {type.name}
                   </h3>
                   
-                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                    {type.description}
-                  </p>
+                  {/* 설명/부제목(Description) 제거 */}
                   
                   {uploadedCount > 0 && (
                     <div className="inline-block">
@@ -575,10 +601,20 @@ export function TrainingSection({
                 ))}
               </div>
 
+              <div className="rounded-lg border border-[#d7ecec] bg-[#f7fbfb] px-4 py-3 text-xs leading-5 text-gray-600">
+                {(() => {
+                  const availableQuestions = getQuestionsByDifficulty(selectedSubject, selectedQuestionType.name, selectedDifficulty).length;
+                  return availableQuestions > 0
+                    ? `현재 선택 기준으로 ${availableQuestions}개의 실전형 문제가 연동되어 있습니다. 유형문제 훈련은 이 문제풀에서 비슷한 난이도의 문제를 자동으로 가져옵니다.`
+                    : '현재 선택 기준으로 연동된 훈련 문제가 없습니다. 다른 난이도나 유형을 선택해주세요.';
+                })()}
+              </div>
+
               {/* 시작 버튼 */}
               <button
                 onClick={handleStartTraining}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557]"
+                disabled={getQuestionsByDifficulty(selectedSubject, selectedQuestionType.name, selectedDifficulty).length === 0}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557] disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 <Play className="h-4 w-4 fill-white" />
                 <span className="text-sm font-semibold">Start Training</span>

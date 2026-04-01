@@ -181,6 +181,46 @@ function getTrainingTitle(section: ReviewSection, variant: ReviewVariant) {
   return 'Listen and Speak 유형문제 Training';
 }
 
+function getTrainingPreview(section: ReviewSection, variant: ReviewVariant) {
+  if (section === 'Reading') {
+    return {
+      label: 'Question 2',
+      prompt: '사실 정보 문제가 나왔을 때 가장 먼저 확인해야 하는 것은 무엇인가요?',
+      options: ['문단 위치', '지문의 제목', '보기 길이', '시간 제한'],
+    };
+  }
+
+  if (section === 'Listening') {
+    return {
+      label: 'Question 3',
+      prompt: '강의 구조 문제를 풀 때 핵심 기준으로 가장 적절한 것은 무엇인가요?',
+      options: ['교수의 감정', '예시 개수', '전개 순서', '음성 길이'],
+    };
+  }
+
+  if (section === 'Writing') {
+    return {
+      label: variant === 'writing-basic' ? 'Question 1' : 'Question 2',
+      prompt: variant === 'writing-basic'
+        ? '문장 배열 문제에서 가장 먼저 해야 할 일은 무엇인가요?'
+        : '통합형 글쓰기에서 본문 첫 단락을 쓸 때 가장 먼저 정리해야 하는 것은 무엇인가요?',
+      options: variant === 'writing-basic'
+        ? ['접속사 찾기', '아무 단어부터 배치', '문장 길이 맞추기', '보기 순서 외우기']
+        : ['화려한 표현', '핵심 입장과 근거', '문장 길이', '개인 경험'],
+    };
+  }
+
+  return {
+    label: variant === 'speaking-repeat' ? 'Question 1' : 'Question 2',
+    prompt: variant === 'speaking-repeat'
+      ? '반복형 말하기에서 가장 우선해야 하는 것은 무엇인가요?'
+      : 'Interview형 스피킹 답변에서 가장 먼저 들려야 하는 것은 무엇인가요?',
+    options: variant === 'speaking-repeat'
+      ? ['모든 단어 완벽 반복', '핵심 의미 전달', '최대한 빠른 속도', '무조건 긴 답변']
+      : ['긴 배경 설명', '명확한 결론', '어려운 단어', '추가 예시'],
+  };
+}
+
 function getTabMeta(tab: string) {
   return TAB_META[tab] ?? {
     icon: Sparkles,
@@ -331,25 +371,95 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
     </div>
   );
 
-  const renderTypeTraining = () => (
-    <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-4">
-      <div className="flex items-center gap-2 text-sm font-bold text-[#111827]">
-        <ClipboardList className="h-4 w-4" />
-        <span>유형문제</span>
+  const renderTypeTraining = () => {
+    const preview = getTrainingPreview(section, variant);
+
+    return (
+      <div className="grid gap-4 lg:grid-cols-[minmax(17rem,0.92fr)_minmax(0,1.08fr)]">
+        <div className="rounded-[26px] border px-4 py-5 sm:px-5 sm:py-6" style={{ borderColor: theme.border, background: `linear-gradient(180deg, ${theme.soft} 0%, rgba(255,255,255,0.92) 100%)` }}>
+          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ borderColor: theme.border, color: theme.accent, backgroundColor: '#ffffffcc' }}>
+            <ClipboardList className="h-3.5 w-3.5" />
+            {section} Training
+          </div>
+
+          <h4 className="mt-4 text-[1.7rem] font-bold leading-tight text-[#0f172a] sm:text-[2rem]">{getTrainingTitle(section, variant)}</h4>
+          <p className="mt-3 text-sm leading-6 text-[#64748b]">현재 문제와 비슷한 유형과 난이도의 문제를 먼저 풀고, 완료하면 원래 문제 흐름으로 돌아갑니다.</p>
+
+          <div className="mt-6 rounded-[24px] border bg-white/80 p-4" style={{ borderColor: theme.border }}>
+            <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[#0f172a]">
+              <span>진행 상태</span>
+              <span>2 / 3</span>
+            </div>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
+              <div className="h-full rounded-full" style={{ width: '66%', background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }} />
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {['Q1', 'Q2', 'Q3'].map((step, index) => {
+                const isCurrent = index === 1;
+                return (
+                  <div
+                    key={step}
+                    className={`rounded-2xl border px-3 py-3 text-center text-xs font-semibold transition-all ${isCurrent ? 'text-white shadow-[0_12px_28px_rgba(15,23,42,0.16)]' : 'bg-white text-[#475569]'}`}
+                    style={{
+                      borderColor: isCurrent ? theme.border : '#e2e8f0',
+                      background: isCurrent ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` : undefined,
+                    }}
+                  >
+                    {step}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onStartTraining(getTrainingTitle(section, variant))}
+            className="mt-6 inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)]"
+            style={{ backgroundColor: theme.accent }}
+          >
+            3문제 시작하기
+          </button>
+        </div>
+
+        <div className="relative overflow-hidden rounded-[26px] border bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:p-6" style={{ borderColor: theme.border }}>
+          <div className="absolute right-[-3rem] top-[-4rem] h-36 w-36 rounded-full opacity-15 blur-3xl" style={{ backgroundColor: theme.accent }} />
+
+          <div className="relative">
+            <div className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white" style={{ backgroundColor: theme.accent }}>
+              {preview.label}
+            </div>
+            <h4 className="mt-4 text-xl font-bold leading-8 text-[#0f172a] sm:text-[1.45rem]">{preview.prompt}</h4>
+
+            <div className="mt-6 space-y-3">
+              {preview.options.map((option, index) => (
+                <div key={option} className="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-4 text-left text-sm font-medium text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:px-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>{option}</span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-[#64748b]">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-5 text-[#64748b]">실전 문제처럼 선택지를 확인하고, 정답 확인 후 다음 문제로 이어집니다.</p>
+              <button
+                type="button"
+                onClick={() => onStartTraining(getTrainingTitle(section, variant))}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white"
+                style={{ backgroundColor: theme.accent }}
+              >
+                정답 확인
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <p className="mt-3 text-xs leading-5 text-[#64748b]">
-        현재 문제와 비슷한 유형과 난이도의 3문제를 먼저 풀고, 완료하면 자동으로 원래 문제 화면으로 돌아옵니다.
-      </p>
-      <button
-        type="button"
-        onClick={() => onStartTraining(getTrainingTitle(section, variant))}
-        className="mt-4 rounded-full px-4 py-2 text-sm font-semibold text-white"
-        style={{ backgroundColor: theme.accent }}
-      >
-        3문제 시작하기
-      </button>
-    </div>
-  );
+    );
+  };
 
   const renderActiveTab = () => {
     if (!activeTab) return null;
@@ -379,8 +489,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
     return renderTypeTraining();
   };
 
+  const panelWidthClass = activeTab === '유형문제'
+    ? 'max-w-[72rem] sm:max-w-[72rem]'
+    : 'max-w-[34rem] sm:max-w-[42rem]';
+
   return (
-    <div className="fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] max-w-[30rem] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] sm:max-w-[34rem]">
+    <div className={`fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] ${panelWidthClass}`}>
       <div className="space-y-3">
         <div
           className="rounded-[30px] border border-white/70 bg-white/75 p-2 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl"
@@ -455,7 +569,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
                       {section}
                     </div>
                     <h3 className="mt-3 text-[1.1rem] font-bold leading-7 text-[#0f172a]">{activeTabMeta.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-[#64748b]">{activeTabMeta.description}</p>
+                    {/* 설명/부제목(Description) 제거 */}
                   </div>
                 </div>
 

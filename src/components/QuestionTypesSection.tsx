@@ -5,7 +5,6 @@ import { Card } from './ui/card';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 // motion removed - using CSS animations
-import { TrainingInterface } from "./TrainingInterface";
 import { DayTrainingInterface } from "./DayTrainingInterface";
 import { LMSContent } from "./LMSSection";
 import { SATVocaPage } from "./SATVocaPage";
@@ -188,9 +187,7 @@ export function QuestionTypesSection({
 }) {
   const skills: ('Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary')[] = ['Reading', 'Listening', 'Writing', 'Speaking', 'Vocabulary'];
   const currentQuestionTypes = questionTypesBySkill[activeSkill];
-  const [showTrainingInterface, setShowTrainingInterface] = useState(false);
   const [showDayTrainingInterface, setShowDayTrainingInterface] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<number>(1);
   const [selectedQuestionType, setSelectedQuestionType] = useState<string>('');
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
   const [showTemplateMastery, setShowTemplateMastery] = useState(false);
@@ -204,7 +201,6 @@ export function QuestionTypesSection({
       if (savedConfig.activeSkill && setActiveSkill) {
         setActiveSkill(savedConfig.activeSkill);
       }
-      if (savedConfig.selectedLevel) setSelectedLevel(savedConfig.selectedLevel);
     }
     // Mark as initialized after restore
     const timer = setTimeout(() => { isInitialized.current = true; }, 100);
@@ -216,10 +212,9 @@ export function QuestionTypesSection({
     if (!isInitialized.current || !onSaveConfig) return;
     onSaveConfig({
       activeSkill,
-      selectedLevel,
       lastUpdated: new Date().toISOString()
     });
-  }, [activeSkill, selectedLevel]);
+  }, [activeSkill]);
 
   // Get active advertisements for QuestionTypes page
   const activeAds = advertisements?.filter(ad => 
@@ -227,17 +222,7 @@ export function QuestionTypesSection({
   ) || [];
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
 
-  // Handle level selection (for Main Idea with Level buttons)
-  const handleLevelSelect = (questionType: string, level: number) => {
-    setSelectedQuestionType(questionType);
-    setSelectedLevel(level);
-    setShowTrainingInterface(true);
-    if (onTrainingStateChange) {
-      onTrainingStateChange(true);
-    }
-  };
-
-  // Handle start training (for non-Main Idea cards)
+  // Handle start training
   const handleStartTraining = (questionType: string) => {
     setSelectedQuestionType(questionType);
     setShowDayTrainingInterface(true);
@@ -246,23 +231,7 @@ export function QuestionTypesSection({
     }
   };
 
-  // Show training interface if active (for Main Idea)
-  if (showTrainingInterface) {
-    return (
-      <TrainingInterface
-        questionType={selectedQuestionType}
-        level={selectedLevel}
-        onClose={() => {
-          setShowTrainingInterface(false);
-          if (onTrainingStateChange) {
-            onTrainingStateChange(false);
-          }
-        }}
-      />
-    );
-  }
-
-  // Show day training interface if active (for other question types)
+  // Show day training interface if active
   if (showDayTrainingInterface) {
     return (
       <DayTrainingInterface
