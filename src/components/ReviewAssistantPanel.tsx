@@ -20,12 +20,12 @@ interface DictationExercise {
 }
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
-  reading: ['해석', '분석', '단어', '유형문제'],
-  listening: ['받아쓰기', '단어', '유형문제'],
-  'writing-basic': ['유형문제'],
-  'writing-guided': ['분석', '표현', '템플릿', '유형문제'],
-  'speaking-repeat': ['받아쓰기', '단어', '유형문제'],
-  'speaking-interview': ['분석', '표현', '템플릿', '유형문제'],
+  reading: ['해석', '분석', '단어'],
+  listening: ['받아쓰기', '단어'],
+  'writing-basic': [],
+  'writing-guided': ['분석', '표현', '템플릿'],
+  'speaking-repeat': ['받아쓰기', '단어'],
+  'speaking-interview': ['분석', '표현', '템플릿'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -70,11 +70,6 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
     icon: BookOpen,
     title: '답변 템플릿',
     description: '시간 안에 구조를 잡을 수 있도록 실전형 포맷을 제공합니다.',
-  },
-  유형문제: {
-    icon: ClipboardList,
-    title: '유형문제 훈련',
-    description: '비슷한 난이도의 추가 문제로 바로 연결해 감각을 이어갑니다.',
   },
 };
 
