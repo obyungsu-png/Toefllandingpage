@@ -14,7 +14,7 @@ import { QuestionUploader } from './components/QuestionUploader';
 import { TrainingSection } from './components/TrainingSection';
 import { QuestionTypesSection } from './components/QuestionTypesSection';
 import { LMSSection, LMSContent } from './components/LMSSection';
-import { TPOTest } from './components/ContentManagement';
+import { TPOQuestion, TPOTest } from './components/ContentManagement';
 import { AdManagement, Advertisement } from './components/AdManagement';
 import { Button } from './components/ui/button';
 import { TPOPage } from './components/TPOPage';
@@ -40,7 +40,7 @@ import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 import { HistorySection, TestResult } from './components/HistorySection';
-import { ReviewAssistantPanel, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
+import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
 import { isContentLocked } from './utils/subscriptionUtils';
@@ -257,7 +257,7 @@ function AppContent() {
   // Speaking: single state replaces ~26 individual show* states
   const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
-  const [reviewTrainingTitle, setReviewTrainingTitle] = useState<string | null>(null);
+  const [reviewTrainingRequest, setReviewTrainingRequest] = useState<ReviewPatternTrainingRequest | null>(null);
   const [currentListeningReviewScreen, setCurrentListeningReviewScreen] = useState<M1Screen | M2Screen | null>(null);
   const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
   const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
@@ -1473,7 +1473,7 @@ function AppContent() {
   };
 
   const clearReviewContext = () => {
-    setReviewTrainingTitle(null);
+    setReviewTrainingRequest(null);
     setCurrentListeningReviewScreen(null);
     setCurrentWritingReviewScreen(null);
     setCurrentSpeakingReviewScreen(null);
@@ -1514,34 +1514,100 @@ function AppContent() {
     setShowToeflTest(true);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string } | null = null;
+  const normalizeReviewQuestionType = (value?: string) => (value || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+
+  const questionNumberMatches = (questionNumber: TPOQuestion['questionNumber'] | undefined, targetNumber: number) => {
+    if (questionNumber === undefined || questionNumber === null) return false;
+
+    if (typeof questionNumber === 'number') {
+      return questionNumber === targetNumber;
+    }
+
+    const numericValue = Number(questionNumber);
+    if (!Number.isNaN(numericValue)) {
+      return numericValue === targetNumber;
+    }
+
+    const rangeMatch = String(questionNumber).match(/(\d+)\s*-\s*(\d+)/);
+    if (rangeMatch) {
+      const start = Number(rangeMatch[1]);
+      const end = Number(rangeMatch[2]);
+      return targetNumber >= start && targetNumber <= end;
+    }
+
+    return String(questionNumber).includes(String(targetNumber));
+  };
+
+  const findReviewQuestion = (
+    sectionType: 'Reading' | 'Listening' | 'Speaking' | 'Writing',
+    typeCandidates: string[],
+    targetNumber?: number
+  ) => {
+    const sectionData = getCurrentSectionData(sectionType);
+    if (!sectionData) return null;
+
+    const normalizedCandidates = typeCandidates.map((candidate) => normalizeReviewQuestionType(candidate));
+    const typedQuestions = sectionData.questions.filter((question) => {
+      const normalizedType = normalizeReviewQuestionType(question.questionType);
+      return normalizedCandidates.some((candidate) => normalizedType === candidate || normalizedType.includes(candidate) || candidate.includes(normalizedType));
+    });
+
+    if (targetNumber !== undefined) {
+      const numberedMatch = typedQuestions.find((question) => questionNumberMatches(question.questionNumber, targetNumber));
+      if (numberedMatch) return numberedMatch;
+    }
+
+    return typedQuestions[0] || (targetNumber !== undefined
+      ? sectionData.questions.find((question) => questionNumberMatches(question.questionNumber, targetNumber)) || null
+      : null);
+  };
+
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
 
     if (isReadingQuestionVisible) {
       let readingQuestionType = 'Read an Academic Passage';
+      let readingQuestionCandidates = ['Read an Academic Passage', 'Academic Reading'];
       if (showFillBlanksTest || showModule2FillBlanks) readingQuestionType = 'Complete Words';
-      else if (showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3) readingQuestionType = 'Read in Daily Life';
+      if (showFillBlanksTest || showModule2FillBlanks) readingQuestionCandidates = ['Complete Words', 'Fill in the Blanks', 'Cloze Test'];
+      else if (showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3) {
+        readingQuestionType = 'Read in Daily Life';
+        readingQuestionCandidates = ['Read in Daily Life', 'Practical Reading', 'Functional Text'];
+      }
+
+      const reviewQuestion = findReviewQuestion('Reading', readingQuestionCandidates);
       activeReviewPanel = {
         section: 'Reading',
         variant: 'reading',
         contentKey: `reading-${currentTest?.tpoNumber ?? 'none'}-${currentTest?.section ?? 'none'}`,
         questionType: readingQuestionType,
+        difficulty: reviewQuestion?.difficulty,
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
       const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
       if (screen.startsWith('q')) {
         const qNum = parseInt(screen.replace('q', ''), 10);
         let listeningQuestionType = 'Listen and Response';
+        let listeningQuestionCandidates = ['Listen and Response'];
         if (qNum >= 9 && qNum <= 10) listeningQuestionType = 'Short Conversation';
-        else if (qNum >= 11 && qNum <= 12) listeningQuestionType = 'Announcements';
-        else if (qNum >= 13) listeningQuestionType = 'Academic Talk';
+        if (qNum >= 9 && qNum <= 10) listeningQuestionCandidates = ['Short Conversation', 'Campus Conversation'];
+        else if (qNum >= 11 && qNum <= 12) {
+          listeningQuestionType = 'Announcements';
+          listeningQuestionCandidates = ['Announcements'];
+        } else if (qNum >= 13) {
+          listeningQuestionType = 'Academic Talk';
+          listeningQuestionCandidates = ['Academic Talk', 'Academic Lecture'];
+        }
+
+        const reviewQuestion = findReviewQuestion('Listening', listeningQuestionCandidates, qNum);
         activeReviewPanel = {
           section: 'Listening',
           variant: 'listening',
           contentKey: `listening-${screen}`,
           questionType: listeningQuestionType,
+          difficulty: reviewQuestion?.difficulty,
         };
       }
     } else if (activeWritingScreen) {
@@ -1550,13 +1616,25 @@ function AppContent() {
       if (isWritingQuestionScreen) {
         const variant: ReviewVariant = screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
         let writingQuestionType = 'Build a Sentence';
-        if (screen === 'email-q1') writingQuestionType = 'Write an Email';
-        else if (screen === 'academic-q2') writingQuestionType = 'Academic Discussion';
+        let writingQuestionCandidates = ['Build a Sentence'];
+        let targetQuestionNumber = Number(screen.replace(/\D/g, '')) || undefined;
+        if (screen === 'email-q1') {
+          writingQuestionType = 'Write an Email';
+          writingQuestionCandidates = ['Write an Email'];
+          targetQuestionNumber = 1;
+        } else if (screen === 'academic-q2') {
+          writingQuestionType = 'Academic Discussion';
+          writingQuestionCandidates = ['Academic Discussion'];
+          targetQuestionNumber = 2;
+        }
+
+        const reviewQuestion = findReviewQuestion('Writing', writingQuestionCandidates, targetQuestionNumber);
         activeReviewPanel = {
           section: 'Writing',
           variant,
           contentKey: `writing-${screen}`,
           questionType: writingQuestionType,
+          difficulty: reviewQuestion?.difficulty,
         };
       }
     } else if (activeSpeakingScreen) {
@@ -1564,11 +1642,18 @@ function AppContent() {
       if (screen.startsWith('q')) {
         const isRepeat = screen === 'q1' || screen === 'q1-record' || screen === 'q2-prep' || screen === 'q2-record' || screen === 'q3-prep' || screen === 'q3-record' || screen === 'q4-prep' || screen === 'q4-record' || screen === 'q5-prep' || screen === 'q5-record' || screen === 'q6-prep' || screen === 'q6-record' || screen === 'q7-prep' || screen === 'q7-record';
         const variant: ReviewVariant = isRepeat ? 'speaking-repeat' : 'speaking-interview';
+        const questionNumber = parseInt(screen.replace(/\D/g, ''), 10);
+        const speakingQuestionType = isRepeat ? 'Listen and Repeat' : 'Take an Interview';
+        const speakingQuestionCandidates = isRepeat
+          ? ['Listen and Repeat', 'Listen and Speak', 'Independent Task']
+          : ['Take an Interview', 'Integrated (Read)', 'Integrated Task - Reading/Listening'];
+        const reviewQuestion = findReviewQuestion('Speaking', speakingQuestionCandidates, questionNumber);
         activeReviewPanel = {
           section: 'Speaking',
           variant,
           contentKey: `speaking-${screen}`,
-          questionType: isRepeat ? 'Independent Task' : 'Integrated (Read)',
+          questionType: speakingQuestionType,
+          difficulty: reviewQuestion?.difficulty,
         };
       }
     }
@@ -6966,17 +7051,19 @@ function AppContent() {
           variant={activeReviewPanel.variant}
           contentKey={activeReviewPanel.contentKey}
           questionType={activeReviewPanel.questionType}
-          onStartTraining={setReviewTrainingTitle}
+          currentDifficulty={activeReviewPanel.difficulty}
+          onStartTraining={setReviewTrainingRequest}
         />
       )}
 
-      {activeReviewPanel && reviewTrainingTitle && (
+      {activeReviewPanel && reviewTrainingRequest && (
         <ReviewTrainingOverlay
           section={activeReviewPanel.section}
-          title={reviewTrainingTitle}
-          questionType={activeReviewPanel.questionType}
+          title={reviewTrainingRequest.title}
+          questionType={reviewTrainingRequest.questionType || activeReviewPanel.questionType}
+          difficulty={reviewTrainingRequest.difficulty || activeReviewPanel.difficulty}
           trainingTests={trainingTests}
-          onClose={() => setReviewTrainingTitle(null)}
+          onClose={() => setReviewTrainingRequest(null)}
         />
       )}
       

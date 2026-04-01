@@ -3,13 +3,21 @@ import { BookOpen, ClipboardList, FileText, Languages, MessageSquareText, Sparkl
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
+export type ReviewDifficulty = '쉬움' | '보통' | '어려움';
+
+export interface ReviewPatternTrainingRequest {
+  title: string;
+  questionType?: string;
+  difficulty?: ReviewDifficulty;
+}
 
 interface ReviewAssistantPanelProps {
   section: ReviewSection;
   variant: ReviewVariant;
   contentKey: string;
   questionType?: string;
-  onStartTraining: (title: string) => void;
+  currentDifficulty?: ReviewDifficulty;
+  onStartTraining: (request: ReviewPatternTrainingRequest) => void;
 }
 
 interface DictationExercise {
@@ -225,7 +233,7 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, questionType, onStartTraining }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
@@ -490,6 +498,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     ? 'max-w-[72rem] sm:max-w-[72rem]'
     : 'max-w-[34rem] sm:max-w-[42rem]';
 
+  const handleStartPatternPractice = () => {
+    onStartTraining({
+      title: `${questionType || getTrainingTitle(section, variant)} 패턴연습`,
+      questionType,
+      difficulty: currentDifficulty,
+    });
+  };
+
   return (
     <div className={`fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] ${panelWidthClass}`}>
       <div className="space-y-3">
@@ -535,6 +551,32 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               );
             })()
           ))}
+          </div>
+
+          <div className="mt-2 border-t border-white/60 px-1 pt-3">
+            <button
+              type="button"
+              onClick={handleStartPatternPractice}
+              className="flex w-full items-center justify-between rounded-[20px] border px-4 py-3 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-0.5"
+              style={{
+                borderColor: `${theme.accent}33`,
+                background: `linear-gradient(135deg, ${theme.soft} 0%, rgba(255,255,255,0.98) 100%)`,
+              }}
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-bold" style={{ color: theme.accent }}>
+                  <ClipboardList className="h-4 w-4" />
+                  <span>패턴연습</span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-[#64748b]">
+                  현재 문제와 같은 유형{currentDifficulty ? ` · ${currentDifficulty}` : ''}의 Training 문제 3개를 실전 프레임으로 풉니다.
+                </p>
+              </div>
+
+              <div className="ml-4 shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: theme.accent }}>
+                3문제
+              </div>
+            </button>
           </div>
         </div>
 
