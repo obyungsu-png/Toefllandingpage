@@ -44,10 +44,19 @@ interface WritingBuildSentenceReviewQuestion {
   slotCount: number;
 }
 
+interface FillBlankReviewConfig {
+  id: string;
+  passageText?: string;
+  blanks: { answer: string; maxLength: number }[];
+  fallbackSegments?: string[];
+}
+
 // Speaking question data
 interface SpeakingQuestion {
   id: string;
   number: number;
+  taskGroup: 'Listen and Speak' | 'Take an Interview';
+  prompt: string;
   modelLabel: string;
   currentVoice: string;
   voiceAvatar: string;
@@ -111,11 +120,95 @@ const defaultWritingBuildSentenceQuestions: WritingBuildSentenceReviewQuestion[]
   { id: 'bs-q10', number: 10, prompt: 'What did you think of the movie?', words: ['thought', 'I', 'was', 'it', 'excellent'], slotCount: 4 },
 ];
 
-const sampleSpeakingQuestions: SpeakingQuestion[] = [
-  { id: 'spk-1', number: 1, modelLabel: 'Model Answer', currentVoice: 'Donald Trump', voiceAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face', modelAudioDuration: 11, userAudioDuration: 8, showTextDefault: true, materialImage: 'https://images.unsplash.com/photo-1633431303895-8236f0a04b46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400', materialAudioDuration: 3, transcript: 'The university plans to renovate the student center to add more study spaces and a new cafeteria. Construction is expected to begin next semester.' },
-  { id: 'spk-2', number: 2, modelLabel: 'Model Answer', currentVoice: 'Morgan Freeman', voiceAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', modelAudioDuration: 15, userAudioDuration: 12, showTextDefault: false, materialImage: 'https://images.unsplash.com/photo-1633431303895-8236f0a04b46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400', materialAudioDuration: 5, transcript: 'In ecology, keystone species play a critical role in maintaining the structure of an ecological community.' },
-  { id: 'spk-3', number: 3, modelLabel: 'Model Answer', currentVoice: 'Donald Trump', voiceAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face', modelAudioDuration: 9, userAudioDuration: 7, showTextDefault: true, transcript: 'Some people prefer to study alone, while others prefer to study in groups. Discuss the advantages of each approach.' },
+const defaultReadingCompleteWordsConfigs: FillBlankReviewConfig[] = [
+  {
+    id: 'reading-module-1-complete-words',
+    blanks: [
+      { answer: 'ght', maxLength: 3 },
+      { answer: 'at', maxLength: 2 },
+      { answer: 'ple', maxLength: 3 },
+      { answer: 'ly', maxLength: 2 },
+      { answer: 'sic', maxLength: 3 },
+      { answer: 'ever', maxLength: 4 },
+      { answer: 's', maxLength: 1 },
+      { answer: 'om', maxLength: 2 },
+      { answer: 'ord', maxLength: 3 },
+      { answer: 'nces', maxLength: 4 },
+    ],
+    fallbackSegments: [
+      'We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi',
+      ' think th',
+      ' prehistoric peo',
+      ' concentrated on',
+      ' on ba',
+      ' survival. How',
+      ', it i',
+      ' clear fr',
+      ' the rec',
+      ' that dan',
+      ' was important to them.',
+    ],
+  },
+  {
+    id: 'reading-module-2-complete-words',
+    blanks: [
+      { answer: 's', maxLength: 1 },
+      { answer: 'to', maxLength: 2 },
+      { answer: 'ions', maxLength: 4 },
+      { answer: 'th', maxLength: 2 },
+      { answer: 'les', maxLength: 3 },
+      { answer: 'ts', maxLength: 2 },
+      { answer: 'rt', maxLength: 2 },
+      { answer: 'lved', maxLength: 4 },
+      { answer: 'itive', maxLength: 5 },
+      { answer: 'ch', maxLength: 2 },
+    ],
+    fallbackSegments: [
+      'The human brain is a complex organ responsible for controlling all bodily functions and enabling thought, emotion, and memory. It i',
+      ' divided in',
+      ' several reg',
+      ', each wi',
+      ' specific ro',
+      '. The cerebrum, i',
+      ' largest pa',
+      ', is invo',
+      ' in higher cogn',
+      ' functions su',
+      ' as reasoning, planning, and language. The cerebellum coordinates movement and balance, while the brainstem controls vital bodily functions like breathing and heart rate. Together, they enable the brain to perform its various tasks.',
+    ],
+  },
 ];
+
+const defaultSpeakingQuestions: SpeakingQuestion[] = Array.from({ length: 11 }, (_, index) => {
+  const isInterview = index >= 7;
+  const number = index + 1;
+  return {
+    id: `spk-${number}`,
+    number,
+    taskGroup: isInterview ? 'Take an Interview' : 'Listen and Speak',
+    prompt: isInterview
+      ? `Interview task ${number - 7}: respond naturally to the interviewer and support your answer with clear details.`
+      : `Listen and Speak task ${number}: listen carefully, then repeat or respond using the provided campus or lecture material.`,
+    modelLabel: 'Model Answer',
+    currentVoice: index % 2 === 0 ? 'Donald Trump' : 'Morgan Freeman',
+    voiceAvatar: index % 2 === 0
+      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face'
+      : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
+    modelAudioDuration: isInterview ? 18 : 12,
+    userAudioDuration: isInterview ? 15 : 8,
+    showTextDefault: !isInterview,
+    materialImage: !isInterview ? 'https://images.unsplash.com/photo-1633431303895-8236f0a04b46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400' : undefined,
+    materialAudioDuration: !isInterview ? 4 : undefined,
+    transcript: isInterview
+      ? 'Please describe a meaningful experience and explain why it was important to you.'
+      : 'Students are discussing a campus change. Summarize the main point and explain the speaker\'s opinion.',
+  };
+});
+
+function includesQuestionType(value: string | undefined, candidates: string[]) {
+  const normalized = String(value || '').toLowerCase();
+  return candidates.some(candidate => normalized.includes(candidate.toLowerCase()));
+}
 
 export function QuestionReviewFull({
   result,
@@ -156,6 +249,21 @@ export function QuestionReviewFull({
   const currentTPOTest = tpoTests.find((test: any) => test.testNumber === tpoNumber);
   const currentSection = currentTPOTest?.sections?.find((s: any) => s.sectionType === activeSection);
   const passageText = currentSection?.passages?.[0]?.content || null;
+  const readingCompleteWordsQuestions = (currentSection?.questions || []).filter((question: any) =>
+    includesQuestionType(question?.questionType, ['Complete Words', 'Fill in the Blanks', 'Cloze Test'])
+  );
+  const readingCompleteWordsQuestion = activeSection === 'Reading'
+    ? readingCompleteWordsQuestions[activeModule - 1] || readingCompleteWordsQuestions[0]
+    : null;
+  const readingCompleteWordsConfig: FillBlankReviewConfig | null = activeSection === 'Reading'
+    ? readingCompleteWordsQuestion
+      ? {
+          id: readingCompleteWordsQuestion.id || `reading-complete-words-${activeModule}`,
+          passageText: readingCompleteWordsQuestion.passageText,
+          blanks: Array.isArray(readingCompleteWordsQuestion.blanks) ? readingCompleteWordsQuestion.blanks : defaultReadingCompleteWordsConfigs[activeModule - 1]?.blanks || [],
+        }
+      : defaultReadingCompleteWordsConfigs[activeModule - 1] || defaultReadingCompleteWordsConfigs[0]
+    : null;
 
   // Sample listening questions for correct answers (placeholder text)
   const listeningCorrectSamples = [
@@ -234,10 +342,38 @@ export function QuestionReviewFull({
   })();
 
   const writingConversations = sampleWritingConversations;
-  
-  // Speaking questions
-  const speakingQs = activeSection === 'Speaking' ? sampleSpeakingQuestions : [];
+
+  const speakingQuestionsFromCms: SpeakingQuestion[] = activeSection === 'Speaking'
+    ? (currentSection?.questions || []).slice(0, 11).map((question: any, index: number) => {
+        const isInterview = index >= 7;
+        return {
+          id: question.id || `spk-${index + 1}`,
+          number: index + 1,
+          taskGroup: isInterview ? 'Take an Interview' : 'Listen and Speak',
+          prompt: question.questionText || question.text || (isInterview ? `Interview task ${index - 6}` : `Listen and Speak task ${index + 1}`),
+          modelLabel: 'Model Answer',
+          currentVoice: isInterview ? 'Morgan Freeman' : 'Donald Trump',
+          voiceAvatar: isInterview
+            ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face'
+            : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+          modelAudioDuration: Number(question.duration) || (isInterview ? 18 : 12),
+          userAudioDuration: isInterview ? 15 : 8,
+          showTextDefault: !isInterview,
+          materialImage: question.passageImageUrl || question.imageUrl,
+          materialAudioDuration: question.passageAudioUrl ? 5 : undefined,
+          transcript: question.passageText || question.translationNote || question.questionText || question.text,
+        };
+      })
+    : [];
+
+  const allSpeakingQuestions = activeSection === 'Speaking'
+    ? (speakingQuestionsFromCms.length > 0 ? speakingQuestionsFromCms : defaultSpeakingQuestions)
+    : [];
+  const speakingQs = activeSection === 'Speaking'
+    ? (activeModule === 1 ? allSpeakingQuestions.slice(0, 7) : allSpeakingQuestions.slice(7, 11))
+    : [];
   const speakingQuestionCount = speakingQs.length;
+  const showReadingCompleteWordsReview = activeSection === 'Reading' && currentQuestionIndex < 10 && !!readingCompleteWordsConfig;
 
   // Determine total questions based on section/module
   const totalQuestions = activeSection === 'Writing'
@@ -403,6 +539,77 @@ export function QuestionReviewFull({
   const currentWritingConv = writingConversations[currentQuestionIndex % writingConversations.length];
   const currentWritingBuildSentence = writingBuildSentenceQuestions[currentQuestionIndex] || writingBuildSentenceQuestions[0];
 
+  const renderCompleteWordsPassage = () => {
+    if (!readingCompleteWordsConfig) return null;
+
+    const inputWidth = (blank: { answer: string; maxLength: number }) => `${Math.max(blank.maxLength, blank.answer.length) * 18}px`;
+
+    if (readingCompleteWordsConfig.passageText) {
+      const parts: React.ReactNode[] = [];
+      const regex = /\[(\d+)\]/g;
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+      let key = 0;
+
+      while ((match = regex.exec(readingCompleteWordsConfig.passageText)) !== null) {
+        const blankIndex = Number(match[1]);
+        const blank = readingCompleteWordsConfig.blanks[blankIndex];
+        const beforeText = readingCompleteWordsConfig.passageText.slice(lastIndex, match.index);
+
+        if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
+        if (blank) {
+          parts.push(
+            <input
+              key={`blank-${blankIndex}`}
+              type="text"
+              readOnly
+              disabled
+              value={blank.answer}
+              className="gap-input filled"
+              style={{ width: inputWidth(blank) }}
+            />
+          );
+        }
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < readingCompleteWordsConfig.passageText.length) {
+        parts.push(<span key={`text-${key++}`}>{readingCompleteWordsConfig.passageText.slice(lastIndex)}</span>);
+      }
+
+      return parts;
+    }
+
+    if (readingCompleteWordsConfig.fallbackSegments) {
+      return readingCompleteWordsConfig.blanks.flatMap((blank, index) => {
+        const nodes: React.ReactNode[] = [];
+        const prefix = readingCompleteWordsConfig.fallbackSegments?.[index];
+        const suffix = index === readingCompleteWordsConfig.blanks.length - 1
+          ? readingCompleteWordsConfig.fallbackSegments?.[index + 1]
+          : null;
+
+        if (prefix) nodes.push(<span key={`segment-${index}`}>{prefix}</span>);
+        nodes.push(
+          <input
+            key={`fallback-blank-${index}`}
+            type="text"
+            readOnly
+            disabled
+            value={blank.answer}
+            className="gap-input filled"
+            style={{ width: inputWidth(blank) }}
+          />
+        );
+        if (suffix) nodes.push(<span key={`segment-tail-${index}`}>{suffix}</span>);
+
+        return nodes;
+      });
+    }
+
+    return null;
+  };
+
   // Module tab label helper
   const getModuleTabLabel = (mod: number) => {
     if (activeSection === 'Writing') {
@@ -410,7 +617,7 @@ export function QuestionReviewFull({
       if (mod === 2) return 'Writing an Email';
       return 'Academic Discussion';
     }
-    if (activeSection === 'Speaking') return `Task ${mod}`;
+    if (activeSection === 'Speaking') return mod === 1 ? 'Listen and Speak' : 'Take an Interview';
     return `Module ${mod}`;
   };
 
@@ -563,6 +770,77 @@ export function QuestionReviewFull({
       <div className="flex-1 overflow-y-auto">
         {/* ===== READING / LISTENING CONTENT ===== */}
         {(activeSection === 'Reading' || activeSection === 'Listening') && (
+          showReadingCompleteWordsReview ? (
+            <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-sm text-gray-500">Questions 1-10</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">Complete Words</h3>
+                    </div>
+                    <button
+                      onClick={() => toggleBookmark(readingCompleteWordsConfig?.id || '')}
+                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                    >
+                      {bookmarkedQuestions.has(readingCompleteWordsConfig?.id || '') ? (
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      ) : (
+                        <StarOff className="w-4 h-4" />
+                      )}
+                      <span>{bookmarkedQuestions.has(readingCompleteWordsConfig?.id || '') ? 'Bookmarked' : 'Bookmark'}</span>
+                    </button>
+                  </div>
+
+                  <p className="mb-8 text-xl md:text-[1.75rem] text-black font-bold text-center">
+                    Fill in the missing letters in the paragraph.
+                  </p>
+
+                  <div
+                    className="text-lg md:text-[1.25rem] leading-[1.8] text-black"
+                    style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
+                  >
+                    {renderCompleteWordsPassage()}
+                  </div>
+                </div>
+
+                <div className="flex justify-between mt-8 pb-6">
+                  <button
+                    onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
+                    disabled={currentQuestionIndex === totalQuestions - 1}
+                    className="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+
+              <div className="w-full md:w-80 shrink-0">
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 sticky top-4">
+                  <h4 className="text-sm font-bold text-gray-800 mb-3">Review Note</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                    Reading Module {activeModule}의 1-10번은 TPO 기준 Complete Words 유형입니다. Review에서도 객관식이 아니라 빈칸 본문 형태로 표시되도록 맞췄습니다.
+                  </p>
+                  <div className="space-y-2">
+                    {readingCompleteWordsConfig?.blanks.map((blank, index) => (
+                      <div key={`answer-key-${index}`} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
+                        <span className="text-gray-500">Blank {index + 1}</span>
+                        <span className="font-semibold text-emerald-700">{blank.answer}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
@@ -778,6 +1056,7 @@ export function QuestionReviewFull({
               </div>
             </div>
           </div>
+          )
         )}
 
         {/* ===== WRITING CONTENT ===== */}
@@ -1000,6 +1279,17 @@ export function QuestionReviewFull({
                     <p className="text-sm text-gray-500">
                       Question {currentQuestionIndex + 1} of {speakingQuestionCount}
                     </p>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColor }}>
+                      {currentSpeakingQ.taskGroup}
+                    </span>
+                  </div>
+
+                  <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">Prompt</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{currentSpeakingQ.prompt}</p>
+                  </div>
+
+                  <div className="flex items-center justify-end mb-6">
                     <button
                       onClick={() => toggleBookmark(currentSpeakingQ.id)}
                       className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
@@ -1131,6 +1421,9 @@ export function QuestionReviewFull({
             <div className="w-full md:w-80 shrink-0">
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
                 <h4 className="text-sm font-bold text-gray-800 mb-3">Reference Material:</h4>
+                <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-600">
+                  TPO Speaking structure verified: Listen and Speak 7 questions, Take an Interview 4 questions.
+                </div>
                 
                 {currentSpeakingQ.materialImage && (
                   <div className="rounded-lg overflow-hidden mb-4 border border-gray-200">
