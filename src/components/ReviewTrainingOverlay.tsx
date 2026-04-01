@@ -3,6 +3,48 @@ import { ArrowRight, CheckCircle2, Sparkles, X } from 'lucide-react';
 import { ReviewSection } from './ReviewAssistantPanel';
 import type { TPOQuestion, TPOTest } from './ContentManagement';
 
+// TrainingInterface와 동일한 문제 유형 분류 함수
+function getTrainingMode(question: TPOQuestion) {
+  if (question.options && question.options.length > 0) return 'multiple-choice';
+  if (question.blanks && question.blanks.length > 0) return 'fill-blanks';
+  if (question.words && question.words.length > 0) return 'build-sentence';
+  return 'open-response';
+}
+
+function normalizeAnswer(value: string) {
+  return value.trim().toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ');
+}
+
+function getDisplayAnswer(question: TPOQuestion) {
+  if (Array.isArray(question.correctAnswer)) {
+    return question.correctAnswer.join(', ');
+  }
+  if (typeof question.correctAnswer === 'string') {
+    return question.correctAnswer;
+  }
+  if (question.blanks && question.blanks.length > 0) {
+    return question.blanks.map((blank) => blank.answer).join(', ');
+  }
+  return '';
+}
+
+function getCorrectOptionIndex(question: TPOQuestion) {
+  if (!question.options || question.options.length === 0) {
+    return -1;
+  }
+  if (typeof question.correctAnswer === 'string') {
+    const numericIndex = Number(question.correctAnswer);
+    if (!Number.isNaN(numericIndex) && question.options[numericIndex] !== undefined) {
+      return numericIndex;
+    }
+    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer || ''));
+  }
+  if (Array.isArray(question.correctAnswer) && question.correctAnswer.length > 0) {
+    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer?.[0] || ''));
+  }
+  return -1;
+}
+
 interface ReviewTrainingOverlayProps {
   section: ReviewSection;
   title: string;
@@ -130,6 +172,19 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   const current = questions[currentIndex];
   const isLast = currentIndex === questions.length - 1;
   const progress = ((currentIndex + 1) / (questions.length || 1)) * 100;
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
+  const [blankInputs, setBlankInputs] = useState<string[]>([]);
+  const [sentenceAnswer, setSentenceAnswer] = useState('');
+  const [writtenAnswer, setWrittenAnswer] = useState('');
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setSelectedOptionIndex(null);
+    setBlankInputs(current?.blanks ? Array(current.blanks.length).fill('') : []);
+    setSentenceAnswer('');
+    setWrittenAnswer('');
+    setChecked(false);
+  }, [currentIndex, current]);
 
   if (!questions.length) {
     return (
@@ -143,6 +198,49 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
       </div>
     );
   }
+
+  // 문제 유형별로 TrainingInterface와 동일하게 분기 렌더링
+  const mode = current ? getTrainingMode(current) : 'open-response';
+  const correctOptionIndex = getCorrectOptionIndex(current);
+
+  // 정답 체크 로직
+  const objectiveResult = (() => {
+    if (mode === 'multiple-choice') {
+      return selectedOptionIndex === correctOptionIndex;
+    }
+    if (mode === 'fill-blanks') {
+      return blankInputs.every((input, index) => normalizeAnswer(input) === normalizeAnswer(current.blanks?.[index]?.answer || ''));
+    }
+    if (mode === 'build-sentence') {
+      return normalizeAnswer(sentenceAnswer) === normalizeAnswer(getDisplayAnswer(current));
+    }
+    return false;
+  })();
+
+  const canCheck = (() => {
+    if (mode === 'multiple-choice') return selectedOptionIndex !== null;
+    if (mode === 'fill-blanks') return blankInputs.every((input) => input.trim().length > 0);
+    if (mode === 'build-sentence') return sentenceAnswer.trim().length > 0;
+    return writtenAnswer.trim().length > 0;
+  })();
+
+  const handleCheck = () => {
+    if (!canCheck || checked) return;
+    setChecked(true);
+  };
+
+  const handleNext = () => {
+    if (isLast) {
+      onClose();
+      return;
+    }
+    setSelectedOptionIndex(null);
+    setBlankInputs(current?.blanks ? Array(current.blanks.length).fill('') : []);
+    setSentenceAnswer('');
+    setWrittenAnswer('');
+    setChecked(false);
+    setCurrentIndex((prev) => prev + 1);
+  };
 
   return (
     <div className={`fixed inset-0 z-[95] overflow-y-auto bg-gradient-to-br ${theme.bg}`}>
