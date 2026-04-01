@@ -1494,24 +1494,34 @@ function AppContent() {
     setShowToeflTest(true);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string } | null = null;
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
 
     if (isReadingQuestionVisible) {
+      let readingQuestionType = 'Read an Academic Passage';
+      if (showFillBlanksTest || showModule2FillBlanks) readingQuestionType = 'Complete Words';
+      else if (showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3) readingQuestionType = 'Read in Daily Life';
       activeReviewPanel = {
         section: 'Reading',
         variant: 'reading',
         contentKey: `reading-${currentTest?.tpoNumber ?? 'none'}-${currentTest?.section ?? 'none'}`,
+        questionType: readingQuestionType,
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
       const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
       if (screen.startsWith('q')) {
+        const qNum = parseInt(screen.replace('q', ''), 10);
+        let listeningQuestionType = 'Listen and Response';
+        if (qNum >= 9 && qNum <= 10) listeningQuestionType = 'Short Conversation';
+        else if (qNum >= 11 && qNum <= 12) listeningQuestionType = 'Announcements';
+        else if (qNum >= 13) listeningQuestionType = 'Academic Talk';
         activeReviewPanel = {
           section: 'Listening',
           variant: 'listening',
           contentKey: `listening-${screen}`,
+          questionType: listeningQuestionType,
         };
       }
     } else if (activeWritingScreen) {
@@ -1519,22 +1529,26 @@ function AppContent() {
       const isWritingQuestionScreen = screen.startsWith('bs-q') || screen === 'email-q1' || screen === 'academic-q2';
       if (isWritingQuestionScreen) {
         const variant: ReviewVariant = screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
+        let writingQuestionType = 'Build a Sentence';
+        if (screen === 'email-q1') writingQuestionType = 'Write an Email';
+        else if (screen === 'academic-q2') writingQuestionType = 'Academic Discussion';
         activeReviewPanel = {
           section: 'Writing',
           variant,
           contentKey: `writing-${screen}`,
+          questionType: writingQuestionType,
         };
       }
     } else if (activeSpeakingScreen) {
       const screen = currentSpeakingReviewScreen || activeSpeakingScreen;
       if (screen.startsWith('q')) {
-        const variant: ReviewVariant = screen === 'q1' || screen === 'q1-record' || screen === 'q2-prep' || screen === 'q2-record' || screen === 'q3-prep' || screen === 'q3-record' || screen === 'q4-prep' || screen === 'q4-record' || screen === 'q5-prep' || screen === 'q5-record' || screen === 'q6-prep' || screen === 'q6-record' || screen === 'q7-prep' || screen === 'q7-record'
-          ? 'speaking-repeat'
-          : 'speaking-interview';
+        const isRepeat = screen === 'q1' || screen === 'q1-record' || screen === 'q2-prep' || screen === 'q2-record' || screen === 'q3-prep' || screen === 'q3-record' || screen === 'q4-prep' || screen === 'q4-record' || screen === 'q5-prep' || screen === 'q5-record' || screen === 'q6-prep' || screen === 'q6-record' || screen === 'q7-prep' || screen === 'q7-record';
+        const variant: ReviewVariant = isRepeat ? 'speaking-repeat' : 'speaking-interview';
         activeReviewPanel = {
           section: 'Speaking',
           variant,
           contentKey: `speaking-${screen}`,
+          questionType: isRepeat ? 'Independent Task' : 'Integrated (Read)',
         };
       }
     }
@@ -6941,6 +6955,7 @@ function AppContent() {
           section={activeReviewPanel.section}
           variant={activeReviewPanel.variant}
           contentKey={activeReviewPanel.contentKey}
+          questionType={activeReviewPanel.questionType}
           onStartTraining={setReviewTrainingTitle}
         />
       )}
@@ -6949,6 +6964,8 @@ function AppContent() {
         <ReviewTrainingOverlay
           section={activeReviewPanel.section}
           title={reviewTrainingTitle}
+          questionType={activeReviewPanel.questionType}
+          trainingTests={trainingTests}
           onClose={() => setReviewTrainingTitle(null)}
         />
       )}

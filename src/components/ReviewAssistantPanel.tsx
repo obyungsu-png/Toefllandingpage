@@ -8,6 +8,7 @@ interface ReviewAssistantPanelProps {
   section: ReviewSection;
   variant: ReviewVariant;
   contentKey: string;
+  questionType?: string;
   onStartTraining: (title: string) => void;
 }
 
@@ -229,7 +230,7 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, onStartTraining }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, onStartTraining }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
@@ -382,8 +383,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, onStartTrai
             {section} Training
           </div>
 
-          <h4 className="mt-4 text-[1.7rem] font-bold leading-tight text-[#0f172a] sm:text-[2rem]">{getTrainingTitle(section, variant)}</h4>
-          <p className="mt-3 text-sm leading-6 text-[#64748b]">현재 문제와 비슷한 유형과 난이도의 문제를 먼저 풀고, 완료하면 원래 문제 흐름으로 돌아갑니다.</p>
+          <h4 className="mt-4 text-[1.7rem] font-bold leading-tight text-[#0f172a] sm:text-[2rem]">{questionType || getTrainingTitle(section, variant)}</h4>
+          <p className="mt-2 text-xs font-semibold rounded-full inline-block px-3 py-1" style={{ backgroundColor: theme.soft, color: theme.accent }}>{section} · 유형 훈련</p>
+          <p className="mt-3 text-sm leading-6 text-[#64748b]">현재 문제와 같은 유형의 실전 문제 3개를 풀어봅니다.</p>
 
           <div className="mt-6 rounded-[24px] border bg-white/80 p-4" style={{ borderColor: theme.border }}>
             <div className="flex items-center justify-between gap-3 text-sm font-semibold text-[#0f172a]">
