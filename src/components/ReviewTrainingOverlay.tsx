@@ -30,7 +30,7 @@ function getSampledQuestions(
   questionType: string | undefined,
   trainingTests: TPOTest[] | undefined
 ): TPOQuestion[] {
-  if (!questionType || !trainingTests) return [];
+  if (!questionType || !trainingTests) return [getDummyQuestion(section, questionType)];
   // Flatten all questions from all training tests for this section
   const allQuestions = trainingTests
     .flatMap(test => test.sections)
@@ -42,7 +42,76 @@ function getSampledQuestions(
     const j = Math.floor(Math.random() * (i + 1));
     [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
   }
+  if (allQuestions.length === 0) {
+    // Return 1 dummy question if none exist
+    return [getDummyQuestion(section, questionType)];
+  }
   return allQuestions.slice(0, 3);
+}
+
+function getDummyQuestion(section: ReviewSection, questionType: string): TPOQuestion {
+  // 객관식 샘플
+  if (questionType.includes('Read in Daily') || questionType.includes('Factual') || questionType.includes('Multiple Choice')) {
+    return {
+      id: 'dummy-mc',
+      questionNumber: 1,
+      questionText: 'Which of the following is TRUE according to the passage?',
+      questionType,
+      options: ['A. The sun rises in the west.', 'B. Water boils at 100°C.', 'C. Birds cannot fly.', 'D. Fish live on land.'],
+      correctAnswer: 'B. Water boils at 100°C.',
+      explanation: 'Water boils at 100°C is a scientific fact.',
+      difficulty: '보통',
+    };
+  }
+  // 빈칸 채우기 샘플
+  if (questionType.includes('Complete Words') || questionType.includes('Fill in the Blank')) {
+    return {
+      id: 'dummy-fill',
+      questionNumber: 1,
+      questionText: 'The ___ is the largest planet in our solar system.',
+      questionType,
+      blanks: [
+        { answer: 'Jupiter', maxLength: 10 }
+      ],
+      explanation: 'Jupiter is the largest planet.',
+      difficulty: '보통',
+    };
+  }
+  // 문장 배열/구성 샘플
+  if (questionType.includes('Build a Sentence') || questionType.includes('Sentence') || questionType.includes('Arrange')) {
+    return {
+      id: 'dummy-build',
+      questionNumber: 1,
+      questionText: 'Arrange the words to make a correct sentence.',
+      questionType,
+      words: ['is', 'the', 'sky', 'blue'],
+      correctAnswer: ['The', 'sky', 'is', 'blue'],
+      explanation: 'The correct sentence is: The sky is blue.',
+      difficulty: '보통',
+    };
+  }
+  // 서술형 샘플
+  if (questionType.includes('Open Response') || questionType.includes('Essay') || questionType.includes('Discussion')) {
+    return {
+      id: 'dummy-open',
+      questionNumber: 1,
+      questionText: 'Explain the importance of recycling in modern society.',
+      questionType,
+      explanation: 'Recycling helps conserve resources and reduce pollution.',
+      difficulty: '보통',
+    };
+  }
+  // 기본 객관식
+  return {
+    id: 'dummy-mc',
+    questionNumber: 1,
+    questionText: 'Which of the following is correct?',
+    questionType,
+    options: ['A. 2+2=5', 'B. 2+2=4', 'C. 2+2=3', 'D. 2+2=1'],
+    correctAnswer: 'B. 2+2=4',
+    explanation: '2+2=4 is correct.',
+    difficulty: '보통',
+  };
 }
 
 export function ReviewTrainingOverlay({ section, title, questionType, trainingTests, onClose }: ReviewTrainingOverlayProps) {
