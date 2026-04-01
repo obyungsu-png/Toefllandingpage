@@ -36,6 +36,14 @@ interface WritingConversation {
   blanks?: { word: string; isCorrect: boolean; userWord?: string }[];
 }
 
+interface WritingBuildSentenceReviewQuestion {
+  id: string;
+  number: number;
+  prompt: string;
+  words: string[];
+  slotCount: number;
+}
+
 // Speaking question data
 interface SpeakingQuestion {
   id: string;
@@ -88,6 +96,19 @@ const sampleWritingConversations: WritingConversation[][] = [
       { word: 'a conclusion', isCorrect: false, userWord: 'an ending' },
     ] },
   ],
+];
+
+const defaultWritingBuildSentenceQuestions: WritingBuildSentenceReviewQuestion[] = [
+  { id: 'bs-q1', number: 1, prompt: 'What was the highlight of your trip?', words: ['were', 'the', 'was', 'old city', 'showed us around', 'who', 'tour guides'], slotCount: 6 },
+  { id: 'bs-q2', number: 2, prompt: 'Are you considering a change?', words: ['a different department', 'if', 'moving to', 'know', 'do', 'you'], slotCount: 5 },
+  { id: 'bs-q3', number: 3, prompt: 'How do you usually spend your weekends?', words: ['usually', 'I', 'friends', 'time with', 'spend', 'my'], slotCount: 5 },
+  { id: 'bs-q4', number: 4, prompt: 'What are your plans for the summer?', words: ['to', 'planning', "I'm", 'Europe', 'travel'], slotCount: 5 },
+  { id: 'bs-q5', number: 5, prompt: 'Did you enjoy the conference?', words: ['was', 'it', 'very', 'yes', 'informative'], slotCount: 4 },
+  { id: 'bs-q6', number: 6, prompt: 'Have you finished your project?', words: ['almost', 'I', 'am', 'done', 'yes'], slotCount: 4 },
+  { id: 'bs-q7', number: 7, prompt: 'Do you like your new job?', words: ['really', 'I', 'yes', 'it', 'enjoy'], slotCount: 4 },
+  { id: 'bs-q8', number: 8, prompt: 'Are you ready for the presentation?', words: ['nervous', 'a bit', 'I', 'but', 'am', 'prepared'], slotCount: 5 },
+  { id: 'bs-q9', number: 9, prompt: 'How was the training session?', words: ['helpful', 'very', 'it', 'was', 'and', 'practical'], slotCount: 5 },
+  { id: 'bs-q10', number: 10, prompt: 'What did you think of the movie?', words: ['thought', 'I', 'was', 'it', 'excellent'], slotCount: 4 },
 ];
 
 const sampleSpeakingQuestions: SpeakingQuestion[] = [
@@ -212,19 +233,19 @@ export function QuestionReviewFull({
     return qs;
   })();
 
-  // Writing questions count (1 per task: email vs academic discussion)
-  const writingQuestionCount = activeSection === 'Writing' ? 1 : 0;
   const writingConversations = sampleWritingConversations;
   
   // Speaking questions
   const speakingQs = activeSection === 'Speaking' ? sampleSpeakingQuestions : [];
   const speakingQuestionCount = speakingQs.length;
 
-  // Determine total questions based on section
-  const totalQuestions = activeSection === 'Writing' 
-    ? writingQuestionCount 
-    : activeSection === 'Speaking' 
-    ? speakingQuestionCount 
+  // Determine total questions based on section/module
+  const totalQuestions = activeSection === 'Writing'
+    ? activeModule === 1
+      ? 10
+      : 1
+    : activeSection === 'Speaking'
+    ? speakingQuestionCount
     : questions.length;
 
   const currentQuestion = questions[currentQuestionIndex] || questions[0];
@@ -325,11 +346,50 @@ export function QuestionReviewFull({
 
   const sectionTabs: SectionTab[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
 
+  const writingSectionQuestions = currentSection?.questions || [];
+  const writingBuildSentenceFromCms = writingSectionQuestions
+    .filter((question: any) => {
+      const type = String(question?.questionType || '').toLowerCase();
+      return type.includes('build a sentence') || type.includes('sentence');
+    })
+    .slice(0, 10)
+    .map((question: any, index: number) => {
+      const cmsWords = Array.isArray(question?.words)
+        ? question.words
+        : Array.isArray(question?.options)
+        ? question.options
+        : [];
+
+      return {
+        id: `bs-q${index + 1}`,
+        number: index + 1,
+        prompt: question?.questionText || question?.text || defaultWritingBuildSentenceQuestions[index]?.prompt || `Build a Sentence ${index + 1}`,
+        words: cmsWords.length > 0 ? cmsWords : (defaultWritingBuildSentenceQuestions[index]?.words || []),
+        slotCount: Number(question?.slotCount) || (defaultWritingBuildSentenceQuestions[index]?.slotCount || 5),
+      } as WritingBuildSentenceReviewQuestion;
+    });
+
+  const writingBuildSentenceQuestions = defaultWritingBuildSentenceQuestions.map((fallback, index) => {
+    const cmsQuestion = writingBuildSentenceFromCms[index];
+    return cmsQuestion
+      ? {
+          ...fallback,
+          ...cmsQuestion,
+          words: cmsQuestion.words.length > 0 ? cmsQuestion.words : fallback.words,
+        }
+      : fallback;
+  });
+
+  const writingModuleQuestionCount = activeSection === 'Writing'
+    ? activeModule === 1
+      ? writingBuildSentenceQuestions.length
+      : 1
+    : 0;
+
   // Writing question pill data
-  const writingPills = Array.from({ length: writingQuestionCount }, (_, i) => ({
-    id: `writing-${i}`,
+  const writingPills = Array.from({ length: writingModuleQuestionCount }, (_, i) => ({
+    id: `writing-${activeModule}-${i + 1}`,
     number: i + 1,
-    isCorrect: i < result.correctAnswers,
   }));
 
   // Speaking question pill data
@@ -341,13 +401,27 @@ export function QuestionReviewFull({
 
   const currentSpeakingQ = speakingQs[currentQuestionIndex] || speakingQs[0];
   const currentWritingConv = writingConversations[currentQuestionIndex % writingConversations.length];
+  const currentWritingBuildSentence = writingBuildSentenceQuestions[currentQuestionIndex] || writingBuildSentenceQuestions[0];
 
   // Module tab label helper
   const getModuleTabLabel = (mod: number) => {
-    if (activeSection === 'Writing') return mod === 1 ? 'Writing an Email' : 'Academic Discussion';
+    if (activeSection === 'Writing') {
+      if (mod === 1) return 'Build a Sentence';
+      if (mod === 2) return 'Writing an Email';
+      return 'Academic Discussion';
+    }
     if (activeSection === 'Speaking') return `Task ${mod}`;
     return `Module ${mod}`;
   };
+
+  useEffect(() => {
+    if (activeSection !== 'Writing') return;
+
+    const maxIndex = activeModule === 1 ? Math.max(0, writingBuildSentenceQuestions.length - 1) : 0;
+    if (currentQuestionIndex > maxIndex) {
+      setCurrentQuestionIndex(0);
+    }
+  }, [activeModule, activeSection, currentQuestionIndex, writingBuildSentenceQuestions.length]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
@@ -386,7 +460,7 @@ export function QuestionReviewFull({
         {/* Module/Task Tabs */}
         <div className="flex items-center justify-between">
           <div className="flex gap-4">
-            {[1, 2].map(mod => (
+            {(activeSection === 'Writing' ? [1, 2, 3] : [1, 2]).map(mod => (
               <button
                 key={mod}
                 onClick={() => { setActiveModule(mod); setCurrentQuestionIndex(0); }}
@@ -406,10 +480,26 @@ export function QuestionReviewFull({
         <div className="flex items-center justify-between mt-3">
           {/* Question Pills */}
           <div className="flex flex-wrap gap-1.5">
-            {activeSection === 'Writing' && (
-              // Writing has 1 essay question per task — no pill navigation needed
-              <span className="text-xs text-gray-400">1 question</span>
-            )}
+            {activeSection === 'Writing' && writingPills.map((q, idx) => {
+              const isCurrent = idx === currentQuestionIndex;
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentQuestionIndex(idx)}
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                    isCurrent
+                      ? 'text-white shadow-lg scale-110'
+                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                  }`}
+                  style={{
+                    backgroundColor: isCurrent ? themeColor : undefined,
+                    borderColor: isCurrent ? themeColor : undefined
+                  }}
+                >
+                  Q{q.number}
+                </button>
+              );
+            })}
             {activeSection === 'Speaking' && speakingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
               return (
@@ -457,7 +547,7 @@ export function QuestionReviewFull({
 
           {/* Stats */}
           <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 ml-4">
-            {activeSection !== 'Speaking' && (
+            {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
               <span>
                 Results: <strong className="text-gray-900">{correctCount}/{totalQuestions}</strong>
               </span>
@@ -693,8 +783,63 @@ export function QuestionReviewFull({
         {/* ===== WRITING CONTENT ===== */}
         {activeSection === 'Writing' && (
           <div className="flex-1 flex flex-col md:flex-row overflow-auto">
-            {/* ---- Writing 1: Writing an Email ---- */}
-            {activeModule === 1 && (
+            {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
+            {activeModule === 1 && currentWritingBuildSentence && (
+              <>
+                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <h2 className="text-3xl font-bold text-black mb-10 text-center">Make an appropriate sentence.</h2>
+
+                  <div className="space-y-8 md:space-y-12 mt-8 md:mt-16 px-2 md:px-8">
+                    <div className="flex items-center gap-4 md:gap-6">
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gray-200 border-4 border-[#1e6b73] flex items-center justify-center flex-shrink-0">
+                        <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="text-xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                    </div>
+
+                    <div className="flex items-end gap-4 md:gap-6">
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gray-200 border-4 border-[#1e6b73] flex items-center justify-center flex-shrink-0">
+                        <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+
+                      <div className="flex-1 overflow-x-auto">
+                        <div className="flex flex-wrap items-end gap-2 md:gap-3">
+                          {Array.from({ length: currentWritingBuildSentence.slotCount }).map((_, idx) => (
+                            <div key={`slot-${idx}`} className="relative w-[120px] h-[44px]">
+                              <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-800" />
+                            </div>
+                          ))}
+                          <span className="text-xl text-gray-800 pb-1">.</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 md:mt-8 flex flex-wrap gap-x-6 gap-y-3 justify-center">
+                      {currentWritingBuildSentence.words.map((word, idx) => (
+                        <span key={`${word}-${idx}`} className="text-2xl text-[#1f2937]">{word}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-gray-50">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Review Note</h3>
+                  <div className="bg-white border border-gray-300 rounded-lg p-4 text-sm text-gray-700 leading-relaxed">
+                    순서 맞추기 유형(1-10번)은 실제 Writing Build a Sentence 형식을 그대로 반영했습니다. 각 문항의 질문과 단어 묶음을 확인하면서 문장 구조를 복기해보세요.
+                  </div>
+                  <div className="mt-4 bg-white border border-gray-300 rounded-lg p-4 min-h-40 text-sm text-gray-500 italic">
+                    {result.wrongAnswers[currentQuestionIndex]?.userAnswer || '(Stored response is not available for this item)'}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ---- Writing 2: Writing an Email ---- */}
+            {activeModule === 2 && (
               <>
                 {/* Left: Prompt */}
                 <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
@@ -749,8 +894,8 @@ export function QuestionReviewFull({
               </>
             )}
 
-            {/* ---- Writing 2: Academic Discussion ---- */}
-            {activeModule === 2 && (
+            {/* ---- Writing 3: Academic Discussion ---- */}
+            {activeModule === 3 && (
               <>
                 {/* Left: Professor prompt */}
                 <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">

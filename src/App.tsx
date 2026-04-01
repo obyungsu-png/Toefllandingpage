@@ -1362,6 +1362,26 @@ function AppContent() {
     setTestResults(prev => [newResult, ...prev]); // Add to beginning for latest first
   };
 
+  const saveSectionResultToHistory = (
+    category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
+    totalQuestions: number
+  ) => {
+    handleAddTestResult({
+      type: getCurrentResultType(),
+      category,
+      testName: `${getCurrentTestLabel()} - ${category}`,
+      testNumber: currentTest?.tpoNumber,
+      bankType: testBankType,
+      status: 'completed',
+      date: new Date().toISOString(),
+      score: 0,
+      totalQuestions,
+      correctAnswers: 0,
+      wrongAnswers: [],
+      timeSpent: 0,
+    });
+  };
+
   // Training Result Handler - saves to both local state and Supabase
   const handleAddTrainingResult = (result: any) => {
     const normalizedResult: Omit<TestResult, 'id'> = {
@@ -5228,19 +5248,7 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question20(false);
                 // Save reading result to history
-                handleAddTestResult({
-                  type: getCurrentResultType(),
-                  category: 'Reading',
-                  testName: `${getCurrentTestLabel()} - Reading`,
-                  testNumber: currentTest?.tpoNumber,
-                  bankType: testBankType,
-                  date: new Date().toISOString(),
-                  score: 0,
-                  totalQuestions: 20,
-                  correctAnswers: 0,
-                  wrongAnswers: [],
-                  timeSpent: 0,
-                });
+                saveSectionResultToHistory('Reading', 20);
                 setShowEndModule2(true);
               }}
             >
@@ -5276,8 +5284,8 @@ function AppContent() {
               questionInfo="5/5"
               onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
               onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
-              onNext={() => { setShowModule2Question20(false); handleAddTestResult({ type: getCurrentResultType(), category: 'Reading', testName: `${getCurrentTestLabel()} - Reading`, testNumber: currentTest?.tpoNumber, bankType: testBankType, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
-              onSubmit={() => { setShowModule2Question20(false); handleAddTestResult({ type: getCurrentResultType(), category: 'Reading', testName: `${getCurrentTestLabel()} - Reading`, testNumber: currentTest?.tpoNumber, bankType: testBankType, date: new Date().toISOString(), score: 0, totalQuestions: 20, correctAnswers: 0, wrongAnswers: [], timeSpent: 0 }); setShowEndModule2(true); }}
+              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); setShowEndModule2(true); }}
               leftContent={
                 <>
                   <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
@@ -5333,6 +5341,7 @@ function AppContent() {
           }}
           onNext={() => {
             setShowModule2Question20(false);
+                saveSectionResultToHistory('Reading', 20);
             setShowEndModule2(true);
           }}
         />
@@ -6891,7 +6900,7 @@ function AppContent() {
             setActiveListeningM2Screen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            // Listening complete - next section can be added later
+            saveSectionResultToHistory('Listening', 34);
           }}
           onVolumeClick={() => setShowVolumeModal(true)}
           onBackToM1={() => {
@@ -6920,6 +6929,7 @@ function AppContent() {
             setActiveWritingScreen(null);
             clearReviewContext();
             setIsReviewMode(false);
+            saveSectionResultToHistory('Writing', 12);
             if (testBankType === 'tpo') {
               setActiveTab('TPO');
             } else {
@@ -6945,7 +6955,7 @@ function AppContent() {
             setActiveSpeakingScreen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            // Speaking complete - navigate to next section
+            saveSectionResultToHistory('Speaking', 11);
           }}
         />
       )}
