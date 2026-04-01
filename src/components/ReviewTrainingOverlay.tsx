@@ -1,10 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, Sparkles, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Headphones, Sparkles, X } from 'lucide-react';
 import { ReviewSection } from './ReviewAssistantPanel';
 import type { TPOQuestion, TPOTest } from './ContentManagement';
 
-// TrainingInterface와 동일한 문제 유형 분류 함수
-function getTrainingMode(question: TPOQuestion) {
+type TrainingMode = 'multiple-choice' | 'fill-blanks' | 'build-sentence' | 'open-response' | 'listen-repeat';
+
+function normalizeType(type?: string) {
+  return (type || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function isListenAndSpeakType(type?: string) {
+  const normalized = normalizeType(type);
+  return normalized.includes('listen and speak') || normalized.includes('listen and repeat') || normalized.includes('repeat');
+}
+
+function getTrainingMode(question: TPOQuestion, section: ReviewSection, selectedQuestionType?: string): TrainingMode {
+  const effectiveType = selectedQuestionType || question.questionType;
+
+  if (section === 'Speaking' && isListenAndSpeakType(effectiveType)) {
+    return 'listen-repeat';
+  }
+
+  if (normalizeType(effectiveType).includes('complete words') || normalizeType(effectiveType).includes('fill in the blank')) {
+    return 'fill-blanks';
+  }
+
   if (question.options && question.options.length > 0) return 'multiple-choice';
   if (question.blanks && question.blanks.length > 0) return 'fill-blanks';
   if (question.words && question.words.length > 0) return 'build-sentence';
@@ -53,11 +73,82 @@ interface ReviewTrainingOverlayProps {
   onClose: () => void;
 }
 
-interface TrainingQuestion {
-  prompt: string;
-  options: string[];
-  answerIndex: number;
-  explanation: string;
+interface FillBlankSpec {
+  answer: string;
+  maxLength: number;
+}
+
+type FillInlinePart =
+  | { type: 'text'; value: string }
+  | { type: 'blank'; blankIndex: number; maxLength: number };
+
+function getFillBlankSpecs(question: TPOQuestion): FillBlankSpec[] {
+  if (question.blanks && question.blanks.length > 0) {
+    return question.blanks.map((blank) => ({ answer: blank.answer, maxLength: blank.maxLength }));
+  }
+
+  const markedText = question.passageText || '';
+  const markedMatches = [...markedText.matchAll(/\[([^\]:]+):(\d+)\]/g)];
+
+  if (markedMatches.length > 0) {
+    return markedMatches.map(([, answer, maxLength]) => ({
+      answer,
+      maxLength: Number(maxLength) || answer.length,
+    }));
+  }
+
+  const underscoreMatches = (question.questionText || '').match(/_{2,}/g) || [];
+  return underscoreMatches.map((match) => ({ answer: '', maxLength: match.length }));
+}
+
+function getFillInlineParts(question: TPOQuestion, specs: FillBlankSpec[]): FillInlinePart[] {
+  const sourceText = question.passageText || question.questionText || '';
+
+  if (sourceText.includes('[') && sourceText.includes(']')) {
+    const regex = /\[([^\]:]+):(\d+)\]/g;
+    const parts: FillInlinePart[] = [];
+    let lastIndex = 0;
+    let blankIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(sourceText)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', value: sourceText.slice(lastIndex, match.index) });
+      }
+
+      const maxLength = Number(match[2]) || specs[blankIndex]?.maxLength || match[1].length;
+      parts.push({ type: 'blank', blankIndex, maxLength });
+      blankIndex += 1;
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < sourceText.length) {
+      parts.push({ type: 'text', value: sourceText.slice(lastIndex) });
+    }
+
+    return parts;
+  }
+
+  if (sourceText.match(/_{2,}/)) {
+    const chunks = sourceText.split(/_{2,}/g);
+    const matches = sourceText.match(/_{2,}/g) || [];
+    const parts: FillInlinePart[] = [];
+
+    chunks.forEach((chunk, index) => {
+      if (chunk) parts.push({ type: 'text', value: chunk });
+      if (index < matches.length) {
+        parts.push({
+          type: 'blank',
+          blankIndex: index,
+          maxLength: specs[index]?.maxLength || matches[index].length,
+        });
+      }
+    });
+
+    return parts;
+  }
+
+  return [{ type: 'text', value: sourceText }];
 }
 
 const SECTION_THEME: Record<ReviewSection, { bg: string; card: string; accent: string; soft: string; border: string }> = {
@@ -73,12 +164,22 @@ function getSampledQuestions(
   trainingTests: TPOTest[] | undefined
 ): TPOQuestion[] {
   if (!questionType || !trainingTests) return [getDummyQuestion(section, questionType)];
+  const normalizedSelected = normalizeType(questionType);
+
   // Flatten all questions from all training tests for this section
   const allQuestions = trainingTests
     .flatMap(test => test.sections)
     .filter(sec => sec.sectionType === section)
     .flatMap(sec => sec.questions)
-    .filter(q => q.questionType === questionType);
+    .filter((q) => {
+      const normalizedQuestionType = normalizeType(q.questionType);
+      return (
+        normalizedQuestionType === normalizedSelected
+        || normalizedQuestionType.includes(normalizedSelected)
+        || normalizedSelected.includes(normalizedQuestionType)
+      );
+    });
+
   // Shuffle and pick 3
   for (let i = allQuestions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -92,6 +193,18 @@ function getSampledQuestions(
 }
 
 function getDummyQuestion(section: ReviewSection, questionType: string): TPOQuestion {
+  if (section === 'Speaking' && isListenAndSpeakType(questionType)) {
+    return {
+      id: 'dummy-listen-speak',
+      questionNumber: 1,
+      questionText: 'Listen and repeat what you hear.',
+      questionType,
+      correctAnswer: 'Please welcome the visitors and guide them to the main hall.',
+      explanation: '핵심 의미를 정확히 전달하면서 문장 리듬을 유지해 보세요.',
+      difficulty: '보통',
+    };
+  }
+
   // 객관식 샘플
   if (questionType.includes('Read in Daily') || questionType.includes('Factual') || questionType.includes('Multiple Choice')) {
     return {
@@ -160,30 +273,31 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   const theme = SECTION_THEME[section];
   const questions = useMemo(() => getSampledQuestions(section, questionType, trainingTests), [section, questionType, trainingTests]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     setCurrentIndex(0);
-    setSelectedIndex(null);
+    setSelectedOptionIndex(null);
     setChecked(false);
   }, [section, title, questionType]);
 
   const current = questions[currentIndex];
+  const fillBlankSpecs = useMemo(() => (current ? getFillBlankSpecs(current) : []), [current]);
+  const fillInlineParts = useMemo(() => (current ? getFillInlineParts(current, fillBlankSpecs) : []), [current, fillBlankSpecs]);
   const isLast = currentIndex === questions.length - 1;
   const progress = ((currentIndex + 1) / (questions.length || 1)) * 100;
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [blankInputs, setBlankInputs] = useState<string[]>([]);
   const [sentenceAnswer, setSentenceAnswer] = useState('');
   const [writtenAnswer, setWrittenAnswer] = useState('');
 
   useEffect(() => {
     setSelectedOptionIndex(null);
-    setBlankInputs(current?.blanks ? Array(current.blanks.length).fill('') : []);
+    setBlankInputs(Array(fillBlankSpecs.length).fill(''));
     setSentenceAnswer('');
     setWrittenAnswer('');
     setChecked(false);
-  }, [currentIndex, current]);
+  }, [currentIndex, current, fillBlankSpecs.length]);
 
   if (!questions.length) {
     return (
@@ -199,7 +313,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
   }
 
   // 문제 유형별로 TrainingInterface와 동일하게 분기 렌더링
-  const mode = current ? getTrainingMode(current) : 'open-response';
+  const mode = current ? getTrainingMode(current, section, questionType) : 'open-response';
   const correctOptionIndex = getCorrectOptionIndex(current);
 
   // 정답 체크 로직
@@ -208,18 +322,22 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
       return selectedOptionIndex === correctOptionIndex;
     }
     if (mode === 'fill-blanks') {
-      return blankInputs.every((input, index) => normalizeAnswer(input) === normalizeAnswer(current.blanks?.[index]?.answer || ''));
+      return fillBlankSpecs.every((blank, index) => normalizeAnswer(blankInputs[index] || '') === normalizeAnswer(blank.answer || ''));
     }
     if (mode === 'build-sentence') {
       return normalizeAnswer(sentenceAnswer) === normalizeAnswer(getDisplayAnswer(current));
+    }
+    if (mode === 'listen-repeat') {
+      return normalizeAnswer(writtenAnswer) === normalizeAnswer(getDisplayAnswer(current));
     }
     return false;
   })();
 
   const canCheck = (() => {
     if (mode === 'multiple-choice') return selectedOptionIndex !== null;
-    if (mode === 'fill-blanks') return blankInputs.every((input) => input.trim().length > 0);
+    if (mode === 'fill-blanks') return fillBlankSpecs.length > 0 && blankInputs.every((input) => input.trim().length > 0);
     if (mode === 'build-sentence') return sentenceAnswer.trim().length > 0;
+    if (mode === 'listen-repeat') return writtenAnswer.trim().length > 0;
     return writtenAnswer.trim().length > 0;
   })();
 
@@ -282,7 +400,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   {questions.map((_, index) => {
                     const isCurrent = index === currentIndex;
-                    const isComplete = index < currentIndex || (checked && index === currentIndex && selectedIndex === current.answerIndex);
+                    const isComplete = index < currentIndex || (checked && index === currentIndex && (mode === 'open-response' || objectiveResult));
 
                     return (
                       <div
@@ -322,43 +440,141 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
                   <div className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white" style={{ backgroundColor: theme.card }}>
                     Question {currentIndex + 1}
                   </div>
-                  <h3 className="mt-4 text-xl font-bold leading-8 text-[#0f172a] sm:text-[1.45rem]">{current.prompt}</h3>
+                  <h3 className="mt-4 text-xl font-bold leading-8 text-[#0f172a] sm:text-[1.45rem]">{current.questionText}</h3>
                 </div>
 
-                <div className="mt-6 space-y-3">
-                  {current.options.map((option, index) => {
-                    const isCorrect = checked && index === current.answerIndex;
-                    const isWrong = checked && selectedIndex === index && index !== current.answerIndex;
+                {mode === 'multiple-choice' && (
+                  <div className="mt-6 space-y-3">
+                    {current.options?.map((option, index) => {
+                      const isCorrect = checked && index === correctOptionIndex;
+                      const isWrong = checked && selectedOptionIndex === index && index !== correctOptionIndex;
 
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => !checked && setSelectedIndex(index)}
-                        className={`w-full rounded-[22px] border px-4 py-4 text-left text-sm font-medium transition-all duration-200 sm:px-5 sm:py-4 ${
-                          isCorrect
-                            ? 'border-green-500 bg-green-50 text-green-700 shadow-[0_10px_28px_rgba(34,197,94,0.12)]'
-                            : isWrong
-                              ? 'border-red-400 bg-red-50 text-red-700 shadow-[0_10px_28px_rgba(248,113,113,0.12)]'
-                              : selectedIndex === index
-                                ? 'border-slate-400 bg-slate-50 text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.08)]'
-                                : 'border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span>{option}</span>
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-[#64748b]">
-                            {String.fromCharCode(65 + index)}
-                          </span>
+                      return (
+                        <button
+                          key={`${current.id}-option-${index}`}
+                          type="button"
+                          onClick={() => !checked && setSelectedOptionIndex(index)}
+                          className={`w-full rounded-[22px] border px-4 py-4 text-left text-sm font-medium transition-all duration-200 sm:px-5 sm:py-4 ${
+                            isCorrect
+                              ? 'border-green-500 bg-green-50 text-green-700 shadow-[0_10px_28px_rgba(34,197,94,0.12)]'
+                              : isWrong
+                                ? 'border-red-400 bg-red-50 text-red-700 shadow-[0_10px_28px_rgba(248,113,113,0.12)]'
+                                : selectedOptionIndex === index
+                                  ? 'border-slate-400 bg-slate-50 text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.08)]'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span>{option}</span>
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-[#64748b]">
+                              {String.fromCharCode(65 + index)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {mode === 'fill-blanks' && (
+                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-[#f6f6f6] p-5 sm:p-6">
+                    <h4 className="mb-6 text-center text-2xl font-bold text-black">{current.questionText}</h4>
+                    <div className="text-[1.28rem] leading-[1.9] text-black whitespace-pre-wrap">
+                      {fillInlineParts.map((part, partIndex) => {
+                        if (part.type === 'text') {
+                          return <span key={`text-${partIndex}`}>{part.value}</span>;
+                        }
+
+                        const value = blankInputs[part.blankIndex] || '';
+                        const expectedLength = Math.max(part.maxLength, 2);
+                        const width = Math.max(expectedLength * 20, 44);
+                        const isCorrect = checked && normalizeAnswer(value) === normalizeAnswer(fillBlankSpecs[part.blankIndex]?.answer || '');
+
+                        return (
+                          <input
+                            key={`blank-${partIndex}`}
+                            value={value}
+                            disabled={checked}
+                            onChange={(event) => {
+                              const next = [...blankInputs];
+                              next[part.blankIndex] = event.target.value;
+                              setBlankInputs(next);
+                            }}
+                            className={`mx-1 inline-block h-[1.55em] rounded-[4px] bg-[#d8d8d8] px-1 align-baseline text-black outline-none ${
+                              checked ? (isCorrect ? 'ring-2 ring-green-400' : 'ring-2 ring-red-300') : ''
+                            }`}
+                            style={{ width: `${width}px` }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {mode === 'listen-repeat' && (
+                  <div className="mt-6 space-y-4 rounded-[24px] border border-slate-200 bg-[#f8f7ff] p-4 sm:p-5">
+                    {(current.audioUrl || current.passageAudioUrl) && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <Headphones className="h-4 w-4" />
+                          Audio
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        <audio controls className="w-full" src={current.audioUrl || current.passageAudioUrl} />
+                      </div>
+                    )}
+
+                    <textarea
+                      value={writtenAnswer}
+                      onChange={(event) => setWrittenAnswer(event.target.value)}
+                      disabled={checked}
+                      className="min-h-[180px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
+                      placeholder="들은 문장을 입력하거나, 말한 내용을 텍스트로 정리해 보세요"
+                    />
+                  </div>
+                )}
+
+                {mode === 'build-sentence' && (
+                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                    <div className="flex flex-wrap gap-2">
+                      {current.words?.map((word) => (
+                        <span key={`${current.id}-${word}`} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700">
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                    <textarea
+                      value={sentenceAnswer}
+                      onChange={(event) => setSentenceAnswer(event.target.value)}
+                      disabled={checked}
+                      className="mt-4 min-h-[140px] w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
+                      placeholder="단어를 조합해 문장을 완성해보세요"
+                    />
+                  </div>
+                )}
+
+                {mode === 'open-response' && (
+                  <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                    <textarea
+                      value={writtenAnswer}
+                      onChange={(event) => setWrittenAnswer(event.target.value)}
+                      disabled={checked}
+                      className="min-h-[220px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm leading-6 text-slate-700 outline-none transition-colors focus:border-slate-400"
+                      placeholder="실전처럼 바로 답변을 작성해보세요"
+                    />
+                  </div>
+                )}
 
                 {checked && (
                   <div className="mt-6 rounded-[24px] border px-4 py-4 text-sm leading-6 text-slate-600" style={{ borderColor: theme.border, backgroundColor: theme.soft }}>
-                    {current.explanation}
+                    {mode !== 'open-response' && mode !== 'listen-repeat' && (
+                      <p className={`font-semibold ${objectiveResult ? 'text-green-700' : 'text-red-700'}`}>
+                        {objectiveResult ? '정답입니다.' : '정답을 다시 확인해보세요.'}
+                      </p>
+                    )}
+                    {current.explanation && <p className={mode !== 'open-response' ? 'mt-2' : ''}>{current.explanation}</p>}
+                    {mode !== 'open-response' && mode !== 'listen-repeat' && !objectiveResult && getDisplayAnswer(current) && (
+                      <p className="mt-2 font-medium">정답: {getDisplayAnswer(current)}</p>
+                    )}
                   </div>
                 )}
 
@@ -367,25 +583,17 @@ export function ReviewTrainingOverlay({ section, title, questionType, trainingTe
                   {!checked ? (
                     <button
                       type="button"
-                      disabled={selectedIndex === null}
-                      onClick={() => setChecked(true)}
+                      disabled={!canCheck}
+                      onClick={handleCheck}
                       className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-                      style={{ backgroundColor: selectedIndex === null ? '#cbd5e1' : theme.card }}
+                      style={{ backgroundColor: canCheck ? theme.card : '#cbd5e1' }}
                     >
-                      정답 확인
+                      {mode === 'open-response' ? '작성 완료' : '정답 확인'}
                     </button>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (isLast) {
-                          onClose();
-                          return;
-                        }
-                        setCurrentIndex((prev) => prev + 1);
-                        setSelectedIndex(null);
-                        setChecked(false);
-                      }}
+                      onClick={handleNext}
                       className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
                       style={{ backgroundColor: theme.card }}
                     >
