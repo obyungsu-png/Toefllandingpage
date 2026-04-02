@@ -3,6 +3,7 @@ import { Mic, Play, Square, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
 import { createClient } from '@supabase/supabase-js';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface PronunciationAnalyzerProps {
   nativeText: string;
@@ -246,11 +247,11 @@ export function PronunciationAnalyzer({
             const base64data = reader.result as string;
             
             // Upload to server
-            const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/upload-file`, {
+            const response = await fetch(`${SERVER_BASE_URL}/upload-file`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${publicAnonKey}`
+                ...getServerHeaders()
               },
               body: JSON.stringify({
                 fileData: base64data,

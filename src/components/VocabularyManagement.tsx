@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Plus, Edit, Trash2, Search, BookOpen, Save, X, Check, Pencil, Upload, Download, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 // motion removed - using CSS animations
 import { SATWord } from './vocaWordSets';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 export interface VocabularyDay {
   id: number;
@@ -90,7 +90,7 @@ export function VocabularyManagement({
   // Collapse/Expand state for word lists (default: collapsed)
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
 
-  const serverUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+  const serverUrl = SERVER_BASE_URL;
 
   // Cache configuration
   const CACHE_VERSION = 'v1';
@@ -162,7 +162,7 @@ export function VocabularyManagement({
     if (!serverWarmedUp.current) {
       serverWarmedUp.current = true;
       fetch(`${serverUrl}/health`, {
-        headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+        headers: getServerHeaders()
       }).catch(() => {});
     }
   }, []);
@@ -205,7 +205,7 @@ export function VocabularyManagement({
       console.log(`[VocabularyManagement] Server URL: ${serverUrl}/vocabulary/${activeTab}`);
 
       const headers = {
-        'Authorization': `Bearer ${publicAnonKey}`,
+        ...getServerHeaders(),
         'Content-Type': 'application/json'
       };
 
@@ -247,9 +247,7 @@ export function VocabularyManagement({
       console.error('Error details:', {
         message: err.message,
         serverUrl,
-        activeTab,
-        projectId,
-        publicAnonKey: publicAnonKey ? '***' + publicAnonKey.slice(-10) : 'undefined'
+        activeTab
       });
       setError(err.message || 'Failed to fetch data from server');
       // Fallback to props if provided
@@ -323,7 +321,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ word: normalizedWord, day: selectedDay })
@@ -355,7 +353,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ oldWord: normalizedOldWord, newWord: normalizedNewWord, day: selectedDay })
@@ -388,7 +386,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ word: normalizedWord, day: selectedDay })
@@ -441,7 +439,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary-days/${activeTab}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ dayName: newDayName })
@@ -472,7 +470,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary-days/${activeTab}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ dayId: editingDayId, newName: editingDayName })
@@ -509,7 +507,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary-days/${activeTab}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ dayId })
@@ -538,7 +536,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary-clear-day/${activeTab}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ day: selectedDay })
@@ -590,7 +588,7 @@ export function VocabularyManagement({
               const response = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${publicAnonKey}`,
+                  'Authorization': getServerHeaders().Authorization,
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ word, day: selectedDay })
@@ -668,7 +666,7 @@ export function VocabularyManagement({
           const response = await fetch(`${serverUrl}/vocabulary-bulk/${activeTab}`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              'Authorization': getServerHeaders().Authorization,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -706,7 +704,7 @@ export function VocabularyManagement({
             const response = await fetch(`${serverUrl}/vocabulary-bulk-multi/${activeTab}`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${publicAnonKey}`,
+                'Authorization': getServerHeaders().Authorization,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({ wordsByDay, replaceExisting })
@@ -728,7 +726,7 @@ export function VocabularyManagement({
             const response = await fetch(`${serverUrl}/vocabulary-bulk/${activeTab}`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${publicAnonKey}`,
+                'Authorization': getServerHeaders().Authorization,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
@@ -857,7 +855,7 @@ export function VocabularyManagement({
         const response = await fetch(`${serverUrl}/vocabulary-bulk-multi/${activeTab}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': getServerHeaders().Authorization,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ wordsByDay })
@@ -903,7 +901,7 @@ export function VocabularyManagement({
       const response = await fetch(`${serverUrl}/vocabulary-normalize/${activeTab}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': getServerHeaders().Authorization,
           'Content-Type': 'application/json'
         }
       });

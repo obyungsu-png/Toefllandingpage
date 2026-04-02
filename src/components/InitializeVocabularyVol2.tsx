@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface SATWord {
   english: string;
@@ -872,12 +872,11 @@ export const InitializeVocabularyVol2: React.FC = () => {
       }
 
       // Upload to server using bulk-multi endpoint
-      const serverUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
-      const response = await fetch(`${serverUrl}/vocabulary-bulk-multi/toefl-hard`, {
+      const response = await fetch(`${SERVER_BASE_URL}/vocabulary-bulk-multi/toefl-hard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${publicAnonKey}`
+          ...getServerHeaders()
         },
         body: JSON.stringify({ wordsByDay })
       });

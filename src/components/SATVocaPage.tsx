@@ -4,7 +4,7 @@ import { BookOpen, Download, FileText, Play, ChevronRight, Check, ArrowLeft, X, 
 import { Button } from './ui/button';
 import { SATWord } from './vocaWordSets';
 import { SATVocaTest } from './SATVocaTest';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak } from 'docx';
 import fileSaver from 'file-saver';
 const saveAs = fileSaver.saveAs || fileSaver;
@@ -24,7 +24,7 @@ interface SATVocaPageProps {
 
 export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaPageProps) {
   const themeColor = testType === 'ACT' ? '#10B981' : '#3D5AA1';
-  const serverUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
+  const serverUrl = SERVER_BASE_URL;
 
   // Cache configuration
   const CACHE_VERSION = 'v1';
@@ -127,9 +127,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         console.log('[Health Check] Checking server at:', `${serverUrl}/health`);
         const response = await fetch(`${serverUrl}/health`, {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-          }
+          headers: getServerHeaders()
         });
         const data = await response.json();
         console.log('[Health Check] Server response:', data);
@@ -162,7 +160,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         console.log(`[SATVocaPage] 🔄 Fetching fresh data from server: ${activeTab}`);
         
         const headers = {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          ...getServerHeaders(),
           'Content-Type': 'application/json'
         };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, User, Lock, Shield, Smartphone, Cloud, MessageCircle, Laptop, Phone } from 'lucide-react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface LoginFormProps {
   onClose: () => void;
@@ -52,11 +52,10 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
     // Call server API for login
     const doLogin = async () => {
       try {
-        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
-        const response = await fetch(`${baseUrl}/users/login`, {
+        const response = await fetch(`${SERVER_BASE_URL}/users/login`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            ...getServerHeaders(),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
