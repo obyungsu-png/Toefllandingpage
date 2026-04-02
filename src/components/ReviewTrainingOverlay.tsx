@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, Headphones, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Headphones, Sparkles, X } from 'lucide-react';
 import { ReviewSection } from './ReviewAssistantPanel';
 import type { TPOQuestion, TPOTest } from './ContentManagement';
 
@@ -163,7 +163,8 @@ function getSampledQuestions(
   section: ReviewSection,
   questionType: string | undefined,
   difficulty: TPOQuestion['difficulty'] | undefined,
-  trainingTests: TPOTest[] | undefined
+  trainingTests: TPOTest[] | undefined,
+  sortOrder: 'random' | 'ascending' = 'random'
 ): TPOQuestion[] {
   if (!questionType || !trainingTests) return [getDummyQuestion(section, questionType)].slice(0, 3);
   const normalizedSelected = normalizeType(questionType);
@@ -191,9 +192,13 @@ function getSampledQuestions(
 
   const orderedPool = [...exactDifficultyMatches, ...fallbackMatches];
 
-  for (let i = orderedPool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [orderedPool[i], orderedPool[j]] = [orderedPool[j], orderedPool[i]];
+  if (sortOrder === 'ascending') {
+    orderedPool.sort((a, b) => (a.questionNumber ?? Number.MAX_SAFE_INTEGER) - (b.questionNumber ?? Number.MAX_SAFE_INTEGER));
+  } else {
+    for (let i = orderedPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [orderedPool[i], orderedPool[j]] = [orderedPool[j], orderedPool[i]];
+    }
   }
 
   if (orderedPool.length === 0) {
@@ -349,7 +354,8 @@ function getDummyQuestion(section: ReviewSection, questionType: string): TPOQues
 
 export function ReviewTrainingOverlay({ section, title, questionType, difficulty, trainingTests, onClose }: ReviewTrainingOverlayProps) {
   const theme = SECTION_THEME[section];
-  const questions = useMemo(() => getSampledQuestions(section, questionType, difficulty, trainingTests), [section, questionType, difficulty, trainingTests]);
+  const [sortOrder, setSortOrder] = useState<'random' | 'ascending'>('random');
+  const questions = useMemo(() => getSampledQuestions(section, questionType, difficulty, trainingTests, sortOrder), [section, questionType, difficulty, trainingTests, sortOrder]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
@@ -363,7 +369,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
     setSelectedOptionIndex(null);
     setChecked(false);
     setCorrectCount(0);
-  }, [section, title, questionType, difficulty]);
+  }, [section, title, questionType, difficulty, sortOrder]);
 
   const current = questions[currentIndex];
   const fillBlankSpecs = useMemo(() => (current ? getFillBlankSpecs(current) : []), [current]);
@@ -387,7 +393,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
 
   if (!questions.length) {
     return (
-      <div className={`fixed inset-0 z-[95] flex items-center justify-center bg-gradient-to-br ${theme.bg}`}>
+      <div className={`fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br ${theme.bg}`}>
         <div className="bg-white/90 rounded-2xl p-10 border shadow-xl flex flex-col items-center">
           <X className="w-8 h-8 mb-4 text-gray-400" />
           <div className="text-lg font-bold mb-2">유형에 맞는 실전 문제가 없습니다.</div>
@@ -447,7 +453,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex flex-col bg-[#f8fafc]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#f8fafc]">
       <div className="flex h-12 sm:h-16 items-center justify-between bg-[#1e6b73] px-3 shadow-lg sm:px-8">
         <div className="text-white text-sm font-bold tracking-wide sm:text-2xl">*toefl ibt</div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -457,10 +463,10 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center gap-1 rounded-lg border border-white bg-white px-3 py-2 text-xs font-semibold text-[#0A6068] transition-colors hover:bg-gray-100 sm:text-sm"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/60 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/20 sm:text-sm"
           >
-            <X className="h-4 w-4" />
-            닫기
+            <ArrowLeft className="h-4 w-4" />
+            뒤로
           </button>
         </div>
       </div>
@@ -473,6 +479,26 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 p-0.5">
+              <button
+                type="button"
+                onClick={() => setSortOrder('ascending')}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  sortOrder === 'ascending' ? 'bg-white text-[#0f172a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                오름차순
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortOrder('random')}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  sortOrder === 'random' ? 'bg-white text-[#0f172a] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                랜덤
+              </button>
+            </div>
             <span className="rounded-full border border-[#cfe5e7] bg-[#eef8f7] px-3 py-1 text-xs font-semibold text-[#0f5d61]">{sourceLabel}</span>
             {difficulty && <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600">난이도 {difficulty}</span>}
             <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-600">정확도 {accuracy}%</span>
