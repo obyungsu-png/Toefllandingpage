@@ -28,12 +28,12 @@ interface DictationExercise {
 }
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
-  reading: ['해석', '분석', '단어'],
-  listening: ['받아쓰기', '단어'],
-  'writing-basic': [],
-  'writing-guided': ['분석', '표현', '템플릿'],
-  'speaking-repeat': ['받아쓰기', '단어'],
-  'speaking-interview': ['분석', '표현', '템플릿'],
+  reading: ['해석', '분석', '단어', '유형연습'],
+  listening: ['받아쓰기', '단어', '유형연습'],
+  'writing-basic': ['유형연습'],
+  'writing-guided': ['분석', '표현', '템플릿', '유형연습'],
+  'speaking-repeat': ['받아쓰기', '단어', '유형연습'],
+  'speaking-interview': ['분석', '표현', '템플릿', '유형연습'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -78,6 +78,11 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
     icon: BookOpen,
     title: '답변 템플릿',
     description: '시간 안에 구조를 잡을 수 있도록 실전형 포맷을 제공합니다.',
+  },
+  유형연습: {
+    icon: ClipboardList,
+    title: '유형연습',
+    description: '현재 문제와 같은 유형의 실전 문제 3개를 풀어봅니다.',
   },
 };
 
@@ -419,7 +424,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
 
           <button
             type="button"
-            onClick={() => onStartTraining(getTrainingTitle(section, variant))}
+            onClick={() => onStartTraining({ title: `${questionType || getTrainingTitle(section, variant)} 유형연습`, questionType, difficulty: currentDifficulty })}
             className="mt-6 inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)]"
             style={{ backgroundColor: theme.accent }}
           >
@@ -453,7 +458,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               <p className="text-xs leading-5 text-[#64748b]">실전 문제처럼 선택지를 확인하고, 정답 확인 후 다음 문제로 이어집니다.</p>
               <button
                 type="button"
-                onClick={() => onStartTraining(getTrainingTitle(section, variant))}
+                onClick={() => onStartTraining({ title: `${questionType || getTrainingTitle(section, variant)} 유형연습`, questionType, difficulty: currentDifficulty })}
                 className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white"
                 style={{ backgroundColor: theme.accent }}
               >
@@ -494,17 +499,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     return renderTypeTraining();
   };
 
-  const panelWidthClass = activeTab === '유형문제'
+  const panelWidthClass = activeTab === '유형연습'
     ? 'max-w-[72rem] sm:max-w-[72rem]'
     : 'max-w-[34rem] sm:max-w-[42rem]';
-
-  const handleStartPatternPractice = () => {
-    onStartTraining({
-      title: `${questionType || getTrainingTitle(section, variant)} 패턴연습`,
-      questionType,
-      difficulty: currentDifficulty,
-    });
-  };
 
   return (
     <div className={`fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] ${panelWidthClass}`}>
@@ -551,32 +548,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               );
             })()
           ))}
-          </div>
-
-          <div className="mt-2 border-t border-white/60 px-1 pt-3">
-            <button
-              type="button"
-              onClick={handleStartPatternPractice}
-              className="flex w-full items-center justify-between rounded-[20px] border px-4 py-3 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-0.5"
-              style={{
-                borderColor: `${theme.accent}33`,
-                background: `linear-gradient(135deg, ${theme.soft} 0%, rgba(255,255,255,0.98) 100%)`,
-              }}
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-bold" style={{ color: theme.accent }}>
-                  <ClipboardList className="h-4 w-4" />
-                  <span>패턴연습</span>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-[#64748b]">
-                  현재 문제와 같은 유형{currentDifficulty ? ` · ${currentDifficulty}` : ''}의 Training 문제 3개를 실전 프레임으로 풉니다.
-                </p>
-              </div>
-
-              <div className="ml-4 shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: theme.accent }}>
-                3문제
-              </div>
-            </button>
           </div>
         </div>
 
