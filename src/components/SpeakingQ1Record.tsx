@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
+import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
@@ -109,7 +109,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl }: SpeakingQ1RecordP
         
         <div className="flex justify-center mb-8">
           <ImageWithFallback 
-            src={imageUrl || zooMapImage} 
+            src={imageUrl ?? zooMapImage} 
             alt="Speaking scene" 
             className="border-2 border-black w-96 h-96 object-cover"
           />
