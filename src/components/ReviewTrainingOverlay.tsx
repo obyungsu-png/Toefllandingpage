@@ -452,7 +452,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
         <div className="text-white text-sm font-bold tracking-wide sm:text-2xl">*toefl ibt</div>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden items-center gap-2 rounded-lg border border-white bg-[#0A6068] px-4 py-2 sm:flex">
-            <span className="text-sm font-semibold text-white">Pattern Practice</span>
+            <span className="text-sm font-semibold text-white">유형연습</span>
           </div>
           <button
             type="button"
@@ -492,7 +492,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
             <div className="rounded-[24px] border border-black bg-white p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">Pattern Practice</p>
+                  <p className="text-xs font-semibold tracking-wide text-gray-400">유형연습</p>
                   <h2 className="mt-2 text-xl font-bold text-black sm:text-2xl">{title}</h2>
                 </div>
                 <div className="rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: theme.card }}>
@@ -670,7 +670,7 @@ export function ReviewTrainingOverlay({ section, title, questionType, difficulty
                     className="flex items-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white hover:opacity-90 sm:px-6 sm:text-base"
                     style={{ backgroundColor: theme.card }}
                   >
-                    {isLast ? '패턴연습 종료' : '다음 문제'}
+                    {isLast ? '유형연습 종료' : '다음 문제'}
                     {!isLast && <ArrowRight className="h-4 w-4" />}
                   </button>
                 )}
