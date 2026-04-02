@@ -5,7 +5,7 @@ import { Textarea } from './ui/textarea';
 import { Plus, Edit2, Trash2, Save, X, Image as ImageIcon, Video, FileText, ExternalLink } from 'lucide-react';
 // motion removed - using CSS animations
 import { toast } from 'sonner@2.0.3';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 // ============================================================================
 // Types
@@ -60,11 +60,9 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/advertisements`,
+        `${SERVER_BASE_URL}/advertisements`,
         {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          }
+          headers: getServerHeaders()
         }
       );
 
@@ -103,11 +101,11 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
       console.log('💾 Saving advertisement:', adData);
 
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/advertisements`,
+        `${SERVER_BASE_URL}/advertisements`,
         {
           method: editingAd ? 'PUT' : 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            ...getServerHeaders(),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(adData)
@@ -150,12 +148,10 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/advertisements/${id}`,
+        `${SERVER_BASE_URL}/advertisements/${id}`,
         {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          }
+          headers: getServerHeaders()
         }
       );
 
@@ -191,11 +187,11 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
       const updatedAd = { ...ad, isActive: !ad.isActive, updatedAt: new Date().toISOString() };
       
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/advertisements`,
+        `${SERVER_BASE_URL}/advertisements`,
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            ...getServerHeaders(),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(updatedAd)

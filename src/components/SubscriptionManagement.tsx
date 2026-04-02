@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Calendar, DollarSign, AlertCircle, TrendingUp, Users, Download, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Button } from './ui/button';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 export interface Subscription {
   id: string;
@@ -32,9 +32,8 @@ export function SubscriptionManagement() {
     // Load subscriptions from Supabase
     const loadSubscriptions = async () => {
       try {
-        const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
-        const response = await fetch(`${baseUrl}/subscriptions`, {
-          headers: { 'Authorization': `Bearer ${publicAnonKey}` }
+        const response = await fetch(`${SERVER_BASE_URL}/subscriptions`, {
+          headers: getServerHeaders()
         });
         if (response.ok) {
           const data = await response.json();
@@ -53,16 +52,16 @@ export function SubscriptionManagement() {
   const saveSubscriptions = async (subs: Subscription[]) => {
     setSubscriptions(subs);
     try {
-      const baseUrl = `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`;
-      await fetch(`${baseUrl}/subscriptions`, {
+      const res = await fetch(`${SERVER_BASE_URL}/subscriptions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          ...getServerHeaders(),
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(subs)
       });
-      console.log('💾 Saved subscriptions to Supabase');
+      if (!res.ok) console.error(`❌ Error saving subscriptions: ${res.status}`);
+      else console.log('💾 Saved subscriptions to Supabase');
     } catch (error) {
       console.error('❌ Error saving subscriptions:', error);
     }

@@ -44,7 +44,7 @@ import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, R
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
 import { isContentLocked } from './utils/subscriptionUtils';
-import { projectId, publicAnonKey } from './utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
@@ -423,18 +423,19 @@ function AppContent() {
     
     const saveStudents = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/students`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/students`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(students)
           }
         );
-        console.log('💾 Saved Students to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Students: ${res.status}`);
+        else console.log('💾 Saved Students to Supabase');
       } catch (error) {
         console.error('❌ Error saving Students:', error);
       }
@@ -449,18 +450,19 @@ function AppContent() {
     
     const saveTestResults = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/test-results`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/test-results`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(testResults)
           }
         );
-        console.log('💾 Saved Test Results to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Test Results: ${res.status}`);
+        else console.log('💾 Saved Test Results to Supabase');
       } catch (error) {
         console.error('❌ Error saving Test Results:', error);
       }
@@ -610,8 +612,8 @@ function AppContent() {
   };
 
   const getSupabaseRequestContext = () => ({
-    headers: { 'Authorization': `Bearer ${publicAnonKey}` },
-    baseUrl: `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a`
+    headers: getServerHeaders(),
+    baseUrl: SERVER_BASE_URL
   });
 
   const fetchSupabaseJson = async (endpoint: string) => {
@@ -831,18 +833,19 @@ function AppContent() {
     
     const saveToSupabase = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/lms-contents`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/lms-contents`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(lmsContents)
           }
         );
-        console.log('💾 Saved LMS contents to Supabase');
+        if (!res.ok) console.error(`❌ Error saving LMS contents: ${res.status}`);
+        else console.log('💾 Saved LMS contents to Supabase');
       } catch (error) {
         console.error('❌ Error saving LMS contents:', error);
       }
@@ -857,18 +860,19 @@ function AppContent() {
     
     const saveToSupabase = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/tpo-tests`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/tpo-tests`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(tpoTests)
           }
         );
-        console.log('💾 Saved TPO tests to Supabase');
+        if (!res.ok) console.error(`❌ Error saving TPO tests: ${res.status}`);
+        else console.log('💾 Saved TPO tests to Supabase');
       } catch (error) {
         console.error('❌ Error saving TPO tests:', error);
       }
@@ -883,18 +887,19 @@ function AppContent() {
     
     const saveToSupabase = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/test-tests`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/test-tests`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(testTests)
           }
         );
-        console.log('💾 Saved Test tests to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Test tests: ${res.status}`);
+        else console.log('💾 Saved Test tests to Supabase');
       } catch (error) {
         console.error('❌ Error saving Test tests:', error);
       }
@@ -909,18 +914,19 @@ function AppContent() {
 
     const saveToSupabase = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-tests`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/training-tests`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(trainingTests)
           }
         );
-        console.log('💾 Saved Training tests to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Training tests: ${res.status}`);
+        else console.log('💾 Saved Training tests to Supabase');
       } catch (error) {
         console.error('❌ Error saving Training tests:', error);
       }
@@ -935,18 +941,19 @@ function AppContent() {
     
     const saveToSupabase = async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/reports`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/reports`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(reports)
           }
         );
-        console.log('💾 Saved Reports to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Reports: ${res.status}`);
+        else console.log('💾 Saved Reports to Supabase');
       } catch (error) {
         console.error('❌ Error saving Reports:', error);
       }
@@ -961,18 +968,19 @@ function AppContent() {
     
     const timer = setTimeout(async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/question-types-config`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/question-types-config`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(questionTypesConfig)
           }
         );
-        console.log('💾 Saved Question Types Config to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Question Types Config: ${res.status}`);
+        else console.log('💾 Saved Question Types Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Question Types Config:', error);
       }
@@ -987,18 +995,19 @@ function AppContent() {
     
     const timer = setTimeout(async () => {
       try {
-        await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-config`,
+        const res = await fetch(
+          `${SERVER_BASE_URL}/training-config`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(trainingConfig)
           }
         );
-        console.log('💾 Saved Training Config to Supabase');
+        if (!res.ok) console.error(`❌ Error saving Training Config: ${res.status}`);
+        else console.log('💾 Saved Training Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Training Config:', error);
       }
@@ -1010,18 +1019,19 @@ function AppContent() {
   // Save Training Result to Supabase (single append)
   const saveTrainingResultToSupabase = async (result: any) => {
     try {
-      await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/training-results`,
+      const res = await fetch(
+        `${SERVER_BASE_URL}/training-results`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            ...getServerHeaders(),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(result)
         }
       );
-      console.log('💾 Saved Training Result to Supabase');
+      if (!res.ok) console.error(`❌ Error saving Training Result: ${res.status}`);
+      else console.log('💾 Saved Training Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Training Result:', error);
     }
@@ -1030,18 +1040,19 @@ function AppContent() {
   // Save Question Types Result to Supabase (single append)
   const saveQuestionTypesResultToSupabase = async (result: any) => {
     try {
-      await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/question-types-results`,
+      const res = await fetch(
+        `${SERVER_BASE_URL}/question-types-results`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            ...getServerHeaders(),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(result)
         }
       );
-      console.log('💾 Saved Question Types Result to Supabase');
+      if (!res.ok) console.error(`❌ Error saving Question Types Result: ${res.status}`);
+      else console.log('💾 Saved Question Types Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Question Types Result:', error);
     }
@@ -1122,12 +1133,12 @@ function AppContent() {
     try {
       const endpoint = getTestEndpoint(test.testType);
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
+        `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
+            ...getServerHeaders()
           },
           body: JSON.stringify(test)
         }
@@ -1151,12 +1162,12 @@ function AppContent() {
     try {
       const endpoint = getTestEndpoint(updatedTest.testType);
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}`,
+        `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
+            ...getServerHeaders()
           },
           body: JSON.stringify(updatedTest)
         }
@@ -1187,11 +1198,11 @@ function AppContent() {
       
       const endpoint = getTestEndpoint(testToDelete.testType);
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/${endpoint}/${testToDelete.testNumber}`,
+        `${SERVER_BASE_URL}/${endpoint}/${testToDelete.testNumber}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
+            ...getServerHeaders()
           }
         }
       );

@@ -8,7 +8,7 @@ import { VocabularyManagement, VocabularyDay } from './VocabularyManagement';
 import { StudentManagement, Student, VocabularyScore } from './StudentManagement';
 import { AdManagement } from './AdManagement';
 import { SATWord } from './vocaWordSets';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 export interface LMSContent {
   id: string;
@@ -144,11 +144,11 @@ export function LMSSection({
       // If there's an audio file, upload it to Supabase Storage first
       if (formData.audioFile && (formData.fileType === 'text-audio' || formData.fileType === 'audio')) {
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/upload-file`,
+          `${SERVER_BASE_URL}/upload-file`,
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
+              ...getServerHeaders(),
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
