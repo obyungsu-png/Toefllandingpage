@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SpeakingIntro } from './SpeakingIntro';
 import { SpeakingListenRepeatIntro } from './SpeakingListenRepeatIntro';
 import { SpeakingQ1 } from './SpeakingQ1';
@@ -89,16 +89,6 @@ export function SpeakingSectionWrapper({
 }: SpeakingSectionWrapperProps) {
   const [screen, setScreen] = useState<SpeakingScreen>(initialScreen);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
-
-  const sortedQuestions = useMemo(() => {
-    return [...questions].sort((a, b) => {
-      const aNum = typeof a.questionNumber === 'number' ? a.questionNumber : Number(String(a.questionNumber).replace(/\D/g, ''));
-      const bNum = typeof b.questionNumber === 'number' ? b.questionNumber : Number(String(b.questionNumber).replace(/\D/g, ''));
-      const safeANum = Number.isNaN(aNum) ? Number.MAX_SAFE_INTEGER : aNum;
-      const safeBNum = Number.isNaN(bNum) ? Number.MAX_SAFE_INTEGER : bNum;
-      return safeANum - safeBNum;
-    });
-  }, [questions]);
   
   // Auto-save progress
   const {
@@ -167,25 +157,9 @@ export function SpeakingSectionWrapper({
     volumeButtonRef,
   };
 
-  const getQuestionIndexFromScreen = (currentScreen: SpeakingScreen): number | null => {
-    const match = currentScreen.match(/^q(\d+)/);
-    if (!match) return null;
-
-    const questionNumber = Number(match[1]);
-    if (Number.isNaN(questionNumber) || questionNumber < 1) return null;
-
-    return questionNumber - 1;
-  };
-
-  const currentQuestion = (() => {
-    const idx = getQuestionIndexFromScreen(screen);
-    if (idx === null) return null;
-    return sortedQuestions[idx] || null;
-  })();
-
   // Map questions to image URLs (Q1=0, Q2=1, Q3=2, etc.)
   const getImageUrl = (questionIndex: number) => {
-    return sortedQuestions[questionIndex]?.imageUrl;
+    return questions[questionIndex]?.imageUrl;
   };
 
   return (
@@ -228,19 +202,6 @@ export function SpeakingSectionWrapper({
       {screen === 'q11-prep' && <SpeakingQ11Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(10)} />}
       {screen === 'q11-record' && <SpeakingQ11Record onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(10)} />}
       {screen === 'end-session' && <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />}
-
-      {currentQuestion?.questionText && (
-        <div className="fixed left-1/2 top-[104px] z-[60] w-[calc(100%-24px)] max-w-4xl -translate-x-1/2 pointer-events-none">
-          <div className="rounded-xl border border-[#0f766e]/25 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm">
-            <p className="text-xs font-semibold tracking-wide text-[#0f766e]">
-              SPEAKING Q{currentQuestion.questionNumber}
-            </p>
-            <p className="mt-1 text-sm font-medium leading-relaxed text-[#0f172a] sm:text-base">
-              {currentQuestion.questionText}
-            </p>
-          </div>
-        </div>
-      )}
       
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
     </>
