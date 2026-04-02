@@ -7056,7 +7056,7 @@ function AppContent() {
         />
       )}
 
-      {activeReviewPanel && (
+      {activeReviewPanel && !reviewTrainingRequest && (
         <ReviewAssistantPanel
           section={activeReviewPanel.section}
           variant={activeReviewPanel.variant}
