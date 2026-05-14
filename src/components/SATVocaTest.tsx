@@ -214,6 +214,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   // Generate questions on mount
   useEffect(() => {
     if (testInfo.testType === 'flashcard') return;
+    if (questions.length > 0) return; // Only generate once
 
     // Check for saved progress on first load
     if (!progressLoaded) {
