@@ -6062,8 +6062,9 @@ function AppContent() {
 
 
     // Apply CMS overrides
-    const finalAnswerOptions = cmsAnswerOptions15 || answerOptions;
-    const finalCorrectAnswer = cmsCorrectAnswer15 || correctAnswer;
+    const finalAnswerOptions = (fillBlanksQuestion?.options && fillBlanksQuestion.options.length > 0)
+      ? fillBlanksQuestion.options : answerOptions;
+    const finalCorrectAnswer = (fillBlanksQuestion?.correctAnswer as string) || correctAnswer;
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
     };
