@@ -34,6 +34,7 @@ export function AcademicReadingBuilder({ onSave, testType = 'TPO', testNumber = 
   const [questionNumber, setQuestionNumber] = useState('16');
   const [questionType, setQuestionType] = useState('Main Idea');
   const [module, setModule] = useState<'Module 1' | 'Module 2'>('Module 1');
+  const [difficulty, setDifficulty] = useState<'쉬움' | '보통' | '어려움'>('보통');
   
   // Preview mode
   const [previewMode, setPreviewMode] = useState(false);
@@ -98,7 +99,7 @@ export function AcademicReadingBuilder({ onSave, testType = 'TPO', testNumber = 
         passage: passageText,
         questions: questions
       }),
-      difficulty: questions.length > 4 ? '어려움' : questions.length > 2 ? '보통' : '쉬움'
+      difficulty: difficulty
     };
 
     onSave(question);
@@ -193,6 +194,31 @@ export function AcademicReadingBuilder({ onSave, testType = 'TPO', testNumber = 
                   <option value="Module 1">Module 1</option>
                   <option value="Module 2">Module 2</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  난이도 <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  {(['쉬움', '보통', '어려움'] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setDifficulty(level)}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all ${
+                        difficulty === level
+                          ? level === '쉬움'
+                            ? 'bg-green-100 border-green-500 text-green-700'
+                            : level === '보통'
+                            ? 'bg-blue-100 border-blue-500 text-blue-700'
+                            : 'bg-red-100 border-red-500 text-red-700'
+                          : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'
+                      }`}
+                    >
+                      {level === '쉬움' ? '🟢 쉬움' : level === '보통' ? '🔵 보통' : '🔴 어려움'}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
