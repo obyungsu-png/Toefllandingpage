@@ -208,6 +208,7 @@ export function ReadDailyLifeTemplates({
     { id: 'blue',   label: '파란색 (Blue)', primary: '#2563eb', border: '#2563eb', bg: '#2563eb', text: 'white' },
     { id: 'black',  label: '검은색 (Black)', primary: '#111827', border: '#111827', bg: '#111827', text: 'white' },
     { id: 'purple', label: '자주색 (Purple)', primary: '#7c3aed', border: '#7c3aed', bg: '#7c3aed', text: 'white' },
+    { id: 'orange', label: '주황색 (Orange)', primary: '#ea580c', border: '#ea580c', bg: '#ea580c', text: 'white' },
   ] as const;
   type ColorThemeId = typeof COLOR_THEMES[number]['id'];
   const [colorThemeId, setColorThemeId] = useState<ColorThemeId>('teal');
@@ -839,6 +840,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
     blue:   '#2563eb',
     black:  '#111827',
     purple: '#7c3aed',
+    orange: '#ea580c',
   };
   const c = COLOR_MAP[parsed.color || 'teal'] || '#1e6b73';
 

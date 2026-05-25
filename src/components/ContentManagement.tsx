@@ -1004,6 +1004,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     explanation: '',
     passageText: '',
     passageTitle: '',
+    colorTheme: '' as string,
     audioFile: null as File | null,
     audioUrl: '',
     videoFile: null as File | null,
@@ -1026,7 +1027,18 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
-      passageText: formData.passageText || undefined,
+      passageText: (() => {
+        const raw = formData.passageText || '';
+        const colorId = (formData as any).colorTheme;
+        if (!colorId || !raw) return raw || undefined;
+        try {
+          const obj = JSON.parse(raw);
+          obj.color = colorId;
+          return JSON.stringify(obj);
+        } catch {
+          return raw || undefined;
+        }
+      })(),
       passageTitle: (formData as any).passageTitle || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
@@ -1305,6 +1317,47 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
+        {/* Color Theme (Read in Daily Life only) */}
+        {section === 'Reading' && (
+          (formData.questionType || '').toLowerCase().includes('daily life') ||
+          (formData.questionType || '').toLowerCase().includes('notice') ||
+          (formData.questionType || '').toLowerCase().includes('email') ||
+          (formData.questionType || '').toLowerCase().includes('social')
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              색상 테마 (Color Theme)
+              <span className="ml-2 text-xs text-gray-400 font-normal">지문 UI 색상</span>
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {([
+                ['teal',   '#1e6b73', '기본'],
+                ['gray',   '#6b7280', '회색'],
+                ['blue',   '#2563eb', '파란색'],
+                ['black',  '#111827', '검은색'],
+                ['purple', '#7c3aed', '자주색'],
+                ['orange', '#ea580c', '주황색'],
+              ] as const).map(([id, hex, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, colorTheme: id } as any)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all border-2"
+                  style={{
+                    backgroundColor: hex,
+                    borderColor: (formData as any).colorTheme === id ? 'white' : 'transparent',
+                    outline: (formData as any).colorTheme === id ? `2px solid ${hex}` : 'none',
+                    transform: (formData as any).colorTheme === id ? 'scale(1.1)' : 'scale(1)',
+                    boxShadow: (formData as any).colorTheme === id ? '0 0 0 3px ' + hex + '50' : 'none',
+                  }}
+                >
+                  {(formData as any).colorTheme === id && '✓ '}{label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Difficulty Level */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
@@ -1362,6 +1415,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     explanation: question.explanation || '',
     passageText: question.passageText || '',
     passageTitle: question.passageTitle || '',
+    colorTheme: (() => {
+      try { return JSON.parse(question.passageText || '').color || 'teal'; } catch { return 'teal'; }
+    })() as string,
     audioFile: null as File | null,
     videoFile: null as File | null,
     imageFile: null as File | null,
@@ -1381,7 +1437,18 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
-      passageText: formData.passageText || undefined,
+      passageText: (() => {
+        const raw = formData.passageText || '';
+        const colorId = (formData as any).colorTheme;
+        if (!colorId || !raw) return raw || undefined;
+        try {
+          const obj = JSON.parse(raw);
+          obj.color = colorId;
+          return JSON.stringify(obj);
+        } catch {
+          return raw || undefined;
+        }
+      })(),
       passageTitle: (formData as any).passageTitle || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
@@ -1660,6 +1727,47 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             placeholder="Explain the correct answer..."
           />
         </div>
+
+        {/* Color Theme (Read in Daily Life only) */}
+        {section === 'Reading' && (
+          (formData.questionType || '').toLowerCase().includes('daily life') ||
+          (formData.questionType || '').toLowerCase().includes('notice') ||
+          (formData.questionType || '').toLowerCase().includes('email') ||
+          (formData.questionType || '').toLowerCase().includes('social')
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              색상 테마 (Color Theme)
+              <span className="ml-2 text-xs text-gray-400 font-normal">지문 UI 색상</span>
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {([
+                ['teal',   '#1e6b73', '기본'],
+                ['gray',   '#6b7280', '회색'],
+                ['blue',   '#2563eb', '파란색'],
+                ['black',  '#111827', '검은색'],
+                ['purple', '#7c3aed', '자주색'],
+                ['orange', '#ea580c', '주황색'],
+              ] as const).map(([id, hex, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, colorTheme: id } as any)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all border-2"
+                  style={{
+                    backgroundColor: hex,
+                    borderColor: (formData as any).colorTheme === id ? 'white' : 'transparent',
+                    outline: (formData as any).colorTheme === id ? `2px solid ${hex}` : 'none',
+                    transform: (formData as any).colorTheme === id ? 'scale(1.1)' : 'scale(1)',
+                    boxShadow: (formData as any).colorTheme === id ? '0 0 0 3px ' + hex + '50' : 'none',
+                  }}
+                >
+                  {(formData as any).colorTheme === id && '✓ '}{label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Difficulty Level */}
         <div>
