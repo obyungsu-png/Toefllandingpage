@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
 // motion removed - using CSS animations
 import { FillBlanksEditor } from './FillBlanksEditor';
+import { AcademicReadingBuilder } from './AcademicReadingBuilder';
 import { ReadDailyLifeTemplates, DailyLifeTemplate } from './ReadDailyLifeTemplates';
 import { TPOOverview } from './TPOOverview';
 import { TPODetailView } from './TPODetailView';
@@ -99,6 +100,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [dateMemo, setDateMemo] = useState<string>('');
   const [showFillBlanksBuilder, setShowFillBlanksBuilder] = useState(false);
   const [showDailyLifeBuilder, setShowDailyLifeBuilder] = useState(false);
+  const [showAcademicReadingBuilder, setShowAcademicReadingBuilder] = useState(false);
   const [savedDailyLifeTemplates, setSavedDailyLifeTemplates] = useState<DailyLifeTemplate[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     type: 'question' | 'test';
@@ -588,14 +590,21 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         {selectedSection === 'Reading' && (
           <>
             <Button
-              onClick={() => { setShowFillBlanksBuilder(!showFillBlanksBuilder); setShowDailyLifeBuilder(false); }}
+              onClick={() => { setShowAcademicReadingBuilder(!showAcademicReadingBuilder); setShowFillBlanksBuilder(false); setShowDailyLifeBuilder(false); }}
+              className={`shadow-lg ${showAcademicReadingBuilder ? 'bg-orange-600 text-white' : 'bg-orange-500 text-white hover:bg-orange-600'}`}
+            >
+              <BookOpen className="w-5 h-5 mr-2" />
+              Academic Reading Builder
+            </Button>
+            <Button
+              onClick={() => { setShowFillBlanksBuilder(!showFillBlanksBuilder); setShowDailyLifeBuilder(false); setShowAcademicReadingBuilder(false); }}
               className={`shadow-lg ${showFillBlanksBuilder ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'}`}
             >
               <FileText className="w-5 h-5 mr-2" />
               Fill Blanks Builder
             </Button>
             <Button
-              onClick={() => { setShowDailyLifeBuilder(!showDailyLifeBuilder); setShowFillBlanksBuilder(false); }}
+              onClick={() => { setShowDailyLifeBuilder(!showDailyLifeBuilder); setShowFillBlanksBuilder(false); setShowAcademicReadingBuilder(false); }}
               className={`shadow-lg ${showDailyLifeBuilder ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
             >
               <Book className="w-5 h-5 mr-2" />
@@ -629,6 +638,19 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               savedTemplates={savedDailyLifeTemplates}
               onSaveTemplate={(t) => setSavedDailyLifeTemplates(prev => [...prev, t])}
               onDeleteTemplate={(id) => setSavedDailyLifeTemplates(prev => prev.filter(t => t.id !== id))}
+            />
+          </div>
+        )}
+      </>
+
+      {/* Academic Reading Builder */}
+      <>
+        {showAcademicReadingBuilder && selectedSection === 'Reading' && (
+          <div style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+            <AcademicReadingBuilder
+              onSave={handleBuilderSave}
+              testType={activeTestType}
+              testNumber={selectedTestNumber}
             />
           </div>
         )}
