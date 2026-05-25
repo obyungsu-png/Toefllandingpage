@@ -1738,10 +1738,12 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read a notice.</h1>
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">
+            {getDailyLifePageTitle(cmsNoticeTitle, cmsNoticeText)}
+          </h1>
           
           <ResizableReadingLayout
-            passageTitle="Read a notice."
+            passageTitle={getDailyLifePageTitle(cmsNoticeTitle, cmsNoticeText)}
             passageSummary={<><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
             questionInfo="2/2"
             onBack={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(true); }}
@@ -3871,6 +3873,7 @@ function AppContent() {
     })[0] || null;  // fallback: 0th Daily Life question in section
 
     const cmsPassageText11 = cmsDailyQ11?.passageText || null;
+    const cmsPassageTitle11 = cmsDailyQ11?.passageTitle || null;
     const cmsQuestionText11 = cmsDailyQ11?.questionText || null;
     const cmsAnswerOptions11 = (cmsDailyQ11?.options && cmsDailyQ11!.options!.length > 0)
       ? cmsDailyQ11!.options! : null;
@@ -3914,10 +3917,10 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read an email.</h1>
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">{getDailyLifePageTitle(cmsPassageTitle11, cmsPassageText11)}</h1>
           
           <ResizableReadingLayout
-            passageTitle="Read an email."
+            passageTitle={getDailyLifePageTitle(null, cmsPassageText11)}
             passageSummary={<><strong>Art Workshop Reservation Confirmation</strong><br/>From: artforeveryone@dmail.com</>}
             questionInfo="1/2"
             onBack={() => { setShowModule2Question11(false); setShowModule2FillBlanks(true); }}
@@ -4055,6 +4058,7 @@ function AppContent() {
     })[1] || null;  // fallback: 1th Daily Life question in section
 
     const cmsPassageText12 = cmsDailyQ12?.passageText || null;
+    const cmsPassageTitle12 = cmsDailyQ12?.passageTitle || null;
     const cmsQuestionText12 = cmsDailyQ12?.questionText || null;
     const cmsAnswerOptions12 = (cmsDailyQ12?.options && cmsDailyQ12!.options!.length > 0)
       ? cmsDailyQ12!.options! : null;
@@ -4135,10 +4139,10 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read an email.</h1>
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">{getDailyLifePageTitle(cmsPassageTitle12, cmsPassageText12)}</h1>
           
           <ResizableReadingLayout
-            passageTitle="Read an email."
+            passageTitle={getDailyLifePageTitle(null, cmsPassageText12)}
             passageSummary={<><strong>Art Workshop Reservation Confirmation</strong><br/>From: artforeveryone@dmail.com</>}
             questionInfo="2/2"
             onBack={() => { setShowModule2Question12(false); setShowModule2Question11(true); }}
@@ -4257,6 +4261,7 @@ function AppContent() {
     })[2] || null;  // fallback: 2th Daily Life question in section
 
     const cmsPassageText13 = cmsDailyQ13?.passageText || null;
+    const cmsPassageTitle13 = cmsDailyQ13?.passageTitle || null;
     const cmsQuestionText13 = cmsDailyQ13?.questionText || null;
     const cmsAnswerOptions13 = (cmsDailyQ13?.options && cmsDailyQ13!.options!.length > 0)
       ? cmsDailyQ13!.options! : null;
@@ -4337,10 +4342,10 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">{getDailyLifePageTitle(cmsPassageTitle13, cmsPassageText13)}</h1>
           
           <ResizableReadingLayout
-            passageTitle="Read an email."
+            passageTitle={getDailyLifePageTitle(null, cmsPassageText13)}
             passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
             questionInfo="1/3"
             onBack={() => { setShowModule2Question13(false); setShowModule2Question12(true); }}
@@ -4500,6 +4505,7 @@ function AppContent() {
     })[3] || null;  // fallback: 3th Daily Life question in section
 
     const cmsPassageText14 = cmsDailyQ14?.passageText || null;
+    const cmsPassageTitle14 = cmsDailyQ14?.passageTitle || null;
     const cmsQuestionText14 = cmsDailyQ14?.questionText || null;
     const cmsAnswerOptions14 = (cmsDailyQ14?.options && cmsDailyQ14!.options!.length > 0)
       ? cmsDailyQ14!.options! : null;
@@ -4580,10 +4586,10 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">{getDailyLifePageTitle(cmsPassageTitle14, cmsPassageText14)}</h1>
           
           <ResizableReadingLayout
-            passageTitle="Read an email."
+            passageTitle={getDailyLifePageTitle(null, cmsPassageText14)}
             passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
             questionInfo="2/3"
             onBack={() => { setShowModule2Question14(false); setShowModule2Question13(true); }}
@@ -4707,6 +4713,7 @@ function AppContent() {
     })[4] || null;  // fallback: 4th Daily Life question in section
 
     const cmsPassageText15 = cmsDailyQ15?.passageText || null;
+    const cmsPassageTitle15 = cmsDailyQ15?.passageTitle || null;
     const cmsQuestionText15 = cmsDailyQ15?.questionText || null;
     const cmsAnswerOptions15 = (cmsDailyQ15?.options && cmsDailyQ15!.options!.length > 0)
       ? cmsDailyQ15!.options! : null;
@@ -4787,10 +4794,10 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read an email.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">{getDailyLifePageTitle(cmsPassageTitle15, cmsPassageText15)}</h1>
           
           <ResizableReadingLayout
-            passageTitle="Read an email."
+            passageTitle={getDailyLifePageTitle(null, cmsPassageText15)}
             passageSummary={<><strong>Grand Opening Invitation</strong><br/>From: part.gymworkers@dmail.com</>}
             questionInfo="3/3"
             onBack={() => { setShowModule2Question15(false); setShowModule2Question14(true); }}
@@ -5992,6 +5999,27 @@ function AppContent() {
         </div>
       </div>
     );
+  };
+
+
+  // Helper: derive page title from CMS passageTitle or template structure
+  const getDailyLifePageTitle = (passageTitle: string | null, passageText: string | null): string => {
+    if (passageTitle) return passageTitle;
+    if (!passageText) return 'Read a notice.';
+    try {
+      const parsed = JSON.parse(passageText);
+      const structureMap: Record<string, string> = {
+        email: 'Read an email.',
+        notice: 'Read a notice.',
+        social_media: 'Read a social media post.',
+        advertisement: 'Read an advertisement.',
+        article: 'Read a news article.',
+        form: 'Read a form.',
+      };
+      return structureMap[parsed.structure] || 'Read a notice.';
+    } catch {
+      return 'Read a notice.';
+    }
   };
 
   // Read Notice Test Screen Component

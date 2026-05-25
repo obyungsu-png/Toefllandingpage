@@ -951,6 +951,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     correctAnswer: '',
     explanation: '',
     passageText: '',
+    passageTitle: '',
     audioFile: null as File | null,
     audioUrl: '',
     videoFile: null as File | null,
@@ -974,6 +975,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
       passageText: formData.passageText || undefined,
+      passageTitle: (formData as any).passageTitle || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
@@ -1147,6 +1149,29 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
+        {/* Page Title (for Daily Life reading screens) */}
+        {section === 'Reading' && (
+          formData.questionType === 'Read in Daily Life' ||
+          formData.questionType === 'Read in Daily Life (Module 1)' ||
+          formData.questionType === 'Read in Daily Life (Module 2)'
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Page Title
+              <span className="ml-2 text-xs text-gray-400 font-normal">
+                (화면 상단 제목. 비워두면 템플릿에 따라 자동 설정됩니다)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).passageTitle || ''}
+              onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="예: Read an email. / Read a notice. / Read a social media post."
+            />
+          </div>
+        )}
+
         {/* Question Text */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
@@ -1284,6 +1309,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     correctAnswer: question.correctAnswer || '',
     explanation: question.explanation || '',
     passageText: question.passageText || '',
+    passageTitle: question.passageTitle || '',
     audioFile: null as File | null,
     videoFile: null as File | null,
     imageFile: null as File | null,
@@ -1304,6 +1330,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
       passageText: formData.passageText || undefined,
+      passageTitle: (formData as any).passageTitle || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
@@ -1468,6 +1495,29 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
           />
         </div>
+
+        {/* Page Title (for Daily Life reading screens) */}
+        {section === 'Reading' && (
+          formData.questionType === 'Read in Daily Life' ||
+          formData.questionType === 'Read in Daily Life (Module 1)' ||
+          formData.questionType === 'Read in Daily Life (Module 2)'
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Page Title
+              <span className="ml-2 text-xs text-gray-400 font-normal">
+                (화면 상단 제목. 비워두면 템플릿에 따라 자동 설정됩니다)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).passageTitle || ''}
+              onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              placeholder="예: Read an email. / Read a notice. / Read a social media post."
+            />
+          </div>
+        )}
 
         {/* Question Text */}
         <div>
