@@ -3974,15 +3974,6 @@ function AppContent() {
             leftContent={
               <div className="relative w-full">
                 {/* CMS PRIORITY: render template from CMS passageText JSON */}
-                {cmsPassageText12
-                  ? (renderDailyLifePassage(cmsPassageText12) ?? (
-                      <div className="border-2 border-gray-200 rounded-lg p-4">
-                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText12}</p>
-                      </div>
-                    ))
-                  : (
-              <div className="relative w-full">
-                {/* CMS PRIORITY: render template from CMS passageText JSON */}
                 {cmsPassageText11
                   ? (renderDailyLifePassage(cmsPassageText11) ?? (
                       <div className="border-2 border-gray-200 rounded-lg p-4">
@@ -4023,15 +4014,12 @@ function AppContent() {
                   )
                 }
               </div>
-                  )
-                }
-              </div>
             }
-            rightContent={
+            rightContent=
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">When is the date of the art workshop?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText11 || "When is the date of the art workshop?"}</h3>
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {(cmsAnswerOptions11 || answerOptions).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`module2-q11-option-${index}`}
@@ -4226,7 +4214,7 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What should Ms. Edwards bring to the workshop?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText12 || "What should Ms. Edwards bring to the workshop?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
@@ -4399,15 +4387,6 @@ function AppContent() {
                   : (
               <div className="relative w-full">
                 {/* CMS PRIORITY: render template from CMS passageText JSON */}
-                {cmsPassageText14
-                  ? (renderDailyLifePassage(cmsPassageText14) ?? (
-                      <div className="border-2 border-gray-200 rounded-lg p-4">
-                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText14}</p>
-                      </div>
-                    ))
-                  : (
-              <div className="relative w-full">
-                {/* CMS PRIORITY: render template from CMS passageText JSON */}
                 {cmsPassageText13
                   ? (renderDailyLifePassage(cmsPassageText13) ?? (
                       <div className="border-2 border-gray-200 rounded-lg p-4">
@@ -4459,13 +4438,10 @@ function AppContent() {
                   )
                 }
               </div>
-                  )
-                }
-              </div>
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What is the main purpose of the email?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText13 || "What is the main purpose of the email?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
@@ -4668,7 +4644,7 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What can be inferred about Ms. Nguyen's relationship with the fitness center?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText14 || "What can be inferred about Ms. Nguyen's relationship with the fitness center?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
@@ -4871,7 +4847,7 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">Why do customers go to the bakery stall early?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText15 || "Why do customers go to the bakery stall early?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions.map((option, index) => (
@@ -6084,6 +6060,10 @@ function AppContent() {
     const cmsNoticeText = dailyLifeQuestion?.passageText || null;
     const cmsQuestionText = dailyLifeQuestion?.questionText || null;
 
+
+    // Apply CMS overrides
+    const finalAnswerOptions = cmsAnswerOptions15 || answerOptions;
+    const finalCorrectAnswer = cmsCorrectAnswer15 || correctAnswer;
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
     };
@@ -6185,7 +6165,7 @@ function AppContent() {
                   {cmsQuestionText || "What type of business issued the notice?"}
                 </h3>
                 <div className="space-y-5 sm:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {finalAnswerOptions.map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`option-${index}`}
