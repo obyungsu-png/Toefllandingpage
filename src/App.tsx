@@ -3529,18 +3529,57 @@ function AppContent() {
     const CHAR_UNIT_WIDTH = 20;
     const isMobileM2FB = typeof window !== 'undefined' && window.innerWidth < 640;
 
-    const m2Inputs = [
-      { id: 0, maxLength: 1 },  // is
-      { id: 1, maxLength: 2 },  // into
-      { id: 2, maxLength: 4 },  // regions
-      { id: 3, maxLength: 2 },  // with
-      { id: 4, maxLength: 3 },  // roles
-      { id: 5, maxLength: 2 },  // its
-      { id: 6, maxLength: 2 },  // part
-      { id: 7, maxLength: 4 },  // involved
-      { id: 8, maxLength: 5 },  // cognitive
-      { id: 9, maxLength: 2 },  // such
-    ];
+    // CMS PRIORITY: parse Module 2 fill-blanks from CMS passageText "word[answer:maxLength]" format
+    const m2SectionData = getCurrentSectionData('Reading');
+    const m2FillBlanksQuestion = m2SectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return (
+        t.includes('complete words') ||
+        t.includes('fill in the blank') ||
+        t.includes('cloze test') ||
+        t.includes('빈칸') ||
+        t.includes('fillblanks') ||
+        t.includes('fill-in')
+      );
+    });
+
+    const parseM2CmsPassage = (raw: string): { m2ParsedInputs: {id:number;maxLength:number;answer:string}[]; m2NormalizedPassage: string } => {
+      const m2ParsedInputs: {id:number;maxLength:number;answer:string}[] = [];
+      let idx = 0;
+      const m2NormalizedPassage = raw.replace(/\[([^\]]+):(\d+)\]/g, (_match: string, answer: string, maxLen: string) => {
+        m2ParsedInputs.push({ id: idx, maxLength: parseInt(maxLen), answer });
+        return `[${idx++}]`;
+      });
+      return { m2ParsedInputs, m2NormalizedPassage };
+    };
+
+    let m2Inputs: {id:number;maxLength:number;answer?:string}[];
+    let m2NormalizedPassage = '';
+
+    const rawM2Passage = m2FillBlanksQuestion?.passageText || '';
+    const hasM2CmsFormat = /\[[^\]]+:\d+\]/.test(rawM2Passage);
+
+    if (hasM2CmsFormat) {
+      const { m2ParsedInputs, m2NormalizedPassage: np } = parseM2CmsPassage(rawM2Passage);
+      m2Inputs = m2ParsedInputs;
+      m2NormalizedPassage = np;
+    } else if (m2FillBlanksQuestion?.blanks && m2FillBlanksQuestion.blanks.length > 0) {
+      m2Inputs = m2FillBlanksQuestion.blanks.map((b, i) => ({ id: i, maxLength: b.maxLength, answer: b.answer }));
+      m2NormalizedPassage = rawM2Passage;
+    } else {
+      m2Inputs = [
+        { id: 0, maxLength: 1 },  // is
+        { id: 1, maxLength: 2 },  // into
+        { id: 2, maxLength: 4 },  // regions
+        { id: 3, maxLength: 2 },  // with
+        { id: 4, maxLength: 3 },  // roles
+        { id: 5, maxLength: 2 },  // its
+        { id: 6, maxLength: 2 },  // part
+        { id: 7, maxLength: 4 },  // involved
+        { id: 8, maxLength: 5 },  // cognitive
+        { id: 9, maxLength: 2 },  // such
+      ];
+    }
 
     const handleM2InputChange = (id: number, value: string) => {
       setM2InputValues(prev => ({ ...prev, [id]: value }));
@@ -5978,14 +6017,38 @@ function AppContent() {
       });
     }, []);
     
-    // Use CMS data if available, otherwise fall back to hardcoded data
-    const inputs = fillBlanksQuestion?.blanks 
-      ? fillBlanksQuestion.blanks.map((blank, idx) => ({
-          id: idx,
-          maxLength: blank.maxLength,
-          answer: blank.answer
-        }))
-      : [
+    // CMS PRIORITY: Parse CMS passageText format "word[answer:maxLength]" e.g. "sh[ow:2]"
+    // This converts CMS format into the blanks array + normalized passage used by the renderer.
+    const parseCmsPassage = (raw: string): { inputs: {id:number;maxLength:number;answer:string}[]; normalizedPassage: string } => {
+      const parsedInputs: {id:number;maxLength:number;answer:string}[] = [];
+      let idx = 0;
+      // Match pattern: [answer:maxLength]  e.g. [ow:2] or [tion:4]
+      const normalized = raw.replace(/\[([^\]]+):(\d+)\]/g, (_match, answer, maxLen) => {
+        parsedInputs.push({ id: idx, maxLength: parseInt(maxLen), answer });
+        return `[${idx++}]`;
+      });
+      return { inputs: parsedInputs, normalizedPassage: normalized };
+    };
+
+    // Determine inputs and passage: CMS passageText (word[answer:N] format) > CMS blanks array > hardcoded
+    let inputs: {id:number;maxLength:number;answer:string}[];
+    let normalizedPassage: string = '';
+
+    const rawCmsPassage = fillBlanksQuestion?.passageText || '';
+    const hasCmsFormat = rawCmsPassage.includes(':[') || /\[[^\]]+:\d+\]/.test(rawCmsPassage);
+
+    if (hasCmsFormat) {
+      // CMS format: "sh[ow:2] the loca[tion:4]..."
+      const parsed = parseCmsPassage(rawCmsPassage);
+      inputs = parsed.inputs;
+      normalizedPassage = parsed.normalizedPassage;
+    } else if (fillBlanksQuestion?.blanks && fillBlanksQuestion.blanks.length > 0) {
+      // Legacy blanks array format
+      inputs = fillBlanksQuestion.blanks.map((blank, i) => ({ id: i, maxLength: blank.maxLength, answer: blank.answer }));
+      normalizedPassage = rawCmsPassage; // already has [N] markers or empty
+    } else {
+      // Hardcoded fallback
+      inputs = [
         { id: 0, maxLength: 3, answer: 'ght' }, // might
         { id: 1, maxLength: 2, answer: 'at' }, // that
         { id: 2, maxLength: 3, answer: 'ple' }, // people
@@ -5997,9 +6060,11 @@ function AppContent() {
         { id: 8, maxLength: 3, answer: 'ord' }, // record
         { id: 9, maxLength: 4, answer: 'nces' }, // dances
       ];
-    
+    }
+
     const questionText = fillBlanksQuestion?.questionText || 'Fill in the missing letters in the paragraph.';
-    const passageText = fillBlanksQuestion?.passageText || '';
+    // passageText here is the normalized passage (with [N] markers), used by renderPassageWithInputs
+    const passageText = normalizedPassage;
 
     // Helper function to render passage with input fields
     const renderPassageWithInputs = () => {
@@ -6202,11 +6267,47 @@ function AppContent() {
           </h1>
 
           <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+            {/* CMS PRIORITY: render CMS passage if available, otherwise show hardcoded fallback */}
+            {m2NormalizedPassage ? (() => {
+              const m2Parts: React.ReactNode[] = [];
+              let m2Key = 0;
+              const m2Regex = /\[(\d+)\]/g;
+              let m2LastIndex = 0;
+              let m2Match;
+              const m2PassageCopy = m2NormalizedPassage;
+              const m2RegexCopy = new RegExp('\\\\[(\\\\d+)\\\\]', 'g');
+              while ((m2Match = m2RegexCopy.exec(m2PassageCopy)) !== null) {
+                const inputId = parseInt(m2Match[1]);
+                const beforeText = m2PassageCopy.substring(m2LastIndex, m2Match.index);
+                if (beforeText) m2Parts.push(<span key={`m2t-${m2Key++}`}>{beforeText}</span>);
+                m2Parts.push(
+                  <input
+                    key={`m2i-${inputId}`}
+                    type="text"
+                    data-input-id={inputId}
+                    className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
+                    maxLength={m2Inputs[inputId]?.maxLength || 5}
+                    value={inputValues[inputId] || ''}
+                    onChange={(e) => handleInputChange(inputId, e.target.value)}
+                    onFocus={() => handleFocus(inputId)}
+                    onBlur={() => handleBlur(inputId)}
+                    onKeyPress={(e) => handleKeyPress(e, inputId)}
+                    style={{ width: getInputWidth(inputId) }}
+                  />
+                );
+                m2LastIndex = m2Match.index + m2Match[0].length;
+              }
+              if (m2LastIndex < m2PassageCopy.length) {
+                m2Parts.push(<span key={`m2t-${m2Key++}`}>{m2PassageCopy.substring(m2LastIndex)}</span>);
+              }
+              return m2Parts;
+            })() : (
+              <>
             We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi<input
               type="text"
               data-input-id="0"
               className={`gap-input ${filledInputs[0] ? 'filled' : ''}`}
-              maxLength={inputs[0].maxLength}
+              maxLength={m2Inputs[0].maxLength}
               value={inputValues[0] || ''}
               onChange={(e) => handleInputChange(0, e.target.value)}
               onFocus={() => handleFocus(0)}
@@ -6217,7 +6318,7 @@ function AppContent() {
               type="text"
               data-input-id="1"
               className={`gap-input ${filledInputs[1] ? 'filled' : ''}`}
-              maxLength={inputs[1].maxLength}
+              maxLength={m2Inputs[1].maxLength}
               value={inputValues[1] || ''}
               onChange={(e) => handleInputChange(1, e.target.value)}
               onFocus={() => handleFocus(1)}
@@ -6228,7 +6329,7 @@ function AppContent() {
               type="text"
               data-input-id="2"
               className={`gap-input ${filledInputs[2] ? 'filled' : ''}`}
-              maxLength={inputs[2].maxLength}
+              maxLength={m2Inputs[2].maxLength}
               value={inputValues[2] || ''}
               onChange={(e) => handleInputChange(2, e.target.value)}
               onFocus={() => handleFocus(2)}
@@ -6239,7 +6340,7 @@ function AppContent() {
               type="text"
               data-input-id="3"
               className={`gap-input ${filledInputs[3] ? 'filled' : ''}`}
-              maxLength={inputs[3].maxLength}
+              maxLength={m2Inputs[3].maxLength}
               value={inputValues[3] || ''}
               onChange={(e) => handleInputChange(3, e.target.value)}
               onFocus={() => handleFocus(3)}
@@ -6250,7 +6351,7 @@ function AppContent() {
               type="text"
               data-input-id="4"
               className={`gap-input ${filledInputs[4] ? 'filled' : ''}`}
-              maxLength={inputs[4].maxLength}
+              maxLength={m2Inputs[4].maxLength}
               value={inputValues[4] || ''}
               onChange={(e) => handleInputChange(4, e.target.value)}
               onFocus={() => handleFocus(4)}
@@ -6261,7 +6362,7 @@ function AppContent() {
               type="text"
               data-input-id="5"
               className={`gap-input ${filledInputs[5] ? 'filled' : ''}`}
-              maxLength={inputs[5].maxLength}
+              maxLength={m2Inputs[5].maxLength}
               value={inputValues[5] || ''}
               onChange={(e) => handleInputChange(5, e.target.value)}
               onFocus={() => handleFocus(5)}
@@ -6272,7 +6373,7 @@ function AppContent() {
               type="text"
               data-input-id="6"
               className={`gap-input ${filledInputs[6] ? 'filled' : ''}`}
-              maxLength={inputs[6].maxLength}
+              maxLength={m2Inputs[6].maxLength}
               value={inputValues[6] || ''}
               onChange={(e) => handleInputChange(6, e.target.value)}
               onFocus={() => handleFocus(6)}
@@ -6283,7 +6384,7 @@ function AppContent() {
               type="text"
               data-input-id="7"
               className={`gap-input ${filledInputs[7] ? 'filled' : ''}`}
-              maxLength={inputs[7].maxLength}
+              maxLength={m2Inputs[7].maxLength}
               value={inputValues[7] || ''}
               onChange={(e) => handleInputChange(7, e.target.value)}
               onFocus={() => handleFocus(7)}
@@ -6294,7 +6395,7 @@ function AppContent() {
               type="text"
               data-input-id="8"
               className={`gap-input ${filledInputs[8] ? 'filled' : ''}`}
-              maxLength={inputs[8].maxLength}
+              maxLength={m2Inputs[8].maxLength}
               value={inputValues[8] || ''}
               onChange={(e) => handleInputChange(8, e.target.value)}
               onFocus={() => handleFocus(8)}
@@ -6305,7 +6406,7 @@ function AppContent() {
               type="text"
               data-input-id="9"
               className={`gap-input ${filledInputs[9] ? 'filled' : ''}`}
-              maxLength={inputs[9].maxLength}
+              maxLength={m2Inputs[9].maxLength}
               value={inputValues[9] || ''}
               onChange={(e) => handleInputChange(9, e.target.value)}
               onFocus={() => handleFocus(9)}
@@ -6313,6 +6414,8 @@ function AppContent() {
               onKeyPress={(e) => handleKeyPress(e, 9)}
               style={{ width: getInputWidth(9) }}
             /> was important to them.
+              </>
+            )}
           </div>
             </div>
           </div>
