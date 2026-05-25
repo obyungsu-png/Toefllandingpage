@@ -6062,9 +6062,9 @@ function AppContent() {
 
 
     // Apply CMS overrides
-    const finalAnswerOptions = (fillBlanksQuestion?.options && fillBlanksQuestion.options.length > 0)
-      ? fillBlanksQuestion.options : answerOptions;
-    const finalCorrectAnswer = (fillBlanksQuestion?.correctAnswer as string) || correctAnswer;
+    const finalAnswerOptions = (dailyLifeQuestion?.options && dailyLifeQuestion.options.length > 0)
+      ? dailyLifeQuestion.options : answerOptions;
+    const finalCorrectAnswer = (dailyLifeQuestion?.correctAnswer as string) || correctAnswer;
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
     };
