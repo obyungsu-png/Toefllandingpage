@@ -915,7 +915,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   </div>
                 </div>
               </div>
-
+            );
           })()}
         </div>
       )}
