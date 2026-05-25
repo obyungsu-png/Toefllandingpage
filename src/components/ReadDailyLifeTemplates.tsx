@@ -199,6 +199,7 @@ export function ReadDailyLifeTemplates({
   const [questionNumber, setQuestionNumber] = useState('1');
   const [questionType, setQuestionType] = useState('Read in Daily Life');
   const [module, setModule] = useState<'Module 1' | 'Module 2'>('Module 1');
+  const [difficulty, setDifficulty] = useState<'쉬움' | '보통' | '어려움'>('보통');
 
   const selectTemplate = (template: DailyLifeTemplate) => {
     setSelectedTemplate(template);
@@ -407,6 +408,7 @@ export function ReadDailyLifeTemplates({
       questionType: `${questionType} (${module})`, // Include module in questionType
       options: options.filter(o => o.trim()),
       correctAnswer: correctAnswer,
+      difficulty: difficulty,
       passageText: JSON.stringify({
         templateId: selectedTemplate.id,
         structure: selectedTemplate.structure,
@@ -731,6 +733,34 @@ export function ReadDailyLifeTemplates({
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1">정답 옵션의 라디오 버튼을 선택하세요</p>
               </div>
+
+              {/* Difficulty Selector */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  난이도 (Difficulty)
+                </label>
+                <div className="flex gap-2">
+                  {(['쉬움', '보통', '어려움'] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setDifficulty(level)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
+                        difficulty === level
+                          ? level === '쉬움'
+                            ? 'bg-green-100 border-green-500 text-green-700'
+                            : level === '보통'
+                            ? 'bg-blue-100 border-blue-500 text-blue-700'
+                            : 'bg-red-100 border-red-500 text-red-700'
+                          : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'
+                      }`}
+                    >
+                      {level === '쉬움' ? '🟢 쉬움' : level === '보통' ? '🔵 보통' : '🔴 어려움'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             </div>
 
             {/* Save Button */}
