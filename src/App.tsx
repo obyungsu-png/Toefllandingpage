@@ -3989,7 +3989,7 @@ function AppContent() {
                     ))
                   : (
               <div className="relative w-full">
-                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
+                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white" style={{ color: '#1e6b73' }}>
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#1e6b73]">
                       <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">To:</div>
@@ -4008,7 +4008,7 @@ function AppContent() {
                       <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">Art Workshop Reservation Confirmation</div>
                     </div>
                   </div>
-                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-current m-1 sm:m-2 max-h-[400px] overflow-y-auto text-sm sm:text-base">
                     <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Dear Ms. Edwards,</p>
                     <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">
                       The reservation for the art workshop that you made on September 10th has been confirmed. The workshop will take place on September 20th at 3:00 PM. All necessary arts supplies will be provided, but please bring your own apron or smock.
@@ -4198,7 +4198,7 @@ function AppContent() {
                     ))
                   : (
                     <div className="relative w-full">
-                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
+                <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white" style={{ color: '#1e6b73' }}>
                   {/* Email Header Fields */}
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#1e6b73]">
@@ -4220,7 +4220,7 @@ function AppContent() {
                   </div>
                   
                   {/* Email Body */}
-                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+                  <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-current m-1 sm:m-2 max-h-[400px] overflow-y-auto text-sm sm:text-base">
                     <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">Dear Ms. Edwards,</p>
                     <p className="font-['Inter',_sans-serif] mb-4 text-sm sm:text-base">
                       The reservation for the art workshop that you made on September 10th has been confirmed. The workshop will take place on September 20th at 3:00 PM. All necessary arts supplies will be provided, but please bring your own apron or smock.
