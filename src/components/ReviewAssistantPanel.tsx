@@ -342,6 +342,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       ))}
     </div>
   );
+  };
 
   const renderBullets = (title: string, lines: string[], icon: JSX.Element) => (
     <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-4">
