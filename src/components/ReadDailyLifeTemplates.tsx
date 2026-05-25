@@ -708,42 +708,42 @@ export function ReadDailyLifeTemplates({
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Question Text</label>
-                <input
-                  type="text"
-                  value={questionText}
-                  onChange={(e) => setQuestionText(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
-                  placeholder="What type of business issued the notice?"
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  문제 + 선택지 한번에 입력
+                </label>
+                <p className="text-[10px] text-blue-500 bg-blue-50 rounded px-2 py-1 mb-1.5">
+                  💡 첫 줄: 문제 &nbsp;|&nbsp; 나머지 줄: 선택지 (한 줄에 하나씩)
+                </p>
+                <textarea
+                  value={[questionText, ...options.filter(o => o.trim())].join('\n')}
+                  onChange={(e) => {
+                    const lines = e.target.value.split('\n');
+                    const newQ = lines[0] || '';
+                    const newOpts = lines.slice(1);
+                    while (newOpts.length < 4) newOpts.push('');
+                    setQuestionText(newQ);
+                    setOptions(newOpts);
+                  }}
+                  className="w-full px-3 py-2 border-2 border-[#2d7a7c] rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#2d7a7c] leading-relaxed"
+                  rows={6}
+                  placeholder={"What type of business issued the notice?\nAn Internet provider\nA computer company\nA paper company\nA bank"}
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Answer Options</label>
-                <div className="space-y-2">
-                  {options.map((opt, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="correctAnswer"
-                        checked={correctAnswer === opt && opt.trim() !== ''}
-                        onChange={() => setCorrectAnswer(opt)}
-                        className="accent-[#1e6b73]"
-                      />
-                      <input
-                        type="text"
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...options];
-                          newOpts[i] = e.target.value;
-                          setOptions(newOpts);
-                        }}
-                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-[#2d7a7c]"
-                        placeholder={`Option ${i + 1}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-gray-400 mt-1">정답 옵션의 라디오 버튼을 선택하세요</p>
+                {/* Correct Answer selector */}
+                {options.filter(o => o.trim()).length >= 2 && (
+                  <div className="mt-2">
+                    <label className="block text-[10px] text-gray-500 mb-1">정답 선택</label>
+                    <select
+                      value={correctAnswer}
+                      onChange={(e) => setCorrectAnswer(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-[#2d7a7c]"
+                    >
+                      <option value="">정답을 선택하세요...</option>
+                      {options.filter(o => o.trim()).map((opt, i) => (
+                        <option key={i} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Color Theme Selector */}
