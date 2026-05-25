@@ -2145,7 +2145,7 @@ function AppContent() {
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">
-            {getDailyLifePageTitle(cmsTitle15, cmsPassage15)}
+            {getDailyLifePageTitle(cmsTitle14, cmsPassage14)}
           </h1>
           
           <ResizableReadingLayout
@@ -2384,7 +2384,7 @@ function AppContent() {
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">
-            {getDailyLifePageTitle(cmsTitle14, cmsPassage14)}
+            {getDailyLifePageTitle(cmsTitle15, cmsPassage15)}
           </h1>
           
           <ResizableReadingLayout
