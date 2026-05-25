@@ -3601,12 +3601,21 @@ function AppContent() {
     let m2NormalizedPassage = '';
 
     const rawM2Passage = m2FillBlanksQuestion?.passageText || '';
+    // Support both [answer:maxLen] format AND already-normalized [N] format
     const hasM2CmsFormat = /\[[^\]]+:\d+\]/.test(rawM2Passage);
+    const hasNormalizedFormat = /\[\d+\]/.test(rawM2Passage);
 
     if (hasM2CmsFormat) {
       const { m2ParsedInputs, m2NormalizedPassage: np } = parseM2CmsPassage(rawM2Passage);
       m2Inputs = m2ParsedInputs;
       m2NormalizedPassage = np;
+    } else if (hasNormalizedFormat) {
+      // Already normalized [0],[1]... format — extract inputs from blank count
+      const blanks: {id:number;maxLength:number;answer?:string}[] = [];
+      let idx = 0;
+      rawM2Passage.replace(/\[(\d+)\]/g, () => { blanks.push({ id: idx, maxLength: 5 }); idx++; return ''; });
+      m2Inputs = blanks.length > 0 ? blanks : Array.from({length:10}, (_, i) => ({ id: i, maxLength: 5 }));
+      m2NormalizedPassage = rawM2Passage;
     } else if (m2FillBlanksQuestion?.blanks && m2FillBlanksQuestion.blanks.length > 0) {
       m2Inputs = m2FillBlanksQuestion.blanks.map((b, i) => ({ id: i, maxLength: b.maxLength, answer: b.answer }));
       m2NormalizedPassage = rawM2Passage;
@@ -3757,7 +3766,7 @@ function AppContent() {
                 {m2NormalizedPassage ? (() => {
                   const parts: React.ReactNode[] = [];
                   let key = 0;
-                  const regex = new RegExp('\\\\[(\\\\d+)\\\\]', 'g');
+                  const regex = /\[(\d+)\]/g;
                   let lastIndex = 0;
                   let match;
                   while ((match = regex.exec(m2NormalizedPassage)) !== null) {
@@ -6288,12 +6297,20 @@ function AppContent() {
 
     const rawCmsPassage = fillBlanksQuestion?.passageText || '';
     const hasCmsFormat = rawCmsPassage.includes(':[') || /\[[^\]]+:\d+\]/.test(rawCmsPassage);
+    const hasNormalizedFormat = /\[\d+\]/.test(rawCmsPassage) && !hasCmsFormat;
 
     if (hasCmsFormat) {
       // CMS format: "sh[ow:2] the loca[tion:4]..."
       const parsed = parseCmsPassage(rawCmsPassage);
       inputs = parsed.inputs;
       normalizedPassage = parsed.normalizedPassage;
+    } else if (hasNormalizedFormat) {
+      // Already normalized [0],[1]... — use passage as-is, build dummy inputs
+      const blanks: {id:number;maxLength:number;answer:string}[] = [];
+      let idx = 0;
+      rawCmsPassage.replace(/\[(\d+)\]/g, () => { blanks.push({ id: idx, maxLength: 5, answer: '' }); idx++; return ''; });
+      inputs = blanks.length > 0 ? blanks : Array.from({length:10}, (_, i) => ({ id: i, maxLength: 5, answer: '' }));
+      normalizedPassage = rawCmsPassage;
     } else if (fillBlanksQuestion?.blanks && fillBlanksQuestion.blanks.length > 0) {
       // Legacy blanks array format
       inputs = fillBlanksQuestion.blanks.map((blank, i) => ({ id: i, maxLength: blank.maxLength, answer: blank.answer }));
