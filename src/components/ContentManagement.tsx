@@ -38,6 +38,7 @@ export interface TPOQuestion {
   passageTitle?: string;
   questionGroupId?: string;
   translationNote?: string;
+  analysisNote?: string;
   vocabularyNote?: string;
 }
 
@@ -973,6 +974,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     options: ['', '', '', ''],
     correctAnswer: '',
     explanation: '',
+    translationNote: '',
+    analysisNote: '',
+    vocabularyNote: '',
     passageText: '',
     passageTitle: '',
     colorTheme: '' as string,
@@ -1370,6 +1374,49 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
+        {/* AI Review Fields: Translation, Analysis, Key Words */}
+        <div className="border-t border-gray-200 pt-4 space-y-3">
+          <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
+            ✨ AI Review Panel Fields
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Translation <span className="text-xs text-gray-400 font-normal">(Korean translation of the passage/question)</span>
+            </label>
+            <textarea
+              value={(formData as any).translationNote || ''}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+              rows={3}
+              placeholder="지문/문제의 한국어 번역을 입력하세요..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
+            </label>
+            <textarea
+              value={(formData as any).analysisNote || ''}
+              onChange={(e) => setFormData({ ...formData, analysisNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+              rows={3}
+              placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Key Words <span className="text-xs text-gray-400 font-normal">(one word per line: word = meaning)</span>
+            </label>
+            <textarea
+              value={(formData as any).vocabularyNote || ''}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm font-mono"
+              rows={4}
+              placeholder={"cohesion = 결속, 통합\nintegration = 통합\nself-awareness = 자기 인식"}
+            />
+          </div>
+        </div>
+
         {/* Color Theme (Read in Daily Life only) */}
         {section === 'Reading' && (
           (formData.questionType || '').toLowerCase().includes('daily life') ||
@@ -1469,6 +1516,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     explanation: question.explanation || '',
     passageText: question.passageText || '',
     passageTitle: question.passageTitle || '',
+    translationNote: question.translationNote || '',
+    analysisNote: (question as any).analysisNote || '',
+    vocabularyNote: question.vocabularyNote || '',
     colorTheme: (() => {
       try { return JSON.parse(question.passageText || '').color || 'teal'; } catch { return 'teal'; }
     })() as string,
@@ -1862,6 +1912,49 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             rows={3}
             placeholder="Explain the correct answer..."
           />
+        </div>
+
+        {/* AI Review Fields: Translation, Analysis, Key Words */}
+        <div className="border-t border-gray-200 pt-4 space-y-3">
+          <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
+            ✨ AI Review Panel Fields
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Translation <span className="text-xs text-gray-400 font-normal">(Korean translation of the passage/question)</span>
+            </label>
+            <textarea
+              value={(formData as any).translationNote || ''}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+              rows={3}
+              placeholder="지문/문제의 한국어 번역을 입력하세요..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
+            </label>
+            <textarea
+              value={(formData as any).analysisNote || ''}
+              onChange={(e) => setFormData({ ...formData, analysisNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+              rows={3}
+              placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Key Words <span className="text-xs text-gray-400 font-normal">(one word per line: word = meaning)</span>
+            </label>
+            <textarea
+              value={(formData as any).vocabularyNote || ''}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm font-mono"
+              rows={4}
+              placeholder={"cohesion = 결속, 통합\nintegration = 통합\nself-awareness = 자기 인식"}
+            />
+          </div>
         </div>
 
         {/* Color Theme (Read in Daily Life only) */}

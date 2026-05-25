@@ -18,6 +18,10 @@ interface ReviewAssistantPanelProps {
   questionType?: string;
   currentDifficulty?: ReviewDifficulty;
   onStartTraining: (request: ReviewPatternTrainingRequest) => void;
+  // CMS question data for Translation, Analysis, Key Words
+  translationNote?: string;
+  analysisNote?: string;
+  vocabularyNote?: string;
 }
 
 interface DictationExercise {
@@ -194,7 +198,7 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, translationNote, analysisNote, vocabularyNote }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
@@ -309,7 +313,26 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     </div>
   );
 
-  const renderWords = () => (
+  const renderWords = () => {
+    if (vocabularyNote) {
+      const lines = vocabularyNote.split('\n').filter(l => l.trim());
+      return (
+        <div className="space-y-2">
+          {lines.map((line, i) => {
+            const [word, ...rest] = line.split('=');
+            const meaning = rest.join('=').trim();
+            return (
+              <div key={i} className="flex items-start gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                <span className="font-bold text-sm text-[#0f172a] min-w-[100px]">{word.trim()}</span>
+                {meaning && <span className="text-sm text-gray-600">{meaning}</span>}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    // fallback
+    return (
     <div className="space-y-3">
       {wordList.map((item) => (
         <div key={item.word} className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3">
@@ -318,6 +341,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         </div>
       ))}
     </div>
+  );
   );
 
   const renderBullets = (title: string, lines: string[], icon: JSX.Element) => (
@@ -342,7 +366,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
 
     if (activeTab === 'Dictation') return renderDictation();
     if (activeTab === 'Key Words') return renderWords();
-    if (activeTab === 'Translation') {
+        if (activeTab === 'Translation') {
+      if (translationNote) {
+        return (
+          <div className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap">
+            {translationNote}
+          </div>
+        );
+      }
       return renderBullets(
         'Translation',
         [
@@ -353,7 +384,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         <Languages className="h-4 w-4" />,
       );
     }
-    if (activeTab === 'Analysis') {
+        if (activeTab === 'Analysis') {
+      if (analysisNote) {
+        return (
+          <div className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap">
+            {analysisNote}
+          </div>
+        );
+      }
       return renderBullets('Analysis', getAnalysisLines(variant), <FileText className="h-4 w-4" />);
     }
     if (activeTab === 'Expressions') {
@@ -369,107 +407,81 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const panelWidthClass = 'max-w-[34rem] sm:max-w-[42rem]';
 
   return (
-    <div className={`fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] ${panelWidthClass}`}>
-      <div className="space-y-3">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {tabs.map((tab) => (
-            (() => {
-              const meta = getTabMeta(tab);
-              const Icon = meta.icon;
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => {
-                    if (tab === 'Practice') {
-                      onStartTraining({
-                        title: `${questionType || getTrainingTitle(section, variant)} Practice`,
-                        questionType,
-                        difficulty: currentDifficulty,
-                      });
-                    } else {
-                      setActiveTab((current) => current === tab ? null : tab);
-                    }
-                  }}
-                  className={`group flex flex-col items-center gap-1.5 min-w-[64px] sm:min-w-[76px] transition-all duration-200 ${
-                    activeTab === tab ? 'opacity-100' : 'opacity-80 hover:opacity-100'
-                  }`}
-                >
-                  {/* Icon box like image 1 */}
-                  <span
-                    className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl transition-all duration-200 shadow-sm ${
-                      activeTab === tab
-                        ? 'shadow-md -translate-y-0.5'
-                        : 'hover:-translate-y-0.5'
-                    }`}
-                    style={{
-                      background: activeTab === tab
-                        ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
-                        : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
-                      boxShadow: activeTab === tab
-                        ? `0 8px 20px ${theme.accent}33`
-                        : '0 2px 8px rgba(15,23,42,0.08)',
-                    }}
-                  >
-                    <Icon
-                      className="h-5 w-5 sm:h-6 sm:w-6"
-                      style={{ color: activeTab === tab ? 'white' : theme.accent }}
-                    />
-                  </span>
-                  {/* Label */}
-                  <span
-                    className="text-xs font-semibold whitespace-nowrap"
-                    style={{ color: activeTab === tab ? theme.accent : '#64748b' }}
-                  >
-                    {tab}
-                  </span>
-                </button>
-              );
-            })()
-          ))}
-        </div>
-
-        {activeTab && activeTabMeta && (
-          <div className="relative pt-3">
+    <div className="flex gap-3 mt-4">
+      {/* ── Left vertical icon sidebar ── */}
+      <div className="flex flex-col gap-3 shrink-0">
+        {tabs.map((tab) => {
+          const meta = getTabMeta(tab);
+          const Icon = meta.icon;
+          const isActive = activeTab === tab;
+          return (
             <button
+              key={tab}
               type="button"
-              onClick={() => setActiveTab(null)}
-              className="absolute right-3 top-0 z-20 inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#334155] shadow-[0_10px_24px_rgba(15,23,42,0.12)] backdrop-blur"
+              title={meta.title}
+              onClick={() => {
+                if (tab === 'Practice') {
+                  onStartTraining({
+                    title: `${questionType || getTrainingTitle(section, variant)} Practice`,
+                    questionType,
+                    difficulty: currentDifficulty,
+                  });
+                } else {
+                  setActiveTab((current) => current === tab ? null : tab);
+                }
+              }}
+              className="flex flex-col items-center gap-1 transition-all duration-200"
             >
-              <X className="h-3.5 w-3.5" />
-              닫기
+              <span
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isActive ? '-translate-x-0.5 shadow-md' : 'hover:-translate-x-0.5'}`}
+                style={{
+                  background: isActive
+                    ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
+                    : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
+                  boxShadow: isActive ? `0 6px 18px ${theme.accent}33` : '0 2px 8px rgba(15,23,42,0.08)',
+                }}
+              >
+                <Icon className="h-5 w-5" style={{ color: isActive ? 'white' : theme.accent }} />
+              </span>
+              <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
+                style={{ color: isActive ? theme.accent : '#94a3b8' }}>
+                {tab}
+              </span>
             </button>
+          );
+        })}
+      </div>
 
-            <div
-              className="relative overflow-hidden rounded-[30px] border bg-white/95 p-4 shadow-[0_22px_50px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:p-5"
-              style={{ borderColor: theme.border }}
-            >
-              <div className="absolute right-[-40px] top-[-56px] h-36 w-36 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: theme.accent }} />
-
-              <div className="relative">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)]" style={{ background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }}>
-                    <activeTabMeta.icon className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0 flex-1 pt-0.5">
-                    <div className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ borderColor: theme.border, backgroundColor: theme.soft, color: theme.accent }}>
-                      {section}
-                    </div>
-                    <h3 className="mt-3 text-[1.1rem] font-bold leading-7 text-[#0f172a]">{activeTabMeta.title}</h3>
-                    {/* 설명/부제목(Description) 제거 */}
-                  </div>
+      {/* ── Content panel (shown below question when tab is active) ── */}
+      {activeTab && activeTabMeta && (
+        <div
+          className="flex-1 relative overflow-hidden rounded-2xl border bg-white/95 p-4 shadow-md"
+          style={{ borderColor: theme.border }}
+        >
+          <div className="absolute right-[-30px] top-[-40px] h-28 w-28 rounded-full opacity-10 blur-2xl" style={{ backgroundColor: theme.accent }} />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }}>
+                  <activeTabMeta.icon className="h-4 w-4" />
                 </div>
-
-                <div className="mt-5 max-h-[500px] overflow-y-auto pr-1">
-                  {renderActiveTab()}
-                </div>
+                <h3 className="text-sm font-bold text-[#0f172a]">{activeTabMeta.title}</h3>
               </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab(null)}
+                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 shadow-sm"
+              >
+                <X className="h-3 w-3" />
+                Close
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto pr-1">
+              {renderActiveTab()}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
