@@ -4404,10 +4404,10 @@ function AppContent() {
             leftContent={
               <div className="relative w-full">
                 {/* CMS PRIORITY: render template from CMS passageText JSON */}
-                {cmsPassageText15
-                  ? (renderDailyLifePassage(cmsPassageText15) ?? (
+                {cmsPassageText13
+                  ? (renderDailyLifePassage(cmsPassageText13) ?? (
                       <div className="border-2 border-gray-200 rounded-lg p-4">
-                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText15}</p>
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText13}</p>
                       </div>
                     ))
                   : (
