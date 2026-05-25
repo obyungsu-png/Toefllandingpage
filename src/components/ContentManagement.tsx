@@ -1252,41 +1252,32 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
-        {/* Question Text */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
-          <textarea
-            value={formData.questionText}
-            onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-            rows={3}
-            required
-            placeholder="Enter the question..."
-          />
-        </div>
-
-        {/* Answer Options */}
-        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+        {/* Question Text + Answer Options - 한번에 입력 */}
+        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' ? (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Answer Options
-                <span className="ml-2 text-xs text-gray-400 font-normal">한 줄에 하나씩 입력하세요</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                문제 + 선택지 한번에 입력
               </label>
+              <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2">
+                💡 <strong>첫 줄:</strong> 문제 &nbsp;|&nbsp; <strong>나머지 줄:</strong> 선택지 (한 줄에 하나씩)<br/>
+                예시: <span className="font-mono">What is the main idea?<br/>　Animals have self-awareness.<br/>　Fish are intelligent.<br/>　Apes are unique.<br/>　Children develop slowly.</span>
+              </p>
               <textarea
-                value={formData.options.join('\n')}
+                value={[formData.questionText, ...formData.options.filter(o => o.trim())].join('\n')}
                 onChange={(e) => {
                   const lines = e.target.value.split('\n');
-                  // Keep at least 4 slots, pad with empty strings if needed
-                  const newOptions = [...lines];
-                  while (newOptions.length < 4) newOptions.push('');
-                  setFormData({ ...formData, options: newOptions.slice(0, Math.max(4, newOptions.length)) });
+                  const qText = lines[0] || '';
+                  const opts = lines.slice(1);
+                  while (opts.length < 4) opts.push('');
+                  setFormData({ ...formData, questionText: qText, options: opts });
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
-                rows={4}
-                placeholder={"Option 1\nOption 2\nOption 3\nOption 4"}
+                className="w-full px-4 py-3 border-2 border-[#2d7a7c] rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm leading-relaxed"
+                rows={6}
+                placeholder={"문제를 첫 줄에 입력하세요\n선택지 1\n선택지 2\n선택지 3\n선택지 4"}
+                required
               />
-              <p className="text-xs text-gray-400 mt-1">각 줄이 하나의 선택지가 됩니다</p>
+              <p className="text-xs text-gray-400 mt-1">첫 줄 = 문제 텍스트 &nbsp;·&nbsp; 2번째 줄부터 = 선택지</p>
             </div>
 
             {/* Correct Answer */}
@@ -1298,13 +1289,26 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                 required
               >
-                <option value="">Select correct answer...</option>
+                <option value="">정답을 선택하세요...</option>
                 {formData.options.filter(o => o.trim() !== '').map((option, index) => (
                   <option key={index} value={option}>{option}</option>
                 ))}
               </select>
             </div>
           </>
+        ) : (
+          /* Non-MC: just Question Text */
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+            <textarea
+              value={formData.questionText}
+              onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={3}
+              required
+              placeholder="Enter the question..."
+            />
+          </div>
         )}
 
         {/* Duration (for Speaking/Writing) */}
@@ -1684,41 +1688,32 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         )}
 
-        {/* Question Text */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
-          <textarea
-            value={formData.questionText}
-            onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-            rows={3}
-            required
-            placeholder="Enter the question..."
-          />
-        </div>
-
-        {/* Answer Options */}
-        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
+        {/* Question Text + Answer Options - 한번에 입력 */}
+        {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' ? (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Answer Options
-                <span className="ml-2 text-xs text-gray-400 font-normal">한 줄에 하나씩 입력하세요</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                문제 + 선택지 한번에 입력
               </label>
+              <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2">
+                💡 <strong>첫 줄:</strong> 문제 &nbsp;|&nbsp; <strong>나머지 줄:</strong> 선택지 (한 줄에 하나씩)<br/>
+                예시: <span className="font-mono">What is the main idea?<br/>　Animals have self-awareness.<br/>　Fish are intelligent.<br/>　Apes are unique.<br/>　Children develop slowly.</span>
+              </p>
               <textarea
-                value={formData.options.join('\n')}
+                value={[formData.questionText, ...formData.options.filter(o => o.trim())].join('\n')}
                 onChange={(e) => {
                   const lines = e.target.value.split('\n');
-                  // Keep at least 4 slots, pad with empty strings if needed
-                  const newOptions = [...lines];
-                  while (newOptions.length < 4) newOptions.push('');
-                  setFormData({ ...formData, options: newOptions.slice(0, Math.max(4, newOptions.length)) });
+                  const qText = lines[0] || '';
+                  const opts = lines.slice(1);
+                  while (opts.length < 4) opts.push('');
+                  setFormData({ ...formData, questionText: qText, options: opts });
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
-                rows={4}
-                placeholder={"Option 1\nOption 2\nOption 3\nOption 4"}
+                className="w-full px-4 py-3 border-2 border-[#2d7a7c] rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm leading-relaxed"
+                rows={6}
+                placeholder={"문제를 첫 줄에 입력하세요\n선택지 1\n선택지 2\n선택지 3\n선택지 4"}
+                required
               />
-              <p className="text-xs text-gray-400 mt-1">각 줄이 하나의 선택지가 됩니다</p>
+              <p className="text-xs text-gray-400 mt-1">첫 줄 = 문제 텍스트 &nbsp;·&nbsp; 2번째 줄부터 = 선택지</p>
             </div>
 
             {/* Correct Answer */}
@@ -1730,13 +1725,26 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                 required
               >
-                <option value="">Select correct answer...</option>
+                <option value="">정답을 선택하세요...</option>
                 {formData.options.filter(o => o.trim() !== '').map((option, index) => (
                   <option key={index} value={option}>{option}</option>
                 ))}
               </select>
             </div>
           </>
+        ) : (
+          /* Non-MC: just Question Text */
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+            <textarea
+              value={formData.questionText}
+              onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={3}
+              required
+              placeholder="Enter the question..."
+            />
+          </div>
         )}
 
         {/* Duration (for Speaking/Writing) */}
