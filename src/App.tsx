@@ -2488,35 +2488,57 @@ function AppContent() {
     const [zoom16, setZoom16] = useState(1);
     
     // Get dynamic question data from CMS
+    // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
     const sectionData = getCurrentSectionData('Reading');
-    const academicQuestion = sectionData?.questions.find(q => 
-      q.questionType?.includes('Academic Reading')
-    );
+    const academicQuestion = sectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic reading') || t.includes('academic') || t.includes('reading passage');
+    });
     
-    // Parse CMS data if available
-    let passageData = null;
+    // Parse CMS data if available (supports both JSON and plain text)
+    let passageData: any = null;
     let currentQuestionIndex = 0;
     if (academicQuestion?.passageText) {
       try {
         passageData = JSON.parse(academicQuestion.passageText);
       } catch (e) {
-        console.error('Failed to parse academic reading data:', e);
+        // passageText is plain text — wrap it so downstream code works uniformly
+        passageData = { passage: academicQuestion.passageText };
       }
     }
     
-    // Use CMS data if available, otherwise fall back to hardcoded data
-    const passageTitle = passageData?.title || "The Mirror Test";
-    const passageText = passageData?.passage || `Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?\n\nFor many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.\n\nApes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.`;
-    
-    const currentQuestion = passageData?.questions?.[currentQuestionIndex] || {
-      questionText: "Which of the following best states a main idea of the passage?",
-      options: [
-        "The mirror test is the only way to measure self-awareness.",
-        "Only great apes can recognize themselves in mirrors.",
-        "Animals may have more self-awareness than humans previously believed.",
-        "Fish are more intelligent than elephants and dolphins."
-      ],
-      correctAnswer: "Animals may have more self-awareness than humans previously believed."
+    // CMS PRIORITY: check direct fields on the question object first, then parsed JSON, then hardcoded
+    const passageTitle =
+      academicQuestion?.passageTitle ||
+      passageData?.title ||
+      "The Mirror Test";
+
+    const passageText =
+      passageData?.passage ||
+      `Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?\n\nFor many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.\n\nApes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.`;
+
+    // CMS PRIORITY: direct question fields > parsed JSON questions > hardcoded
+    const cmsQuestionText = academicQuestion?.questionText;
+    const cmsOptions = academicQuestion?.options;
+    const cmsCorrectAnswer = academicQuestion?.correctAnswer;
+
+    const currentQuestion = {
+      questionText:
+        cmsQuestionText ||
+        passageData?.questions?.[currentQuestionIndex]?.questionText ||
+        "Which of the following best states a main idea of the passage?",
+      options:
+        (cmsOptions && cmsOptions.length > 0 ? cmsOptions : null) ||
+        passageData?.questions?.[currentQuestionIndex]?.options || [
+          "The mirror test is the only way to measure self-awareness.",
+          "Only great apes can recognize themselves in mirrors.",
+          "Animals may have more self-awareness than humans previously believed.",
+          "Fish are more intelligent than elephants and dolphins."
+        ],
+      correctAnswer:
+        cmsCorrectAnswer ||
+        passageData?.questions?.[currentQuestionIndex]?.correctAnswer ||
+        "Animals may have more self-awareness than humans previously believed."
     };
     
     const correctAnswer = currentQuestion.correctAnswer;
@@ -5756,19 +5778,36 @@ function AppContent() {
   // Read Notice Test Screen Component
   const ReadNoticeTestScreen = () => {
     // Get dynamic question data from CMS
+    // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
     const sectionData = getCurrentSectionData('Reading');
-    const dailyLifeQuestion = sectionData?.questions.find(q => 
-      q.questionType?.includes('Read in Daily Life') || q.questionType?.includes('Practical Reading') || q.questionType?.includes('Functional Text')
-    );
-    
-    // Use CMS data if available, otherwise fall back to hardcoded data
-    const correctAnswer = dailyLifeQuestion?.correctAnswer || "A bank";
-    const answerOptions = dailyLifeQuestion?.options || [
+    const dailyLifeQuestion = sectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return (
+        t.includes('daily life') ||
+        t.includes('read in daily life') ||
+        t.includes('practical reading') ||
+        t.includes('functional text') ||
+        t.includes('notice') ||
+        t.includes('실용문')
+      );
+    });
+
+    // CMS PRIORITY: direct fields first, then hardcoded fallback
+    const correctAnswer =
+      (dailyLifeQuestion?.correctAnswer as string) || "A bank";
+    const answerOptions =
+      (dailyLifeQuestion?.options && dailyLifeQuestion.options.length > 0
+        ? dailyLifeQuestion.options
+        : null) || [
       "An Internet provider",
-      "A computer company", 
+      "A computer company",
       "A paper company",
       "A bank"
     ];
+    // CMS passage fields for the notice content (used in JSX below if available)
+    const cmsNoticeTitle = dailyLifeQuestion?.passageTitle || null;
+    const cmsNoticeText = dailyLifeQuestion?.passageText || null;
+    const cmsQuestionText = dailyLifeQuestion?.questionText || null;
 
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
@@ -5824,7 +5863,9 @@ function AppContent() {
           
           <ResizableReadingLayout
             passageTitle="Read a notice."
-            passageSummary={<><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
+            passageSummary={cmsNoticeTitle
+              ? <><strong>{cmsNoticeTitle}</strong></>
+              : <><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
             questionInfo="1/1"
             onBack={() => { setShowReadNoticeTest(false); setShowFillBlanksTest(true); }}
             onNext={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}
@@ -5832,21 +5873,31 @@ function AppContent() {
             leftContent={
               <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6 ml-0 md:ml-4 lg:ml-12">
                 <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
-                  <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
-                  <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-medium mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
-                  <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed">
-                    Safe, convenient, easy. Enroll in paperless billing to receive 
-                    monthly savings account statements in an electronic PDF 
-                    document. Access your Municipal Charter account through 
-                    the mobile app and select account preferences in the upper 
-                    right-hand corner to enroll.
-                  </p>
+                  {/* CMS PRIORITY: use CMS title/text if available */}
+                  {cmsNoticeText ? (
+                    <p className="text-base font-['Inter',_sans-serif] leading-relaxed whitespace-pre-line">{cmsNoticeText}</p>
+                  ) : (
+                    <>
+                      <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
+                      <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-medium mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
+                      <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed">
+                        Safe, convenient, easy. Enroll in paperless billing to receive 
+                        monthly savings account statements in an electronic PDF 
+                        document. Access your Municipal Charter account through 
+                        the mobile app and select account preferences in the upper 
+                        right-hand corner to enroll.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-6 sm:mb-10">What type of business issued the notice?</h3>
+                {/* CMS PRIORITY: use CMS question text if available */}
+                <h3 className="text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-6 sm:mb-10">
+                  {cmsQuestionText || "What type of business issued the notice?"}
+                </h3>
                 <div className="space-y-5 sm:space-y-6">
                   {answerOptions.map((option, index) => (
                     <RadioOption
@@ -5900,10 +5951,19 @@ function AppContent() {
     const isMobileFB = typeof window !== 'undefined' && window.innerWidth < 640;
     
     // Get dynamic question data from CMS
+    // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
     const sectionData = getCurrentSectionData('Reading');
-    const fillBlanksQuestion = sectionData?.questions.find(q => 
-      q.questionType?.includes('Complete Words') || q.questionType?.includes('Fill in the Blanks') || q.questionType?.includes('Cloze Test')
-    );
+    const fillBlanksQuestion = sectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return (
+        t.includes('complete words') ||
+        t.includes('fill in the blank') ||
+        t.includes('cloze test') ||
+        t.includes('빈칸') ||
+        t.includes('fillblanks') ||
+        t.includes('fill-in')
+      );
+    });
     
     // Debug logging
     React.useEffect(() => {
