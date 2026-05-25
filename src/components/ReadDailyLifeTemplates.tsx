@@ -877,7 +877,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
               </div>
             ) : null)}
           </div>
-          <div className="p-3 sm:p-6 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm whitespace-pre-wrap border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+          <div className="p-3 sm:p-6 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base whitespace-pre-wrap border-2 sm:border-4 m-1 sm:m-2 max-h-[400px] overflow-y-auto rounded" style={{ borderColor: c }}>
             {f.body}
           </div>
         </div>
