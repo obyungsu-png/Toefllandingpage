@@ -1697,6 +1697,28 @@ function AppContent() {
       "By calling a Municipal Charter customer service representative"
     ];
 
+    // CMS PRIORITY: load same Daily Life question data (Q12 or second Daily Life question)
+    const sectionData2 = getCurrentSectionData('Reading');
+    const dailyLifeQ2 = sectionData2?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('실용문');
+      const qn = q.questionNumber;
+      return isDaily && (qn === 12 || qn === '12' || String(qn) === '12');
+    }) || sectionData2?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('실용문');
+    })[1] || null;  // fallback: second Daily Life question
+
+    const cmsNoticeTitle = dailyLifeQ2?.passageTitle || null;
+    const cmsNoticeText = dailyLifeQ2?.passageText || null;
+    const cmsQuestionText2 = dailyLifeQ2?.questionText || null;
+    const cmsAnswerOptions2 = (dailyLifeQ2?.options && dailyLifeQ2.options.length > 0)
+      ? dailyLifeQ2.options : null;
+
     const handleAnswerSelect2 = (answer: string) => {
       setSelectedAnswer2(answer);
     };
@@ -1751,21 +1773,36 @@ function AppContent() {
             onNext={() => { setShowReadNoticeTest2(false); setShowSocialMediaTest(true); }}
             onSubmit={() => { setShowReadNoticeTest2(false); setShowSocialMediaTest(true); }}
             leftContent={
-              <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6 ml-0 md:ml-4 lg:ml-12">
-                <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
-                  <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-black text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
-                  <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-bold text-black mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
-                  <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed text-black">
-                  Safe, convenient, easy. Enroll in paperless billing to receive monthly savings account statements in an electronic PDF document. Access your Municipal Charter account through the mobile app and select account preferences in the upper right-hand corner to enroll.
-                  </p>
-                </div>
+              <div className="ml-0 md:ml-4 lg:ml-12">
+                {cmsNoticeText
+                  ? (renderDailyLifePassage(cmsNoticeText) ?? (
+                      <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6">
+                        <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                          <p className="text-base font-['Inter',_sans-serif] leading-relaxed whitespace-pre-line">{cmsNoticeText}</p>
+                        </div>
+                      </div>
+                    ))
+                  : (
+                    <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6">
+                      <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                        <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-black text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
+                        <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-bold text-black mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
+                        <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed text-black">
+                        Safe, convenient, easy. Enroll in paperless billing to receive monthly savings account statements in an electronic PDF document. Access your Municipal Charter account through the mobile app and select account preferences in the upper right-hand corner to enroll.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-lg sm:text-xl md:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">How can customers enroll in paperless billing?</h3>
+                <h3 className="text-lg sm:text-xl md:text-2xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">
+                  {cmsQuestionText2 || "How can customers enroll in paperless billing?"}
+                </h3>
                 <div className="space-y-4 md:space-y-4 lg:space-y-6">
-                  {answerOptions2.map((option, index) => (
+                  {(cmsAnswerOptions2 || answerOptions2).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`option2-${index}`}
