@@ -102,6 +102,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [showFillBlanksBuilder, setShowFillBlanksBuilder] = useState(false);
   const [showDailyLifeBuilder, setShowDailyLifeBuilder] = useState(false);
   const [showAcademicReadingBuilder, setShowAcademicReadingBuilder] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<'Module 1' | 'Module 2'>('Module 1');
   const [savedDailyLifeTemplates, setSavedDailyLifeTemplates] = useState<DailyLifeTemplate[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     type: 'question' | 'test';
@@ -853,59 +854,55 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               );
             }
 
+            const m1 = section.questions.filter(q => !(q.questionType||'').includes('Module 2'));
+            const m2 = section.questions.filter(q => (q.questionType||'').includes('Module 2'));
+            const activeQ = selectedModule === 'Module 1' ? m1 : m2;
+            const activeColor = selectedModule === 'Module 1' ? '#2d7a7c' : '#f97316';
+
             return (
-              <div className="space-y-1">
-                {/* ── Module 1 ── */}
-                {section.questions.filter(q => !(q.questionType || '').includes('Module 2')).length > 0 && (
-                  <div className="mb-2">
-                    <div className="flex items-center gap-2 px-2 py-0.5 mb-1">
-                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Module 1</span>
-                      <div className="flex-1 h-px bg-gray-200" />
-                      <span className="text-xs text-gray-400">{section.questions.filter(q => !(q.questionType||'').includes('Module 2')).length}문제</span>
-                    </div>
-                    {section.questions.filter(q => !(q.questionType||'').includes('Module 2')).map((question) => (
-                      <div key={question.id} className={`flex items-center justify-between px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition-colors mb-1 ${editingQuestion?.id === question.id ? 'border-[#2d7a7c] bg-[#f0fafa] ring-2 ring-[#2d7a7c]/30' : 'border-gray-200'}`}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="px-2 py-0.5 text-white rounded-full text-xs font-bold bg-[#2d7a7c]">Q{question.questionNumber}</span>
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{(question.questionType||'')}</span>
-                            {question.difficulty && <span className={`px-1.5 py-0.5 rounded text-xs border ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>{question.difficulty}</span>}
-                            {question.passageText && <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-600 rounded border border-green-200">지문</span>}
-                          </div>
-                          <p className="text-xs text-gray-500 truncate mt-0.5 max-w-[500px]">{question.questionText}</p>
-                        </div>
-                        <div className="flex gap-1 shrink-0 ml-2">
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => setPreviewQuestion(question)}><Eye className="w-3 h-3" /></Button>
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => { setEditingQuestion(question); setShowUploadForm(false); }}><Edit className="w-3 h-3" /></Button>
-                          <Button size="sm" className="h-7 w-7 p-0 bg-red-500 text-white hover:bg-red-600" onClick={() => { setDeleteConfirmation({ type:'question', id:question.id, name:`Q${question.questionNumber}: ${question.questionText.substring(0,50)}...`, onConfirm: () => { const ut={...test}; const si=ut.sections.findIndex(s=>s.sectionType===selectedSection); if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(q=>q.id!==question.id);ut.updatedAt=new Date();onUpdateTest(ut);} setDeleteConfirmation(null); } }); }}><Trash2 className="w-3 h-3" /></Button>
-                        </div>
-                      </div>
-                    ))}
+              <div>
+                {/* Module Tab Switcher */}
+                <div className="flex gap-2 mb-3">
+                  {(['Module 1', 'Module 2'] as const).map(mod => (
+                    <button key={mod} type="button" onClick={() => setSelectedModule(mod)}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold border-2 transition-all ${selectedModule === mod
+                        ? mod === 'Module 1' ? 'bg-[#2d7a7c] border-[#2d7a7c] text-white' : 'bg-orange-500 border-orange-500 text-white'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+                      {mod}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${selectedModule === mod ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                        {mod === 'Module 1' ? m1.length : m2.length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Question list */}
+                {activeQ.length === 0 ? (
+                  <div className="text-center py-6 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                    {selectedModule} 문제가 없습니다
                   </div>
-                )}
-                {/* ── Module 2 ── */}
-                {section.questions.filter(q => (q.questionType||'').includes('Module 2')).length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 px-2 py-0.5 mb-1">
-                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">Module 2</span>
-                      <div className="flex-1 h-px bg-orange-200" />
-                      <span className="text-xs text-orange-400">{section.questions.filter(q => (q.questionType||'').includes('Module 2')).length}문제</span>
-                    </div>
-                    {section.questions.filter(q => (q.questionType||'').includes('Module 2')).map((question) => (
-                      <div key={question.id} className={`flex items-center justify-between px-3 py-1.5 border rounded-lg hover:bg-orange-50 transition-colors mb-1 ${editingQuestion?.id === question.id ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-300' : 'border-orange-200'}`}>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="px-2 py-0.5 text-white rounded-full text-xs font-bold bg-orange-500">Q{question.questionNumber}</span>
-                            <span className="px-2 py-0.5 bg-orange-50 text-orange-700 rounded text-xs border border-orange-200">{(question.questionType||'').replace(' (Module 2)','')}</span>
-                            {question.difficulty && <span className={`px-1.5 py-0.5 rounded text-xs border ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>{question.difficulty}</span>}
-                            {question.passageText && <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-600 rounded border border-green-200">지문</span>}
-                          </div>
-                          <p className="text-xs text-gray-500 truncate mt-0.5 max-w-[500px]">{question.questionText}</p>
-                        </div>
-                        <div className="flex gap-1 shrink-0 ml-2">
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => setPreviewQuestion(question)}><Eye className="w-3 h-3" /></Button>
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => { setEditingQuestion(question); setShowUploadForm(false); }}><Edit className="w-3 h-3" /></Button>
-                          <Button size="sm" className="h-7 w-7 p-0 bg-red-500 text-white hover:bg-red-600" onClick={() => { setDeleteConfirmation({ type:'question', id:question.id, name:`Q${question.questionNumber}: ${question.questionText.substring(0,50)}...`, onConfirm: () => { const ut={...test}; const si=ut.sections.findIndex(s=>s.sectionType===selectedSection); if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(q=>q.id!==question.id);ut.updatedAt=new Date();onUpdateTest(ut);} setDeleteConfirmation(null); } }); }}><Trash2 className="w-3 h-3" /></Button>
+                ) : (
+                  <div className="space-y-0.5">
+                    {activeQ.map((question) => (
+                      <div key={question.id} className={`flex items-center gap-2 px-2.5 py-1 border rounded-lg hover:bg-gray-50 transition-colors ${editingQuestion?.id === question.id
+                        ? selectedModule === 'Module 1' ? 'border-[#2d7a7c] bg-[#f0fafa] ring-2 ring-[#2d7a7c]/30' : 'border-orange-400 bg-orange-50 ring-2 ring-orange-300'
+                        : selectedModule === 'Module 1' ? 'border-gray-200' : 'border-orange-200'}`}>
+                        <span className={`px-1.5 py-0.5 text-white rounded text-[10px] font-bold shrink-0 ${selectedModule === 'Module 1' ? 'bg-[#2d7a7c]' : 'bg-orange-500'}`}>
+                          Q{question.questionNumber}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded shrink-0 hidden sm:inline max-w-[120px] truncate">
+                          {(question.questionType||'').replace(' (Module 2)','')}
+                        </span>
+                        {question.difficulty && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>
+                            {question.difficulty}
+                          </span>
+                        )}
+                        <p className="text-xs text-gray-600 truncate flex-1">{question.questionText || question.questionType}</p>
+                        <div className="flex gap-1 shrink-0">
+                          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => setPreviewQuestion(question)}><Eye className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => { setEditingQuestion(question); setShowUploadForm(false); }}><Edit className="w-3 h-3" /></Button>
+                          <Button size="sm" className="h-6 w-6 p-0 bg-red-500 text-white hover:bg-red-600" onClick={() => { setDeleteConfirmation({ type:'question', id:question.id, name:`Q${question.questionNumber}: ${(question.questionText||'').substring(0,40)}`, onConfirm: () => { const ut={...test}; const si=ut.sections.findIndex(s=>s.sectionType===selectedSection); if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(q=>q.id!==question.id);ut.updatedAt=new Date();onUpdateTest(ut);} setDeleteConfirmation(null); } }); }}><Trash2 className="w-3 h-3" /></Button>
                         </div>
                       </div>
                     ))}
