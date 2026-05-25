@@ -570,16 +570,30 @@ export function QuestionReviewFull({
 
         if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
         if (blank) {
+          // Find if user got this blank wrong
+          const blankNum = blankIndex + 1;
+          const wrongEntry = result.wrongAnswers.find(w =>
+            w.questionId === String(blankNum) || w.questionId === `blank-${blankNum}` ||
+            (w.questionId === '1-10' && w.userAnswer?.split(',')[blankIndex])
+          );
+          const userAnswerForBlank = wrongEntry?.userAnswer?.split(',')?.[blankIndex]?.trim() || null;
+          const isBlankCorrect = !wrongEntry || (wrongEntry && userAnswerForBlank === blank.answer);
           parts.push(
-            <input
-              key={`blank-${blankIndex}`}
-              type="text"
-              readOnly
-              disabled
-              value={blank.answer}
-              className="gap-input filled"
-              style={{ width: inputWidth(blank) }}
-            />
+            <span key={`blank-${blankIndex}`} className="inline-flex flex-col items-center mx-0.5 align-bottom">
+              <span
+                className={`inline-block border-b-2 px-1 text-sm font-bold min-w-[28px] text-center rounded-sm ${
+                  isBlankCorrect
+                    ? 'border-green-500 text-green-700 bg-green-50'
+                    : 'border-red-500 text-red-700 bg-red-50'
+                }`}
+                style={{ minWidth: inputWidth(blank) }}
+              >
+                {blank.answer}
+              </span>
+              {!isBlankCorrect && userAnswerForBlank && (
+                <span className="text-[9px] text-gray-400 line-through">{userAnswerForBlank}</span>
+              )}
+            </span>
           );
         }
 
@@ -848,12 +862,34 @@ export function QuestionReviewFull({
                     Reading Module {activeModule}의 1-10번은 TPO 기준 Complete Words 유형입니다. Review에서도 객관식이 아니라 빈칸 본문 형태로 표시되도록 맞췄습니다.
                   </p>
                   <div className="space-y-2">
-                    {readingCompleteWordsConfig?.blanks.map((blank, index) => (
-                      <div key={`answer-key-${index}`} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
-                        <span className="text-gray-500">Blank {index + 1}</span>
-                        <span className="font-semibold text-emerald-700">{blank.answer}</span>
-                      </div>
-                    ))}
+                    {readingCompleteWordsConfig?.blanks.map((blank, index) => {
+                      // Determine if this blank was answered correctly
+                      const blankNum = index + 1;
+                      const wrongEntry = result.wrongAnswers.find(w =>
+                        w.questionId === String(blankNum) || w.questionId === `blank-${blankNum}`
+                      );
+                      const isCorrect = !wrongEntry;
+                      const userAns = wrongEntry?.userAnswer?.split(',')?.[index]?.trim() || null;
+                      return (
+                        <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+                          isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                        }`}>
+                          <span className="text-gray-500">Blank {index + 1}</span>
+                          <div className="flex items-center gap-2">
+                            {!isCorrect && userAns && (
+                              <span className="text-xs text-red-400 line-through">{userAns}</span>
+                            )}
+                            <span className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                              {blank.answer}
+                            </span>
+                            {isCorrect
+                              ? <Check className="w-3.5 h-3.5 text-green-500" />
+                              : <X className="w-3.5 h-3.5 text-red-500" />
+                            }
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -863,12 +899,34 @@ export function QuestionReviewFull({
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
               <div className="w-full md:w-1/2 order-1 md:order-none">
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 h-full overflow-y-auto">
-                  <h4 className="text-base font-bold text-gray-800 mb-4">Passage</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {currentQuestion?.passageText || 
-                      'The passage text related to this question would appear here. In a complete implementation, the full reading passage would be displayed, allowing students to reference the text while reviewing their answers.'}
-                  </p>
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto" style={{ maxHeight: '70vh' }}>
+                  {(() => {
+                    // Get passage from CMS question for current question
+                    const realQ = (currentSection?.questions || [])[currentQuestionIndex];
+                    const rawPassage = realQ?.passageText || currentQuestion?.passageText || null;
+                    
+                    // Parse JSON template if needed
+                    let passageContent: string | null = null;
+                    if (rawPassage) {
+                      try {
+                        const parsed = JSON.parse(rawPassage);
+                        if (parsed.fields?.body) passageContent = parsed.fields.body;
+                        else if (parsed.passage) passageContent = parsed.passage;
+                        else passageContent = rawPassage;
+                      } catch { passageContent = rawPassage; }
+                    }
+                    
+                    return passageContent ? (
+                      <>
+                        {realQ?.passageTitle && (
+                          <h4 className="text-base font-bold text-gray-900 mb-3">{realQ.passageTitle}</h4>
+                        )}
+                        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">지문을 불러올 수 없습니다.</p>
+                    );
+                  })()}
                 </div>
               </div>
             )}
