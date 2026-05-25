@@ -724,9 +724,27 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               if (questionIndex === -1) return;
 
               const updatedTest = { ...test };
-              updatedTest.sections[sectionIndex].questions[questionIndex] = updatedQuestion;
-              updatedTest.updatedAt = new Date();
+              const originalNumber = editingQuestion.questionNumber;
+              const newNumber = updatedQuestion.questionNumber;
+              const numberChanged = String(originalNumber) !== String(newNumber);
 
+              if (numberChanged) {
+                // 번호가 바뀐 경우: 기존 문제는 그대로 두고, 새 번호로 새 문제를 추가
+                const newQuestion = {
+                  ...updatedQuestion,
+                  id: `q-${Date.now()}`, // 새 ID 부여
+                };
+                updatedTest.sections[sectionIndex].questions.push(newQuestion);
+                // 번호 순으로 정렬
+                updatedTest.sections[sectionIndex].questions.sort((a, b) =>
+                  Number(a.questionNumber) - Number(b.questionNumber)
+                );
+              } else {
+                // 번호가 같은 경우: 기존 문제를 업데이트
+                updatedTest.sections[sectionIndex].questions[questionIndex] = updatedQuestion;
+              }
+
+              updatedTest.updatedAt = new Date();
               onUpdateTest(updatedTest);
               setEditingQuestion(null);
             }}
@@ -1357,6 +1375,15 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       <h3 className="text-xl font-medium text-gray-800 mb-4">
         Edit {section} Question - {testType} {testNumber}
       </h3>
+
+      {/* Info banner: number change creates new question */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+        <span className="text-blue-500 text-lg leading-none mt-0.5">ℹ️</span>
+        <p className="text-sm text-blue-700">
+          <strong>문제 번호를 변경하면</strong> 기존 문제는 그대로 유지되고, 변경된 번호로 <strong>새 문제가 추가</strong>됩니다.
+          같은 번호로 저장하면 기존 문제가 수정됩니다.
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
