@@ -1699,19 +1699,15 @@ function AppContent() {
 
     // CMS PRIORITY: load same Daily Life question data (Q12 or second Daily Life question)
     const sectionData2 = getCurrentSectionData('Reading');
-    const dailyLifeQ2 = sectionData2?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('실용문');
-      const qn = q.questionNumber;
-      return isDaily && (qn === 12 || qn === '12' || String(qn) === '12');
-    }) || sectionData2?.questions.filter(q => {
+    // CMS PRIORITY: 번호로 먼저 찾기 (Q12) → 없으면 타입으로 찾기
+    const dailyLifeQ2 = sectionData2?.questions.find(q =>
+      String(q.questionNumber) === '12' || q.questionNumber === 12
+    ) || sectionData2?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('실용문');
-    })[1] || null;  // fallback: second Daily Life question
+    })[1] || null;
 
     const cmsNoticeTitle = dailyLifeQ2?.passageTitle || null;
     const cmsNoticeText = dailyLifeQ2?.passageText || null;
@@ -3892,22 +3888,17 @@ function AppContent() {
 
     // CMS PRIORITY: load question 11 data from CMS (Daily Life reading questions)
     const cmsSection11 = getCurrentSectionData('Reading');
+    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 0번째
     const cmsDailyQ11 = cmsSection11?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
       const qn = q.questionNumber;
-      const matchesNum = qn === 11 || qn === '11' || String(qn) === '11';
-      return isDaily && matchesNum;
+      return qn === 11 || qn === '11' || String(qn) === '11';
     }) || cmsSection11?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
         t.includes('실용문');
-    })[0] || null;  // fallback: 0th Daily Life question in section
+    })[0] || null;
 
     const cmsPassageText11 = cmsDailyQ11?.passageText || null;
     const cmsPassageTitle11 = cmsDailyQ11?.passageTitle || null;
@@ -4077,22 +4068,17 @@ function AppContent() {
 
     // CMS PRIORITY: load question 12 data from CMS (Daily Life reading questions)
     const cmsSection12 = getCurrentSectionData('Reading');
+    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 1번째
     const cmsDailyQ12 = cmsSection12?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
       const qn = q.questionNumber;
-      const matchesNum = qn === 12 || qn === '12' || String(qn) === '12';
-      return isDaily && matchesNum;
+      return qn === 12 || qn === '12' || String(qn) === '12';
     }) || cmsSection12?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
         t.includes('실용문');
-    })[1] || null;  // fallback: 1th Daily Life question in section
+    })[1] || null;
 
     const cmsPassageText12 = cmsDailyQ12?.passageText || null;
     const cmsPassageTitle12 = cmsDailyQ12?.passageTitle || null;
@@ -4280,22 +4266,17 @@ function AppContent() {
 
     // CMS PRIORITY: load question 13 data from CMS (Daily Life reading questions)
     const cmsSection13 = getCurrentSectionData('Reading');
+    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 2번째
     const cmsDailyQ13 = cmsSection13?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
       const qn = q.questionNumber;
-      const matchesNum = qn === 13 || qn === '13' || String(qn) === '13';
-      return isDaily && matchesNum;
+      return qn === 13 || qn === '13' || String(qn) === '13';
     }) || cmsSection13?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
         t.includes('실용문');
-    })[2] || null;  // fallback: 2th Daily Life question in section
+    })[2] || null;
 
     const cmsPassageText13 = cmsDailyQ13?.passageText || null;
     const cmsPassageTitle13 = cmsDailyQ13?.passageTitle || null;
@@ -4524,22 +4505,17 @@ function AppContent() {
 
     // CMS PRIORITY: load question 14 data from CMS (Daily Life reading questions)
     const cmsSection14 = getCurrentSectionData('Reading');
+    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 3번째
     const cmsDailyQ14 = cmsSection14?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
       const qn = q.questionNumber;
-      const matchesNum = qn === 14 || qn === '14' || String(qn) === '14';
-      return isDaily && matchesNum;
+      return qn === 14 || qn === '14' || String(qn) === '14';
     }) || cmsSection14?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
         t.includes('실용문');
-    })[3] || null;  // fallback: 3th Daily Life question in section
+    })[3] || null;
 
     const cmsPassageText14 = cmsDailyQ14?.passageText || null;
     const cmsPassageTitle14 = cmsDailyQ14?.passageTitle || null;
@@ -4732,22 +4708,17 @@ function AppContent() {
 
     // CMS PRIORITY: load question 15 data from CMS (Daily Life reading questions)
     const cmsSection15 = getCurrentSectionData('Reading');
+    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 4번째
     const cmsDailyQ15 = cmsSection15?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
       const qn = q.questionNumber;
-      const matchesNum = qn === 15 || qn === '15' || String(qn) === '15';
-      return isDaily && matchesNum;
+      return qn === 15 || qn === '15' || String(qn) === '15';
     }) || cmsSection15?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
       return t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('practical reading') || t.includes('functional text') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
         t.includes('실용문');
-    })[4] || null;  // fallback: 4th Daily Life question in section
+    })[4] || null;
 
     const cmsPassageText15 = cmsDailyQ15?.passageText || null;
     const cmsPassageTitle15 = cmsDailyQ15?.passageTitle || null;
@@ -6064,7 +6035,10 @@ function AppContent() {
     // Get dynamic question data from CMS
     // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
     const sectionData = getCurrentSectionData('Reading');
-    const dailyLifeQuestion = sectionData?.questions.find(q => {
+    // CMS PRIORITY: 번호로 먼저 찾기 (Q11) → 없으면 타입으로 찾기
+    const dailyLifeQuestion = sectionData?.questions.find(q =>
+      String(q.questionNumber) === '11' || q.questionNumber === 11
+    ) || sectionData?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
       return (
         t.includes('daily life') ||
