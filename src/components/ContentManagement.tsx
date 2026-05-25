@@ -590,25 +590,14 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         {selectedSection === 'Reading' && (
           <>
             <Button
-              onClick={() => { 
-                setShowAcademicReadingBuilder(!showAcademicReadingBuilder); 
-                setShowFillBlanksBuilder(false); 
-                setShowDailyLifeBuilder(false); 
-              }}
-              className={`shadow-lg ${showAcademicReadingBuilder ? 'bg-orange-600 text-white' : 'bg-orange-500 text-white hover:bg-orange-600'}`}
-            >
-              <BookOpen className="w-5 h-5 mr-2" />
-              Academic Reading Builder
-            </Button>
-            <Button
-              onClick={() => { setShowFillBlanksBuilder(!showFillBlanksBuilder); setShowDailyLifeBuilder(false); setShowAcademicReadingBuilder(false); }}
+              onClick={() => { setShowFillBlanksBuilder(!showFillBlanksBuilder); setShowDailyLifeBuilder(false); }}
               className={`shadow-lg ${showFillBlanksBuilder ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'}`}
             >
               <FileText className="w-5 h-5 mr-2" />
               Fill Blanks Builder
             </Button>
             <Button
-              onClick={() => { setShowDailyLifeBuilder(!showDailyLifeBuilder); setShowFillBlanksBuilder(false); setShowAcademicReadingBuilder(false); }}
+              onClick={() => { setShowDailyLifeBuilder(!showDailyLifeBuilder); setShowFillBlanksBuilder(false); }}
               className={`shadow-lg ${showDailyLifeBuilder ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
             >
               <Book className="w-5 h-5 mr-2" />
@@ -642,19 +631,6 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               savedTemplates={savedDailyLifeTemplates}
               onSaveTemplate={(t) => setSavedDailyLifeTemplates(prev => [...prev, t])}
               onDeleteTemplate={(id) => setSavedDailyLifeTemplates(prev => prev.filter(t => t.id !== id))}
-            />
-          </div>
-        )}
-      </>
-
-      {/* Academic Reading Builder */}
-      <>
-        {showAcademicReadingBuilder && selectedSection === 'Reading' && (
-          <div style={{ animation: 'fadeInUp 0.3s ease-out' }}>
-            <AcademicReadingBuilder
-              onSave={handleBuilderSave}
-              testType={activeTestType}
-              testNumber={selectedTestNumber}
             />
           </div>
         )}
@@ -1121,6 +1097,26 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         </div>
 
+        {/* Passage Title (for Reading - Academic Passage) */}
+        {section === 'Reading' && (
+          formData.questionType === 'Read an Academic Passage' ||
+          (formData.questionType || '').toLowerCase().includes('academic')
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passage Title
+              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 제목)</span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).passageTitle || ''}
+              onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-semibold"
+              placeholder="예: The Mirror Test"
+            />
+          </div>
+        )}
+
         {/* Passage Text (for Reading) */}
         {section === 'Reading' && (
           <div>
@@ -1531,6 +1527,26 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             </select>
           </div>
         </div>
+
+        {/* Passage Title (for Reading - Academic Passage) */}
+        {section === 'Reading' && (
+          formData.questionType === 'Read an Academic Passage' ||
+          (formData.questionType || '').toLowerCase().includes('academic')
+        ) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passage Title
+              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 제목)</span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).passageTitle || ''}
+              onChange={(e) => setFormData({ ...formData, passageTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-semibold"
+              placeholder="예: The Mirror Test"
+            />
+          </div>
+        )}
 
         {/* Passage Text (for Reading) */}
         {section === 'Reading' && (
