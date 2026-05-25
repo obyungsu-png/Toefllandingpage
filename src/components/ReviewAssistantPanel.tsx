@@ -407,8 +407,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const panelWidthClass = 'max-w-[34rem] sm:max-w-[42rem]';
 
   return (
-    <div className="flex gap-3 mt-4">
-      {/* ── Left vertical icon sidebar ── */}
+    <div className="fixed right-4 bottom-24 z-[85] flex flex-row-reverse items-end gap-3">
+      {/* ── Right vertical icon sidebar ── */}
       <div className="flex flex-col gap-3 shrink-0">
         {tabs.map((tab) => {
           const meta = getTabMeta(tab);
@@ -452,11 +452,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         })}
       </div>
 
-      {/* ── Content panel (shown below question when tab is active) ── */}
+      {/* ── Content panel: expands to the left of the icon sidebar ── */}
       {activeTab && activeTabMeta && (
         <div
-          className="flex-1 relative overflow-hidden rounded-2xl border bg-white/95 p-4 shadow-md"
-          style={{ borderColor: theme.border }}
+          className="relative overflow-hidden rounded-2xl border bg-white/95 p-4 shadow-xl backdrop-blur-sm"
+          style={{ borderColor: theme.border, width: '320px', maxHeight: '480px', overflowY: 'auto' }}
         >
           <div className="absolute right-[-30px] top-[-40px] h-28 w-28 rounded-full opacity-10 blur-2xl" style={{ backgroundColor: theme.accent }} />
           <div className="relative">
