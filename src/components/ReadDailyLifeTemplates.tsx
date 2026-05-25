@@ -201,6 +201,18 @@ export function ReadDailyLifeTemplates({
   const [module, setModule] = useState<'Module 1' | 'Module 2'>('Module 1');
   const [difficulty, setDifficulty] = useState<'쉬움' | '보통' | '어려움'>('보통');
 
+  // Color theme for template rendering
+  const COLOR_THEMES = [
+    { id: 'teal',   label: '기본 (Teal)',   primary: '#1e6b73', border: '#1e6b73', bg: '#1e6b73', text: 'white' },
+    { id: 'gray',   label: '회색 (Gray)',   primary: '#6b7280', border: '#6b7280', bg: '#6b7280', text: 'white' },
+    { id: 'blue',   label: '파란색 (Blue)', primary: '#2563eb', border: '#2563eb', bg: '#2563eb', text: 'white' },
+    { id: 'black',  label: '검은색 (Black)', primary: '#111827', border: '#111827', bg: '#111827', text: 'white' },
+    { id: 'purple', label: '자주색 (Purple)', primary: '#7c3aed', border: '#7c3aed', bg: '#7c3aed', text: 'white' },
+  ] as const;
+  type ColorThemeId = typeof COLOR_THEMES[number]['id'];
+  const [colorThemeId, setColorThemeId] = useState<ColorThemeId>('teal');
+  const colorTheme = COLOR_THEMES.find(t => t.id === colorThemeId) || COLOR_THEMES[0];
+
   const selectTemplate = (template: DailyLifeTemplate) => {
     setSelectedTemplate(template);
     setEditedFields({ ...template.fields });
@@ -211,39 +223,36 @@ export function ReadDailyLifeTemplates({
     setEditedFields(prev => ({ ...prev, [key]: value }));
   };
 
-  // Render preview based on template structure
+  // Render preview based on template structure (uses colorTheme)
   const renderPreview = () => {
     if (!selectedTemplate) return null;
     const f = editedFields;
+    const c = colorTheme.primary; // main color hex
 
     switch (selectedTemplate.structure) {
       case 'notice':
         return (
-          <div className="border-[3px] border-black p-6">
-            <div className="border-2 border-black p-6">
-              <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-center mb-4">{f.title}</h2>
-              {f.subtitle && (
-                <p className="text-center font-['Inter',_sans-serif] font-medium mb-4">{f.subtitle}</p>
-              )}
-              <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap">{f.body}</p>
+          <div className="border-[3px] p-6" style={{ borderColor: c }}>
+            <div className="border-2 p-6" style={{ borderColor: c }}>
+              {f.title && <h2 className="text-2xl font-[\'Inter\',_sans-serif] font-bold text-center mb-4" style={{ color: c }}>{f.title}</h2>}
+              {f.subtitle && <p className="text-center font-[\'Inter\',_sans-serif] font-medium mb-4">{f.subtitle}</p>}
+              {f.body && <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap">{f.body}</p>}
             </div>
           </div>
         );
 
       case 'email':
         return (
-          <div className="border-4 border-[#1e6b73] rounded-lg overflow-hidden">
+          <div className="rounded-lg overflow-hidden border-4" style={{ borderColor: c }}>
             <div className="bg-white">
-              {['to', 'from', 'date', 'subject'].map(key => f[key] && (
-                <div key={key} className="flex border-b-2 border-[#1e6b73]">
-                  <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-4 py-2 w-24 text-sm capitalize">
-                    {key}:
-                  </div>
-                  <div className="flex-1 bg-white px-4 py-2 font-['Inter',_sans-serif] text-sm">{f[key]}</div>
+              {['to', 'from', 'date', 'subject'].map(key => f[key] ? (
+                <div key={key} className="flex border-b-2" style={{ borderColor: c }}>
+                  <div className="font-[\'Inter\',_sans-serif] font-bold px-4 py-2 w-24 text-sm capitalize text-white" style={{ backgroundColor: c }}>{key}:</div>
+                  <div className="flex-1 bg-white px-4 py-2 font-[\'Inter\',_sans-serif] text-sm">{f[key]}</div>
                 </div>
-              ))}
+              ) : null)}
             </div>
-            <div className="p-4 font-['Inter',_sans-serif] leading-relaxed text-sm whitespace-pre-wrap">
+            <div className="p-4 font-[\'Inter\',_sans-serif] leading-relaxed text-sm whitespace-pre-wrap border-4 m-1" style={{ borderColor: c }}>
               {f.body}
             </div>
           </div>
@@ -252,24 +261,24 @@ export function ReadDailyLifeTemplates({
       case 'social_media':
         return (
           <div className="border-2 border-gray-300 rounded-xl overflow-hidden">
-            <div className="bg-gray-100 px-4 py-2 border-b border-gray-300">
-              <span className="font-['Inter',_sans-serif] font-bold text-sm text-gray-800">{f.platform}</span>
+            <div className="px-4 py-2 border-b border-gray-300 text-white font-[\'Inter\',_sans-serif] font-bold text-sm" style={{ backgroundColor: c }}>
+              {f.platform}
             </div>
             <div className="p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#1e6b73] flex items-center justify-center text-white font-bold text-sm">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: c }}>
                   {(f.username || 'U')[1]?.toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-['Inter',_sans-serif] font-bold text-sm">{f.username}</p>
+                  <p className="font-[\'Inter\',_sans-serif] font-bold text-sm">{f.username}</p>
                   <p className="text-xs text-gray-500">{f.timestamp}</p>
                 </div>
               </div>
-              <p className="font-['Inter',_sans-serif] leading-relaxed text-sm mb-3 whitespace-pre-wrap">{f.content}</p>
+              <p className="font-[\'Inter\',_sans-serif] leading-relaxed text-sm mb-3 whitespace-pre-wrap">{f.content}</p>
               <div className="flex gap-4 text-xs text-gray-500 border-t border-gray-200 pt-2">
-                <span>♥ {f.likes}</span>
-                <span>💬 {f.comments}</span>
-                <span>↗ {f.shares}</span>
+                {f.likes && <span>♥ {f.likes}</span>}
+                {f.comments && <span>💬 {f.comments}</span>}
+                {f.shares && <span>↗ {f.shares}</span>}
               </div>
             </div>
           </div>
@@ -277,18 +286,20 @@ export function ReadDailyLifeTemplates({
 
       case 'advertisement':
         return (
-          <div className="border-4 border-double border-black p-6">
+          <div className="border-4 border-double p-6" style={{ borderColor: c }}>
             <div className="text-center mb-4">
-              <h2 className="text-2xl font-['Inter',_sans-serif] font-black tracking-wide">{f.headline}</h2>
-              <p className="font-['Inter',_sans-serif] font-bold text-lg mt-1">{f.business}</p>
+              <h2 className="text-2xl font-[\'Inter\',_sans-serif] font-black tracking-wide" style={{ color: c }}>{f.headline}</h2>
+              {f.business && <p className="font-[\'Inter\',_sans-serif] font-bold text-lg mt-1">{f.business}</p>}
             </div>
-            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4 text-center">
-              <p className="font-['Inter',_sans-serif] font-bold text-lg">{f.offer}</p>
-            </div>
-            <div className="font-['Inter',_sans-serif] text-sm leading-relaxed whitespace-pre-wrap mb-4">{f.details}</div>
-            <div className="border-t-2 border-black pt-3 text-center">
-              <p className="font-['Inter',_sans-serif] text-sm font-medium">{f.location}</p>
-              <p className="font-['Inter',_sans-serif] text-xs text-gray-600 mt-1">{f.contact}</p>
+            {f.offer && (
+              <div className="rounded-lg p-4 mb-4 text-center border-2" style={{ borderColor: c, backgroundColor: c + '15' }}>
+                <p className="font-[\'Inter\',_sans-serif] font-bold text-lg" style={{ color: c }}>{f.offer}</p>
+              </div>
+            )}
+            {f.details && <div className="font-[\'Inter\',_sans-serif] text-sm leading-relaxed whitespace-pre-wrap mb-4">{f.details}</div>}
+            <div className="border-t-2 pt-3 text-center" style={{ borderColor: c }}>
+              {f.location && <p className="font-[\'Inter\',_sans-serif] text-sm font-medium">{f.location}</p>}
+              {f.contact && <p className="font-[\'Inter\',_sans-serif] text-xs text-gray-600 mt-1">{f.contact}</p>}
             </div>
           </div>
         );
@@ -296,17 +307,16 @@ export function ReadDailyLifeTemplates({
       case 'article':
         return (
           <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-            <div className="bg-gray-800 text-white px-4 py-2 text-center">
-              <span className="font-['Georgia',_serif] font-bold text-lg italic">{f.source}</span>
+            <div className="text-white px-4 py-2 text-center" style={{ backgroundColor: c }}>
+              <span className="font-[\'Georgia\',_serif] font-bold text-lg italic">{f.source}</span>
             </div>
             <div className="p-5">
-              <h2 className="text-xl font-['Georgia',_serif] font-bold mb-2">{f.headline}</h2>
+              <h2 className="text-xl font-[\'Georgia\',_serif] font-bold mb-2">{f.headline}</h2>
               <div className="flex items-center gap-3 text-xs text-gray-500 mb-4 border-b border-gray-200 pb-3">
-                <span>{f.date}</span>
-                <span>|</span>
-                <span>{f.author}</span>
+                {f.date && <span>{f.date}</span>}
+                {f.author && <><span>|</span><span>{f.author}</span></>}
               </div>
-              <p className="font-['Georgia',_serif] leading-relaxed text-sm whitespace-pre-wrap">{f.body}</p>
+              <p className="font-[\'Georgia\',_serif] leading-relaxed text-sm whitespace-pre-wrap">{f.body}</p>
             </div>
           </div>
         );
@@ -314,59 +324,49 @@ export function ReadDailyLifeTemplates({
       case 'form':
         return (
           <div className="border-2 border-gray-400 rounded-lg overflow-hidden">
-            <div className="bg-[#1e6b73] text-white px-4 py-3 text-center">
-              <h2 className="font-['Inter',_sans-serif] font-bold">{f.title}</h2>
-              <p className="text-xs text-white/80">{f.company}</p>
+            <div className="text-white px-4 py-3 text-center" style={{ backgroundColor: c }}>
+              <h2 className="font-[\'Inter\',_sans-serif] font-bold">{f.title}</h2>
+              {f.company && <p className="text-xs text-white/80">{f.company}</p>}
             </div>
             <div className="p-4">
               {f.tableHeaders && f.tableRows && (
                 <table className="w-full border-collapse mb-4">
                   <thead>
-                    <tr className="bg-gray-100">
-                      {f.tableHeaders.split(',').map((header, i) => (
-                        <th key={i} className="border border-gray-300 px-3 py-2 text-xs font-['Inter',_sans-serif] font-bold text-left">
-                          {header.trim()}
-                        </th>
+                    <tr style={{ backgroundColor: c + '20' }}>
+                      {f.tableHeaders.split(',').map((h: string, i: number) => (
+                        <th key={i} className="border px-3 py-2 text-xs font-[\'Inter\',_sans-serif] font-bold text-left" style={{ borderColor: c }}>{h.trim()}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {f.tableRows.split('\n').filter(r => r.trim()).map((row, i) => (
+                    {f.tableRows.split('\n').filter((r: string) => r.trim()).map((row: string, i: number) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        {row.split(',').map((cell, j) => (
-                          <td key={j} className="border border-gray-300 px-3 py-2 text-xs font-['Inter',_sans-serif]">
-                            {cell.trim()}
-                          </td>
+                        {row.split(',').map((cell: string, j: number) => (
+                          <td key={j} className="border px-3 py-2 text-xs font-[\'Inter\',_sans-serif]" style={{ borderColor: c }}>{cell.trim()}</td>
                         ))}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
-              <div className="text-xs font-['Inter',_sans-serif] whitespace-pre-wrap text-gray-700 border-t border-gray-300 pt-3">
-                {f.footer}
-              </div>
+              {f.footer && <div className="text-xs font-[\'Inter\',_sans-serif] whitespace-pre-wrap text-gray-700 border-t pt-3" style={{ borderColor: c }}>{f.footer}</div>}
             </div>
           </div>
         );
 
       default:
-        // Custom template - render fields as simple labeled content
         return (
           <div className="border-2 border-gray-300 rounded-lg p-5 space-y-3">
             {Object.entries(f).map(([key, value]) => (
               <div key={key}>
-                <p className="text-xs font-bold text-gray-500 uppercase mb-1">
-                  {selectedTemplate.fieldLabels[key] || key}
-                </p>
-                <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{value}</p>
+                <p className="text-xs font-bold uppercase mb-1" style={{ color: c }}>{selectedTemplate.fieldLabels[key] || key}</p>
+                <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{String(value)}</p>
               </div>
             ))}
           </div>
         );
     }
-  };
-
+  }
   // Add new field to custom template
   const addFieldToNewTemplate = () => {
     if (!newFieldName.trim()) return;
@@ -412,6 +412,7 @@ export function ReadDailyLifeTemplates({
       passageText: JSON.stringify({
         templateId: selectedTemplate.id,
         structure: selectedTemplate.structure,
+        color: colorThemeId,
         fields: editedFields,
       }),
     };
@@ -734,6 +735,32 @@ export function ReadDailyLifeTemplates({
                 <p className="text-[10px] text-gray-400 mt-1">정답 옵션의 라디오 버튼을 선택하세요</p>
               </div>
 
+              {/* Color Theme Selector */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">
+                  색상 테마 (Color Theme)
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {COLOR_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setColorThemeId(theme.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all ${
+                        colorThemeId === theme.id
+                          ? 'border-gray-800 shadow-md scale-105'
+                          : 'border-transparent hover:border-gray-300'
+                      }`}
+                      style={{ backgroundColor: theme.primary, color: 'white' }}
+                      title={theme.label}
+                    >
+                      {colorThemeId === theme.id && <span>✓</span>}
+                      {theme.label.split(' (')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Difficulty Selector */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-2">
@@ -794,7 +821,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
   if (!passageText) return null;
 
   // Try to parse as JSON template
-  let parsed: { structure?: string; fields?: Record<string, string> } | null = null;
+  let parsed: { structure?: string; fields?: Record<string, string>; color?: string } | null = null;
   try {
     parsed = JSON.parse(passageText);
   } catch {
@@ -805,11 +832,21 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
 
   const f = parsed.fields;
 
+  // Color theme: use saved color or default teal
+  const COLOR_MAP: Record<string, string> = {
+    teal:   '#1e6b73',
+    gray:   '#6b7280',
+    blue:   '#2563eb',
+    black:  '#111827',
+    purple: '#7c3aed',
+  };
+  const c = COLOR_MAP[parsed.color || 'teal'] || '#1e6b73';
+
   switch (parsed.structure) {
     case 'notice':
       return (
-        <div className="border-[3px] border-black p-4 md:p-6">
-          <div className="border-2 border-black p-4 md:p-6">
+        <div className="border-[3px] p-4 md:p-6" style={{ borderColor: c }}>
+          <div className="border-2 p-4 md:p-6" style={{ borderColor: c }}>
             {f.title && <h2 className="text-xl md:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-3 md:mb-4">{f.title}</h2>}
             {f.subtitle && <p className="text-center font-['Inter',_sans-serif] font-medium mb-3 md:mb-4">{f.subtitle}</p>}
             {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.body}</p>}
@@ -819,11 +856,11 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
 
     case 'email':
       return (
-        <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
+        <div className="border-2 md:border-4 rounded-lg overflow-hidden bg-white" style={{ borderColor: c }}>
           <div className="bg-white">
             {['to', 'from', 'date', 'subject'].map(key => f[key] ? (
-              <div key={key} className="flex border-b-2 border-[#1e6b73]">
-                <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-xs sm:text-sm capitalize">{key}:</div>
+              <div key={key} className="flex border-b-2" style={{ borderColor: c }}>
+                <div className="text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-xs sm:text-sm capitalize" style={{ backgroundColor: c }}>{key}:</div>
                 <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-xs sm:text-sm">{f[key]}</div>
               </div>
             ) : null)}
@@ -842,7 +879,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
           </div>
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#1e6b73] flex items-center justify-center text-white font-bold text-sm">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: c }}>
                 {(f.username || 'U')[1]?.toUpperCase() ?? 'U'}
               </div>
               <div>
@@ -883,7 +920,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
     case 'article':
       return (
         <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-          <div className="bg-gray-800 text-white px-4 py-2 text-center">
+          <div className="text-white px-4 py-2 text-center" style={{ backgroundColor: c }}>
             <span className="font-['Georgia',_serif] font-bold text-lg italic">{f.source}</span>
           </div>
           <div className="p-4 md:p-5">
@@ -900,7 +937,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
     case 'form':
       return (
         <div className="border-2 border-gray-400 rounded-lg overflow-hidden">
-          <div className="bg-[#1e6b73] text-white px-4 py-3 text-center">
+          <div className="text-white px-4 py-3 text-center" style={{ backgroundColor: c }}>
             <h2 className="font-['Inter',_sans-serif] font-bold">{f.title}</h2>
             {f.company && <p className="text-xs text-white/80">{f.company}</p>}
           </div>
