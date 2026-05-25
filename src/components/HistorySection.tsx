@@ -476,20 +476,7 @@ export function HistorySection({
       <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Practice Records</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowShareSettings(true)}
-            className="px-4 py-2 text-xs font-bold rounded-full text-white flex items-center gap-1.5 transition-all hover:shadow-md"
-            style={{ backgroundColor: '#e6882a' }}
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            SMS/WeChat
-          </button>
-          <button
-            onClick={() => setShowShareSettings(true)}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
             className={`hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${

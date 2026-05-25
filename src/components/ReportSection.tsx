@@ -550,13 +550,7 @@ ${messageToParent.trim() ? `\n━━━━━━━━━━━━━━━━\n
             <Mail className="w-3.5 h-3.5 md:w-4 md:h-4" />
             <span>Email</span>
           </button>
-          <button
-            onClick={() => handleShareWeChat(currentMonth)}
-            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-white text-xs md:text-sm font-bold transition-all hover:opacity-90 active:scale-95 shadow-md bg-gradient-to-r from-green-500 to-green-600"
-          >
-            <MessageCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            <span>SMS/WeChat</span>
-          </button>
+
         </div>
         <p className="text-[10px] text-gray-400 text-center mt-3">
           Share your learning progress with parents.
