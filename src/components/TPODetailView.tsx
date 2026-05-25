@@ -245,98 +245,66 @@ export function TPODetailView({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4">
-        {filteredQuestions
-          .sort((a, b) => {
-            const numA = typeof a.questionNumber === 'string' 
-              ? parseInt(a.questionNumber.split('-')[0]) 
-              : a.questionNumber;
-            const numB = typeof b.questionNumber === 'string' 
-              ? parseInt(b.questionNumber.split('-')[0]) 
-              : b.questionNumber;
-            return numA - numB;
-          })
-          .map(question => {
-            const style = getQuestionStyle(question.questionType || '');
-            const summary = getQuestionSummary(question);
-            const module = question.questionType?.includes('Module 2') ? 'Module 2' : 'Module 1';
+      {/* Side-by-side Module 1 / Module 2 panels */}
+      {filteredQuestions.length > 0 && (() => {
+        const m1q = filteredQuestions.filter(q => !q.questionType?.includes('Module 2')).sort((a,b) => Number(a.questionNumber)-Number(b.questionNumber));
+        const m2q = filteredQuestions.filter(q => q.questionType?.includes('Module 2')).sort((a,b) => Number(a.questionNumber)-Number(b.questionNumber));
 
-            return (
-              <div
-                key={question.id}
-                className="bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  {/* Left: Question Info */}
-                  <div className="flex-1 min-w-0">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border ${style.color} font-medium text-sm`}>
-                        {style.icon}
-                        <span>Q{question.questionNumber}</span>
-                      </div>
-                      <div className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium border border-gray-300">
-                        {module}
-                      </div>
-                      {question.difficulty && (
-                        <div className={`px-3 py-1 rounded-lg text-sm font-medium border ${
-                          question.difficulty === '쉬움' ? 'bg-green-100 text-green-700 border-green-300' :
-                          question.difficulty === '보통' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
-                          'bg-red-100 text-red-700 border-red-300'
-                        }`}>
-                          {question.difficulty}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Question Type */}
-                    <h3 className="text-base font-bold text-gray-800 mb-2 truncate">
-                      {question.questionType || 'Unknown Type'}
-                    </h3>
-
-                    {/* Question Text Preview */}
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {question.questionText}
-                    </p>
-
-                    {/* Summary */}
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>{summary}</span>
-                      {question.audioUrl && <span>🎧 Audio</span>}
-                      {question.imageUrl && <span>🖼️ Image</span>}
-                      {question.videoUrl && <span>🎥 Video</span>}
-                    </div>
-                  </div>
-
-                  {/* Right: Actions */}
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => onPreviewQuestion(question)}
-                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
-                      title="미리보기"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onEditQuestion(question)}
-                      className="p-2 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg transition-colors"
-                      title="수정"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(question.id)}
-                      className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
-                      title="삭제"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+        const renderCard = (question: TPOQuestion, isM2: boolean) => {
+          const style = getQuestionStyle(question.questionType || '');
+          const summary = getQuestionSummary(question);
+          return (
+            <div key={question.id} className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-lg transition-all hover:shadow-sm group ${isM2 ? 'border-orange-100 hover:bg-orange-50/40' : 'border-gray-100 hover:bg-gray-50'}`}>
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${style.color} shrink-0`}>
+                {style.icon}<span>Q{question.questionNumber}</span>
               </div>
-            );
-          })}
-      </div>
+              {question.difficulty && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>
+                  {question.difficulty}
+                </span>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-gray-700 truncate">{question.questionText || (question.questionType||'').replace(' (Module 2)','')}</p>
+                <p className="text-[10px] text-gray-400">{summary}</p>
+              </div>
+              <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => onPreviewQuestion(question)} className="p-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded" title="미리보기"><Eye className="w-3 h-3"/></button>
+                <button onClick={() => onEditQuestion(question)} className="p-1 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded" title="편집"><Edit className="w-3 h-3"/></button>
+                <button onClick={() => setDeleteConfirm(question.id)} className="p-1 bg-red-50 hover:bg-red-100 text-red-500 rounded" title="삭제"><Trash2 className="w-3 h-3"/></button>
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            {/* Module 1 */}
+            <div className="rounded-xl border border-[#2d7a7c]/20 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73]">
+                <span className="text-white font-bold text-sm">Module 1</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/25 text-white font-bold">{m1q.length}</span>
+              </div>
+              <div className="p-2 space-y-1 min-h-[60px]">
+                {m1q.length === 0
+                  ? <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
+                  : m1q.map(q => renderCard(q, false))}
+              </div>
+            </div>
+            {/* Module 2 */}
+            <div className="rounded-xl border border-orange-200 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400">
+                <span className="text-white font-bold text-sm">Module 2</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/25 text-white font-bold">{m2q.length}</span>
+              </div>
+              <div className="p-2 space-y-1 min-h-[60px]">
+                {m2q.length === 0
+                  ? <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
+                  : m2q.map(q => renderCard(q, true))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
