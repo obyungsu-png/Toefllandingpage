@@ -995,6 +995,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     questionNumber: 1,
     questionText: '',
     questionType: questionTypes[0],
+    module: 'Module 1' as 'Module 1' | 'Module 2',
     options: ['', '', '', ''],
     correctAnswer: '',
     explanation: '',
@@ -1019,7 +1020,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       id: `q-${Date.now()}`,
       questionNumber: formData.questionNumber,
       questionText: formData.questionText,
-      questionType: formData.questionType,
+      questionType: formData.module === 'Module 2' ? `${formData.questionType} (Module 2)` : formData.questionType,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
@@ -1115,6 +1116,32 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               ))}
             </select>
           </div>
+        </div>
+
+        {/* Module Selector */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700">Module:</span>
+          <div className="flex gap-2">
+            {(['Module 1', 'Module 2'] as const).map((mod) => (
+              <button
+                key={mod}
+                type="button"
+                onClick={() => setFormData({ ...formData, module: mod })}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold border-2 transition-all ${
+                  formData.module === mod
+                    ? 'bg-[#1e6b73] border-[#1e6b73] text-white shadow-md'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-[#1e6b73] hover:text-[#1e6b73]'
+                }`}
+              >
+                {mod}
+              </button>
+            ))}
+          </div>
+          {formData.module === 'Module 2' && (
+            <span className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+              Module 2로 저장됩니다
+            </span>
+          )}
         </div>
 
         {/* Passage Title (for Reading - Academic Passage) */}
@@ -1430,7 +1457,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
   const [formData, setFormData] = useState({
     questionNumber: question.questionNumber,
     questionText: question.questionText,
-    questionType: question.questionType,
+    questionType: question.questionType.replace(' (Module 2)', ''),
+    module: (question.questionType || '').includes('Module 2') ? 'Module 2' as const : 'Module 1' as const,
     options: question.options || ['', '', '', ''],
     correctAnswer: question.correctAnswer || '',
     explanation: question.explanation || '',
@@ -1454,7 +1482,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       id: question.id,
       questionNumber: formData.questionNumber,
       questionText: formData.questionText,
-      questionType: formData.questionType,
+      questionType: (formData as any).module === 'Module 2' ? `${formData.questionType} (Module 2)` : formData.questionType,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
@@ -1551,6 +1579,32 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               ))}
             </select>
           </div>
+        </div>
+
+        {/* Module Selector */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700">Module:</span>
+          <div className="flex gap-2">
+            {(['Module 1', 'Module 2'] as const).map((mod) => (
+              <button
+                key={mod}
+                type="button"
+                onClick={() => setFormData({ ...formData, module: mod } as any)}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold border-2 transition-all ${
+                  (formData as any).module === mod
+                    ? 'bg-[#1e6b73] border-[#1e6b73] text-white shadow-md'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-[#1e6b73] hover:text-[#1e6b73]'
+                }`}
+              >
+                {mod}
+              </button>
+            ))}
+          </div>
+          {(formData as any).module === 'Module 2' && (
+            <span className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+              Module 2로 저장됩니다
+            </span>
+          )}
         </div>
 
         {/* Passage Title (for Reading - Academic Passage) */}
