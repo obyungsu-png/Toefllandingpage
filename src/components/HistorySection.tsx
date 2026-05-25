@@ -418,7 +418,7 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
-    setShowScoreModal(true);
+    setShowQuestionReview(true);
   };
 
   const handleRestartClick = (result: TestResult) => {
@@ -444,7 +444,17 @@ export function HistorySection({
     setShowQuestionReview(false);
   };
 
-  // (QuestionReviewFull removed - replaced by ScoreModal)
+  // Full-screen Question Review
+  if (showQuestionReview && selectedResult) {
+    return (
+      <QuestionReviewFull
+        result={selectedResult}
+        tpoTests={tpoTests}
+        onBack={handleBackFromReview}
+        themeColor={themeColor}
+      />
+    );
+  }
 
   return (
     <div className="w-full h-[calc(100vh-80px)] bg-[#f5f7fa] overflow-hidden flex flex-col -mx-2 md:-mx-4 -mb-4 md:-mb-12">
