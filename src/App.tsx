@@ -2151,85 +2151,41 @@ function AppContent() {
           <ResizableReadingLayout
             leftContent={
               <div className="relative w-full">
-                {/* Outer gray border */}
-                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
-                  {/* Inner white container */}
-                  <div className="bg-white border border-black rounded-lg">
-                    {/* Header */}
-                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
-                      {/* Left side - Camera icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                        <circle cx="12" cy="12" r="3" fill="white"/>
-                      </svg>
-                      
-                      {/* Center - Search bar */}
-                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
-                        <div className="flex-1"></div>
-                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <circle cx="11" cy="11" r="8"/>
-                          <path d="M21 21l-4.35-4.35"/>
-                        </svg>
+                {/* CMS PRIORITY: render template if CMS data exists */}
+                {cmsPassage14
+                  ? (renderDailyLifePassage(cmsPassage14) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassage14}</p>
                       </div>
-                      
-                      {/* Right side - Message icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-                      </svg>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col min-h-[300px]">
-                      <div className="p-3 md:p-5">
-                        {/* Profile */}
-                        <div className="flex items-center gap-2 mb-3 md:mb-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
+                    ))
+                  : (
+                    <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
+                      <div className="bg-white border border-black rounded-lg">
+                        <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 justify-between">
+                          <span className="text-white text-xs font-bold">Community Forum</span>
+                        </div>
+                        <div className="p-3 md:p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 rounded-full bg-[#F4A261] flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">S</span>
+                            </div>
+                            <span className="text-sm font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                           </div>
-                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
-                        </div>
-
-                        {/* Post content */}
-                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
-                          <p>
-                            Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
-                          </p>
-                          <p>
-                            Don't miss the bakery stall—get there early for the best bread and pastries, including gluten-free and vegan options. The smell of freshly baked goods fills the air, and these treats sell out fast!
-                          </p>
-                          <p>
-                            In addition to food, the market sells handmade crafts like jewelry, pottery, and textiles. These unique items make perfect gifts and support local artisans. Plus, enjoy live music while you shop. Talented local musicians help create a vibrant atmosphere, and the community spirit makes it a delightful experience for all. See you there!
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
-                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Like</span>
-                          </button>
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
-                          </button>
+                          <div className="text-xs sm:text-sm font-['Inter',_sans-serif] leading-relaxed space-y-2">
+                            <p>Every Saturday, our local farmer's market is the place to be! The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers.</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                }
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What reason is given for the popularity of the Thompson family's stall?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">
+                  {cmsQuestion14 || "What reason is given for the popularity of the Thompson family's stall?"}
+                </h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions4.map((option, index) => (
@@ -2390,80 +2346,34 @@ function AppContent() {
           <ResizableReadingLayout
             leftContent={
               <div className="relative w-full">
-                {/* Outer gray border */}
-                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
-                  {/* Inner white container */}
-                  <div className="bg-white border border-black rounded-lg">
-                    {/* Header */}
-                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
-                      {/* Left side - Camera icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                        <circle cx="12" cy="12" r="3" fill="white"/>
-                      </svg>
-                      
-                      {/* Center - Search bar */}
-                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
-                        <div className="flex-1"></div>
-                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <circle cx="11" cy="11" r="8"/>
-                          <path d="M21 21l-4.35-4.35"/>
-                        </svg>
+                {/* CMS PRIORITY: render template if CMS data exists */}
+                {cmsPassage15
+                  ? (renderDailyLifePassage(cmsPassage15) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassage15}</p>
                       </div>
-                      
-                      {/* Right side - Message icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-                      </svg>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col min-h-[300px]">
-                      <div className="p-3 md:p-5">
-                        {/* Profile */}
-                        <div className="flex items-center gap-2 mb-3 md:mb-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
+                    ))
+                  : (
+                    <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
+                      <div className="bg-white border border-black rounded-lg">
+                        <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 justify-between">
+                          <span className="text-white text-xs font-bold">Community Forum</span>
+                        </div>
+                        <div className="p-3 md:p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 rounded-full bg-[#F4A261] flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">S</span>
+                            </div>
+                            <span className="text-sm font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                           </div>
-                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
-                        </div>
-
-                        {/* Post content */}
-                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
-                          <p>
-                            Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
-                          </p>
-                          <p>
-                            Don't miss the bakery stall—get there early for the best bread and pastries, including gluten-free and vegan options. The smell of freshly baked goods fills the air, and these treats sell out fast!
-                          </p>
-                          <p>
-                            In addition to food, the market sells handmade crafts like jewelry, pottery, and textiles. These unique items make perfect gifts and support local artisans. Plus, enjoy live music while you shop. Talented local musicians help create a vibrant atmosphere, and the community spirit makes it a delightful experience for all. See you there!
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
-                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Like</span>
-                          </button>
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
-                          </button>
+                          <div className="text-xs sm:text-sm font-['Inter',_sans-serif] leading-relaxed space-y-2">
+                            <p>Don't miss the bakery stall—get there early for the best bread and pastries, including gluten-free and vegan options. The smell of freshly baked goods fills the air, and these treats sell out fast!</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                }
               </div>
             }
             rightContent={
