@@ -43,7 +43,7 @@ import { HistorySection, TestResult } from './components/HistorySection';
 import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
-import { isContentLocked } from './utils/subscriptionUtils';
+import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
@@ -3850,6 +3850,32 @@ function AppContent() {
       "September 30th"
     ];
 
+    // CMS PRIORITY: load question 11 data from CMS (Daily Life reading questions)
+    const cmsSection11 = getCurrentSectionData('Reading');
+    const cmsDailyQ11 = cmsSection11?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
+      const qn = q.questionNumber;
+      const matchesNum = qn === 11 || qn === '11' || String(qn) === '11';
+      return isDaily && matchesNum;
+    }) || cmsSection11?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('실용문');
+    })[0] || null;  // fallback: 0th Daily Life question in section
+
+    const cmsPassageText11 = cmsDailyQ11?.passageText || null;
+    const cmsQuestionText11 = cmsDailyQ11?.questionText || null;
+    const cmsAnswerOptions11 = (cmsDailyQ11?.options && cmsDailyQ11!.options!.length > 0)
+      ? cmsDailyQ11!.options! : null;
+    const cmsCorrectAnswer11 = cmsDailyQ11?.correctAnswer as string | null || null;
+
+
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Header */}
@@ -3898,6 +3924,24 @@ function AppContent() {
             onSubmit={() => { setShowModule2Question11(false); setShowModule2Question12(true); }}
             leftContent={
               <div className="relative w-full">
+                {/* CMS PRIORITY: render template from CMS passageText JSON */}
+                {cmsPassageText12
+                  ? (renderDailyLifePassage(cmsPassageText12) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText12}</p>
+                      </div>
+                    ))
+                  : (
+              <div className="relative w-full">
+                {/* CMS PRIORITY: render template from CMS passageText JSON */}
+                {cmsPassageText11
+                  ? (renderDailyLifePassage(cmsPassageText11) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText11}</p>
+                      </div>
+                    ))
+                  : (
+              <div className="relative w-full">
                 <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#1e6b73]">
@@ -3926,6 +3970,12 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif] text-sm sm:text-base">Laura Bennett</p>
                   </div>
                 </div>
+              </div>
+                  )
+                }
+              </div>
+                  )
+                }
               </div>
             }
             rightContent={
@@ -3983,6 +4033,32 @@ function AppContent() {
       "A protective garment",
       "Proof of reservation"
     ];
+
+    // CMS PRIORITY: load question 12 data from CMS (Daily Life reading questions)
+    const cmsSection12 = getCurrentSectionData('Reading');
+    const cmsDailyQ12 = cmsSection12?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
+      const qn = q.questionNumber;
+      const matchesNum = qn === 12 || qn === '12' || String(qn) === '12';
+      return isDaily && matchesNum;
+    }) || cmsSection12?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('실용문');
+    })[1] || null;  // fallback: 1th Daily Life question in section
+
+    const cmsPassageText12 = cmsDailyQ12?.passageText || null;
+    const cmsQuestionText12 = cmsDailyQ12?.questionText || null;
+    const cmsAnswerOptions12 = (cmsDailyQ12?.options && cmsDailyQ12!.options!.length > 0)
+      ? cmsDailyQ12!.options! : null;
+    const cmsCorrectAnswer12 = cmsDailyQ12?.correctAnswer as string | null || null;
+
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -4160,6 +4236,32 @@ function AppContent() {
       "To announce a discount available to fitness-center members"
     ];
 
+    // CMS PRIORITY: load question 13 data from CMS (Daily Life reading questions)
+    const cmsSection13 = getCurrentSectionData('Reading');
+    const cmsDailyQ13 = cmsSection13?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
+      const qn = q.questionNumber;
+      const matchesNum = qn === 13 || qn === '13' || String(qn) === '13';
+      return isDaily && matchesNum;
+    }) || cmsSection13?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('실용문');
+    })[2] || null;  // fallback: 2th Daily Life question in section
+
+    const cmsPassageText13 = cmsDailyQ13?.passageText || null;
+    const cmsQuestionText13 = cmsDailyQ13?.questionText || null;
+    const cmsAnswerOptions13 = (cmsDailyQ13?.options && cmsDailyQ13!.options!.length > 0)
+      ? cmsDailyQ13!.options! : null;
+    const cmsCorrectAnswer13 = cmsDailyQ13?.correctAnswer as string | null || null;
+
+
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Header */}
@@ -4246,6 +4348,33 @@ function AppContent() {
             onSubmit={() => { setShowModule2Question13(false); setShowModule2Question14(true); }}
             leftContent={
               <div className="relative w-full">
+                {/* CMS PRIORITY: render template from CMS passageText JSON */}
+                {cmsPassageText15
+                  ? (renderDailyLifePassage(cmsPassageText15) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText15}</p>
+                      </div>
+                    ))
+                  : (
+              <div className="relative w-full">
+                {/* CMS PRIORITY: render template from CMS passageText JSON */}
+                {cmsPassageText14
+                  ? (renderDailyLifePassage(cmsPassageText14) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText14}</p>
+                      </div>
+                    ))
+                  : (
+              <div className="relative w-full">
+                {/* CMS PRIORITY: render template from CMS passageText JSON */}
+                {cmsPassageText13
+                  ? (renderDailyLifePassage(cmsPassageText13) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText13}</p>
+                      </div>
+                    ))
+                  : (
+              <div className="relative w-full">
                 <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
@@ -4282,6 +4411,15 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
                 </div>
+              </div>
+                  )
+                }
+              </div>
+                  )
+                }
+              </div>
+                  )
+                }
               </div>
             }
             rightContent={
@@ -4340,6 +4478,32 @@ function AppContent() {
       "She is a member at one of the fitness center's other locations.",
       "She is new to using fitness centers and exercise equipment."
     ];
+
+    // CMS PRIORITY: load question 14 data from CMS (Daily Life reading questions)
+    const cmsSection14 = getCurrentSectionData('Reading');
+    const cmsDailyQ14 = cmsSection14?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
+      const qn = q.questionNumber;
+      const matchesNum = qn === 14 || qn === '14' || String(qn) === '14';
+      return isDaily && matchesNum;
+    }) || cmsSection14?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('실용문');
+    })[3] || null;  // fallback: 3th Daily Life question in section
+
+    const cmsPassageText14 = cmsDailyQ14?.passageText || null;
+    const cmsQuestionText14 = cmsDailyQ14?.questionText || null;
+    const cmsAnswerOptions14 = (cmsDailyQ14?.options && cmsDailyQ14!.options!.length > 0)
+      ? cmsDailyQ14!.options! : null;
+    const cmsCorrectAnswer14 = cmsDailyQ14?.correctAnswer as string | null || null;
+
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -4521,6 +4685,32 @@ function AppContent() {
       "To meet the famous baker",
       "To take advantage of early morning discounts"
     ];
+
+    // CMS PRIORITY: load question 15 data from CMS (Daily Life reading questions)
+    const cmsSection15 = getCurrentSectionData('Reading');
+    const cmsDailyQ15 = cmsSection15?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isDaily = t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('advertisement') || t.includes('article') || t.includes('form') || t.includes('실용문');
+      const qn = q.questionNumber;
+      const matchesNum = qn === 15 || qn === '15' || String(qn) === '15';
+      return isDaily && matchesNum;
+    }) || cmsSection15?.questions.filter(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('practical reading') || t.includes('functional text') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') ||
+        t.includes('실용문');
+    })[4] || null;  // fallback: 4th Daily Life question in section
+
+    const cmsPassageText15 = cmsDailyQ15?.passageText || null;
+    const cmsQuestionText15 = cmsDailyQ15?.questionText || null;
+    const cmsAnswerOptions15 = (cmsDailyQ15?.options && cmsDailyQ15!.options!.length > 0)
+      ? cmsDailyQ15!.options! : null;
+    const cmsCorrectAnswer15 = cmsDailyQ15?.correctAnswer as string | null || null;
+
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -5899,25 +6089,34 @@ function AppContent() {
             onNext={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}
             onSubmit={() => { setShowReadNoticeTest(false); setShowReadNoticeTest2(true); }}
             leftContent={
-              <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6 ml-0 md:ml-4 lg:ml-12">
-                <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
-                  {/* CMS PRIORITY: use CMS title/text if available */}
-                  {cmsNoticeText ? (
-                    <p className="text-base font-['Inter',_sans-serif] leading-relaxed whitespace-pre-line">{cmsNoticeText}</p>
-                  ) : (
-                    <>
-                      <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
-                      <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-medium mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
-                      <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed">
-                        Safe, convenient, easy. Enroll in paperless billing to receive 
-                        monthly savings account statements in an electronic PDF 
-                        document. Access your Municipal Charter account through 
-                        the mobile app and select account preferences in the upper 
-                        right-hand corner to enroll.
-                      </p>
-                    </>
-                  )}
-                </div>
+              <div className="ml-0 md:ml-4 lg:ml-12">
+                {/* CMS PRIORITY: parse JSON template and render correct visual format */}
+                {cmsNoticeText
+                  ? (renderDailyLifePassage(cmsNoticeText) ?? (
+                      // Plain text fallback (not a JSON template)
+                      <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6">
+                        <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                          <p className="text-base font-['Inter',_sans-serif] leading-relaxed whitespace-pre-line">{cmsNoticeText}</p>
+                        </div>
+                      </div>
+                    ))
+                  : (
+                    // Hardcoded fallback (no CMS data)
+                    <div className="border-[1px] md:border-[2px] lg:border-[3px] border-black p-2 md:p-4 lg:p-6">
+                      <div className="border-[1px] md:border-2 border-black p-2 md:p-4 lg:p-6">
+                        <h2 className="text-lg md:text-xl lg:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-6">Municipal Charter</h2>
+                        <p className="text-base md:text-base text-center font-['Inter',_sans-serif] font-medium mb-2 md:mb-4 lg:mb-6">Sign up for paperless billing statements today.</p>
+                        <p className="text-base md:text-base font-['Inter',_sans-serif] leading-relaxed">
+                          Safe, convenient, easy. Enroll in paperless billing to receive 
+                          monthly savings account statements in an electronic PDF 
+                          document. Access your Municipal Charter account through 
+                          the mobile app and select account preferences in the upper 
+                          right-hand corner to enroll.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
               </div>
             }
             rightContent={

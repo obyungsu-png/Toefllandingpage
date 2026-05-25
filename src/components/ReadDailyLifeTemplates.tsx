@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList } from 'lucide-react';
 // motion removed - using CSS animations
@@ -751,4 +751,166 @@ export function ReadDailyLifeTemplates({
       </div>
     </div>
   );
+}
+
+// ─── Standalone CMS template renderer ───────────────────────────────────────
+// Parses the JSON stored in CMS passageText and renders the correct visual
+// template. Used by App.tsx test screens so they don't show raw JSON.
+//
+// JSON shape expected:
+//   { "templateId": "email-1", "structure": "email", "fields": { ... } }
+//
+export function renderDailyLifePassage(passageText: string): React.ReactNode | null {
+  if (!passageText) return null;
+
+  // Try to parse as JSON template
+  let parsed: { structure?: string; fields?: Record<string, string> } | null = null;
+  try {
+    parsed = JSON.parse(passageText);
+  } catch {
+    return null; // plain text — caller handles it
+  }
+
+  if (!parsed?.structure || !parsed?.fields) return null;
+
+  const f = parsed.fields;
+
+  switch (parsed.structure) {
+    case 'notice':
+      return (
+        <div className="border-[3px] border-black p-4 md:p-6">
+          <div className="border-2 border-black p-4 md:p-6">
+            {f.title && <h2 className="text-xl md:text-2xl font-['Inter',_sans-serif] font-bold text-center mb-3 md:mb-4">{f.title}</h2>}
+            {f.subtitle && <p className="text-center font-['Inter',_sans-serif] font-medium mb-3 md:mb-4">{f.subtitle}</p>}
+            {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.body}</p>}
+          </div>
+        </div>
+      );
+
+    case 'email':
+      return (
+        <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
+          <div className="bg-white">
+            {['to', 'from', 'date', 'subject'].map(key => f[key] ? (
+              <div key={key} className="flex border-b-2 border-[#1e6b73]">
+                <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-xs sm:text-sm capitalize">{key}:</div>
+                <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-xs sm:text-sm">{f[key]}</div>
+              </div>
+            ) : null)}
+          </div>
+          <div className="p-3 sm:p-6 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm whitespace-pre-wrap border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
+            {f.body}
+          </div>
+        </div>
+      );
+
+    case 'social_media':
+      return (
+        <div className="border-2 border-gray-300 rounded-xl overflow-hidden">
+          <div className="bg-gray-100 px-4 py-2 border-b border-gray-300">
+            <span className="font-['Inter',_sans-serif] font-bold text-sm text-gray-800">{f.platform}</span>
+          </div>
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#1e6b73] flex items-center justify-center text-white font-bold text-sm">
+                {(f.username || 'U')[1]?.toUpperCase() ?? 'U'}
+              </div>
+              <div>
+                <p className="font-['Inter',_sans-serif] font-bold text-sm">{f.username}</p>
+                <p className="text-xs text-gray-500">{f.timestamp}</p>
+              </div>
+            </div>
+            <p className="font-['Inter',_sans-serif] leading-relaxed text-sm mb-3 whitespace-pre-wrap">{f.content}</p>
+            <div className="flex gap-4 text-xs text-gray-500 border-t border-gray-200 pt-2">
+              {f.likes && <span>♥ {f.likes}</span>}
+              {f.comments && <span>💬 {f.comments}</span>}
+              {f.shares && <span>↗ {f.shares}</span>}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'advertisement':
+      return (
+        <div className="border-4 border-double border-black p-4 md:p-6">
+          <div className="text-center mb-4">
+            <h2 className="text-xl md:text-2xl font-['Inter',_sans-serif] font-black tracking-wide">{f.headline}</h2>
+            {f.business && <p className="font-['Inter',_sans-serif] font-bold text-base md:text-lg mt-1">{f.business}</p>}
+          </div>
+          {f.offer && (
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4 text-center">
+              <p className="font-['Inter',_sans-serif] font-bold text-base md:text-lg">{f.offer}</p>
+            </div>
+          )}
+          {f.details && <div className="font-['Inter',_sans-serif] text-sm leading-relaxed whitespace-pre-wrap mb-4">{f.details}</div>}
+          <div className="border-t-2 border-black pt-3 text-center">
+            {f.location && <p className="font-['Inter',_sans-serif] text-sm font-medium">{f.location}</p>}
+            {f.contact && <p className="font-['Inter',_sans-serif] text-xs text-gray-600 mt-1">{f.contact}</p>}
+          </div>
+        </div>
+      );
+
+    case 'article':
+      return (
+        <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
+          <div className="bg-gray-800 text-white px-4 py-2 text-center">
+            <span className="font-['Georgia',_serif] font-bold text-lg italic">{f.source}</span>
+          </div>
+          <div className="p-4 md:p-5">
+            <h2 className="text-lg md:text-xl font-['Georgia',_serif] font-bold mb-2">{f.headline}</h2>
+            <div className="flex items-center gap-3 text-xs text-gray-500 mb-4 border-b border-gray-200 pb-3">
+              {f.date && <span>{f.date}</span>}
+              {f.author && <><span>|</span><span>{f.author}</span></>}
+            </div>
+            <p className="font-['Georgia',_serif] leading-relaxed text-sm whitespace-pre-wrap">{f.body}</p>
+          </div>
+        </div>
+      );
+
+    case 'form':
+      return (
+        <div className="border-2 border-gray-400 rounded-lg overflow-hidden">
+          <div className="bg-[#1e6b73] text-white px-4 py-3 text-center">
+            <h2 className="font-['Inter',_sans-serif] font-bold">{f.title}</h2>
+            {f.company && <p className="text-xs text-white/80">{f.company}</p>}
+          </div>
+          <div className="p-4">
+            {f.tableHeaders && f.tableRows && (
+              <table className="w-full border-collapse mb-4">
+                <thead>
+                  <tr className="bg-gray-100">
+                    {f.tableHeaders.split(',').map((h, i) => (
+                      <th key={i} className="border border-gray-300 px-3 py-2 text-xs font-['Inter',_sans-serif] font-bold text-left">{h.trim()}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {f.tableRows.split('\n').filter(r => r.trim()).map((row, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      {row.split(',').map((cell, j) => (
+                        <td key={j} className="border border-gray-300 px-3 py-2 text-xs font-['Inter',_sans-serif]">{cell.trim()}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {f.footer && <div className="text-xs font-['Inter',_sans-serif] whitespace-pre-wrap text-gray-700 border-t border-gray-300 pt-3">{f.footer}</div>}
+          </div>
+        </div>
+      );
+
+    default:
+      // Custom: render all fields as labelled content
+      return (
+        <div className="border-2 border-gray-300 rounded-lg p-5 space-y-3">
+          {Object.entries(f).map(([key, value]) => (
+            <div key={key}>
+              <p className="text-xs font-bold text-gray-500 uppercase mb-1">{key}</p>
+              <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{value}</p>
+            </div>
+          ))}
+        </div>
+      );
+  }
 }
