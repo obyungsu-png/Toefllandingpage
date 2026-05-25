@@ -191,6 +191,7 @@ export function HistorySection({
   // Question review full screen
   const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
+  const [showScoreModal, setShowScoreModal] = useState(false);
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -417,7 +418,7 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
-    setShowQuestionReview(true);
+    setShowScoreModal(true);
   };
 
   const handleRestartClick = (result: TestResult) => {
@@ -443,17 +444,7 @@ export function HistorySection({
     setShowQuestionReview(false);
   };
 
-  // Full-screen Question Review
-  if (showQuestionReview && selectedResult) {
-    return (
-      <QuestionReviewFull
-        result={selectedResult}
-        tpoTests={tpoTests}
-        onBack={handleBackFromReview}
-        themeColor={themeColor}
-      />
-    );
-  }
+  // (QuestionReviewFull removed - replaced by ScoreModal)
 
   return (
     <div className="w-full h-[calc(100vh-80px)] bg-[#f5f7fa] overflow-hidden flex flex-col -mx-2 md:-mx-4 -mb-4 md:-mb-12">
@@ -962,6 +953,96 @@ export function HistorySection({
           }}
           onClose={() => setShowShareSettings(false)}
         />
+      )}
+
+      {/* Score Results Modal */}
+      {showScoreModal && selectedResult && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowScoreModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">Results</h2>
+                <span className="text-sm text-gray-500 font-medium">{selectedResult.testName}</span>
+              </div>
+              <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Score summary */}
+            <div className="grid grid-cols-3 gap-4 px-6 py-5 bg-[#f8fafc]">
+              {[
+                { label: 'Total Questions', value: selectedResult.totalQuestions },
+                { label: 'Correct Answers', value: selectedResult.correctAnswers, color: 'text-green-600' },
+                { label: 'Incorrect Answers', value: selectedResult.totalQuestions - selectedResult.correctAnswers, color: 'text-red-500' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="bg-white rounded-xl border border-gray-100 px-4 py-5 text-center shadow-sm">
+                  <p className={`text-4xl font-bold mb-1 ${color || 'text-gray-800'}`}>{value}</p>
+                  <p className="text-sm text-gray-500">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Question table */}
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-[#2d3748] text-white">
+                  <tr>
+                    {['Question', 'Section', 'Correct Answer', 'Your Answer', 'Actions'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
+                    const qNum = i + 1;
+                    const wrong = selectedResult.wrongAnswers.find(w => w.questionId === String(qNum) || w.questionText?.includes(`${qNum}`));
+                    const isWrong = !!wrong || i >= selectedResult.correctAnswers;
+                    const correctAns = wrong?.correctAnswer || '—';
+                    const userAns = isWrong ? (wrong?.userAnswer || 'Omitted') : correctAns;
+                    const section = selectedResult.testName.includes('Reading') ? 'Reading'
+                      : selectedResult.testName.includes('Listening') ? 'Listening'
+                      : selectedResult.testName.includes('Speaking') ? 'Speaking'
+                      : selectedResult.testName.includes('Writing') ? 'Writing'
+                      : 'Reading and Writing';
+                    return (
+                      <tr key={qNum} className={`hover:bg-gray-50 transition-colors ${!isWrong ? 'bg-green-50/30' : ''}`}>
+                        <td className="px-4 py-3 font-medium text-gray-700">{qNum}</td>
+                        <td className="px-4 py-3 text-gray-600">{section}</td>
+                        <td className="px-4 py-3 text-gray-700">{correctAns}</td>
+                        <td className={`px-4 py-3 font-medium ${isWrong ? 'text-red-500' : 'text-green-600'}`}>
+                          {isWrong ? (userAns || 'Omitted') : '✓'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {wrong?.explanation && (
+                            <button
+                              className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                              onClick={() => alert(wrong.explanation)}
+                            >
+                              Review
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end px-6 py-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowScoreModal(false)}
+                className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+                style={{ backgroundColor: themeColor }}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Restart Confirm Modal */}
