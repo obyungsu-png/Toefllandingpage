@@ -4015,7 +4015,7 @@ function AppContent() {
                 }
               </div>
             }
-            rightContent=
+            rightContent={
               <>
                 <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText11 || "When is the date of the art workshop?"}</h3>
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
