@@ -3903,19 +3903,26 @@ function AppContent() {
       "September 30th"
     ];
 
-    // CMS PRIORITY: load question 11 data from CMS (Daily Life reading questions)
+    // CMS PRIORITY: load Module 2 question 11 from CMS
     const cmsSection11 = getCurrentSectionData('Reading');
-    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 0번째
+    // 1순위: Module 2 태그 + 번호 일치
+    // 2순위: Module 2 태그된 Daily Life 문제 중 0번째
+    // 3순위: 번호만 일치 (Module 1 fallback)
     const cmsDailyQ11 = cmsSection11?.questions.find(q => {
-      const qn = q.questionNumber;
-      return qn === 11 || qn === '11' || String(qn) === '11';
+      const t = (q.questionType || '').toLowerCase();
+      const num = q.questionNumber;
+      return t.includes('module 2') && (num === 11 || num === '11' || String(num) === '11');
     }) || cmsSection11?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
+      return t.includes('module 2') && (
+        t.includes('daily life') || t.includes('read in daily life') ||
         t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문');
-    })[0] || null;
+        t.includes('실용문')
+      );
+    })[0] || cmsSection11?.questions.find(q => {
+      const num = q.questionNumber;
+      return num === 11 || num === '11' || String(num) === '11';
+    }) || null;
 
     const cmsPassageText11 = cmsDailyQ11?.passageText || null;
     const cmsPassageTitle11 = cmsDailyQ11?.passageTitle || null;
@@ -4071,19 +4078,22 @@ function AppContent() {
       "Proof of reservation"
     ];
 
-    // CMS PRIORITY: load question 12 data from CMS (Daily Life reading questions)
+    // CMS PRIORITY: load Module 2 question 12 from CMS
     const cmsSection12 = getCurrentSectionData('Reading');
-    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 1번째
     const cmsDailyQ12 = cmsSection12?.questions.find(q => {
-      const qn = q.questionNumber;
-      return qn === 12 || qn === '12' || String(qn) === '12';
+      const t = (q.questionType || '').toLowerCase();
+      const num = q.questionNumber;
+      return t.includes('module 2') && (num === 12 || num === '12' || String(num) === '12');
     }) || cmsSection12?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문');
-    })[1] || null;
+      return t.includes('module 2') && (
+        t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
+      );
+    })[0] || cmsSection12?.questions.find(q => {
+      const num = q.questionNumber;
+      return num === 12 || num === '12' || String(num) === '12';
+    }) || null;
 
     const cmsPassageText12 = cmsDailyQ12?.passageText || null;
     const cmsPassageTitle12 = cmsDailyQ12?.passageTitle || null;
@@ -4179,6 +4189,15 @@ function AppContent() {
             onSubmit={() => { setShowModule2Question12(false); setShowModule2Question13(true); }}
             leftContent={
               <div className="relative w-full">
+                {/* CMS PRIORITY */}
+                {cmsPassageText12
+                  ? (renderDailyLifePassage(cmsPassageText12) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText12}</p>
+                      </div>
+                    ))
+                  : (
+                    <div className="relative w-full">
                 <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
@@ -4210,6 +4229,10 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif] text-sm sm:text-base">Laura Bennett</p>
                   </div>
                 </div>
+
+                    </div>
+                  )
+                }
               </div>
             }
             rightContent={
@@ -4217,7 +4240,7 @@ function AppContent() {
                 <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText12 || "What should Ms. Edwards bring to the workshop?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {(cmsAnswerOptions12 || answerOptions).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`module2-q12-option-${index}`}
@@ -4269,19 +4292,22 @@ function AppContent() {
       "To announce a discount available to fitness-center members"
     ];
 
-    // CMS PRIORITY: load question 13 data from CMS (Daily Life reading questions)
+    // CMS PRIORITY: load Module 2 question 13 from CMS
     const cmsSection13 = getCurrentSectionData('Reading');
-    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 2번째
     const cmsDailyQ13 = cmsSection13?.questions.find(q => {
-      const qn = q.questionNumber;
-      return qn === 13 || qn === '13' || String(qn) === '13';
+      const t = (q.questionType || '').toLowerCase();
+      const num = q.questionNumber;
+      return t.includes('module 2') && (num === 13 || num === '13' || String(num) === '13');
     }) || cmsSection13?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문');
-    })[2] || null;
+      return t.includes('module 2') && (
+        t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
+      );
+    })[1] || cmsSection13?.questions.find(q => {
+      const num = q.questionNumber;
+      return num === 13 || num === '13' || String(num) === '13';
+    }) || null;
 
     const cmsPassageText13 = cmsDailyQ13?.passageText || null;
     const cmsPassageTitle13 = cmsDailyQ13?.passageTitle || null;
@@ -4444,7 +4470,7 @@ function AppContent() {
                 <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText13 || "What is the main purpose of the email?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {(cmsAnswerOptions13 || answerOptions).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`module2-q13-option-${index}`}
@@ -4496,19 +4522,22 @@ function AppContent() {
       "She is new to using fitness centers and exercise equipment."
     ];
 
-    // CMS PRIORITY: load question 14 data from CMS (Daily Life reading questions)
+    // CMS PRIORITY: load Module 2 question 14 from CMS
     const cmsSection14 = getCurrentSectionData('Reading');
-    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 3번째
     const cmsDailyQ14 = cmsSection14?.questions.find(q => {
-      const qn = q.questionNumber;
-      return qn === 14 || qn === '14' || String(qn) === '14';
+      const t = (q.questionType || '').toLowerCase();
+      const num = q.questionNumber;
+      return t.includes('module 2') && (num === 14 || num === '14' || String(num) === '14');
     }) || cmsSection14?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문');
-    })[3] || null;
+      return t.includes('module 2') && (
+        t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
+      );
+    })[2] || cmsSection14?.questions.find(q => {
+      const num = q.questionNumber;
+      return num === 14 || num === '14' || String(num) === '14';
+    }) || null;
 
     const cmsPassageText14 = cmsDailyQ14?.passageText || null;
     const cmsPassageTitle14 = cmsDailyQ14?.passageTitle || null;
@@ -4604,6 +4633,15 @@ function AppContent() {
             onSubmit={() => { setShowModule2Question14(false); setShowModule2Question15(true); }}
             leftContent={
               <div className="relative w-full">
+                {/* CMS PRIORITY */}
+                {cmsPassageText14
+                  ? (renderDailyLifePassage(cmsPassageText14) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassageText14}</p>
+                      </div>
+                    ))
+                  : (
+                    <div className="relative w-full">
                 <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
@@ -4640,6 +4678,10 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
                 </div>
+
+                    </div>
+                  )
+                }
               </div>
             }
             rightContent={
@@ -4647,7 +4689,7 @@ function AppContent() {
                 <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText14 || "What can be inferred about Ms. Nguyen's relationship with the fitness center?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {(cmsAnswerOptions14 || answerOptions).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`module2-q14-option-${index}`}
@@ -4699,19 +4741,22 @@ function AppContent() {
       "To take advantage of early morning discounts"
     ];
 
-    // CMS PRIORITY: load question 15 data from CMS (Daily Life reading questions)
+    // CMS PRIORITY: load Module 2 question 15 from CMS
     const cmsSection15 = getCurrentSectionData('Reading');
-    // CMS PRIORITY: 번호로 먼저 찾기 (question type 무관) → 없으면 Daily Life 타입 중 4번째
     const cmsDailyQ15 = cmsSection15?.questions.find(q => {
-      const qn = q.questionNumber;
-      return qn === 15 || qn === '15' || String(qn) === '15';
+      const t = (q.questionType || '').toLowerCase();
+      const num = q.questionNumber;
+      return t.includes('module 2') && (num === 15 || num === '15' || String(num) === '15');
     }) || cmsSection15?.questions.filter(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('practical reading') || t.includes('functional text') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문');
-    })[4] || null;
+      return t.includes('module 2') && (
+        t.includes('daily life') || t.includes('read in daily life') ||
+        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
+      );
+    })[3] || cmsSection15?.questions.find(q => {
+      const num = q.questionNumber;
+      return num === 15 || num === '15' || String(num) === '15';
+    }) || null;
 
     const cmsPassageText15 = cmsDailyQ15?.passageText || null;
     const cmsPassageTitle15 = cmsDailyQ15?.passageTitle || null;
@@ -4850,7 +4895,7 @@ function AppContent() {
                 <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">{cmsQuestionText15 || "Why do customers go to the bakery stall early?"}</h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
-                  {answerOptions.map((option, index) => (
+                  {(cmsAnswerOptions15 || answerOptions).map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`module2-q15-option-${index}`}
