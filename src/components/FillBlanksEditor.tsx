@@ -417,14 +417,24 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
             <label className="block text-xs font-medium text-gray-700 mb-1.5">
               Module <span className="text-red-500">*</span>
             </label>
-            <select
-              value={module}
-              onChange={(e) => setModule(e.target.value as 'Module 1' | 'Module 2')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-            >
-              <option value="Module 1">Module 1</option>
-              <option value="Module 2">Module 2</option>
-            </select>
+            <div className="flex gap-2">
+              {(['Module 1', 'Module 2'] as const).map((mod) => (
+                <button
+                  key={mod}
+                  type="button"
+                  onClick={() => setModule(mod)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold border-2 transition-all ${
+                    module === mod
+                      ? mod === 'Module 1'
+                        ? 'bg-[#2d7a7c] border-[#2d7a7c] text-white shadow-sm'
+                        : 'bg-orange-500 border-orange-500 text-white shadow-sm'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400'
+                  }`}
+                >
+                  {mod}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
