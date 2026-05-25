@@ -1269,23 +1269,24 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
         {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
-              <div className="space-y-2">
-                {formData.options.map((option, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...formData.options];
-                      newOptions[index] = e.target.value;
-                      setFormData({ ...formData, options: newOptions });
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                    placeholder={`Option ${index + 1}`}
-                  />
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Answer Options
+                <span className="ml-2 text-xs text-gray-400 font-normal">한 줄에 하나씩 입력하세요</span>
+              </label>
+              <textarea
+                value={formData.options.join('\n')}
+                onChange={(e) => {
+                  const lines = e.target.value.split('\n');
+                  // Keep at least 4 slots, pad with empty strings if needed
+                  const newOptions = [...lines];
+                  while (newOptions.length < 4) newOptions.push('');
+                  setFormData({ ...formData, options: newOptions.slice(0, Math.max(4, newOptions.length)) });
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+                rows={4}
+                placeholder={"Option 1\nOption 2\nOption 3\nOption 4"}
+              />
+              <p className="text-xs text-gray-400 mt-1">각 줄이 하나의 선택지가 됩니다</p>
             </div>
 
             {/* Correct Answer */}
@@ -1700,23 +1701,24 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         {(section === 'Reading' || section === 'Listening') && formData.questionType !== 'Complete Words' && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options</label>
-              <div className="space-y-2">
-                {formData.options.map((option, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...formData.options];
-                      newOptions[index] = e.target.value;
-                      setFormData({ ...formData, options: newOptions });
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                    placeholder={`Option ${index + 1}`}
-                  />
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Answer Options
+                <span className="ml-2 text-xs text-gray-400 font-normal">한 줄에 하나씩 입력하세요</span>
+              </label>
+              <textarea
+                value={formData.options.join('\n')}
+                onChange={(e) => {
+                  const lines = e.target.value.split('\n');
+                  // Keep at least 4 slots, pad with empty strings if needed
+                  const newOptions = [...lines];
+                  while (newOptions.length < 4) newOptions.push('');
+                  setFormData({ ...formData, options: newOptions.slice(0, Math.max(4, newOptions.length)) });
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+                rows={4}
+                placeholder={"Option 1\nOption 2\nOption 3\nOption 4"}
+              />
+              <p className="text-xs text-gray-400 mt-1">각 줄이 하나의 선택지가 됩니다</p>
             </div>
 
             {/* Correct Answer */}
