@@ -853,89 +853,63 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             }
 
             return (
-              <div className="space-y-3">
-                {section.questions.map((question, index) => (
-                  <div
-                    key={question.id}
-                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
-                      editingQuestion?.id === question.id
-                        ? 'border-[#2d7a7c] bg-[#f0fafa] ring-2 ring-[#2d7a7c]/30'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="px-3 py-1 bg-[#2d7a7c] text-white rounded-full text-sm">
-                          Q{question.questionNumber}
-                        </span>
-                        <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm">
-                          {question.questionType}
-                        </span>
-                      </div>
-                      <p className="text-gray-800 line-clamp-2">{question.questionText}</p>
-                      <div className="flex gap-2 mt-2">
-                        {question.audioUrl && (
-                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                            <Music className="w-3 h-3 inline mr-1" />Audio
-                          </span>
-                        )}
-                        {question.videoUrl && (
-                          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                            <Video className="w-3 h-3 inline mr-1" />Video
-                          </span>
-                        )}
-                        {question.passageText && (
-                          <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-                            <FileText className="w-3 h-3 inline mr-1" />Passage
-                          </span>
-                        )}
-                      </div>
+              <div className="space-y-1">
+                {/* ── Module 1 ── */}
+                {section.questions.filter(q => !(q.questionType || '').includes('Module 2')).length > 0 && (
+                  <div className="mb-2">
+                    <div className="flex items-center gap-2 px-2 py-0.5 mb-1">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Module 1</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs text-gray-400">{section.questions.filter(q => !(q.questionType||'').includes('Module 2')).length}문제</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setPreviewQuestion(question)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingQuestion(question);
-                          setShowUploadForm(false);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="bg-red-500 text-white hover:bg-red-600"
-                        onClick={() => {
-                          setDeleteConfirmation({
-                            type: 'question',
-                            id: question.id,
-                            name: `Q${question.questionNumber}: ${question.questionText.substring(0, 50)}...`,
-                            onConfirm: () => {
-                              const updatedTest = { ...test };
-                              const sectionIndex = updatedTest.sections.findIndex(s => s.sectionType === selectedSection);
-                              if (sectionIndex !== -1) {
-                                updatedTest.sections[sectionIndex].questions = 
-                                  updatedTest.sections[sectionIndex].questions.filter(q => q.id !== question.id);
-                                updatedTest.updatedAt = new Date();
-                                onUpdateTest(updatedTest);
-                              }
-                              setDeleteConfirmation(null);
-                            }
-                          });
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {section.questions.filter(q => !(q.questionType||'').includes('Module 2')).map((question) => (
+                      <div key={question.id} className={`flex items-center justify-between px-3 py-1.5 border rounded-lg hover:bg-gray-50 transition-colors mb-1 ${editingQuestion?.id === question.id ? 'border-[#2d7a7c] bg-[#f0fafa] ring-2 ring-[#2d7a7c]/30' : 'border-gray-200'}`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="px-2 py-0.5 text-white rounded-full text-xs font-bold bg-[#2d7a7c]">Q{question.questionNumber}</span>
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{(question.questionType||'')}</span>
+                            {question.difficulty && <span className={`px-1.5 py-0.5 rounded text-xs border ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>{question.difficulty}</span>}
+                            {question.passageText && <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-600 rounded border border-green-200">지문</span>}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate mt-0.5 max-w-[500px]">{question.questionText}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0 ml-2">
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => setPreviewQuestion(question)}><Eye className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => { setEditingQuestion(question); setShowUploadForm(false); }}><Edit className="w-3 h-3" /></Button>
+                          <Button size="sm" className="h-7 w-7 p-0 bg-red-500 text-white hover:bg-red-600" onClick={() => { setDeleteConfirmation({ type:'question', id:question.id, name:`Q${question.questionNumber}: ${question.questionText.substring(0,50)}...`, onConfirm: () => { const ut={...test}; const si=ut.sections.findIndex(s=>s.sectionType===selectedSection); if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(q=>q.id!==question.id);ut.updatedAt=new Date();onUpdateTest(ut);} setDeleteConfirmation(null); } }); }}><Trash2 className="w-3 h-3" /></Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+                {/* ── Module 2 ── */}
+                {section.questions.filter(q => (q.questionType||'').includes('Module 2')).length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 px-2 py-0.5 mb-1">
+                      <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">Module 2</span>
+                      <div className="flex-1 h-px bg-orange-200" />
+                      <span className="text-xs text-orange-400">{section.questions.filter(q => (q.questionType||'').includes('Module 2')).length}문제</span>
+                    </div>
+                    {section.questions.filter(q => (q.questionType||'').includes('Module 2')).map((question) => (
+                      <div key={question.id} className={`flex items-center justify-between px-3 py-1.5 border rounded-lg hover:bg-orange-50 transition-colors mb-1 ${editingQuestion?.id === question.id ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-300' : 'border-orange-200'}`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="px-2 py-0.5 text-white rounded-full text-xs font-bold bg-orange-500">Q{question.questionNumber}</span>
+                            <span className="px-2 py-0.5 bg-orange-50 text-orange-700 rounded text-xs border border-orange-200">{(question.questionType||'').replace(' (Module 2)','')}</span>
+                            {question.difficulty && <span className={`px-1.5 py-0.5 rounded text-xs border ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>{question.difficulty}</span>}
+                            {question.passageText && <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-600 rounded border border-green-200">지문</span>}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate mt-0.5 max-w-[500px]">{question.questionText}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0 ml-2">
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => setPreviewQuestion(question)}><Eye className="w-3 h-3" /></Button>
+                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => { setEditingQuestion(question); setShowUploadForm(false); }}><Edit className="w-3 h-3" /></Button>
+                          <Button size="sm" className="h-7 w-7 p-0 bg-red-500 text-white hover:bg-red-600" onClick={() => { setDeleteConfirmation({ type:'question', id:question.id, name:`Q${question.questionNumber}: ${question.questionText.substring(0,50)}...`, onConfirm: () => { const ut={...test}; const si=ut.sections.findIndex(s=>s.sectionType===selectedSection); if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(q=>q.id!==question.id);ut.updatedAt=new Date();onUpdateTest(ut);} setDeleteConfirmation(null); } }); }}><Trash2 className="w-3 h-3" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -1216,16 +1190,47 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 : "Enter the reading passage here..."}
             />
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-800 mb-2">
-                  감지된 빈칸: {formData.blanks.length}개
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.blanks.map((blank, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
-                    </span>
-                  ))}
+              <div className="mt-3 space-y-2">
+                {/* Blank count chips */}
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs font-medium text-blue-800 mb-1.5">
+                    감지된 빈칸: {formData.blanks.length}개
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {formData.blanks.map((blank, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                        #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Visual passage preview with actual blanks */}
+                <div className="p-4 bg-white border-2 border-[#2d7a7c] rounded-lg">
+                  <p className="text-xs font-semibold text-[#2d7a7c] mb-2">📝 실전 미리보기</p>
+                  <p className="text-sm font-['Inter',_sans-serif] leading-loose">
+                    {(() => {
+                      const raw = formData.passageText;
+                      const parts: React.ReactNode[] = [];
+                      let key = 0;
+                      const regex = /([^[]+)|\[([^:\]]+):(\d+)\]/g;
+                      let match;
+                      let blankIdx = 0;
+                      while ((match = regex.exec(raw)) !== null) {
+                        if (match[1]) {
+                          parts.push(<span key={key++}>{match[1]}</span>);
+                        } else if (match[2] !== undefined) {
+                          const len = parseInt(match[3]);
+                          parts.push(
+                            <span key={key++} className="inline-block border-b-2 border-gray-500 bg-gray-100 text-transparent select-none rounded px-1 mx-0.5 text-xs align-bottom" style={{minWidth: `${len * 10 + 8}px`, height: '20px'}}>
+                              {'_'.repeat(len)}
+                            </span>
+                          );
+                          blankIdx++;
+                        }
+                      }
+                      return parts;
+                    })()}
+                  </p>
                 </div>
               </div>
             )}
@@ -1679,16 +1684,47 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 : "Enter the reading passage here..."}
             />
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-800 mb-2">
-                  감지된 빈칸: {formData.blanks.length}개
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.blanks.map((blank, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
-                    </span>
-                  ))}
+              <div className="mt-3 space-y-2">
+                {/* Blank count chips */}
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs font-medium text-blue-800 mb-1.5">
+                    감지된 빈칸: {formData.blanks.length}개
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {formData.blanks.map((blank, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                        #{idx + 1}: "{blank.answer}" (최대 {blank.maxLength}자)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {/* Visual passage preview with actual blanks */}
+                <div className="p-4 bg-white border-2 border-[#2d7a7c] rounded-lg">
+                  <p className="text-xs font-semibold text-[#2d7a7c] mb-2">📝 실전 미리보기</p>
+                  <p className="text-sm font-['Inter',_sans-serif] leading-loose">
+                    {(() => {
+                      const raw = formData.passageText;
+                      const parts: React.ReactNode[] = [];
+                      let key = 0;
+                      const regex = /([^[]+)|\[([^:\]]+):(\d+)\]/g;
+                      let match;
+                      let blankIdx = 0;
+                      while ((match = regex.exec(raw)) !== null) {
+                        if (match[1]) {
+                          parts.push(<span key={key++}>{match[1]}</span>);
+                        } else if (match[2] !== undefined) {
+                          const len = parseInt(match[3]);
+                          parts.push(
+                            <span key={key++} className="inline-block border-b-2 border-gray-500 bg-gray-100 text-transparent select-none rounded px-1 mx-0.5 text-xs align-bottom" style={{minWidth: `${len * 10 + 8}px`, height: '20px'}}>
+                              {'_'.repeat(len)}
+                            </span>
+                          );
+                          blankIdx++;
+                        }
+                      }
+                      return parts;
+                    })()}
+                  </p>
                 </div>
               </div>
             )}
