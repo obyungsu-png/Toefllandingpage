@@ -280,26 +280,31 @@ export function QuestionReviewFull({
   const questions: ReviewQuestion[] = (() => {
     if (activeSection === 'Writing' || activeSection === 'Speaking') return [];
     const qs: ReviewQuestion[] = [];
-    const totalCorrect = result.correctAnswers;
+    const totalQ = result.totalQuestions; // Use actual total, not just correct count
     const wrongQs = result.wrongAnswers;
+    const wrongIds = new Set(wrongQs.map(w => w.questionId));
     
     // Try to get real questions from CMS data
     const realQuestions = currentSection?.questions || [];
     
-    for (let i = 0; i < totalCorrect; i++) {
+    for (let i = 0; i < totalQ; i++) {
       const realQ = realQuestions[i];
+      const qNum = i + 1;
+      const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
+      const isWrong = !!wrong;
       const sample = activeSection === 'Listening' && listeningCorrectSamples[i % listeningCorrectSamples.length];
       
       if (realQ) {
         // Use real CMS question data
         qs.push({
-          id: realQ.id || `correct-${i}`,
-          number: i + 1,
-          text: realQ.questionText || realQ.text || `Question ${i + 1}`,
-          options: realQ.options || ['Option A', 'Option B', 'Option C', 'Option D'],
-          userAnswer: realQ.correctAnswer || 'A',
-          correctAnswer: realQ.correctAnswer || 'A',
-          isCorrect: true,
+          id: realQ.id || `q-${i}`,
+          number: qNum,
+          text: realQ.questionText || realQ.text || `Question ${qNum}`,
+          options: realQ.options || (wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D']),
+          userAnswer: isWrong ? (wrong?.userAnswer || '') : (realQ.correctAnswer || 'A'),
+          correctAnswer: isWrong ? (wrong?.correctAnswer || realQ.correctAnswer || 'A') : (realQ.correctAnswer || 'A'),
+          explanation: wrong?.explanation,
+          isCorrect: !isWrong,
           hasAudio: activeSection === 'Listening',
           audioText: realQ.audioText || (activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined),
           passageText: passageText,
@@ -322,22 +327,29 @@ export function QuestionReviewFull({
       }
     }
     
-    wrongQs.forEach((wrong, idx) => {
-      qs.push({
-        id: wrong.questionId,
-        number: totalCorrect + idx + 1,
-        text: wrong.questionText,
-        options: generateOptions(wrong.correctAnswer, wrong.userAnswer),
-        userAnswer: wrong.userAnswer,
-        correctAnswer: wrong.correctAnswer,
-        explanation: wrong.explanation,
-        isCorrect: false,
-        hasAudio: activeSection === 'Listening',
-        audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
-        passageText: passageText,
-      });
+    // Add remaining wrong answers that weren't covered by the loop
+    wrongQs.forEach((wrong) => {
+      const alreadyAdded = qs.find(q => q.id === wrong.questionId || String(q.number) === wrong.questionId);
+      if (!alreadyAdded) {
+        const num = parseInt(wrong.questionId) || (qs.length + 1);
+        qs.push({
+          id: wrong.questionId,
+          number: num,
+          text: wrong.questionText,
+          options: generateOptions(wrong.correctAnswer, wrong.userAnswer),
+          userAnswer: wrong.userAnswer,
+          correctAnswer: wrong.correctAnswer,
+          explanation: wrong.explanation,
+          isCorrect: false,
+          hasAudio: activeSection === 'Listening',
+          audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
+          passageText: passageText,
+        });
+      }
     });
     
+    // Sort by question number
+    qs.sort((a, b) => a.number - b.number);
     return qs;
   })();
 
@@ -755,9 +767,15 @@ export function QuestionReviewFull({
           {/* Stats */}
           <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 ml-4">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
-              <span>
-                Results: <strong className="text-gray-900">{correctCount}/{totalQuestions}</strong>
-              </span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+                <span className="text-gray-500 text-xs">Score</span>
+                <strong className="text-gray-900 text-base">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                  correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
+                  correctCount/totalQuestions >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>{Math.round(correctCount/totalQuestions*100)}%</span>
+              </div>
             )}
             <span>
               Time: <strong className="text-gray-900">{timeDisplay}</strong>
