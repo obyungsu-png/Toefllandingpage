@@ -6111,10 +6111,12 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">Read a notice.</h1>
+          <h1 className="hidden sm:block text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-6 lg:py-8 text-center">
+            {getDailyLifePageTitle(cmsNoticeTitle, cmsNoticeText)}
+          </h1>
           
           <ResizableReadingLayout
-            passageTitle="Read a notice."
+            passageTitle={getDailyLifePageTitle(cmsNoticeTitle, cmsNoticeText)}
             passageSummary={cmsNoticeTitle
               ? <><strong>{cmsNoticeTitle}</strong></>
               : <><strong>Municipal Charter</strong><br/>Sign up for paperless billing statements today.</>}
