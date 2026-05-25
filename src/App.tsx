@@ -1843,13 +1843,26 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 13)
   const ReadSocialMediaTestScreen = () => {
-    const correctAnswer3 = "To describe the variety of products available at the farmer's market";
-    const answerOptions3 = [
+    const hardcodedAnswer3 = "To describe the variety of products available at the farmer's market";
+    const hardcodedOptions3 = [
       "To explain the benefits of organic farming",
       "To describe the variety of products available at the farmer's market",
       "To compare different farmer's markets in the area",
       "To offer advice on starting a stall at the farmer's market"
     ];
+
+    // CMS PRIORITY: 번호(13)로 먼저 찾기
+    const sectionData13 = getCurrentSectionData('Reading');
+    const cmsQ13 = sectionData13?.questions.find(q =>
+      String(q.questionNumber) === '13' || q.questionNumber === 13
+    ) || null;
+
+    const cmsPassage13   = cmsQ13?.passageText   || null;
+    const cmsTitle13     = cmsQ13?.passageTitle   || null;
+    const cmsQuestion13  = cmsQ13?.questionText   || null;
+    const cmsOptions13   = (cmsQ13?.options && cmsQ13.options.length > 0) ? cmsQ13.options : null;
+
+    const answerOptions3 = cmsOptions13 || hardcodedOptions3;
 
     const handleAnswerSelect3 = (answer: string) => {
       setSelectedAnswer3(answer);
@@ -1934,90 +1947,51 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">
+            {getDailyLifePageTitle(cmsTitle13, cmsPassage13)}
+          </h1>
           
           <ResizableReadingLayout
             leftContent={
               <div className="relative w-full">
-                {/* Outer gray border */}
-                <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
-                  {/* Inner white container */}
-                  <div className="bg-white border border-black rounded-lg">
-                    {/* Header */}
-                    <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
-                      {/* Left side - Camera icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
-                        <circle cx="12" cy="12" r="3" fill="white"/>
-                      </svg>
-                      
-                      {/* Center - Search bar */}
-                      <div className="flex-1 mx-2 md:mx-4 h-5 md:h-7 bg-[#004D4F] rounded-full flex items-center px-2 md:px-3">
-                        <div className="flex-1"></div>
-                        <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <circle cx="11" cy="11" r="8"/>
-                          <path d="M21 21l-4.35-4.35"/>
-                        </svg>
+                {/* CMS PRIORITY: render template if CMS data exists */}
+                {cmsPassage13
+                  ? (renderDailyLifePassage(cmsPassage13) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{cmsPassage13}</p>
                       </div>
-                      
-                      {/* Right side - Message icon */}
-                      <svg className="w-4 h-4 md:w-6 md:h-6 flex-shrink-0" viewBox="0 0 24 24" fill="white">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-                      </svg>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col min-h-[300px]">
-                      <div className="p-3 md:p-5">
-                        {/* Profile */}
-                        <div className="flex items-center gap-2 mb-3 md:mb-4">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center overflow-hidden">
-                            <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="white">
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
+                    ))
+                  : (
+                    /* Hardcoded fallback: original social media post UI */
+                    <div className="relative bg-[#B3B3B3] border border-black rounded-xl p-2 md:p-4">
+                      <div className="bg-white border border-black rounded-lg">
+                        <div className="bg-[#0A5E63] h-9 md:h-11 rounded-t-lg flex items-center px-2 md:px-4 relative justify-between">
+                          <span className="text-white text-xs font-bold">Community Forum</span>
+                        </div>
+                        <div className="p-3 md:p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#F4A261] flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">S</span>
+                            </div>
+                            <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
                           </div>
-                          <span className="text-sm md:text-base font-['Inter',_sans-serif] font-bold">Sofia Baker</span>
-                        </div>
-
-                        {/* Post content */}
-                        <div className="space-y-2 md:space-y-3 text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] font-normal leading-relaxed">
-                          <p>
-                            Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service. Their stall is always bustling with customers eager to buy fresh, pesticide-free vegetables from the welcoming staff.
-                          </p>
-                          <p>
-                            Don't miss the bakery stall—get there early for the best bread and pastries, including gluten-free and vegan options. The smell of freshly baked goods fills the air, and these treats sell out fast!
-                          </p>
-                          <p>
-                            In addition to food, the market sells handmade crafts like jewelry, pottery, and textiles. These unique items make perfect gifts and support local artisans. Plus, enjoy live music while you shop. Talented local musicians help create a vibrant atmosphere, and the community spirit makes it a delightful experience for all. See you there!
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Like and Comment section */}
-                      <div className="border-t border-gray-300 p-2 md:p-4 mt-auto">
-                        <div className="flex items-center gap-3 md:gap-6 text-gray-600 justify-end text-xs md:text-base">
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Like</span>
-                          </button>
-                          <button className="flex items-center gap-1 md:gap-2 hover:text-blue-600 transition-colors">
-                            <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span className="font-['Inter',_sans-serif] font-medium">Comment</span>
-                          </button>
+                          <div className="text-xs sm:text-sm md:text-base font-['Inter',_sans-serif] leading-relaxed space-y-2">
+                            <p>Every Saturday, our local farmer's market is the place to be! Fresh fruits, veggies, homemade goodies, and unique crafts await you. The Thompson family's organic produce is a must-try, known for its quality and cordial service.</p>
+                            <p>Don't miss the bakery stall—get there early for the best bread and pastries, including gluten-free and vegan options.</p>
+                            <p>In addition to food, the market sells handmade crafts like jewelry, pottery, and textiles. Plus, enjoy live music while you shop!</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                }
               </div>
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">What is the main purpose of the post?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">
+                  {cmsQuestion13 || "What is the main purpose of the post?"}
+                </h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions3.map((option, index) => (
@@ -2067,13 +2041,25 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 14)
   const ReadSocialMediaTest2Screen = () => {
-    const correctAnswer4 = "They provide friendly service and excellent products.";
-    const answerOptions4 = [
+    const correctAnswer4_hardcoded = "They provide friendly service and excellent products.";
+    const answerOptions4_hardcoded = [
       "They offer cooking tips and recipes.",
       "They offer the lowest prices at the market.",
       "They provide friendly service and excellent products.",
       "They have a beautiful and well-decorated stall."
     ];
+
+
+    // CMS PRIORITY: 번호(14)로 먼저 찾기
+    const sectionDataQ14 = getCurrentSectionData('Reading');
+    const cmsQ14 = sectionDataQ14?.questions.find(q =>
+      String(q.questionNumber) === '14' || q.questionNumber === 14
+    ) || null;
+    const cmsPassage14   = cmsQ14?.passageText   || null;
+    const cmsTitle14     = cmsQ14?.passageTitle   || null;
+    const cmsQuestion14  = cmsQ14?.questionText   || null;
+    const answerOptions4 = (cmsQ14?.options && cmsQ14!.options!.length > 0)
+      ? cmsQ14!.options! : answerOptions4_hardcoded;
 
     const handleAnswerSelect4 = (answer: string) => {
       setSelectedAnswer4(answer);
@@ -2158,7 +2144,9 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">
+            {getDailyLifePageTitle(cmsTitle15, cmsPassage15)}
+          </h1>
           
           <ResizableReadingLayout
             leftContent={
@@ -2292,13 +2280,25 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 15 - duplicate of Q14)
   const ReadSocialMediaTest3Screen = () => {
-    const correctAnswer5 = "To get freshly baked bread and pastries before they are gone";
-    const answerOptions5 = [
+    const correctAnswer5_hardcoded = "To get freshly baked bread and pastries before they are gone";
+    const answerOptions5_hardcoded = [
       "To get the free samples given in mornings",
       "To get freshly baked bread and pastries before they are gone",
       "To meet the famous baker",
       "To take advantage of early morning discounts"
     ];
+
+
+    // CMS PRIORITY: 번호(15)로 먼저 찾기
+    const sectionDataQ15 = getCurrentSectionData('Reading');
+    const cmsQ15 = sectionDataQ15?.questions.find(q =>
+      String(q.questionNumber) === '15' || q.questionNumber === 15
+    ) || null;
+    const cmsPassage15   = cmsQ15?.passageText   || null;
+    const cmsTitle15     = cmsQ15?.passageTitle   || null;
+    const cmsQuestion15  = cmsQ15?.questionText   || null;
+    const answerOptions5 = (cmsQ15?.options && cmsQ15!.options!.length > 0)
+      ? cmsQ15!.options! : answerOptions5_hardcoded;
 
     const handleAnswerSelect5 = (answer: string) => {
       setSelectedAnswer5(answer);
@@ -2383,7 +2383,9 @@ function AppContent() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto bg-white border border-black">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">Read a social media post.</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-black py-3 md:py-6 lg:py-8 text-center">
+            {getDailyLifePageTitle(cmsTitle14, cmsPassage14)}
+          </h1>
           
           <ResizableReadingLayout
             leftContent={
@@ -2466,7 +2468,9 @@ function AppContent() {
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">Why do customers go to the bakery stall early?</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-8 lg:mb-10">
+                  {cmsQuestion15 || 'Why do customers go to the bakery stall early?'}
+                </h3>
                 
                 <div className="space-y-3 md:space-y-4 lg:space-y-6">
                   {answerOptions5.map((option, index) => (
