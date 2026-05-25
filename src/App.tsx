@@ -2646,14 +2646,35 @@ function AppContent() {
   const Module1Question17Screen = () => {
     const [selectedAnswer17, setSelectedAnswer17] = useState<string | null>(null);
     const [zoom17, setZoom17] = useState(1);
-    const correctAnswer = "The mirror test demonstrates self-awareness in animals.";
+    // CMS PRIORITY: look up Q17 by number first
+    const sectionDataQ17 = getCurrentSectionData('Reading');
+    const cmsAcQ17 = sectionDataQ17?.questions.find(q =>
+      String(q.questionNumber) === '17' || q.questionNumber === 17
+    ) || sectionDataQ17?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic') || t.includes('reading passage');
+    });
 
-    const answerOptions = [
+    let parsedAC17: any = null;
+    if (cmsAcQ17?.passageText) {
+      try { parsedAC17 = JSON.parse(cmsAcQ17!.passageText!); }
+      catch { parsedAC17 = { passage: cmsAcQ17!.passageText }; }
+    }
+    const cmsQItem17 = parsedAC17?.questions?.[1];
+
+    const answerOptions =
+      (cmsAcQ17?.options && cmsAcQ17!.options!.length > 0 ? cmsAcQ17!.options! : null) ||
+      cmsQItem17?.options ||
+      [
       "The mirror test demonstrates self-awareness in animals.",
       "Young children can recognize themselves earlier than 18 months.",
       "Great apes are the only animals that pass the mirror test.",
       "Fish cannot pass the mirror test."
     ];
+    const correctAnswer =
+      (cmsAcQ17?.correctAnswer as string | undefined) ||
+      cmsQItem17?.correctAnswer ||
+      "The mirror test demonstrates self-awareness in animals.";
 
     const handleWheel17 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -2730,30 +2751,29 @@ function AppContent() {
 
         <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{parsedAC17?.title || cmsAcQ17?.passageTitle || "The Mirror Test"}</h2>
             <ResizableReadingLayout
               zoom={zoom17}
               onWheel={handleWheel17}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
-                    <p>
-                      Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                    </p>
-                    
-                    <p>
-                      For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                    </p>
-                    
-                    <p>
-                      Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                    </p>
-                  </div>
+                  {/* CMS PRIORITY: render passage from CMS if available */}
+                  {parsedAC17?.passage ? (
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      {parsedAC17!.passage}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                      <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
+                      <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
+                      <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
+                    </div>
+                  )}
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">According to the passage, what is true about the mirror test?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ17?.questionText || cmsQItem17?.questionText || "According to the passage, what is true about the mirror test?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
@@ -2810,14 +2830,35 @@ function AppContent() {
   const Module1Question18Screen = () => {
     const [selectedAnswer18, setSelectedAnswer18] = useState<string | null>(null);
     const [zoom18, setZoom18] = useState(1);
-    const correctAnswer = "Elephants and dolphins";
+    // CMS PRIORITY: look up Q18 by number first
+    const sectionDataQ18 = getCurrentSectionData('Reading');
+    const cmsAcQ18 = sectionDataQ18?.questions.find(q =>
+      String(q.questionNumber) === '18' || q.questionNumber === 18
+    ) || sectionDataQ18?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic') || t.includes('reading passage');
+    });
 
-    const answerOptions = [
+    let parsedAC18: any = null;
+    if (cmsAcQ18?.passageText) {
+      try { parsedAC18 = JSON.parse(cmsAcQ18!.passageText!); }
+      catch { parsedAC18 = { passage: cmsAcQ18!.passageText }; }
+    }
+    const cmsQItem18 = parsedAC18?.questions?.[2];
+
+    const answerOptions =
+      (cmsAcQ18?.options && cmsAcQ18!.options!.length > 0 ? cmsAcQ18!.options! : null) ||
+      cmsQItem18?.options ||
+      [
       "Great apes only",
       "Elephants and dolphins",
       "Cleaner fish",
       "Young children"
     ];
+    const correctAnswer =
+      (cmsAcQ18?.correctAnswer as string | undefined) ||
+      cmsQItem18?.correctAnswer ||
+      "Elephants and dolphins";
 
     const handleWheel18 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -2894,30 +2935,29 @@ function AppContent() {
 
         <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{parsedAC18?.title || cmsAcQ18?.passageTitle || "The Mirror Test"}</h2>
             <ResizableReadingLayout
               zoom={zoom18}
               onWheel={handleWheel18}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
-                    <p>
-                      Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                    </p>
-                    
-                    <p>
-                      For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                    </p>
-                    
-                    <p>
-                      Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                    </p>
-                  </div>
+                  {/* CMS PRIORITY: render passage from CMS if available */}
+                  {parsedAC18?.passage ? (
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      {parsedAC18!.passage}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                      <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
+                      <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
+                      <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
+                    </div>
+                  )}
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">Which animals besides great apes have shown signs of self-recognition?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ18?.questionText || cmsQItem18?.questionText || "Which animals besides great apes have shown signs of self-recognition?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
@@ -2975,14 +3015,35 @@ function AppContent() {
   const Module1Question19Screen = () => {
     const [selectedAnswer19, setSelectedAnswer19] = useState<string | null>(null);
     const [zoom19, setZoom19] = useState(1);
-    const correctAnswer = "It suggests that self-awareness may be more widespread than previously thought.";
+    // CMS PRIORITY: look up Q19 by number first
+    const sectionDataQ19 = getCurrentSectionData('Reading');
+    const cmsAcQ19 = sectionDataQ19?.questions.find(q =>
+      String(q.questionNumber) === '19' || q.questionNumber === 19
+    ) || sectionDataQ19?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic') || t.includes('reading passage');
+    });
 
-    const answerOptions = [
+    let parsedAC19: any = null;
+    if (cmsAcQ19?.passageText) {
+      try { parsedAC19 = JSON.parse(cmsAcQ19!.passageText!); }
+      catch { parsedAC19 = { passage: cmsAcQ19!.passageText }; }
+    }
+    const cmsQItem19 = parsedAC19?.questions?.[3];
+
+    const answerOptions =
+      (cmsAcQ19?.options && cmsAcQ19!.options!.length > 0 ? cmsAcQ19!.options! : null) ||
+      cmsQItem19?.options ||
+      [
       "It proves that fish are highly intelligent.",
       "It suggests that self-awareness may be more widespread than previously thought.",
       "It demonstrates that the mirror test is flawed.",
       "It shows that only ocean animals have self-awareness."
     ];
+    const correctAnswer =
+      (cmsAcQ19?.correctAnswer as string | undefined) ||
+      cmsQItem19?.correctAnswer ||
+      "It suggests that self-awareness may be more widespread than previously thought.";
 
     const handleWheel19 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -3059,30 +3120,29 @@ function AppContent() {
 
         <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{parsedAC19?.title || cmsAcQ19?.passageTitle || "The Mirror Test"}</h2>
             <ResizableReadingLayout
               zoom={zoom19}
               onWheel={handleWheel19}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
-                    <p>
-                      Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                    </p>
-                    
-                    <p>
-                      For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                    </p>
-                    
-                    <p>
-                      Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                    </p>
-                  </div>
+                  {/* CMS PRIORITY: render passage from CMS if available */}
+                  {parsedAC19?.passage ? (
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      {parsedAC19!.passage}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                      <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
+                      <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
+                      <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
+                    </div>
+                  )}
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">What is the significance of the cleaner fish experiment?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ19?.questionText || cmsQItem19?.questionText || "What is the significance of the cleaner fish experiment?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
@@ -3141,14 +3201,35 @@ function AppContent() {
   const Module1Question20Screen = () => {
     const [selectedAnswer20, setSelectedAnswer20] = useState<string | null>(null);
     const [zoom20, setZoom20] = useState(1);
-    const correctAnswer = "Around 18 months of age";
+    // CMS PRIORITY: look up Q20 by number first
+    const sectionDataQ20 = getCurrentSectionData('Reading');
+    const cmsAcQ20 = sectionDataQ20?.questions.find(q =>
+      String(q.questionNumber) === '20' || q.questionNumber === 20
+    ) || sectionDataQ20?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic') || t.includes('reading passage');
+    });
 
-    const answerOptions = [
+    let parsedAC20: any = null;
+    if (cmsAcQ20?.passageText) {
+      try { parsedAC20 = JSON.parse(cmsAcQ20!.passageText!); }
+      catch { parsedAC20 = { passage: cmsAcQ20!.passageText }; }
+    }
+    const cmsQItem20 = parsedAC20?.questions?.[4];
+
+    const answerOptions =
+      (cmsAcQ20?.options && cmsAcQ20!.options!.length > 0 ? cmsAcQ20!.options! : null) ||
+      cmsQItem20?.options ||
+      [
       "At birth",
       "Around 6 months of age",
       "Around 18 months of age",
       "At 3 years of age"
     ];
+    const correctAnswer =
+      (cmsAcQ20?.correctAnswer as string | undefined) ||
+      cmsQItem20?.correctAnswer ||
+      "Around 18 months of age";
 
     const handleWheel20 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -3225,30 +3306,29 @@ function AppContent() {
 
         <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Mirror Test</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{parsedAC20?.title || cmsAcQ20?.passageTitle || "The Mirror Test"}</h2>
             <ResizableReadingLayout
               zoom={zoom20}
               onWheel={handleWheel20}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
-                    <p>
-                      Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?
-                    </p>
-                    
-                    <p>
-                      For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.
-                    </p>
-                    
-                    <p>
-                      Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.
-                    </p>
-                  </div>
+                  {/* CMS PRIORITY: render passage from CMS if available */}
+                  {parsedAC20?.passage ? (
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      {parsedAC20!.passage}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                      <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
+                      <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
+                      <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
+                    </div>
+                  )}
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">According to the passage, when do children typically recognize themselves in a mirror?</h3>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ20?.questionText || cmsQItem20?.questionText || "According to the passage, when do children typically recognize themselves in a mirror?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {answerOptions.map((option, index) => (
