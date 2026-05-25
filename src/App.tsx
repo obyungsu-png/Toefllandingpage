@@ -44,6 +44,7 @@ import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, R
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
+import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
