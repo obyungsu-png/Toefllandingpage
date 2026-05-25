@@ -28,12 +28,12 @@ interface DictationExercise {
 }
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
-  reading: ['해석', '분석', '단어', '유형연습'],
-  listening: ['받아쓰기', '단어', '유형연습'],
-  'writing-basic': ['유형연습'],
-  'writing-guided': ['분석', '표현', '템플릿', '유형연습'],
-  'speaking-repeat': ['받아쓰기', '단어', '유형연습'],
-  'speaking-interview': ['분석', '표현', '템플릿', '유형연습'],
+  reading: ['Translation', 'Analysis', 'Key Words', 'Practice'],
+  listening: ['Dictation', 'Key Words', 'Practice'],
+  'writing-basic': ['Practice'],
+  'writing-guided': ['Analysis', 'Expressions', 'Template', 'Practice'],
+  'speaking-repeat': ['Dictation', 'Key Words', 'Practice'],
+  'speaking-interview': ['Analysis', 'Expressions', 'Template', 'Practice'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -44,45 +44,40 @@ const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border:
 };
 
 const TAB_META: Record<string, { icon: LucideIcon; title: string; description: string }> = {
-  '받아쓰기': {
+  Dictation: {
     icon: Volume2,
-    title: '받아쓰기 트레이닝',
-    description: '오디오를 듣고 빈칸을 채우며 핵심 표현을 정확하게 복기합니다.',
+    title: 'Dictation Training',
+    description: 'Listen to the audio and fill in the blanks to review key expressions.',
   },
-  해석: {
+  Translation: {
     icon: Languages,
-    title: '지문 해석',
-    description: '핵심 문장과 논리 흐름을 빠르게 잡을 수 있도록 정리했습니다.',
+    title: 'Translation',
+    description: 'Quickly grasp key sentences and logical flow with organized translations.',
   },
-  분석: {
+  Analysis: {
     icon: FileText,
-    title: '문제 분석',
-    description: '정답 판단 기준과 접근 순서를 짧고 명확하게 확인할 수 있습니다.',
+    title: 'Question Analysis',
+    description: 'Review answer criteria and approach strategies clearly and concisely.',
   },
-  단어: {
+  'Key Words': {
     icon: Sparkles,
-    title: '핵심 단어',
-    description: '현재 문항에서 바로 써먹을 수 있는 어휘만 추려서 보여줍니다.',
+    title: 'Key Words',
+    description: 'Essential vocabulary from the current question, ready to use.',
   },
-  표현: {
+  Expressions: {
     icon: MessageSquareText,
-    title: '유용한 표현',
-    description: '답변이나 에세이에 바로 적용할 수 있는 문장 패턴을 모았습니다.',
+    title: 'Useful Expressions',
+    description: 'Sentence patterns you can apply directly in answers or essays.',
   },
-  템플릿: {
+  Template: {
     icon: BookOpen,
-    title: '답변 템플릿',
-    description: '시간 안에 구조를 잡을 수 있도록 실전형 포맷을 제공합니다.',
+    title: 'Answer Template',
+    description: 'Practical formats to structure your answer within time limits.',
   },
-  템프릿: {
-    icon: BookOpen,
-    title: '답변 템플릿',
-    description: '시간 안에 구조를 잡을 수 있도록 실전형 포맷을 제공합니다.',
-  },
-  유형연습: {
+  Practice: {
     icon: ClipboardList,
-    title: '유형연습',
-    description: '현재 문제와 같은 유형의 실전 문제 3개를 풀어봅니다.',
+    title: 'Question Practice',
+    description: 'Practice real exam questions of the same type.',
   },
 };
 
@@ -345,11 +340,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const renderActiveTab = () => {
     if (!activeTab) return null;
 
-    if (activeTab === '받아쓰기') return renderDictation();
-    if (activeTab === '단어') return renderWords();
-    if (activeTab === '해석') {
+    if (activeTab === 'Dictation') return renderDictation();
+    if (activeTab === 'Key Words') return renderWords();
+    if (activeTab === 'Translation') {
       return renderBullets(
-        '지문 해석',
+        'Translation',
         [
           '핵심 문장은 먼저 직역하고, 뒤에서 자연스럽게 재구성합니다.',
           '배경 설명보다 결론과 근거의 연결을 먼저 잡으면 빠르게 이해됩니다.',
@@ -358,16 +353,16 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         <Languages className="h-4 w-4" />,
       );
     }
-    if (activeTab === '분석') {
-      return renderBullets('문제 분석', getAnalysisLines(variant), <FileText className="h-4 w-4" />);
+    if (activeTab === 'Analysis') {
+      return renderBullets('Analysis', getAnalysisLines(variant), <FileText className="h-4 w-4" />);
     }
-    if (activeTab === '표현') {
+    if (activeTab === 'Expressions') {
       return renderBullets('유용한 표현', getExpressionLines(section), <MessageSquareText className="h-4 w-4" />);
     }
-    if (activeTab === '템플릿' || activeTab === '템프릿') {
+    if (activeTab === 'Template') {
       return renderBullets('템플릿', getTemplateLines(section), <BookOpen className="h-4 w-4" />);
     }
-    if (activeTab === '유형연습') return null;
+    if (activeTab === 'Practice') return null;
     return null;
   };
 
@@ -376,14 +371,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   return (
     <div className={`fixed bottom-20 right-3 z-[90] w-[calc(100vw-1.5rem)] sm:bottom-8 sm:right-8 sm:w-[calc(100vw-4rem)] ${panelWidthClass}`}>
       <div className="space-y-3">
-        <div
-          className="rounded-[30px] border border-white/70 bg-white/75 p-2 shadow-[0_20px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl"
-          style={{
-            borderColor: theme.border,
-            background: `linear-gradient(180deg, ${theme.soft}cc 0%, rgba(255,255,255,0.94) 100%)`,
-          }}
-        >
-          <div className="flex gap-1 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {tabs.map((tab) => (
             (() => {
               const meta = getTabMeta(tab);
@@ -394,9 +382,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   key={tab}
                   type="button"
                   onClick={() => {
-                    if (tab === '유형연습') {
+                    if (tab === 'Practice') {
                       onStartTraining({
-                        title: `${questionType || getTrainingTitle(section, variant)} 유형연습`,
+                        title: `${questionType || getTrainingTitle(section, variant)} Practice`,
                         questionType,
                         difficulty: currentDifficulty,
                       });
@@ -404,31 +392,42 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                       setActiveTab((current) => current === tab ? null : tab);
                     }
                   }}
-                  className={`group relative inline-flex min-w-[60px] items-center gap-1 overflow-hidden rounded-[16px] border px-2 py-2 text-xs font-semibold transition-all duration-300 sm:min-w-[80px] sm:px-3 sm:py-2.5 sm:text-sm ${
-                    activeTab === tab
-                      ? 'text-white -translate-y-0.5'
-                      : 'text-[#475569] hover:-translate-y-0.5 hover:text-[#0f172a]'
+                  className={`group flex flex-col items-center gap-1.5 min-w-[64px] sm:min-w-[76px] transition-all duration-200 ${
+                    activeTab === tab ? 'opacity-100' : 'opacity-80 hover:opacity-100'
                   }`}
-                  style={{
-                    borderColor: activeTab === tab ? `${theme.accent}55` : theme.border,
-                    background: activeTab === tab
-                      ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)`
-                      : 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.92) 100%)',
-                    boxShadow: activeTab === tab
-                      ? `0 12px 24px ${theme.accent}22`
-                      : '0 4px 12px rgba(15,23,42,0.06)',
-                  }}
                 >
-                  <span className={`absolute inset-0 opacity-0 transition-opacity duration-300 ${activeTab === tab ? 'opacity-100' : 'group-hover:opacity-100'}`} style={{ background: activeTab === tab ? 'transparent' : `linear-gradient(135deg, ${theme.soft} 0%, rgba(255,255,255,0) 100%)` }} />
-                  <span className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/18 backdrop-blur-sm sm:h-8 sm:w-8">
-                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {/* Icon box like image 1 */}
+                  <span
+                    className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl transition-all duration-200 shadow-sm ${
+                      activeTab === tab
+                        ? 'shadow-md -translate-y-0.5'
+                        : 'hover:-translate-y-0.5'
+                    }`}
+                    style={{
+                      background: activeTab === tab
+                        ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
+                        : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
+                      boxShadow: activeTab === tab
+                        ? `0 8px 20px ${theme.accent}33`
+                        : '0 2px 8px rgba(15,23,42,0.08)',
+                    }}
+                  >
+                    <Icon
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      style={{ color: activeTab === tab ? 'white' : theme.accent }}
+                    />
                   </span>
-                  <span className="relative z-10 whitespace-nowrap">{tab === '템프릿' ? '템플릿' : tab}</span>
+                  {/* Label */}
+                  <span
+                    className="text-xs font-semibold whitespace-nowrap"
+                    style={{ color: activeTab === tab ? theme.accent : '#64748b' }}
+                  >
+                    {tab}
+                  </span>
                 </button>
               );
             })()
           ))}
-          </div>
         </div>
 
         {activeTab && activeTabMeta && (
