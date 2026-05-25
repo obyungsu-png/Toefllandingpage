@@ -554,19 +554,36 @@ export function QuestionReviewFull({
   const renderCompleteWordsPassage = () => {
     if (!readingCompleteWordsConfig) return null;
 
-    const inputWidth = (blank: { answer: string; maxLength: number }) => `${Math.max(blank.maxLength, blank.answer.length) * 18}px`;
+    const inputWidth = (blank: { answer: string; maxLength: number }) => `${Math.max(blank.maxLength || 3, (blank.answer || '').length) * 14 + 8}px`;
 
-    if (readingCompleteWordsConfig.passageText) {
+    const rawPassage = readingCompleteWordsConfig.passageText || '';
+    
+    // Normalize: convert [answer:maxLen] → [N] and build blanks array if needed
+    let normalizedPassage = rawPassage;
+    let extractedBlanks: { answer: string; maxLength: number }[] = readingCompleteWordsConfig.blanks || [];
+    
+    if (/\[[^\]]+:\d+\]/.test(rawPassage)) {
+      // CMS format: word[answer:maxLen] → extract and replace with [N]
+      const newBlanks: { answer: string; maxLength: number }[] = [];
+      let idx = 0;
+      normalizedPassage = rawPassage.replace(/\[([^\]]+):(\d+)\]/g, (_: string, answer: string, maxLen: string) => {
+        newBlanks.push({ answer: answer.trim(), maxLength: parseInt(maxLen) });
+        return `[${idx++}]`;
+      });
+      if (newBlanks.length > 0) extractedBlanks = newBlanks;
+    }
+
+    if (normalizedPassage) {
       const parts: React.ReactNode[] = [];
       const regex = /\[(\d+)\]/g;
       let lastIndex = 0;
       let match: RegExpExecArray | null;
       let key = 0;
 
-      while ((match = regex.exec(readingCompleteWordsConfig.passageText)) !== null) {
+      while ((match = regex.exec(normalizedPassage)) !== null) {
         const blankIndex = Number(match[1]);
-        const blank = readingCompleteWordsConfig.blanks[blankIndex];
-        const beforeText = readingCompleteWordsConfig.passageText.slice(lastIndex, match.index);
+        const blank = extractedBlanks[blankIndex];
+        const beforeText = normalizedPassage.slice(lastIndex, match.index);
 
         if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
         if (blank) {
@@ -862,34 +879,45 @@ export function QuestionReviewFull({
                     Reading Module {activeModule}의 1-10번은 TPO 기준 Complete Words 유형입니다. Review에서도 객관식이 아니라 빈칸 본문 형태로 표시되도록 맞췄습니다.
                   </p>
                   <div className="space-y-2">
-                    {readingCompleteWordsConfig?.blanks.map((blank, index) => {
-                      // Determine if this blank was answered correctly
-                      const blankNum = index + 1;
-                      const wrongEntry = result.wrongAnswers.find(w =>
-                        w.questionId === String(blankNum) || w.questionId === `blank-${blankNum}`
-                      );
-                      const isCorrect = !wrongEntry;
-                      const userAns = wrongEntry?.userAnswer?.split(',')?.[index]?.trim() || null;
-                      return (
-                        <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
-                          isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
-                        }`}>
-                          <span className="text-gray-500">Blank {index + 1}</span>
-                          <div className="flex items-center gap-2">
-                            {!isCorrect && userAns && (
-                              <span className="text-xs text-red-400 line-through">{userAns}</span>
-                            )}
-                            <span className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                              {blank.answer}
-                            </span>
-                            {isCorrect
-                              ? <Check className="w-3.5 h-3.5 text-green-500" />
-                              : <X className="w-3.5 h-3.5 text-red-500" />
-                            }
+                    {(() => {
+                      // Parse blanks from CMS format if needed
+                      const rawP = readingCompleteWordsConfig?.passageText || '';
+                      let displayBlanks = readingCompleteWordsConfig?.blanks || [];
+                      if (/\[[^\]]+:\d+\]/.test(rawP)) {
+                        const parsed: {answer:string;maxLength:number}[] = [];
+                        rawP.replace(/\[([^\]]+):(\d+)\]/g, (_:string, ans:string, ml:string) => {
+                          parsed.push({answer:ans.trim(), maxLength:parseInt(ml)});
+                          return '';
+                        });
+                        if (parsed.length > 0) displayBlanks = parsed;
+                      }
+                      return displayBlanks.map((blank, index) => {
+                        const wrongEntry = result.wrongAnswers.find(w =>
+                          w.questionId === String(index+1) || w.questionId === `blank-${index+1}`
+                        );
+                        const isCorrect = !wrongEntry;
+                        const userAns = wrongEntry?.userAnswer?.split(',')?.[index]?.trim() || wrongEntry?.userAnswer || null;
+                        return (
+                          <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+                            isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                          }`}>
+                            <span className="text-gray-500">Blank {index + 1}</span>
+                            <div className="flex items-center gap-2">
+                              {!isCorrect && userAns && (
+                                <span className="text-xs text-red-400 line-through">{userAns}</span>
+                              )}
+                              <span className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                {blank.answer}
+                              </span>
+                              {isCorrect
+                                ? <Check className="w-3.5 h-3.5 text-green-500" />
+                                : <X className="w-3.5 h-3.5 text-red-500" />
+                              }
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </div>
