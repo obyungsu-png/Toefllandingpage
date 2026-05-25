@@ -3561,7 +3561,21 @@ function AppContent() {
 
     // CMS PRIORITY: parse Module 2 fill-blanks from CMS passageText "word[answer:maxLength]" format
     const m2SectionData = getCurrentSectionData('Reading');
+    // First: look for question explicitly tagged as Module 2
     const m2FillBlanksQuestion = m2SectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return (
+        t.includes('module 2') && (
+          t.includes('complete words') ||
+          t.includes('fill in the blank') ||
+          t.includes('cloze test') ||
+          t.includes('빈칸') ||
+          t.includes('fillblanks') ||
+          t.includes('fill-in')
+        )
+      );
+    }) || m2SectionData?.questions.find(q => {
+      // Fallback: any complete words question (Module 1 style, for backward compat)
       const t = (q.questionType || '').toLowerCase();
       return (
         t.includes('complete words') ||
@@ -6216,7 +6230,21 @@ function AppContent() {
     // Get dynamic question data from CMS
     // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
     const sectionData = getCurrentSectionData('Reading');
+    // CMS PRIORITY: flexible type matching — Module 1 only (exclude Module 2 tagged questions)
     const fillBlanksQuestion = sectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      const isModule2 = t.includes('module 2');
+      const isFillBlanks = (
+        t.includes('complete words') ||
+        t.includes('fill in the blank') ||
+        t.includes('cloze test') ||
+        t.includes('빈칸') ||
+        t.includes('fillblanks') ||
+        t.includes('fill-in')
+      );
+      return isFillBlanks && !isModule2;
+    }) || sectionData?.questions.find(q => {
+      // Fallback: any fill-blanks question (backward compat)
       const t = (q.questionType || '').toLowerCase();
       return (
         t.includes('complete words') ||
