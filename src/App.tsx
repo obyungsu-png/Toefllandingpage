@@ -3709,117 +3709,106 @@ function AppContent() {
               </h1>
 
               <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                {/* CMS PRIORITY: dynamic passage renderer */}
+                {m2NormalizedPassage ? (() => {
+                  const parts: React.ReactNode[] = [];
+                  let key = 0;
+                  const regex = new RegExp('\\\\[(\\\\d+)\\\\]', 'g');
+                  let lastIndex = 0;
+                  let match;
+                  while ((match = regex.exec(m2NormalizedPassage)) !== null) {
+                    const id = parseInt(match[1]);
+                    const before = m2NormalizedPassage.substring(lastIndex, match.index);
+                    if (before) parts.push(<span key={`t${key++}`}>{before}</span>);
+                    parts.push(
+                      <input key={`i${id}`} type="text" data-input-id={`m2-${id}`}
+                        className={`m2-gap-input ${m2FilledInputs[id] ? 'filled' : ''}`}
+                        maxLength={m2Inputs[id]?.maxLength || 5}
+                        value={m2InputValues[id] || ''}
+                        onChange={(e) => handleM2InputChange(id, e.target.value)}
+                        onFocus={() => handleM2Focus(id)} onBlur={() => handleM2Blur(id)}
+                        onKeyPress={(e) => handleM2KeyPress(e, id)}
+                        style={{ width: getM2InputWidth(id) }} />
+                    );
+                    lastIndex = match.index + match[0].length;
+                  }
+                  if (lastIndex < m2NormalizedPassage.length) parts.push(<span key={`t${key++}`}>{m2NormalizedPassage.substring(lastIndex)}</span>);
+                  return parts;
+                })() : (
+                  <>
                 The human brain is a complex organ responsible for controlling all bodily functions and enabling thought, emotion, and memory. It i<input
-                  type="text"
-                  data-input-id="m2-0"
+                  type="text" data-input-id="m2-0"
                   className={`m2-gap-input ${m2FilledInputs[0] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[0].maxLength}
-                  value={m2InputValues[0] || ''}
+                  maxLength={m2Inputs[0].maxLength} value={m2InputValues[0] || ''}
                   onChange={(e) => handleM2InputChange(0, e.target.value)}
-                  onFocus={() => handleM2Focus(0)}
-                  onBlur={() => handleM2Blur(0)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 0)}
-                  style={{ width: getM2InputWidth(0) }}
+                  onFocus={() => handleM2Focus(0)} onBlur={() => handleM2Blur(0)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 0)} style={{ width: getM2InputWidth(0) }}
                 /> divided in<input
-                  type="text"
-                  data-input-id="m2-1"
+                  type="text" data-input-id="m2-1"
                   className={`m2-gap-input ${m2FilledInputs[1] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[1].maxLength}
-                  value={m2InputValues[1] || ''}
+                  maxLength={m2Inputs[1].maxLength} value={m2InputValues[1] || ''}
                   onChange={(e) => handleM2InputChange(1, e.target.value)}
-                  onFocus={() => handleM2Focus(1)}
-                  onBlur={() => handleM2Blur(1)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 1)}
-                  style={{ width: getM2InputWidth(1) }}
+                  onFocus={() => handleM2Focus(1)} onBlur={() => handleM2Blur(1)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 1)} style={{ width: getM2InputWidth(1) }}
                 /> several reg<input
-                  type="text"
-                  data-input-id="m2-2"
+                  type="text" data-input-id="m2-2"
                   className={`m2-gap-input ${m2FilledInputs[2] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[2].maxLength}
-                  value={m2InputValues[2] || ''}
+                  maxLength={m2Inputs[2].maxLength} value={m2InputValues[2] || ''}
                   onChange={(e) => handleM2InputChange(2, e.target.value)}
-                  onFocus={() => handleM2Focus(2)}
-                  onBlur={() => handleM2Blur(2)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 2)}
-                  style={{ width: getM2InputWidth(2) }}
+                  onFocus={() => handleM2Focus(2)} onBlur={() => handleM2Blur(2)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 2)} style={{ width: getM2InputWidth(2) }}
                 />, each wi<input
-                  type="text"
-                  data-input-id="m2-3"
+                  type="text" data-input-id="m2-3"
                   className={`m2-gap-input ${m2FilledInputs[3] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[3].maxLength}
-                  value={m2InputValues[3] || ''}
+                  maxLength={m2Inputs[3].maxLength} value={m2InputValues[3] || ''}
                   onChange={(e) => handleM2InputChange(3, e.target.value)}
-                  onFocus={() => handleM2Focus(3)}
-                  onBlur={() => handleM2Blur(3)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 3)}
-                  style={{ width: getM2InputWidth(3) }}
+                  onFocus={() => handleM2Focus(3)} onBlur={() => handleM2Blur(3)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 3)} style={{ width: getM2InputWidth(3) }}
                 /> specific ro<input
-                  type="text"
-                  data-input-id="m2-4"
+                  type="text" data-input-id="m2-4"
                   className={`m2-gap-input ${m2FilledInputs[4] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[4].maxLength}
-                  value={m2InputValues[4] || ''}
+                  maxLength={m2Inputs[4].maxLength} value={m2InputValues[4] || ''}
                   onChange={(e) => handleM2InputChange(4, e.target.value)}
-                  onFocus={() => handleM2Focus(4)}
-                  onBlur={() => handleM2Blur(4)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 4)}
-                  style={{ width: getM2InputWidth(4) }}
+                  onFocus={() => handleM2Focus(4)} onBlur={() => handleM2Blur(4)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 4)} style={{ width: getM2InputWidth(4) }}
                 />. The cerebrum, i<input
-                  type="text"
-                  data-input-id="m2-5"
+                  type="text" data-input-id="m2-5"
                   className={`m2-gap-input ${m2FilledInputs[5] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[5].maxLength}
-                  value={m2InputValues[5] || ''}
+                  maxLength={m2Inputs[5].maxLength} value={m2InputValues[5] || ''}
                   onChange={(e) => handleM2InputChange(5, e.target.value)}
-                  onFocus={() => handleM2Focus(5)}
-                  onBlur={() => handleM2Blur(5)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 5)}
-                  style={{ width: getM2InputWidth(5) }}
+                  onFocus={() => handleM2Focus(5)} onBlur={() => handleM2Blur(5)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 5)} style={{ width: getM2InputWidth(5) }}
                 /> largest pa<input
-                  type="text"
-                  data-input-id="m2-6"
+                  type="text" data-input-id="m2-6"
                   className={`m2-gap-input ${m2FilledInputs[6] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[6].maxLength}
-                  value={m2InputValues[6] || ''}
+                  maxLength={m2Inputs[6].maxLength} value={m2InputValues[6] || ''}
                   onChange={(e) => handleM2InputChange(6, e.target.value)}
-                  onFocus={() => handleM2Focus(6)}
-                  onBlur={() => handleM2Blur(6)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 6)}
-                  style={{ width: getM2InputWidth(6) }}
+                  onFocus={() => handleM2Focus(6)} onBlur={() => handleM2Blur(6)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 6)} style={{ width: getM2InputWidth(6) }}
                 />, is invo<input
-                  type="text"
-                  data-input-id="m2-7"
+                  type="text" data-input-id="m2-7"
                   className={`m2-gap-input ${m2FilledInputs[7] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[7].maxLength}
-                  value={m2InputValues[7] || ''}
+                  maxLength={m2Inputs[7].maxLength} value={m2InputValues[7] || ''}
                   onChange={(e) => handleM2InputChange(7, e.target.value)}
-                  onFocus={() => handleM2Focus(7)}
-                  onBlur={() => handleM2Blur(7)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 7)}
-                  style={{ width: getM2InputWidth(7) }}
+                  onFocus={() => handleM2Focus(7)} onBlur={() => handleM2Blur(7)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 7)} style={{ width: getM2InputWidth(7) }}
                 /> in higher cogn<input
-                  type="text"
-                  data-input-id="m2-8"
+                  type="text" data-input-id="m2-8"
                   className={`m2-gap-input ${m2FilledInputs[8] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[8].maxLength}
-                  value={m2InputValues[8] || ''}
+                  maxLength={m2Inputs[8].maxLength} value={m2InputValues[8] || ''}
                   onChange={(e) => handleM2InputChange(8, e.target.value)}
-                  onFocus={() => handleM2Focus(8)}
-                  onBlur={() => handleM2Blur(8)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 8)}
-                  style={{ width: getM2InputWidth(8) }}
+                  onFocus={() => handleM2Focus(8)} onBlur={() => handleM2Blur(8)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 8)} style={{ width: getM2InputWidth(8) }}
                 /> functions su<input
-                  type="text"
-                  data-input-id="m2-9"
+                  type="text" data-input-id="m2-9"
                   className={`m2-gap-input ${m2FilledInputs[9] ? 'filled' : ''}`}
-                  maxLength={m2Inputs[9].maxLength}
-                  value={m2InputValues[9] || ''}
+                  maxLength={m2Inputs[9].maxLength} value={m2InputValues[9] || ''}
                   onChange={(e) => handleM2InputChange(9, e.target.value)}
-                  onFocus={() => handleM2Focus(9)}
-                  onBlur={() => handleM2Blur(9)}
-                  onKeyPress={(e) => handleM2KeyPress(e, 9)}
-                  style={{ width: getM2InputWidth(9) }}
+                  onFocus={() => handleM2Focus(9)} onBlur={() => handleM2Blur(9)}
+                  onKeyPress={(e) => handleM2KeyPress(e, 9)} style={{ width: getM2InputWidth(9) }}
                 /> as reasoning, planning, and language. The cerebellum coordinates movement and balance, while the brainstem controls vital bodily functions like breathing and heart rate. Together, they enable the brain to perform its various tasks.
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -6267,47 +6256,14 @@ function AppContent() {
           </h1>
 
           <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-            {/* CMS PRIORITY: render CMS passage if available, otherwise show hardcoded fallback */}
-            {m2NormalizedPassage ? (() => {
-              const m2Parts: React.ReactNode[] = [];
-              let m2Key = 0;
-              const m2Regex = /\[(\d+)\]/g;
-              let m2LastIndex = 0;
-              let m2Match;
-              const m2PassageCopy = m2NormalizedPassage;
-              const m2RegexCopy = new RegExp('\\\\[(\\\\d+)\\\\]', 'g');
-              while ((m2Match = m2RegexCopy.exec(m2PassageCopy)) !== null) {
-                const inputId = parseInt(m2Match[1]);
-                const beforeText = m2PassageCopy.substring(m2LastIndex, m2Match.index);
-                if (beforeText) m2Parts.push(<span key={`m2t-${m2Key++}`}>{beforeText}</span>);
-                m2Parts.push(
-                  <input
-                    key={`m2i-${inputId}`}
-                    type="text"
-                    data-input-id={inputId}
-                    className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
-                    maxLength={m2Inputs[inputId]?.maxLength || 5}
-                    value={inputValues[inputId] || ''}
-                    onChange={(e) => handleInputChange(inputId, e.target.value)}
-                    onFocus={() => handleFocus(inputId)}
-                    onBlur={() => handleBlur(inputId)}
-                    onKeyPress={(e) => handleKeyPress(e, inputId)}
-                    style={{ width: getInputWidth(inputId) }}
-                  />
-                );
-                m2LastIndex = m2Match.index + m2Match[0].length;
-              }
-              if (m2LastIndex < m2PassageCopy.length) {
-                m2Parts.push(<span key={`m2t-${m2Key++}`}>{m2PassageCopy.substring(m2LastIndex)}</span>);
-              }
-              return m2Parts;
-            })() : (
+            {/* CMS PRIORITY: render CMS passage dynamically using passageText + inputs */}
+            {renderPassageWithInputs() || (
               <>
             We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi<input
               type="text"
               data-input-id="0"
               className={`gap-input ${filledInputs[0] ? 'filled' : ''}`}
-              maxLength={m2Inputs[0].maxLength}
+              maxLength={inputs[0].maxLength}
               value={inputValues[0] || ''}
               onChange={(e) => handleInputChange(0, e.target.value)}
               onFocus={() => handleFocus(0)}
@@ -6318,7 +6274,7 @@ function AppContent() {
               type="text"
               data-input-id="1"
               className={`gap-input ${filledInputs[1] ? 'filled' : ''}`}
-              maxLength={m2Inputs[1].maxLength}
+              maxLength={inputs[1].maxLength}
               value={inputValues[1] || ''}
               onChange={(e) => handleInputChange(1, e.target.value)}
               onFocus={() => handleFocus(1)}
@@ -6329,7 +6285,7 @@ function AppContent() {
               type="text"
               data-input-id="2"
               className={`gap-input ${filledInputs[2] ? 'filled' : ''}`}
-              maxLength={m2Inputs[2].maxLength}
+              maxLength={inputs[2].maxLength}
               value={inputValues[2] || ''}
               onChange={(e) => handleInputChange(2, e.target.value)}
               onFocus={() => handleFocus(2)}
@@ -6340,7 +6296,7 @@ function AppContent() {
               type="text"
               data-input-id="3"
               className={`gap-input ${filledInputs[3] ? 'filled' : ''}`}
-              maxLength={m2Inputs[3].maxLength}
+              maxLength={inputs[3].maxLength}
               value={inputValues[3] || ''}
               onChange={(e) => handleInputChange(3, e.target.value)}
               onFocus={() => handleFocus(3)}
@@ -6351,7 +6307,7 @@ function AppContent() {
               type="text"
               data-input-id="4"
               className={`gap-input ${filledInputs[4] ? 'filled' : ''}`}
-              maxLength={m2Inputs[4].maxLength}
+              maxLength={inputs[4].maxLength}
               value={inputValues[4] || ''}
               onChange={(e) => handleInputChange(4, e.target.value)}
               onFocus={() => handleFocus(4)}
@@ -6362,7 +6318,7 @@ function AppContent() {
               type="text"
               data-input-id="5"
               className={`gap-input ${filledInputs[5] ? 'filled' : ''}`}
-              maxLength={m2Inputs[5].maxLength}
+              maxLength={inputs[5].maxLength}
               value={inputValues[5] || ''}
               onChange={(e) => handleInputChange(5, e.target.value)}
               onFocus={() => handleFocus(5)}
@@ -6373,7 +6329,7 @@ function AppContent() {
               type="text"
               data-input-id="6"
               className={`gap-input ${filledInputs[6] ? 'filled' : ''}`}
-              maxLength={m2Inputs[6].maxLength}
+              maxLength={inputs[6].maxLength}
               value={inputValues[6] || ''}
               onChange={(e) => handleInputChange(6, e.target.value)}
               onFocus={() => handleFocus(6)}
@@ -6384,7 +6340,7 @@ function AppContent() {
               type="text"
               data-input-id="7"
               className={`gap-input ${filledInputs[7] ? 'filled' : ''}`}
-              maxLength={m2Inputs[7].maxLength}
+              maxLength={inputs[7].maxLength}
               value={inputValues[7] || ''}
               onChange={(e) => handleInputChange(7, e.target.value)}
               onFocus={() => handleFocus(7)}
@@ -6395,7 +6351,7 @@ function AppContent() {
               type="text"
               data-input-id="8"
               className={`gap-input ${filledInputs[8] ? 'filled' : ''}`}
-              maxLength={m2Inputs[8].maxLength}
+              maxLength={inputs[8].maxLength}
               value={inputValues[8] || ''}
               onChange={(e) => handleInputChange(8, e.target.value)}
               onFocus={() => handleFocus(8)}
@@ -6406,7 +6362,7 @@ function AppContent() {
               type="text"
               data-input-id="9"
               className={`gap-input ${filledInputs[9] ? 'filled' : ''}`}
-              maxLength={m2Inputs[9].maxLength}
+              maxLength={inputs[9].maxLength}
               value={inputValues[9] || ''}
               onChange={(e) => handleInputChange(9, e.target.value)}
               onFocus={() => handleFocus(9)}
