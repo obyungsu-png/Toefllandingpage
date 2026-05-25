@@ -723,28 +723,46 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               const questionIndex = test.sections[sectionIndex].questions.findIndex(q => q.id === editingQuestion.id);
               if (questionIndex === -1) return;
 
-              const updatedTest = { ...test };
               const originalNumber = editingQuestion.questionNumber;
               const newNumber = updatedQuestion.questionNumber;
               const numberChanged = String(originalNumber) !== String(newNumber);
 
-              if (numberChanged) {
-                // 번호가 바뀐 경우: 기존 문제는 그대로 두고, 새 번호로 새 문제를 추가
-                const newQuestion = {
-                  ...updatedQuestion,
-                  id: `q-${Date.now()}`, // 새 ID 부여
-                };
-                updatedTest.sections[sectionIndex].questions.push(newQuestion);
+              // 항상 sections를 완전히 새로 복사해서 원본 배열 mutation 방지
+              const newSections = test.sections.map((section, si) => {
+                if (si !== sectionIndex) return section;
+
+                let newQuestions = [...section.questions];
+
+                if (numberChanged) {
+                  // 번호가 바뀐 경우:
+                  // - 기존 문제(originalNumber)는 배열에 그대로 유지
+                  // - 새 번호로 새 문제를 추가 (새 ID 부여)
+                  const newQuestion = {
+                    ...updatedQuestion,
+                    id: `q-${Date.now()}-new`,
+                  };
+                  newQuestions = [...newQuestions, newQuestion];
+                } else {
+                  // 번호가 같은 경우: 해당 인덱스만 교체
+                  newQuestions = newQuestions.map((q, qi) =>
+                    qi === questionIndex ? updatedQuestion : q
+                  );
+                }
+
                 // 번호 순으로 정렬
-                updatedTest.sections[sectionIndex].questions.sort((a, b) =>
+                newQuestions.sort((a, b) =>
                   Number(a.questionNumber) - Number(b.questionNumber)
                 );
-              } else {
-                // 번호가 같은 경우: 기존 문제를 업데이트
-                updatedTest.sections[sectionIndex].questions[questionIndex] = updatedQuestion;
-              }
 
-              updatedTest.updatedAt = new Date();
+                return { ...section, questions: newQuestions };
+              });
+
+              const updatedTest = {
+                ...test,
+                sections: newSections,
+                updatedAt: new Date(),
+              };
+
               onUpdateTest(updatedTest);
               setEditingQuestion(null);
             }}
