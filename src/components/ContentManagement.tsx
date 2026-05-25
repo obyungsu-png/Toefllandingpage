@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
 // motion removed - using CSS animations
@@ -83,6 +83,16 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [showBulkUploadForm, setShowBulkUploadForm] = useState(false);
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
+  const editFormRef = useRef<HTMLDivElement>(null);
+
+  // 편집 폼이 열리면 자동으로 스크롤
+  useEffect(() => {
+    if (editingQuestion && editFormRef.current) {
+      setTimeout(() => {
+        editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, [editingQuestion]);
   const [previewQuestion, setPreviewQuestion] = useState<TPOQuestion | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
@@ -707,6 +717,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           />
         )}
         {editingQuestion && (
+          <div ref={editFormRef}>
           <QuestionEditForm
             testType={activeTestType}
             testNumber={selectedTestNumber}
@@ -768,6 +779,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             }}
             onCancel={() => setEditingQuestion(null)}
           />
+          </div>
         )}
         {showBulkUploadForm && (
           <BulkUploadForm
@@ -849,7 +861,11 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                 {section.questions.map((question, index) => (
                   <div
                     key={question.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors ${
+                      editingQuestion?.id === question.id
+                        ? 'border-[#2d7a7c] bg-[#f0fafa] ring-2 ring-[#2d7a7c]/30'
+                        : 'border-gray-200'
+                    }`}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
