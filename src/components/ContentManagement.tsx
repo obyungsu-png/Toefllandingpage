@@ -4,7 +4,6 @@ import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, 
 // motion removed - using CSS animations
 import { FillBlanksEditor } from './FillBlanksEditor';
 import { ReadDailyLifeTemplates, DailyLifeTemplate } from './ReadDailyLifeTemplates';
-import { AcademicReadingBuilder } from './AcademicReadingBuilder';
 import { TPOOverview } from './TPOOverview';
 import { TPODetailView } from './TPODetailView';
 
@@ -100,7 +99,6 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [dateMemo, setDateMemo] = useState<string>('');
   const [showFillBlanksBuilder, setShowFillBlanksBuilder] = useState(false);
   const [showDailyLifeBuilder, setShowDailyLifeBuilder] = useState(false);
-  const [showAcademicReadingBuilder, setShowAcademicReadingBuilder] = useState(false);
   const [savedDailyLifeTemplates, setSavedDailyLifeTemplates] = useState<DailyLifeTemplate[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     type: 'question' | 'test';
