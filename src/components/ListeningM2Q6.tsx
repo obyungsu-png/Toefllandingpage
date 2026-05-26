@@ -110,7 +110,7 @@ export function ListeningM2Q6({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                     checked={selectedAnswer === option}
                     onChange={() => setSelectedAnswer(option)}
                     label={option}
-                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
+                    labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
                   />
                 ))}
               </div>
@@ -120,15 +120,15 @@ export function ListeningM2Q6({ onBack, onNext, onHome, onVolumeClick, imageUrl 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-            <div className="flex flex-row items-start justify-center" style={{gap: '60px', paddingLeft: '4%', paddingRight: '4%'}}>
-              <div style={{width:'280px', flexShrink:0}}>
+            <div className="relative" style={{minHeight: '420px'}}>
+              <div style={{position: 'absolute', left: '15%', top: 0, width: '260px'}}>
                 <ImageWithFallback 
                   src={imageUrl || "figma:asset/7b913b2206383d965add3e87836aa3fcbdacdb00.png"} 
                   alt="Woman in navy blazer"
                   className="w-full object-contain object-top" style={{maxHeight:'480px'}}
                 />
               </div>
-              <div style={{width:'42%', paddingTop:'8px'}}>
+              <div style={{position: 'absolute', left: '48%', top: '8px', width: '44%'}}>
                 <div className="space-y-7">
                   {answerOptions.map((option, index) => (
                     <RadioOption
@@ -139,7 +139,7 @@ export function ListeningM2Q6({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
-                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
+                    labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
                   />
                   ))}
                 </div>
