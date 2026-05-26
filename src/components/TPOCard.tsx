@@ -5,6 +5,7 @@ import { TPOTest } from './ContentManagement';
 interface TPOCardProps {
   number: number;
   onStartTest: (section: string) => void;
+  onReviewTest?: (section: string) => void;
   onContinueTest?: (section: string) => void;
   isLocked?: boolean;
   onUnlockClick?: () => void;
@@ -12,7 +13,7 @@ interface TPOCardProps {
   bankType?: string;
 }
 
-export function TPOCard({ number, onStartTest, onContinueTest, isLocked = false, onUnlockClick, testData, bankType = 'tpo' }: TPOCardProps) {
+export function TPOCard({ number, onStartTest, onReviewTest, onContinueTest, isLocked = false, onUnlockClick, testData, bankType = 'tpo' }: TPOCardProps) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
