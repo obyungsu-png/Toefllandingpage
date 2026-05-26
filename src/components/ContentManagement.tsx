@@ -1066,6 +1066,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
         }
       })(),
       passageTitle: (formData as any).passageTitle || undefined,
+      translationNote: (formData as any).translationNote || undefined,
+      analysisNote: (formData as any).analysisNote || undefined,
+      vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
@@ -1723,6 +1726,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         }
       })(),
       passageTitle: (formData as any).passageTitle || undefined,
+      translationNote: (formData as any).translationNote || undefined,
+      analysisNote: (formData as any).analysisNote || undefined,
+      vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
