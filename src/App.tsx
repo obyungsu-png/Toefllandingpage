@@ -4852,7 +4852,16 @@ function AppContent() {
             onSubmit={() => { setShowModule2Question15(false); setShowModule2Question16(true); }}
             leftContent={
               <div className="relative w-full">
-                <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
+                {/* CMS PRIORITY */}
+                {cmsPassageText15
+                  ? (renderDailyLifePassage(cmsPassageText15) ?? (
+                      <div className="border-2 border-gray-200 rounded-lg p-4">
+                        <p className="font-['Inter',_sans-serif] text-sm sm:text-base whitespace-pre-wrap">{cmsPassageText15}</p>
+                      </div>
+                    ))
+                  : (
+                <div className="relative w-full">
+                  <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
                   {/* Email Header Fields */}
                   <div className="bg-white">
                     <div className="flex border-b-2 border-[#9d5a2f]">
@@ -4888,6 +4897,8 @@ function AppContent() {
                     <p className="font-['Inter',_sans-serif]">John Parker</p>
                   </div>
                 </div>
+                </div>
+                  )}
               </div>
             }
             rightContent={
