@@ -36,6 +36,9 @@ interface ListeningM1WrapperProps {
   onHome: () => void;
   onComplete: () => void; // Called when Module2Intro → Next is clicked
   onScreenChange?: (screen: M1Screen) => void;
+  getCmsListeningQuestion?: (qNumber: number) => {
+    imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string;
+  } | null;
 }
 
 // Question data for each Q screen
@@ -344,14 +347,20 @@ function QuestionScreen({
   onHome,
   onBack,
   onNext,
+  cmsData,
 }: {
   data: { questionNum: number; questionText?: string; options: string[] };
   imageAsset?: string;
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  cmsData?: { imageUrl?: string; questionText?: string; options?: string[]; audioUrl?: string } | null;
 }) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  // CMS overrides
+  const displayImage = cmsData?.imageUrl || imageAsset;
+  const displayOptions = (cmsData?.options && cmsData.options.length > 0) ? cmsData.options : data.options;
+  const displayQuestion = cmsData?.questionText || data.questionText || 'Choose the best response.';
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -362,21 +371,21 @@ function QuestionScreen({
           {/* Mobile: Image -> Question -> Options layout */}
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
-            {imageAsset && (
+            {displayImage && (
               <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
-                <ImageWithFallback src={imageAsset} alt="Listening" className="w-full h-full object-contain" />
+                <ImageWithFallback src={displayImage} alt="Listening" className="w-full h-full object-contain" />
               </div>
             )}
             
             {/* Question */}
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
-              {data.questionText || 'Choose the best response.'}
+              {displayQuestion}
             </h2>
             
             {/* Options */}
             <div className="w-full max-w-2xl px-8">
               <div className="space-y-5">
-                {data.options.map((option, index) => (
+                {displayOptions.map((option, index) => (
                   <RadioOption
                     key={index}
                     id={`lm1-q${data.questionNum}-opt-${index}`}
@@ -395,13 +404,13 @@ function QuestionScreen({
           {/* Desktop: Original side-by-side layout */}
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">
-              {data.questionText || 'Choose the best response.'}
+              {displayQuestion}
             </h2>
             <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
-              {imageAsset && (
+              {displayImage && (
                 <div className="flex-shrink-0">
-                  <div className="w-96 h-96 bg-white rounded-lg overflow-hidden border border-gray-300">
-                    <ImageWithFallback src={imageAsset} alt="Listening" className="w-full h-full object-contain" />
+                  <div className="w-80 bg-white rounded-lg overflow-hidden border border-gray-300">
+                    <img src={displayImage} alt="Listening" className="w-full object-contain" style={{maxHeight: '420px', objectPosition: 'top'}} />
                   </div>
                 </div>
               )}
@@ -623,7 +632,7 @@ function Module2IntroScreen({
 // Main Wrapper Component
 // ============================================================================
 
-export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreenChange }: ListeningM1WrapperProps) {
+export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreenChange, getCmsListeningQuestion }: ListeningM1WrapperProps) {
   const [currentScreen, setCurrentScreen] = useState<M1Screen>(initialScreen);
   
   // Auto-save progress
@@ -724,10 +733,12 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
       {questionData[currentScreen] && (() => {
         const data = questionData[currentScreen];
         const imgAsset = questionImageAssets[currentScreen];
+        const cmsQ = getCmsListeningQuestion?.(data.questionNum) || null;
         return (
           <QuestionScreen
             data={data}
             imageAsset={imgAsset}
+            cmsData={cmsQ}
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}

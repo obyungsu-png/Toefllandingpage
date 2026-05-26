@@ -7422,6 +7422,13 @@ function AppContent() {
             setActiveListeningM1Screen(null);
             setActiveListeningM2Screen('q1');
           }}
+          getCmsListeningQuestion={(qNumber: number) => {
+            const sectionData = getCurrentSectionData('Listening');
+            return sectionData?.questions.find(q =>
+              (q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)) &&
+              !(q.questionType || '').toLowerCase().includes('module 2')
+            ) || null;
+          }}
         />
       )}
       {/* Listening Section - M2 Wrapper */}

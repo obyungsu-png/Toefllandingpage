@@ -1,6 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
+
+const supabaseClient = createClient(`https://${projectId}.supabase.co`, publicAnonKey);
+
+// Upload file to Supabase Storage, return public URL
+async function uploadToStorage(file: File, bucket: string): Promise<string> {
+  const ext = file.name.split('.').pop() || 'bin';
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
 // motion removed - using CSS animations
 import { FillBlanksEditor } from './FillBlanksEditor';
 import { AcademicReadingBuilder } from './AcademicReadingBuilder';
@@ -994,7 +1008,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     blanks: [] as Array<{ answer: string; maxLength: number }>
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const question: TPOQuestion = {
@@ -1023,23 +1037,32 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       blanks: formData.blanks
     };
 
-    // Handle URL inputs or file uploads (URL takes priority)
+    // Handle audio: upload to Supabase Storage if file selected
     if (formData.audioUrl.trim()) {
       question.audioUrl = formData.audioUrl.trim();
     } else if (formData.audioFile) {
-      question.audioUrl = URL.createObjectURL(formData.audioFile);
+      try {
+        question.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio');
+      } catch {
+        question.audioUrl = URL.createObjectURL(formData.audioFile);
+      }
     }
-    
+
+    // Handle image: upload to Supabase Storage if file selected
+    if (formData.imageUrl.trim()) {
+      question.imageUrl = formData.imageUrl.trim();
+    } else if (formData.imageFile) {
+      try {
+        question.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images');
+      } catch {
+        question.imageUrl = URL.createObjectURL(formData.imageFile);
+      }
+    }
+
     if (formData.videoUrl.trim()) {
       question.videoUrl = formData.videoUrl.trim();
     } else if (formData.videoFile) {
       question.videoUrl = URL.createObjectURL(formData.videoFile);
-    }
-    
-    if (formData.imageUrl.trim()) {
-      question.imageUrl = formData.imageUrl.trim();
-    } else if (formData.imageFile) {
-      question.imageUrl = URL.createObjectURL(formData.imageFile);
     }
 
     onSubmit(question);
