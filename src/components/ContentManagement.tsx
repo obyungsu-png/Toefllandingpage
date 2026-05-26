@@ -101,6 +101,30 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const editFormRef = useRef<HTMLDivElement>(null);
 
   // 편집 폼이 열리면 자동으로 스크롤
+  // Auto-create Supabase Storage buckets on mount
+  useEffect(() => {
+    const ensureBuckets = async () => {
+      try {
+        for (const bucket of [
+          { id: 'listening-audio', mime: ['audio/mpeg','audio/mp3','audio/wav','audio/ogg','audio/x-m4a'] },
+          { id: 'listening-images', mime: ['image/png','image/jpeg','image/jpg','image/webp','image/gif'] },
+        ]) {
+          const { error } = await supabaseClient.storage.createBucket(bucket.id, {
+            public: true,
+            fileSizeLimit: bucket.id === 'listening-audio' ? 52428800 : 10485760,
+            allowedMimeTypes: bucket.mime,
+          });
+          if (error && !error.message.includes('already exists')) {
+            console.warn(`Bucket ${bucket.id}:`, error.message);
+          }
+        }
+      } catch (e) {
+        // Ignore - bucket likely already exists
+      }
+    };
+    ensureBuckets();
+  }, []);
+
   useEffect(() => {
     if (editingQuestion && editFormRef.current) {
       setTimeout(() => {
