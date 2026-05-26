@@ -1313,40 +1313,58 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               <span className="text-xs text-gray-400">또는 URL 직접 입력</span>
             </div>
 
-            {/* Sample image grid */}
-            <div>
-              <p className="text-xs text-gray-500 mb-2">📌 샘플 이미지 선택:</p>
-              <div className="grid grid-cols-5 gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
-                {[
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-woman-business.png', label: '비즈니스 여성' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-man-casual.png', label: '남성 캐주얼' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-student.png', label: '학생' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-teacher.png', label: '선생님' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/library.png', label: '도서관' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/classroom.png', label: '교실' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/cafe.png', label: '카페' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/office.png', label: '사무실' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/phone.png', label: '전화' },
-                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/two-people.png', label: '두 사람' },
-                ].map((img) => (
-                  <button key={img.url} type="button"
-                    onClick={() => setFormData({ ...formData, imageUrl: img.url })}
-                    className={`relative flex flex-col items-center gap-1 p-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] ${
-                      formData.imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'
-                    }`}
-                    title={img.label}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.label}
-                      className="w-full aspect-square object-cover rounded"
-                      onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="%23f3f4f6"/><text x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="8">' + img.label + '</text></svg>'; }}
-                    />
-                    <span className="text-[9px] text-gray-500 text-center leading-tight">{img.label}</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-gray-400 mt-1">* 이미지를 먼저 Supabase Storage에 업로드한 후 URL이 동작합니다</p>
+            {/* Sample image gallery by category */}
+            <div className="space-y-3">
+              {[
+                {
+                  category: '🎙 Listen and Response (1인)',
+                  images: [
+                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                  ]
+                },
+                {
+                  category: '💬 Short Conversation (2인)',
+                  images: [
+                    { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
+                    { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
+                  ]
+                },
+                {
+                  category: '📢 Announcement',
+                  images: [
+                    { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
+                    { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
+                  ]
+                },
+              ].map(({ category, images }) => (
+                <div key={category}>
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">{category}</p>
+                  <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    {images.map((img) => (
+                      <button key={img.url} type="button"
+                        onClick={() => setFormData({ ...formData, imageUrl: img.url })}
+                        className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${
+                          formData.imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'
+                        }`}
+                        title={img.label}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.label}
+                          className="object-contain bg-white rounded"
+                          style={{ width: '72px', height: '100px', objectPosition: 'center top' }}
+                        />
+                        <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
