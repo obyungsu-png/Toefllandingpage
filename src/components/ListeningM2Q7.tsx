@@ -120,15 +120,15 @@ export function ListeningM2Q7({ onBack, onNext, onHome, onVolumeClick, imageUrl 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-            <div className="flex flex-row items-start" style={{paddingLeft: '12%', paddingRight: '6%', gap: '80px'}}>
-              <div className="flex-shrink-0">
+            <div className="flex flex-row items-start justify-center" style={{gap: '60px', paddingLeft: '4%', paddingRight: '4%'}}>
+              <div style={{width:'280px', flexShrink:0}}>
                 <ImageWithFallback 
                   src={imageUrl || "figma:asset/5fa0c07bab0c14eb14ace47b8c2d85e72ae7e4d3.png"} 
                   alt="Man in white shirt"
-                  className="w-64 object-contain"
+                  className="w-full object-contain object-top" style={{maxHeight:'480px'}}
                 />
               </div>
-              <div className="flex-1 pt-2">
+              <div style={{width:'42%', paddingTop:'8px'}}>
                 <div className="space-y-7">
                   {answerOptions.map((option, index) => (
                     <RadioOption
