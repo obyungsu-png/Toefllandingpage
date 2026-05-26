@@ -2437,12 +2437,15 @@ function AppContent() {
     const [selectedAnswer16, setSelectedAnswer16] = useState<string | null>(null);
     const [zoom16, setZoom16] = useState(1);
     
-    // Get dynamic question data from CMS
-    // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
+    // CMS PRIORITY: Q16 - academic reading, by number first, exclude Module 2
     const sectionData = getCurrentSectionData('Reading');
     const academicQuestion = sectionData?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('academic reading') || t.includes('academic') || t.includes('reading passage');
+      const num = q.questionNumber;
+      return !t.includes('module 2') && (num === 16 || num === '16' || String(num) === '16');
+    }) || sectionData?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return !t.includes('module 2') && (t.includes('academic reading') || t.includes('academic') || t.includes('reading passage'));
     });
     
     // Parse CMS data if available (supports both JSON and plain text)
@@ -2646,13 +2649,15 @@ function AppContent() {
   const Module1Question17Screen = () => {
     const [selectedAnswer17, setSelectedAnswer17] = useState<string | null>(null);
     const [zoom17, setZoom17] = useState(1);
-    // CMS PRIORITY: look up Q17 by number first
+    // CMS PRIORITY: Q17 - academic reading, exclude Module 2 tagged
     const sectionDataQ17 = getCurrentSectionData('Reading');
-    const cmsAcQ17 = sectionDataQ17?.questions.find(q =>
-      String(q.questionNumber) === '17' || q.questionNumber === 17
-    ) || sectionDataQ17?.questions.find(q => {
+    const cmsAcQ17 = sectionDataQ17?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('academic') || t.includes('reading passage');
+      const num = q.questionNumber;
+      return !t.includes('module 2') && (num === 17 || num === '17' || String(num) === '17');
+    }) || sectionDataQ17?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
     });
 
     let parsedAC17: any = null;
@@ -2830,13 +2835,15 @@ function AppContent() {
   const Module1Question18Screen = () => {
     const [selectedAnswer18, setSelectedAnswer18] = useState<string | null>(null);
     const [zoom18, setZoom18] = useState(1);
-    // CMS PRIORITY: look up Q18 by number first
+    // CMS PRIORITY: Q18 - academic reading, exclude Module 2 tagged
     const sectionDataQ18 = getCurrentSectionData('Reading');
-    const cmsAcQ18 = sectionDataQ18?.questions.find(q =>
-      String(q.questionNumber) === '18' || q.questionNumber === 18
-    ) || sectionDataQ18?.questions.find(q => {
+    const cmsAcQ18 = sectionDataQ18?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('academic') || t.includes('reading passage');
+      const num = q.questionNumber;
+      return !t.includes('module 2') && (num === 18 || num === '18' || String(num) === '18');
+    }) || sectionDataQ18?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
     });
 
     let parsedAC18: any = null;
@@ -3015,13 +3022,15 @@ function AppContent() {
   const Module1Question19Screen = () => {
     const [selectedAnswer19, setSelectedAnswer19] = useState<string | null>(null);
     const [zoom19, setZoom19] = useState(1);
-    // CMS PRIORITY: look up Q19 by number first
+    // CMS PRIORITY: Q19 - academic reading, exclude Module 2 tagged
     const sectionDataQ19 = getCurrentSectionData('Reading');
-    const cmsAcQ19 = sectionDataQ19?.questions.find(q =>
-      String(q.questionNumber) === '19' || q.questionNumber === 19
-    ) || sectionDataQ19?.questions.find(q => {
+    const cmsAcQ19 = sectionDataQ19?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('academic') || t.includes('reading passage');
+      const num = q.questionNumber;
+      return !t.includes('module 2') && (num === 19 || num === '19' || String(num) === '19');
+    }) || sectionDataQ19?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
     });
 
     let parsedAC19: any = null;
@@ -3201,13 +3210,15 @@ function AppContent() {
   const Module1Question20Screen = () => {
     const [selectedAnswer20, setSelectedAnswer20] = useState<string | null>(null);
     const [zoom20, setZoom20] = useState(1);
-    // CMS PRIORITY: look up Q20 by number first
+    // CMS PRIORITY: Q20 - academic reading, exclude Module 2 tagged
     const sectionDataQ20 = getCurrentSectionData('Reading');
-    const cmsAcQ20 = sectionDataQ20?.questions.find(q =>
-      String(q.questionNumber) === '20' || q.questionNumber === 20
-    ) || sectionDataQ20?.questions.find(q => {
+    const cmsAcQ20 = sectionDataQ20?.questions.find(q => {
       const t = (q.questionType || '').toLowerCase();
-      return t.includes('academic') || t.includes('reading passage');
+      const num = q.questionNumber;
+      return !t.includes('module 2') && (num === 20 || num === '20' || String(num) === '20');
+    }) || sectionDataQ20?.questions.find(q => {
+      const t = (q.questionType || '').toLowerCase();
+      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
     });
 
     let parsedAC20: any = null;
