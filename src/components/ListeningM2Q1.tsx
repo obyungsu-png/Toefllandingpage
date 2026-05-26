@@ -86,7 +86,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
 
       {/* Main content */}
       <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           {/* Mobile: Image -> Question -> Options */}
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
@@ -113,7 +113,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                     checked={selectedAnswer === option}
                     onChange={() => setSelectedAnswer(option)}
                     label={option}
-                    labelClassName="text-lg"
+                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                   />
                 ))}
               </div>
@@ -123,15 +123,15 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-            <div className="flex flex-row gap-20 items-start" style={{paddingLeft: '8%', paddingRight: '4%'}}>
+            <div className="flex flex-row items-start" style={{paddingLeft: '12%', paddingRight: '6%', gap: '80px'}}>
               <div className="flex-shrink-0">
                 <ImageWithFallback 
                   src={imageUrl || "figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png"} 
                   alt="Woman in business attire"
-                  className="w-72 h-auto object-contain"
+                  className="w-64 object-contain"
                 />
               </div>
-              <div className="flex-1 pt-4">
+              <div className="flex-1 pt-2">
                 <div className="space-y-7">
                   {answerOptions.map((option, index) => (
                     <RadioOption
@@ -142,7 +142,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
-                    labelClassName="text-lg"
+                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                   />
                   ))}
                 </div>

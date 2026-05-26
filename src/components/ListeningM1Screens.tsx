@@ -367,7 +367,7 @@ function QuestionScreen({
       <ScreenHeader onHome={onHome} onBack={onBack} onNext={onNext} />
       <SectionTab label="Listening" questionInfo={`Question ${data.questionNum} of 18`} />
       <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           {/* Mobile: Image -> Question -> Options layout */}
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
@@ -406,13 +406,13 @@ function QuestionScreen({
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
               {displayQuestion}
             </h2>
-            <div className="flex flex-row gap-20 items-start" style={{paddingLeft: '8%', paddingRight: '4%'}}>
+            <div className="flex flex-row items-start" style={{paddingLeft: '12%', paddingRight: '6%', gap: '80px'}}>
               {displayImage && (
                 <div className="flex-shrink-0">
-                  <img src={displayImage} alt="Listening" className="w-72 object-contain" style={{maxHeight: '420px', objectPosition: 'top'}} />
+                  <img src={displayImage} alt="Listening" className="w-64 object-contain" style={{maxHeight: '400px', objectPosition: 'top'}} />
                 </div>
               )}
-              <div className="flex-1 pt-4">
+              <div className="flex-1 pt-2">
                 <div className="space-y-7">
                   {displayOptions.map((option, index) => (
                     <RadioOption
@@ -423,7 +423,7 @@ function QuestionScreen({
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
-                      labelClassName="text-lg"
+                      labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                     />
                   ))}
                 </div>
