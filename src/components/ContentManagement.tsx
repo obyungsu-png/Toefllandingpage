@@ -1339,6 +1339,12 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                   images: [
                     { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
                     { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
+                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
                   ]
                 },
               ].map(({ category, images }) => (
