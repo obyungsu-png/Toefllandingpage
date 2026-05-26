@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { supabase as supabaseClient } from '../utils/supabase/client';
 
-const supabaseClient = createClient(`https://${projectId}.supabase.co`, publicAnonKey);
+
+
 
 // Upload file to Supabase Storage, return public URL
 async function uploadToStorage(file: File, bucket: string): Promise<string> {

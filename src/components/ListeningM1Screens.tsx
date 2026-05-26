@@ -745,6 +745,12 @@ function Module2IntroScreen({
 export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreenChange, getCmsListeningQuestion }: ListeningM1WrapperProps) {
   const [currentScreen, setCurrentScreen] = useState<M1Screen>(initialScreen);
   
+  // Review mode = started from a mid-flow screen (not 'intro')
+  // Don't save/restore progress in review mode to avoid spurious restore modals
+  const isReviewMode = initialScreen !== 'intro';
+
+  // Auto-save progress
+  
   // Auto-save progress
   const {
     savedProgress,
@@ -755,7 +761,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
     startFresh
   } = useTestProgress({
     testType: 'listening_m1',
-    enabled: true
+    enabled: !isReviewMode
   });
 
   // Restore progress on mount

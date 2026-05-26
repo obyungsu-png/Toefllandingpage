@@ -71,6 +71,9 @@ export function ListeningM2Wrapper({
 }: ListeningM2WrapperProps) {
   const [screen, setScreen] = useState<M2Screen>(initialScreen);
   
+  // Review mode = started from a mid-flow screen (not 'q1')
+  const isReviewMode = initialScreen !== 'q1';
+
   // Auto-save progress
   const {
     savedProgress,
@@ -81,7 +84,7 @@ export function ListeningM2Wrapper({
     startFresh
   } = useTestProgress({
     testType: 'listening_m2',
-    enabled: true
+    enabled: !isReviewMode
   });
 
   // Restore progress on mount

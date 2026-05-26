@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mic, Play, Square, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
-import { createClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { supabase } from '../utils/supabase/client';
+
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface PronunciationAnalyzerProps {
@@ -16,11 +16,7 @@ interface PitchPoint {
   pitch: number;
 }
 
-// Initialize Supabase client
-const supabase = createClient(
-  `https://${projectId}.supabase.co`,
-  publicAnonKey
-);
+
 
 export function PronunciationAnalyzer({ 
   nativeText, 
