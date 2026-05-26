@@ -1692,12 +1692,14 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     audioFile: null as File | null,
     videoFile: null as File | null,
     imageFile: null as File | null,
+    imageUrl: question.imageUrl || '',
+    audioUrl: question.audioUrl || '',
     duration: question.duration || 0,
     difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
     blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const updatedQuestion: TPOQuestion = {
@@ -1726,15 +1728,23 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       blanks: formData.blanks
     };
 
-    // Handle file uploads (in a real app, you'd upload to a server)
+    // Handle file uploads to Supabase or use URL from gallery
+    if ((formData as any).audioUrl?.trim()) {
+      updatedQuestion.audioUrl = (formData as any).audioUrl.trim();
+    }
     if (formData.audioFile) {
-      updatedQuestion.audioUrl = URL.createObjectURL(formData.audioFile);
+      try { updatedQuestion.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio'); }
+      catch { updatedQuestion.audioUrl = URL.createObjectURL(formData.audioFile); }
+    }
+    if ((formData as any).imageUrl?.trim()) {
+      updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
+    }
+    if (formData.imageFile) {
+      try { updatedQuestion.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images'); }
+      catch { updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile); }
     }
     if (formData.videoFile) {
       updatedQuestion.videoUrl = URL.createObjectURL(formData.videoFile);
-    }
-    if (formData.imageFile) {
-      updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile);
     }
 
     onSubmit(updatedQuestion);
@@ -1971,6 +1981,72 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
           />
         </div>
+
+        {/* Image Gallery for Listening questions (Edit form) */}
+        {section === 'Listening' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question Image
+              <span className="ml-2 text-xs text-gray-400 font-normal">(선택지 왼쪽에 표시되는 이미지)</span>
+            </label>
+            {(formData as any).imageUrl && (
+              <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <img src={(formData as any).imageUrl} alt="selected" className="w-16 h-16 object-cover rounded" />
+                <div className="flex-1 text-xs text-green-700 truncate">{((formData as any).imageUrl || '').split('/').pop()}</div>
+                <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '' } as any)}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+              </div>
+            )}
+            <input type="text" value={(formData as any).imageUrl || ''} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] mb-2" placeholder="이미지 URL을 직접 입력하거나 아래에서 선택..." />
+            <div className="flex items-center gap-2 mb-3">
+              <label className="cursor-pointer px-3 py-2 bg-[#2d7a7c] text-white text-xs font-semibold rounded-lg hover:bg-[#1e6b73] transition-colors">
+                📁 파일 업로드
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) { setFormData({ ...formData, imageFile: file, imageUrl: URL.createObjectURL(file) } as any); } }} />
+              </label>
+              <span className="text-xs text-gray-400">또는 URL 직접 입력</span>
+            </div>
+            <div className="space-y-3">
+              {[
+                { category: '🎙 Listen and Response (1인)', images: [
+                  { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                  { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                  { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                  { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                  { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                  { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                ]},
+                { category: '💬 Short Conversation (2인)', images: [
+                  { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
+                  { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
+                ]},
+                { category: '📢 Announcement', images: [
+                  { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
+                  { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
+                  { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                  { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                  { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                  { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                  { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                  { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                ]},
+              ].map(({ category, images }) => (
+                <div key={category}>
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">{category}</p>
+                  <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    {images.map((img) => (
+                      <button key={img.url} type="button" onClick={() => setFormData({ ...formData, imageUrl: img.url } as any)}
+                        className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${(formData as any).imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'}`} title={img.label}>
+                        <img src={img.url} alt={img.label} className="object-contain bg-white rounded" style={{ width: '72px', height: '100px', objectPosition: 'center top' }} />
+                        <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Page Title (for Daily Life reading screens) */}
         {section === 'Reading' && (
@@ -2225,7 +2301,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!file) {
