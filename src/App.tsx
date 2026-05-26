@@ -1574,7 +1574,7 @@ function AppContent() {
       : null);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty } | null = null;
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
@@ -1596,6 +1596,9 @@ function AppContent() {
         contentKey: `reading-${currentTest?.tpoNumber ?? 'none'}-${currentTest?.section ?? 'none'}`,
         questionType: readingQuestionType,
         difficulty: reviewQuestion?.difficulty,
+        translationNote: reviewQuestion?.translationNote,
+        analysisNote: (reviewQuestion as any)?.analysisNote,
+        vocabularyNote: reviewQuestion?.vocabularyNote,
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
       const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
@@ -1620,6 +1623,9 @@ function AppContent() {
           contentKey: `listening-${screen}`,
           questionType: listeningQuestionType,
           difficulty: reviewQuestion?.difficulty,
+          translationNote: reviewQuestion?.translationNote,
+          analysisNote: (reviewQuestion as any)?.analysisNote,
+          vocabularyNote: reviewQuestion?.vocabularyNote,
         };
       }
     } else if (activeWritingScreen) {
@@ -7524,6 +7530,9 @@ function AppContent() {
           questionType={activeReviewPanel.questionType}
           currentDifficulty={activeReviewPanel.difficulty}
           onStartTraining={setReviewTrainingRequest}
+          translationNote={activeReviewPanel.translationNote}
+          analysisNote={activeReviewPanel.analysisNote}
+          vocabularyNote={activeReviewPanel.vocabularyNote}
         />
       )}
 

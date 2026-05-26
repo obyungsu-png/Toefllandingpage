@@ -364,7 +364,19 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const renderActiveTab = () => {
     if (!activeTab) return null;
 
-    if (activeTab === 'Dictation') return renderDictation();
+    if (activeTab === 'Dictation') {
+      if (translationNote) {
+        return (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Listening Script</p>
+            <div className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border border-gray-200">
+              {translationNote}
+            </div>
+          </div>
+        );
+      }
+      return renderDictation();
+    }
     if (activeTab === 'Key Words') return renderWords();
         if (activeTab === 'Translation') {
       if (translationNote) {

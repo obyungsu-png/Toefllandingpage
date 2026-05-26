@@ -1551,7 +1551,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Translation <span className="text-xs text-gray-400 font-normal">(Korean translation of the passage/question)</span>
+              {section === 'Listening' ? 'Dictation Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 받아쓰기 스크립트)' : '(Korean translation of the passage/question)'}</span>
             </label>
             <textarea
               value={(formData as any).translationNote || ''}
@@ -1563,7 +1563,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
+              Analysis <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(문제 풀이 전략)' : '(question strategy & answer explanation)'}</span>
             </label>
             <textarea
               value={(formData as any).analysisNote || ''}
@@ -1575,7 +1575,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Key Words <span className="text-xs text-gray-400 font-normal">(one word per line: word = meaning)</span>
+              Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>
             </label>
             <textarea
               value={(formData as any).vocabularyNote || ''}
@@ -2170,7 +2170,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Translation <span className="text-xs text-gray-400 font-normal">(Korean translation of the passage/question)</span>
+              {section === 'Listening' ? 'Dictation Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 받아쓰기 스크립트)' : '(Korean translation of the passage/question)'}</span>
             </label>
             <textarea
               value={(formData as any).translationNote || ''}
@@ -2182,7 +2182,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
+              Analysis <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(문제 풀이 전략)' : '(question strategy & answer explanation)'}</span>
             </label>
             <textarea
               value={(formData as any).analysisNote || ''}
@@ -2194,7 +2194,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Key Words <span className="text-xs text-gray-400 font-normal">(one word per line: word = meaning)</span>
+              Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>
             </label>
             <textarea
               value={(formData as any).vocabularyNote || ''}
