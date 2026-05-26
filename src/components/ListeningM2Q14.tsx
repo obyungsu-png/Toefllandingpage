@@ -7,9 +7,10 @@ interface ListeningM2Q14Props {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick: () => void;
+  imageUrl?: string;
 }
 
-export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick }: ListeningM2Q14Props) {
+export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl }: ListeningM2Q14Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   const answerOptions = [

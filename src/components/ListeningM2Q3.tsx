@@ -8,9 +8,10 @@ interface ListeningM2Q3Props {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick: () => void;
+  imageUrl?: string;
 }
 
-export function ListeningM2Q3({ onBack, onNext, onHome, onVolumeClick }: ListeningM2Q3Props) {
+export function ListeningM2Q3({ onBack, onNext, onHome, onVolumeClick, imageUrl }: ListeningM2Q3Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   const answerOptions = [
@@ -89,7 +90,7 @@ export function ListeningM2Q3({ onBack, onNext, onHome, onVolumeClick }: Listeni
           {/* Mobile: Image -> Question -> Options */}
           <div className="md:hidden flex flex-col items-center">
             <ImageWithFallback 
-              src="figma:asset/8dff692d23dd45f1754de714cf1d6d15abccd0a8.png"
+              src={imageUrl || "figma:asset/8dff692d23dd45f1754de714cf1d6d15abccd0a8.png"}
               alt="Man in pink shirt"
               className="w-40 h-auto object-contain mb-6"
             />
@@ -122,7 +123,7 @@ export function ListeningM2Q3({ onBack, onNext, onHome, onVolumeClick }: Listeni
             <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
               <div className="flex-shrink-0">
                 <ImageWithFallback 
-                  src="figma:asset/8dff692d23dd45f1754de714cf1d6d15abccd0a8.png"
+                  src={imageUrl || "figma:asset/8dff692d23dd45f1754de714cf1d6d15abccd0a8.png"}
                   alt="Man in pink shirt"
                   className="w-80 h-auto object-contain"
                 />

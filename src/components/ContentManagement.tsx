@@ -1268,6 +1268,89 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
+        {/* Image Gallery for Listening questions */}
+        {section === 'Listening' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Question Image
+              <span className="ml-2 text-xs text-gray-400 font-normal">(선택지 왼쪽에 표시되는 이미지)</span>
+            </label>
+
+            {/* Current selection */}
+            {formData.imageUrl && (
+              <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <img src={formData.imageUrl} alt="selected" className="w-16 h-16 object-cover rounded" />
+                <div className="flex-1 text-xs text-green-700 truncate">{formData.imageUrl.split('/').pop()}</div>
+                <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">
+                  제거
+                </button>
+              </div>
+            )}
+
+            {/* Direct URL input */}
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] mb-2"
+              placeholder="이미지 URL을 직접 입력하거나 아래에서 선택..."
+            />
+
+            {/* File upload */}
+            <div className="flex items-center gap-2 mb-3">
+              <label className="cursor-pointer px-3 py-2 bg-[#2d7a7c] text-white text-xs font-semibold rounded-lg hover:bg-[#1e6b73] transition-colors">
+                📁 파일 업로드
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, imageFile: file, imageUrl: URL.createObjectURL(file) });
+                    }
+                  }}
+                />
+              </label>
+              <span className="text-xs text-gray-400">또는 URL 직접 입력</span>
+            </div>
+
+            {/* Sample image grid */}
+            <div>
+              <p className="text-xs text-gray-500 mb-2">📌 샘플 이미지 선택:</p>
+              <div className="grid grid-cols-5 gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
+                {[
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-woman-business.png', label: '비즈니스 여성' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-man-casual.png', label: '남성 캐주얼' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-student.png', label: '학생' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/person-teacher.png', label: '선생님' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/library.png', label: '도서관' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/classroom.png', label: '교실' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/cafe.png', label: '카페' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/office.png', label: '사무실' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/phone.png', label: '전화' },
+                  { url: 'https://xmdfbjfmiavuxlpzawan.supabase.co/storage/v1/object/public/listening-images/two-people.png', label: '두 사람' },
+                ].map((img) => (
+                  <button key={img.url} type="button"
+                    onClick={() => setFormData({ ...formData, imageUrl: img.url })}
+                    className={`relative flex flex-col items-center gap-1 p-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] ${
+                      formData.imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'
+                    }`}
+                    title={img.label}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.label}
+                      className="w-full aspect-square object-cover rounded"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="%23f3f4f6"/><text x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="8">' + img.label + '</text></svg>'; }}
+                    />
+                    <span className="text-[9px] text-gray-500 text-center leading-tight">{img.label}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">* 이미지를 먼저 Supabase Storage에 업로드한 후 URL이 동작합니다</p>
+            </div>
+          </div>
+        )}
+
         {/* Page Title (for Daily Life reading screens) */}
         {section === 'Reading' && (
           formData.questionType === 'Read in Daily Life' ||

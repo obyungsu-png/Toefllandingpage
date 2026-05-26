@@ -7450,6 +7450,12 @@ function AppContent() {
             setActiveListeningM2Screen(null);
             setActiveListeningM1Screen('module2-intro');
           }}
+          getCmsListeningQuestion={(qNumber: number) => {
+            const sectionData = getCurrentSectionData('Listening');
+            return sectionData?.questions.find(q =>
+              q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)
+            ) || null;
+          }}
         />
       )}
 

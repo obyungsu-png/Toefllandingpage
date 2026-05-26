@@ -8,9 +8,10 @@ interface ListeningM2Q1Props {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick: () => void;
+  imageUrl?: string;
 }
 
-export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick }: ListeningM2Q1Props) {
+export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl }: ListeningM2Q1Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   const answerOptions = [
@@ -90,7 +91,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick }: Listeni
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
             <ImageWithFallback 
-              src="figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png" 
+              src={imageUrl || "figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png"} 
               alt="Woman in business attire"
               className="w-40 h-auto object-contain mb-6"
             />
@@ -125,7 +126,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick }: Listeni
             <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
               <div className="flex-shrink-0">
                 <ImageWithFallback 
-                  src="figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png" 
+                  src={imageUrl || "figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png"} 
                   alt="Woman in business attire"
                   className="w-80 h-auto object-contain"
                 />

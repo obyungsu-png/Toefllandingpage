@@ -57,6 +57,7 @@ interface ListeningM2WrapperProps {
   /** Called when user clicks Back on Q1 (go back to M1) */
   onBackToM1?: () => void;
   onScreenChange?: (screen: M2Screen) => void;
+  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string } | null;
 }
 
 export function ListeningM2Wrapper({
@@ -66,6 +67,7 @@ export function ListeningM2Wrapper({
   onVolumeClick,
   onBackToM1,
   onScreenChange,
+  getCmsListeningQuestion,
 }: ListeningM2WrapperProps) {
   const [screen, setScreen] = useState<M2Screen>(initialScreen);
   
@@ -133,7 +135,10 @@ export function ListeningM2Wrapper({
     }
   };
 
+  const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
+  // Per-question props with CMS imageUrl
+  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n) });
 
   return (
     <>
@@ -146,25 +151,25 @@ export function ListeningM2Wrapper({
         />
       )}
 
-      {screen === 'q1' && <ListeningM2Q1 {...commonProps} />}
-      {screen === 'q2' && <ListeningM2Q2 {...commonProps} />}
-      {screen === 'q3' && <ListeningM2Q3 {...commonProps} />}
-      {screen === 'q4' && <ListeningM2Q4 {...commonProps} />}
-      {screen === 'q5' && <ListeningM2Q5 {...commonProps} />}
-      {screen === 'q6' && <ListeningM2Q6 {...commonProps} />}
-      {screen === 'q7' && <ListeningM2Q7 {...commonProps} />}
-      {screen === 'q8' && <ListeningM2Q8 {...commonProps} />}
+      {screen === 'q1' && <ListeningM2Q1 {...qProps(1)} />}
+      {screen === 'q2' && <ListeningM2Q2 {...qProps(2)} />}
+      {screen === 'q3' && <ListeningM2Q3 {...qProps(3)} />}
+      {screen === 'q4' && <ListeningM2Q4 {...qProps(4)} />}
+      {screen === 'q5' && <ListeningM2Q5 {...qProps(5)} />}
+      {screen === 'q6' && <ListeningM2Q6 {...qProps(6)} />}
+      {screen === 'q7' && <ListeningM2Q7 {...qProps(7)} />}
+      {screen === 'q8' && <ListeningM2Q8 {...qProps(8)} />}
       {screen === 'conversation' && <ListeningM2Conversation {...commonProps} />}
-      {screen === 'q9' && <ListeningM2Q9 {...commonProps} />}
-      {screen === 'q10' && <ListeningM2Q10 {...commonProps} />}
+      {screen === 'q9' && <ListeningM2Q9 {...qProps(9)} />}
+      {screen === 'q10' && <ListeningM2Q10 {...qProps(10)} />}
       {screen === 'announcement' && <ListeningM2Announcement {...commonProps} />}
-      {screen === 'q11' && <ListeningM2Q11 {...commonProps} />}
-      {screen === 'q12' && <ListeningM2Q12 {...commonProps} />}
+      {screen === 'q11' && <ListeningM2Q11 {...qProps(11)} />}
+      {screen === 'q12' && <ListeningM2Q12 {...qProps(12)} />}
       {screen === 'lecture' && <ListeningM2Lecture {...commonProps} />}
-      {screen === 'q13' && <ListeningM2Q13 {...commonProps} />}
-      {screen === 'q14' && <ListeningM2Q14 {...commonProps} />}
-      {screen === 'q15' && <ListeningM2Q15 {...commonProps} />}
-      {screen === 'q16' && <ListeningM2Q16 {...commonProps} />}
+      {screen === 'q13' && <ListeningM2Q13 {...qProps(13)} />}
+      {screen === 'q14' && <ListeningM2Q14 {...qProps(14)} />}
+      {screen === 'q15' && <ListeningM2Q15 {...qProps(15)} />}
+      {screen === 'q16' && <ListeningM2Q16 {...qProps(16)} />}
       {screen === 'end' && (
         <ListeningM2End
           onBack={goBack}
