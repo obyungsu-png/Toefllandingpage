@@ -361,6 +361,43 @@ function QuestionScreen({
   const displayImage = cmsData?.imageUrl || imageAsset;
   const displayOptions = (cmsData?.options && cmsData.options.length > 0) ? cmsData.options : data.options;
   const displayQuestion = cmsData?.questionText || data.questionText || 'Choose the best response.';
+  const displayAudio = cmsData?.audioUrl || null;
+
+  // Audio playback
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioPlayed, setAudioPlayed] = useState(false);
+
+  React.useEffect(() => {
+    // Auto-play audio when screen loads (only once)
+    if (displayAudio && !audioPlayed) {
+      const audio = new Audio(displayAudio);
+      audioRef.current = audio;
+      audio.play().then(() => {
+        setIsPlaying(true);
+        setAudioPlayed(true);
+      }).catch(() => {});
+      audio.onended = () => setIsPlaying(false);
+      return () => { audio.pause(); audio.currentTime = 0; };
+    }
+  }, [displayAudio]);
+
+  const toggleAudio = () => {
+    if (!audioRef.current && displayAudio) {
+      audioRef.current = new Audio(displayAudio);
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -406,6 +443,21 @@ function QuestionScreen({
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
               {displayQuestion}
             </h2>
+            {/* Audio play button */}
+            {displayAudio && (
+              <div className="flex justify-center mb-6">
+                <button onClick={toggleAudio}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all shadow-md ${
+                    isPlaying ? 'bg-[#1e6b73] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}>
+                  {isPlaying ? (
+                    <><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg> Playing...</>
+                  ) : (
+                    <><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Play Audio</>
+                  )}
+                </button>
+              </div>
+            )}
             <div className="relative" style={{minHeight: '420px'}}>
               {displayImage && (
                 <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
