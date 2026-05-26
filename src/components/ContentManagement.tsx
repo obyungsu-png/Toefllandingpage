@@ -1561,7 +1561,6 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               placeholder="지문/문제의 한국어 번역을 입력하세요..."
             />
           </div>
-          {section !== 'Listening' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
@@ -1574,7 +1573,6 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
             />
           </div>
-          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>
@@ -2182,7 +2180,6 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               placeholder="지문/문제의 한국어 번역을 입력하세요..."
             />
           </div>
-          {section !== 'Listening' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
@@ -2195,7 +2192,6 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
             />
           </div>
-          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>

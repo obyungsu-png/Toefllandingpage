@@ -33,7 +33,7 @@ interface DictationExercise {
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   reading: ['Translation', 'Analysis', 'Key Words', 'Practice'],
-  listening: ['Dictation', 'Key Words', 'Practice'],
+  listening: ['Dictation', 'Key Words', 'Analysis', 'Practice'],
   'writing-basic': ['Practice'],
   'writing-guided': ['Analysis', 'Expressions', 'Template', 'Practice'],
   'speaking-repeat': ['Dictation', 'Key Words', 'Practice'],
