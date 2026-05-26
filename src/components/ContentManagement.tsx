@@ -370,6 +370,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       {viewMode === 'overview' && (
         <TPOOverview
           allTests={getAllTestsOrganized()}
+          tests={tests || []}
           onSelectTest={(testType, testNumber) => {
             setActiveTestType(testType as 'TPO' | 'Test' | 'Training');
             setSelectedTestNumber(testNumber);
@@ -506,12 +507,15 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         </div>
 
         {/* Year / Month / Official Tag */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <h4 className="font-medium text-gray-700 mb-3 text-xs md:text-sm">Test Metadata (for filtering)</h4>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="mt-4 pt-4 border-t-2 border-[#2d7a7c]/20">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-5 bg-[#2d7a7c] rounded-full" />
+            <h4 className="font-bold text-[#2d7a7c] text-xs md:text-sm">📅 연도 · 월 설정 <span className="text-gray-400 font-normal">(카드 배지 + 필터 연동)</span></h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 bg-[#f0fafa] border border-[#2d7a7c]/20 rounded-xl p-3 md:p-4">
             {/* Year */}
             <div>
-              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Year</label>
+              <label className="block text-xs md:text-sm font-bold text-[#2d7a7c] mb-2">🗓 Year</label>
               <select
                 value={selectedYear || ''}
                 onChange={(e) => {
@@ -523,10 +527,10 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                     onUpdateTest(updatedTest);
                   }
                 }}
-                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
+                className="w-full px-3 md:px-4 py-2 border-2 border-[#2d7a7c]/30 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base font-medium bg-white"
               >
-                <option value="">Not Set</option>
-                {[2024, 2025, 2026, 2027].map(y => (
+                <option value="">미설정</option>
+                {[2023, 2024, 2025, 2026, 2027].map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
@@ -534,7 +538,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
             {/* Month */}
             <div>
-              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Month</label>
+              <label className="block text-xs md:text-sm font-bold text-[#e67e22] mb-2">📆 Month</label>
               <select
                 value={selectedMonth || ''}
                 onChange={(e) => {
@@ -546,12 +550,12 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                     onUpdateTest(updatedTest);
                   }
                 }}
-                className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
+                className="w-full px-3 md:px-4 py-2 border-2 border-[#e67e22]/30 rounded-lg focus:ring-2 focus:ring-[#e67e22] focus:border-transparent text-sm md:text-base font-medium bg-white"
               >
-                <option value="">Not Set</option>
+                <option value="">미설정</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                   <option key={m} value={m}>
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ({m})
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ({m}월)
                   </option>
                 ))}
               </select>
