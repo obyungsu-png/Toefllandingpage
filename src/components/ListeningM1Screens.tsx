@@ -364,12 +364,14 @@ function QuestionScreen({
   const displayQuestion = cmsData?.questionText || data.questionText || 'Choose the best response.';
   const displayAudio = cmsData?.audioUrl || null;
 
-  // Audio playback - auto-play after 1.5s delay
+  // Audio playback - auto-play after 1.5s delay, only once per question
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const audioPlayedRef = React.useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   React.useEffect(() => {
-    if (displayAudio) {
+    if (displayAudio && !audioPlayedRef.current) {
+      audioPlayedRef.current = true;
       const timer = setTimeout(() => {
         const audio = new Audio(displayAudio);
         audioRef.current = audio;
@@ -472,12 +474,14 @@ function QuestionScreen({
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
               You must enter an answer before you can leave this question.
             </p>
-            <button
-              onClick={() => setShowMustAnswer(false)}
-              className="px-8 py-3 bg-[#1e6b73] text-white font-semibold rounded-full border-2 border-[#164f54] hover:bg-[#164f54] transition-colors text-lg"
-            >
-              Return to Question
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowMustAnswer(false)}
+                className="px-8 py-3 bg-[#1e6b73] text-white font-semibold rounded-full border-2 border-[#164f54] hover:bg-[#164f54] transition-colors text-lg"
+              >
+                Return to Question
+              </button>
+            </div>
           </div>
         </div>
       )}
