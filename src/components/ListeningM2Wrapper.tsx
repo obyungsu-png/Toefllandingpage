@@ -57,7 +57,7 @@ interface ListeningM2WrapperProps {
   /** Called when user clicks Back on Q1 (go back to M1) */
   onBackToM1?: () => void;
   onScreenChange?: (screen: M2Screen) => void;
-  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string } | null;
+  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string } | null;
 }
 
 export function ListeningM2Wrapper({
@@ -136,9 +136,10 @@ export function ListeningM2Wrapper({
   };
 
   const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
+  const getQAudioUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.audioUrl || undefined;
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
-  // Per-question props with CMS imageUrl
-  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n) });
+  // Per-question props with CMS imageUrl and audioUrl
+  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n), audioUrl: getQAudioUrl(n) });
 
   return (
     <>

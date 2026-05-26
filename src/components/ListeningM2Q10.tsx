@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MobileFooter } from './MobileFooter';
 import { RadioOption } from './RadioOption';
 
@@ -8,10 +8,44 @@ interface ListeningM2Q10Props {
   onHome: () => void;
   onVolumeClick: () => void;
   imageUrl?: string;
+  audioUrl?: string;
 }
 
-export function ListeningM2Q10({ onBack, onNext, onHome, onVolumeClick, imageUrl }: ListeningM2Q10Props) {
+export function ListeningM2Q10({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl }: ListeningM2Q10Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  // Audio: auto-play 1s after mount, replay via button
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioPlayedRef = useRef(false);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+
+  useEffect(() => {
+    audioPlayedRef.current = false;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    setIsPlaying(false);
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (audioUrl && !audioPlayedRef.current) {
+      audioPlayedRef.current = true;
+      const timer = setTimeout(() => {
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        audio.onended = () => setIsPlaying(false);
+      }, 1000);
+      return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); } };
+    }
+  }, [audioUrl]);
+
+  const handlePlayAudio = () => {
+    if (!audioUrl || isPlaying) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    audio.onended = () => setIsPlaying(false);
+  };
+
 
   const answerOptions = [
     "The device is cheaper.",
@@ -96,6 +130,17 @@ export function ListeningM2Q10({ onBack, onNext, onHome, onVolumeClick, imageUrl
               </svg>
             </div>
             
+            {/* Play Audio Button */}
+            {audioUrl && (
+              <button
+                onClick={handlePlayAudio}
+                disabled={isPlaying}
+                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base mb-6 transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
+              >
+                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
+                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+              </button>
+            )}
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
               What reason does the woman give for her suggestion?
             </h2>
@@ -120,7 +165,20 @@ export function ListeningM2Q10({ onBack, onNext, onHome, onVolumeClick, imageUrl
 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
-            <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
+                        {/* Play Audio Button - Desktop */}
+            {audioUrl && (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={handlePlayAudio}
+                  disabled={isPlaying}
+                  className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
+                >
+                  <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
+                  <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+                </button>
+              </div>
+            )}
+<div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
               <div className="flex-shrink-0">
                 <div className="w-96 h-96 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
                   <svg className="w-24 h-24 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

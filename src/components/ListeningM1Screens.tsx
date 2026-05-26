@@ -393,10 +393,19 @@ function QuestionScreen({
         audioRef.current = audio;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
-      }, 1500);
+      }, 1000);
       return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } };
     }
   }, [displayAudio, data.questionNum]);
+
+  const handlePlayAudio = () => {
+    if (!displayAudio || isPlaying) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    const audio = new Audio(displayAudio);
+    audioRef.current = audio;
+    audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    audio.onended = () => setIsPlaying(false);
+  };
 
   // Must answer check before next
   const handleNext = () => {
@@ -422,6 +431,22 @@ function QuestionScreen({
               </div>
             )}
             
+            {/* Play Audio Button - Mobile */}
+            {displayAudio && (
+              <button
+                onClick={handlePlayAudio}
+                disabled={isPlaying}
+                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base mb-6 transition-all shadow-sm ${
+                  isPlaying
+                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+                }`}
+              >
+                <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+              </button>
+            )}
+
             {/* Question */}
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
               {displayQuestion}
@@ -448,6 +473,23 @@ function QuestionScreen({
 
           {/* Desktop: Original side-by-side layout */}
           <div className="hidden md:block">
+            {/* Play Audio Button - Desktop */}
+            {displayAudio && (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={handlePlayAudio}
+                  disabled={isPlaying}
+                  className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
+                    isPlaying
+                      ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                      : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+                  }`}
+                >
+                  <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+                  <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+                </button>
+              </div>
+            )}
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
               {displayQuestion}
             </h2>
