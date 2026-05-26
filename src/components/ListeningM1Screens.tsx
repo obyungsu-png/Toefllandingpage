@@ -403,20 +403,18 @@ function QuestionScreen({
 
           {/* Desktop: Original side-by-side layout */}
           <div className="hidden md:block">
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">
+            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
               {displayQuestion}
             </h2>
-            <div className="flex flex-row gap-16 items-start justify-center pl-12 mt-12">
+            <div className="flex flex-row gap-16 items-start justify-center pl-12">
               {displayImage && (
                 <div className="flex-shrink-0">
-                  <div className="w-80 bg-white rounded-lg overflow-hidden border border-gray-300">
-                    <img src={displayImage} alt="Listening" className="w-full object-contain" style={{maxHeight: '420px', objectPosition: 'top'}} />
-                  </div>
+                  <img src={displayImage} alt="Listening" className="w-72 object-contain" style={{maxHeight: '420px', objectPosition: 'top'}} />
                 </div>
               )}
-              <div className="flex-1 max-w-xl mt-8">
+              <div className="flex-1 max-w-xl">
                 <div className="space-y-6">
-                  {data.options.map((option, index) => (
+                  {displayOptions.map((option, index) => (
                     <RadioOption
                       key={index}
                       id={`lm1-q${data.questionNum}-opt-${index}`}
