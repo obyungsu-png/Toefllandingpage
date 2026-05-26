@@ -162,17 +162,17 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
         </div>
       )}
 
-      <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-3 sm:px-4 h-11 sm:h-13 md:h-14">
-        <p className="font-['Inter',_sans-serif] text-white text-base sm:text-xl md:text-2xl font-bold tracking-wide">{customTitle || `Test ${number}`}</p>
+      <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-4 py-3 min-h-[52px]">
+        <p className="font-['Inter',_sans-serif] text-white text-xl sm:text-2xl font-bold tracking-wide">{customTitle || `Test ${number}`}</p>
         {testData && (testData.year || testData.month) && (
-          <div className="flex flex-col items-end gap-0.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             {testData.year && (
-              <span className="text-[10px] sm:text-[11px] px-2 py-0.5 bg-white/25 text-white rounded-full font-bold tracking-wide border border-white/30 leading-tight">
+              <span className="text-xs px-2.5 py-1 bg-white/25 text-white rounded-full font-bold tracking-wide border border-white/40">
                 {testData.year}
               </span>
             )}
             {testData.month && (
-              <span className="text-[10px] sm:text-[11px] px-2 py-0.5 bg-[#e67e22] text-white rounded-full font-bold shadow-sm leading-tight">
+              <span className="text-xs px-2.5 py-1 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
                 {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}
               </span>
             )}
