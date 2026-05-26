@@ -149,12 +149,12 @@ export function TPOCard({ number, onStartTest, onContinueTest, isLocked = false,
         {testData && (testData.year || testData.month) && (
           <div className="flex items-center gap-1">
             {testData.year && (
-              <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-white/20 text-white rounded-full font-medium">
+              <span className="text-[10px] sm:text-[11px] md:text-xs px-2 py-0.5 bg-white/25 text-white rounded-full font-bold tracking-wide border border-white/30">
                 {testData.year}
               </span>
             )}
             {testData.month && (
-              <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 bg-[#e67e22]/80 text-white rounded-full font-medium">
+              <span className="text-[10px] sm:text-[11px] md:text-xs px-2 py-0.5 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
                 {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}
               </span>
             )}
