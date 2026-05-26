@@ -393,9 +393,19 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             setShowUploadForm(true);
           }}
           onEditQuestion={(question) => {
+            // Auto-switch to the section that contains this question
+            const test = getExistingTest();
+            if (test) {
+              const owningSection = test.sections.find(s =>
+                s.questions.some(q => q.id === question.id)
+              );
+              if (owningSection) {
+                setSelectedSection(owningSection.sectionType);
+              }
+            }
             setEditingQuestion(question);
             setViewMode('edit');
-            setShowUploadForm(true);
+            setShowUploadForm(false);
           }}
           onDeleteQuestion={(questionId) => {
             setDeleteConfirmation({
@@ -917,7 +927,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:`Q${q.questionNumber}`,onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
@@ -945,7 +955,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'').replace(' (Module 2)','')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:`Q${q.questionNumber}`,onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
