@@ -358,6 +358,12 @@ function QuestionScreen({
 }) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showMustAnswer, setShowMustAnswer] = useState(false);
+
+  // Reset answer when question changes
+  React.useEffect(() => {
+    setSelectedAnswer(null);
+    setShowMustAnswer(false);
+  }, [data.questionNum]);
   // CMS overrides
   const displayImage = cmsData?.imageUrl || imageAsset;
   const displayOptions = (cmsData?.options && cmsData.options.length > 0) ? cmsData.options : data.options;
@@ -367,7 +373,17 @@ function QuestionScreen({
   // Audio playback - auto-play after 1.5s delay, only once per question
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = React.useRef(false);
+  const prevQuestionRef = React.useRef(data.questionNum);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Reset audio flag when question changes
+  React.useEffect(() => {
+    if (prevQuestionRef.current !== data.questionNum) {
+      audioPlayedRef.current = false;
+      prevQuestionRef.current = data.questionNum;
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    }
+  }, [data.questionNum]);
 
   React.useEffect(() => {
     if (displayAudio && !audioPlayedRef.current) {
@@ -380,7 +396,7 @@ function QuestionScreen({
       }, 1500);
       return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } };
     }
-  }, [displayAudio]);
+  }, [displayAudio, data.questionNum]);
 
   // Must answer check before next
   const handleNext = () => {
