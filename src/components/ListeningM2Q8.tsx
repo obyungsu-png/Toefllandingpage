@@ -110,7 +110,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                     checked={selectedAnswer === option}
                     onChange={() => setSelectedAnswer(option)}
                     label={option}
-                    labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
+                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                   />
                 ))}
               </div>
@@ -121,14 +121,14 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl 
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
             <div className="relative" style={{minHeight: '420px'}}>
-              <div style={{position: 'absolute', left: '15%', top: 0, width: '260px'}}>
+              <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
                 <ImageWithFallback 
                   src={imageUrl || "figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png"} 
                   alt="Woman in yellow blazer"
                   className="w-full object-contain object-top" style={{maxHeight:'480px'}}
                 />
               </div>
-              <div style={{position: 'absolute', left: '48%', top: '8px', width: '44%'}}>
+              <div style={{position: 'absolute', left: '51%', top: '8px', width: '42%'}}>
                 <div className="space-y-7">
                   {answerOptions.map((option, index) => (
                     <RadioOption
@@ -139,7 +139,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
-                    labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
+                    labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                   />
                   ))}
                 </div>
