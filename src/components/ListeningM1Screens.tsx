@@ -406,14 +406,14 @@ function QuestionScreen({
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
               {displayQuestion}
             </h2>
-            <div className="flex flex-row gap-16 items-start justify-center pl-12">
+            <div className="flex flex-row gap-20 items-start" style={{paddingLeft: '8%', paddingRight: '4%'}}>
               {displayImage && (
                 <div className="flex-shrink-0">
                   <img src={displayImage} alt="Listening" className="w-72 object-contain" style={{maxHeight: '420px', objectPosition: 'top'}} />
                 </div>
               )}
-              <div className="flex-1 max-w-xl">
-                <div className="space-y-6">
+              <div className="flex-1 pt-4">
+                <div className="space-y-7">
                   {displayOptions.map((option, index) => (
                     <RadioOption
                       key={index}
@@ -423,6 +423,7 @@ function QuestionScreen({
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
+                      labelClassName="text-lg"
                     />
                   ))}
                 </div>

@@ -123,7 +123,7 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
             <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">Choose the best response.</h2>
-            <div className="flex flex-row gap-16 items-start justify-center pl-12">
+            <div className="flex flex-row gap-20 items-start" style={{paddingLeft: '8%', paddingRight: '4%'}}>
               <div className="flex-shrink-0">
                 <ImageWithFallback 
                   src={imageUrl || "figma:asset/69462fe57a401e70a158987599ab6d28018bcc6a.png"} 
@@ -131,8 +131,8 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                   className="w-72 h-auto object-contain"
                 />
               </div>
-              <div className="flex-1 max-w-xl">
-                <div className="space-y-6">
+              <div className="flex-1 pt-4">
+                <div className="space-y-7">
                   {answerOptions.map((option, index) => (
                     <RadioOption
                       key={index}
@@ -142,7 +142,8 @@ export function ListeningM2Q1({ onBack, onNext, onHome, onVolumeClick, imageUrl 
                       checked={selectedAnswer === option}
                       onChange={() => setSelectedAnswer(option)}
                       label={option}
-                    />
+                    labelClassName="text-lg"
+                  />
                   ))}
                 </div>
               </div>
