@@ -156,6 +156,15 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
   }, [clearProgress, testType]);
 
   /**
+   * Reset progressLoaded when storageKey changes (e.g. different TPO number)
+   */
+  useEffect(() => {
+    setProgressLoaded(false);
+    setSavedProgress(null);
+    setShowRestoreModal(false);
+  }, [storageKey]);
+
+  /**
    * Check for saved progress on mount
    */
   useEffect(() => {
