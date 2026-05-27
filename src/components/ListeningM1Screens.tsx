@@ -552,31 +552,98 @@ function QuestionScreen({
 function InterstitialScreen({
   title,
   imageAsset,
+  cmsImageUrl,
+  cmsAudioUrl,
   onHome,
   onBack,
   onNext,
 }: {
   title: string;
   imageAsset: string;
+  cmsImageUrl?: string;
+  cmsAudioUrl?: string;
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
 }) {
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const playedRef = React.useRef(false);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [audioEnded, setAudioEnded] = React.useState(false);
+
+  React.useEffect(() => {
+    playedRef.current = false;
+    setIsPlaying(false);
+    setAudioEnded(false);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+  }, [cmsAudioUrl]);
+
+  React.useEffect(() => {
+    if (!cmsAudioUrl || playedRef.current) return;
+    playedRef.current = true;
+    const timer = setTimeout(() => {
+      const audio = new Audio(cmsAudioUrl);
+      audioRef.current = audio;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+    }, 1000);
+    return () => { clearTimeout(timer); audioRef.current?.pause(); };
+  }, [cmsAudioUrl]);
+
+  const canGoNext = !cmsAudioUrl || audioEnded;
+
+  const handleReplay = () => {
+    if (!cmsAudioUrl || isPlaying) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    const audio = new Audio(cmsAudioUrl);
+    audioRef.current = audio;
+    audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+  };
+
+  const displayImage = cmsImageUrl || imageAsset;
+
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-      <ScreenHeader onHome={onHome} onBack={onBack} onNext={onNext} />
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      <ScreenHeader onHome={onHome} onBack={onBack} onNext={canGoNext ? onNext : () => {}} />
       <SectionTab label="Listening" />
       <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
         <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
           {title}
         </h1>
-        <div className="flex-1 flex justify-center items-center">
-          <div className="w-96 h-96 flex items-center justify-center">
-            <ImageWithFallback src={imageAsset} alt={title} className="w-full h-full object-contain" />
+        <div className="flex-1 flex flex-col justify-center items-center gap-6">
+          {/* 이미지 — 실전 시험처럼 크게 */}
+          <div className="w-full max-w-2xl aspect-[4/3] flex items-center justify-center">
+            <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
           </div>
+
+          {/* 오디오 상태 */}
+          {cmsAudioUrl && (
+            <div className="flex flex-col items-center gap-2">
+              {isPlaying && (
+                <div className="flex items-center gap-2 text-[#0d9488] font-semibold text-sm">
+                  <span className="w-2 h-2 bg-[#0d9488] rounded-full animate-pulse" />
+                  재생 중...
+                </div>
+              )}
+              {!isPlaying && !audioEnded && (
+                <button onClick={handleReplay}
+                  className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]">
+                  <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'5px 0 5px 9px',borderColor:'transparent transparent transparent #1e293b',display:'inline-block'}} />
+                  Play Audio
+                </button>
+              )}
+              {audioEnded && (
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-sm text-[#0d9488] font-medium">✓ 재생 완료 — Next를 눌러 문제로 이동하세요</p>
+                  <button onClick={handleReplay} className="text-xs text-gray-400 underline hover:text-gray-600">다시 듣기</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-      <MobileFooter onHome={onHome} onBack={onBack} onNext={onNext} />
+      <MobileFooter onHome={onHome} onBack={onBack} onNext={canGoNext ? onNext : () => {}} />
     </div>
   );
 }
@@ -834,10 +901,21 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
       {/* Interstitial screens */}
       {interstitialData[currentScreen] && (() => {
         const data = interstitialData[currentScreen];
+        // 각 인트로 화면 → 다음 첫 문제의 CMS 데이터 사용
+        const nextQNum: Record<string, number> = {
+          conversation: 9,
+          conversation2: 11,
+          announcement: 13,
+          podcast: 15,
+        };
+        const qNum = nextQNum[currentScreen];
+        const cmsQ = qNum ? getCmsListeningQuestion?.(qNum) || null : null;
         return (
           <InterstitialScreen
             title={data.title}
             imageAsset={data.imageAsset}
+            cmsImageUrl={cmsQ?.imageUrl}
+            cmsAudioUrl={cmsQ?.audioUrl}
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}
