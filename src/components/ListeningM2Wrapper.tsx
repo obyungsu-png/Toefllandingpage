@@ -188,7 +188,7 @@ export function ListeningM2Wrapper({
       {screen === 'announcement' && <ListeningM2Announcement {...commonProps} audioUrl={announcementAudioUrl} imageUrl={announcementImageUrl} />}
       {screen === 'q11' && <ListeningM2Q11 {...qProps(11)} />}
       {screen === 'q12' && <ListeningM2Q12 {...qProps(12)} />}
-      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} audioUrl={lectureAudioUrl} imageUrl={lectureImageUrl} />}}
+      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} audioUrl={lectureAudioUrl} imageUrl={lectureImageUrl} />}
       {screen === 'q13' && <ListeningM2Q13 {...qProps(13)} />}
       {screen === 'q14' && <ListeningM2Q14 {...qProps(14)} />}
       {screen === 'q15' && <ListeningM2Q15 {...qProps(15)} />}
