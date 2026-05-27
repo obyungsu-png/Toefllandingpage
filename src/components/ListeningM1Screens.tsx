@@ -372,7 +372,7 @@ function QuestionScreen({
   const displayQuestion = cmsData?.questionText || data.questionText || 'Choose the best response.';
   const displayAudio = cmsData?.audioUrl || null;
 
-  // Audio playback - auto-play after 1.5s delay, only once per question
+  // Audio playback - auto-play after 1s, only once per question, disabled for conversation group
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = React.useRef(false);
   const prevQuestionRef = React.useRef(data.questionNum);
@@ -388,6 +388,8 @@ function QuestionScreen({
   }, [data.questionNum]);
 
   React.useEffect(() => {
+    // hideAudio=true인 문제(Q9-Q12)는 자동재생 안 함 — 인트로에서 이미 들음
+    if (hideAudio) return;
     if (displayAudio && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
       const timer = setTimeout(() => {
@@ -398,7 +400,7 @@ function QuestionScreen({
       }, 1000);
       return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } };
     }
-  }, [displayAudio, data.questionNum]);
+  }, [displayAudio, data.questionNum, hideAudio]);
 
   const handlePlayAudio = () => {
     if (!displayAudio || isPlaying) return;
