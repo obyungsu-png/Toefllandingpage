@@ -178,9 +178,9 @@ export function ListeningM2Q16({ onBack, onNext, onHome, onVolumeClick, imageUrl
                 </button>
               </div>
             )}
-<div className="flex flex-row gap-10 items-center justify-center pl-8 mt-6">
+<div className="flex flex-row gap-6 items-center justify-center pl-4 mt-4">
               <div className="flex-shrink-0">
-                <div className="w-[480px] h-[480px] bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                <div className="w-[600px] h-[600px] bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
                   <svg className="w-24 h-24 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>

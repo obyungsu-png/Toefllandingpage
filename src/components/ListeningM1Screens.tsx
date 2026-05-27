@@ -494,13 +494,13 @@ function QuestionScreen({
               {displayQuestion}
             </h2>
 
-            <div className="relative" style={{minHeight: '420px'}}>
+            <div className="relative" style={{minHeight: '520px'}}>
               {displayImage && (
-                <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
-                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: '480px'}} />
+                <div style={{position: 'absolute', left: '8%', top: 0, width: '480px'}}>
+                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: '560px'}} />
                 </div>
               )}
-              <div style={{position: 'absolute', left: '51%', top: '8px', width: '42%'}}>
+              <div style={{position: 'absolute', left: displayImage ? '55%' : '10%', top: '8px', width: displayImage ? '40%' : '80%'}}>
                 <div className="space-y-7">
                   {displayOptions.map((option, index) => (
                     <RadioOption
