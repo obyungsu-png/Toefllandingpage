@@ -24,12 +24,12 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={14}
       totalQuestions={16}
       fallbackQuestion="According to the professor, what is one advantage of solar energy?"
-      fallbackOptions=[
+      fallbackOptions={[
     "It is less expensive than wind energy",
     "It can be used in remote locations",
     "It does not require any maintenance",
-    "It produces more energy than fossil fuels"
-  ]
+    "It produces more energy than fossil fuels",
+  ]}
     />
   );
 }

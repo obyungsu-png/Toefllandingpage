@@ -24,12 +24,12 @@ export function ListeningM2Q16({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={16}
       totalQuestions={16}
       fallbackQuestion="Why does the professor mention tidal energy?"
-      fallbackOptions=[
+      fallbackOptions={[
     "To compare it to solar energy",
     "To explain why it is not widely used",
     "As an example of a predictable energy source",
-    "To show that it is the most efficient energy type"
-  ]
+    "To show that it is the most efficient energy type",
+  ]}
     />
   );
 }

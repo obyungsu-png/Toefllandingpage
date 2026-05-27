@@ -24,12 +24,12 @@ export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={13}
       totalQuestions={16}
       fallbackQuestion="What is the lecture mainly about?"
-      fallbackOptions=[
+      fallbackOptions={[
     "Types of renewable energy",
     "The history of solar power",
     "How wind turbines work",
-    "Energy storage solutions"
-  ]
+    "Energy storage solutions",
+  ]}
     />
   );
 }

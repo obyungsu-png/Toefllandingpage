@@ -24,12 +24,12 @@ export function ListeningM2Q9({ onBack, onNext, onHome, onVolumeClick, imageUrl,
       questionNumber={9}
       totalQuestions={16}
       fallbackQuestion="What is the man trying to decide between?"
-      fallbackOptions=[
+      fallbackOptions={[
     "A laptop and a smartphone",
     "A smartphone and a tablet",
     "A tablet and a desktop computer",
-    "A smartphone and a smartwatch"
-  ]
+    "A smartphone and a smartwatch",
+  ]}
     />
   );
 }

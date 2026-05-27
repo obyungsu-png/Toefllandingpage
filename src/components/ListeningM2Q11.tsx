@@ -24,12 +24,12 @@ export function ListeningM2Q11({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={11}
       totalQuestions={16}
       fallbackQuestion="What does the woman want to do this evening?"
-      fallbackOptions=[
+      fallbackOptions={[
     "See a play",
     "Change her clothes",
     "Go shopping",
-    "Eat dinner"
-  ]
+    "Eat dinner",
+  ]}
     />
   );
 }

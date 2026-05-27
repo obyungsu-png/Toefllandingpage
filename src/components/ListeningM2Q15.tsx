@@ -24,12 +24,12 @@ export function ListeningM2Q15({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={15}
       totalQuestions={16}
       fallbackQuestion="What does the professor imply about fossil fuels?"
-      fallbackOptions=[
+      fallbackOptions={[
     "They will never be replaced",
     "They are becoming more affordable",
     "Their use is declining",
-    "They are better for the environment"
-  ]
+    "They are better for the environment",
+  ]}
     />
   );
 }

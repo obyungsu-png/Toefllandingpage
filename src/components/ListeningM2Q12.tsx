@@ -24,12 +24,12 @@ export function ListeningM2Q12({ onBack, onNext, onHome, onVolumeClick, imageUrl
       questionNumber={12}
       totalQuestions={16}
       fallbackQuestion="What is the problem?"
-      fallbackOptions=[
+      fallbackOptions={[
     "He forgot what the woman wanted him to buy",
     "He forgot about the timing of their plans",
     "He forgot what they were going to eat for dinner",
-    "He forgot to buy salmon and salad at the supermarket"
-  ]
+    "He forgot to buy salmon and salad at the supermarket",
+  ]}
     />
   );
 }
