@@ -103,7 +103,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
           </div>
         )}
 
-        <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
+        <div className="w-full max-w-2xl md:max-w-4xl aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
           {imageUrl ? (
             <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
           ) : (

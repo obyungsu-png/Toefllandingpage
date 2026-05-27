@@ -634,7 +634,7 @@ function InterstitialScreen({
           )}
 
           {/* 이미지 */}
-          <div className="w-full max-w-2xl aspect-[4/3] flex items-center justify-center">
+          <div className="w-full max-w-2xl md:max-w-4xl aspect-[4/3] flex items-center justify-center">
             <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
           </div>
         </div>
