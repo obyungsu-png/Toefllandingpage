@@ -103,27 +103,15 @@ export function ListeningM2Announcement({ onBack, onNext, onHome, onVolumeClick,
 
         {/* 오디오 상태 */}
         {audioUrl && (
-          <div className="flex flex-col items-center gap-2">
-            {isPlaying && (
-              <div className="flex items-center gap-2 text-[#0d9488] font-semibold text-sm">
-                <span className="w-2 h-2 bg-[#0d9488] rounded-full animate-pulse" />
-                재생 중...
-              </div>
-            )}
-            {!isPlaying && !audioEnded && (
-              <button onClick={handleReplay}
-                className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]">
-                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'5px 0 5px 9px',borderColor:'transparent transparent transparent #1e293b',display:'inline-block'}} />
-                Play Audio
-              </button>
-            )}
-            {audioEnded && (
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm text-[#0d9488] font-medium">✓ 재생 완료 — Next를 눌러 문제로 이동하세요</p>
-                <button onClick={handleReplay}
-                  className="text-xs text-gray-400 underline hover:text-gray-600">다시 듣기</button>
-              </div>
-            )}
+          <div className="flex justify-center mt-2">
+            <button
+              onClick={handleReplay}
+              disabled={isPlaying}
+              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
+            >
+              <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`,display:'inline-block'}} />
+              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+            </button>
           </div>
         )}
       </div>
