@@ -558,6 +558,7 @@ function InterstitialScreen({
   imageAsset,
   cmsImageUrl,
   cmsAudioUrl,
+  cmsTitle,
   isLarge,
   onHome,
   onBack,
@@ -567,6 +568,7 @@ function InterstitialScreen({
   imageAsset: string;
   cmsImageUrl?: string;
   cmsAudioUrl?: string;
+  cmsTitle?: string;
   isLarge?: boolean;
   onHome: () => void;
   onBack: () => void;
@@ -608,6 +610,7 @@ function InterstitialScreen({
   };
 
   const displayImage = cmsImageUrl || imageAsset;
+  const displayTitle = cmsTitle || title;
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -615,7 +618,7 @@ function InterstitialScreen({
       <SectionTab label="Listening" />
       <div className="flex-1 flex flex-col p-8 overflow-auto bg-white border border-black">
         <h1 className="text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-8 text-center mt-4">
-          {title}
+          {displayTitle}
         </h1>
         <div className="flex-1 flex flex-col justify-center items-center gap-6">
           {/* 오디오 — 이미지 위에 표시 */}
@@ -916,6 +919,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
             imageAsset={data.imageAsset}
             cmsImageUrl={cmsQ?.imageUrl}
             cmsAudioUrl={cmsQ?.audioUrl}
+            cmsTitle={(cmsQ as any)?.interstitialTitle || undefined}
             isLarge={currentScreen === 'conversation' || currentScreen === 'conversation2'}
             onHome={onHome}
             onBack={goBack}
@@ -937,7 +941,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}
-            hideAudio={[9, 10, 11, 12, 13, 14].includes(data.questionNum)}
+            hideAudio={[9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(data.questionNum)}
           />
         );
       })()}

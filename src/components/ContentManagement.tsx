@@ -50,6 +50,7 @@ export interface TPOQuestion {
   passageAudioUrl?: string;
   passageImageUrl?: string;
   passageTitle?: string;
+  interstitialTitle?: string; // 인트로 화면 상단 한줄 텍스트 (conversation/announcement/lecture)
   questionGroupId?: string;
   translationNote?: string;
   analysisNote?: string;
@@ -1069,6 +1070,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           return raw || undefined;
         }
       })(),
+      interstitialTitle: (formData as any).interstitialTitle || undefined,
       passageTitle: (formData as any).passageTitle || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
@@ -1206,6 +1208,52 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-semibold"
               placeholder="예: The Mirror Test"
             />
+          </div>
+        )}
+
+
+        {/* Interstitial Title (for Listening - conversation/announcement/academic) */}
+        {section === 'Listening' && (
+          ['Short Conversation', 'Announcements', 'Academic Talk'].some(t =>
+            (formData.questionType || '').includes(t)
+          )
+        ) && (
+          <div className="bg-[#f0fafa] border border-[#2d7a7c]/20 rounded-xl p-4">
+            <label className="block text-sm font-bold text-[#2d7a7c] mb-2">
+              🎧 인트로 화면 상단 텍스트
+              <span className="ml-2 text-xs text-gray-400 font-normal">(비워두면 기본값 사용)</span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).interstitialTitle || ''}
+              onChange={(e) => setFormData({ ...formData, interstitialTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-[#2d7a7c]/30 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm"
+              placeholder="예: Listen to a conversation. / Listen to an announcement."
+            />
+            <p className="text-xs text-gray-400 mt-1">기본값: conversation → "Listen to a conversation." / announcement → "Listen to an announcement in a classroom."</p>
+          </div>
+        )}
+
+
+        {/* Interstitial Title (for Listening - conversation/announcement/academic) */}
+        {section === 'Listening' && (
+          ['Short Conversation', 'Announcements', 'Academic Talk'].some(t =>
+            (formData.questionType || '').includes(t)
+          )
+        ) && (
+          <div className="bg-[#f0fafa] border border-[#2d7a7c]/20 rounded-xl p-4">
+            <label className="block text-sm font-bold text-[#2d7a7c] mb-2">
+              🎧 인트로 화면 상단 텍스트
+              <span className="ml-2 text-xs text-gray-400 font-normal">(비워두면 기본값 사용)</span>
+            </label>
+            <input
+              type="text"
+              value={(formData as any).interstitialTitle || ''}
+              onChange={(e) => setFormData({ ...formData, interstitialTitle: e.target.value } as any)}
+              className="w-full px-4 py-2 border border-[#2d7a7c]/30 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm"
+              placeholder="예: Listen to a conversation. / Listen to an announcement."
+            />
+            <p className="text-xs text-gray-400 mt-1">기본값: conversation → "Listen to a conversation." / announcement → "Listen to an announcement in a classroom."</p>
           </div>
         )}
 
@@ -1690,6 +1738,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     explanation: question.explanation || '',
     passageText: question.passageText || '',
     passageTitle: question.passageTitle || '',
+    interstitialTitle: question.interstitialTitle || '',
     translationNote: question.translationNote || '',
     analysisNote: (question as any).analysisNote || '',
     vocabularyNote: question.vocabularyNote || '',
@@ -1729,6 +1778,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           return raw || undefined;
         }
       })(),
+      interstitialTitle: (formData as any).interstitialTitle || undefined,
       passageTitle: (formData as any).passageTitle || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
