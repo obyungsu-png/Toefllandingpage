@@ -6840,22 +6840,6 @@ function AppContent() {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
         {/* Reading Progress Restore Modal — Reading 소개 화면 진입 시에만 표시 */}
-        {showReadingRestoreModal && readingSavedProgress && showReadingSection && (
-          <TestProgressRestoreModal
-            savedProgress={readingSavedProgress}
-            themeColor="#1e6b73"
-            onRestore={() => {
-              restoreReadingProgress();
-              if (readingSavedProgress.currentScreen) {
-                restoreReadingScreen(readingSavedProgress.currentScreen);
-              }
-            }}
-            onStartFresh={() => {
-              startReadingFresh();
-              clearReadingProgress();
-            }}
-          />
-        )}
         {/* Header */}
         <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
           <div className="flex items-center">
@@ -7478,6 +7462,23 @@ function AppContent() {
       {showReadingIntro && <ReadingIntroScreen />}
       
       {/* TOEFL Reading Section Screen (Questions 1-10) */}
+      {/* Reading Progress Restore Modal — 최상위에서 렌더링 (리스닝과 동일한 방식) */}
+      {showReadingRestoreModal && readingSavedProgress && showReadingSection && (
+        <TestProgressRestoreModal
+          savedProgress={readingSavedProgress}
+          themeColor="#1e6b73"
+          onRestore={() => {
+            restoreReadingProgress();
+            if (readingSavedProgress.currentScreen) {
+              restoreReadingScreen(readingSavedProgress.currentScreen);
+            }
+          }}
+          onStartFresh={() => {
+            startReadingFresh();
+            clearReadingProgress();
+          }}
+        />
+      )}
       {showReadingSection && <ReadingSectionScreen />}
       
       {/* Module 1 Intro Screen */}
