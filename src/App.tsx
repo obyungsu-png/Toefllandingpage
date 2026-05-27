@@ -7475,9 +7475,20 @@ function AppContent() {
           }}
           getCmsListeningQuestion={(qNumber: number) => {
             const sectionData = getCurrentSectionData('Listening');
-            return sectionData?.questions.find(q =>
+            const q = sectionData?.questions.find(q =>
               q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)
-            ) || null;
+            );
+            if (!q) return null;
+            return {
+              imageUrl: q.imageUrl,
+              questionText: q.questionText,
+              options: q.options,
+              correctAnswer: q.correctAnswer,
+              audioUrl: q.audioUrl,
+              passageAudioUrl: q.passageAudioUrl,
+              passageImageUrl: q.passageImageUrl,
+              questionGroupId: q.questionGroupId,
+            };
           }}
         />
       )}

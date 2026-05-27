@@ -57,7 +57,7 @@ interface ListeningM2WrapperProps {
   /** Called when user clicks Back on Q1 (go back to M1) */
   onBackToM1?: () => void;
   onScreenChange?: (screen: M2Screen) => void;
-  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string } | null;
+  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string; passageAudioUrl?: string; passageImageUrl?: string; questionGroupId?: string } | null;
 }
 
 export function ListeningM2Wrapper({
@@ -104,7 +104,6 @@ export function ListeningM2Wrapper({
         totalQuestions: M2_SCREEN_ORDER.length
       });
     } else {
-      // Clear progress when test is complete
       clearProgress();
     }
   }, [screen]);
@@ -138,11 +137,31 @@ export function ListeningM2Wrapper({
     }
   };
 
-  const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
-  const getQAudioUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.audioUrl || undefined;
+  const getQData = (qNumber: number) => getCmsListeningQuestion?.(qNumber) || null;
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
-  // Per-question props with CMS imageUrl and audioUrl
-  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n), audioUrl: getQAudioUrl(n) });
+
+  // For Q9-Q10: use passageAudioUrl from Q9 (first question of this group)
+  const conversationData = getQData(9);
+  const conversationAudioUrl = conversationData?.passageAudioUrl || conversationData?.audioUrl;
+  const conversationImageUrl = conversationData?.passageImageUrl || conversationData?.imageUrl;
+
+  // For Q11-Q12: announcement group
+  const announcementData = getQData(11);
+  const announcementAudioUrl = announcementData?.passageAudioUrl || announcementData?.audioUrl;
+  const announcementImageUrl = announcementData?.passageImageUrl || announcementData?.imageUrl;
+
+  // For Q13-Q16: lecture group
+  const lectureData = getQData(13);
+  const lectureAudioUrl = lectureData?.passageAudioUrl || lectureData?.audioUrl;
+  const lectureImageUrl = lectureData?.passageImageUrl || lectureData?.imageUrl;
+
+  // Per-question props: image = passageImageUrl (same scene), question/options from CMS
+  const qProps = (n: number) => {
+    const d = getQData(n);
+    // Use passageImageUrl as the scene image shown during questions
+    const sceneImage = d?.passageImageUrl || d?.imageUrl;
+    return { ...commonProps, imageUrl: sceneImage, audioUrl: undefined, questionText: d?.questionText, options: d?.options };
+  };
 
   return (
     <>
@@ -163,13 +182,13 @@ export function ListeningM2Wrapper({
       {screen === 'q6' && <ListeningM2Q6 {...qProps(6)} />}
       {screen === 'q7' && <ListeningM2Q7 {...qProps(7)} />}
       {screen === 'q8' && <ListeningM2Q8 {...qProps(8)} />}
-      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} />}
+      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} audioUrl={conversationAudioUrl} imageUrl={conversationImageUrl} />}
       {screen === 'q9' && <ListeningM2Q9 {...qProps(9)} />}
       {screen === 'q10' && <ListeningM2Q10 {...qProps(10)} />}
-      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} />}
+      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} audioUrl={announcementAudioUrl} imageUrl={announcementImageUrl} />}
       {screen === 'q11' && <ListeningM2Q11 {...qProps(11)} />}
       {screen === 'q12' && <ListeningM2Q12 {...qProps(12)} />}
-      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} />}
+      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} audioUrl={lectureAudioUrl} imageUrl={lectureImageUrl} />}}
       {screen === 'q13' && <ListeningM2Q13 {...qProps(13)} />}
       {screen === 'q14' && <ListeningM2Q14 {...qProps(14)} />}
       {screen === 'q15' && <ListeningM2Q15 {...qProps(15)} />}
