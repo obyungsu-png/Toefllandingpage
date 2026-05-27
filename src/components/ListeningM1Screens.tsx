@@ -680,9 +680,7 @@ function IntroScreen({
   onHome: () => void;
   onNext: () => void;
 }) {
-  useSpeechEffect(
-    'In the listening section, you will answer 35 to 45 questions to demonstrate how well you understand spoken English. There are three types of tasks: Listen and Choose a Response, Conversations, and Lectures. You will not be able to return to previous questions.'
-  );
+  // 음성 없음 — Module1IntroScreen에서만 재생
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">

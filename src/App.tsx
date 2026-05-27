@@ -30,6 +30,8 @@ import { ListeningM2Wrapper, M2Screen } from './components/ListeningM2Wrapper';
 import { WritingSectionWrapper, WritingScreen } from './components/WritingSectionWrapper';
 import { SpeakingSectionWrapper, SpeakingScreen } from './components/SpeakingSectionWrapper';
 import { MobileQuestionNav } from './components/MobileQuestionNav';
+import { useTestProgress } from './hooks/useTestProgress';
+import { TestProgressRestoreModal } from './components/TestProgressRestoreModal';
 
 import { TPOCard } from './components/TPOCard';
 import { TestCard } from './components/TestCard';
@@ -231,7 +233,100 @@ function AppContent() {
   const [showModule2Question20, setShowModule2Question20] = useState(false);
   const [showEndModule2, setShowEndModule2] = useState(false);
   const [blankAnswers, setBlankAnswers] = useState<{ [key: number]: string }>({});
-  
+
+  // ── Reading Progress Save/Restore ──
+  const readingProgressKey = currentTest
+    ? `reading_${testBankType}_${currentTest.tpoNumber}`
+    : 'reading_general';
+
+  const {
+    savedProgress: readingSavedProgress,
+    showRestoreModal: showReadingRestoreModal,
+    saveProgress: saveReadingProgress,
+    clearProgress: clearReadingProgress,
+    restoreProgress: restoreReadingProgress,
+    startFresh: startReadingFresh,
+  } = useTestProgress({ testType: readingProgressKey, enabled: showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20 });
+
+  // Map current reading screen to string key for progress saving
+  const getCurrentReadingScreen = (): string | null => {
+    if (showFillBlanksTest) return 'fillBlanks';
+    if (showReadNoticeTest) return 'readNotice1';
+    if (showReadNoticeTest2) return 'readNotice2';
+    if (showSocialMediaTest) return 'socialMedia1';
+    if (showSocialMediaTest2) return 'socialMedia2';
+    if (showSocialMediaTest3) return 'socialMedia3';
+    if (showModule1Question16) return 'q16';
+    if (showModule1Question17) return 'q17';
+    if (showModule1Question18) return 'q18';
+    if (showModule1Question19) return 'q19';
+    if (showModule1Question20) return 'q20';
+    if (showModule2FillBlanks) return 'm2FillBlanks';
+    if (showModule2Question11) return 'm2q11';
+    if (showModule2Question12) return 'm2q12';
+    if (showModule2Question13) return 'm2q13';
+    if (showModule2Question14) return 'm2q14';
+    if (showModule2Question15) return 'm2q15';
+    if (showModule2Question16) return 'm2q16';
+    if (showModule2Question17) return 'm2q17';
+    if (showModule2Question18) return 'm2q18';
+    if (showModule2Question19) return 'm2q19';
+    if (showModule2Question20) return 'm2q20';
+    if (showModule2) return 'module2';
+    return null;
+  };
+
+  // Restore reading screen from saved progress
+  const restoreReadingScreen = (screen: string) => {
+    const resetAll = () => {
+      setShowFillBlanksTest(false); setShowReadNoticeTest(false); setShowReadNoticeTest2(false);
+      setShowSocialMediaTest(false); setShowSocialMediaTest2(false); setShowSocialMediaTest3(false);
+      setShowModule1Question16(false); setShowModule1Question17(false); setShowModule1Question18(false);
+      setShowModule1Question19(false); setShowModule1Question20(false);
+      setShowModule2(false); setShowModule2FillBlanks(false);
+      setShowModule2Question11(false); setShowModule2Question12(false); setShowModule2Question13(false);
+      setShowModule2Question14(false); setShowModule2Question15(false); setShowModule2Question16(false);
+      setShowModule2Question17(false); setShowModule2Question18(false); setShowModule2Question19(false);
+      setShowModule2Question20(false);
+    };
+    resetAll();
+    const map: Record<string, () => void> = {
+      fillBlanks: () => setShowFillBlanksTest(true),
+      readNotice1: () => setShowReadNoticeTest(true),
+      readNotice2: () => setShowReadNoticeTest2(true),
+      socialMedia1: () => setShowSocialMediaTest(true),
+      socialMedia2: () => setShowSocialMediaTest2(true),
+      socialMedia3: () => setShowSocialMediaTest3(true),
+      q16: () => setShowModule1Question16(true),
+      q17: () => setShowModule1Question17(true),
+      q18: () => setShowModule1Question18(true),
+      q19: () => setShowModule1Question19(true),
+      q20: () => setShowModule1Question20(true),
+      module2: () => setShowModule2(true),
+      m2FillBlanks: () => setShowModule2FillBlanks(true),
+      m2q11: () => setShowModule2Question11(true),
+      m2q12: () => setShowModule2Question12(true),
+      m2q13: () => setShowModule2Question13(true),
+      m2q14: () => setShowModule2Question14(true),
+      m2q15: () => setShowModule2Question15(true),
+      m2q16: () => setShowModule2Question16(true),
+      m2q17: () => setShowModule2Question17(true),
+      m2q18: () => setShowModule2Question18(true),
+      m2q19: () => setShowModule2Question19(true),
+      m2q20: () => setShowModule2Question20(true),
+    };
+    map[screen]?.();
+    setShowReadingSection(true);
+  };
+
+  // Auto-save reading progress when screen changes
+  useEffect(() => {
+    const screen = getCurrentReadingScreen();
+    if (screen) {
+      saveReadingProgress({ currentScreen: screen, totalQuestions: 20 });
+    }
+  }, [showFillBlanksTest, showReadNoticeTest, showReadNoticeTest2, showSocialMediaTest, showSocialMediaTest2, showSocialMediaTest3, showModule1Question16, showModule1Question17, showModule1Question18, showModule1Question19, showModule1Question20, showModule2, showModule2FillBlanks, showModule2Question11, showModule2Question12, showModule2Question13, showModule2Question14, showModule2Question15, showModule2Question16, showModule2Question17, showModule2Question18, showModule2Question19, showModule2Question20]);
+
   // Listening section states
   const [showReadingIntro, setShowReadingIntro] = useState(false);
   // Listening M1: single state replaces ~27 individual show* states
@@ -6742,6 +6837,23 @@ function AppContent() {
   const ReadingSectionScreen = () => {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        {/* Reading Progress Restore Modal */}
+        {showReadingRestoreModal && readingSavedProgress && (
+          <TestProgressRestoreModal
+            savedProgress={readingSavedProgress}
+            themeColor="#1e6b73"
+            onRestore={() => {
+              restoreReadingProgress();
+              if (readingSavedProgress.currentScreen) {
+                restoreReadingScreen(readingSavedProgress.currentScreen);
+              }
+            }}
+            onStartFresh={() => {
+              startReadingFresh();
+              clearReadingProgress();
+            }}
+          />
+        )}
         {/* Header */}
         <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
           <div className="flex items-center">
