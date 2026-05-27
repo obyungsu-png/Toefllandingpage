@@ -7241,16 +7241,26 @@ function AppContent() {
       </div>
     );
 
+    const tpoMeta = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
+
     return (
       <div className="bg-white rounded-[12px] shadow-lg border border-gray-200 w-full max-w-[268px] transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-        <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] h-16 relative rounded-t-[12px] shadow-md">
-          <div className="absolute box-border content-stretch flex items-center justify-start left-0 px-4 py-0 right-0 top-0">
-            <div className="basis-0 content-stretch flex flex-col grow h-16 items-start justify-start min-h-px min-w-px relative shrink-0">
-              <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[24px] text-white w-full tracking-wide">
-                <p className="leading-[64px]">TPO {number}</p>
-              </div>
+        <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-4 py-3 min-h-[52px]">
+          <p className="font-['Inter',_sans-serif] font-bold text-[24px] text-white tracking-wide">TPO {number}</p>
+          {tpoMeta && (tpoMeta.year || tpoMeta.month) && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {tpoMeta.year && (
+                <span className="text-xs px-2.5 py-1 bg-white/25 text-white rounded-full font-bold tracking-wide border border-white/40">
+                  {tpoMeta.year}
+                </span>
+              )}
+              {tpoMeta.month && (
+                <span className="text-xs px-2.5 py-1 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
+                  {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][tpoMeta.month - 1]}
+                </span>
+              )}
             </div>
-          </div>
+          )}
         </div>
         {renderSectionRow('Reading', 'Reading')}
         {renderSectionRow('Listening', 'Listening')}
