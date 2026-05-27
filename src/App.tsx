@@ -246,7 +246,7 @@ function AppContent() {
     clearProgress: clearReadingProgress,
     restoreProgress: restoreReadingProgress,
     startFresh: startReadingFresh,
-  } = useTestProgress({ testType: readingProgressKey, enabled: showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20 });
+  } = useTestProgress({ testType: readingProgressKey, enabled: true });
 
   // Map current reading screen to string key for progress saving
   const getCurrentReadingScreen = (): string | null => {
@@ -5762,6 +5762,7 @@ function AppContent() {
                 setShowModule2Question20(false);
                 // Save reading result to history
                 saveSectionResultToHistory('Reading', 20);
+                clearReadingProgress();
                 setShowEndModule2(true);
               }}
             >
@@ -5797,8 +5798,8 @@ function AppContent() {
               questionInfo="5/5"
               onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
               onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
-              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); setShowEndModule2(true); }}
-              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); setShowEndModule2(true); }}
+              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); clearReadingProgress(); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); clearReadingProgress(); setShowEndModule2(true); }}
               leftContent={
                 <>
                   <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
@@ -5855,6 +5856,7 @@ function AppContent() {
           onNext={() => {
             setShowModule2Question20(false);
                 saveSectionResultToHistory('Reading', 20);
+            clearReadingProgress();
             setShowEndModule2(true);
           }}
         />
@@ -6837,8 +6839,8 @@ function AppContent() {
   const ReadingSectionScreen = () => {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Reading Progress Restore Modal */}
-        {showReadingRestoreModal && readingSavedProgress && (
+        {/* Reading Progress Restore Modal — Reading 소개 화면 진입 시에만 표시 */}
+        {showReadingRestoreModal && readingSavedProgress && showReadingSection && (
           <TestProgressRestoreModal
             savedProgress={readingSavedProgress}
             themeColor="#1e6b73"
