@@ -140,7 +140,21 @@ export function ListeningM2Wrapper({
 
   const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
   const getQAudioUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.audioUrl || undefined;
+
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
+
+  // conversation 인트로: Q9의 이미지·오디오를 사용
+  const conversationImageUrl = getQImageUrl(9);
+  const conversationAudioUrl = getQAudioUrl(9);
+
+  // announcement 인트로: Q11의 이미지·오디오를 사용
+  const announcementImageUrl = getQImageUrl(11);
+  const announcementAudioUrl = getQAudioUrl(11);
+
+  // lecture 인트로: Q13의 이미지·오디오를 사용
+  const lectureImageUrl = getQImageUrl(13);
+  const lectureAudioUrl = getQAudioUrl(13);
+
   // Per-question props with CMS imageUrl and audioUrl
   const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n), audioUrl: getQAudioUrl(n) });
 
@@ -163,13 +177,13 @@ export function ListeningM2Wrapper({
       {screen === 'q6' && <ListeningM2Q6 {...qProps(6)} />}
       {screen === 'q7' && <ListeningM2Q7 {...qProps(7)} />}
       {screen === 'q8' && <ListeningM2Q8 {...qProps(8)} />}
-      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} />}
+      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} imageUrl={conversationImageUrl} audioUrl={conversationAudioUrl} />}
       {screen === 'q9' && <ListeningM2Q9 {...qProps(9)} />}
       {screen === 'q10' && <ListeningM2Q10 {...qProps(10)} />}
-      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} />}
+      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} imageUrl={announcementImageUrl} audioUrl={announcementAudioUrl} />}
       {screen === 'q11' && <ListeningM2Q11 {...qProps(11)} />}
       {screen === 'q12' && <ListeningM2Q12 {...qProps(12)} />}
-      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} />}
+      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} imageUrl={lectureImageUrl} audioUrl={lectureAudioUrl} />}
       {screen === 'q13' && <ListeningM2Q13 {...qProps(13)} />}
       {screen === 'q14' && <ListeningM2Q14 {...qProps(14)} />}
       {screen === 'q15' && <ListeningM2Q15 {...qProps(15)} />}
