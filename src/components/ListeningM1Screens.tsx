@@ -558,6 +558,7 @@ function InterstitialScreen({
   imageAsset,
   cmsImageUrl,
   cmsAudioUrl,
+  isLarge,
   onHome,
   onBack,
   onNext,
@@ -566,6 +567,7 @@ function InterstitialScreen({
   imageAsset: string;
   cmsImageUrl?: string;
   cmsAudioUrl?: string;
+  isLarge?: boolean;
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
@@ -636,7 +638,7 @@ function InterstitialScreen({
           )}
 
           {/* 이미지 */}
-          <div className="w-full max-w-xl md:max-w-2xl aspect-[4/3] flex items-center justify-center">
+          <div className={`w-full ${isLarge ? 'max-w-2xl md:max-w-4xl' : 'max-w-xl md:max-w-2xl'} aspect-[4/3] flex items-center justify-center`}>
             <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
           </div>
         </div>
@@ -914,6 +916,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
             imageAsset={data.imageAsset}
             cmsImageUrl={cmsQ?.imageUrl}
             cmsAudioUrl={cmsQ?.audioUrl}
+            isLarge={currentScreen === 'conversation' || currentScreen === 'conversation2'}
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}
