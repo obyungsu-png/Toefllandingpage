@@ -7475,7 +7475,13 @@ function AppContent() {
           }}
           getCmsListeningQuestion={(qNumber: number) => {
             const sectionData = getCurrentSectionData('Listening');
-            return sectionData?.questions.find(q =>
+            // Module 2 문제만 찾기 (questionType에 'Module 2' 포함)
+            const q = sectionData?.questions.find(q =>
+              (q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)) &&
+              (q.questionType || '').toLowerCase().includes('module 2')
+            );
+            // Module 2 필터로 못 찾으면 전체에서 찾기 (fallback)
+            return q || sectionData?.questions.find(q =>
               q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)
             ) || null;
           }}
