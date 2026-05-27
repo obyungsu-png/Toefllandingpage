@@ -107,46 +107,55 @@ export function ListeningM2AudioIntro({
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-start overflow-auto pt-10 pb-24 md:pb-8 px-4">
-        <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
+      <div className="flex-1 flex flex-col items-center justify-start overflow-auto pt-8 pb-24 md:pb-8 px-4">
+        <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">
           {title}
         </h2>
 
-        {/* Image */}
-        <div className="w-64 h-64 md:w-96 md:h-96 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-8">
+        {/* Image — 실전 시험과 동일하게 크게 */}
+        <div className="w-[340px] h-[340px] md:w-[520px] md:h-[520px] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
           {imageUrl ? (
-            <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-cover" />
+            <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
           ) : (
-            <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg className="w-28 h-28 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
               <polyline points="21 15 16 10 5 21"/>
             </svg>
           )}
         </div>
 
-        {/* Audio status + replay */}
+        {/* Audio status */}
         {audioUrl ? (
-          <div className="flex flex-col items-center gap-3">
-            <button
-              onClick={handleReplay}
-              disabled={isPlaying}
-              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
-                isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
-              }`}
-            >
-              <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',
-                borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
-              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-            </button>
-            {!audioEnded && !isPlaying && (
-              <p className="text-sm text-gray-400">오디오가 끝나면 Next 버튼이 활성화됩니다</p>
+          <div className="flex flex-col items-center gap-2">
+            {isPlaying && (
+              <div className="flex items-center gap-2 text-[#0d9488] font-semibold text-sm">
+                <span className="w-2 h-2 bg-[#0d9488] rounded-full animate-pulse" />
+                재생 중...
+              </div>
+            )}
+            {!isPlaying && !audioEnded && (
+              <button
+                onClick={handleReplay}
+                className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]"
+              >
+                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'5px 0 5px 9px',borderColor:'transparent transparent transparent #1e293b',display:'inline-block'}} />
+                Play Audio
+              </button>
             )}
             {audioEnded && (
-              <p className="text-sm text-[#0d9488] font-medium">✓ 오디오 재생 완료 — Next를 눌러 문제로 이동하세요</p>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-[#0d9488] font-medium">✓ 재생 완료 — Next를 눌러 문제로 이동하세요</p>
+                <button
+                  onClick={handleReplay}
+                  className="flex items-center gap-2 px-5 py-1.5 rounded-full text-xs font-medium bg-[#f0f0f0] text-gray-500 hover:bg-[#e2e8f0]"
+                >
+                  다시 듣기
+                </button>
+              </div>
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">CMS에서 오디오를 업로드하면 여기서 재생됩니다</p>
+          <p className="text-sm text-gray-400">CMS에서 오디오를 업로드하면 자동 재생됩니다</p>
         )}
       </div>
 
