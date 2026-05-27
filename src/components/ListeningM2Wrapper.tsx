@@ -57,7 +57,7 @@ interface ListeningM2WrapperProps {
   /** Called when user clicks Back on Q1 (go back to M1) */
   onBackToM1?: () => void;
   onScreenChange?: (screen: M2Screen) => void;
-  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string; passageAudioUrl?: string; passageImageUrl?: string; questionGroupId?: string } | null;
+  getCmsListeningQuestion?: (qNumber: number) => { imageUrl?: string; questionText?: string; options?: string[]; correctAnswer?: string; audioUrl?: string } | null;
 }
 
 export function ListeningM2Wrapper({
@@ -104,6 +104,7 @@ export function ListeningM2Wrapper({
         totalQuestions: M2_SCREEN_ORDER.length
       });
     } else {
+      // Clear progress when test is complete
       clearProgress();
     }
   }, [screen]);
@@ -137,42 +138,11 @@ export function ListeningM2Wrapper({
     }
   };
 
-  const getQData = (qNumber: number) => getCmsListeningQuestion?.(qNumber) || null;
+  const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
+  const getQAudioUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.audioUrl || undefined;
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
-
-  // conversation 그룹 (Q9-Q10): Q9의 passageAudioUrl 우선, 없으면 audioUrl
-  const conversationData = getQData(9);
-  const conversationAudioUrl = conversationData?.passageAudioUrl || conversationData?.audioUrl;
-  const conversationImageUrl = conversationData?.passageImageUrl || conversationData?.imageUrl;
-
-  // announcement 그룹 (Q11-Q12): Q11 기준
-  const announcementData = getQData(11);
-  const announcementAudioUrl = announcementData?.passageAudioUrl || announcementData?.audioUrl;
-  const announcementImageUrl = announcementData?.passageImageUrl || announcementData?.imageUrl;
-
-  // lecture 그룹 (Q13-Q16): Q13 기준
-  const lectureData = getQData(13);
-  const lectureAudioUrl = lectureData?.passageAudioUrl || lectureData?.audioUrl;
-  const lectureImageUrl = lectureData?.passageImageUrl || lectureData?.imageUrl;
-
-  // 문제 화면: 같은 그룹의 인트로 이미지를 공유 (Q9-Q10 → conversationImageUrl, Q11-Q12 → announcementImageUrl, Q13-Q16 → lectureImageUrl)
-  const getGroupImageUrl = (n: number) => {
-    if (n >= 9 && n <= 10) return conversationImageUrl;
-    if (n >= 11 && n <= 12) return announcementImageUrl;
-    if (n >= 13 && n <= 16) return lectureImageUrl;
-    return getQData(n)?.passageImageUrl || getQData(n)?.imageUrl;
-  };
-
-  const qProps = (n: number) => {
-    const d = getQData(n);
-    return {
-      ...commonProps,
-      imageUrl: getGroupImageUrl(n),
-      audioUrl: undefined,
-      questionText: d?.questionText,
-      options: d?.options,
-    };
-  };
+  // Per-question props with CMS imageUrl and audioUrl
+  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n), audioUrl: getQAudioUrl(n) });
 
   return (
     <>
@@ -193,13 +163,13 @@ export function ListeningM2Wrapper({
       {screen === 'q6' && <ListeningM2Q6 {...qProps(6)} />}
       {screen === 'q7' && <ListeningM2Q7 {...qProps(7)} />}
       {screen === 'q8' && <ListeningM2Q8 {...qProps(8)} />}
-      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} audioUrl={conversationAudioUrl} imageUrl={conversationImageUrl} />}
+      {screen === 'conversation' && <ListeningM2Conversation {...commonProps} />}
       {screen === 'q9' && <ListeningM2Q9 {...qProps(9)} />}
       {screen === 'q10' && <ListeningM2Q10 {...qProps(10)} />}
-      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} audioUrl={announcementAudioUrl} imageUrl={announcementImageUrl} />}
+      {screen === 'announcement' && <ListeningM2Announcement {...commonProps} />}
       {screen === 'q11' && <ListeningM2Q11 {...qProps(11)} />}
       {screen === 'q12' && <ListeningM2Q12 {...qProps(12)} />}
-      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} audioUrl={lectureAudioUrl} imageUrl={lectureImageUrl} />}
+      {screen === 'lecture' && <ListeningM2Lecture {...commonProps} />}
       {screen === 'q13' && <ListeningM2Q13 {...qProps(13)} />}
       {screen === 'q14' && <ListeningM2Q14 {...qProps(14)} />}
       {screen === 'q15' && <ListeningM2Q15 {...qProps(15)} />}
