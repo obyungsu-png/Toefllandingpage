@@ -500,8 +500,8 @@ function QuestionScreen({
 
             <div className="relative" style={{minHeight: '420px'}}>
               {displayImage && (
-                <div style={{position: 'absolute', left: [9,10,11,12].includes(data.questionNum) ? '15%' : '18%', top: 0, width: [9,10,11,12].includes(data.questionNum) ? '420px' : '280px'}}>
-                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: [9,10,11,12].includes(data.questionNum) ? '520px' : '480px'}} />
+                <div style={{position: 'absolute', left: [9,10,11,12].includes(data.questionNum) ? '12%' : '18%', top: 0, width: [9,10,11,12].includes(data.questionNum) ? '460px' : '280px'}}>
+                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: [9,10,11,12].includes(data.questionNum) ? '560px' : '480px'}} />
                 </div>
               )}
               <div style={{position: 'absolute', left: displayImage ? ([9,10,11,12].includes(data.questionNum) ? '56%' : '51%') : '10%', top: '8px', width: displayImage ? ([9,10,11,12].includes(data.questionNum) ? '38%' : '42%') : '80%'}}>
@@ -641,7 +641,7 @@ function InterstitialScreen({
           )}
 
           {/* 이미지 */}
-          <div className={`w-full ${isLarge ? 'max-w-2xl md:max-w-4xl' : 'max-w-xl md:max-w-2xl'} aspect-[4/3] flex items-center justify-center`}>
+          <div className={`w-full ${isLarge ? 'max-w-2xl md:max-w-3xl' : 'max-w-xl md:max-w-2xl'} aspect-[4/3] flex items-center justify-center`}>
             <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
           </div>
         </div>
