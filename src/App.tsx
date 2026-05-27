@@ -7460,10 +7460,9 @@ function AppContent() {
       <Toaster position="top-right" richColors />
       {/* Reading Section Intro */}
       {showReadingIntro && <ReadingIntroScreen />}
-      
-      {/* TOEFL Reading Section Screen (Questions 1-10) */}
+
       {/* Reading Progress Restore Modal — 최상위에서 렌더링 (리스닝과 동일한 방식) */}
-      {showReadingRestoreModal && readingSavedProgress && showReadingSection && (
+      {showReadingRestoreModal && readingSavedProgress && (
         <TestProgressRestoreModal
           savedProgress={readingSavedProgress}
           themeColor="#1e6b73"
