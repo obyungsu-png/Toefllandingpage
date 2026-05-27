@@ -348,6 +348,7 @@ function QuestionScreen({
   onBack,
   onNext,
   cmsData,
+  hideAudio,
 }: {
   data: { questionNum: number; questionText?: string; options: string[] };
   imageAsset?: string;
@@ -355,6 +356,7 @@ function QuestionScreen({
   onBack: () => void;
   onNext: () => void;
   cmsData?: { imageUrl?: string; questionText?: string; options?: string[]; audioUrl?: string } | null;
+  hideAudio?: boolean;
 }) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showMustAnswer, setShowMustAnswer] = useState(false);
@@ -432,7 +434,7 @@ function QuestionScreen({
             )}
             
             {/* Play Audio Button - Mobile */}
-            {displayAudio && (
+            {displayAudio && !hideAudio && (
               <button
                 onClick={handlePlayAudio}
                 disabled={isPlaying}
@@ -474,7 +476,7 @@ function QuestionScreen({
           {/* Desktop: Original side-by-side layout */}
           <div className="hidden md:block">
             {/* Play Audio Button - Desktop */}
-            {displayAudio && (
+            {displayAudio && !hideAudio && (
               <div className="flex justify-center mb-8">
                 <button
                   onClick={handlePlayAudio}
@@ -930,6 +932,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}
+            hideAudio={[9, 10, 11, 12].includes(data.questionNum)}
           />
         );
       })()}
