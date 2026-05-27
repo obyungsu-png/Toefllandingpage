@@ -612,14 +612,9 @@ function InterstitialScreen({
           {title}
         </h1>
         <div className="flex-1 flex flex-col justify-center items-center gap-6">
-          {/* 이미지 — 실전 시험처럼 크게 */}
-          <div className="w-full max-w-2xl aspect-[4/3] flex items-center justify-center">
-            <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
-          </div>
-
-          {/* 오디오 상태 — 다른 문제들과 동일한 Play Audio 버튼 */}
+          {/* 오디오 — 이미지 위에 표시 */}
           {cmsAudioUrl && (
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center">
               <button
                 onClick={handleReplay}
                 disabled={isPlaying}
@@ -635,6 +630,11 @@ function InterstitialScreen({
               </button>
             </div>
           )}
+
+          {/* 이미지 */}
+          <div className="w-full max-w-2xl aspect-[4/3] flex items-center justify-center">
+            <ImageWithFallback src={displayImage} alt={title} className="w-full h-full object-contain" />
+          </div>
         </div>
       </div>
       <MobileFooter onHome={onHome} onBack={onBack} onNext={canGoNext ? onNext : () => {}} />

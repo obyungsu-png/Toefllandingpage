@@ -88,22 +88,9 @@ export function ListeningM2Conversation({ onBack, onNext, onHome, onVolumeClick,
           Listen to a conversation.
         </h2>
 
-        {/* 이미지 — 실전 시험 참고해서 크게 */}
-        <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
-          {imageUrl ? (
-            <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
-          ) : (
-            <svg className="w-28 h-28 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-          )}
-        </div>
-
-        {/* 오디오 상태 */}
+        {/* 오디오 버튼 — 이미지 위 */}
         {audioUrl && (
-          <div className="flex justify-center mt-2">
+          <div className="flex justify-center mb-4">
             <button
               onClick={handleReplay}
               disabled={isPlaying}
@@ -119,6 +106,19 @@ export function ListeningM2Conversation({ onBack, onNext, onHome, onVolumeClick,
             </button>
           </div>
         )}
+
+        {/* 이미지 */}
+        <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
+          {imageUrl ? (
+            <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
+          ) : (
+            <svg className="w-28 h-28 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          )}
+        </div>
       </div>
 
       <MobileFooter onBack={onBack} onHome={onHome} onNext={canGoNext ? onNext : () => {}} />

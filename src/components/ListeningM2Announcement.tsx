@@ -88,7 +88,21 @@ export function ListeningM2Announcement({ onBack, onNext, onHome, onVolumeClick,
           Listen to an announcement.
         </h2>
 
-        {/* 이미지 — 실전 시험 참고해서 크게 */}
+        
+
+        {audioUrl && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleReplay}
+              disabled={isPlaying}
+              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
+            >
+              <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`,display:'inline-block'}} />
+              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+            </button>
+          </div>
+        )}
+
         <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center shadow-sm mb-6">
           {imageUrl ? (
             <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
@@ -102,18 +116,6 @@ export function ListeningM2Announcement({ onBack, onNext, onHome, onVolumeClick,
         </div>
 
         {/* 오디오 상태 */}
-        {audioUrl && (
-          <div className="flex justify-center mt-2">
-            <button
-              onClick={handleReplay}
-              disabled={isPlaying}
-              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
-            >
-              <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`,display:'inline-block'}} />
-              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       <MobileFooter onBack={onBack} onHome={onHome} onNext={canGoNext ? onNext : () => {}} />
