@@ -140,27 +140,38 @@ export function ListeningM2Wrapper({
   const getQData = (qNumber: number) => getCmsListeningQuestion?.(qNumber) || null;
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
 
-  // For Q9-Q10: use passageAudioUrl from Q9 (first question of this group)
+  // conversation 그룹 (Q9-Q10): Q9의 passageAudioUrl 우선, 없으면 audioUrl
   const conversationData = getQData(9);
   const conversationAudioUrl = conversationData?.passageAudioUrl || conversationData?.audioUrl;
   const conversationImageUrl = conversationData?.passageImageUrl || conversationData?.imageUrl;
 
-  // For Q11-Q12: announcement group
+  // announcement 그룹 (Q11-Q12): Q11 기준
   const announcementData = getQData(11);
   const announcementAudioUrl = announcementData?.passageAudioUrl || announcementData?.audioUrl;
   const announcementImageUrl = announcementData?.passageImageUrl || announcementData?.imageUrl;
 
-  // For Q13-Q16: lecture group
+  // lecture 그룹 (Q13-Q16): Q13 기준
   const lectureData = getQData(13);
   const lectureAudioUrl = lectureData?.passageAudioUrl || lectureData?.audioUrl;
   const lectureImageUrl = lectureData?.passageImageUrl || lectureData?.imageUrl;
 
-  // Per-question props: image = passageImageUrl (same scene), question/options from CMS
+  // 문제 화면: 같은 그룹의 인트로 이미지를 공유 (Q9-Q10 → conversationImageUrl, Q11-Q12 → announcementImageUrl, Q13-Q16 → lectureImageUrl)
+  const getGroupImageUrl = (n: number) => {
+    if (n >= 9 && n <= 10) return conversationImageUrl;
+    if (n >= 11 && n <= 12) return announcementImageUrl;
+    if (n >= 13 && n <= 16) return lectureImageUrl;
+    return getQData(n)?.passageImageUrl || getQData(n)?.imageUrl;
+  };
+
   const qProps = (n: number) => {
     const d = getQData(n);
-    // Use passageImageUrl as the scene image shown during questions
-    const sceneImage = d?.passageImageUrl || d?.imageUrl;
-    return { ...commonProps, imageUrl: sceneImage, audioUrl: undefined, questionText: d?.questionText, options: d?.options };
+    return {
+      ...commonProps,
+      imageUrl: getGroupImageUrl(n),
+      audioUrl: undefined,
+      questionText: d?.questionText,
+      options: d?.options,
+    };
   };
 
   return (
