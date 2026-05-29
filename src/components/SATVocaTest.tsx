@@ -707,7 +707,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
           )}
 
           {/* Action Buttons */}
-          <div className="mt-8 flex gap-4 justify-center">
+          <div className="mt-8 flex gap-4 justify-center pb-8 md:pb-0">
             <Button 
               onClick={restartTest} 
               variant="outline" 
@@ -749,7 +749,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white overflow-y-auto pb-24 md:pb-0">
+    <div className="fixed inset-0 z-50 bg-white overflow-y-auto pb-32 md:pb-8">
       {/* Restore Progress Modal */}
       {showRestoreModal && savedProgress && (
         <div className="fixed inset-0 z-[70] bg-black bg-opacity-50 flex items-center justify-center p-4">
