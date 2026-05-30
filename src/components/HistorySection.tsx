@@ -421,7 +421,14 @@ export function HistorySection({
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
     setShowScoreModal(true);
-    setScoreModalSection('Reading');
+    // Set initial tab to the result's section
+    const sec = result.category
+      || (result.testName.includes('Reading') ? 'Reading'
+      : result.testName.includes('Listening') ? 'Listening'
+      : result.testName.includes('Speaking') ? 'Speaking'
+      : result.testName.includes('Writing') ? 'Writing'
+      : 'Reading');
+    setScoreModalSection(sec as any);
     setReviewingQuestion(null);
   };
 
@@ -975,38 +982,50 @@ export function HistorySection({
         const sectionIcons: Record<string, string> = { Reading: '📖', Listening: '🎧', Writing: '✍️', Speaking: '🎤' };
         const sectionColors: Record<string, string> = { Reading: '#3b82f6', Listening: '#8b5cf6', Writing: '#10b981', Speaking: '#f97316' };
 
-        // Build questions per section from wrongAnswers + correctAnswers
-        const allQuestions = Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
-          const qNum = i + 1;
-          const wrong = selectedResult.wrongAnswers.find(
-            (w) => w.questionId === String(qNum) || w.questionId === `q${qNum}` || w.questionId === `l${qNum}` || w.questionId === `wr${qNum}` || w.questionId === `w${qNum}` || w.questionId === `t${qNum}` || w.questionId === `v${qNum}`
-          );
-          const isWrong = !!wrong;
-          // Determine section from category or testName
-          const sec = selectedResult.category
-            || (selectedResult.testName.includes('Reading') ? 'Reading'
-            : selectedResult.testName.includes('Listening') ? 'Listening'
-            : selectedResult.testName.includes('Speaking') ? 'Speaking'
-            : selectedResult.testName.includes('Writing') ? 'Writing'
-            : 'Reading');
-          return { qNum, wrong, isWrong, section: sec };
+        // Find all related results (same testNumber or same test name prefix)
+        const testNum = selectedResult.testNumber;
+        const testPrefix = selectedResult.testName.replace(/ - (Reading|Listening|Writing|Speaking).*$/, '');
+        const allResults = results.length > 0 ? results : SAMPLE_RESULTS;
+        const relatedResults = allResults.filter(r =>
+          (testNum && r.testNumber === testNum) ||
+          r.testName.startsWith(testPrefix)
+        );
+
+        // Group by section
+        const sectionData: Record<string, TestResult | null> = {};
+        sections.forEach(sec => {
+          sectionData[sec] = relatedResults.find(r =>
+            r.category === sec || r.testName.includes(sec)
+          ) || null;
         });
 
-        // Also match wrongAnswers that weren't matched by index
-        const matchedIds = new Set(allQuestions.filter(q => q.wrong).map(q => q.wrong!.questionId));
-        const unmatchedWrongs = selectedResult.wrongAnswers.filter(w => !matchedIds.has(w.questionId));
-        
-        // For section filtering: if only one section, show all; otherwise filter
-        const hasMultipleSections = new Set(allQuestions.map(q => q.section)).size > 1;
-        const filteredQuestions = hasMultipleSections
-          ? allQuestions.filter(q => q.section === scoreModalSection)
-          : allQuestions;
+        // Current section result
+        const currentSectionResult = sectionData[scoreModalSection];
 
-        const sectionTotal = filteredQuestions.length;
-        const sectionCorrect = filteredQuestions.filter(q => !q.isWrong).length;
+        // Build questions for current section
+        const buildQuestions = (result: TestResult | null) => {
+          if (!result) return [];
+          return Array.from({ length: result.totalQuestions }, (_, i) => {
+            const qNum = i + 1;
+            const wrong = result.wrongAnswers.find(
+              (w) => {
+                const wId = w.questionId?.replace(/[^0-9]/g, '');
+                return wId === String(qNum) || result.wrongAnswers.indexOf(w) === i - result.correctAnswers;
+              }
+            );
+            // More accurate: first N are correct, rest are wrong (if no specific match)
+            const isWrong = wrong ? true : (i >= result.correctAnswers);
+            const matchedWrong = wrong || (isWrong && result.wrongAnswers[i - result.correctAnswers]) || null;
+            return { qNum, wrong: matchedWrong, isWrong, section: scoreModalSection };
+          });
+        };
+
+        const filteredQuestions = buildQuestions(currentSectionResult);
+        const sectionTotal = currentSectionResult?.totalQuestions || 0;
+        const sectionCorrect = currentSectionResult?.correctAnswers || 0;
         const sectionIncorrect = sectionTotal - sectionCorrect;
 
-        // Reviewing question detail view
+        // Reviewing question detail
         const reviewQ = reviewingQuestion !== null ? filteredQuestions.find(q => q.qNum === reviewingQuestion) : null;
 
         return (
@@ -1024,22 +1043,39 @@ export function HistorySection({
                 </button>
               </div>
 
-              {/* Section Tabs */}
-              <div className="flex border-b border-gray-200 px-2 md:px-6 overflow-x-auto">
+              {/* Section Tabs - Large Card Style */}
+              <div className="grid grid-cols-4 gap-2 md:gap-3 px-4 md:px-6 py-4 bg-gray-50 border-b border-gray-200">
                 {sections.map(sec => {
                   const isActive = scoreModalSection === sec;
                   const color = sectionColors[sec];
+                  const secResult = sectionData[sec];
+                  const secScore = secResult ? Math.round((secResult.correctAnswers / Math.max(secResult.totalQuestions, 1)) * 100) : 0;
+                  const hasData = !!secResult;
                   return (
                     <button
                       key={sec}
                       onClick={() => { setScoreModalSection(sec); setReviewingQuestion(null); }}
-                      className={`flex items-center gap-1.5 px-3 md:px-5 py-3 text-xs md:text-sm font-semibold border-b-3 transition-all whitespace-nowrap ${
-                        isActive ? 'border-current' : 'border-transparent text-gray-400 hover:text-gray-600'
+                      className={`relative flex flex-col items-center gap-1 py-3 md:py-4 rounded-xl transition-all ${
+                        isActive
+                          ? 'bg-white shadow-lg ring-2'
+                          : hasData
+                            ? 'bg-white/60 hover:bg-white hover:shadow-md'
+                            : 'bg-white/30 opacity-50'
                       }`}
-                      style={isActive ? { color, borderBottomColor: color, borderBottomWidth: '3px' } : { borderBottomWidth: '3px' }}
+                      style={isActive ? { ringColor: color, borderColor: color, boxShadow: `0 4px 14px ${color}20`, outline: `2px solid ${color}` } : {}}
                     >
-                      <span>{sectionIcons[sec]}</span>
-                      {sec}
+                      <span className="text-xl md:text-2xl">{sectionIcons[sec]}</span>
+                      <span className={`text-xs md:text-sm font-bold ${isActive ? '' : 'text-gray-600'}`} style={isActive ? { color } : {}}>
+                        {sec}
+                      </span>
+                      {hasData && (
+                        <span className="text-[10px] md:text-xs text-gray-400 font-medium">
+                          {secResult!.correctAnswers}/{secResult!.totalQuestions}
+                        </span>
+                      )}
+                      {!hasData && (
+                        <span className="text-[10px] text-gray-400">—</span>
+                      )}
                     </button>
                   );
                 })}
@@ -1047,7 +1083,13 @@ export function HistorySection({
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto">
-                {reviewQ && reviewQ.wrong ? (
+                {!currentSectionResult ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                    <span className="text-4xl mb-3">{sectionIcons[scoreModalSection]}</span>
+                    <p className="text-sm font-medium">No {scoreModalSection} data available</p>
+                    <p className="text-xs mt-1">This section has not been completed yet</p>
+                  </div>
+                ) : reviewQ && reviewQ.wrong ? (
                   /* Question Review Detail */
                   <div className="p-5 md:p-8">
                     <button
@@ -1061,16 +1103,14 @@ export function HistorySection({
                     <div className="space-y-5">
                       <div className="flex items-center gap-3">
                         <span className="w-8 h-8 rounded-full bg-red-100 text-red-600 text-sm font-bold flex items-center justify-center">{reviewQ.qNum}</span>
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{reviewQ.section}</span>
+                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{scoreModalSection}</span>
                       </div>
 
-                      {/* Question Text */}
                       <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Question</p>
                         <p className="text-sm md:text-base text-gray-800 leading-relaxed">{reviewQ.wrong.questionText}</p>
                       </div>
 
-                      {/* Answers */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-red-50 rounded-xl p-4 border border-red-100">
                           <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">Your Answer</p>
@@ -1082,7 +1122,6 @@ export function HistorySection({
                         </div>
                       </div>
 
-                      {/* Explanation */}
                       {reviewQ.wrong.explanation && (
                         <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
                           <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2">Explanation</p>
@@ -1094,7 +1133,6 @@ export function HistorySection({
                 ) : (
                   /* Questions Overview */
                   <div>
-                    {/* Summary Cards */}
                     <div className="px-5 md:px-6 py-5">
                       <p className="text-sm font-semibold text-gray-700 mb-3">Questions Overview</p>
                       <div className="grid grid-cols-3 gap-3">
@@ -1113,7 +1151,6 @@ export function HistorySection({
                       </div>
                     </div>
 
-                    {/* Question Table */}
                     <div className="px-2 md:px-6 pb-4">
                       <table className="w-full text-sm">
                         <thead className="bg-[#2d3748] text-white">
@@ -1132,7 +1169,7 @@ export function HistorySection({
                             return (
                               <tr key={q.qNum} className={`hover:bg-gray-50 transition-colors ${!q.isWrong ? 'bg-green-50/30' : ''}`}>
                                 <td className="px-3 md:px-4 py-3 font-medium text-gray-700">{q.qNum}</td>
-                                <td className="px-3 md:px-4 py-3 text-gray-600 hidden md:table-cell">{q.section}</td>
+                                <td className="px-3 md:px-4 py-3 text-gray-600 hidden md:table-cell">{scoreModalSection}</td>
                                 <td className="px-3 md:px-4 py-3 text-gray-700 text-xs md:text-sm">{correctAns}</td>
                                 <td className={`px-3 md:px-4 py-3 font-medium text-xs md:text-sm ${q.isWrong ? 'text-red-500' : 'text-green-600'}`}>
                                   {q.isWrong ? (userAns || 'Omitted') : '✓ Correct'}
