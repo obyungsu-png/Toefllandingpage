@@ -192,6 +192,8 @@ export function HistorySection({
   const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   const [showScoreModal, setShowScoreModal] = useState(false);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [activeScoreTab, setActiveScoreTab] = useState<'overview' | 'questions'>('overview');
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -418,7 +420,9 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
-    setShowQuestionReview(true);
+    setShowScoreModal(true);
+    setExpandedQuestion(null);
+    setActiveScoreTab('overview');
   };
 
   const handleRestartClick = (result: TestResult) => {
@@ -965,95 +969,260 @@ export function HistorySection({
         />
       )}
 
-      {/* Score Results Modal */}
-      {showScoreModal && selectedResult && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowScoreModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">Results</h2>
-                <span className="text-sm text-gray-500 font-medium">{selectedResult.testName}</span>
-              </div>
-              <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
+      {/* Score Results Modal - Modern Design */}
+      {showScoreModal && selectedResult && (() => {
+        const section = selectedResult.category
+          || (selectedResult.testName.includes('Reading') ? 'Reading'
+          : selectedResult.testName.includes('Listening') ? 'Listening'
+          : selectedResult.testName.includes('Speaking') ? 'Speaking'
+          : selectedResult.testName.includes('Writing') ? 'Writing'
+          : 'General');
+        const scorePercent = selectedResult.totalQuestions > 0
+          ? Math.round((selectedResult.correctAnswers / selectedResult.totalQuestions) * 100)
+          : 0;
+        const wrongCount = selectedResult.totalQuestions - selectedResult.correctAnswers;
+        const timeMin = selectedResult.timeSpent ? Math.floor(selectedResult.timeSpent / 60) : 0;
+        const timeSec = selectedResult.timeSpent ? selectedResult.timeSpent % 60 : 0;
+        const sectionColors: Record<string, { bg: string; text: string; ring: string; icon: string }> = {
+          Reading: { bg: 'bg-blue-50', text: 'text-blue-600', ring: '#3b82f6', icon: '📖' },
+          Listening: { bg: 'bg-purple-50', text: 'text-purple-600', ring: '#8b5cf6', icon: '🎧' },
+          Writing: { bg: 'bg-emerald-50', text: 'text-emerald-600', ring: '#10b981', icon: '✍️' },
+          Speaking: { bg: 'bg-orange-50', text: 'text-orange-600', ring: '#f97316', icon: '🎤' },
+          General: { bg: 'bg-gray-50', text: 'text-gray-600', ring: '#6b7280', icon: '📝' },
+        };
+        const sc = sectionColors[section] || sectionColors.General;
+        const circumference = 2 * Math.PI * 54;
+        const strokeDashoffset = circumference - (scorePercent / 100) * circumference;
 
-            {/* Score summary */}
-            <div className="grid grid-cols-3 gap-4 px-6 py-5 bg-[#f8fafc]">
-              {[
-                { label: 'Total Questions', value: selectedResult.totalQuestions },
-                { label: 'Correct Answers', value: selectedResult.correctAnswers, color: 'text-green-600' },
-                { label: 'Incorrect Answers', value: selectedResult.totalQuestions - selectedResult.correctAnswers, color: 'text-red-500' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="bg-white rounded-xl border border-gray-100 px-4 py-5 text-center shadow-sm">
-                  <p className={`text-4xl font-bold mb-1 ${color || 'text-gray-800'}`}>{value}</p>
-                  <p className="text-sm text-gray-500">{label}</p>
+        return (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-6" onClick={() => setShowScoreModal(false)}>
+            <div
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden"
+              onClick={e => e.stopPropagation()}
+              style={{ animation: 'fadeSlideUp 0.3s ease-out' }}
+            >
+              {/* Header */}
+              <div className="relative px-5 md:px-8 pt-6 pb-4" style={{ background: `linear-gradient(135deg, ${sc.ring}15, ${sc.ring}08)` }}>
+                <button
+                  onClick={() => setShowScoreModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 hover:bg-white text-gray-500 hover:text-gray-700 transition-all shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{sc.icon}</span>
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">Test Results</h2>
                 </div>
-              ))}
-            </div>
+                <p className="text-sm text-gray-500">{selectedResult.testName}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{new Date(selectedResult.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
 
-            {/* Question table */}
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#2d3748] text-white">
-                  <tr>
-                    {['Question', 'Section', 'Correct Answer', 'Your Answer', 'Actions'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
-                    const qNum = i + 1;
-                    const wrong = selectedResult.wrongAnswers.find(w => w.questionId === String(qNum) || w.questionText?.includes(`${qNum}`));
-                    const isWrong = !!wrong || i >= selectedResult.correctAnswers;
-                    const correctAns = wrong?.correctAnswer || '—';
-                    const userAns = isWrong ? (wrong?.userAnswer || 'Omitted') : correctAns;
-                    const section = selectedResult.testName.includes('Reading') ? 'Reading'
-                      : selectedResult.testName.includes('Listening') ? 'Listening'
-                      : selectedResult.testName.includes('Speaking') ? 'Speaking'
-                      : selectedResult.testName.includes('Writing') ? 'Writing'
-                      : 'Reading and Writing';
-                    return (
-                      <tr key={qNum} className={`hover:bg-gray-50 transition-colors ${!isWrong ? 'bg-green-50/30' : ''}`}>
-                        <td className="px-4 py-3 font-medium text-gray-700">{qNum}</td>
-                        <td className="px-4 py-3 text-gray-600">{section}</td>
-                        <td className="px-4 py-3 text-gray-700">{correctAns}</td>
-                        <td className={`px-4 py-3 font-medium ${isWrong ? 'text-red-500' : 'text-green-600'}`}>
-                          {isWrong ? (userAns || 'Omitted') : '✓'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {wrong?.explanation && (
+              {/* Tabs */}
+              <div className="flex border-b border-gray-100 px-5 md:px-8">
+                {[
+                  { key: 'overview' as const, label: 'Score' },
+                  { key: 'questions' as const, label: 'Questions' },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveScoreTab(tab.key)}
+                    className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
+                      activeScoreTab === tab.key
+                        ? `border-current ${sc.text}`
+                        : 'border-transparent text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                {activeScoreTab === 'overview' ? (
+                  <div className="px-5 md:px-8 py-6">
+                    {/* Score Circle + Stats */}
+                    <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+                      {/* Donut */}
+                      <div className="relative w-36 h-36 shrink-0">
+                        <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                          <circle cx="60" cy="60" r="54" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                          <circle
+                            cx="60" cy="60" r="54" fill="none"
+                            stroke={sc.ring}
+                            strokeWidth="10"
+                            strokeLinecap="round"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-3xl font-black text-gray-800">{scorePercent}%</span>
+                          <span className="text-xs text-gray-400 font-medium">Score</span>
+                        </div>
+                      </div>
+
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-2 gap-3 flex-1 w-full">
+                        <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-gray-800">{selectedResult.totalQuestions}</p>
+                          <p className="text-xs text-gray-500 mt-1">Total</p>
+                        </div>
+                        <div className="bg-green-50 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-green-600">{selectedResult.correctAnswers}</p>
+                          <p className="text-xs text-gray-500 mt-1">Correct</p>
+                        </div>
+                        <div className="bg-red-50 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-red-500">{wrongCount}</p>
+                          <p className="text-xs text-gray-500 mt-1">Wrong</p>
+                        </div>
+                        <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                          <p className="text-2xl font-bold text-blue-600">{timeMin > 0 ? `${timeMin}m` : `${timeSec}s`}</p>
+                          <p className="text-xs text-gray-500 mt-1">Time</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section Score Bar */}
+                    <div className={`${sc.bg} rounded-2xl p-5`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{sc.icon}</span>
+                          <span className={`font-bold ${sc.text}`}>{section}</span>
+                        </div>
+                        <span className={`text-2xl font-black ${sc.text}`}>{selectedResult.score}</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-white/60 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${scorePercent}%`, backgroundColor: sc.ring }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">{selectedResult.correctAnswers}/{selectedResult.totalQuestions} correct answers</p>
+                    </div>
+
+                    {/* Wrong Answers Summary */}
+                    {wrongCount > 0 && (
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">❌ Wrong Answers ({wrongCount})</p>
+                        <div className="space-y-2">
+                          {selectedResult.wrongAnswers.slice(0, 5).map((w, i) => (
+                            <div key={i} className="flex items-start gap-3 bg-red-50/50 rounded-xl px-4 py-3">
+                              <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                {i + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm text-gray-700 line-clamp-1">{w.questionText}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Your: <span className="text-red-500">{w.userAnswer || 'Omitted'}</span>
+                                  {' → '}
+                                  Correct: <span className="text-green-600">{w.correctAnswer}</span>
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          {wrongCount > 5 && (
                             <button
-                              className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                              onClick={() => alert(wrong.explanation)}
+                              onClick={() => setActiveScoreTab('questions')}
+                              className={`w-full text-center text-sm font-medium ${sc.text} py-2 hover:underline`}
                             >
-                              Review
+                              + {wrongCount - 5} more → View all questions
                             </button>
                           )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Questions Tab */
+                  <div className="px-5 md:px-8 py-4">
+                    <div className="space-y-2">
+                      {Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
+                        const qNum = i + 1;
+                        const wrong = selectedResult.wrongAnswers.find(
+                          (w, wi) => w.questionId === String(qNum) || w.questionId === `q${qNum}` || wi === i - selectedResult.correctAnswers
+                        );
+                        const isWrong = !!wrong || i >= selectedResult.correctAnswers;
+                        const isExpanded = expandedQuestion === i;
 
-            {/* Footer */}
-            <div className="flex justify-end px-6 py-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowScoreModal(false)}
-                className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
-                style={{ backgroundColor: themeColor }}
-              >
-                닫기
-              </button>
+                        return (
+                          <div key={qNum} className={`rounded-xl border transition-all ${isExpanded ? 'border-gray-200 shadow-md' : 'border-gray-100 hover:border-gray-200'}`}>
+                            <button
+                              onClick={() => setExpandedQuestion(isExpanded ? null : i)}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                            >
+                              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                isWrong ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                              }`}>
+                                {qNum}
+                              </span>
+                              <span className="flex-1 text-sm text-gray-700 truncate">
+                                {wrong?.questionText || (isWrong ? 'Question ' + qNum : 'Question ' + qNum)}
+                              </span>
+                              {isWrong ? (
+                                <X className="w-4 h-4 text-red-400 shrink-0" />
+                              ) : (
+                                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                              )}
+                              <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isExpanded && (
+                              <div className="px-4 pb-4 border-t border-gray-100 pt-3 space-y-3">
+                                {wrong ? (
+                                  <>
+                                    <div>
+                                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Question</p>
+                                      <p className="text-sm text-gray-800">{wrong.questionText}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="bg-red-50 rounded-lg p-3">
+                                        <p className="text-xs font-semibold text-red-400 mb-1">Your Answer</p>
+                                        <p className="text-sm text-red-600 font-medium">{wrong.userAnswer || 'Omitted'}</p>
+                                      </div>
+                                      <div className="bg-green-50 rounded-lg p-3">
+                                        <p className="text-xs font-semibold text-green-500 mb-1">Correct Answer</p>
+                                        <p className="text-sm text-green-700 font-medium">{wrong.correctAnswer}</p>
+                                      </div>
+                                    </div>
+                                    {wrong.explanation && (
+                                      <div className="bg-blue-50 rounded-lg p-3">
+                                        <p className="text-xs font-semibold text-blue-500 mb-1">💡 Explanation</p>
+                                        <p className="text-sm text-gray-700">{wrong.explanation}</p>
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-green-600">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    <p className="text-sm font-medium">Correct! Well done.</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 px-5 md:px-8 py-4 border-t border-gray-100 bg-gray-50/50">
+                <button
+                  onClick={() => setShowScoreModal(false)}
+                  className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 shadow-md"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  닫기
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Restart Confirm Modal */}
       {showRestartModal && restartTarget && (
