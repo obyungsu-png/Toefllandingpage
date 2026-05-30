@@ -350,17 +350,17 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     const headwordPool: SATWord[] = [];
     const synonymPool: SATWord[] = [];
     
-    // Shuffle available words
-    const shuffledWords = [...availableWords].sort(() => Math.random() - 0.5);
+    // Keep original order (no shuffle)
+    const orderedWords = [...availableWords];
     
     // Extract headwords up to headwordQuestions
-    for (let i = 0; i < shuffledWords.length && headwordPool.length < headwordQuestions; i++) {
-      headwordPool.push(shuffledWords[i]);
+    for (let i = 0; i < orderedWords.length && headwordPool.length < headwordQuestions; i++) {
+      headwordPool.push(orderedWords[i]);
     }
     
     // Extract synonyms up to synonymQuestions
-    for (let i = 0; i < shuffledWords.length && synonymPool.length < synonymQuestions; i++) {
-      const word = shuffledWords[i];
+    for (let i = 0; i < orderedWords.length && synonymPool.length < synonymQuestions; i++) {
+      const word = orderedWords[i];
       if (word.synonyms && word.synonyms.trim().length > 0) {
         const synonymList = word.synonyms.split(',').map(s => s.trim()).filter(s => s.length > 0);
         for (const synonym of synonymList) {
@@ -378,8 +378,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
       }
     }
     
-    // Combine and shuffle all questions
-    const allQuestions = [...headwordPool, ...synonymPool].sort(() => Math.random() - 0.5);
+    // Combine in order (headwords first, then synonyms)
+    const allQuestions = [...headwordPool, ...synonymPool];
     setSelectedWords(allQuestions);
     setStep(2);
   };
