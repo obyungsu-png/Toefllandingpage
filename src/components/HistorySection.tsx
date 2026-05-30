@@ -192,6 +192,8 @@ export function HistorySection({
   const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   const [showScoreModal, setShowScoreModal] = useState(false);
+  const [scoreModalSection, setScoreModalSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
+  const [reviewingQuestion, setReviewingQuestion] = useState<number | null>(null);
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -418,7 +420,9 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
-    setShowQuestionReview(true);
+    setShowScoreModal(true);
+    setScoreModalSection('Reading');
+    setReviewingQuestion(null);
   };
 
   const handleRestartClick = (result: TestResult) => {
@@ -966,94 +970,214 @@ export function HistorySection({
       )}
 
       {/* Score Results Modal */}
-      {showScoreModal && selectedResult && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowScoreModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">Results</h2>
-                <span className="text-sm text-gray-500 font-medium">{selectedResult.testName}</span>
-              </div>
-              <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
+      {showScoreModal && selectedResult && (() => {
+        const sections: ('Reading' | 'Listening' | 'Writing' | 'Speaking')[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
+        const sectionIcons: Record<string, string> = { Reading: '📖', Listening: '🎧', Writing: '✍️', Speaking: '🎤' };
+        const sectionColors: Record<string, string> = { Reading: '#3b82f6', Listening: '#8b5cf6', Writing: '#10b981', Speaking: '#f97316' };
 
-            {/* Score summary */}
-            <div className="grid grid-cols-3 gap-4 px-6 py-5 bg-[#f8fafc]">
-              {[
-                { label: 'Total Questions', value: selectedResult.totalQuestions },
-                { label: 'Correct Answers', value: selectedResult.correctAnswers, color: 'text-green-600' },
-                { label: 'Incorrect Answers', value: selectedResult.totalQuestions - selectedResult.correctAnswers, color: 'text-red-500' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="bg-white rounded-xl border border-gray-100 px-4 py-5 text-center shadow-sm">
-                  <p className={`text-4xl font-bold mb-1 ${color || 'text-gray-800'}`}>{value}</p>
-                  <p className="text-sm text-gray-500">{label}</p>
+        // Build questions per section from wrongAnswers + correctAnswers
+        const allQuestions = Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
+          const qNum = i + 1;
+          const wrong = selectedResult.wrongAnswers.find(
+            (w) => w.questionId === String(qNum) || w.questionId === `q${qNum}` || w.questionId === `l${qNum}` || w.questionId === `wr${qNum}` || w.questionId === `w${qNum}` || w.questionId === `t${qNum}` || w.questionId === `v${qNum}`
+          );
+          const isWrong = !!wrong;
+          // Determine section from category or testName
+          const sec = selectedResult.category
+            || (selectedResult.testName.includes('Reading') ? 'Reading'
+            : selectedResult.testName.includes('Listening') ? 'Listening'
+            : selectedResult.testName.includes('Speaking') ? 'Speaking'
+            : selectedResult.testName.includes('Writing') ? 'Writing'
+            : 'Reading');
+          return { qNum, wrong, isWrong, section: sec };
+        });
+
+        // Also match wrongAnswers that weren't matched by index
+        const matchedIds = new Set(allQuestions.filter(q => q.wrong).map(q => q.wrong!.questionId));
+        const unmatchedWrongs = selectedResult.wrongAnswers.filter(w => !matchedIds.has(w.questionId));
+        
+        // For section filtering: if only one section, show all; otherwise filter
+        const hasMultipleSections = new Set(allQuestions.map(q => q.section)).size > 1;
+        const filteredQuestions = hasMultipleSections
+          ? allQuestions.filter(q => q.section === scoreModalSection)
+          : allQuestions;
+
+        const sectionTotal = filteredQuestions.length;
+        const sectionCorrect = filteredQuestions.filter(q => !q.isWrong).length;
+        const sectionIncorrect = sectionTotal - sectionCorrect;
+
+        // Reviewing question detail view
+        const reviewQ = reviewingQuestion !== null ? filteredQuestions.find(q => q.qNum === reviewingQuestion) : null;
+
+        return (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 md:p-4" onClick={() => { setShowScoreModal(false); setReviewingQuestion(null); }}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">TOEFL Scores</h2>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold border-2 border-blue-500 text-blue-500">Score</span>
                 </div>
-              ))}
-            </div>
+                <button onClick={() => { setShowScoreModal(false); setReviewingQuestion(null); }} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
 
-            {/* Question table */}
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#2d3748] text-white">
-                  <tr>
-                    {['Question', 'Section', 'Correct Answer', 'Your Answer', 'Actions'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
-                    const qNum = i + 1;
-                    const wrong = selectedResult.wrongAnswers.find(w => w.questionId === String(qNum) || w.questionText?.includes(`${qNum}`));
-                    const isWrong = !!wrong || i >= selectedResult.correctAnswers;
-                    const correctAns = wrong?.correctAnswer || '—';
-                    const userAns = isWrong ? (wrong?.userAnswer || 'Omitted') : correctAns;
-                    const section = selectedResult.testName.includes('Reading') ? 'Reading'
-                      : selectedResult.testName.includes('Listening') ? 'Listening'
-                      : selectedResult.testName.includes('Speaking') ? 'Speaking'
-                      : selectedResult.testName.includes('Writing') ? 'Writing'
-                      : 'Reading and Writing';
-                    return (
-                      <tr key={qNum} className={`hover:bg-gray-50 transition-colors ${!isWrong ? 'bg-green-50/30' : ''}`}>
-                        <td className="px-4 py-3 font-medium text-gray-700">{qNum}</td>
-                        <td className="px-4 py-3 text-gray-600">{section}</td>
-                        <td className="px-4 py-3 text-gray-700">{correctAns}</td>
-                        <td className={`px-4 py-3 font-medium ${isWrong ? 'text-red-500' : 'text-green-600'}`}>
-                          {isWrong ? (userAns || 'Omitted') : '✓'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {wrong?.explanation && (
-                            <button
-                              className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                              onClick={() => alert(wrong.explanation)}
-                            >
-                              Review
-                            </button>
+              {/* Section Tabs */}
+              <div className="flex border-b border-gray-200 px-2 md:px-6 overflow-x-auto">
+                {sections.map(sec => {
+                  const isActive = scoreModalSection === sec;
+                  const color = sectionColors[sec];
+                  return (
+                    <button
+                      key={sec}
+                      onClick={() => { setScoreModalSection(sec); setReviewingQuestion(null); }}
+                      className={`flex items-center gap-1.5 px-3 md:px-5 py-3 text-xs md:text-sm font-semibold border-b-3 transition-all whitespace-nowrap ${
+                        isActive ? 'border-current' : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                      style={isActive ? { color, borderBottomColor: color, borderBottomWidth: '3px' } : { borderBottomWidth: '3px' }}
+                    >
+                      <span>{sectionIcons[sec]}</span>
+                      {sec}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                {reviewQ && reviewQ.wrong ? (
+                  /* Question Review Detail */
+                  <div className="p-5 md:p-8">
+                    <button
+                      onClick={() => setReviewingQuestion(null)}
+                      className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-5 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back to Questions
+                    </button>
+
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-full bg-red-100 text-red-600 text-sm font-bold flex items-center justify-center">{reviewQ.qNum}</span>
+                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{reviewQ.section}</span>
+                      </div>
+
+                      {/* Question Text */}
+                      <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Question</p>
+                        <p className="text-sm md:text-base text-gray-800 leading-relaxed">{reviewQ.wrong.questionText}</p>
+                      </div>
+
+                      {/* Answers */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                          <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1.5">Your Answer</p>
+                          <p className="text-sm text-red-600 font-medium">{reviewQ.wrong.userAnswer || 'Omitted'}</p>
+                        </div>
+                        <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                          <p className="text-xs font-semibold text-green-500 uppercase tracking-wider mb-1.5">Correct Answer</p>
+                          <p className="text-sm text-green-700 font-medium">{reviewQ.wrong.correctAnswer}</p>
+                        </div>
+                      </div>
+
+                      {/* Explanation */}
+                      {reviewQ.wrong.explanation && (
+                        <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                          <p className="text-xs font-semibold text-blue-500 uppercase tracking-wider mb-2">Explanation</p>
+                          <p className="text-sm text-gray-700 leading-relaxed">{reviewQ.wrong.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Questions Overview */
+                  <div>
+                    {/* Summary Cards */}
+                    <div className="px-5 md:px-6 py-5">
+                      <p className="text-sm font-semibold text-gray-700 mb-3">Questions Overview</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-blue-50 rounded-xl px-4 py-4 text-center">
+                          <p className="text-2xl md:text-3xl font-bold text-gray-800">{sectionTotal}</p>
+                          <p className="text-xs text-gray-500 mt-1">Total Questions</p>
+                        </div>
+                        <div className="bg-green-50 rounded-xl px-4 py-4 text-center">
+                          <p className="text-2xl md:text-3xl font-bold text-green-600">{sectionCorrect}</p>
+                          <p className="text-xs text-gray-500 mt-1">Correct Answers</p>
+                        </div>
+                        <div className="bg-red-50 rounded-xl px-4 py-4 text-center">
+                          <p className="text-2xl md:text-3xl font-bold text-red-500">{sectionIncorrect}</p>
+                          <p className="text-xs text-gray-500 mt-1">Incorrect Answers</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Question Table */}
+                    <div className="px-2 md:px-6 pb-4">
+                      <table className="w-full text-sm">
+                        <thead className="bg-[#2d3748] text-white">
+                          <tr>
+                            <th className="px-3 md:px-4 py-3 text-left font-semibold text-xs md:text-sm">Question</th>
+                            <th className="px-3 md:px-4 py-3 text-left font-semibold text-xs md:text-sm hidden md:table-cell">Section</th>
+                            <th className="px-3 md:px-4 py-3 text-left font-semibold text-xs md:text-sm">Correct Answer</th>
+                            <th className="px-3 md:px-4 py-3 text-left font-semibold text-xs md:text-sm">Your Answer</th>
+                            <th className="px-3 md:px-4 py-3 text-left font-semibold text-xs md:text-sm">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filteredQuestions.map((q) => {
+                            const correctAns = q.wrong?.correctAnswer || '—';
+                            const userAns = q.isWrong ? (q.wrong?.userAnswer || 'Omitted') : correctAns;
+                            return (
+                              <tr key={q.qNum} className={`hover:bg-gray-50 transition-colors ${!q.isWrong ? 'bg-green-50/30' : ''}`}>
+                                <td className="px-3 md:px-4 py-3 font-medium text-gray-700">{q.qNum}</td>
+                                <td className="px-3 md:px-4 py-3 text-gray-600 hidden md:table-cell">{q.section}</td>
+                                <td className="px-3 md:px-4 py-3 text-gray-700 text-xs md:text-sm">{correctAns}</td>
+                                <td className={`px-3 md:px-4 py-3 font-medium text-xs md:text-sm ${q.isWrong ? 'text-red-500' : 'text-green-600'}`}>
+                                  {q.isWrong ? (userAns || 'Omitted') : '✓ Correct'}
+                                </td>
+                                <td className="px-3 md:px-4 py-3">
+                                  {q.wrong && (
+                                    <button
+                                      className="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-100 hover:border-gray-400 transition-all"
+                                      onClick={() => setReviewingQuestion(q.qNum)}
+                                    >
+                                      Review
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {filteredQuestions.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">
+                                No questions in this section
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {/* Footer */}
-            <div className="flex justify-end px-6 py-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowScoreModal(false)}
-                className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
-                style={{ backgroundColor: themeColor }}
-              >
-                닫기
-              </button>
+              {/* Footer */}
+              <div className="flex justify-end px-5 md:px-6 py-4 border-t border-gray-200">
+                <button
+                  onClick={() => { setShowScoreModal(false); setReviewingQuestion(null); }}
+                  className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  닫기
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Restart Confirm Modal */}
       {showRestartModal && restartTarget && (
