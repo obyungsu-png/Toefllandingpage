@@ -26,6 +26,8 @@ interface HistorySectionProps {
   onShareConfigChange?: (config: ShareConfig) => void;
   studentName?: string;
   advertisements?: any[];
+  isLoggedIn?: boolean;
+  onRequestLogin?: () => void;
 }
 
 type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report';
@@ -160,7 +162,9 @@ export function HistorySection({
   shareConfig,
   onShareConfigChange,
   studentName = 'Student',
-  advertisements = []
+  advertisements = [],
+  isLoggedIn = true,
+  onRequestLogin
 }: HistorySectionProps) {
   // Navigation & Tab state
   const [activeNav, setActiveNav] = useState<NavType>('records');
@@ -205,7 +209,8 @@ export function HistorySection({
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   // Effective results (fallback to samples)
-  const effectiveResults = results.length > 0 ? results : SAMPLE_RESULTS;
+  // Don't show sample results to logged-out users
+  const effectiveResults = isLoggedIn ? (results.length > 0 ? results : SAMPLE_RESULTS) : [];
 
   // Ads
   const activeAds = (advertisements as Advertisement[])?.filter(ad =>
@@ -468,6 +473,36 @@ export function HistorySection({
   };
 
   // Full-screen Question Review
+  // Login required guard — History is for registered students only
+  if (!isLoggedIn) {
+    return (
+      <div className="w-full h-[calc(100vh-80px)] flex items-center justify-center bg-[#f5f7fa] -mx-2 md:-mx-4 -mb-4 md:-mb-12">
+        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full mx-4 p-8 text-center">
+          <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: `${themeColor}15` }}>
+            <User className="w-8 h-8" style={{ color: themeColor }} />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">로그인이 필요해요</h2>
+          <p className="text-sm text-gray-500 leading-relaxed mb-6">
+            학습 기록(History)은 등록된 학생만 확인할 수 있어요.<br/>
+            로그인하시면 본인의 TPO·Test·Training 응시 기록과 점수, 오답 노트를 모두 볼 수 있습니다.
+          </p>
+          <div className="space-y-2">
+            <button
+              onClick={() => onRequestLogin?.()}
+              className="w-full px-5 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 shadow-sm"
+              style={{ backgroundColor: themeColor }}
+            >
+              로그인하기
+            </button>
+            <p className="text-xs text-gray-400 mt-3">
+              계정이 없으신가요? 담당 강사에게 학생 등록을 요청해주세요.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (showQuestionReview && selectedResult) {
     return (
       <QuestionReviewFull

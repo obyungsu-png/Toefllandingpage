@@ -8380,6 +8380,8 @@ function AppContent() {
           onShareConfigChange={setShareConfig}
           studentName={loggedInUserName || 'Student'}
           advertisements={advertisements}
+          isLoggedIn={isLoggedIn}
+          onRequestLogin={() => setShowLoginPopup(true)}
           onDeleteResult={(resultId) => {
             setTestResults(prev => prev.filter(r => r.id !== resultId));
             toast.success('기록이 삭제되었습니다.');
