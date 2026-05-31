@@ -1016,9 +1016,20 @@ export function HistorySection({
         if (!relatedResults[selfSec]) relatedResults[selfSec] = selectedResult;
 
         const curResult = relatedResults[scoreModalSection] || null;
-        const totalQ = curResult?.totalQuestions || 0;
+
+        // === Get question count from CMS (TPO data) for accurate question count ===
+        // Default counts per section if CMS data unavailable
+        const defaultCounts: Record<string, number> = { Reading: 20, Listening: 28, Writing: 2, Speaking: 4 };
+        const cmsTpo = tpoTests?.find((t: any) => t.testNumber === selectedResult.testNumber);
+        const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === scoreModalSection);
+        const cmsQuestionCount = cmsSection?.questions?.length || 0;
+
+        // Priority: CMS count > result.totalQuestions > default
+        const totalQ = cmsQuestionCount > 0
+          ? cmsQuestionCount
+          : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0);
         const correctQ = curResult?.correctAnswers || 0;
-        const wrongQ = totalQ - correctQ;
+        const wrongQ = Math.max(0, totalQ - correctQ);
         const color = sectionColors[scoreModalSection];
 
         // Build per-question correctness
@@ -1027,7 +1038,7 @@ export function HistorySection({
           const wrong = curResult?.wrongAnswers.find(
             w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum
           );
-          const isWrong = wrong ? true : i >= correctQ;
+          const isWrong = wrong ? true : (curResult ? i >= correctQ : false);
           return { qNum, isWrong, wrong };
         });
 
@@ -1054,6 +1065,10 @@ export function HistorySection({
                   const isActive = scoreModalSection === sec;
                   const secRes = relatedResults[sec];
                   const sc = sectionColors[sec];
+                  // CMS-based question count for this section
+                  const secCmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === sec);
+                  const secCmsCount = secCmsSection?.questions?.length || 0;
+                  const secTotal = secCmsCount > 0 ? secCmsCount : (secRes?.totalQuestions || defaultCounts[sec] || 0);
                   return (
                     <button key={sec}
                       onClick={() => setScoreModalSection(sec)}
@@ -1063,9 +1078,13 @@ export function HistorySection({
                       style={isActive ? { color: sc, borderBottomColor: sc } : {}}>
                       <span className="text-base">{sectionIcons[sec]}</span>
                       <span>{sec}</span>
-                      {secRes && (
+                      {secRes ? (
                         <span className="text-[10px] font-normal ml-1 opacity-70">
-                          {secRes.correctAnswers}/{secRes.totalQuestions}
+                          {secRes.correctAnswers}/{secTotal}
+                        </span>
+                      ) : secCmsCount > 0 && (
+                        <span className="text-[10px] font-normal ml-1 opacity-50">
+                          —/{secTotal}
                         </span>
                       )}
                     </button>
@@ -1075,7 +1094,7 @@ export function HistorySection({
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto">
-                {!curResult ? (
+                {!curResult && cmsQuestionCount === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                     <span className="text-4xl mb-3">{sectionIcons[scoreModalSection]}</span>
                     <p className="text-sm font-medium">No {scoreModalSection} data</p>
@@ -1121,7 +1140,7 @@ export function HistorySection({
                     </div>
 
                     {/* Wrong answers list */}
-                    {curResult.wrongAnswers.length > 0 && (
+                    {curResult && curResult.wrongAnswers.length > 0 && (
                       <div className="px-5 md:px-6 py-4">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
                         <div className="space-y-2">
