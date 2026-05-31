@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BarChart3, Clock, CheckCircle, XCircle, RotateCcw, ChevronRight, Calendar, Share2, Settings, TrendingUp, ChevronDown, BookOpen, Star, ChevronLeft, CheckCircle2, Flame, Eye, MessageCircle, PanelRightOpen, PanelRightClose, User } from 'lucide-react';
+import { BarChart3, Clock, CheckCircle, XCircle, RotateCcw, ChevronRight, Calendar, Share2, Settings, TrendingUp, ChevronDown, BookOpen, Star, ChevronLeft, CheckCircle2, Flame, Eye, MessageCircle, PanelRightOpen, PanelRightClose, User, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ShareSettings, ShareConfig } from './ShareSettings';
 import { ReportSection } from './ReportSection';
@@ -21,6 +21,7 @@ interface HistorySectionProps {
   onRetryWrongAnswers?: (result: TestResult) => void;
   onRestartTest?: (result: TestResult, startFresh: boolean) => void;
   onViewDetail?: (result: TestResult) => void;
+  onDeleteResult?: (resultId: string) => void;
   shareConfig?: ShareConfig;
   onShareConfigChange?: (config: ShareConfig) => void;
   studentName?: string;
@@ -155,6 +156,7 @@ export function HistorySection({
   onRetryWrongAnswers,
   onRestartTest,
   onViewDetail,
+  onDeleteResult,
   shareConfig,
   onShareConfigChange,
   studentName = 'Student',
@@ -184,6 +186,10 @@ export function HistorySection({
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [restartTarget, setRestartTarget] = useState<TestResult | null>(null);
+
+  // Delete confirm modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<TestResult | null>(null);
 
   // Calendar state
   const now = new Date();
@@ -439,6 +445,24 @@ export function HistorySection({
     onRetryWrongAnswers?.(result);
   };
 
+  const handleDeleteClick = (result: TestResult) => {
+    setDeleteTarget(result);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteTarget) {
+      onDeleteResult?.(deleteTarget.id);
+    }
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+  };
+
   const handleBackFromReview = () => {
     setShowQuestionReview(false);
   };
@@ -670,6 +694,14 @@ export function HistorySection({
                                 >
                                   View Results
                                 </button>
+                                <button
+                                  onClick={() => handleDeleteClick(record.result)}
+                                  className="px-2 py-1.5 rounded-lg text-xs font-bold border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors"
+                                  title="기록 삭제"
+                                  aria-label="기록 삭제"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -804,6 +836,14 @@ export function HistorySection({
                                         <Eye className="w-3 h-3" />
                                         View Results
                                       </span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteClick(record.result)}
+                                      className="px-3 py-2 rounded-lg text-xs font-bold border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-all"
+                                      title="기록 삭제"
+                                      aria-label="기록 삭제"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 </div>
@@ -1185,6 +1225,48 @@ export function HistorySection({
             setRestartTarget(null);
           }}
         />
+      )}
+
+      {/* Delete Confirm Modal */}
+      {showDeleteModal && deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={handleDeleteCancel}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-gray-900">기록 삭제</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">이 작업은 되돌릴 수 없어요</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                <span className="font-bold text-gray-900">{deleteTarget.testName}</span>{' '}
+                기록을 삭제할까요?
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                {new Date(deleteTarget.date).toLocaleString('ko-KR')} · 점수 {deleteTarget.score}점
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-5 py-2 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
