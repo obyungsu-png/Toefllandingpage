@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Lock, Shield, Smartphone, Cloud, MessageCircle, Laptop, Phone } from 'lucide-react';
+import { X, User, Lock, Shield, Mail, Cloud, Laptop } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface LoginFormProps {
@@ -11,11 +11,11 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
   const [captcha, setCaptcha] = useState('');
   const [captchaRotation, setCaptchaRotation] = useState(0);
   const [captchaColor, setCaptchaColor] = useState('#555');
-  const [loginMethod, setLoginMethod] = useState<'username' | 'phone'>('username');
+  const [loginMethod, setLoginMethod] = useState<'username' | 'email'>('username');
   
   // Form fields
   const [username, setUsername] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
 
@@ -43,7 +43,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
     
     // Validate captcha
     if (captchaInput.toLowerCase() !== captcha.toLowerCase()) {
-      alert('Invalid verification code! Please check the captcha.');
+      alert('보안 코드가 올바르지 않아요. 다시 확인해주세요.');
       generateCaptcha();
       setCaptchaInput('');
       return;
@@ -60,7 +60,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
           },
           body: JSON.stringify({
             username: loginMethod === 'username' ? username : undefined,
-            phoneNumber: loginMethod === 'phone' ? phoneNumber : undefined,
+            email: loginMethod === 'email' ? email : undefined,
             password,
             loginMethod
           })
@@ -133,7 +133,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
         {/* Right: Login Form */}
         <div className="flex-none w-full md:w-[450px] bg-white/25 p-5 md:p-10 rounded-2xl backdrop-blur-xl shadow-2xl border border-white/20 animate-slideInRight" style={{ opacity: 0 }}>
           <h2 className="text-center text-2xl md:text-3xl text-[#333] mb-6 md:mb-8 font-bold tracking-wide">
-            User Login
+            로그인
           </h2>
           
           {/* Login Method Toggle */}
@@ -147,18 +147,18 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
                   : 'bg-transparent text-[#666] hover:bg-white/50'
               }`}
             >
-              Username Login
+              사용자명 로그인
             </button>
             <button
               type="button"
-              onClick={() => setLoginMethod('phone')}
+              onClick={() => setLoginMethod('email')}
               className={`flex-1 py-2 rounded-md font-semibold text-sm transition-all ${
-                loginMethod === 'phone' 
+                loginMethod === 'email' 
                   ? 'bg-[#29B6F6] text-white shadow-md' 
                   : 'bg-transparent text-[#666] hover:bg-white/50'
               }`}
             >
-              Phone Login
+              이메일 로그인
             </button>
           </div>
           
@@ -168,7 +168,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               <div className="relative mb-5">
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder="사용자명"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -178,19 +178,15 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               </div>
             ) : (
               <div className="relative mb-5">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#666] border-r border-gray-300 pr-3">
-                  <Phone className="w-5 h-5" />
-                  <span className="text-sm font-semibold">+86</span>
-                </div>
                 <input
-                  type="tel"
-                  placeholder="Phone Number"
+                  type="email"
+                  placeholder="이메일 주소"
                   required
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  maxLength={11}
-                  className="w-full pl-[100px] pr-4 py-4 rounded-md bg-white text-[#333] transition-all focus:outline-none focus:ring-4 focus:ring-[#29B6F6]/30 shadow-sm"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 rounded-md bg-white text-[#333] transition-all focus:outline-none focus:ring-4 focus:ring-[#29B6F6]/30 shadow-sm"
                 />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aaa]" />
               </div>
             )}
 
@@ -198,7 +194,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             <div className="relative mb-5">
               <input
                 type="password"
-                placeholder="Password"
+                placeholder="비밀번호"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -212,7 +208,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-[#aaa] z-10" />
               <input
                 type="text"
-                placeholder="Verification Code"
+                placeholder="자동입력 방지 코드"
                 required
                 value={captchaInput}
                 onChange={(e) => setCaptchaInput(e.target.value)}
@@ -243,7 +239,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             {/* Divider */}
             <div className="flex items-center text-center my-6 text-[#666] text-sm font-semibold">
               <div className="flex-1 border-b-2 border-black/10 mr-4"></div>
-              <span>Other Login Methods</span>
+              <span>다른 로그인 방법</span>
               <div className="flex-1 border-b-2 border-black/10 ml-4"></div>
             </div>
 
@@ -258,10 +254,10 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             {/* Bottom Links */}
             <div className="flex justify-between text-sm px-3">
               <a href="#" className="text-[#0288D1] no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
-                Register Now
+                회원가입
               </a>
               <a href="#" className="text-[#0288D1] no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
-                Forgot Password?
+                비밀번호 찾기
               </a>
             </div>
           </form>
