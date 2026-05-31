@@ -7674,6 +7674,17 @@ function AppContent() {
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
           onScreenChange={setCurrentWritingReviewScreen}
+          writingQuestions={(() => {
+            // Pull Writing questions from the active CMS bank
+            const tpoNum = currentTest?.tpoNumber;
+            let bank: any[] = [];
+            if (testBankType === 'tpo') bank = tpoTests;
+            else if (testBankType === 'test') bank = testTests;
+            else if (testBankType === 'training') bank = trainingTests;
+            const t = bank.find((b: any) => b.testNumber === tpoNum);
+            const sec = t?.sections?.find((s: any) => s.sectionType === 'Writing');
+            return sec?.questions || [];
+          })()}
           onHome={() => {
             setActiveWritingScreen(null);
             clearReviewContext();

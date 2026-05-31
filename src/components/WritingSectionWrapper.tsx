@@ -48,6 +48,8 @@ interface WritingSectionWrapperProps {
   onHome: () => void;
   onComplete: () => void;
   onScreenChange?: (screen: WritingScreen) => void;
+  // CMS-driven writing questions (passed from TPO/Test/Training)
+  writingQuestions?: any[];
 }
 
 export function WritingSectionWrapper({
@@ -55,6 +57,7 @@ export function WritingSectionWrapper({
   onHome,
   onComplete,
   onScreenChange,
+  writingQuestions = [],
 }: WritingSectionWrapperProps) {
   const [screen, setScreen] = useState<WritingScreen>(initialScreen);
   
@@ -132,20 +135,170 @@ export function WritingSectionWrapper({
 
       {screen === 'intro' && <WritingIntro onNext={goNext} onHome={onHome} />}
       {screen === 'build-sentence-intro' && <WritingBuildSentenceIntro onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q1' && <WritingBuildSentenceQ1 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q2' && <WritingBuildSentenceQ2 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q3' && <WritingBuildSentenceQ3 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q4' && <WritingBuildSentenceQ4 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q5' && <WritingBuildSentenceQ5 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q6' && <WritingBuildSentenceQ6 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q7' && <WritingBuildSentenceQ7 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q8' && <WritingBuildSentenceQ8 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q9' && <WritingBuildSentenceQ9 onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q10' && <WritingBuildSentenceQ10 onBack={goBack} onNext={goNext} onHome={onHome} />}
+      {screen === 'bs-q1' && (() => {
+        const cmsQ = writingQuestions[0];
+        return (
+          <WritingBuildSentenceQ1
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q2' && (() => {
+        const cmsQ = writingQuestions[1];
+        return (
+          <WritingBuildSentenceQ2
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q3' && (() => {
+        const cmsQ = writingQuestions[2];
+        return (
+          <WritingBuildSentenceQ3
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q4' && (() => {
+        const cmsQ = writingQuestions[3];
+        return (
+          <WritingBuildSentenceQ4
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q5' && (() => {
+        const cmsQ = writingQuestions[4];
+        return (
+          <WritingBuildSentenceQ5
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q6' && (() => {
+        const cmsQ = writingQuestions[5];
+        return (
+          <WritingBuildSentenceQ6
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q7' && (() => {
+        const cmsQ = writingQuestions[6];
+        return (
+          <WritingBuildSentenceQ7
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q8' && (() => {
+        const cmsQ = writingQuestions[7];
+        return (
+          <WritingBuildSentenceQ8
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q9' && (() => {
+        const cmsQ = writingQuestions[8];
+        return (
+          <WritingBuildSentenceQ9
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
+      {screen === 'bs-q10' && (() => {
+        const cmsQ = writingQuestions[9];
+        return (
+          <WritingBuildSentenceQ10
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
+            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
+            questionText={cmsQ?.questionText}
+            words={cmsQ?.words}
+          />
+        );
+      })()}
       {screen === 'email-intro' && <WritingEmailIntro onNext={goNext} onHome={onHome} />}
       {screen === 'email-q1' && <WritingEmailQ1 onBack={goBack} onNext={goNext} onHome={onHome} />}
       {screen === 'academic-intro' && <WritingAcademicDiscussionIntro onBegin={goNext} onHome={onHome} />}
-      {screen === 'academic-q2' && <WritingAcademicDiscussionQ2 onBack={goBack} onNext={goNext} onHome={onHome} />}
+      {screen === 'academic-q2' && (() => {
+        // Find the Academic Discussion question from CMS (by type or by position — typically Q12, after 10 Build Sentence + 1 Email)
+        const adQ = writingQuestions.find((q: any) =>
+          (q.questionType || '').toLowerCase().includes('academic discussion') ||
+          (q.questionType || '').toLowerCase().includes('discussion')
+        ) || writingQuestions[11] || writingQuestions[writingQuestions.length - 1];
+        return (
+          <WritingAcademicDiscussionQ2
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            professorImageUrl={adQ?.professorImageUrl}
+            professorName={adQ?.professorName}
+            professorMessage={adQ?.professorMessage}
+            student1ImageUrl={adQ?.student1ImageUrl}
+            student1Message={adQ?.student1Message}
+            student2ImageUrl={adQ?.student2ImageUrl}
+            student2Message={adQ?.student2Message}
+          />
+        );
+      })()}
       {screen === 'end' && <WritingEnd onNext={onComplete} onHome={onHome} />}
     </>
   );

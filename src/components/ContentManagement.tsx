@@ -46,6 +46,14 @@ export interface TPOQuestion {
   avatar1ImageUrl?: string; // Question person avatar
   avatar2ImageUrl?: string; // Answer person avatar
   words?: string[]; // Words to arrange
+  // For Writing "Academic Discussion" (Q11+, 두번째 라이팅 문제 — 교수님 + 학생 두 명)
+  professorImageUrl?: string;
+  professorName?: string;
+  professorMessage?: string;
+  student1ImageUrl?: string;
+  student1Message?: string;
+  student2ImageUrl?: string;
+  student2Message?: string;
   // For grouped Listening types (Short Conversation, Announcements, Academic Talk)
   passageAudioUrl?: string;
   passageImageUrl?: string;
@@ -1051,6 +1059,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     avatar2ImageFile: null as File | null,
     avatar2ImageUrl: '',
     words: '' as string, // space-separated words
+    // Academic Discussion (두번째 라이팅 문제) fields
+    professorImageFile: null as File | null,
+    professorImageUrl: '',
+    professorName: '',
+    professorMessage: '',
+    student1ImageFile: null as File | null,
+    student1ImageUrl: '',
+    student1Message: '',
+    student2ImageFile: null as File | null,
+    student2ImageUrl: '',
+    student2Message: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1136,6 +1155,39 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.words.trim()) {
       question.words = formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean);
     }
+
+    // Academic Discussion: professor + 2 students avatars + messages
+    if (formData.professorImageUrl.trim()) {
+      question.professorImageUrl = formData.professorImageUrl.trim();
+    } else if (formData.professorImageFile) {
+      try {
+        question.professorImageUrl = await uploadToStorage(formData.professorImageFile, 'writing-avatars');
+      } catch {
+        question.professorImageUrl = URL.createObjectURL(formData.professorImageFile);
+      }
+    }
+    if (formData.student1ImageUrl.trim()) {
+      question.student1ImageUrl = formData.student1ImageUrl.trim();
+    } else if (formData.student1ImageFile) {
+      try {
+        question.student1ImageUrl = await uploadToStorage(formData.student1ImageFile, 'writing-avatars');
+      } catch {
+        question.student1ImageUrl = URL.createObjectURL(formData.student1ImageFile);
+      }
+    }
+    if (formData.student2ImageUrl.trim()) {
+      question.student2ImageUrl = formData.student2ImageUrl.trim();
+    } else if (formData.student2ImageFile) {
+      try {
+        question.student2ImageUrl = await uploadToStorage(formData.student2ImageFile, 'writing-avatars');
+      } catch {
+        question.student2ImageUrl = URL.createObjectURL(formData.student2ImageFile);
+      }
+    }
+    if (formData.professorName.trim()) question.professorName = formData.professorName.trim();
+    if (formData.professorMessage.trim()) question.professorMessage = formData.professorMessage.trim();
+    if (formData.student1Message.trim()) question.student1Message = formData.student1Message.trim();
+    if (formData.student2Message.trim()) question.student2Message = formData.student2Message.trim();
 
     onSubmit(question);
   };
@@ -1720,6 +1772,130 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Academic Discussion (두번째 라이팅 문제) — Writing only */}
+        {section === 'Writing' && (
+          <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 bg-purple-50/40">
+            <p className="text-sm font-bold text-purple-700 mb-3 flex items-center gap-1.5">
+              🎓 Academic Discussion 설정
+              <span className="text-xs font-normal text-gray-500">— 교수님 1명 + 학생 2명의 토론 응답 문제용</span>
+            </p>
+
+            {/* Professor row */}
+            <div className="bg-white rounded-lg p-3 border border-purple-200 mb-3">
+              <p className="text-xs font-semibold text-purple-700 mb-2">🧑‍🏫 교수님 (가운데 원)</p>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] bg-gray-100">
+                    {formData.professorImageUrl ? (
+                      <img src={formData.professorImageUrl} alt="professor preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFormData({ ...formData, professorImageFile: file, professorImageUrl: URL.createObjectURL(file) });
+                      }
+                    }}
+                    className="text-[10px] w-20"
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    value={formData.professorName}
+                    onChange={(e) => setFormData({ ...formData, professorName: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                    placeholder="교수님 이름 (예: Dr. Achebe)"
+                  />
+                  <textarea
+                    value={formData.professorMessage}
+                    onChange={(e) => setFormData({ ...formData, professorMessage: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                    rows={3}
+                    placeholder="교수님의 토론 주제·질문 (예: Volunteerism refers to the act of...)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Two students */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Student 1 */}
+              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 mb-2">👩‍🎓 학생 1 (찬성·찬반 입장 응답 1)</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#c9b99b] bg-gray-100">
+                      {formData.student1ImageUrl ? (
+                        <img src={formData.student1ImageUrl} alt="student1" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormData({ ...formData, student1ImageFile: file, student1ImageUrl: URL.createObjectURL(file) });
+                        }
+                      }}
+                      className="text-[10px] w-14"
+                    />
+                  </div>
+                  <textarea
+                    value={formData.student1Message}
+                    onChange={(e) => setFormData({ ...formData, student1Message: e.target.value })}
+                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                    rows={4}
+                    placeholder="학생 1의 응답..."
+                  />
+                </div>
+              </div>
+
+              {/* Student 2 */}
+              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 mb-2">🧑‍🎓 학생 2 (반대·반대 입장 응답 2)</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#c9b99b] bg-gray-100">
+                      {formData.student2ImageUrl ? (
+                        <img src={formData.student2ImageUrl} alt="student2" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormData({ ...formData, student2ImageFile: file, student2ImageUrl: URL.createObjectURL(file) });
+                        }
+                      }}
+                      className="text-[10px] w-14"
+                    />
+                  </div>
+                  <textarea
+                    value={formData.student2Message}
+                    onChange={(e) => setFormData({ ...formData, student2Message: e.target.value })}
+                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                    rows={4}
+                    placeholder="학생 2의 응답..."
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
