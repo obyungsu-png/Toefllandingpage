@@ -227,6 +227,8 @@ export function QuestionReviewFull({
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  // Listening detail tabs (Dictation / Key Words / Analysis / Translation)
+  const [listeningTab, setListeningTab] = useState<'transcript' | 'keywords' | 'analysis' | 'translation' | null>(null);
   const [audioProgress, setAudioProgress] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const progressInterval = useRef<number | null>(null);
@@ -964,89 +966,137 @@ export function QuestionReviewFull({
             )}
 
             {/* Left Panel: Audio Player (for Listening) - Equal width 50% */}
-            {activeSection === 'Listening' && (
-              <div className="w-full md:w-1/2 order-1 md:order-none">
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 h-full overflow-y-auto">
-                  {/* Listening Image (if available from CMS) */}
-                  {currentQuestion?.imageUrl && (
-                    <div className="rounded-lg overflow-hidden mb-4 border border-gray-200">
-                      <img
-                        src={currentQuestion.imageUrl}
-                        alt="Listening question context"
-                        className="w-full h-48 object-cover"
-                      />
-                    </div>
-                  )}
-
-                  {/* Audio Player */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0"
-                      style={{ backgroundColor: themeColor }}
-                    >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                    </button>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                        <span>0:{String(Math.floor(audioProgress / 20)).padStart(2, '0')}</span>
-                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{ width: `${audioProgress}%`, backgroundColor: themeColor }}
-                          />
-                        </div>
-                        <span>0:05</span>
+            {activeSection === 'Listening' && (() => {
+              const realQ = (currentSection?.questions || [])[currentQuestionIndex];
+              const imageUrl = currentQuestion?.imageUrl || realQ?.imageUrl;
+              const transcript = realQ?.audioText || realQ?.transcript || currentQuestion?.audioText || currentQuestion?.text;
+              const translation = realQ?.translation || realQ?.koreanTranslation;
+              const keyWords: string[] = realQ?.keyWords || realQ?.vocabulary || [];
+              const analysis = realQ?.analysis || realQ?.explanation || currentQuestion?.explanation;
+              return (
+                <div className="w-full md:w-1/2 order-1 md:order-none">
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-5 h-full overflow-y-auto">
+                    {/* Listening Image (CMS) — full face visible */}
+                    {imageUrl ? (
+                      <div className="rounded-lg overflow-hidden mb-4 border border-gray-200 bg-white flex items-center justify-center" style={{ maxHeight: '320px' }}>
+                        <img
+                          src={imageUrl}
+                          alt="Listening question context"
+                          className="w-full h-auto object-contain"
+                          style={{ maxHeight: '320px' }}
+                        />
                       </div>
-                    </div>
-                    <button
-                      onClick={() => setPlaybackRate(playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1)}
-                      className="text-xs font-medium border border-gray-300 rounded-full px-2 py-0.5 text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      {playbackRate}x
-                    </button>
-                  </div>
-
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => setShowTranslation(!showTranslation)}
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-                        showTranslation
-                          ? 'text-white border-transparent'
-                          : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-                      }`}
-                      style={{ backgroundColor: showTranslation ? themeColor : undefined }}
-                    >
-                      Show Translation
-                    </button>
-                    <button
-                      onClick={() => setShowTranscript(!showTranscript)}
-                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-                        showTranscript
-                          ? 'text-white border-transparent'
-                          : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-                      }`}
-                      style={{ backgroundColor: showTranscript ? themeColor : undefined }}
-                    >
-                      {showTranscript ? 'Hide Transcript' : 'Show Transcript'}
-                    </button>
-                  </div>
-
-                  {/* replace AnimatePresence with fragment: */}
-                  <>
-                    {(showTranscript || showTranslation) && (
-                      <div
-                        className="overflow-hidden animate-[fadeSlideUp_0.2s_ease-out]"
-                      >
-                        <p className="text-sm italic" style={{ color: themeColor }}>
-                          {currentQuestion?.audioText || currentQuestion?.text}
-                        </p>
+                    ) : (
+                      <div className="rounded-lg mb-4 border-2 border-dashed border-gray-200 bg-white flex items-center justify-center text-gray-300 text-xs" style={{ height: '180px' }}>
+                        No image
                       </div>
                     )}
-                  </>
+
+                    {/* Audio Player */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ backgroundColor: themeColor }}
+                      >
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                      </button>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                          <span>0:{String(Math.floor(audioProgress / 20)).padStart(2, '0')}</span>
+                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${audioProgress}%`, backgroundColor: themeColor }}
+                            />
+                          </div>
+                          <span>0:05</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setPlaybackRate(playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1)}
+                        className="text-xs font-medium border border-gray-300 rounded-full px-2 py-0.5 text-gray-600 hover:bg-gray-100 transition-colors"
+                      >
+                        {playbackRate}x
+                      </button>
+                    </div>
+
+                    {/* Feature Tabs: Dictation / Key Words / Analysis / Practice */}
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      {[
+                        { key: 'transcript', label: 'Dictation', icon: '🔊' },
+                        { key: 'keywords', label: 'Key Words', icon: '✨' },
+                        { key: 'analysis', label: 'Analysis', icon: '📄' },
+                        { key: 'translation', label: 'Translation', icon: '🌐' },
+                      ].map(tab => {
+                        const isActive = listeningTab === tab.key;
+                        return (
+                          <button
+                            key={tab.key}
+                            onClick={() => setListeningTab(isActive ? null : tab.key as any)}
+                            className={`flex flex-col items-center gap-1 py-2 rounded-lg border transition-all ${
+                              isActive
+                                ? 'text-white border-transparent shadow-sm'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700'
+                            }`}
+                            style={isActive ? { backgroundColor: themeColor } : {}}
+                          >
+                            <span className="text-base leading-none">{tab.icon}</span>
+                            <span className="text-[10px] font-semibold">{tab.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Tab content */}
+                    {listeningTab && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-4 animate-[fadeSlideUp_0.2s_ease-out]">
+                        {listeningTab === 'transcript' && (
+                          <>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">📝 Transcript</p>
+                            <p className="text-sm italic leading-relaxed" style={{ color: themeColor }}>
+                              {transcript || 'CMS에 등록된 스크립트가 없습니다.'}
+                            </p>
+                          </>
+                        )}
+                        {listeningTab === 'keywords' && (
+                          <>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">✨ Key Words</p>
+                            {keyWords.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {keyWords.map((w, i) => (
+                                  <span key={i} className="px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
+                                    {w}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-400 italic">CMS에 등록된 핵심 단어가 없습니다.</p>
+                            )}
+                          </>
+                        )}
+                        {listeningTab === 'analysis' && (
+                          <>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">📄 Analysis</p>
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                              {analysis || 'CMS에 등록된 해설이 없습니다.'}
+                            </p>
+                          </>
+                        )}
+                        {listeningTab === 'translation' && (
+                          <>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">🌐 Translation</p>
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {translation || 'CMS에 등록된 번역이 없습니다.'}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Right: Question Content - Equal width 50% */}
             <div className="w-full md:w-1/2 shrink-0 order-2 md:order-none">
