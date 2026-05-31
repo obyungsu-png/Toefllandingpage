@@ -27,7 +27,7 @@ interface HistorySectionProps {
   advertisements?: any[];
 }
 
-type TabType = 'TPO' | 'Test' | 'Training' | 'Vocabulary' | 'Wrong Answers' | 'Report';
+type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report';
 type NavType = 'records';
 type TimeFilter = 'all' | 'today' | '7days' | '1month' | '3months';
 type StatusFilter = 'all' | 'completed' | 'incomplete';
@@ -146,22 +146,6 @@ const SAMPLE_RESULTS: TestResult[] = [
     ],
     timeSpent: 1800,
   },
-  {
-    id: 'sample-vocab-1',
-    type: 'Vocabulary',
-    testName: 'TOEFL Vocabulary Test',
-    date: '2026-03-08T08:00:00',
-    score: 88,
-    totalQuestions: 100,
-    correctAnswers: 88,
-    wrongAnswers: [
-      { questionId: 'v1', questionText: 'What does "aberration" mean?', userAnswer: 'normal', correctAnswer: 'deviation, anomaly', explanation: 'Aberration refers to a departure from what is normal.' },
-      { questionId: 'v2', questionText: 'What does "benevolent" mean?', userAnswer: 'malicious', correctAnswer: 'kind, generous', explanation: 'Benevolent describes a kind and generous character.' },
-    ],
-    timeSpent: 600,
-    vocabularyDay: 3,
-    vocabularyVolume: 1,
-  },
 ];
 
 export function HistorySection({ 
@@ -224,7 +208,7 @@ export function HistorySection({
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Vocabulary', 'Wrong Answers', 'Report'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report'];
 
   const timeFilters: { key: TimeFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -253,9 +237,6 @@ export function HistorySection({
       case 'Training':
         filtered = effectiveResults.filter(r => r.type === 'Training');
         break;
-      case 'Vocabulary':
-        filtered = effectiveResults.filter(r => r.type === 'Vocabulary');
-        break;
       case 'Wrong Answers':
         filtered = effectiveResults.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0);
         break;
@@ -270,7 +251,6 @@ export function HistorySection({
         case 'TPO': return SAMPLE_RESULTS.filter(r => r.type === 'TPO');
         case 'Test': return SAMPLE_RESULTS.filter(r => r.type === 'Test');
         case 'Training': return SAMPLE_RESULTS.filter(r => r.type === 'Training');
-        case 'Vocabulary': return SAMPLE_RESULTS.filter(r => r.type === 'Vocabulary');
         case 'Wrong Answers': return SAMPLE_RESULTS.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0);
         default: return SAMPLE_RESULTS;
       }
@@ -392,7 +372,6 @@ export function HistorySection({
       case 'TPO': return effectiveResults.filter(r => r.type === 'TPO').length;
       case 'Test': return effectiveResults.filter(r => r.type === 'Test').length;
       case 'Training': return effectiveResults.filter(r => r.type === 'Training').length;
-      case 'Vocabulary': return effectiveResults.filter(r => r.type === 'Vocabulary').length;
       case 'Wrong Answers': return effectiveResults.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0).length;
       case 'Report': return 0;
       default: return 0;

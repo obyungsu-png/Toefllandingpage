@@ -1473,6 +1473,41 @@ function AppContent() {
     category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
     totalQuestions: number
   ) => {
+    // Collect all selectedAnswers (selectedAnswer, selectedAnswer2..selectedAnswer20)
+    const allAnswers: (string | null)[] = [
+      selectedAnswer, selectedAnswer2, selectedAnswer3, selectedAnswer4, selectedAnswer5,
+      selectedAnswer6, selectedAnswer7, selectedAnswer8, selectedAnswer9, selectedAnswer10,
+    ];
+
+    // Match against CMS data to calculate score
+    const tpoNum = currentTest?.tpoNumber;
+    const cmsTpo = tpoTests?.find((t: any) => t.testNumber === tpoNum);
+    const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === category);
+    const cmsQuestions = cmsSection?.questions || [];
+
+    let correctCount = 0;
+    const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
+
+    for (let i = 0; i < Math.min(totalQuestions, allAnswers.length); i++) {
+      const userAns = allAnswers[i];
+      const cmsQ = cmsQuestions[i];
+      const correctAns = cmsQ?.correctAnswer;
+
+      if (userAns && correctAns && userAns === correctAns) {
+        correctCount++;
+      } else if (userAns) {
+        wrongAnswers.push({
+          questionId: String(i + 1),
+          questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
+          userAnswer: userAns,
+          correctAnswer: correctAns || '',
+          explanation: cmsQ?.explanation,
+        });
+      }
+    }
+
+    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
     handleAddTestResult({
       type: getCurrentResultType(),
       category,
@@ -1481,10 +1516,10 @@ function AppContent() {
       bankType: testBankType,
       status: 'completed',
       date: new Date().toISOString(),
-      score: 0,
+      score,
       totalQuestions,
-      correctAnswers: 0,
-      wrongAnswers: [],
+      correctAnswers: correctCount,
+      wrongAnswers,
       timeSpent: 0,
     });
   };
