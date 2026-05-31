@@ -1044,7 +1044,13 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     imageUrl: '',
     duration: 0,
     difficulty: '보통' as '쉬움' | '보통' | '어려움',
-    blanks: [] as Array<{ answer: string; maxLength: number }>
+    blanks: [] as Array<{ answer: string; maxLength: number }>,
+    // Build Sentence (문장 배열) fields
+    avatar1ImageFile: null as File | null,
+    avatar1ImageUrl: '',
+    avatar2ImageFile: null as File | null,
+    avatar2ImageUrl: '',
+    words: '' as string, // space-separated words
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1106,6 +1112,29 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.videoUrl = formData.videoUrl.trim();
     } else if (formData.videoFile) {
       question.videoUrl = URL.createObjectURL(formData.videoFile);
+    }
+
+    // Build Sentence: avatars + words
+    if (formData.avatar1ImageUrl.trim()) {
+      question.avatar1ImageUrl = formData.avatar1ImageUrl.trim();
+    } else if (formData.avatar1ImageFile) {
+      try {
+        question.avatar1ImageUrl = await uploadToStorage(formData.avatar1ImageFile, 'writing-avatars');
+      } catch {
+        question.avatar1ImageUrl = URL.createObjectURL(formData.avatar1ImageFile);
+      }
+    }
+    if (formData.avatar2ImageUrl.trim()) {
+      question.avatar2ImageUrl = formData.avatar2ImageUrl.trim();
+    } else if (formData.avatar2ImageFile) {
+      try {
+        question.avatar2ImageUrl = await uploadToStorage(formData.avatar2ImageFile, 'writing-avatars');
+      } catch {
+        question.avatar2ImageUrl = URL.createObjectURL(formData.avatar2ImageFile);
+      }
+    }
+    if (formData.words.trim()) {
+      question.words = formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean);
     }
 
     onSubmit(question);
@@ -1581,6 +1610,117 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               placeholder="e.g., 45, 60, 300"
             />
+          </div>
+        )}
+
+        {/* Build Sentence (문장 배열) — Writing only */}
+        {section === 'Writing' && (
+          <div className="border-2 border-dashed border-[#2d7a7c]/30 rounded-xl p-4 bg-[#f0fafa]/40">
+            <p className="text-sm font-bold text-[#2d7a7c] mb-3 flex items-center gap-1.5">
+              ✏️ Build Sentence (문장 배열) 설정
+              <span className="text-xs font-normal text-gray-500">— 두 사람의 대화로 구성되는 문장 배열 문제용</span>
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              {/* Avatar 1 — Question Person */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">
+                  👤 질문자 (Avatar 1) — 위쪽 원
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
+                    {formData.avatar1ImageUrl ? (
+                      <img src={formData.avatar1ImageUrl} alt="avatar1 preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormData({ ...formData, avatar1ImageFile: file, avatar1ImageUrl: URL.createObjectURL(file) });
+                        }
+                      }}
+                      className="text-xs w-full"
+                    />
+                    {formData.avatar1ImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: '' })}
+                        className="text-xs text-red-500 mt-1 hover:underline"
+                      >
+                        제거
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Avatar 2 — Answer Person */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">
+                  👤 답변자 (Avatar 2) — 아래쪽 원
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
+                    {formData.avatar2ImageUrl ? (
+                      <img src={formData.avatar2ImageUrl} alt="avatar2 preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormData({ ...formData, avatar2ImageFile: file, avatar2ImageUrl: URL.createObjectURL(file) });
+                        }
+                      }}
+                      className="text-xs w-full"
+                    />
+                    {formData.avatar2ImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: '' })}
+                        className="text-xs text-red-500 mt-1 hover:underline"
+                      >
+                        제거
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Words to arrange */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                🔤 단어 목록 (쉼표로 구분 — 학생이 배열할 단어)
+              </label>
+              <input
+                type="text"
+                value={formData.words}
+                onChange={(e) => setFormData({ ...formData, words: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
+                placeholder="예: were, the, was, old city, showed us around, who, tour guides"
+              />
+              {formData.words && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean).map((w, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-[#2d7a7c]/10 text-[#2d7a7c] text-xs font-medium">
+                      {w}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
