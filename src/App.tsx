@@ -1473,15 +1473,27 @@ function AppContent() {
     category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
     totalQuestions: number
   ) => {
-    // Collect all selectedAnswers (selectedAnswer, selectedAnswer2..selectedAnswer20)
+    // Collect available selectedAnswers (1~10 in this scope, 11~20 are in nested scopes)
+    // Use window.__moduleAnswers if module components have shared their answers
+    const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
     const allAnswers: (string | null)[] = [
       selectedAnswer, selectedAnswer2, selectedAnswer3, selectedAnswer4, selectedAnswer5,
       selectedAnswer6, selectedAnswer7, selectedAnswer8, selectedAnswer9, selectedAnswer10,
+      sharedAnswers[11] || null, sharedAnswers[12] || null, sharedAnswers[13] || null,
+      sharedAnswers[14] || null, sharedAnswers[15] || null, sharedAnswers[16] || null,
+      sharedAnswers[17] || null, sharedAnswers[18] || null, sharedAnswers[19] || null,
+      sharedAnswers[20] || null,
     ];
 
-    // Match against CMS data to calculate score
+    // Pick the correct CMS bank based on testBankType
     const tpoNum = currentTest?.tpoNumber;
-    const cmsTpo = tpoTests?.find((t: any) => t.testNumber === tpoNum);
+    let cmsBank: any[] = [];
+    if (testBankType === 'tpo') cmsBank = tpoTests;
+    else if (testBankType === 'test') cmsBank = testTests;
+    else if (testBankType === 'training') cmsBank = trainingTests;
+    else cmsBank = [...tpoTests, ...testTests, ...trainingTests];
+
+    const cmsTpo = cmsBank?.find((t: any) => t.testNumber === tpoNum);
     const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === category);
     const cmsQuestions = cmsSection?.questions || [];
 
@@ -1507,6 +1519,11 @@ function AppContent() {
     }
 
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+    // Clear shared answers after saving
+    if (typeof window !== 'undefined') {
+      (window as any).__moduleAnswers = {};
+    }
 
     handleAddTestResult({
       type: getCurrentResultType(),
@@ -2739,7 +2756,7 @@ function AppContent() {
                         name="module1-q16"
                         value={option}
                         checked={selectedAnswer16 === option}
-                        onChange={() => setSelectedAnswer16(option)}
+                        onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -2924,7 +2941,7 @@ function AppContent() {
                         name="module1-q17"
                         value={option}
                         checked={selectedAnswer17 === option}
-                        onChange={() => setSelectedAnswer17(option)}
+                        onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3110,7 +3127,7 @@ function AppContent() {
                         name="module1-q18"
                         value={option}
                         checked={selectedAnswer18 === option}
-                        onChange={() => setSelectedAnswer18(option)}
+                        onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3297,7 +3314,7 @@ function AppContent() {
                         name="module1-q19"
                         value={option}
                         checked={selectedAnswer19 === option}
-                        onChange={() => setSelectedAnswer19(option)}
+                        onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3485,7 +3502,7 @@ function AppContent() {
                         name="module1-q20"
                         value={option}
                         checked={selectedAnswer20 === option}
-                        onChange={() => setSelectedAnswer20(option)}
+                        onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -5229,7 +5246,7 @@ function AppContent() {
                         name="module2-q16"
                         value={option}
                         checked={selectedAnswer16 === option}
-                        onChange={() => setSelectedAnswer16(option)}
+                        onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
                         label={option}
                       />
                     ))}
@@ -5387,7 +5404,7 @@ function AppContent() {
                       name="module2-q17"
                       value={option}
                       checked={selectedAnswer17 === option}
-                      onChange={() => setSelectedAnswer17(option)}
+                      onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
                       label={option}
                     />
                   ))}
@@ -5545,7 +5562,7 @@ function AppContent() {
                       name="module2-q18"
                       value={option}
                       checked={selectedAnswer18 === option}
-                      onChange={() => setSelectedAnswer18(option)}
+                      onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
                       label={option}
                     />
                   ))}
@@ -5703,7 +5720,7 @@ function AppContent() {
                       name="module2-q19"
                       value={option}
                       checked={selectedAnswer19 === option}
-                      onChange={() => setSelectedAnswer19(option)}
+                      onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
                       label={option}
                     />
                   ))}
@@ -5864,7 +5881,7 @@ function AppContent() {
                       name="module2-q20"
                       value={option}
                       checked={selectedAnswer20 === option}
-                      onChange={() => setSelectedAnswer20(option)}
+                      onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
                       label={option}
                     />
                   ))}
