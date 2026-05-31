@@ -11,6 +11,8 @@ interface QuestionReviewFullProps {
   tpoTests?: any[];
   onBack: () => void;
   themeColor?: string;
+  initialSection?: 'Reading' | 'Listening' | 'Writing' | 'Speaking';
+  initialIndex?: number;
 }
 
 interface ReviewQuestion {
@@ -214,11 +216,13 @@ export function QuestionReviewFull({
   result,
   tpoTests = [],
   onBack,
-  themeColor = '#005f61'
+  themeColor = '#005f61',
+  initialSection,
+  initialIndex = 0
 }: QuestionReviewFullProps) {
-  const [activeSection, setActiveSection] = useState<SectionTab>((result.category as SectionTab) || 'Reading');
+  const [activeSection, setActiveSection] = useState<SectionTab>(initialSection || (result.category as SectionTab) || 'Reading');
   const [activeModule, setActiveModule] = useState(1);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialIndex);
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);

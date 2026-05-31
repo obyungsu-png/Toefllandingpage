@@ -192,6 +192,10 @@ export function HistorySection({
   const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   const [showScoreModal, setShowScoreModal] = useState(false);
+  const [reviewInitialSection, setReviewInitialSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
+  const [reviewInitialIndex, setReviewInitialIndex] = useState(0);
+  // Score modal section nav state
+  const [scoreModalSection, setScoreModalSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -418,6 +422,22 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
+    // Determine initial section from result
+    const sec = (result.category as any) ||
+      (result.testName.includes('Reading') ? 'Reading'
+      : result.testName.includes('Listening') ? 'Listening'
+      : result.testName.includes('Speaking') ? 'Speaking'
+      : result.testName.includes('Writing') ? 'Writing'
+      : 'Reading');
+    setScoreModalSection(sec);
+    setShowScoreModal(true);
+  };
+
+  // Jump to QuestionReviewFull at a specific section + question index
+  const handleJumpToQuestion = (section: 'Reading' | 'Listening' | 'Writing' | 'Speaking', index: number) => {
+    setReviewInitialSection(section);
+    setReviewInitialIndex(index);
+    setShowScoreModal(false);
     setShowQuestionReview(true);
   };
 
@@ -452,6 +472,8 @@ export function HistorySection({
         tpoTests={tpoTests}
         onBack={handleBackFromReview}
         themeColor={themeColor}
+        initialSection={reviewInitialSection}
+        initialIndex={reviewInitialIndex}
       />
     );
   }
@@ -965,95 +987,193 @@ export function HistorySection({
         />
       )}
 
-      {/* Score Results Modal */}
-      {showScoreModal && selectedResult && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowScoreModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">Results</h2>
-                <span className="text-sm text-gray-500 font-medium">{selectedResult.testName}</span>
-              </div>
-              <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
+      {/* Score Results Modal — Section Tabs + Q-number jump */}
+      {showScoreModal && selectedResult && (() => {
+        const sections: ('Reading' | 'Listening' | 'Writing' | 'Speaking')[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
+        const sectionIcons: Record<string, string> = { Reading: '📖', Listening: '🎧', Writing: '✍️', Speaking: '🎤' };
+        const sectionColors: Record<string, string> = { Reading: '#3b82f6', Listening: '#8b5cf6', Writing: '#10b981', Speaking: '#f97316' };
 
-            {/* Score summary */}
-            <div className="grid grid-cols-3 gap-4 px-6 py-5 bg-[#f8fafc]">
-              {[
-                { label: 'Total Questions', value: selectedResult.totalQuestions },
-                { label: 'Correct Answers', value: selectedResult.correctAnswers, color: 'text-green-600' },
-                { label: 'Incorrect Answers', value: selectedResult.totalQuestions - selectedResult.correctAnswers, color: 'text-red-500' },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="bg-white rounded-xl border border-gray-100 px-4 py-5 text-center shadow-sm">
-                  <p className={`text-4xl font-bold mb-1 ${color || 'text-gray-800'}`}>{value}</p>
-                  <p className="text-sm text-gray-500">{label}</p>
+        // Find related results for the same TPO
+        const testNum = selectedResult.testNumber;
+        const testPrefix = selectedResult.testName.replace(/\s*-\s*(Reading|Listening|Writing|Speaking).*/i, '');
+        const relatedResults: Record<string, TestResult> = {};
+        results.forEach(r => {
+          if ((testNum && r.testNumber === testNum) || r.testName.startsWith(testPrefix)) {
+            const sec = r.category || (
+              r.testName.includes('Reading') ? 'Reading'
+              : r.testName.includes('Listening') ? 'Listening'
+              : r.testName.includes('Writing') ? 'Writing'
+              : r.testName.includes('Speaking') ? 'Speaking' : '');
+            if (sec) relatedResults[sec] = r;
+          }
+        });
+        // Also include the selected result itself
+        const selfSec = selectedResult.category || (
+          selectedResult.testName.includes('Reading') ? 'Reading'
+          : selectedResult.testName.includes('Listening') ? 'Listening'
+          : selectedResult.testName.includes('Writing') ? 'Writing'
+          : selectedResult.testName.includes('Speaking') ? 'Speaking' : 'Reading');
+        if (!relatedResults[selfSec]) relatedResults[selfSec] = selectedResult;
+
+        const curResult = relatedResults[scoreModalSection] || null;
+        const totalQ = curResult?.totalQuestions || 0;
+        const correctQ = curResult?.correctAnswers || 0;
+        const wrongQ = totalQ - correctQ;
+        const color = sectionColors[scoreModalSection];
+
+        // Build per-question correctness
+        const qList = Array.from({ length: totalQ }, (_, i) => {
+          const qNum = i + 1;
+          const wrong = curResult?.wrongAnswers.find(
+            w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum
+          );
+          const isWrong = wrong ? true : i >= correctQ;
+          return { qNum, isWrong, wrong };
+        });
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-6"
+            onClick={() => setShowScoreModal(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden"
+              onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-gray-100">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">{selectedResult.testName}</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">{new Date(selectedResult.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-              ))}
-            </div>
+                <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
 
-            {/* Question table */}
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#2d3748] text-white">
-                  <tr>
-                    {['Question', 'Section', 'Correct Answer', 'Your Answer', 'Actions'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-semibold">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {Array.from({ length: selectedResult.totalQuestions }, (_, i) => {
-                    const qNum = i + 1;
-                    const wrong = selectedResult.wrongAnswers.find(w => w.questionId === String(qNum) || w.questionText?.includes(`${qNum}`));
-                    const isWrong = !!wrong || i >= selectedResult.correctAnswers;
-                    const correctAns = wrong?.correctAnswer || '—';
-                    const userAns = isWrong ? (wrong?.userAnswer || 'Omitted') : correctAns;
-                    const section = selectedResult.testName.includes('Reading') ? 'Reading'
-                      : selectedResult.testName.includes('Listening') ? 'Listening'
-                      : selectedResult.testName.includes('Speaking') ? 'Speaking'
-                      : selectedResult.testName.includes('Writing') ? 'Writing'
-                      : 'Reading and Writing';
-                    return (
-                      <tr key={qNum} className={`hover:bg-gray-50 transition-colors ${!isWrong ? 'bg-green-50/30' : ''}`}>
-                        <td className="px-4 py-3 font-medium text-gray-700">{qNum}</td>
-                        <td className="px-4 py-3 text-gray-600">{section}</td>
-                        <td className="px-4 py-3 text-gray-700">{correctAns}</td>
-                        <td className={`px-4 py-3 font-medium ${isWrong ? 'text-red-500' : 'text-green-600'}`}>
-                          {isWrong ? (userAns || 'Omitted') : '✓'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {wrong?.explanation && (
-                            <button
-                              className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                              onClick={() => alert(wrong.explanation)}
-                            >
-                              Review
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+              {/* Section Tabs */}
+              <div className="flex border-b border-gray-100 overflow-x-auto px-2 md:px-4">
+                {sections.map(sec => {
+                  const isActive = scoreModalSection === sec;
+                  const secRes = relatedResults[sec];
+                  const sc = sectionColors[sec];
+                  return (
+                    <button key={sec}
+                      onClick={() => setScoreModalSection(sec)}
+                      className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
+                        isActive ? '' : 'border-transparent text-gray-400 hover:text-gray-600'
+                      }`}
+                      style={isActive ? { color: sc, borderBottomColor: sc } : {}}>
+                      <span className="text-base">{sectionIcons[sec]}</span>
+                      <span>{sec}</span>
+                      {secRes && (
+                        <span className="text-[10px] font-normal ml-1 opacity-70">
+                          {secRes.correctAnswers}/{secRes.totalQuestions}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Footer */}
-            <div className="flex justify-end px-6 py-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowScoreModal(false)}
-                className="px-6 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
-                style={{ backgroundColor: themeColor }}
-              >
-                닫기
-              </button>
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                {!curResult ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                    <span className="text-4xl mb-3">{sectionIcons[scoreModalSection]}</span>
+                    <p className="text-sm font-medium">No {scoreModalSection} data</p>
+                    <p className="text-xs mt-1">This section has not been completed yet</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Score Summary */}
+                    <div className="grid grid-cols-3 gap-3 px-5 md:px-6 pt-5 pb-4">
+                      {[
+                        { label: 'Total', value: totalQ, color: 'text-gray-800', bg: 'bg-gray-50' },
+                        { label: 'Correct', value: correctQ, color: 'text-green-600', bg: 'bg-green-50' },
+                        { label: 'Wrong', value: wrongQ, color: 'text-red-500', bg: 'bg-red-50' },
+                      ].map(({ label, value, color: c, bg }) => (
+                        <div key={label} className={`${bg} rounded-xl py-4 text-center`}>
+                          <p className={`text-3xl font-bold ${c}`}>{value}</p>
+                          <p className="text-xs text-gray-500 mt-1">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Q-number grid — click to jump to that question in QuestionReviewFull */}
+                    <div className="px-5 md:px-6 pb-2">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                        문제를 클릭하면 해당 문제로 바로 이동해요
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {qList.map(({ qNum, isWrong }) => (
+                          <button
+                            key={qNum}
+                            onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
+                            className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
+                              isWrong
+                                ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                            title={`Q${qNum} — ${isWrong ? 'Wrong' : 'Correct'} · Click to review`}
+                          >
+                            {qNum}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Wrong answers list */}
+                    {curResult.wrongAnswers.length > 0 && (
+                      <div className="px-5 md:px-6 py-4">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
+                        <div className="space-y-2">
+                          {curResult.wrongAnswers.map((w, i) => {
+                            const idx = (parseInt(w.questionId) || i + 1) - 1;
+                            return (
+                              <button key={i}
+                                onClick={() => handleJumpToQuestion(scoreModalSection, idx)}
+                                className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
+                                <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                  {parseInt(w.questionId) || i + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-700 truncate">{w.questionText || `Question ${w.questionId}`}</p>
+                                  <p className="text-xs text-gray-400 mt-0.5">
+                                    내 답: <span className="text-red-500">{w.userAnswer || 'Omitted'}</span>
+                                    {' → '}정답: <span className="text-green-600">{w.correctAnswer}</span>
+                                  </p>
+                                </div>
+                                <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                <p className="text-xs text-gray-400">문제 번호를 클릭하면 실전 리뷰 화면으로 이동해요</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setShowScoreModal(false); setReviewInitialSection(scoreModalSection); setReviewInitialIndex(0); setShowQuestionReview(true); }}
+                    className="px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:opacity-80"
+                    style={{ borderColor: color, color }}>
+                    전체 리뷰
+                  </button>
+                  <button
+                    onClick={() => setShowScoreModal(false)}
+                    className="px-4 py-2 rounded-xl text-white text-sm font-bold transition-all hover:opacity-90"
+                    style={{ backgroundColor: themeColor }}>
+                    닫기
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Restart Confirm Modal */}
       {showRestartModal && restartTarget && (
