@@ -15,6 +15,7 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [sentCode, setSentCode] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -209,7 +210,8 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
               <input
                 type="checkbox"
                 id="terms"
-                required
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
                 className="mr-3 cursor-pointer accent-[#29B6F6] w-4 h-4"
               />
               <label htmlFor="terms" className="cursor-pointer">
@@ -220,12 +222,18 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
               </label>
             </div>
 
-            {/* Sign Up Button */}
+            {/* Sign Up Button — disabled until agree is checked */}
             <button
               type="submit"
-              className="w-full py-4 bg-[#29B6F6] text-white rounded-md text-lg font-bold cursor-pointer transition-all hover:bg-[#039BE5] hover:-translate-y-0.5 shadow-lg active:translate-y-0"
+              disabled={!agreedToTerms}
+              className={`w-full py-4 rounded-md text-lg font-bold transition-all shadow-lg ${
+                agreedToTerms
+                  ? 'bg-[#29B6F6] text-white cursor-pointer hover:bg-[#039BE5] hover:-translate-y-0.5 active:translate-y-0'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              title={agreedToTerms ? '' : 'Privacy Policy에 동의해야 가입할 수 있어요'}
             >
-              Sign Up
+              {agreedToTerms ? 'Sign Up' : '✓ 약관 동의 후 가입 가능'}
             </button>
 
             {/* Login Link */}

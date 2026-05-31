@@ -253,10 +253,6 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
                 title="Login with Mobile">
                 <Smartphone size={28} />
               </div>
-              <div className="w-14 h-14 rounded-full bg-[#07c160] text-white flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:rotate-[10deg] shadow-lg"
-                title="Login with WeChat">
-                <MessageCircle size={28} />
-              </div>
             </div>
 
             {/* Bottom Links */}
