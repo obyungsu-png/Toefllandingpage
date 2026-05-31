@@ -799,6 +799,21 @@ function AppContent() {
         if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
         if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
 
+        // Batch 1c: ALWAYS preload test-results on app start (prevent History overwrite by empty state)
+        try {
+          const resultsRes = await fetchSupabaseJson('test-results');
+          if (Array.isArray(resultsRes)) {
+            skipTestResultsSaveRef.current = true;
+            setTestResults(resultsRes);
+            // Mark history as already loaded so the deferred loader doesn't refetch unnecessarily
+            setDeferredLoadStatus(prev => ({ ...prev, history: 'loaded' }));
+            anySuccess = true;
+            console.log('✅ Preloaded Test Results on app start:', resultsRes.length);
+          }
+        } catch (e) {
+          console.error('⚠️ Failed to preload test-results:', e);
+        }
+
         if (anySuccess) {
           setDataLoadedSuccessfully(true);
         } else {
