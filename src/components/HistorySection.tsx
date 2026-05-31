@@ -186,6 +186,7 @@ export function HistorySection({
   const [reviewInitialIndex, setReviewInitialIndex] = useState(0);
   // Score modal section nav state
   const [scoreModalSection, setScoreModalSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
+  const [scoreModalModule, setScoreModalModule] = useState<1 | 2>(1);
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -420,6 +421,7 @@ export function HistorySection({
       : result.testName.includes('Writing') ? 'Writing'
       : 'Reading');
     setScoreModalSection(sec);
+    setScoreModalModule(1);
     setShowScoreModal(true);
   };
 
@@ -1074,26 +1076,48 @@ export function HistorySection({
         // === Get question count from CMS (TPO data) for accurate question count ===
         // Default counts per section if CMS data unavailable
         const defaultCounts: Record<string, number> = { Reading: 20, Listening: 28, Writing: 2, Speaking: 4 };
-        const cmsTpo = tpoTests?.find((t: any) => t.testNumber === selectedResult.testNumber);
+
+        // Pick CMS bank based on test type
+        const cmsBanks = [...(tpoTests || [])];
+        const cmsTpo = cmsBanks?.find((t: any) => t.testNumber === selectedResult.testNumber);
         const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === scoreModalSection);
-        const cmsQuestionCount = cmsSection?.questions?.length || 0;
+        const allCmsQuestions = cmsSection?.questions || [];
+
+        // Reading and Listening have Module 1 / Module 2 split
+        const hasModules = scoreModalSection === 'Reading' || scoreModalSection === 'Listening';
+
+        // Filter by module if applicable (CMS uses 'Module 2' string in questionType to mark Module 2)
+        const moduleFilteredCmsQuestions = hasModules
+          ? allCmsQuestions.filter((q: any) => {
+              const isM2 = (q.questionType || '').includes('Module 2');
+              return scoreModalModule === 2 ? isM2 : !isM2;
+            })
+          : allCmsQuestions;
+
+        const cmsQuestionCount = moduleFilteredCmsQuestions.length;
 
         // Priority: CMS count > result.totalQuestions > default
         const totalQ = cmsQuestionCount > 0
           ? cmsQuestionCount
-          : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0);
+          : (hasModules
+              ? Math.ceil((curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0) / 2)
+              : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0));
         const correctQ = curResult?.correctAnswers || 0;
         const wrongQ = Math.max(0, totalQ - correctQ);
         const color = sectionColors[scoreModalSection];
 
-        // Build per-question correctness
+        // Build per-question correctness (use module question offset for accurate Q numbering)
+        const moduleOffset = hasModules && scoreModalModule === 2
+          ? (allCmsQuestions.filter((q: any) => !(q.questionType || '').includes('Module 2')).length || 0)
+          : 0;
         const qList = Array.from({ length: totalQ }, (_, i) => {
           const qNum = i + 1;
+          const globalQNum = moduleOffset + qNum;
           const wrong = curResult?.wrongAnswers.find(
-            w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum
+            w => w.questionId === String(globalQNum) || parseInt(w.questionId) === globalQNum
           );
           const isWrong = wrong ? true : (curResult ? i >= correctQ : false);
-          return { qNum, isWrong, wrong };
+          return { qNum, globalQNum, isWrong, wrong };
         });
 
         return (
@@ -1125,7 +1149,7 @@ export function HistorySection({
                   const secTotal = secCmsCount > 0 ? secCmsCount : (secRes?.totalQuestions || defaultCounts[sec] || 0);
                   return (
                     <button key={sec}
-                      onClick={() => setScoreModalSection(sec)}
+                      onClick={() => { setScoreModalSection(sec); setScoreModalModule(1); }}
                       className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
                         isActive ? '' : 'border-transparent text-gray-400 hover:text-gray-600'
                       }`}
@@ -1172,20 +1196,43 @@ export function HistorySection({
 
                     {/* Q-number grid — click to jump to that question in QuestionReviewFull */}
                     <div className="px-5 md:px-6 pb-2">
+                      {/* Module toggle for Reading/Listening */}
+                      {hasModules && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">Module</span>
+                          {[1, 2].map(mod => {
+                            const isActive = scoreModalModule === mod;
+                            return (
+                              <button
+                                key={mod}
+                                onClick={() => setScoreModalModule(mod as 1 | 2)}
+                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                                  isActive
+                                    ? 'text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
+                                style={isActive ? { backgroundColor: color } : {}}
+                              >
+                                Module {mod}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                         문제를 클릭하면 해당 문제로 바로 이동해요
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {qList.map(({ qNum, isWrong }) => (
+                        {qList.map(({ qNum, globalQNum, isWrong }) => (
                           <button
                             key={qNum}
-                            onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
+                            onClick={() => handleJumpToQuestion(scoreModalSection, globalQNum - 1)}
                             className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
                               isWrong
                                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
-                            title={`Q${qNum} — ${isWrong ? 'Wrong' : 'Correct'} · Click to review`}
+                            title={`Q${qNum} (전체 ${globalQNum}번) — ${isWrong ? 'Wrong' : 'Correct'} · Click to review`}
                           >
                             {qNum}
                           </button>
