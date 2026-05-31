@@ -211,7 +211,11 @@ export function HistorySection({
 
   // Effective results (fallback to samples)
   // Don't show sample results to logged-out users
-  const effectiveResults = isLoggedIn ? (results.length > 0 ? results : SAMPLE_RESULTS) : [];
+  // Show only this student's own results (matched by ownerName)
+  const myResults = isLoggedIn
+    ? results.filter(r => r.ownerName === studentName)
+    : [];
+  const effectiveResults = isLoggedIn ? (myResults.length > 0 ? myResults : SAMPLE_RESULTS) : [];
 
   // Ads
   const activeAds = (advertisements as Advertisement[])?.filter(ad =>

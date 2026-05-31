@@ -1453,7 +1453,15 @@ function AppContent() {
   };
 
   const handleDeleteStudent = (studentId: string) => {
+    // Find the student first to get their name (used as ownerName in test results)
+    const studentToDelete = students.find(s => s.id === studentId);
     setStudents(students.filter(s => s.id !== studentId));
+
+    // Cascade delete: remove all test results owned by this student
+    if (studentToDelete?.name) {
+      setTestResults(prev => prev.filter(r => r.ownerName !== studentToDelete.name));
+      console.log(`🗑️ Deleted student "${studentToDelete.name}" and their history records.`);
+    }
   };
 
   // Vocabulary Score Handlers
@@ -1477,6 +1485,9 @@ function AppContent() {
   const handleAddTestResult = (result: Omit<TestResult, 'id'>) => {
     const newResult: TestResult = {
       id: Date.now().toString(),
+      // Auto-attach ownership so each student sees only their own results
+      ownerId: loggedInUserName || undefined,
+      ownerName: loggedInUserName || undefined,
       bankType: result.bankType ?? (result.type === 'TPO' ? 'tpo' : result.type === 'Training' ? 'training' : 'test'),
       testNumber: result.testNumber ?? currentTest?.tpoNumber,
       ...result
