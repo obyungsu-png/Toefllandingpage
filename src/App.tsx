@@ -349,6 +349,47 @@ function AppContent() {
   const [selectedAnswer8, setSelectedAnswer8] = useState<string | null>(null);
   const [selectedAnswer9, setSelectedAnswer9] = useState<string | null>(null);
   const [selectedAnswer10, setSelectedAnswer10] = useState<string | null>(null);
+
+  // ── 실전 시험 답안 수집기 (리뷰 화면용) ──
+  // key: `${section}_${module}_${qNum}` → { questionNumber, questionText, userAnswer, correctAnswer, options }
+  type CollectedAnswer = {
+    questionNumber: number;
+    questionText: string;
+    userAnswer: string;
+    correctAnswer: string;
+    options?: string[];
+  };
+  const [collectedAnswers, setCollectedAnswers] = useState<Record<string, CollectedAnswer>>({});
+
+  const recordAnswer = (
+    section: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
+    module: number,
+    qNum: number,
+    data: { questionText: string; userAnswer: string; correctAnswer: string; options?: string[] }
+  ) => {
+    const key = `${section}_M${module}_Q${qNum}`;
+    setCollectedAnswers(prev => ({
+      ...prev,
+      [key]: { questionNumber: qNum, ...data },
+    }));
+  };
+
+  // 수집된 답안을 wrongAnswers 배열로 변환 (틀린 것만) + 정답 수 계산
+  const buildResultFromCollected = (section: 'Reading' | 'Listening' | 'Writing' | 'Speaking', module: number) => {
+    const prefix = `${section}_M${module}_`;
+    const entries = Object.entries(collectedAnswers).filter(([k]) => k.startsWith(prefix));
+    const wrongAnswers = entries
+      .filter(([, a]) => (a.userAnswer || '').trim().toLowerCase() !== (a.correctAnswer || '').trim().toLowerCase())
+      .map(([, a]) => ({
+        questionId: String(a.questionNumber),
+        questionText: a.questionText,
+        userAnswer: a.userAnswer || '(답변 없음)',
+        correctAnswer: a.correctAnswer,
+      }));
+    const correctCount = entries.length - wrongAnswers.length;
+    return { wrongAnswers, correctCount, total: entries.length };
+  };
+
   
   // Speaking: single state replaces ~26 individual show* states
   const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
@@ -1471,8 +1512,12 @@ function AppContent() {
 
   const saveSectionResultToHistory = (
     category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
-    totalQuestions: number
+    totalQuestions: number,
+    module: number = 1
   ) => {
+    const { wrongAnswers, correctCount, total } = buildResultFromCollected(category, module);
+    const effectiveTotal = total > 0 ? total : totalQuestions;
+    const score = effectiveTotal > 0 ? Math.round((correctCount / effectiveTotal) * 100) : 0;
     handleAddTestResult({
       type: getCurrentResultType(),
       category,
@@ -1481,10 +1526,10 @@ function AppContent() {
       bankType: testBankType,
       status: 'completed',
       date: new Date().toISOString(),
-      score: 0,
-      totalQuestions,
-      correctAnswers: 0,
-      wrongAnswers: [],
+      score,
+      totalQuestions: effectiveTotal,
+      correctAnswers: correctCount,
+      wrongAnswers,
       timeSpent: 0,
     });
   };
@@ -1818,6 +1863,12 @@ function AppContent() {
 
     const handleAnswerSelect2 = (answer: string) => {
       setSelectedAnswer2(answer);
+      recordAnswer('Reading', 1, 2, {
+        questionText: cmsQuestionText2 || dailyLifeQ2?.questionText || 'Question 2',
+        userAnswer: answer,
+        correctAnswer: dailyLifeQ2?.correctAnswer || '',
+        options: cmsAnswerOptions2 || dailyLifeQ2?.options || undefined,
+      });
     };
 
     return (
@@ -1967,6 +2018,12 @@ function AppContent() {
 
     const handleAnswerSelect3 = (answer: string) => {
       setSelectedAnswer3(answer);
+      recordAnswer('Reading', 1, 3, {
+        questionText: cmsQuestion13 || 'Question 3',
+        userAnswer: answer,
+        correctAnswer: cmsQ13?.correctAnswer || '',
+        options: answerOptions3 || undefined,
+      });
     };
 
     return (
@@ -2164,6 +2221,12 @@ function AppContent() {
 
     const handleAnswerSelect4 = (answer: string) => {
       setSelectedAnswer4(answer);
+      recordAnswer('Reading', 1, 4, {
+        questionText: cmsQuestion14 || 'Question 4',
+        userAnswer: answer,
+        correctAnswer: cmsQ14?.correctAnswer || '',
+        options: answerOptions4 || undefined,
+      });
     };
 
     return (
@@ -2359,6 +2422,12 @@ function AppContent() {
 
     const handleAnswerSelect5 = (answer: string) => {
       setSelectedAnswer5(answer);
+      recordAnswer('Reading', 1, 5, {
+        questionText: cmsQuestion15 || 'Question 5',
+        userAnswer: answer,
+        correctAnswer: cmsQ15?.correctAnswer || '',
+        options: answerOptions5 || undefined,
+      });
     };
 
     return (
@@ -6237,6 +6306,12 @@ function AppContent() {
     const finalCorrectAnswer = (dailyLifeQuestion?.correctAnswer as string) || correctAnswer;
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
+      recordAnswer('Reading', 1, 1, {
+        questionText: cmsQuestionText || 'Question 1',
+        userAnswer: answer,
+        correctAnswer: finalCorrectAnswer || '',
+        options: finalAnswerOptions || undefined,
+      });
     };
 
     return (
