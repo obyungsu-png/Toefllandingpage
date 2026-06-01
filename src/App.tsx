@@ -350,47 +350,6 @@ function AppContent() {
   const [selectedAnswer9, setSelectedAnswer9] = useState<string | null>(null);
   const [selectedAnswer10, setSelectedAnswer10] = useState<string | null>(null);
 
-  // ── 실전 시험 답안 수집기 (리뷰 화면용) ──
-  // key: `${section}_${module}_${qNum}` → { questionNumber, questionText, userAnswer, correctAnswer, options }
-  type CollectedAnswer = {
-    questionNumber: number;
-    questionText: string;
-    userAnswer: string;
-    correctAnswer: string;
-    options?: string[];
-  };
-  const [collectedAnswers, setCollectedAnswers] = useState<Record<string, CollectedAnswer>>({});
-
-  const recordAnswer = (
-    section: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
-    module: number,
-    qNum: number,
-    data: { questionText: string; userAnswer: string; correctAnswer: string; options?: string[] }
-  ) => {
-    const key = `${section}_M${module}_Q${qNum}`;
-    setCollectedAnswers(prev => ({
-      ...prev,
-      [key]: { questionNumber: qNum, ...data },
-    }));
-  };
-
-  // 수집된 답안을 wrongAnswers 배열로 변환 (틀린 것만) + 정답 수 계산
-  const buildResultFromCollected = (section: 'Reading' | 'Listening' | 'Writing' | 'Speaking', module: number) => {
-    const prefix = `${section}_M${module}_`;
-    const entries = Object.entries(collectedAnswers).filter(([k]) => k.startsWith(prefix));
-    const wrongAnswers = entries
-      .filter(([, a]) => (a.userAnswer || '').trim().toLowerCase() !== (a.correctAnswer || '').trim().toLowerCase())
-      .map(([, a]) => ({
-        questionId: String(a.questionNumber),
-        questionText: a.questionText,
-        userAnswer: a.userAnswer || '(답변 없음)',
-        correctAnswer: a.correctAnswer,
-      }));
-    const correctCount = entries.length - wrongAnswers.length;
-    return { wrongAnswers, correctCount, total: entries.length };
-  };
-
-  
   // Speaking: single state replaces ~26 individual show* states
   const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -578,7 +537,7 @@ function AppContent() {
       }
     };
     
-    saveStudents();
+    scheduleDebouncedSave('students', saveStudents);
   }, [students, isLoadingData, dataLoadedSuccessfully]);
 
   // Save test results to Supabase whenever they change
@@ -605,7 +564,7 @@ function AppContent() {
       }
     };
     
-    saveTestResults();
+    scheduleDebouncedSave('testresults', saveTestResults);
   }, [testResults, isLoadingData, dataLoadedSuccessfully]);
 
   // Footer auto-hide on scroll
@@ -720,6 +679,18 @@ function AppContent() {
     ref.current = false;
     return true;
   };
+
+  // Debounce timers for auto-save useEffects (prevents Edge Function spam)
+  const saveDebounceTimers = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const scheduleDebouncedSave = (key: string, fn: () => void, delayMs = 3000) => {
+    if (saveDebounceTimers.current[key]) {
+      clearTimeout(saveDebounceTimers.current[key]);
+    }
+    saveDebounceTimers.current[key] = setTimeout(() => {
+      fn();
+      delete saveDebounceTimers.current[key];
+    }, delayMs);
+  };
   
   // Load data from Supabase on mount
   // Retry-enabled fetch for cold start resilience
@@ -755,14 +726,18 @@ function AppContent() {
 
   const fetchSupabaseJson = async (endpoint: string) => {
     const { headers, baseUrl } = getSupabaseRequestContext();
-    const res = await fetchWithRetry(`${baseUrl}/${endpoint}`, { headers });
-    if (!res.ok) throw new Error(`${endpoint}: ${res.status}`);
+    // Use simple fetch (no retry) — 404 means "not found", not a server error
+    const res = await fetch(`${baseUrl}/${endpoint}`, { headers });
+    if (!res.ok) {
+      if (res.status === 404) return null; // 404 = data not yet created, return null (no retry)
+      throw new Error(`${endpoint}: ${res.status}`);
+    }
     return res.json();
   };
 
   // Warm up edge function and wait until it responds
   const warmUpServer = async (baseUrl: string, headers: Record<string, string>) => {
-    for (let attempt = 1; attempt <= 4; attempt++) {
+    for (let attempt = 1; attempt <= 1; attempt++) { // Single attempt only — avoid extra invocations
       try {
         const controller = new AbortController();
         const timeoutMs = 10000;
@@ -839,6 +814,21 @@ function AppContent() {
         
         if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
         if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
+
+        // Batch 1c: ALWAYS preload test-results on app start (prevent History overwrite by empty state)
+        try {
+          const resultsRes = await fetchSupabaseJson('test-results');
+          if (Array.isArray(resultsRes)) {
+            skipTestResultsSaveRef.current = true;
+            setTestResults(resultsRes);
+            // Mark history as already loaded so the deferred loader doesn't refetch unnecessarily
+            setDeferredLoadStatus(prev => ({ ...prev, history: 'loaded' }));
+            anySuccess = true;
+            console.log('✅ Preloaded Test Results on app start:', resultsRes.length);
+          }
+        } catch (e) {
+          console.error('⚠️ Failed to preload test-results:', e);
+        }
 
         if (anySuccess) {
           setDataLoadedSuccessfully(true);
@@ -988,7 +978,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('lmsContents', saveToSupabase);
   }, [lmsContents, isLoadingData, dataLoadedSuccessfully]);
 
   // Save TPO tests to Supabase whenever they change
@@ -1015,7 +1005,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('tpoTests', saveToSupabase);
   }, [tpoTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Test tests to Supabase whenever they change
@@ -1042,7 +1032,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('testTests', saveToSupabase);
   }, [testTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Training tests to Supabase whenever they change
@@ -1069,7 +1059,7 @@ function AppContent() {
       }
     };
 
-    saveToSupabase();
+    scheduleDebouncedSave('trainingTests', saveToSupabase);
   }, [trainingTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Reports to Supabase whenever they change
@@ -1096,7 +1086,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('reports', saveToSupabase);
   }, [reports, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Question Types Config to Supabase (debounced 1s)
@@ -1479,7 +1469,15 @@ function AppContent() {
   };
 
   const handleDeleteStudent = (studentId: string) => {
+    // Find the student first to get their name (used as ownerName in test results)
+    const studentToDelete = students.find(s => s.id === studentId);
     setStudents(students.filter(s => s.id !== studentId));
+
+    // Cascade delete: remove all test results owned by this student
+    if (studentToDelete?.name) {
+      setTestResults(prev => prev.filter(r => r.ownerName !== studentToDelete.name));
+      console.log(`🗑️ Deleted student "${studentToDelete.name}" and their history records.`);
+    }
   };
 
   // Vocabulary Score Handlers
@@ -1503,6 +1501,9 @@ function AppContent() {
   const handleAddTestResult = (result: Omit<TestResult, 'id'>) => {
     const newResult: TestResult = {
       id: Date.now().toString(),
+      // Auto-attach ownership so each student sees only their own results
+      ownerId: loggedInUserName || undefined,
+      ownerName: loggedInUserName || undefined,
       bankType: result.bankType ?? (result.type === 'TPO' ? 'tpo' : result.type === 'Training' ? 'training' : 'test'),
       testNumber: result.testNumber ?? currentTest?.tpoNumber,
       ...result
@@ -1515,9 +1516,58 @@ function AppContent() {
     totalQuestions: number,
     module: number = 1
   ) => {
-    const { wrongAnswers, correctCount, total } = buildResultFromCollected(category, module);
-    const effectiveTotal = total > 0 ? total : totalQuestions;
-    const score = effectiveTotal > 0 ? Math.round((correctCount / effectiveTotal) * 100) : 0;
+    // Collect available selectedAnswers (1~10 in this scope, 11~20 are in nested scopes)
+    // Use window.__moduleAnswers if module components have shared their answers
+    const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
+    const allAnswers: (string | null)[] = [
+      selectedAnswer, selectedAnswer2, selectedAnswer3, selectedAnswer4, selectedAnswer5,
+      selectedAnswer6, selectedAnswer7, selectedAnswer8, selectedAnswer9, selectedAnswer10,
+      sharedAnswers[11] || null, sharedAnswers[12] || null, sharedAnswers[13] || null,
+      sharedAnswers[14] || null, sharedAnswers[15] || null, sharedAnswers[16] || null,
+      sharedAnswers[17] || null, sharedAnswers[18] || null, sharedAnswers[19] || null,
+      sharedAnswers[20] || null,
+    ];
+
+    // Pick the correct CMS bank based on testBankType
+    const tpoNum = currentTest?.tpoNumber;
+    let cmsBank: any[] = [];
+    if (testBankType === 'tpo') cmsBank = tpoTests;
+    else if (testBankType === 'test') cmsBank = testTests;
+    else if (testBankType === 'training') cmsBank = trainingTests;
+    else cmsBank = [...tpoTests, ...testTests, ...trainingTests];
+
+    const cmsTpo = cmsBank?.find((t: any) => t.testNumber === tpoNum);
+    const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === category);
+    const cmsQuestions = cmsSection?.questions || [];
+
+    let correctCount = 0;
+    const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
+
+    for (let i = 0; i < Math.min(totalQuestions, allAnswers.length); i++) {
+      const userAns = allAnswers[i];
+      const cmsQ = cmsQuestions[i];
+      const correctAns = cmsQ?.correctAnswer;
+
+      if (userAns && correctAns && userAns === correctAns) {
+        correctCount++;
+      } else if (userAns) {
+        wrongAnswers.push({
+          questionId: String(i + 1),
+          questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
+          userAnswer: userAns,
+          correctAnswer: correctAns || '',
+          explanation: cmsQ?.explanation,
+        });
+      }
+    }
+
+    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+    // Clear shared answers after saving
+    if (typeof window !== 'undefined') {
+      (window as any).__moduleAnswers = {};
+    }
+
     handleAddTestResult({
       type: getCurrentResultType(),
       category,
@@ -1527,7 +1577,7 @@ function AppContent() {
       status: 'completed',
       date: new Date().toISOString(),
       score,
-      totalQuestions: effectiveTotal,
+      totalQuestions,
       correctAnswers: correctCount,
       wrongAnswers,
       timeSpent: 0,
@@ -1863,12 +1913,6 @@ function AppContent() {
 
     const handleAnswerSelect2 = (answer: string) => {
       setSelectedAnswer2(answer);
-      recordAnswer('Reading', 1, 2, {
-        questionText: cmsQuestionText2 || dailyLifeQ2?.questionText || 'Question 2',
-        userAnswer: answer,
-        correctAnswer: dailyLifeQ2?.correctAnswer || '',
-        options: cmsAnswerOptions2 || dailyLifeQ2?.options || undefined,
-      });
     };
 
     return (
@@ -2018,12 +2062,6 @@ function AppContent() {
 
     const handleAnswerSelect3 = (answer: string) => {
       setSelectedAnswer3(answer);
-      recordAnswer('Reading', 1, 3, {
-        questionText: cmsQuestion13 || 'Question 3',
-        userAnswer: answer,
-        correctAnswer: cmsQ13?.correctAnswer || '',
-        options: answerOptions3 || undefined,
-      });
     };
 
     return (
@@ -2221,12 +2259,6 @@ function AppContent() {
 
     const handleAnswerSelect4 = (answer: string) => {
       setSelectedAnswer4(answer);
-      recordAnswer('Reading', 1, 4, {
-        questionText: cmsQuestion14 || 'Question 4',
-        userAnswer: answer,
-        correctAnswer: cmsQ14?.correctAnswer || '',
-        options: answerOptions4 || undefined,
-      });
     };
 
     return (
@@ -2422,12 +2454,6 @@ function AppContent() {
 
     const handleAnswerSelect5 = (answer: string) => {
       setSelectedAnswer5(answer);
-      recordAnswer('Reading', 1, 5, {
-        questionText: cmsQuestion15 || 'Question 5',
-        userAnswer: answer,
-        correctAnswer: cmsQ15?.correctAnswer || '',
-        options: answerOptions5 || undefined,
-      });
     };
 
     return (
@@ -2773,7 +2799,7 @@ function AppContent() {
                         name="module1-q16"
                         value={option}
                         checked={selectedAnswer16 === option}
-                        onChange={() => { setSelectedAnswer16(option); recordAnswer('Reading', 1, 16, { questionText: currentQuestion.questionText, userAnswer: option, correctAnswer: cmsCorrectAnswer || currentQuestion.correctAnswer || '', options: currentQuestion.options }); }}
+                        onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -2958,7 +2984,7 @@ function AppContent() {
                         name="module1-q17"
                         value={option}
                         checked={selectedAnswer17 === option}
-                        onChange={() => { setSelectedAnswer17(option); recordAnswer('Reading', 1, 17, { questionText: cmsAcQ17?.questionText || cmsQItem17?.questionText || 'Question 17', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
+                        onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3144,7 +3170,7 @@ function AppContent() {
                         name="module1-q18"
                         value={option}
                         checked={selectedAnswer18 === option}
-                        onChange={() => { setSelectedAnswer18(option); recordAnswer('Reading', 1, 18, { questionText: cmsAcQ18?.questionText || cmsQItem18?.questionText || 'Question 18', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
+                        onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3331,7 +3357,7 @@ function AppContent() {
                         name="module1-q19"
                         value={option}
                         checked={selectedAnswer19 === option}
-                        onChange={() => { setSelectedAnswer19(option); recordAnswer('Reading', 1, 19, { questionText: cmsAcQ19?.questionText || cmsQItem19?.questionText || 'Question 19', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
+                        onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -3519,7 +3545,7 @@ function AppContent() {
                         name="module1-q20"
                         value={option}
                         checked={selectedAnswer20 === option}
-                        onChange={() => { setSelectedAnswer20(option); recordAnswer('Reading', 1, 20, { questionText: cmsAcQ20?.questionText || cmsQItem20?.questionText || 'Question 20', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
+                        onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
                         label={option}
                         size="sm"
                       />
@@ -5263,7 +5289,7 @@ function AppContent() {
                         name="module2-q16"
                         value={option}
                         checked={selectedAnswer16 === option}
-                        onChange={() => setSelectedAnswer16(option)}
+                        onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
                         label={option}
                       />
                     ))}
@@ -5421,7 +5447,7 @@ function AppContent() {
                       name="module2-q17"
                       value={option}
                       checked={selectedAnswer17 === option}
-                      onChange={() => setSelectedAnswer17(option)}
+                      onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
                       label={option}
                     />
                   ))}
@@ -5579,7 +5605,7 @@ function AppContent() {
                       name="module2-q18"
                       value={option}
                       checked={selectedAnswer18 === option}
-                      onChange={() => setSelectedAnswer18(option)}
+                      onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
                       label={option}
                     />
                   ))}
@@ -5737,7 +5763,7 @@ function AppContent() {
                       name="module2-q19"
                       value={option}
                       checked={selectedAnswer19 === option}
-                      onChange={() => setSelectedAnswer19(option)}
+                      onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
                       label={option}
                     />
                   ))}
@@ -5898,7 +5924,7 @@ function AppContent() {
                       name="module2-q20"
                       value={option}
                       checked={selectedAnswer20 === option}
-                      onChange={() => setSelectedAnswer20(option)}
+                      onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
                       label={option}
                     />
                   ))}
@@ -6306,12 +6332,6 @@ function AppContent() {
     const finalCorrectAnswer = (dailyLifeQuestion?.correctAnswer as string) || correctAnswer;
     const handleAnswerSelect = (answer: string) => {
       setSelectedAnswer(answer);
-      recordAnswer('Reading', 1, 1, {
-        questionText: cmsQuestionText || 'Question 1',
-        userAnswer: answer,
-        correctAnswer: finalCorrectAnswer || '',
-        options: finalAnswerOptions || undefined,
-      });
     };
 
     return (
@@ -7682,6 +7702,17 @@ function AppContent() {
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
           onScreenChange={setCurrentWritingReviewScreen}
+          writingQuestions={(() => {
+            // Pull Writing questions from the active CMS bank
+            const tpoNum = currentTest?.tpoNumber;
+            let bank: any[] = [];
+            if (testBankType === 'tpo') bank = tpoTests;
+            else if (testBankType === 'test') bank = testTests;
+            else if (testBankType === 'training') bank = trainingTests;
+            const t = bank.find((b: any) => b.testNumber === tpoNum);
+            const sec = t?.sections?.find((s: any) => s.sectionType === 'Writing');
+            return sec?.questions || [];
+          })()}
           onHome={() => {
             setActiveWritingScreen(null);
             clearReviewContext();
@@ -8420,6 +8451,12 @@ function AppContent() {
           onShareConfigChange={setShareConfig}
           studentName={loggedInUserName || 'Student'}
           advertisements={advertisements}
+          isLoggedIn={isLoggedIn}
+          onRequestLogin={() => setShowLoginPopup(true)}
+          onDeleteResult={(resultId) => {
+            setTestResults(prev => prev.filter(r => r.id !== resultId));
+            toast.success('기록이 삭제되었습니다.');
+          }}
         />
       )}
 

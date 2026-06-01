@@ -1,5 +1,8 @@
 export interface TestResult {
   id: string;
+  // Per-student ownership (so each student sees only their own history)
+  ownerId?: string;
+  ownerName?: string;
   type: 'TPO' | 'Test' | 'Training' | 'Vocabulary' | 'Question Types';
   category?: string;
   testName: string;

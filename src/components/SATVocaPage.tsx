@@ -350,17 +350,17 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     const headwordPool: SATWord[] = [];
     const synonymPool: SATWord[] = [];
     
-    // Shuffle available words
-    const shuffledWords = [...availableWords].sort(() => Math.random() - 0.5);
+    // Keep original order (no shuffle)
+    const orderedWords = [...availableWords];
     
     // Extract headwords up to headwordQuestions
-    for (let i = 0; i < shuffledWords.length && headwordPool.length < headwordQuestions; i++) {
-      headwordPool.push(shuffledWords[i]);
+    for (let i = 0; i < orderedWords.length && headwordPool.length < headwordQuestions; i++) {
+      headwordPool.push(orderedWords[i]);
     }
     
     // Extract synonyms up to synonymQuestions
-    for (let i = 0; i < shuffledWords.length && synonymPool.length < synonymQuestions; i++) {
-      const word = shuffledWords[i];
+    for (let i = 0; i < orderedWords.length && synonymPool.length < synonymQuestions; i++) {
+      const word = orderedWords[i];
       if (word.synonyms && word.synonyms.trim().length > 0) {
         const synonymList = word.synonyms.split(',').map(s => s.trim()).filter(s => s.length > 0);
         for (const synonym of synonymList) {
@@ -378,8 +378,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
       }
     }
     
-    // Combine and shuffle all questions
-    const allQuestions = [...headwordPool, ...synonymPool].sort(() => Math.random() - 0.5);
+    // Combine in order (headwords first, then synonyms)
+    const allQuestions = [...headwordPool, ...synonymPool];
     setSelectedWords(allQuestions);
     setStep(2);
   };
@@ -916,7 +916,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
                 {/* Desktop: Scrollable DAY List */}
                 <div className="border-2 rounded-lg overflow-hidden hidden md:block" style={{ borderColor: '#e5e7eb' }}>
                   <div className="max-h-[600px] overflow-y-auto">
-                    {daysFromDB.map(day => (
+                    {daysFromDB.map((day, dayListIndex) => (
                       <button
                         key={day.id}
                         onClick={() => toggleDay(day.id)}
@@ -926,7 +926,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
                           borderColor: selectedDays.includes(day.id) ? '#10B981' : '#e5e7eb'
                         }}
                       >
-                        <span className="text-gray-400 text-lg w-6 group-hover:text-teal-600 transition-colors">{day.id}</span>
+                        <span className="text-gray-400 text-lg w-6 group-hover:text-teal-600 transition-colors">{dayListIndex + 1}</span>
                         <span className="font-bold text-lg group-hover:text-teal-700 transition-colors">{day.name}</span>
                         <span className="text-gray-400 group-hover:text-teal-500 transition-colors">
                           {activeTab === 'toefl-hard'

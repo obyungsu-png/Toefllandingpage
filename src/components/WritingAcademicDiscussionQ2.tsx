@@ -9,9 +9,33 @@ interface WritingAcademicDiscussionQ2Props {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick?: () => void;
+  // CMS-driven content
+  professorImageUrl?: string;
+  professorName?: string;
+  professorMessage?: string;
+  student1ImageUrl?: string;
+  student1Message?: string;
+  student2ImageUrl?: string;
+  student2Message?: string;
+  promptTitle?: string;
+  promptInstructions?: string;
 }
 
-export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeClick }: WritingAcademicDiscussionQ2Props) {
+export function WritingAcademicDiscussionQ2({
+  onBack,
+  onNext,
+  onHome,
+  onVolumeClick,
+  professorImageUrl,
+  professorName = 'Dr. Achebe',
+  professorMessage,
+  student1ImageUrl,
+  student1Message,
+  student2ImageUrl,
+  student2Message,
+  promptTitle,
+  promptInstructions,
+}: WritingAcademicDiscussionQ2Props) {
   const [response, setResponse] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [hideWordCount, setHideWordCount] = useState(false);
@@ -192,12 +216,12 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
             <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-300">
               <div className="flex flex-col items-center mb-4 md:mb-6">
                 <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 md:mb-3 border-4 border-[#1e6b73] shadow-sm">
-                  <ImageWithFallback src={fixedDiscussionPhoto} alt="Professor" className="w-full h-full object-cover" />
+                  <ImageWithFallback src={professorImageUrl || fixedDiscussionPhoto} alt={professorName} className="w-full h-full object-cover" />
                 </div>
-                <p className="font-bold text-base md:text-lg text-gray-900 font-['Georgia',_serif]">Dr. Achebe</p>
+                <p className="font-bold text-base md:text-lg text-gray-900 font-['Georgia',_serif]">{professorName}</p>
               </div>
               <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-                Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?
+                {professorMessage || `Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?`}
               </p>
             </div>
           </div>
@@ -210,24 +234,24 @@ export function WritingAcademicDiscussionQ2({ onBack, onNext, onHome, onVolumeCl
           <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
             {/* Student 1 */}
             <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                <ImageWithFallback src={fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                <ImageWithFallback src={student1ImageUrl || fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
                 <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-                  Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.
+                  {student1Message || `Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.`}
                 </p>
               </div>
             </div>
 
             {/* Student 2 */}
             <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                <ImageWithFallback src={fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
+                <ImageWithFallback src={student2ImageUrl || fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1">
                 <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-                  I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.
+                  {student2Message || `I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.`}
                 </p>
               </div>
             </div>

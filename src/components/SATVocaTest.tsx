@@ -310,8 +310,8 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         generatedQuestions.push(subjectiveQuestion);
       }
       
-      setQuestions(shuffleArray(generatedQuestions));
-      setOriginalQuestions(shuffleArray(generatedQuestions));
+      setQuestions(generatedQuestions);
+      setOriginalQuestions(generatedQuestions);
     } else {
       // Non-mixed types: 1 question per word
       testInfo.words.forEach((word, index) => {

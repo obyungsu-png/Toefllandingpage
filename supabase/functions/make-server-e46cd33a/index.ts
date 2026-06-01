@@ -1208,20 +1208,26 @@ app.delete('/make-server-e46cd33a/training-tests/:number', async (c) => {
   }
 });
 
-// User registration endpoint
+// User registration endpoint (email-based)
 app.post('/make-server-e46cd33a/users/register', async (c) => {
   try {
-    const { phoneNumber, username, password } = await c.req.json();
+    const { email, username, password } = await c.req.json();
 
     // Validate inputs
-    if (!phoneNumber || !username || !password) {
+    if (!email || !username || !password) {
       return c.json({ error: 'All fields are required' }, 400);
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: 'Invalid email format' }, 400);
+    }
+
     // Check if user already exists
-    const existingUser = await kv.get(`user:phone:${phoneNumber}`);
+    const existingUser = await kv.get(`user:email:${email.toLowerCase()}`);
     if (existingUser) {
-      return c.json({ error: 'Phone number already registered' }, 400);
+      return c.json({ error: 'Email already registered' }, 400);
     }
 
     const existingUsername = await kv.get(`user:username:${username}`);
@@ -1232,7 +1238,7 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     // Create user object
     const user = {
       id: `user_${Date.now()}`,
-      phoneNumber,
+      email: email.toLowerCase(),
       username,
       password, // Note: In production, you should hash passwords
       createdAt: new Date().toISOString(),
@@ -1240,7 +1246,7 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     };
 
     // Save user
-    await kv.set(`user:phone:${phoneNumber}`, user);
+    await kv.set(`user:email:${email.toLowerCase()}`, user);
     await kv.set(`user:username:${username}`, user);
     await kv.set(`user:id:${user.id}`, user);
 
@@ -1249,7 +1255,7 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
       success: true, 
       user: { 
         id: user.id, 
-        phoneNumber: user.phoneNumber, 
+        email: user.email, 
         username: user.username 
       } 
     });
@@ -1259,22 +1265,133 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
   }
 });
 
+// Send email verification code via Resend
+app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
+  try {
+    const { email } = await c.req.json();
+
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: 'Invalid email format' }, 400);
+    }
+
+    // Backend generates the code (single source of truth)
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Get Resend API key from environment
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return c.json({ error: 'Email service not configured' }, 500);
+    }
+
+    const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
+    const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'TOEFL ALLMYEXAM';
+
+    // Store the code in KV (5 minutes TTL)
+    await kv.set(`email_code:${email.toLowerCase()}`, {
+      code,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    });
+
+    // Send via Resend API
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to: [email],
+        subject: '[TOEFL] 이메일 인증 코드',
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <h1 style="font-size: 24px; font-weight: 700; color: #005f61; margin: 0;">TOEFL ALLMYEXAM</h1>
+            </div>
+            <div style="background: #f5f7fa; border-radius: 16px; padding: 32px; text-align: center;">
+              <p style="font-size: 16px; color: #4a5568; margin: 0 0 16px 0;">이메일 인증 코드</p>
+              <div style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #005f61; padding: 16px 0;">${code}</div>
+              <p style="font-size: 13px; color: #718096; margin: 16px 0 0 0;">이 코드는 5분 후 만료됩니다.</p>
+            </div>
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+              <p style="font-size: 12px; color: #a0aec0; text-align: center; line-height: 1.6; margin: 0;">
+                본인이 요청하지 않은 경우 이 메일을 무시해주세요.<br/>
+                이 메일은 발신 전용입니다.
+              </p>
+            </div>
+          </div>
+        `,
+      }),
+    });
+
+    if (!resendResponse.ok) {
+      const errorText = await resendResponse.text();
+      console.error('Resend API error:', errorText);
+      return c.json({ error: 'Failed to send email', detail: errorText }, 500);
+    }
+
+    const data = await resendResponse.json();
+    console.log('✅ Email sent to', email, '— Resend ID:', data.id);
+    // Return code to frontend so it can verify locally
+    return c.json({ success: true, messageId: data.id, code });
+  } catch (error) {
+    console.error('Send email code error:', error);
+    return c.json({ error: 'Failed to send email code' }, 500);
+  }
+});
+
+// Verify email code (optional — frontend can also check, but server-side is more secure)
+app.post('/make-server-e46cd33a/auth/verify-email-code', async (c) => {
+  try {
+    const { email, code } = await c.req.json();
+    if (!email || !code) {
+      return c.json({ error: 'Email and code required' }, 400);
+    }
+    const stored = await kv.get(`email_code:${email.toLowerCase()}`);
+    if (!stored) {
+      return c.json({ error: 'No code found. Please request a new one.' }, 400);
+    }
+    if (Date.now() > stored.expiresAt) {
+      return c.json({ error: 'Code expired. Please request a new one.' }, 400);
+    }
+    if (stored.code !== code) {
+      return c.json({ error: 'Invalid code' }, 400);
+    }
+    // Clear the code after successful verification
+    await kv.delete(`email_code:${email.toLowerCase()}`);
+    return c.json({ success: true, verified: true });
+  } catch (error) {
+    console.error('Verify email code error:', error);
+    return c.json({ error: 'Verification failed' }, 500);
+  }
+});
+
 // User login endpoint
 app.post('/make-server-e46cd33a/users/login', async (c) => {
   try {
-    const { username, phoneNumber, password, loginMethod } = await c.req.json();
+    const body = await c.req.json();
+    const { username, email, phoneNumber, password, loginMethod } = body;
 
     // Validate inputs
-    if (!password || (!username && !phoneNumber)) {
+    if (!password || (!username && !email && !phoneNumber)) {
       return c.json({ error: 'Invalid credentials' }, 400);
     }
 
-    // Find user
+    // Find user by chosen login method
     let user;
-    if (loginMethod === 'phone' && phoneNumber) {
-      user = await kv.get(`user:phone:${phoneNumber}`);
+    if (loginMethod === 'email' && email) {
+      user = await kv.get(`user:email:${String(email).toLowerCase()}`);
     } else if (loginMethod === 'username' && username) {
       user = await kv.get(`user:username:${username}`);
+    } else if (loginMethod === 'phone' && phoneNumber) {
+      // Legacy phone login still supported for old accounts
+      user = await kv.get(`user:phone:${phoneNumber}`);
     }
 
     if (!user) {
@@ -1301,4 +1418,4 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
   }
 });
 
-Deno.serve(app.fetch);
+Deno.serve(app.fetch);// deployed: 2026-06-01T04:17:47Z
