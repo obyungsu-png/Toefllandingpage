@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Lock, Shield, Mail, Cloud, Laptop } from 'lucide-react';
+import { X, User, Lock, Shield, Mail, Cloud, Laptop, Smartphone } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface LoginFormProps {

@@ -117,7 +117,12 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
         }
 
         if (!response.ok) {
-          alert(data.error || 'Registration failed');
+          const msg = data.error === 'Email already registered'
+            ? '이미 등록된 이메일이에요. 로그인해주세요.'
+            : data.error === 'Username already taken'
+            ? '이미 사용 중인 사용자명이에요.'
+            : data.error || '회원가입에 실패했어요.';
+          alert(msg);
           return;
         }
 
