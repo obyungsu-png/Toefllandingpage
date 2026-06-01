@@ -2773,7 +2773,7 @@ function AppContent() {
                         name="module1-q16"
                         value={option}
                         checked={selectedAnswer16 === option}
-                        onChange={() => setSelectedAnswer16(option)}
+                        onChange={() => { setSelectedAnswer16(option); recordAnswer('Reading', 1, 16, { questionText: currentQuestion.questionText, userAnswer: option, correctAnswer: cmsCorrectAnswer || currentQuestion.correctAnswer || '', options: currentQuestion.options }); }}
                         label={option}
                         size="sm"
                       />
@@ -2958,7 +2958,7 @@ function AppContent() {
                         name="module1-q17"
                         value={option}
                         checked={selectedAnswer17 === option}
-                        onChange={() => setSelectedAnswer17(option)}
+                        onChange={() => { setSelectedAnswer17(option); recordAnswer('Reading', 1, 17, { questionText: cmsAcQ17?.questionText || cmsQItem17?.questionText || 'Question 17', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
                         label={option}
                         size="sm"
                       />
@@ -3144,7 +3144,7 @@ function AppContent() {
                         name="module1-q18"
                         value={option}
                         checked={selectedAnswer18 === option}
-                        onChange={() => setSelectedAnswer18(option)}
+                        onChange={() => { setSelectedAnswer18(option); recordAnswer('Reading', 1, 18, { questionText: cmsAcQ18?.questionText || cmsQItem18?.questionText || 'Question 18', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
                         label={option}
                         size="sm"
                       />
@@ -3331,7 +3331,7 @@ function AppContent() {
                         name="module1-q19"
                         value={option}
                         checked={selectedAnswer19 === option}
-                        onChange={() => setSelectedAnswer19(option)}
+                        onChange={() => { setSelectedAnswer19(option); recordAnswer('Reading', 1, 19, { questionText: cmsAcQ19?.questionText || cmsQItem19?.questionText || 'Question 19', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
                         label={option}
                         size="sm"
                       />
@@ -3519,7 +3519,7 @@ function AppContent() {
                         name="module1-q20"
                         value={option}
                         checked={selectedAnswer20 === option}
-                        onChange={() => setSelectedAnswer20(option)}
+                        onChange={() => { setSelectedAnswer20(option); recordAnswer('Reading', 1, 20, { questionText: cmsAcQ20?.questionText || cmsQItem20?.questionText || 'Question 20', userAnswer: option, correctAnswer: correctAnswer || '', options: answerOptions }); }}
                         label={option}
                         size="sm"
                       />
