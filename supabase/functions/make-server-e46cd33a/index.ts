@@ -1290,7 +1290,7 @@ app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
     }
 
     const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
-    const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'TOEFL Landing Page';
+    const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'TOEFL ALLMYEXAM';
 
     // Store the code in KV (5 minutes TTL)
     await kv.set(`email_code:${email.toLowerCase()}`, {
@@ -1312,7 +1312,7 @@ app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a;">
             <div style="text-align: center; margin-bottom: 32px;">
-              <h1 style="font-size: 24px; font-weight: 700; color: #005f61; margin: 0;">TOEFL Landing Page</h1>
+              <h1 style="font-size: 24px; font-weight: 700; color: #005f61; margin: 0;">TOEFL ALLMYEXAM</h1>
             </div>
             <div style="background: #f5f7fa; border-radius: 16px; padding: 32px; text-align: center;">
               <p style="font-size: 16px; color: #4a5568; margin: 0 0 16px 0;">이메일 인증 코드</p>
