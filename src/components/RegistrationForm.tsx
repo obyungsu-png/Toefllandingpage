@@ -33,34 +33,36 @@ export function RegistrationForm({ onClose, onRegisterSuccess }: RegistrationFor
       return;
     }
 
-    // Generate a random 6-digit verification code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-
     try {
       const res = await fetch(`${SERVER_BASE_URL}/auth/send-email-code`, {
         method: 'POST',
         headers: { ...getServerHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email }),  // 코드를 백엔드에서 생성
       });
 
       if (res.ok) {
-        setSentCode(code);
+        const data = await res.json();
+        // 백엔드가 생성한 코드를 받아서 저장
+        if (data.code) {
+          setSentCode(data.code);
+        }
         setCountdown(60);
         setIsButtonDisabled(true);
         alert(`인증 코드가 ${email} 로 전송되었어요.\n메일함을 확인해주세요. (스팸함도 함께 확인)`);
       } else {
-        // Backend not configured yet — dev fallback
+        // 백엔드 오류 시 직접 생성 (개발 fallback)
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
         setSentCode(code);
         setCountdown(60);
         setIsButtonDisabled(true);
-        alert(`[개발 모드] 메일 발송 백엔드가 아직 설정되지 않았어요.\n인증 코드: ${code}\n\n(실서비스에서는 ${email} 로 자동 전송됩니다)`);
+        alert(`[개발 모드] 인증 코드: ${code}`);
       }
     } catch (err) {
-      // Network error — dev fallback
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
       setSentCode(code);
       setCountdown(60);
       setIsButtonDisabled(true);
-      alert(`[개발 모드] 인증 코드: ${code}\n\n(백엔드 연결 시 ${email} 로 자동 발송)`);
+      alert(`[개발 모드] 인증 코드: ${code}`);
     }
   };
 

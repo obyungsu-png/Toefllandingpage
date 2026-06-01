@@ -1268,16 +1268,19 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
 // Send email verification code via Resend
 app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
   try {
-    const { email, code } = await c.req.json();
+    const { email } = await c.req.json();
 
-    if (!email || !code) {
-      return c.json({ error: 'Email and code are required' }, 400);
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return c.json({ error: 'Invalid email format' }, 400);
     }
+
+    // Backend generates the code (single source of truth)
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Get Resend API key from environment
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -1286,14 +1289,13 @@ app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
       return c.json({ error: 'Email service not configured' }, 500);
     }
 
-    // Resend "from" address — use onboarding@resend.dev for testing, or your verified domain
     const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev';
     const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'TOEFL Landing Page';
 
-    // Store the code temporarily (5 minutes TTL via timestamp check on verify)
+    // Store the code in KV (5 minutes TTL)
     await kv.set(`email_code:${email.toLowerCase()}`, {
       code,
-      expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+      expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
     // Send via Resend API
@@ -1336,7 +1338,8 @@ app.post('/make-server-e46cd33a/auth/send-email-code', async (c) => {
 
     const data = await resendResponse.json();
     console.log('✅ Email sent to', email, '— Resend ID:', data.id);
-    return c.json({ success: true, messageId: data.id });
+    // Return code to frontend so it can verify locally
+    return c.json({ success: true, messageId: data.id, code });
   } catch (error) {
     console.error('Send email code error:', error);
     return c.json({ error: 'Failed to send email code' }, 500);
