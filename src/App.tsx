@@ -537,7 +537,7 @@ function AppContent() {
       }
     };
     
-    saveStudents();
+    scheduleDebouncedSave('students', saveStudents);
   }, [students, isLoadingData, dataLoadedSuccessfully]);
 
   // Save test results to Supabase whenever they change
@@ -564,7 +564,7 @@ function AppContent() {
       }
     };
     
-    saveTestResults();
+    scheduleDebouncedSave('testresults', saveTestResults);
   }, [testResults, isLoadingData, dataLoadedSuccessfully]);
 
   // Footer auto-hide on scroll
@@ -679,6 +679,18 @@ function AppContent() {
     ref.current = false;
     return true;
   };
+
+  // Debounce timers for auto-save useEffects (prevents Edge Function spam)
+  const saveDebounceTimers = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const scheduleDebouncedSave = (key: string, fn: () => void, delayMs = 3000) => {
+    if (saveDebounceTimers.current[key]) {
+      clearTimeout(saveDebounceTimers.current[key]);
+    }
+    saveDebounceTimers.current[key] = setTimeout(() => {
+      fn();
+      delete saveDebounceTimers.current[key];
+    }, delayMs);
+  };
   
   // Load data from Supabase on mount
   // Retry-enabled fetch for cold start resilience
@@ -714,14 +726,18 @@ function AppContent() {
 
   const fetchSupabaseJson = async (endpoint: string) => {
     const { headers, baseUrl } = getSupabaseRequestContext();
-    const res = await fetchWithRetry(`${baseUrl}/${endpoint}`, { headers });
-    if (!res.ok) throw new Error(`${endpoint}: ${res.status}`);
+    // Use simple fetch (no retry) — 404 means "not found", not a server error
+    const res = await fetch(`${baseUrl}/${endpoint}`, { headers });
+    if (!res.ok) {
+      if (res.status === 404) return null; // 404 = data not yet created, return null (no retry)
+      throw new Error(`${endpoint}: ${res.status}`);
+    }
     return res.json();
   };
 
   // Warm up edge function and wait until it responds
   const warmUpServer = async (baseUrl: string, headers: Record<string, string>) => {
-    for (let attempt = 1; attempt <= 4; attempt++) {
+    for (let attempt = 1; attempt <= 1; attempt++) { // Single attempt only — avoid extra invocations
       try {
         const controller = new AbortController();
         const timeoutMs = 10000;
@@ -962,7 +978,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('lmsContents', saveToSupabase);
   }, [lmsContents, isLoadingData, dataLoadedSuccessfully]);
 
   // Save TPO tests to Supabase whenever they change
@@ -989,7 +1005,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('tpoTests', saveToSupabase);
   }, [tpoTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Test tests to Supabase whenever they change
@@ -1016,7 +1032,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('testTests', saveToSupabase);
   }, [testTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Training tests to Supabase whenever they change
@@ -1043,7 +1059,7 @@ function AppContent() {
       }
     };
 
-    saveToSupabase();
+    scheduleDebouncedSave('trainingTests', saveToSupabase);
   }, [trainingTests, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Reports to Supabase whenever they change
@@ -1070,7 +1086,7 @@ function AppContent() {
       }
     };
     
-    saveToSupabase();
+    scheduleDebouncedSave('reports', saveToSupabase);
   }, [reports, isLoadingData, dataLoadedSuccessfully]);
 
   // Save Question Types Config to Supabase (debounced 1s)
