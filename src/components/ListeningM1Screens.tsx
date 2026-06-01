@@ -361,6 +361,17 @@ function QuestionScreen({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showMustAnswer, setShowMustAnswer] = useState(false);
 
+  // 답 선택 시 window.__moduleAnswers에 저장 (리뷰 화면용)
+  const recordListeningAnswer = (option: string) => {
+    setSelectedAnswer(option);
+    if (typeof window !== 'undefined') {
+      (window as any).__moduleAnswers = {
+        ...((window as any).__moduleAnswers || {}),
+        [data.questionNum]: option,
+      };
+    }
+  };
+
   // Reset answer when question changes
   React.useEffect(() => {
     setSelectedAnswer(null);
@@ -466,7 +477,7 @@ function QuestionScreen({
                     name={`lm1-q${data.questionNum}`}
                     value={option}
                     checked={selectedAnswer === option}
-                    onChange={() => setSelectedAnswer(option)}
+                    onChange={() => recordListeningAnswer(option)}
                     label={option}
                     labelClassName="text-lg"
                   />
@@ -513,7 +524,7 @@ function QuestionScreen({
                       name={`lm1-q${data.questionNum}`}
                       value={option}
                       checked={selectedAnswer === option}
-                      onChange={() => setSelectedAnswer(option)}
+                      onChange={() => recordListeningAnswer(option)}
                       label={option}
                       labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                     />
