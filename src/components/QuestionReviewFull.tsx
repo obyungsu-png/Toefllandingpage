@@ -290,8 +290,14 @@ export function QuestionReviewFull({
     const wrongQs = result.wrongAnswers;
     const wrongIds = new Set(wrongQs.map(w => w.questionId));
     
-    // Try to get real questions from CMS data
-    const realQuestions = currentSection?.questions || [];
+    // Try to get real questions from CMS data — filtered by active module
+    const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
+    const allRealQuestions = currentSection?.questions || [];
+    const realQuestions = activeSection === 'Reading' || activeSection === 'Listening'
+      ? (activeModule === 2
+          ? allRealQuestions.filter(isModule2Q)
+          : allRealQuestions.filter((q: any) => !isModule2Q(q)))
+      : allRealQuestions;
     
     for (let i = 0; i < totalQ; i++) {
       const realQ = realQuestions[i];

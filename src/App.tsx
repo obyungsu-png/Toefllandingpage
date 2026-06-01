@@ -1541,7 +1541,12 @@ function AppContent() {
 
     const cmsTpo = cmsBank?.find((t: any) => t.testNumber === tpoNum);
     const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === category);
-    const cmsQuestions = cmsSection?.questions || [];
+    const allCmsQuestions = cmsSection?.questions || [];
+    // Module 구분: questionType에 'module 2' 포함 여부로 필터
+    const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
+    const cmsQuestions = module === 2
+      ? allCmsQuestions.filter(isModule2Q)
+      : allCmsQuestions.filter((q: any) => !isModule2Q(q));
 
     let correctCount = 0;
     const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
@@ -3621,6 +3626,7 @@ function AppContent() {
               className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
               onClick={() => {
                 setShowEndModule1(false);
+                saveSectionResultToHistory('Reading', 20, 1);
                 setShowModule2(true);
               }}
             >
@@ -5859,7 +5865,7 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question20(false);
                 // Save reading result to history
-                saveSectionResultToHistory('Reading', 20);
+                saveSectionResultToHistory('Reading', 20, 2);
                 clearReadingProgress();
                 setShowEndModule2(true);
               }}
@@ -5896,8 +5902,8 @@ function AppContent() {
               questionInfo="5/5"
               onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
               onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
-              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); clearReadingProgress(); setShowEndModule2(true); }}
-              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20); clearReadingProgress(); setShowEndModule2(true); }}
+              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20, 2); clearReadingProgress(); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20, 2); clearReadingProgress(); setShowEndModule2(true); }}
               leftContent={
                 <>
                   <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
@@ -5953,7 +5959,7 @@ function AppContent() {
           }}
           onNext={() => {
             setShowModule2Question20(false);
-                saveSectionResultToHistory('Reading', 20);
+                saveSectionResultToHistory('Reading', 20, 2);
             clearReadingProgress();
             setShowEndModule2(true);
           }}
