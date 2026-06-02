@@ -179,21 +179,21 @@ export function WritingAcademicDiscussionQ2({
         <div className={`md:w-5/12 p-4 md:p-6 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-200 ${isMobile ? (activeTab === 'passage' ? 'block' : 'hidden') : 'block'}`}>
           {/* Instructions box */}
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5">
-            <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
+            <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
               <span className="font-bold">Instructions: </span>
               {promptTitle || "Your professor is teaching a class on social studies. Write a post responding to the professor's question. In your response you should:"}
             </p>
             <ul className="mt-2 ml-4 space-y-1">
-              <li className="flex items-start gap-2 text-[14px] md:text-[15px] text-gray-700 leading-6">
+              <li className="flex items-start gap-2 text-[15px] md:text-[16px] text-gray-800 leading-6 font-medium">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-700 flex-shrink-0"></span>
                 express and support your personal opinion
               </li>
-              <li className="flex items-start gap-2 text-[14px] md:text-[15px] text-gray-700 leading-6">
+              <li className="flex items-start gap-2 text-[15px] md:text-[16px] text-gray-800 leading-6 font-medium">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-700 flex-shrink-0"></span>
                 make a contribution to the discussion
               </li>
             </ul>
-            <p className="mt-2 text-[14px] md:text-[15px] text-gray-700">An effective response will contain at least 100 words.</p>
+            <p className="mt-2 text-[15px] md:text-[16px] text-gray-800 font-medium">An effective response will contain at least 100 words.</p>
           </div>
 
           {/* Professor */}
@@ -203,7 +203,7 @@ export function WritingAcademicDiscussionQ2({
             </div>
             <p className="font-bold text-[15px] md:text-[17px] text-gray-900 mt-2">{professorName}</p>
           </div>
-          <p className="text-[14px] md:text-[16px] text-gray-800 leading-7">
+          <p className="text-[15px] md:text-[17px] text-gray-900 leading-7 font-medium">
             {professorMessage || `Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?`}
           </p>
         </div>
@@ -223,7 +223,7 @@ export function WritingAcademicDiscussionQ2({
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
+                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
                   {student1Message || `Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.`}
                 </p>
               </div>
@@ -239,7 +239,7 @@ export function WritingAcademicDiscussionQ2({
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
+                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
                   {student2Message || `I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.`}
                 </p>
               </div>
