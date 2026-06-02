@@ -181,7 +181,7 @@ export function WritingAcademicDiscussionQ2({
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5">
             <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
               <span className="font-bold">Instructions: </span>
-              {promptTitle || 'Your professor is teaching a class on social studies. Write a post responding to the professor's question. In your response you should:'}
+              {promptTitle || "Your professor is teaching a class on social studies. Write a post responding to the professor's question. In your response you should:"}
             </p>
             <ul className="mt-2 ml-4 space-y-1">
               <li className="flex items-start gap-2 text-[14px] md:text-[15px] text-gray-700 leading-6">
