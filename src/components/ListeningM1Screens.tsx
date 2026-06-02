@@ -723,13 +723,15 @@ function Module1IntroScreen({
   onHome,
   onBack,
   onNext,
+  skipSpeech = false,
 }: {
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  skipSpeech?: boolean;
 }) {
   useSpeechEffect(
-    'Module 1. You can use Next to move to the next question. The first task is Listen and Choose a Response. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.'
+    skipSpeech ? '' : 'Module 1. You can use Next to move to the next question. The first task is Listen and Choose a Response. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.'
   );
 
   return (
@@ -823,6 +825,10 @@ function Module2IntroScreen({
 
 export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreenChange, getCmsListeningQuestion }: ListeningM1WrapperProps) {
   const [currentScreen, setCurrentScreen] = useState<M1Screen>(initialScreen);
+  const [isRestored, setIsRestored] = useState(
+    // initialScreen이 intro가 아니면 이어풀기 또는 리뷰 모드 → 소개 음성 Skip
+    initialScreen !== 'intro' && initialScreen !== 'm1-intro'
+  );
   
   // Review mode = started from a mid-flow screen (not 'intro')
   // Don't save/restore progress in review mode to avoid spurious restore modals
@@ -888,6 +894,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
 
   const handleRestore = () => {
     restoreProgress();
+    setIsRestored(true);
     if (savedProgress && savedProgress.currentScreen) {
       setCurrentScreen(savedProgress.currentScreen as M1Screen);
     }
@@ -906,7 +913,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
       )}
 
       {currentScreen === 'intro' && <IntroScreen onHome={onHome} onNext={goNext} />}
-      {currentScreen === 'm1-intro' && <Module1IntroScreen onHome={onHome} onBack={goBack} onNext={goNext} />}
+      {currentScreen === 'm1-intro' && <Module1IntroScreen onHome={onHome} onBack={goBack} onNext={goNext} skipSpeech={isRestored} />}
       {currentScreen === 'end-m1' && <EndModule1Screen onHome={onHome} onBack={goBack} onNext={goNext} />}
       {currentScreen === 'module2-intro' && <Module2IntroScreen onHome={onHome} onBack={goBack} onNext={goNext} />}
 
