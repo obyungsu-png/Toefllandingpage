@@ -62,8 +62,10 @@ export interface TPOQuestion {
   professorName?: string;
   professorMessage?: string;
   student1ImageUrl?: string;
+  student1Name?: string;
   student1Message?: string;
   student2ImageUrl?: string;
+  student2Name?: string;
   student2Message?: string;
   // For grouped Listening types (Short Conversation, Announcements, Academic Talk)
   passageAudioUrl?: string;
@@ -1209,7 +1211,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.professorName.trim()) question.professorName = formData.professorName.trim();
     if (formData.professorMessage.trim()) question.professorMessage = formData.professorMessage.trim();
     if (formData.student1Message.trim()) question.student1Message = formData.student1Message.trim();
+    if ((formData as any).student1Name?.trim()) question.student1Name = (formData as any).student1Name.trim();
     if (formData.student2Message.trim()) question.student2Message = formData.student2Message.trim();
+    if ((formData as any).student2Name?.trim()) question.student2Name = (formData as any).student2Name.trim();
 
     onSubmit(question);
   };
@@ -2002,13 +2006,22 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                       className="text-[10px] w-14"
                     />
                   </div>
-                  <textarea
-                    value={formData.student1Message}
-                    onChange={(e) => setFormData({ ...formData, student1Message: e.target.value })}
-                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
-                    rows={4}
-                    placeholder="학생 1의 응답..."
-                  />
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <input
+                      type="text"
+                      value={(formData as any).student1Name || ''}
+                      onChange={(e) => setFormData({ ...formData, student1Name: e.target.value } as any)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 1 이름 (예: Paul N)"
+                    />
+                    <textarea
+                      value={formData.student1Message}
+                      onChange={(e) => setFormData({ ...formData, student1Message: e.target.value })}
+                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      rows={4}
+                      placeholder="학생 1의 응답..."
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -2046,13 +2059,22 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                       className="text-[10px] w-14"
                     />
                   </div>
-                  <textarea
-                    value={formData.student2Message}
-                    onChange={(e) => setFormData({ ...formData, student2Message: e.target.value })}
-                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
-                    rows={4}
-                    placeholder="학생 2의 응답..."
-                  />
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <input
+                      type="text"
+                      value={(formData as any).student2Name || ''}
+                      onChange={(e) => setFormData({ ...formData, student2Name: e.target.value } as any)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 2 이름 (예: Lena A)"
+                    />
+                    <textarea
+                      value={formData.student2Message}
+                      onChange={(e) => setFormData({ ...formData, student2Message: e.target.value })}
+                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      rows={4}
+                      placeholder="학생 2의 응답..."
+                    />
+                  </div>
                 </div>
               </div>
             </div>

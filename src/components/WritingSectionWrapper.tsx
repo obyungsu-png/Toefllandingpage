@@ -306,8 +306,10 @@ export function WritingSectionWrapper({
             professorName={adQ?.professorName}
             professorMessage={adQ?.professorMessage}
             student1ImageUrl={adQ?.student1ImageUrl}
+            student1Name={adQ?.student1Name}
             student1Message={adQ?.student1Message}
             student2ImageUrl={adQ?.student2ImageUrl}
+            student2Name={adQ?.student2Name}
             student2Message={adQ?.student2Message}
           />
         );

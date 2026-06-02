@@ -14,8 +14,10 @@ interface WritingAcademicDiscussionQ2Props {
   professorName?: string;
   professorMessage?: string;
   student1ImageUrl?: string;
+  student1Name?: string;
   student1Message?: string;
   student2ImageUrl?: string;
+  student2Name?: string;
   student2Message?: string;
   promptTitle?: string;
   promptInstructions?: string;
@@ -30,8 +32,10 @@ export function WritingAcademicDiscussionQ2({
   professorName = 'Dr. Achebe',
   professorMessage,
   student1ImageUrl,
+  student1Name,
   student1Message,
   student2ImageUrl,
+  student2Name,
   student2Message,
   promptTitle,
   promptInstructions,
@@ -160,97 +164,82 @@ export function WritingAcademicDiscussionQ2({
         {/* Mobile Tab Navigation */}
         {isMobile && (
           <div className="flex border-b border-gray-300 bg-white">
-            <button
-              onClick={() => setActiveTab('passage')}
-              className={`flex-1 py-3 text-sm font-semibold transition-all ${
-                activeTab === 'passage'
-                  ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
-                  : 'text-gray-500'
-              }`}
-            >
+            <button onClick={() => setActiveTab('passage')}
+              className={`flex-1 py-3 text-sm font-semibold transition-all ${activeTab === 'passage' ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' : 'text-gray-500'}`}>
               Passage
             </button>
-            <button
-              onClick={() => setActiveTab('response')}
-              className={`flex-1 py-3 text-sm font-semibold transition-all ${
-                activeTab === 'response'
-                  ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
-                  : 'text-gray-500'
-              }`}
-            >
+            <button onClick={() => setActiveTab('response')}
+              className={`flex-1 py-3 text-sm font-semibold transition-all ${activeTab === 'response' ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' : 'text-gray-500'}`}>
               Response
             </button>
           </div>
         )}
 
-        {/* Left side - Instructions and Professor's context */}
-        <div className={`md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300 ${
-          isMobile ? (activeTab === 'passage' ? 'block' : 'hidden') : 'block'
-        }`}>
-          <div className="space-y-4 md:space-y-6">
-            <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-              Your professor is teaching a class on social studies. Write a post responding to the professor's question.
+        {/* Left side — Instructions + Professor */}
+        <div className={`md:w-5/12 p-4 md:p-6 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-200 ${isMobile ? (activeTab === 'passage' ? 'block' : 'hidden') : 'block'}`}>
+          {/* Instructions box */}
+          <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5">
+            <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
+              <span className="font-bold">Instructions: </span>
+              {promptTitle || 'Your professor is teaching a class on social studies. Write a post responding to the professor's question. In your response you should:'}
             </p>
-
-            <div>
-              <p className="text-[15px] md:text-[17px] text-gray-900 mb-2 md:mb-3 font-semibold font-['Georgia',_serif]">
-                In your response, you should do the following.
-              </p>
-              <ul className="space-y-1 md:space-y-2 ml-4 md:ml-6">
-                <li className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">Express and support your opinion.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                  <span className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">Make a contribution to the discussion in your own words.</span>
-                </li>
-              </ul>
-            </div>
-
-            <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-              An effective response will contain at least 100 words.
-            </p>
-
-            {/* Professor's detailed discussion */}
-            <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-gray-300">
-              <div className="flex flex-col items-center mb-4 md:mb-6">
-                <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-2 md:mb-3 border-4 border-[#1e6b73] shadow-sm">
-                  <ImageWithFallback src={professorImageUrl || fixedDiscussionPhoto} alt={professorName} className="w-full h-full object-cover" />
-                </div>
-                <p className="font-bold text-base md:text-lg text-gray-900 font-['Georgia',_serif]">{professorName}</p>
-              </div>
-              <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
-                {professorMessage || `Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?`}
-              </p>
-            </div>
+            <ul className="mt-2 ml-4 space-y-1">
+              <li className="flex items-start gap-2 text-[14px] md:text-[15px] text-gray-700 leading-6">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-700 flex-shrink-0"></span>
+                express and support your personal opinion
+              </li>
+              <li className="flex items-start gap-2 text-[14px] md:text-[15px] text-gray-700 leading-6">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-700 flex-shrink-0"></span>
+                make a contribution to the discussion
+              </li>
+            </ul>
+            <p className="mt-2 text-[14px] md:text-[15px] text-gray-700">An effective response will contain at least 100 words.</p>
           </div>
+
+          {/* Professor */}
+          <div className="flex flex-col items-center mb-3">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-[#1e6b73] shadow">
+              <ImageWithFallback src={professorImageUrl || fixedDiscussionPhoto} alt={professorName} className="w-full h-full object-cover" />
+            </div>
+            <p className="font-bold text-[15px] md:text-[17px] text-gray-900 mt-2">{professorName}</p>
+          </div>
+          <p className="text-[14px] md:text-[16px] text-gray-800 leading-7">
+            {professorMessage || `Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?`}
+          </p>
         </div>
 
-        {/* Right side - Students' responses and writing area */}
-        <div className={`md:w-2/3 p-4 md:p-8 overflow-auto bg-[#f8f7f3] ${
-          isMobile ? (activeTab === 'response' ? 'block' : 'hidden') : 'block'
-        }`}>
-          <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
+        {/* Right side — Student responses + writing area */}
+        <div className={`md:w-7/12 flex flex-col overflow-hidden bg-white ${isMobile ? (activeTab === 'response' ? 'flex' : 'hidden') : 'flex'}`}>
+          {/* Students scrollable area */}
+          <div className="flex-shrink-0 p-4 md:p-6 overflow-y-auto border-b border-gray-200" style={{maxHeight: '45%'}}>
             {/* Student 1 */}
-            <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                <ImageWithFallback src={student1ImageUrl || fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex flex-col items-center flex-shrink-0 w-14">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-gray-300">
+                  <ImageWithFallback src={student1ImageUrl || fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
+                </div>
+                <p className="text-[11px] text-gray-600 font-semibold mt-1 text-center leading-tight">
+                  {student1Name || 'Student 1'}
+                </p>
               </div>
-              <div className="flex-1">
-                <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
                   {student1Message || `Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.`}
                 </p>
               </div>
             </div>
-
             {/* Student 2 */}
-            <div className="flex items-start gap-3 md:gap-4 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                <ImageWithFallback src={student2ImageUrl || fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
+            <div className="flex items-start gap-3">
+              <div className="flex flex-col items-center flex-shrink-0 w-14">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-gray-300">
+                  <ImageWithFallback src={student2ImageUrl || fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
+                </div>
+                <p className="text-[11px] text-gray-600 font-semibold mt-1 text-center leading-tight">
+                  {student2Name || 'Student 2'}
+                </p>
               </div>
-              <div className="flex-1">
-                <p className="text-[15px] md:text-[17px] text-gray-800 leading-8 font-['Georgia',_serif]">
+              <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                <p className="text-[14px] md:text-[15px] text-gray-800 leading-7">
                   {student2Message || `I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.`}
                 </p>
               </div>
