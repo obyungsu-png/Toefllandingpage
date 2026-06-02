@@ -6,9 +6,16 @@ interface WritingEmailQ1Props {
   onNext: () => void;
   onHome: () => void;
   onVolumeClick?: () => void;
+  writingQuestion?: {
+    emailScenario?: string;
+    emailInstruction?: string;
+    emailBullets?: string[];
+    emailSubject?: string;
+    emailTo?: string;
+  } | null;
 }
 
-export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: WritingEmailQ1Props) {
+export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQuestion }: WritingEmailQ1Props) {
   const [emailBody, setEmailBody] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [hideWordCount, setHideWordCount] = useState(false);
@@ -160,26 +167,24 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
         }`}>
           <div className="max-w-2xl">
             <p className="text-sm md:text-base text-gray-800 mb-4 md:mb-6 leading-relaxed">
-              A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.
+              {writingQuestion?.emailScenario || 'A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.'}
             </p>
             
             <p className="text-sm md:text-base text-gray-800 font-bold mb-3 md:mb-4">
-              Write an email to the editor of the magazine. In your email, do the following.
+              {writingQuestion?.emailInstruction || 'Write an email to the editor of the magazine. In your email, do the following.'}
             </p>
             
             <ul className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-              <li className="flex items-start gap-2 md:gap-3">
-                <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-sm md:text-base text-gray-800">Tell the editor what you like about the new magazine.</span>
-              </li>
-              <li className="flex items-start gap-2 md:gap-3">
-                <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-sm md:text-base text-gray-800">Describe the problem you experienced.</span>
-              </li>
-              <li className="flex items-start gap-2 md:gap-3">
-                <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
-                <span className="text-sm md:text-base text-gray-800">Ask about the status of your submissions.</span>
-              </li>
+              {(writingQuestion?.emailBullets?.filter(b => b.trim()) || [
+                'Tell the editor what you like about the new magazine.',
+                'Describe the problem you experienced.',
+                'Ask about the status of your submissions.',
+              ]).map((bullet, i) => (
+                <li key={i} className="flex items-start gap-2 md:gap-3">
+                  <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
+                  <span className="text-sm md:text-base text-gray-800">{bullet}</span>
+                </li>
+              ))}
             </ul>
             
             <p className="text-sm md:text-base text-gray-800">
@@ -197,10 +202,10 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick }: Writin
             
             <div className="mb-4">
               <div className="text-sm md:text-base text-gray-700 mb-2">
-                <span className="font-bold">To:</span> editor@sunshinepoetymagazine.com
+                <span className="font-bold">To:</span> {writingQuestion?.emailTo || 'editor@sunshinepoetymagazine.com'}
               </div>
               <div className="text-sm md:text-base text-gray-700 mb-4 md:mb-6">
-                <span className="font-bold">Subject:</span> Problem using submission form
+                <span className="font-bold">Subject:</span> {writingQuestion?.emailSubject || 'Problem using submission form'}
               </div>
             </div>
 

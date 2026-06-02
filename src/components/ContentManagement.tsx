@@ -59,6 +59,12 @@ export interface TPOQuestion {
   passageImageUrl?: string;
   passageTitle?: string;
   interstitialTitle?: string; // 인트로 화면 상단 한줄 텍스트 (conversation/announcement/lecture)
+  // Write an Email (Writing Q1) fields
+  emailScenario?: string;      // 상단 상황 설명 문단
+  emailInstruction?: string;   // "Write an email to..." 한 줄
+  emailBullets?: string[];     // 세 가지 지시 사항 (bullet list)
+  emailSubject?: string;       // Subject 줄
+  emailTo?: string;            // To 줄
   questionGroupId?: string;
   translationNote?: string;
   analysisNote?: string;
@@ -1097,6 +1103,11 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       })(),
       interstitialTitle: (formData as any).interstitialTitle || undefined,
       passageTitle: (formData as any).passageTitle || undefined,
+      emailScenario: (formData as any).emailScenario || undefined,
+      emailInstruction: (formData as any).emailInstruction || undefined,
+      emailBullets: (formData as any).emailBullets?.filter((b: string) => b.trim()) || undefined,
+      emailSubject: (formData as any).emailSubject || undefined,
+      emailTo: (formData as any).emailTo || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
@@ -1246,7 +1257,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         </div>
 
-        {/* Module Selector */}
+        {/* Module Selector — Writing 제외 */}
+        {section !== 'Writing' && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
@@ -1271,6 +1283,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
             </span>
           )}
         </div>
+        )}
 
         {/* Passage Title (for Reading - Academic Passage) */}
         {section === 'Reading' && (
@@ -1776,6 +1789,83 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
+        {/* Write an Email (첫번째 라이팅 문제) — Writing only */}
+        {section === 'Writing' && formData.questionType === 'Write an Email' && (
+          <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 bg-blue-50/40">
+            <p className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-1.5">
+              ✉️ Write an Email 설정
+              <span className="text-xs font-normal text-gray-500">— 이메일 작성 문제 편집</span>
+            </p>
+
+            {/* Scenario */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">상황 설명 (첫 단락)</label>
+              <textarea
+                rows={3}
+                value={(formData as any).emailScenario || ''}
+                onChange={(e) => setFormData({ ...formData, emailScenario: e.target.value } as any)}
+                placeholder="예: A new poetry magazine has asked its readers for submissions..."
+                className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+              />
+            </div>
+
+            {/* Instruction */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">지시문 (Write an email to...)</label>
+              <input
+                type="text"
+                value={(formData as any).emailInstruction || ''}
+                onChange={(e) => setFormData({ ...formData, emailInstruction: e.target.value } as any)}
+                placeholder="예: Write an email to the editor of the magazine. In your email, do the following."
+                className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              />
+            </div>
+
+            {/* Bullet points */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">지시 사항 (한 줄씩, 최대 4개)</label>
+              {[0,1,2,3].map(i => (
+                <input
+                  key={i}
+                  type="text"
+                  value={((formData as any).emailBullets || [])[i] || ''}
+                  onChange={(e) => {
+                    const bullets = [...(((formData as any).emailBullets) || ['','','',''])];
+                    bullets[i] = e.target.value;
+                    setFormData({ ...formData, emailBullets: bullets } as any);
+                  }}
+                  placeholder={`지시 사항 ${i+1}`}
+                  className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent mb-2"
+                />
+              ))}
+            </div>
+
+            {/* To / Subject */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">To (수신자 이메일)</label>
+                <input
+                  type="text"
+                  value={(formData as any).emailTo || ''}
+                  onChange={(e) => setFormData({ ...formData, emailTo: e.target.value } as any)}
+                  placeholder="예: editor@magazine.com"
+                  className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Subject (제목)</label>
+                <input
+                  type="text"
+                  value={(formData as any).emailSubject || ''}
+                  onChange={(e) => setFormData({ ...formData, emailSubject: e.target.value } as any)}
+                  placeholder="예: Problem using submission form"
+                  className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Academic Discussion (두번째 라이팅 문제) — Writing only */}
         {section === 'Writing' && (
           <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 bg-purple-50/40">
@@ -2055,6 +2145,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     passageText: question.passageText || '',
     passageTitle: question.passageTitle || '',
     interstitialTitle: question.interstitialTitle || '',
+    emailScenario: question.emailScenario || '',
+    emailInstruction: question.emailInstruction || '',
+    emailBullets: question.emailBullets || ['', '', '', ''],
+    emailSubject: question.emailSubject || '',
+    emailTo: question.emailTo || '',
     translationNote: question.translationNote || '',
     analysisNote: (question as any).analysisNote || '',
     vocabularyNote: question.vocabularyNote || '',
@@ -2096,6 +2191,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       })(),
       interstitialTitle: (formData as any).interstitialTitle || undefined,
       passageTitle: (formData as any).passageTitle || undefined,
+      emailScenario: (formData as any).emailScenario || undefined,
+      emailInstruction: (formData as any).emailInstruction || undefined,
+      emailBullets: (formData as any).emailBullets?.filter((b: string) => b.trim()) || undefined,
+      emailSubject: (formData as any).emailSubject || undefined,
+      emailTo: (formData as any).emailTo || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
@@ -2189,7 +2289,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         </div>
 
-        {/* Module Selector */}
+        {/* Module Selector — Writing 제외 */}
+        {section !== 'Writing' && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
@@ -2214,6 +2315,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             </span>
           )}
         </div>
+        )}
 
         {/* Passage Title (for Reading - Academic Passage) */}
         {section === 'Reading' && (

@@ -276,7 +276,20 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'email-intro' && <WritingEmailIntro onNext={goNext} onHome={onHome} />}
-      {screen === 'email-q1' && <WritingEmailQ1 onBack={goBack} onNext={goNext} onHome={onHome} />}
+      {screen === 'email-q1' && (() => {
+        const emailQ = writingQuestions.find((q: any) =>
+          (q.questionType || '').toLowerCase().includes('write an email') ||
+          (q.questionType || '').toLowerCase().includes('email')
+        );
+        return (
+          <WritingEmailQ1
+            onBack={goBack}
+            onNext={goNext}
+            onHome={onHome}
+            writingQuestion={emailQ || null}
+          />
+        );
+      })()}
       {screen === 'academic-intro' && <WritingAcademicDiscussionIntro onBegin={goNext} onHome={onHome} />}
       {screen === 'academic-q2' && (() => {
         // Find the Academic Discussion question from CMS (by type or by position — typically Q12, after 10 Build Sentence + 1 Email)
