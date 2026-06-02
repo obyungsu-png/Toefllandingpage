@@ -3,6 +3,17 @@ import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 
+// 기본 아바타 목록 (public/avatars/ 에서 서빙)
+const DEFAULT_AVATARS = [
+  { url: '/avatars/avatar-male-asian.png', label: '남성 1' },
+  { url: '/avatars/avatar-female-red.png', label: '여성 1' },
+  { url: '/avatars/avatar-male-beard.png', label: '남성 2' },
+  { url: '/avatars/avatar-female-curly.png', label: '여성 2' },
+  { url: '/avatars/avatar-male-blonde.png', label: '남성 3' },
+  { url: '/avatars/avatar-female-redhair.png', label: '여성 3' },
+  { url: '/avatars/avatar-female-brown.png', label: '여성 4' },
+];
+
 
 
 
@@ -1701,6 +1712,20 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
+                    {/* 기본 아바타 갤러리 */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button
+                          key={av.url}
+                          type="button"
+                          title={av.label}
+                          onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
+                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}
+                        >
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                     <input
                       type="file"
                       accept="image/*"
@@ -1739,6 +1764,20 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
+                    {/* 기본 아바타 갤러리 */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button
+                          key={av.url}
+                          type="button"
+                          title={av.label}
+                          onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: av.url })}
+                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar2ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}
+                        >
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                     <input
                       type="file"
                       accept="image/*"
@@ -1886,7 +1925,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                     )}
                   </div>
-                  <input
+                  {/* 기본 아바타 갤러리 */}
+                  <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                    {DEFAULT_AVATARS.map((av) => (
+                      <button key={av.url} type="button" title={av.label}
+                        onClick={() => setFormData({ ...formData, professorImageFile: null, professorImageUrl: av.url })}
+                        className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${formData.professorImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                                    <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
@@ -1931,7 +1980,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                       )}
                     </div>
-                    <input
+                    {/* 기본 아바타 갤러리 */}
+                    <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: av.url })}
+                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student1ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                                        <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
@@ -1965,7 +2024,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                       )}
                     </div>
-                    <input
+                    {/* 기본 아바타 갤러리 */}
+                    <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: av.url })}
+                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student2ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                                        <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
