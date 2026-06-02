@@ -985,7 +985,15 @@ export function HistorySection({
             })
           : allCmsQuestions;
 
-        const cmsQuestionCount = moduleFilteredCmsQuestions.length;
+        // Calculate true question count: FillBlanks/Complete Words count as their blank count
+        const cmsQuestionCount = moduleFilteredCmsQuestions.reduce((sum: number, q: any) => {
+          const qt = (q.questionType || '').toLowerCase();
+          const isFillBlanks = qt.includes('complete words') || qt.includes('fill in the blank') || qt.includes('cloze');
+          if (isFillBlanks && Array.isArray(q.blanks) && q.blanks.length > 0) {
+            return sum + q.blanks.length;
+          }
+          return sum + 1;
+        }, 0);
 
         // Priority: CMS count > result.totalQuestions > default
         const totalQ = cmsQuestionCount > 0
@@ -1137,13 +1145,17 @@ export function HistorySection({
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
                         <div className="space-y-2">
                           {curResult.wrongAnswers.map((w, i) => {
-                            const idx = (parseInt(w.questionId) || i + 1) - 1;
+                            const isBlank = w.questionId?.startsWith('blank-');
+                            const displayNum = isBlank
+                              ? parseInt(w.questionId.replace('blank-', '')) || i + 1
+                              : parseInt(w.questionId) || i + 1;
+                            const idx = displayNum - 1;
                             return (
                               <button key={i}
                                 onClick={() => handleJumpToQuestion(scoreModalSection, idx)}
                                 className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
                                 <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
-                                  {parseInt(w.questionId) || i + 1}
+                                  {isBlank ? `B${displayNum}` : displayNum}
                                 </span>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm text-gray-700 truncate">{w.questionText || `Question ${w.questionId}`}</p>

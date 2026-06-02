@@ -905,10 +905,12 @@ export function QuestionReviewFull({
                       }
                       return displayBlanks.map((blank, index) => {
                         const wrongEntry = result.wrongAnswers.find(w =>
-                          w.questionId === String(index+1) || w.questionId === `blank-${index+1}`
+                          w.questionId === `blank-${index+1}` ||
+                          w.questionId === String(index+1) ||
+                          parseInt(w.questionId) === index+1
                         );
                         const isCorrect = !wrongEntry;
-                        const userAns = wrongEntry?.userAnswer?.split(',')?.[index]?.trim() || wrongEntry?.userAnswer || null;
+                        const userAns = wrongEntry?.userAnswer || null;
                         return (
                           <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
                             isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'

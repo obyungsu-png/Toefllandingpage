@@ -1569,6 +1569,45 @@ function AppContent() {
       }
     }
 
+    // FillBlanks 답 수집 (window.__fillBlanksAnswers)
+    const fillBlanksAnswers = (typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {};
+    // FillBlanks 정답은 CMS에서 가져옴
+    const fillBlanksQuestion = cmsQuestions.find((q: any) => {
+      const t = (q?.questionType || '').toLowerCase();
+      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
+    });
+    if (fillBlanksQuestion && Object.keys(fillBlanksAnswers).length > 0) {
+      // Parse CMS blanks
+      let cmsBlanks: {answer: string; maxLength: number}[] = [];
+      const rawP = fillBlanksQuestion.passageText || '';
+      if (/\[[^\]]+:\d+\]/.test(rawP)) {
+        rawP.replace(/\[([^\]]+):(\d+)\]/g, (_: string, ans: string) => {
+          cmsBlanks.push({ answer: ans.trim(), maxLength: 0 });
+          return '';
+        });
+      } else if (Array.isArray(fillBlanksQuestion.blanks)) {
+        cmsBlanks = fillBlanksQuestion.blanks;
+      }
+      cmsBlanks.forEach((blank, i) => {
+        const userAns = fillBlanksAnswers[i] || '';
+        const correctAns = blank.answer;
+        if (userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
+          correctCount++;
+        } else {
+          wrongAnswers.push({
+            questionId: `blank-${i + 1}`,
+            questionText: `Fill in the blank — Blank ${i + 1}`,
+            userAnswer: userAns || '(빈칸)',
+            correctAnswer: correctAns,
+          });
+        }
+      });
+      // Clear after saving
+      if (typeof window !== 'undefined') {
+        (window as any).__fillBlanksAnswers = {};
+      }
+    }
+
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
     // Clear shared answers after saving
@@ -6486,6 +6525,13 @@ function AppContent() {
   const FillBlanksTestScreen = () => {
     const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
     const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
+
+    // FillBlanks 답을 window.__fillBlanksAnswers에 저장 (리뷰용)
+    React.useEffect(() => {
+      if (typeof window !== 'undefined') {
+        (window as any).__fillBlanksAnswers = inputValues;
+      }
+    }, [inputValues]);
     const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
     
     const CHAR_UNIT_WIDTH = 20; // CSS background-size의 가로 폭과 일치
