@@ -44,6 +44,10 @@ interface WritingBuildSentenceReviewQuestion {
   prompt: string;
   words: string[];
   slotCount: number;
+  correctAnswer?: string;
+  sentenceEnding?: '.' | '?';
+  avatar1ImageUrl?: string;
+  avatar2ImageUrl?: string;
 }
 
 interface FillBlankReviewConfig {
@@ -541,6 +545,10 @@ export function QuestionReviewFull({
         prompt: question?.questionText || question?.text || defaultWritingBuildSentenceQuestions[index]?.prompt || `Build a Sentence ${index + 1}`,
         words: cmsWords.length > 0 ? cmsWords : (defaultWritingBuildSentenceQuestions[index]?.words || []),
         slotCount: Number(question?.slotCount) || (defaultWritingBuildSentenceQuestions[index]?.slotCount || 5),
+        correctAnswer: question?.correctAnswer as string || undefined,
+        sentenceEnding: (question?.sentenceEnding as '.' | '?') || '.',
+        avatar1ImageUrl: question?.avatar1ImageUrl || undefined,
+        avatar2ImageUrl: question?.avatar2ImageUrl || undefined,
       } as WritingBuildSentenceReviewQuestion;
     });
 
@@ -1256,52 +1264,96 @@ export function QuestionReviewFull({
             {activeModule === 1 && currentWritingBuildSentence && (
               <>
                 <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <h2 className="text-3xl font-bold text-black mb-10 text-center">Make an appropriate sentence.</h2>
+                  <h2 className="text-2xl font-bold text-black mb-8 text-center">Make an appropriate sentence.</h2>
 
-                  <div className="space-y-8 md:space-y-12 mt-8 md:mt-16 px-2 md:px-8">
+                  <div className="space-y-8 mt-6 px-2 md:px-8">
+                    {/* Avatar 1 + prompt */}
                     <div className="flex items-center gap-4 md:gap-6">
-                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gray-200 border-4 border-[#1e6b73] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                        {currentWritingBuildSentence.avatar1ImageUrl
+                          ? <img src={currentWritingBuildSentence.avatar1ImageUrl} alt="Q" className="w-full h-full object-cover" />
+                          : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                        }
                       </div>
-                      <div className="text-xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                      <div className="text-lg text-gray-800">{currentWritingBuildSentence.prompt}</div>
                     </div>
 
-                    <div className="flex items-end gap-4 md:gap-6">
-                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gray-200 border-4 border-[#1e6b73] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
+                    {/* Avatar 2 + word chips */}
+                    <div className="flex items-start gap-4 md:gap-6">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center mt-1">
+                        {currentWritingBuildSentence.avatar2ImageUrl
+                          ? <img src={currentWritingBuildSentence.avatar2ImageUrl} alt="A" className="w-full h-full object-cover" />
+                          : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                        }
                       </div>
-
-                      <div className="flex-1 overflow-x-auto">
-                        <div className="flex flex-wrap items-end gap-2 md:gap-3">
-                          {Array.from({ length: currentWritingBuildSentence.slotCount }).map((_, idx) => (
-                            <div key={`slot-${idx}`} className="relative w-[120px] h-[44px]">
-                              <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-800" />
-                            </div>
-                          ))}
-                          <span className="text-xl text-gray-800 pb-1">.</span>
+                      <div className="flex-1">
+                        {/* Word bank */}
+                        <div className="flex flex-wrap gap-2 mb-6">
+                          {currentWritingBuildSentence.words.map((word, idx) => {
+                            const isPrefilled = word.startsWith('[') && word.endsWith(']');
+                            const display = word.replace(/^\[|\]$/g, '');
+                            return isPrefilled
+                              ? <span key={idx} className="text-[15px] font-medium text-gray-700">{display}</span>
+                              : <span key={idx} className="px-3 py-1 border border-gray-300 rounded text-[15px] text-gray-700 bg-gray-50">{display}</span>;
+                          })}
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 md:mt-8 flex flex-wrap gap-x-6 gap-y-3 justify-center">
-                      {currentWritingBuildSentence.words.map((word, idx) => (
-                        <span key={`${word}-${idx}`} className="text-2xl text-[#1f2937]">{word}</span>
-                      ))}
+                        {/* Correct Answer */}
+                        {currentWritingBuildSentence.correctAnswer && (
+                          <div className="mb-3">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">정답</p>
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2.5 text-[15px] font-medium text-emerald-800">
+                              {currentWritingBuildSentence.correctAnswer}{currentWritingBuildSentence.sentenceEnding || '.'}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* User's answer from wrongAnswers */}
+                        {(() => {
+                          const qNum = currentQuestionIndex + 1;
+                          const wrongEntry = result.wrongAnswers.find(
+                            w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
+                          );
+                          const userAns = wrongEntry?.userAnswer;
+                          const isWrong = !!wrongEntry;
+                          if (!userAns && !currentWritingBuildSentence.correctAnswer) return null;
+                          return (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내 답</p>
+                              <div className={`rounded-lg px-4 py-2.5 text-[15px] border ${
+                                isWrong
+                                  ? 'bg-red-50 border-red-200 text-red-800'
+                                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              }`}>
+                                {userAns || '(미제출)'}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-gray-50">
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Review Note</h3>
-                  <div className="bg-white border border-gray-300 rounded-lg p-4 text-sm text-gray-700 leading-relaxed">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-600 leading-relaxed">
                     순서 맞추기 유형(1-10번)은 실제 Writing Build a Sentence 형식을 그대로 반영했습니다. 각 문항의 질문과 단어 묶음을 확인하면서 문장 구조를 복기해보세요.
                   </div>
-                  <div className="mt-4 bg-white border border-gray-300 rounded-lg p-4 min-h-40 text-sm text-gray-500 italic">
-                    {result.wrongAnswers[currentQuestionIndex]?.userAnswer || '(Stored response is not available for this item)'}
+
+                  {/* Nav buttons */}
+                  <div className="flex justify-between mt-8">
+                    <button
+                      onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                      disabled={currentQuestionIndex === 0}
+                      className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
+                    >← Previous</button>
+                    <button
+                      onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
+                      disabled={currentQuestionIndex === totalQuestions - 1}
+                      className="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 transition-all"
+                      style={{ backgroundColor: themeColor }}
+                    >Next →</button>
                   </div>
                 </div>
               </>

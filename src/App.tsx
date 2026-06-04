@@ -1611,6 +1611,33 @@ function AppContent() {
 
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
+    // Writing: collect Build a Sentence answers from window.__writingBsAnswers
+    if (category === 'Writing') {
+      const bsAnswers = (typeof window !== 'undefined' && (window as any).__writingBsAnswers) || {};
+      const cmsBsQuestions = cmsQuestions.filter((q: any) => {
+        const t = (q?.questionType || '').toLowerCase();
+        return t.includes('build a sentence') || t.includes('sentence');
+      });
+      cmsBsQuestions.forEach((q: any, i: number) => {
+        const qNum = i + 1;
+        const userAns = bsAnswers[qNum] || '';
+        const correctAns = q.correctAnswer as string || '';
+        if (userAns && correctAns) {
+          if (userAns.toLowerCase().trim() !== correctAns.toLowerCase().trim()) {
+            wrongAnswers.push({
+              questionId: `writing-bs-${qNum}`,
+              questionText: q.questionText || `Build a Sentence Q${qNum}`,
+              userAnswer: userAns,
+              correctAnswer: correctAns,
+            });
+          }
+        }
+      });
+      if (typeof window !== 'undefined') {
+        (window as any).__writingBsAnswers = {};
+      }
+    }
+
     // Clear shared answers after saving
     if (typeof window !== 'undefined') {
       (window as any).__moduleAnswers = {};

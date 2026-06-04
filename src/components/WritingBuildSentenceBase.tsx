@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
 
@@ -71,6 +71,15 @@ export function WritingBuildSentenceBase({
   }, []);
 
   const isComplete = sentenceSlots.every(slot => slot !== null);
+
+  // Save answer to window.__writingBsAnswers for review
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && isComplete) {
+      const assembled = sentenceSlots.filter(Boolean).join(' ') + (sentenceEnding || '.');
+      const existing = (window as any).__writingBsAnswers || {};
+      (window as any).__writingBsAnswers = { ...existing, [questionNumber]: assembled };
+    }
+  }, [sentenceSlots, isComplete, questionNumber, sentenceEnding]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
