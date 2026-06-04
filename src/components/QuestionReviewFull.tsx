@@ -331,6 +331,7 @@ export function QuestionReviewFull({
           audioText: realQ.audioText || (activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined),
           passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
+        });
       } else {
         // Fallback to sample data
         qs.push({
