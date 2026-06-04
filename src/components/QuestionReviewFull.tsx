@@ -329,9 +329,8 @@ export function QuestionReviewFull({
           isCorrect: !isWrong,
           hasAudio: activeSection === 'Listening',
           audioText: realQ.audioText || (activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined),
-          passageText: passageText,
+          passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
-        });
       } else {
         // Fallback to sample data
         qs.push({
@@ -956,9 +955,20 @@ export function QuestionReviewFull({
               <div className="w-full md:w-1/2 order-1 md:order-none">
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto" style={{ maxHeight: '70vh' }}>
                   {(() => {
-                    // Get passage from CMS question for current question
-                    const realQ = (currentSection?.questions || [])[currentQuestionIndex];
-                    const rawPassage = realQ?.passageText || currentQuestion?.passageText || null;
+                    // Use passageText from the already-correctly-mapped currentQuestion
+                    // (currentQuestion is built with correct CMS offset for Q11-20)
+                    const rawPassage = currentQuestion?.passageText || null;
+                    
+                    // Also try to get passageTitle from the mapped CMS question
+                    const readingM1Offset = activeModule === 1 ? 10 : 0;
+                    const isFBQ = (q: any) => {
+                      const t = (q?.questionType || '').toLowerCase();
+                      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
+                    };
+                    const filteredCmsQuestions = (currentSection?.questions || []).filter((q: any) => !isFBQ(q));
+                    const mappedCmsQ = filteredCmsQuestions[currentQuestionIndex - readingM1Offset];
+                    const passageTitle = mappedCmsQ?.passageTitle || null;
+                    const emailMeta = mappedCmsQ?.emailMeta || null; // e.g. {to, from, date, subject}
                     
                     // Parse JSON template if needed
                     let passageContent: string | null = null;
@@ -973,8 +983,8 @@ export function QuestionReviewFull({
                     
                     return passageContent ? (
                       <>
-                        {realQ?.passageTitle && (
-                          <h4 className="text-base font-bold text-gray-900 mb-3">{realQ.passageTitle}</h4>
+                        {passageTitle && (
+                          <h4 className="text-base font-bold text-gray-900 mb-3">{passageTitle}</h4>
                         )}
                         <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
