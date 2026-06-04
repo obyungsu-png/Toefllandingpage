@@ -2748,11 +2748,77 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         {/* Build a Sentence fields — Writing only */}
         {section === 'Writing' && formData.questionType === 'Build a Sentence' && (
           <div className="border-2 border-dashed border-[#2d7a7c]/40 rounded-xl p-4 bg-[#f0fafa] space-y-4">
-            <p className="text-sm font-bold text-[#2d7a7c]">🔤 Build a Sentence 설정</p>
+            <p className="text-sm font-bold text-[#2d7a7c]">✏️ Build Sentence (문장 배열) 설정
+              <span className="text-xs font-normal text-gray-500 ml-1">— 두 사람의 대화로 구성되는 문장 배열 문제용</span>
+            </p>
+
+            {/* Avatar selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Avatar 1 */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">👤 질문자 (Avatar 1) — 위쪽 원</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
+                    {formData.avatar1ImageUrl
+                      ? <img src={formData.avatar1ImageUrl} alt="avatar1" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
+                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    <input type="file" accept="image/*" className="text-xs w-full"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar1ImageFile: f, avatar1ImageUrl: URL.createObjectURL(f) }); }}
+                    />
+                    {formData.avatar1ImageUrl && (
+                      <button type="button" onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: '' })} className="text-xs text-red-500 mt-1 hover:underline">제거</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Avatar 2 */}
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <label className="block text-xs font-semibold text-gray-600 mb-2">👤 답변자 (Avatar 2) — 아래쪽 원</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
+                    {formData.avatar2ImageUrl
+                      ? <img src={formData.avatar2ImageUrl} alt="avatar2" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: av.url })}
+                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar2ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    <input type="file" accept="image/*" className="text-xs w-full"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar2ImageFile: f, avatar2ImageUrl: URL.createObjectURL(f) }); }}
+                    />
+                    {formData.avatar2ImageUrl && (
+                      <button type="button" onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: '' })} className="text-xs text-red-500 mt-1 hover:underline">제거</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Words */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">단어 목록 (쉼표로 구분)</label>
-              <input
-                type="text"
+              <input type="text"
                 value={(formData as any).words || ''}
                 onChange={(e) => setFormData({ ...formData, words: e.target.value } as any)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
@@ -2769,6 +2835,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 </div>
               )}
             </div>
+
+            {/* Sentence Ending */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-2">문장 끝 부호</label>
               <div className="flex gap-3">
