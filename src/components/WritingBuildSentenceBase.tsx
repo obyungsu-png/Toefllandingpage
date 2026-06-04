@@ -11,6 +11,7 @@ export interface WritingBuildSentenceProps {
   avatar2ImageUrl?: string;
   questionText?: string;
   words?: string[];
+  sentenceEnding?: '.' | '?';
 }
 
 interface WritingBuildSentenceBaseProps extends WritingBuildSentenceProps {
@@ -29,6 +30,7 @@ export function WritingBuildSentenceBase({
   avatar2ImageUrl,
   questionText,
   words,
+  sentenceEnding = '.',
   questionNumber,
   defaultQuestionText,
   defaultWords,
@@ -292,7 +294,7 @@ export function WritingBuildSentenceBase({
                       <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === index && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
                     </div>
                   ))}
-                  <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">.</span>
+                  <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">{sentenceEnding}</span>
                 </div>
               </div>
             </div>

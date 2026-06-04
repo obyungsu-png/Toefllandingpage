@@ -146,6 +146,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -160,6 +161,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -174,6 +176,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -188,6 +191,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -202,6 +206,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -216,6 +221,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -230,6 +236,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -244,6 +251,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -258,6 +266,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}
@@ -272,6 +281,7 @@ export function WritingSectionWrapper({
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
             words={cmsQ?.words}
+            sentenceEnding={cmsQ?.sentenceEnding}
           />
         );
       })()}

@@ -57,6 +57,7 @@ export interface TPOQuestion {
   avatar1ImageUrl?: string; // Question person avatar
   avatar2ImageUrl?: string; // Answer person avatar
   words?: string[]; // Words to arrange
+  sentenceEnding?: '.' | '?'; // Period or question mark at end of Build a Sentence
   // For Writing "Academic Discussion" (Q11+, 두번째 라이팅 문제 — 교수님 + 학생 두 명)
   professorImageUrl?: string;
   professorName?: string;
@@ -1076,6 +1077,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     avatar2ImageFile: null as File | null,
     avatar2ImageUrl: '',
     words: '' as string, // space-separated words
+    sentenceEnding: '.' as '.' | '?', // Period or question mark at end of sentence
     // Academic Discussion (두번째 라이팅 문제) fields
     professorImageFile: null as File | null,
     professorImageUrl: '',
@@ -1177,6 +1179,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.words.trim()) {
       question.words = formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean);
     }
+    question.sentenceEnding = formData.sentenceEnding || '.';
 
     // Academic Discussion: professor + 2 students avatars + messages
     if (formData.professorImageUrl.trim()) {
@@ -1827,6 +1830,29 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 </div>
               )}
             </div>
+
+            {/* Sentence Ending */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">
+                🔚 문장 끝 부호 (문제에 표시된 마침표/물음표 선택)
+              </label>
+              <div className="flex gap-3">
+                {(['.', '?'] as const).map(ending => (
+                  <button
+                    key={ending}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, sentenceEnding: ending })}
+                    className={`flex-1 py-2.5 rounded-lg border-2 text-lg font-bold transition-all ${
+                      formData.sentenceEnding === ending
+                        ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-[#2d7a7c]'
+                    }`}
+                  >
+                    {ending === '.' ? '마침표 (.)' : '물음표 (?)'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -2252,7 +2278,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     audioUrl: question.audioUrl || '',
     duration: question.duration || 0,
     difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
-    blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>
+    blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
+    words: Array.isArray((question as any).words) ? (question as any).words.join(', ') : '',
+    sentenceEnding: ((question as any).sentenceEnding || '.') as '.' | '?',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2311,6 +2339,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if (formData.videoFile) {
       updatedQuestion.videoUrl = URL.createObjectURL(formData.videoFile);
     }
+    // Build Sentence words + sentenceEnding
+    if ((formData as any).words?.trim()) {
+      updatedQuestion.words = (formData as any).words.split(/[,]+/).map((w: string) => w.trim()).filter(Boolean);
+    }
+    updatedQuestion.sentenceEnding = (formData as any).sentenceEnding || '.';
 
     onSubmit(updatedQuestion);
   };
@@ -2694,6 +2727,46 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               required
               placeholder="Enter the question..."
             />
+          </div>
+        )}
+
+        {/* Build a Sentence fields — Writing only */}
+        {section === 'Writing' && formData.questionType === 'Build a Sentence' && (
+          <div className="border-2 border-dashed border-[#2d7a7c]/40 rounded-xl p-4 bg-[#f0fafa] space-y-4">
+            <p className="text-sm font-bold text-[#2d7a7c]">🔤 Build a Sentence 설정</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">단어 목록 (쉼표로 구분)</label>
+              <input
+                type="text"
+                value={(formData as any).words || ''}
+                onChange={(e) => setFormData({ ...formData, words: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
+                placeholder="예: decided, you, a topic, have, on"
+              />
+              {(formData as any).words && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(formData as any).words.split(/[,]+/).map((w: string) => w.trim()).filter(Boolean).map((w: string, i: number) => (
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-[#2d7a7c]/10 text-[#2d7a7c] text-xs font-medium">{w}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">문장 끝 부호</label>
+              <div className="flex gap-3">
+                {(['.', '?'] as const).map(ending => (
+                  <button key={ending} type="button"
+                    onClick={() => setFormData({ ...formData, sentenceEnding: ending } as any)}
+                    className={`flex-1 py-2.5 rounded-lg border-2 text-base font-bold transition-all ${
+                      (formData as any).sentenceEnding === ending
+                        ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-[#2d7a7c]'
+                    }`}>
+                    {ending === '.' ? '마침표 (.)' : '물음표 (?)'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
