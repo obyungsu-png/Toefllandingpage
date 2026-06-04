@@ -273,9 +273,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     Writing: [
       'Build a Sentence',
       'Write an Email',
-      'Academic Discussion',
-      'Integrated Writing Task',
-      'Independent Essay'
+      'Academic Discussion'
     ]
   };
 
