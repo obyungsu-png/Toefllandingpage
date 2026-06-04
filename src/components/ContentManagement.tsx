@@ -2286,10 +2286,16 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     sentenceEnding: ((question as any).sentenceEnding || '.') as '.' | '?',
     professorName: (question as any).professorName || '',
     professorMessage: (question as any).professorMessage || '',
+    professorImageUrl: (question as any).professorImageUrl || '',
+    professorImageFile: null,
     student1Name: (question as any).student1Name || '',
     student1Message: (question as any).student1Message || '',
+    student1ImageUrl: (question as any).student1ImageUrl || '',
+    student1ImageFile: null,
     student2Name: (question as any).student2Name || '',
     student2Message: (question as any).student2Message || '',
+    student2ImageUrl: (question as any).student2ImageUrl || '',
+    student2ImageFile: null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2324,10 +2330,13 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       emailTo: (formData as any).emailTo || undefined,
       professorName: (formData as any).professorName || undefined,
       professorMessage: (formData as any).professorMessage || undefined,
+      professorImageUrl: (formData as any).professorImageUrl || undefined,
       student1Name: (formData as any).student1Name || undefined,
       student1Message: (formData as any).student1Message || undefined,
+      student1ImageUrl: (formData as any).student1ImageUrl || undefined,
       student2Name: (formData as any).student2Name || undefined,
       student2Message: (formData as any).student2Message || undefined,
+      student2ImageUrl: (formData as any).student2ImageUrl || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
@@ -2860,6 +2869,35 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         {section === 'Writing' && formData.questionType === 'Write an Email' && (
           <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 bg-blue-50/40 space-y-3">
             <p className="text-sm font-bold text-blue-700 flex items-center gap-1.5">✉️ Write an Email 설정 — 이메일 작성 문제 편집</p>
+
+            {/* Avatar */}
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <label className="block text-xs font-semibold text-gray-600 mb-2">👤 아바타 (선택)</label>
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
+                  {formData.avatar1ImageUrl
+                    ? <img src={formData.avatar1ImageUrl} alt="avatar" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {DEFAULT_AVATARS.map((av) => (
+                      <button key={av.url} type="button" title={av.label}
+                        onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
+                        className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  <input type="file" accept="image/*" className="text-xs w-full"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar1ImageFile: f, avatar1ImageUrl: URL.createObjectURL(f) }); }}
+                  />
+                  {formData.avatar1ImageUrl && (
+                    <button type="button" onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: '' })} className="text-xs text-red-500 mt-1 hover:underline">제거</button>
+                  )}
+                </div>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">상황 설명 (첫 단락)</label>
               <textarea rows={3}
@@ -2920,56 +2958,127 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         {section === 'Writing' && formData.questionType === 'Academic Discussion' && (
           <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 bg-purple-50/30 space-y-3">
             <p className="text-sm font-bold text-purple-700 flex items-center gap-1.5">🎓 Academic Discussion 설정 — 교수님 1명 + 학생 2명의 토론 응답 문제용</p>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">교수님 이름</label>
-              <input type="text"
-                value={(formData as any).professorName || ''}
-                onChange={(e) => setFormData({ ...formData, professorName: e.target.value } as any)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                placeholder="예: Dr. Achebe"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">교수님의 토론 주제·질문</label>
-              <textarea rows={4}
-                value={(formData as any).professorMessage || ''}
-                onChange={(e) => setFormData({ ...formData, professorMessage: e.target.value } as any)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                placeholder="예: Volunteerism refers to the act of..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600">학생 1 이름</label>
-                <input type="text"
-                  value={(formData as any).student1Name || ''}
-                  onChange={(e) => setFormData({ ...formData, student1Name: e.target.value } as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                  placeholder="예: Paul N"
-                />
-                <label className="block text-xs font-semibold text-gray-600">학생 1의 응답</label>
-                <textarea rows={3}
-                  value={(formData as any).student1Message || ''}
-                  onChange={(e) => setFormData({ ...formData, student1Message: e.target.value } as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                  placeholder="학생 1의 응답..."
-                />
+
+            {/* Professor */}
+            <div className="bg-white rounded-lg p-3 border border-purple-200">
+              <p className="text-xs font-semibold text-purple-700 mb-2">🧑‍🏫 교수님 (가운데 원)</p>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-[#1e6b73] bg-gray-100">
+                    {formData.professorImageUrl
+                      ? <img src={formData.professorImageUrl} alt="professor" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>}
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {DEFAULT_AVATARS.map((av) => (
+                      <button key={av.url} type="button" title={av.label}
+                        onClick={() => setFormData({ ...formData, professorImageFile: null, professorImageUrl: av.url })}
+                        className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${formData.professorImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  <input type="file" accept="image/*" className="text-[10px] w-16"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, professorImageFile: f, professorImageUrl: URL.createObjectURL(f) }); }}
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input type="text"
+                    value={(formData as any).professorName || ''}
+                    onChange={(e) => setFormData({ ...formData, professorName: e.target.value } as any)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                    placeholder="교수님 이름 (예: Dr. Achebe)"
+                  />
+                  <textarea rows={3}
+                    value={(formData as any).professorMessage || ''}
+                    onChange={(e) => setFormData({ ...formData, professorMessage: e.target.value } as any)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                    placeholder="교수님의 토론 주제·질문 (예: Volunteerism refers to the act of...)"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600">학생 2 이름</label>
-                <input type="text"
-                  value={(formData as any).student2Name || ''}
-                  onChange={(e) => setFormData({ ...formData, student2Name: e.target.value } as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                  placeholder="예: Lena A"
-                />
-                <label className="block text-xs font-semibold text-gray-600">학생 2의 응답</label>
-                <textarea rows={3}
-                  value={(formData as any).student2Message || ''}
-                  onChange={(e) => setFormData({ ...formData, student2Message: e.target.value } as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
-                  placeholder="학생 2의 응답..."
-                />
+            </div>
+
+            {/* Students */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Student 1 */}
+              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 mb-2">👩‍🎓 학생 1 (찬성·찬반 입장 응답 1)</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#c9b99b] bg-gray-100">
+                      {formData.student1ImageUrl
+                        ? <img src={formData.student1ImageUrl} alt="student1" className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">없음</div>}
+                    </div>
+                    <div className="flex flex-wrap gap-0.5 mt-1">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: av.url })}
+                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student1ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    <input type="file" accept="image/*" className="text-[10px] w-12"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student1ImageFile: f, student1ImageUrl: URL.createObjectURL(f) }); }}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <input type="text"
+                      value={(formData as any).student1Name || ''}
+                      onChange={(e) => setFormData({ ...formData, student1Name: e.target.value } as any)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 1 이름 (예: Paul N)"
+                    />
+                    <textarea rows={3}
+                      value={(formData as any).student1Message || ''}
+                      onChange={(e) => setFormData({ ...formData, student1Message: e.target.value } as any)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 1의 응답..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Student 2 */}
+              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 mb-2">🧑‍🎓 학생 2 (반대·반대 입장 응답 2)</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#c9b99b] bg-gray-100">
+                      {formData.student2ImageUrl
+                        ? <img src={formData.student2ImageUrl} alt="student2" className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">없음</div>}
+                    </div>
+                    <div className="flex flex-wrap gap-0.5 mt-1">
+                      {DEFAULT_AVATARS.map((av) => (
+                        <button key={av.url} type="button" title={av.label}
+                          onClick={() => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: av.url })}
+                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student2ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                    <input type="file" accept="image/*" className="text-[10px] w-12"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student2ImageFile: f, student2ImageUrl: URL.createObjectURL(f) }); }}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <input type="text"
+                      value={(formData as any).student2Name || ''}
+                      onChange={(e) => setFormData({ ...formData, student2Name: e.target.value } as any)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 2 이름 (예: Lena A)"
+                    />
+                    <textarea rows={3}
+                      value={(formData as any).student2Message || ''}
+                      onChange={(e) => setFormData({ ...formData, student2Message: e.target.value } as any)}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-400"
+                      placeholder="학생 2의 응답..."
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
