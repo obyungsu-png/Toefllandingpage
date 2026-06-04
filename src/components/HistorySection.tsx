@@ -1172,7 +1172,7 @@ export function HistorySection({
                     </div>
 
                     {/* Wrong answers list */}
-                    {curResult && curResult.wrongAnswers.length > 0 && (
+                    {false && curResult && curResult.wrongAnswers.length > 0 && (
                       <div className="px-5 md:px-6 py-4">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
                         <div className="space-y-2">
