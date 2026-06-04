@@ -2284,6 +2284,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
     words: Array.isArray((question as any).words) ? (question as any).words.join(', ') : '',
     sentenceEnding: ((question as any).sentenceEnding || '.') as '.' | '?',
+    professorName: (question as any).professorName || '',
+    professorMessage: (question as any).professorMessage || '',
+    student1Name: (question as any).student1Name || '',
+    student1Message: (question as any).student1Message || '',
+    student2Name: (question as any).student2Name || '',
+    student2Message: (question as any).student2Message || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -2316,6 +2322,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       emailBullets: (formData as any).emailBullets?.filter((b: string) => b.trim()) || undefined,
       emailSubject: (formData as any).emailSubject || undefined,
       emailTo: (formData as any).emailTo || undefined,
+      professorName: (formData as any).professorName || undefined,
+      professorMessage: (formData as any).professorMessage || undefined,
+      student1Name: (formData as any).student1Name || undefined,
+      student1Message: (formData as any).student1Message || undefined,
+      student2Name: (formData as any).student2Name || undefined,
+      student2Message: (formData as any).student2Message || undefined,
       translationNote: (formData as any).translationNote || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
@@ -2771,6 +2783,125 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                     {ending === '.' ? '마침표 (.)' : '물음표 (?)'}
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Write an Email — Writing Edit only */}
+        {section === 'Writing' && formData.questionType === 'Write an Email' && (
+          <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 bg-blue-50/40 space-y-3">
+            <p className="text-sm font-bold text-blue-700 flex items-center gap-1.5">✉️ Write an Email 설정 — 이메일 작성 문제 편집</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">상황 설명 (첫 단락)</label>
+              <textarea rows={3}
+                value={(formData as any).emailScenario || ''}
+                onChange={(e) => setFormData({ ...formData, emailScenario: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400"
+                placeholder="예: A new poetry magazine has asked its readers for submissions..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">지시문 (Write an email to...)</label>
+              <input type="text"
+                value={(formData as any).emailInstruction || ''}
+                onChange={(e) => setFormData({ ...formData, emailInstruction: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400"
+                placeholder="예: Write an email to the editor of the magazine. In your email, do the following."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">지시 사항 (한 줄씩, 최대 4개)</label>
+              {[0, 1, 2, 3].map(i => (
+                <input key={i} type="text"
+                  value={((formData as any).emailBullets || [])[i] || ''}
+                  onChange={(e) => {
+                    const bullets = [...(((formData as any).emailBullets) || ['', '', '', ''])];
+                    bullets[i] = e.target.value;
+                    setFormData({ ...formData, emailBullets: bullets } as any);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 mb-1.5"
+                  placeholder={`지시 사항 ${i + 1}`}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">To (수신자 이메일)</label>
+                <input type="text"
+                  value={(formData as any).emailTo || ''}
+                  onChange={(e) => setFormData({ ...formData, emailTo: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400"
+                  placeholder="예: editor@magazine.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Subject (제목)</label>
+                <input type="text"
+                  value={(formData as any).emailSubject || ''}
+                  onChange={(e) => setFormData({ ...formData, emailSubject: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400"
+                  placeholder="예: Problem using submission form"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Academic Discussion — Writing Edit only */}
+        {section === 'Writing' && formData.questionType === 'Academic Discussion' && (
+          <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 bg-purple-50/30 space-y-3">
+            <p className="text-sm font-bold text-purple-700 flex items-center gap-1.5">🎓 Academic Discussion 설정 — 교수님 1명 + 학생 2명의 토론 응답 문제용</p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">교수님 이름</label>
+              <input type="text"
+                value={(formData as any).professorName || ''}
+                onChange={(e) => setFormData({ ...formData, professorName: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                placeholder="예: Dr. Achebe"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">교수님의 토론 주제·질문</label>
+              <textarea rows={4}
+                value={(formData as any).professorMessage || ''}
+                onChange={(e) => setFormData({ ...formData, professorMessage: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                placeholder="예: Volunteerism refers to the act of..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-600">학생 1 이름</label>
+                <input type="text"
+                  value={(formData as any).student1Name || ''}
+                  onChange={(e) => setFormData({ ...formData, student1Name: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                  placeholder="예: Paul N"
+                />
+                <label className="block text-xs font-semibold text-gray-600">학생 1의 응답</label>
+                <textarea rows={3}
+                  value={(formData as any).student1Message || ''}
+                  onChange={(e) => setFormData({ ...formData, student1Message: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                  placeholder="학생 1의 응답..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-600">학생 2 이름</label>
+                <input type="text"
+                  value={(formData as any).student2Name || ''}
+                  onChange={(e) => setFormData({ ...formData, student2Name: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                  placeholder="예: Lena A"
+                />
+                <label className="block text-xs font-semibold text-gray-600">학생 2의 응답</label>
+                <textarea rows={3}
+                  value={(formData as any).student2Message || ''}
+                  onChange={(e) => setFormData({ ...formData, student2Message: e.target.value } as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400"
+                  placeholder="학생 2의 응답..."
+                />
               </div>
             </div>
           </div>
