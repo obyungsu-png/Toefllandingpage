@@ -4289,7 +4289,7 @@ function AppContent() {
                       name="module2-q11"
                       value={option}
                       checked={selectedAnswer11 === option}
-                      onChange={() => setSelectedAnswer11(option)}
+                      onChange={() => { setSelectedAnswer11(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 11: option }; }}
                       label={option}
                       size="sm"
                     />
@@ -4503,7 +4503,7 @@ function AppContent() {
                       name="module2-q12"
                       value={option}
                       checked={selectedAnswer12 === option}
-                      onChange={() => setSelectedAnswer12(option)}
+                      onChange={() => { setSelectedAnswer12(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 12: option }; }}
                       label={option}
                       size="sm"
                     />
@@ -4733,7 +4733,7 @@ function AppContent() {
                       name="module2-q13"
                       value={option}
                       checked={selectedAnswer13 === option}
-                      onChange={() => setSelectedAnswer13(option)}
+                      onChange={() => { setSelectedAnswer13(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 13: option }; }}
                       label={option}
                       size="sm"
                     />
@@ -4952,7 +4952,7 @@ function AppContent() {
                       name="module2-q14"
                       value={option}
                       checked={selectedAnswer14 === option}
-                      onChange={() => setSelectedAnswer14(option)}
+                      onChange={() => { setSelectedAnswer14(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 14: option }; }}
                       label={option}
                       size="sm"
                     />
@@ -5169,7 +5169,7 @@ function AppContent() {
                       name="module2-q15"
                       value={option}
                       checked={selectedAnswer15 === option}
-                      onChange={() => setSelectedAnswer15(option)}
+                      onChange={() => { setSelectedAnswer15(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 15: option }; }}
                       label={option}
                       size="sm"
                     />
@@ -6379,8 +6379,12 @@ function AppContent() {
     const finalAnswerOptions = (dailyLifeQuestion?.options && dailyLifeQuestion.options.length > 0)
       ? dailyLifeQuestion.options : answerOptions;
     const finalCorrectAnswer = (dailyLifeQuestion?.correctAnswer as string) || correctAnswer;
+    const [selectedAnswer11Local, setSelectedAnswer11Local] = React.useState<string | null>(null);
     const handleAnswerSelect = (answer: string) => {
-      setSelectedAnswer(answer);
+      setSelectedAnswer11Local(answer);
+      if (typeof window !== 'undefined') {
+        (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 11: answer };
+      }
     };
 
     return (
@@ -6486,7 +6490,7 @@ function AppContent() {
                       id={`option-${index}`}
                       name="business-type"
                       value={option}
-                      checked={selectedAnswer === option}
+                      checked={selectedAnswer11Local === option}
                       onChange={() => handleAnswerSelect(option)}
                       label={option}
                     />

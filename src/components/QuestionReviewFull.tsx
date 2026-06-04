@@ -292,15 +292,25 @@ export function QuestionReviewFull({
     
     // Try to get real questions from CMS data — filtered by active module
     const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
+    const isFillBlanksQ = (q: any) => {
+      const t = (q?.questionType || '').toLowerCase();
+      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
+    };
     const allRealQuestions = currentSection?.questions || [];
     const realQuestions = activeSection === 'Reading' || activeSection === 'Listening'
       ? (activeModule === 2
           ? allRealQuestions.filter(isModule2Q)
-          : allRealQuestions.filter((q: any) => !isModule2Q(q)))
+          // Module 1 Reading: exclude FillBlanks (Q1-10) — they are shown separately in Complete Words review
+          : allRealQuestions.filter((q: any) => !isModule2Q(q) && (activeSection !== 'Reading' || !isFillBlanksQ(q))))
       : allRealQuestions;
     
+    // For Reading Module 1, realQuestions are Q11-Q20 (FillBlanks excluded above)
+    // So realQuestions[0] = Q11, realQuestions[1] = Q12, etc.
+    // We need to offset: for i=10 (Q11), use realQuestions[0]; for i=0..9, no CMS question (FillBlanks handled separately)
+    const readingM1Offset = (activeSection === 'Reading' && activeModule === 1) ? 10 : 0;
+
     for (let i = 0; i < totalQ; i++) {
-      const realQ = realQuestions[i];
+      const realQ = realQuestions[i - readingM1Offset];
       const qNum = i + 1;
       const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
       const isWrong = !!wrong;
