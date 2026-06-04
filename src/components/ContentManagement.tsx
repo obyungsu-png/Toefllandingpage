@@ -1818,8 +1818,11 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 value={formData.words}
                 onChange={(e) => setFormData({ ...formData, words: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
-                placeholder="예: were, the, was, old city, showed us around, who, tour guides"
+                placeholder="예: did, flight, you, yet"
               />
+              <p className="text-xs text-gray-400 mt-1">
+                💡 문장 중간에 미리 채워진 단어는 <code className="bg-gray-100 px-1 rounded">[단어]</code>로 감싸세요. 예: <code className="bg-gray-100 px-1 rounded">did, you, [book your], flight, yet</code>
+              </p>
               {formData.words && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean).map((w, i) => (
@@ -2741,8 +2744,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 value={(formData as any).words || ''}
                 onChange={(e) => setFormData({ ...formData, words: e.target.value } as any)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
-                placeholder="예: decided, you, a topic, have, on"
+                placeholder="예: did, you, [book your], flight, yet"
               />
+              <p className="text-xs text-gray-400 mt-1">
+                💡 미리 채워진 단어는 <code className="bg-gray-100 px-1 rounded">[단어]</code>로 감싸세요
+              </p>
               {(formData as any).words && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {(formData as any).words.split(/[,]+/).map((w: string) => w.trim()).filter(Boolean).map((w: string, i: number) => (

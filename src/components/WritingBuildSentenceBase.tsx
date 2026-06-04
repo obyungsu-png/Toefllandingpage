@@ -37,7 +37,15 @@ export function WritingBuildSentenceBase({
   slotCount,
 }: WritingBuildSentenceBaseProps) {
   const sourceWords = words && words.length > 0 ? words : defaultWords;
-  const [sentenceSlots, setSentenceSlots] = useState<(string | null)[]>(() => Array(slotCount).fill(null));
+  
+  // Parse words: [word] = prefilled (shown in sentence, not draggable), others = draggable blanks
+  const parsedWords = sourceWords.map(w => ({
+    text: w.replace(/^\[|\]$/g, ''),
+    prefilled: w.startsWith('[') && w.endsWith(']'),
+  }));
+  const draggableWords = parsedWords.filter(w => !w.prefilled).map(w => w.text);
+  const effectiveSlotCount = draggableWords.length; // blanks = draggable words only
+  const [sentenceSlots, setSentenceSlots] = useState<(string | null)[]>(() => Array(effectiveSlotCount).fill(null));
   const [timeRemaining, setTimeRemaining] = useState<number>(420);
   const [showTime, setShowTime] = useState<boolean>(true);
   const [draggedWord, setDraggedWord] = useState<string | null>(null);
@@ -45,8 +53,8 @@ export function WritingBuildSentenceBase({
   const draggedWordRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setSentenceSlots(Array(slotCount).fill(null));
-  }, [slotCount, sourceWords]);
+    setSentenceSlots(Array(effectiveSlotCount).fill(null));
+  }, [effectiveSlotCount, draggableWords.join(',')]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -81,11 +89,11 @@ export function WritingBuildSentenceBase({
   };
 
   const getOccurrenceIndex = (index: number) => {
-    const word = sourceWords[index];
-    return sourceWords.slice(0, index + 1).filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
+    const word = draggableWords[index];
+    return draggableWords.slice(0, index + 1).filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
   };
 
-  const canUseWord = (word: string) => getUsedCount(word) < sourceWords.filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
+  const canUseWord = (word: string) => getUsedCount(word) < draggableWords.filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
 
   const handleSlotClick = (index: number) => {
     if (!sentenceSlots[index]) {
@@ -236,7 +244,7 @@ export function WritingBuildSentenceBase({
 
           <div className="space-y-8 md:space-y-12 mt-16 md:mt-28 px-2 md:pl-12 md:pr-8">
             <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-gray-300 flex-shrink-0">
                 {avatar1ImageUrl ? (
                   <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
                 ) : (
@@ -253,7 +261,7 @@ export function WritingBuildSentenceBase({
             </div>
 
             <div className="flex items-end gap-4 md:gap-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-gray-300 flex-shrink-0 mb-[-4px]">
                 {avatar2ImageUrl ? (
                   <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
                 ) : (
@@ -267,40 +275,45 @@ export function WritingBuildSentenceBase({
 
               <div className="flex-1 overflow-x-auto">
                 <div className={`flex flex-wrap items-end ${isComplete ? 'gap-0.5 md:gap-1' : 'gap-1.5 md:gap-2'}`}>
-                  {sentenceSlots.map((word, index) => (
-                    <div
-                      key={index}
-                      onClick={() => word ? handleSlotClick(index) : undefined}
-                      onDragEnter={(e) => handleDragEnter(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDragLeave={() => {
-                        if (dragOverSlotIndex === index) {
-                          setDragOverSlotIndex(null);
-                        }
-                      }}
-                      onDrop={(e) => handleDrop(e, index)}
-                      className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
-                      style={{
-                        minWidth: word ? '0px' : getEmptySlotWidth(),
-                        width: word ? 'fit-content' : getEmptySlotWidth(),
-                        paddingBottom: '4px'
-                      }}
-                    >
-                      <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === index && !word ? 'bg-[#eef4f3]' : ''}`}>
-                        <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">
-                          {word || ''}
-                        </span>
-                      </div>
-                      <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === index && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
-                    </div>
-                  ))}
+                  {(() => {
+                    let slotIdx = 0;
+                    return parsedWords.map((pw, i) => {
+                      if (pw.prefilled) {
+                        // Fixed text — not draggable
+                        return (
+                          <span key={`pre-${i}`} className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] pb-2 whitespace-nowrap">
+                            {pw.text}
+                          </span>
+                        );
+                      }
+                      const si = slotIdx++;
+                      const word = sentenceSlots[si];
+                      return (
+                        <div
+                          key={`slot-${si}`}
+                          onClick={() => word ? handleSlotClick(si) : undefined}
+                          onDragEnter={(e) => handleDragEnter(e, si)}
+                          onDragOver={(e) => handleDragOver(e, si)}
+                          onDragLeave={() => { if (dragOverSlotIndex === si) setDragOverSlotIndex(null); }}
+                          onDrop={(e) => handleDrop(e, si)}
+                          className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
+                          style={{ minWidth: word ? '0px' : getEmptySlotWidth(), width: word ? 'fit-content' : getEmptySlotWidth(), paddingBottom: '4px' }}
+                        >
+                          <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
+                            <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
+                          </div>
+                          <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
+                        </div>
+                      );
+                    });
+                  })()}
                   <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">{sentenceEnding}</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-8 md:mt-16 flex flex-wrap gap-2 md:gap-3 justify-center">
-              {sourceWords.map((word, index) => {
+              {draggableWords.map((word, index) => {
                 const usedCount = getUsedCount(word);
                 const isSelected = getOccurrenceIndex(index) <= usedCount;
 
