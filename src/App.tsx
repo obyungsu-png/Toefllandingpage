@@ -1519,11 +1519,12 @@ function AppContent() {
     // Collect available selectedAnswers (1~10 in this scope, 11~20 are in nested scopes)
     // Use window.__moduleAnswers if module components have shared their answers
     const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
-    // Reading uses local selectedAnswer states for Q1-Q10; other sections use shared answers only
+    // Reading Module 1의 Q1-10은 FillBlanks(빈칸 채우기)이므로 selectedAnswer1~10은 사용하지 않음.
+    // fillBlanksAnswers에서 별도 채점. Q11-20은 sharedAnswers 사용.
     const allAnswers: (string | null)[] = category === 'Reading'
       ? [
-          selectedAnswer, selectedAnswer2, selectedAnswer3, selectedAnswer4, selectedAnswer5,
-          selectedAnswer6, selectedAnswer7, selectedAnswer8, selectedAnswer9, selectedAnswer10,
+          // Q1-10: null (FillBlanks, handled separately via fillBlanksAnswers below)
+          null, null, null, null, null, null, null, null, null, null,
           sharedAnswers[11] || null, sharedAnswers[12] || null, sharedAnswers[13] || null,
           sharedAnswers[14] || null, sharedAnswers[15] || null, sharedAnswers[16] || null,
           sharedAnswers[17] || null, sharedAnswers[18] || null, sharedAnswers[19] || null,

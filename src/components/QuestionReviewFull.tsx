@@ -910,9 +910,7 @@ export function QuestionReviewFull({
                       }
                       return displayBlanks.map((blank, index) => {
                         const wrongEntry = result.wrongAnswers.find(w =>
-                          w.questionId === `blank-${index+1}` ||
-                          w.questionId === String(index+1) ||
-                          parseInt(w.questionId) === index+1
+                          w.questionId === `blank-${index+1}`
                         );
                         const isCorrect = !wrongEntry;
                         const userAns = wrongEntry?.userAnswer || null;
