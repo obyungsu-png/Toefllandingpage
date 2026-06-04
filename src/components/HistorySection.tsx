@@ -995,28 +995,33 @@ export function HistorySection({
           return sum + 1;
         }, 0);
 
-        // Priority: CMS count > result.totalQuestions > default
-        const totalQ = cmsQuestionCount > 0
-          ? cmsQuestionCount
-          : (hasModules
-              ? Math.ceil((curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0) / 2)
-              : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0));
+        // Always use result.totalQuestions (20) as the source of truth
+        const totalQ = curResult?.totalQuestions || 20;
         const correctQ = curResult?.correctAnswers || 0;
         const wrongQ = Math.max(0, totalQ - correctQ);
         const color = sectionColors[scoreModalSection];
 
-        // Build per-question correctness (use module question offset for accurate Q numbering)
-        const moduleOffset = hasModules && scoreModalModule === 2
-          ? (allCmsQuestions.filter((q: any) => !(q.questionType || '').includes('Module 2')).length || 0)
-          : 0;
+        // Helper: is this wrongAnswer a FillBlanks entry?
+        const isFillBlanksWrong = (w: any) =>
+          w.questionId?.startsWith('blank-') ||
+          (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
+
+        // Build per-question correctness
         const qList = Array.from({ length: totalQ }, (_, i) => {
           const qNum = i + 1;
-          const globalQNum = moduleOffset + qNum;
-          const wrong = curResult?.wrongAnswers.find(
-            w => w.questionId === String(globalQNum) || parseInt(w.questionId) === globalQNum
-          );
-          const isWrong = wrong ? true : (curResult ? i >= correctQ : false);
-          return { qNum, globalQNum, isWrong, wrong };
+          // Q1-10: check if any blank-N wrong exists (FillBlanks)
+          const isInFillBlanksRange = qNum <= 10;
+          const hasFillBlanksWrongs = curResult?.wrongAnswers.some(isFillBlanksWrong);
+          const wrong = isInFillBlanksRange
+            ? (hasFillBlanksWrongs ? curResult?.wrongAnswers.find(isFillBlanksWrong) : undefined)
+            : curResult?.wrongAnswers.find(
+                w => !isFillBlanksWrong(w) && (w.questionId === String(qNum) || parseInt(w.questionId) === qNum)
+              );
+          // For Q1-10, mark as wrong only if there's a blank wrong (can't know individual Q1-10 status)
+          const isWrong = isInFillBlanksRange
+            ? false // Show Q1-10 as neutral (Complete Words reviewed separately)
+            : !!wrong;
+          return { qNum, globalQNum: qNum, isWrong, wrong };
         });
 
         return (
@@ -1125,9 +1130,11 @@ export function HistorySection({
                         {qList.map(({ qNum, globalQNum, isWrong }) => (
                           <button
                             key={qNum}
-                            onClick={() => handleJumpToQuestion(scoreModalSection, globalQNum - 1)}
+                            onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
                             className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
-                              isWrong
+                              qNum <= 10
+                                ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                : isWrong
                                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
@@ -1145,24 +1152,33 @@ export function HistorySection({
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
                         <div className="space-y-2">
                           {(() => {
-                            const blankWrongs = curResult.wrongAnswers.filter(w => w.questionId?.startsWith('blank-'));
-                            const mcqWrongs = curResult.wrongAnswers.filter(w => !w.questionId?.startsWith('blank-'));
+                            const isFillBlanks = (w: any) =>
+                              w.questionId?.startsWith('blank-') ||
+                              (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
+
+                            const blankWrongs = curResult.wrongAnswers.filter(isFillBlanks);
+                            const mcqWrongs = curResult.wrongAnswers.filter(w => !isFillBlanks(w));
 
                             const items: React.ReactNode[] = [];
 
-                            // Group all blank-N wrongs into a single Q1-10 Complete Words entry
+                            // Group all FillBlanks wrongs into a single Q1-10 Complete Words entry
                             if (blankWrongs.length > 0) {
+                              const blankNums = blankWrongs.map(w =>
+                                w.questionId?.startsWith('blank-')
+                                  ? w.questionId.replace('blank-', '')
+                                  : w.questionId
+                              ).join(', ');
                               items.push(
                                 <button key="complete-words"
                                   onClick={() => handleJumpToQuestion(scoreModalSection, 0)}
                                   className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
-                                  <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                  <span className="w-9 h-7 rounded-full bg-red-200 text-red-700 text-[10px] font-bold flex items-center justify-center shrink-0">
                                     1-10
                                   </span>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm text-gray-700 truncate">Complete Words (Fill in the blanks)</p>
                                     <p className="text-xs text-gray-400 mt-0.5">
-                                      {blankWrongs.length}개 오답 — Blank {blankWrongs.map(w => w.questionId.replace('blank-', '')).join(', ')}
+                                      {blankWrongs.length}개 오답 — Blank {blankNums}
                                     </p>
                                   </div>
                                   <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
@@ -1171,8 +1187,9 @@ export function HistorySection({
                             }
 
                             // MCQ wrongs — show actual question number
-                            mcqWrongs.forEach((w, i) => {
-                              const displayNum = parseInt(w.questionId) || i + 1;
+                            mcqWrongs.forEach((w) => {
+                              const displayNum = parseInt(w.questionId) || 0;
+                              if (!displayNum) return;
                               const idx = displayNum - 1;
                               items.push(
                                 <button key={w.questionId}
