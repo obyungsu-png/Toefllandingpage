@@ -244,7 +244,7 @@ export function WritingBuildSentenceBase({
 
           <div className="space-y-8 md:space-y-12 mt-16 md:mt-28 px-2 md:pl-12 md:pr-8">
             <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-gray-300 flex-shrink-0">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
                 {avatar1ImageUrl ? (
                   <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
                 ) : (
@@ -261,7 +261,7 @@ export function WritingBuildSentenceBase({
             </div>
 
             <div className="flex items-end gap-4 md:gap-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-gray-300 flex-shrink-0 mb-[-4px]">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
                 {avatar2ImageUrl ? (
                   <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
                 ) : (
