@@ -1144,30 +1144,57 @@ export function HistorySection({
                       <div className="px-5 md:px-6 py-4">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
                         <div className="space-y-2">
-                          {curResult.wrongAnswers.map((w, i) => {
-                            const isBlank = w.questionId?.startsWith('blank-');
-                            const displayNum = isBlank
-                              ? parseInt(w.questionId.replace('blank-', '')) || i + 1
-                              : parseInt(w.questionId) || i + 1;
-                            const idx = displayNum - 1;
-                            return (
-                              <button key={i}
-                                onClick={() => handleJumpToQuestion(scoreModalSection, idx)}
-                                className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
-                                <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
-                                  {isBlank ? `B${displayNum}` : displayNum}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-700 truncate">{w.questionText || `Question ${w.questionId}`}</p>
-                                  <p className="text-xs text-gray-400 mt-0.5">
-                                    내 답: <span className="text-red-500">{w.userAnswer || 'Omitted'}</span>
-                                    {' → '}정답: <span className="text-green-600">{w.correctAnswer}</span>
-                                  </p>
-                                </div>
-                                <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
-                              </button>
-                            );
-                          })}
+                          {(() => {
+                            const blankWrongs = curResult.wrongAnswers.filter(w => w.questionId?.startsWith('blank-'));
+                            const mcqWrongs = curResult.wrongAnswers.filter(w => !w.questionId?.startsWith('blank-'));
+
+                            const items: React.ReactNode[] = [];
+
+                            // Group all blank-N wrongs into a single Q1-10 Complete Words entry
+                            if (blankWrongs.length > 0) {
+                              items.push(
+                                <button key="complete-words"
+                                  onClick={() => handleJumpToQuestion(scoreModalSection, 0)}
+                                  className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
+                                  <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                    1-10
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-700 truncate">Complete Words (Fill in the blanks)</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {blankWrongs.length}개 오답 — Blank {blankWrongs.map(w => w.questionId.replace('blank-', '')).join(', ')}
+                                    </p>
+                                  </div>
+                                  <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
+                                </button>
+                              );
+                            }
+
+                            // MCQ wrongs — show actual question number
+                            mcqWrongs.forEach((w, i) => {
+                              const displayNum = parseInt(w.questionId) || i + 1;
+                              const idx = displayNum - 1;
+                              items.push(
+                                <button key={w.questionId}
+                                  onClick={() => handleJumpToQuestion(scoreModalSection, idx)}
+                                  className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
+                                  <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
+                                    {displayNum}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-700 truncate">{w.questionText || `Question ${displayNum}`}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      내 답: <span className="text-red-500">{w.userAnswer || 'Omitted'}</span>
+                                      {' → '}정답: <span className="text-green-600">{w.correctAnswer}</span>
+                                    </p>
+                                  </div>
+                                  <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
+                                </button>
+                              );
+                            });
+
+                            return items;
+                          })()}
                         </div>
                       </div>
                     )}
