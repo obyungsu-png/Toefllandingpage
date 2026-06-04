@@ -340,10 +340,15 @@ export function QuestionReviewFull({
     }
     
     // Add remaining wrong answers that weren't covered by the loop
+    // Skip blank-N IDs (they belong to Complete Words / FillBlanks Q1-10, shown separately)
     wrongQs.forEach((wrong) => {
+      // Skip FillBlanks entries (blank-1, blank-2, ...) — shown in Complete Words review
+      if (/^blank-/i.test(wrong.questionId)) return;
       const alreadyAdded = qs.find(q => q.id === wrong.questionId || String(q.number) === wrong.questionId);
       if (!alreadyAdded) {
-        const num = parseInt(wrong.questionId) || (qs.length + 1);
+        const num = parseInt(wrong.questionId);
+        // Only add if within the expected totalQ range (prevent extra pills beyond 20)
+        if (!num || num < 1 || num > totalQ) return;
         qs.push({
           id: wrong.questionId,
           number: num,
@@ -360,9 +365,9 @@ export function QuestionReviewFull({
       }
     });
     
-    // Sort by question number
+    // Sort by question number and cap at totalQ to ensure exactly 20 pills
     qs.sort((a, b) => a.number - b.number);
-    return qs;
+    return qs.slice(0, totalQ);
   })();
 
   const writingConversations = sampleWritingConversations;
