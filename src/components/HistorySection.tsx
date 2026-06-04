@@ -189,7 +189,22 @@ export function HistorySection({
       const allSections = ['Reading', 'Listening', 'Writing', 'Speaking'];
       allSections.forEach(s => {
         if (r.category === s) {
-          sections.push({ name: s, status: 'completed', correct: r.correctAnswers, total: r.totalQuestions });
+          // Calculate correct accurately: total - non-blank wrong answers
+          const mcqWrongs = r.wrongAnswers.filter(w =>
+            !w.questionId?.startsWith('blank-') &&
+            !(typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
+          ).length;
+          const blankWrongs = r.wrongAnswers.filter(w =>
+            w.questionId?.startsWith('blank-') ||
+            (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
+          ).length;
+          // For Reading: Q1-10 = FillBlanks (10 total), Q11-20 = MCQ (10 total)
+          const fillBlanksTotal = (s === 'Reading') ? 10 : 0;
+          const mcqTotal = r.totalQuestions - fillBlanksTotal;
+          const correctMcq = Math.max(0, mcqTotal - mcqWrongs);
+          const correctBlanks = Math.max(0, fillBlanksTotal - blankWrongs);
+          const accurate = correctMcq + correctBlanks;
+          sections.push({ name: s, status: 'completed', correct: accurate, total: r.totalQuestions });
         } else {
           sections.push({ name: s, status: 'not-started' });
         }
@@ -304,17 +319,15 @@ export function HistorySection({
 
   const handleViewResults = (result: TestResult) => {
     setSelectedResult(result);
-    // Determine initial section from result
     const sec = (result.category as any) ||
       (result.testName.includes('Reading') ? 'Reading'
       : result.testName.includes('Listening') ? 'Listening'
       : result.testName.includes('Speaking') ? 'Speaking'
       : result.testName.includes('Writing') ? 'Writing'
       : 'Reading');
-    // Go directly to full review (skip score modal)
-    setReviewInitialSection(sec);
-    setReviewInitialIndex(0);
-    setShowQuestionReview(true);
+    setScoreModalSection(sec);
+    setScoreModalModule(1);
+    setShowScoreModal(true);
   };
 
   // Jump to QuestionReviewFull at a specific section + question index
@@ -998,11 +1011,6 @@ export function HistorySection({
 
         // Always use result.totalQuestions (20) as the source of truth
         const totalQ = curResult?.totalQuestions || 20;
-        // Correct count: totalQ minus actual wrong count
-        const actualWrongCount = curResult?.wrongAnswers?.length || 0;
-        const correctQ = curResult ? Math.max(curResult.correctAnswers, totalQ - actualWrongCount) : 0;
-        const wrongQ = Math.max(0, totalQ - correctQ);
-        const color = sectionColors[scoreModalSection];
 
         // Helper: is this wrongAnswer a FillBlanks entry?
         const isFillBlanksWrong = (w: any) =>
@@ -1012,6 +1020,14 @@ export function HistorySection({
         // Separate FillBlanks and MCQ wrongs
         const fillBlanksWrongs = curResult?.wrongAnswers.filter(isFillBlanksWrong) || [];
         const mcqWrongs = curResult?.wrongAnswers.filter((w: any) => !isFillBlanksWrong(w)) || [];
+
+        // Accurate correct count: Reading has 10 FillBlanks + 10 MCQ
+        const fillBlanksTotal = (scoreModalSection === 'Reading') ? 10 : 0;
+        const mcqTotal = totalQ - fillBlanksTotal;
+        const correctQ = Math.max(0, mcqTotal - mcqWrongs.length) + Math.max(0, fillBlanksTotal - fillBlanksWrongs.length);
+        const wrongQ = Math.max(0, totalQ - correctQ);
+        const color = sectionColors[scoreModalSection];
+
         // Build a set of wrong MCQ question IDs for fast lookup
         const wrongMcqIds = new Set(mcqWrongs.map((w: any) => parseInt(w.questionId)).filter(Boolean));
 
