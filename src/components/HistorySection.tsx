@@ -311,9 +311,10 @@ export function HistorySection({
       : result.testName.includes('Speaking') ? 'Speaking'
       : result.testName.includes('Writing') ? 'Writing'
       : 'Reading');
-    setScoreModalSection(sec);
-    setScoreModalModule(1);
-    setShowScoreModal(true);
+    // Go directly to full review (skip score modal)
+    setReviewInitialSection(sec);
+    setReviewInitialIndex(0);
+    setShowQuestionReview(true);
   };
 
   // Jump to QuestionReviewFull at a specific section + question index
@@ -997,7 +998,9 @@ export function HistorySection({
 
         // Always use result.totalQuestions (20) as the source of truth
         const totalQ = curResult?.totalQuestions || 20;
-        const correctQ = curResult?.correctAnswers || 0;
+        // Correct count: totalQ minus actual wrong count
+        const actualWrongCount = curResult?.wrongAnswers?.length || 0;
+        const correctQ = curResult ? Math.max(curResult.correctAnswers, totalQ - actualWrongCount) : 0;
         const wrongQ = Math.max(0, totalQ - correctQ);
         const color = sectionColors[scoreModalSection];
 
@@ -1006,22 +1009,30 @@ export function HistorySection({
           w.questionId?.startsWith('blank-') ||
           (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
 
+        // Separate FillBlanks and MCQ wrongs
+        const fillBlanksWrongs = curResult?.wrongAnswers.filter(isFillBlanksWrong) || [];
+        const mcqWrongs = curResult?.wrongAnswers.filter((w: any) => !isFillBlanksWrong(w)) || [];
+        // Build a set of wrong MCQ question IDs for fast lookup
+        const wrongMcqIds = new Set(mcqWrongs.map((w: any) => parseInt(w.questionId)).filter(Boolean));
+
         // Build per-question correctness
         const qList = Array.from({ length: totalQ }, (_, i) => {
           const qNum = i + 1;
-          // Q1-10: check if any blank-N wrong exists (FillBlanks)
           const isInFillBlanksRange = qNum <= 10;
-          const hasFillBlanksWrongs = curResult?.wrongAnswers.some(isFillBlanksWrong);
-          const wrong = isInFillBlanksRange
-            ? (hasFillBlanksWrongs ? curResult?.wrongAnswers.find(isFillBlanksWrong) : undefined)
-            : curResult?.wrongAnswers.find(
-                w => !isFillBlanksWrong(w) && (w.questionId === String(qNum) || parseInt(w.questionId) === qNum)
-              );
-          // For Q1-10, mark as wrong only if there's a blank wrong (can't know individual Q1-10 status)
-          const isWrong = isInFillBlanksRange
-            ? false // Show Q1-10 as neutral (Complete Words reviewed separately)
-            : !!wrong;
-          return { qNum, globalQNum: qNum, isWrong, wrong };
+          let isWrong = false;
+          if (isInFillBlanksRange) {
+            // Q1-10: check if there's a matching blank wrong
+            isWrong = fillBlanksWrongs.some((w: any) => {
+              const blankNum = w.questionId?.startsWith('blank-')
+                ? parseInt(w.questionId.replace('blank-', ''))
+                : parseInt(w.questionId);
+              return blankNum === qNum;
+            });
+          } else {
+            // Q11-20: check MCQ wrongs by questionId
+            isWrong = wrongMcqIds.has(qNum);
+          }
+          return { qNum, globalQNum: qNum, isWrong };
         });
 
         return (
@@ -1132,9 +1143,7 @@ export function HistorySection({
                             key={qNum}
                             onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
                             className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
-                              qNum <= 10
-                                ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                : isWrong
+                              isWrong
                                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
