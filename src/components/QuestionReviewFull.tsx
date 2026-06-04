@@ -987,7 +987,7 @@ export function QuestionReviewFull({
                         {passageTitle && (
                           <h4 className="text-base font-bold text-gray-900 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        <p className="text-[15px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
                     ) : (
                       <p className="text-sm text-gray-400 italic">지문을 불러올 수 없습니다.</p>
@@ -1137,11 +1137,11 @@ export function QuestionReviewFull({
                   key={currentQuestion?.id}
                   className="animate-[fadeIn_0.2s_ease-out]"
                 >
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-[13px] font-medium text-gray-500 mb-4">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-base md:text-lg text-gray-900 mb-6 leading-relaxed">
+                  <p className="text-lg md:text-xl font-semibold text-gray-900 mb-6 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
@@ -1162,7 +1162,7 @@ export function QuestionReviewFull({
                               : 'bg-white border-gray-200'
                           }`}
                         >
-                          <span className={`text-sm font-bold mt-0.5 ${
+                          <span className={`text-[15px] font-bold mt-0.5 ${
                             isCorrectAnswer
                               ? 'text-emerald-600'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1171,12 +1171,12 @@ export function QuestionReviewFull({
                           }`}>
                             {optionLetter}.
                           </span>
-                          <span className={`text-sm flex-1 ${
+                          <span className={`text-[15px] flex-1 ${
                             isCorrectAnswer
-                              ? 'text-emerald-700 font-medium'
+                              ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'text-red-700'
-                              : 'text-gray-700'
+                              ? 'text-red-700 font-medium'
+                              : 'text-gray-700 font-medium'
                           }`}>
                             {option}
                           </span>
@@ -1199,7 +1199,7 @@ export function QuestionReviewFull({
                   )}
 
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex flex-col gap-2 text-[15px]">
                       <span className="text-gray-600">
                         My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
                           {currentQuestion?.userAnswer}
