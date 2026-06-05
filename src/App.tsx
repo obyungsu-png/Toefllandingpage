@@ -1557,13 +1557,18 @@ function AppContent() {
       const cmsQ = cmsQuestions[i];
       const correctAns = cmsQ?.correctAnswer;
 
+      // Skip Q1-10 for Reading (handled by FillBlanks below)
+      const isReadingFillBlanksSlot = category === 'Reading' && i < 10;
+      if (isReadingFillBlanksSlot) continue;
+
       if (userAns && correctAns && userAns === correctAns) {
         correctCount++;
-      } else if (userAns) {
+      } else {
+        // Wrong OR unanswered — both count against the score
         wrongAnswers.push({
           questionId: String(i + 1),
           questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
-          userAnswer: userAns,
+          userAnswer: userAns || '(미답변)',
           correctAnswer: correctAns || '',
           explanation: cmsQ?.explanation,
         });
@@ -1577,7 +1582,7 @@ function AppContent() {
       const t = (q?.questionType || '').toLowerCase();
       return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
     });
-    if (fillBlanksQuestion && Object.keys(fillBlanksAnswers).length > 0) {
+    if (fillBlanksQuestion) {
       // Parse CMS blanks
       let cmsBlanks: {answer: string; maxLength: number}[] = [];
       const rawP = fillBlanksQuestion.passageText || '';
@@ -1592,7 +1597,7 @@ function AppContent() {
       cmsBlanks.forEach((blank, i) => {
         const userAns = fillBlanksAnswers[i] || '';
         const correctAns = blank.answer;
-        if (userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
+        if (userAns && userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
           correctCount++;
         } else {
           wrongAnswers.push({
