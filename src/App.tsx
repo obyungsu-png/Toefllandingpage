@@ -8040,6 +8040,11 @@ function AppContent() {
             setShowLoginForm(false);
             setShowLoginPopup(false);
           }}
+          onShowRegister={() => {
+            setShowLoginForm(false);
+            setShowRegistrationForm(true);
+            setRegistrationFormKey(prev => prev + 1);
+          }}
         />
       )}
 

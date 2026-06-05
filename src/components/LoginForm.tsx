@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
-import { X, User, Lock, Shield, Mail, Cloud, Laptop, Smartphone } from 'lucide-react';
+import { X, User, Lock, Shield, Mail, Cloud, Laptop } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface LoginFormProps {
   onClose: () => void;
   onLoginSuccess?: (username: string) => void; // Pass username on success
+  onShowRegister?: () => void;
 }
 
-export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
+export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginFormProps) {
   const [captcha, setCaptcha] = useState('');
   const [captchaRotation, setCaptchaRotation] = useState(0);
   const [captchaColor, setCaptchaColor] = useState('#555');
   const [loginMethod, setLoginMethod] = useState<'username' | 'email'>('username');
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   
   // Form fields
   const [username, setUsername] = useState('');
@@ -103,6 +107,34 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
     };
 
     doLogin();
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim() || !forgotEmail.includes('@')) {
+      setForgotStatus('error');
+      return;
+    }
+    setForgotStatus('sending');
+    try {
+      const response = await fetch(`${SERVER_BASE_URL}/users/forgot-password`, {
+        method: 'POST',
+        headers: {
+          ...getServerHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: forgotEmail.trim() })
+      });
+      if (response.ok) {
+        setForgotStatus('sent');
+      } else {
+        // Even on server error, show generic success message for security
+        setForgotStatus('sent');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      // Show success message regardless (don't reveal whether email exists)
+      setForgotStatus('sent');
+    }
   };
 
   return (
@@ -236,33 +268,81 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               Login
             </button>
 
-            {/* Divider */}
-            <div className="flex items-center text-center my-6 text-[#666] text-sm font-semibold">
-              <div className="flex-1 border-b-2 border-black/10 mr-4"></div>
-              <span>다른 로그인 방법</span>
-              <div className="flex-1 border-b-2 border-black/10 ml-4"></div>
-            </div>
-
-            {/* Social Login */}
-            <div className="flex justify-center gap-8 mb-8">
-              <div className="w-14 h-14 rounded-full bg-[#29B6F6] text-white flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:rotate-[10deg] shadow-lg"
-                title="Login with Mobile">
-                <Smartphone size={28} />
-              </div>
-            </div>
-
             {/* Bottom Links */}
-            <div className="flex justify-between text-sm px-3">
-              <a href="#" className="text-[#0288D1] no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
+            <div className="flex justify-between text-sm px-3 mt-6">
+              <button type="button"
+                onClick={() => { if (onShowRegister) onShowRegister(); }}
+                className="text-[#0288D1] bg-transparent border-none cursor-pointer no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
                 회원가입
-              </a>
-              <a href="#" className="text-[#0288D1] no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
+              </button>
+              <button type="button"
+                onClick={() => { setShowForgot(true); setForgotStatus('idle'); }}
+                className="text-[#0288D1] bg-transparent border-none cursor-pointer no-underline font-bold transition-colors hover:text-[#01579b] hover:underline">
                 비밀번호 찾기
-              </a>
+              </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setShowForgot(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">비밀번호 찾기</h3>
+              <button onClick={() => setShowForgot(false)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400">
+                <X size={20} />
+              </button>
+            </div>
+
+            {forgotStatus === 'sent' ? (
+              <div className="text-center py-6">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                  <Mail size={28} className="text-emerald-600" />
+                </div>
+                <p className="text-gray-700 font-medium mb-1">이메일을 확인해주세요</p>
+                <p className="text-sm text-gray-500">
+                  입력하신 주소로 비밀번호 재설정 링크를 보냈어요.<br />받은 편지함과 스팸함을 확인해주세요.
+                </p>
+                <button onClick={() => setShowForgot(false)}
+                  className="mt-6 w-full py-2.5 rounded-lg bg-[#0288D1] text-white font-bold hover:bg-[#01579b] transition-colors">
+                  확인
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 mb-4">
+                  가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드려요.
+                </p>
+                <div className="relative mb-3">
+                  <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => { setForgotEmail(e.target.value); setForgotStatus('idle'); }}
+                    placeholder="example@email.com"
+                    className={`w-full pl-10 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#0288D1] focus:border-transparent ${
+                      forgotStatus === 'error' ? 'border-red-400' : 'border-gray-300'
+                    }`}
+                  />
+                </div>
+                {forgotStatus === 'error' && (
+                  <p className="text-xs text-red-500 mb-3">올바른 이메일 주소를 입력해주세요.</p>
+                )}
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={forgotStatus === 'sending'}
+                  className="w-full py-2.5 rounded-lg bg-[#0288D1] text-white font-bold hover:bg-[#01579b] transition-colors disabled:opacity-50"
+                >
+                  {forgotStatus === 'sending' ? '전송 중...' : '재설정 링크 보내기'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes floatCloud {
