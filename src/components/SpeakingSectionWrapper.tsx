@@ -187,6 +187,12 @@ export function SpeakingSectionWrapper({
   const getImageUrl = (questionIndex: number) => {
     return sortedQuestions[questionIndex]?.imageUrl;
   };
+  const getAudioUrl = (questionIndex: number) => {
+    return sortedQuestions[questionIndex]?.audioUrl;
+  };
+  const getVideoUrl = (questionIndex: number) => {
+    return (sortedQuestions[questionIndex] as any)?.videoUrl;
+  };
 
   return (
     <>
@@ -204,7 +210,7 @@ export function SpeakingSectionWrapper({
         <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} {...volumeProps} />
       )}
       {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} />}
-      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} />}
+      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} />}
       {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(1)} />}
       {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(1)} />}
       {screen === 'q3-prep' && <SpeakingQ3Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(2)} />}

@@ -1466,6 +1466,37 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
+        {/* Speaking 설정 — image upload + guidance */}
+        {section === 'Speaking' && (
+          <div className="border-2 border-dashed border-rose-300 rounded-xl p-4 bg-rose-50/30 space-y-3">
+            <p className="text-sm font-bold text-rose-700 flex items-center gap-1.5">
+              🎤 Speaking 설정
+              <span className="text-xs font-normal text-gray-500">
+                {(formData.questionType || '').includes('Repeat')
+                  ? '— 1-7번 Listen & Repeat: 들려주고 따라 읽으면 녹음됩니다'
+                  : '— 8-11번 Interview: 사진/음성/동영상 제시 후 답변 녹음'}
+              </span>
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">📷 문제 이미지 (선택)</label>
+              {formData.imageUrl && (
+                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                  <img src={formData.imageUrl} alt="selected" className="w-16 h-16 object-cover rounded" />
+                  <div className="flex-1 text-xs text-gray-600 truncate">{formData.imageUrl.split('/').pop()}</div>
+                  <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '', imageFile: null })}
+                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                </div>
+              )}
+              <input type="file" accept="image/*" className="text-sm w-full"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) }); }}
+              />
+            </div>
+            <div className="text-xs text-gray-500 bg-white rounded-lg p-2.5 border border-rose-100">
+              💡 <strong>음성</strong>은 아래 <strong>Audio File</strong>, <strong>동영상</strong>은 <strong>Video File</strong>에 업로드하세요. 학생은 듣거나 본 뒤 마이크로 답변을 녹음합니다.
+            </div>
+          </div>
+        )}
+
         {/* Audio Upload (for Listening/Speaking) */}
         {(section === 'Listening' || section === 'Speaking') && (
           <div>

@@ -1,28 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
+import { useAudioRecorder } from './useAudioRecorder';
 
 interface SpeakingQ1RecordProps {
   onNext: () => void;
   onHome: () => void;
   imageUrl?: string;
+  audioUrl?: string;
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl }: SpeakingQ1RecordProps) {
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
+  const recorder = useAudioRecorder();
+  const promptAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Play the prompt audio first, then start recording
   useEffect(() => {
+    if (audioUrl && promptAudioRef.current) {
+      promptAudioRef.current.play().catch(() => {});
+    }
     const startTimer = setTimeout(() => {
       setIsRecording(true);
-    }, 2000);
+      recorder.startRecording();
+    }, audioUrl ? 3000 : 2000);
 
     return () => clearTimeout(startTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -32,6 +42,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl }: SpeakingQ1RecordP
           if (prev <= 1) {
             clearInterval(timer);
             setIsRecording(false);
+            recorder.stopRecording();
             setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
@@ -44,6 +55,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl }: SpeakingQ1RecordP
 
       return () => clearInterval(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, timeRemaining, onNext]);
 
   return (
@@ -118,7 +130,22 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl }: SpeakingQ1RecordP
         <div className="flex justify-center">
           <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
         </div>
+
+        {/* Recording indicator */}
+        {recorder.isRecording && (
+          <div className="flex justify-center mt-3">
+            <span className="flex items-center gap-2 text-red-600 font-semibold text-sm">
+              <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" /> 녹음 중...
+            </span>
+          </div>
+        )}
+        {recorder.status === 'denied' && (
+          <p className="text-center text-xs text-red-500 mt-2">{recorder.error}</p>
+        )}
       </div>
+
+      {/* Hidden prompt audio (the voice student listens to) */}
+      {audioUrl && <audio ref={promptAudioRef} src={audioUrl} preload="auto" />}
 
       {/* Volume Control Dropdown */}
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
