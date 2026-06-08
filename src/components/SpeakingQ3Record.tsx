@@ -9,6 +9,9 @@ interface SpeakingQ3RecordProps {
   onNext: () => void;
   onHome: () => void;
   imageUrl?: string; // CMS-managed image URL
+  questionText?: string;  // text shown above the image
+  responseDelay?: number; // seconds before recording starts (default 3)
+  stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
 export function SpeakingQ3Record({ onNext, onHome, imageUrl }: SpeakingQ3RecordProps) {
@@ -21,7 +24,7 @@ export function SpeakingQ3Record({ onNext, onHome, imageUrl }: SpeakingQ3RecordP
     // Give a short buffer between prompt audio and recording.
     const startTimer = setTimeout(() => {
       setIsRecording(true);
-    }, 2000);
+    }, (responseDelay ? responseDelay * 1000 : 3000));
 
     return () => clearTimeout(startTimer);
   }, []);
@@ -36,7 +39,7 @@ export function SpeakingQ3Record({ onNext, onHome, imageUrl }: SpeakingQ3RecordP
             setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
-            }, 1500);
+            }, (stopDuration ? stopDuration * 1000 : 2500));
             return 0;
           }
           return prev - 1;
@@ -105,13 +108,11 @@ export function SpeakingQ3Record({ onNext, onHome, imageUrl }: SpeakingQ3RecordP
       <div className="flex-1 flex flex-col bg-white">
         {/* Title at top center */}
         <div className="pt-8 pb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">
-            Listen and repeat only once.
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         
         {/* Image */}
-        <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-8">
           <ImageWithFallback 
             src={imageUrl || speakingImage} 
             alt="Speaking scene" 

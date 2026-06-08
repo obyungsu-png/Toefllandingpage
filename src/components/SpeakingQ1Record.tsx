@@ -9,7 +9,10 @@ import { useAudioRecorder } from './useAudioRecorder';
 interface SpeakingQ1RecordProps {
   onNext: () => void;
   onHome: () => void;
-  imageUrl?: string;
+  imageUrl?: string; // CMS-managed image URL
+  questionText?: string;  // text shown above the image
+  responseDelay?: number; // seconds before recording starts (default 3)
+  stopDuration?: number;  // seconds for stop overlay (default 2.5)
   audioUrl?: string;
 }
 
@@ -29,7 +32,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl }: Speakin
     const startTimer = setTimeout(() => {
       setIsRecording(true);
       recorder.startRecording();
-    }, audioUrl ? 3000 : 2000);
+    }, audioUrl ? (responseDelay ? responseDelay * 1000 + 1000 : 4000) : (responseDelay ? responseDelay * 1000 : 3000));
 
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,7 +49,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl }: Speakin
             setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
-            }, 1500);
+            }, (stopDuration ? stopDuration * 1000 : 2500));
             return 0;
           }
           return prev - 1;
@@ -114,12 +117,9 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl }: Speakin
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white">
         <div className="pt-8 pb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">
-            Listen and repeat only once.
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
-        
-        <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-8">
           <ImageWithFallback 
             src={imageUrl ?? zooMapImage} 
             alt="Speaking scene" 

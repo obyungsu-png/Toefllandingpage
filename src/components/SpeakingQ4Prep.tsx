@@ -8,9 +8,11 @@ interface SpeakingQ4PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
+  questionText?: string;     // text shown above the image
+  audioPlayDuration?: number; // seconds
 }
 
-export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef }: SpeakingQ4PrepProps) {
+export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, questionText, audioPlayDuration }: SpeakingQ4PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
@@ -21,7 +23,7 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       // After audio finishes (3 seconds), automatically go to recording screen
       const nextTimer = setTimeout(() => {
         onNext();
-      }, 3000);
+      }, (audioPlayDuration ? audioPlayDuration * 1000 : 5000));
       
       return () => clearTimeout(nextTimer);
     }, 1000);
@@ -74,9 +76,7 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       <div className="flex-1 flex flex-col bg-white pt-12 px-12">
         {/* Title at top center */}
         <div className="pb-8">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">
-            Listen and repeat only once.
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         
         {/* Image - Square */}

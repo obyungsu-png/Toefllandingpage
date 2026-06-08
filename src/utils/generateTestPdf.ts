@@ -5,9 +5,96 @@ type PdfMode = 'standard' | 'annotated';
 
 const SECTION_ORDER: Array<TPOSection['sectionType']> = ['Reading', 'Listening', 'Speaking', 'Writing'];
 
+interface PdfLine {
+  text: string;
+  link?: string;     // when set, render as a short clickable hyperlink
+  heading?: boolean; // the "Q1 [...]" line
+}
+
 function stringifyAnswer(answer?: string | string[]) {
   if (!answer) return 'N/A';
   return Array.isArray(answer) ? answer.join(', ') : answer;
+}
+
+// Fill-in-the-blank passages are stored with "word[answer:length]" markers
+// (e.g. "gu[ides:4]"). On paper we want the natural full word ("guides").
+// Same logic as FillBlanksEditor's getPlainFromMarked.
+function cleanFillBlanks(text: string) {
+  return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => `${prefix}${answer}`);
+}
+
+// "Read in Daily Life" passages are stored as a JSON template
+// ({ structure, fields, color }). Render them as clean labelled text
+// instead of dumping the raw JSON. Returns null for plain-text passages.
+function formatTemplatePassage(passageText: string): string[] | null {
+  let parsed: { structure?: string; fields?: Record<string, string> } | null = null;
+  try {
+    parsed = JSON.parse(passageText);
+  } catch {
+    return null; // plain text
+  }
+  if (!parsed || typeof parsed !== 'object' || !parsed.structure || !parsed.fields) return null;
+
+  const f = parsed.fields;
+  const out: string[] = [];
+  const labelled = (label: string, key: string) => { if (f[key]) out.push(`${label}: ${f[key]}`); };
+  const raw = (key: string) => { if (f[key]) out.push(f[key]); };
+  const blank = () => { if (out.length) out.push(''); };
+
+  switch (parsed.structure) {
+    case 'email':
+      labelled('To', 'to');
+      labelled('From', 'from');
+      labelled('Date', 'date');
+      labelled('Subject', 'subject');
+      blank();
+      raw('body');
+      break;
+    case 'notice':
+      raw('title');
+      raw('subtitle');
+      blank();
+      raw('body');
+      break;
+    case 'social_media':
+      raw('platform');
+      raw('username');
+      blank();
+      raw('content');
+      break;
+    case 'advertisement':
+      raw('headline');
+      raw('business');
+      raw('offer');
+      raw('details');
+      raw('location');
+      raw('contact');
+      break;
+    case 'article': {
+      raw('source');
+      raw('headline');
+      const meta = [f.date, f.author].filter(Boolean).join('  |  ');
+      if (meta) out.push(meta);
+      blank();
+      raw('body');
+      break;
+    }
+    case 'form': {
+      raw('title');
+      raw('company');
+      if (f.tableHeaders) out.push(f.tableHeaders.split(',').map(s => s.trim()).join('  |  '));
+      if (f.tableRows) {
+        f.tableRows.split('\n').filter(r => r.trim()).forEach(r =>
+          out.push(r.split(',').map(s => s.trim()).join('  |  ')));
+      }
+      raw('footer');
+      break;
+    }
+    default:
+      Object.entries(f).forEach(([k, v]) => { if (v) out.push(`${k}: ${v}`); });
+  }
+
+  return out;
 }
 
 function addWrappedText(pdf: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 6) {
@@ -24,26 +111,43 @@ function ensureSpace(pdf: jsPDF, y: number, requiredHeight: number) {
   return 18;
 }
 
-function questionLines(question: TPOQuestion, mode: PdfMode) {
-  const lines: string[] = [];
-  lines.push(`Q${question.questionNumber}  [${question.questionType}]`);
+function questionLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
+  const lines: PdfLine[] = [];
+  lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
-  if (question.passageTitle) lines.push(`Passage Title: ${question.passageTitle}`);
-  if (question.questionText) lines.push(`Question: ${question.questionText}`);
-  if (question.passageText) lines.push(`Passage: ${question.passageText}`);
-  if (question.words?.length) lines.push(`Words: ${question.words.join(' / ')}`);
-  if (question.options?.length) {
-    question.options.forEach((option, index) => lines.push(`${String.fromCharCode(65 + index)}. ${option}`));
+  if (question.passageTitle) lines.push({ text: `Passage Title: ${question.passageTitle}` });
+  if (question.questionText) lines.push({ text: `Question: ${cleanFillBlanks(question.questionText)}` });
+
+  if (question.passageText) {
+    const template = formatTemplatePassage(question.passageText);
+    if (template) {
+      lines.push({ text: 'Passage:' });
+      template.forEach(t => lines.push({ text: t }));
+    } else {
+      lines.push({ text: `Passage: ${cleanFillBlanks(question.passageText)}` });
+    }
   }
-  if (question.audioUrl) lines.push(`Audio: ${question.audioUrl}`);
-  if (question.videoUrl) lines.push(`Video: ${question.videoUrl}`);
-  if (question.imageUrl) lines.push(`Image: ${question.imageUrl}`);
+
+  if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
+  if (question.options?.length) {
+    question.options.forEach((option, index) =>
+      lines.push({ text: `${String.fromCharCode(65 + index)}. ${option}` }));
+  }
+
+  // Audio/video/image: show a short clickable link instead of dumping the
+  // full URL. Internal relative asset paths (e.g. /listening-images/..) are
+  // omitted since they can't render on paper.
+  if (question.audioUrl) lines.push({ text: 'Audio (click to listen)', link: question.audioUrl });
+  if (question.videoUrl) lines.push({ text: 'Video (click to watch)', link: question.videoUrl });
+  if (question.imageUrl && /^https?:\/\//i.test(question.imageUrl)) {
+    lines.push({ text: 'Image (click to view)', link: question.imageUrl });
+  }
 
   if (mode === 'annotated') {
-    lines.push(`Correct Answer: ${stringifyAnswer(question.correctAnswer)}`);
-    if (question.explanation) lines.push(`Notes: ${question.explanation}`);
-    if (question.translationNote) lines.push(`Translation: ${question.translationNote}`);
-    if (question.vocabularyNote) lines.push(`Vocabulary: ${question.vocabularyNote}`);
+    lines.push({ text: `Correct Answer: ${stringifyAnswer(question.correctAnswer)}` });
+    if (question.explanation) lines.push({ text: `Notes: ${question.explanation}` });
+    if (question.translationNote) lines.push({ text: `Translation: ${question.translationNote}` });
+    if (question.vocabularyNote) lines.push({ text: `Vocabulary: ${question.vocabularyNote}` });
   }
 
   return lines;
@@ -67,9 +171,18 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
     const lines = questionLines(question, mode);
     for (const line of lines) {
       y = ensureSpace(pdf, y, 10);
-      pdf.setFont('helvetica', line.startsWith('Q') ? 'bold' : 'normal');
-      pdf.setFontSize(line.startsWith('Q') ? 11 : 10);
-      y = addWrappedText(pdf, line, 14, y, 182, 5);
+      if (line.link) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(37, 99, 235); // blue, so it reads as a link
+        pdf.textWithLink(line.text, 14, y, { url: line.link });
+        pdf.setTextColor(0, 0, 0);
+        y += 5;
+      } else {
+        pdf.setFont('helvetica', line.heading ? 'bold' : 'normal');
+        pdf.setFontSize(line.heading ? 11 : 10);
+        y = addWrappedText(pdf, line.text, 14, y, 182, 5);
+      }
     }
     y += 4;
   }

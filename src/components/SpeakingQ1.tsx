@@ -7,7 +7,8 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 interface SpeakingQ1Props {
   onNext?: () => void;
   onHome?: () => void;
-  imageUrl?: string; // CMS-managed image URL
+  imageUrl, questionText?: string;
+  questionText?: string; // CMS-managed image URL
 }
 
 export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
@@ -149,9 +150,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">{questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}</h1>
           
           {/* Zoo Map Image */}
           <div className="flex justify-center my-8">

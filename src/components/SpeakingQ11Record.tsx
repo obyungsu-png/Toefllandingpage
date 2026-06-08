@@ -10,7 +10,10 @@ interface SpeakingQ11RecordProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
-  imageUrl?: string;
+  imageUrl?: string; // CMS-managed image URL
+  questionText?: string;  // text shown above the image
+  responseDelay?: number; // seconds before recording starts (default 3)
+  stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
 export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ11RecordProps) {
@@ -21,7 +24,7 @@ export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
   useEffect(() => {
     const startTimer = setTimeout(() => {
       setIsRecording(true);
-    }, 2000);
+    }, (responseDelay ? responseDelay * 1000 : 3000));
 
     return () => clearTimeout(startTimer);
   }, []);
@@ -36,7 +39,7 @@ export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
             setShowStopOverlay(true);
             setTimeout(() => {
               onNext();
-            }, 1500);
+            }, (stopDuration ? stopDuration * 1000 : 2500));
             return 0;
           }
           return prev - 1;
@@ -92,12 +95,10 @@ export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center bg-white p-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">
-          Please answer the interviewer's questions.
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
         
         {/* Interviewer Image */}
-        <div className="flex justify-center mb-12">
+          <div className="flex justify-center mb-12">
           <ImageWithFallback
             src={imageUrl || interviewerImage}
             alt="Interviewer"

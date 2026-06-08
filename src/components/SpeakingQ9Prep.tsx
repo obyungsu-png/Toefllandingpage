@@ -8,7 +8,9 @@ interface SpeakingQ9PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
-  imageUrl?: string;
+  imageUrl?: string; // CMS-managed image URL
+  questionText?: string;     // text shown above the image
+  audioPlayDuration?: number; // seconds (overrides default 5s)
 }
 
 export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ9PrepProps) {
@@ -21,7 +23,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
     const nextTimer = setTimeout(() => {
       onNext();
-    }, 5500);
+    }, (audioPlayDuration ? audioPlayDuration * 1000 : 7000));
     
     return () => {
       clearTimeout(videoTimer);
@@ -80,9 +82,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center bg-white p-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">
-          Please answer the interviewer's questions.
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
         
         {/* Interviewer Video */}
         <div className="flex justify-center mb-12">

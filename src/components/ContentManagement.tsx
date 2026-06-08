@@ -45,8 +45,13 @@ export interface TPOQuestion {
   audioUrl?: string;
   videoUrl?: string;
   imageUrl?: string;
+  introImageUrl?: string; // Speaking Q1 intro screen image (different from recording screen)
   passageText?: string;
   duration?: number; // for speaking/writing
+  // Speaking phase timing (seconds). Defaults when not set: audioPlayDuration=5, responseDelay=3, stopDuration=2.5
+  audioPlayDuration?: number; // how long Playing audio/video screen stays before response time
+  responseDelay?: number;     // buffer (s) between audio end and recording timer start
+  stopDuration?: number;      // how long Stop Speaking overlay shows before advancing
   difficulty?: '쉬움' | '보통' | '어려움'; // Difficulty level for training filtering
   // For "Complete Words" (빈칸넣기) questions
   blanks?: Array<{
@@ -1068,7 +1073,12 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     videoUrl: '',
     imageFile: null as File | null,
     imageUrl: '',
+    introImageFile: null as File | null,
+    introImageUrl: '',
     duration: 0,
+    audioPlayDuration: 0,
+    responseDelay: 0,
+    stopDuration: 0,
     difficulty: '보통' as '쉬움' | '보통' | '어려움',
     blanks: [] as Array<{ answer: string; maxLength: number }>,
     // Build Sentence (문장 배열) fields
@@ -1125,6 +1135,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
+      audioPlayDuration: formData.audioPlayDuration || undefined,
+      responseDelay: formData.responseDelay || undefined,
+      stopDuration: formData.stopDuration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
     };
@@ -1148,6 +1161,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
         question.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images');
       } catch {
         question.imageUrl = URL.createObjectURL(formData.imageFile);
+      }
+    }
+
+    // Handle introImageUrl (Speaking Q1 intro screen)
+    if ((formData as any).introImageUrl?.trim()) {
+      (question as any).introImageUrl = (formData as any).introImageUrl.trim();
+    } else if ((formData as any).introImageFile) {
+      try {
+        (question as any).introImageUrl = await uploadToStorage((formData as any).introImageFile, 'listening-images');
+      } catch {
+        (question as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile);
       }
     }
 
@@ -1273,8 +1297,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         </div>
 
-        {/* Module Selector — Writing 제외 */}
-        {section !== 'Writing' && (
+        {/* Module Selector — Reading 전용 */}
+        {section === 'Reading' && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
@@ -1491,6 +1515,24 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) }); }}
               />
             </div>
+            {/* Intro image — only for Q1 (Listen & Repeat intro screen) */}
+            {(String(formData.questionNumber) === '1' || (formData.questionType || '').includes('Repeat')) && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 인트로 화면 이미지 (Q1 전 인트로 스피킹 화면용)</label>
+                <p className="text-[11px] text-gray-400 mb-1">녹음 화면 이미지(위)와 다른 이미지를 인트로에 쓰려면 여기에 업로드하세요.</p>
+                {(formData as any).introImageUrl && (
+                  <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                    <img src={(formData as any).introImageUrl} alt="intro" className="w-16 h-16 object-cover rounded" />
+                    <div className="flex-1 text-xs text-gray-600 truncate">{((formData as any).introImageUrl || '').split('/').pop()}</div>
+                    <button type="button" onClick={() => setFormData({ ...formData, introImageUrl: '', introImageFile: null } as any)}
+                      className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                  </div>
+                )}
+                <input type="file" accept="image/*" className="text-sm w-full"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introImageFile: f, introImageUrl: URL.createObjectURL(f) } as any); }}
+                />
+              </div>
+            )}
             <div className="text-xs text-gray-500 bg-white rounded-lg p-2.5 border border-rose-100">
               💡 <strong>음성</strong>은 아래 <strong>Audio File</strong>, <strong>동영상</strong>은 <strong>Video File</strong>에 업로드하세요. 학생은 듣거나 본 뒤 마이크로 답변을 녹음합니다.
             </div>
@@ -1722,6 +1764,48 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               placeholder="e.g., 45, 60, 300"
             />
+          </div>
+        )}
+
+        {/* Speaking phase timing */}
+        {section === 'Speaking' && (
+          <div className="border-2 border-dashed border-[#2d7a7c]/30 rounded-xl p-4 bg-[#f0fafa]/40">
+            <p className="text-sm font-bold text-[#2d7a7c] mb-3 flex items-center gap-1.5">
+              ⏱️ Speaking 화면 전환 타이밍
+              <span className="text-xs font-normal text-gray-500">— 0이면 기본값 사용</span>
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">오디오 재생 시간 (초)</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={formData.audioPlayDuration || ''}
+                  onChange={(e) => setFormData({ ...formData, audioPlayDuration: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="기본 5초"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">녹음 시작 딜레이 (초)</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={formData.responseDelay || ''}
+                  onChange={(e) => setFormData({ ...formData, responseDelay: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="기본 3초"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Stop 오버레이 시간 (초)</label>
+                <input
+                  type="number" min="0" step="0.5"
+                  value={formData.stopDuration || ''}
+                  onChange={(e) => setFormData({ ...formData, stopDuration: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                  placeholder="기본 2.5초"
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -2309,8 +2393,13 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     videoFile: null as File | null,
     imageFile: null as File | null,
     imageUrl: question.imageUrl || '',
+    introImageFile: null as File | null,
+    introImageUrl: (question as any).introImageUrl || '',
     audioUrl: question.audioUrl || '',
     duration: question.duration || 0,
+    audioPlayDuration: (question as any).audioPlayDuration || 0,
+    responseDelay: (question as any).responseDelay || 0,
+    stopDuration: (question as any).stopDuration || 0,
     difficulty: question.difficulty || '보통' as '쉬움' | '보통' | '어려움',
     blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
     words: Array.isArray((question as any).words) ? (question as any).words.join(', ') : '',
@@ -2372,6 +2461,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
+      audioPlayDuration: (formData as any).audioPlayDuration || undefined,
+      responseDelay: (formData as any).responseDelay || undefined,
+      stopDuration: (formData as any).stopDuration || undefined,
       difficulty: formData.difficulty,
       blanks: formData.blanks
     };
@@ -2390,6 +2482,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if (formData.imageFile) {
       try { updatedQuestion.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images'); }
       catch { updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile); }
+    }
+    if ((formData as any).introImageFile) {
+      try { (updatedQuestion as any).introImageUrl = await uploadToStorage((formData as any).introImageFile, 'listening-images'); }
+      catch { (updatedQuestion as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile); }
+    } else if ((formData as any).introImageUrl?.trim()) {
+      (updatedQuestion as any).introImageUrl = (formData as any).introImageUrl.trim();
     }
     if (formData.videoFile) {
       updatedQuestion.videoUrl = URL.createObjectURL(formData.videoFile);

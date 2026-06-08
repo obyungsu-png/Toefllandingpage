@@ -8,7 +8,9 @@ interface SpeakingQ7PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
-  imageUrl?: string;
+  imageUrl?: string; // CMS-managed image URL
+  questionText?: string;     // text shown above the image
+  audioPlayDuration?: number; // seconds (overrides default 5s)
 }
 
 export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ7PrepProps) {
@@ -22,7 +24,7 @@ export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       // After audio finishes (3 seconds), automatically go to recording screen
       const nextTimer = setTimeout(() => {
         onNext();
-      }, 3000);
+      }, (audioPlayDuration ? audioPlayDuration * 1000 : 5000));
       
       return () => clearTimeout(nextTimer);
     }, 1000);
@@ -83,13 +85,11 @@ export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       <div className="flex-1 flex flex-col bg-white pt-12 px-12">
         {/* Title at top center */}
         <div className="pb-8">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">
-            Listen and repeat only once.
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         
         {/* Image - Square */}
-        <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-8">
           <ImageWithFallback
             src={imageUrl || speakingImage}
             alt="Speaking scene"
