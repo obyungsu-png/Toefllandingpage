@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
@@ -7,16 +7,44 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 interface SpeakingQ1Props {
   onNext?: () => void;
   onHome?: () => void;
-  imageUrl, questionText?: string;
-  questionText?: string; // CMS-managed image URL
+  imageUrl?: string;
+  introAudioUrl?: string; // CMS-managed intro audio (replaces TTS)
+  questionText?: string;  // CMS-managed heading text
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionText }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const textToRead = "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
+    // ── Real audio from CMS ──────────────────────────────────────────────────
+    if (introAudioUrl) {
+      const audio = new Audio(introAudioUrl);
+      audioRef.current = audio;
+
+      audio.onplay  = () => setIsAudioPlaying(true);
+      audio.onended = () => {
+        setIsAudioPlaying(false);
+        setTimeout(() => onNext?.(), 500);
+      };
+      audio.onerror = () => {
+        // fallback to TTS if audio fails
+        setIsAudioPlaying(false);
+        onNext?.();
+      };
+
+      const t = setTimeout(() => audio.play().catch(() => onNext?.()), 500);
+      return () => {
+        clearTimeout(t);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+
+    // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
+    const textToRead = questionText ||
+      "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
     let fallbackTimer: number | undefined;
     let ttsEnded = false;
 
@@ -29,82 +57,45 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
 
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoices = [
-          'Google UK English Female',
-          'Microsoft Susan - English (United Kingdom)',
-          'Kate',
-          'Serena',
-          'Stephanie'
-        ];
-
-        let selectedVoice = voices.find(voice => 
-          preferredVoices.some(preferred => voice.name.includes(preferred))
-        );
-
-        if (!selectedVoice) {
-          selectedVoice = voices.find(voice => 
-            voice.lang.includes('en-GB') && 
-            (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-          );
-        }
-
-        if (!selectedVoice) {
-          selectedVoice = voices.find(voice => voice.lang.includes('en-GB'));
-        }
-
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
+        const preferred = ['Google UK English Female','Microsoft Susan - English (United Kingdom)','Kate','Serena','Stephanie'];
+        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
+        if (!v) v = voices.find(voice => voice.lang.includes('en-GB') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')));
+        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
+        if (v) utterance.voice = v;
       };
 
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        setVoice();
-      }
+      if (window.speechSynthesis.getVoices().length > 0) setVoice();
       window.speechSynthesis.onvoiceschanged = setVoice;
 
-      utterance.onstart = () => {
-        setIsAudioPlaying(true);
-      };
+      utterance.onstart = () => setIsAudioPlaying(true);
       utterance.onend = () => {
         setIsAudioPlaying(false);
         ttsEnded = true;
-        setTimeout(() => {
-          onNext?.();
-        }, 500);
+        setTimeout(() => onNext?.(), 500);
       };
 
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 500);
+      setTimeout(() => window.speechSynthesis.speak(utterance), 500);
 
-      // Fallback: 만약 TTS가 8초 내에 끝나지 않으면 강제로 onNext 호출
       fallbackTimer = window.setTimeout(() => {
-        if (!ttsEnded) {
-          window.speechSynthesis.cancel();
-          onNext?.();
-        }
-      }, 8000);
+        if (!ttsEnded) { window.speechSynthesis.cancel(); onNext?.(); }
+      }, 12000);
 
       return () => {
         window.speechSynthesis.cancel();
         if (fallbackTimer) clearTimeout(fallbackTimer);
       };
     } else {
-      // Fallback: TTS 미지원 환경에서는 사용자 입력 대기 (자동 진행 없음)
       setIsAudioPlaying(false);
-      return () => {
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-      };
+      return () => { if (fallbackTimer) clearTimeout(fallbackTimer); };
     }
-  }, [onNext]);
+  }, [introAudioUrl, onNext, questionText]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div className="flex items-center">
-          <div 
+          <div
             className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={onHome}
           >
@@ -112,7 +103,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             ref={buttonRef}
             onClick={toggleVolume}
             className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
@@ -122,9 +113,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           </button>
-          
-          {/* Next Button - 항상 표시 */}
-          <button 
+          <button
             onClick={onNext}
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
           >
@@ -150,13 +139,14 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">{questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}</h1>
-          
-          {/* Zoo Map Image */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
+          </h1>
+
           <div className="flex justify-center my-8">
-            <ImageWithFallback 
-              src={imageUrl || zooMapImage} 
-              alt="Zoo Map" 
+            <ImageWithFallback
+              src={imageUrl || zooMapImage}
+              alt="Zoo Map"
               className="border-2 border-gray-400 w-96 h-96 object-cover"
             />
           </div>
@@ -164,7 +154,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
           <div className="mt-10 flex flex-col items-center gap-5">
             {isAudioPlaying && (
               <div className="flex items-center gap-3 text-[#148b8f]">
-                <svg className="h-8 w-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg className="h-8 w-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
                 </svg>
                 <span className="text-xl font-semibold">Playing audio...</span>
@@ -174,7 +164,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ
         </div>
       </div>
 
-      {/* Volume Control Dropdown */}
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
       <MobileQuestionNav onNext={onNext} onHome={onHome} />
     </div>

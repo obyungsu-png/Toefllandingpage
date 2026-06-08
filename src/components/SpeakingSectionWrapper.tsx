@@ -200,6 +200,9 @@ export function SpeakingSectionWrapper({
     const q = sortedQuestions[questionIndex] as any;
     return q?.introImageUrl || q?.imageUrl;
   };
+  const getIntroAudioUrl = (questionIndex: number) => {
+    return (sortedQuestions[questionIndex] as any)?.introAudioUrl;
+  };
   const getTiming = (questionIndex: number) => ({
     audioPlayDuration: (sortedQuestions[questionIndex] as any)?.audioPlayDuration,
     responseDelay:     (sortedQuestions[questionIndex] as any)?.responseDelay,
@@ -221,7 +224,7 @@ export function SpeakingSectionWrapper({
       {screen === 'listen-repeat-intro' && (
         <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} {...volumeProps} />
       )}
-      {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} imageUrl={getIntroImageUrl(0)} questionText={getQuestionText(0)} />}
+      {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} imageUrl={getIntroImageUrl(0)} introAudioUrl={getIntroAudioUrl(0)} questionText={getQuestionText(0)} />}
       {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} questionText={getQuestionText(0)} responseDelay={getTiming(0).responseDelay} stopDuration={getTiming(0).stopDuration} />}
       {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} audioPlayDuration={getTiming(1).audioPlayDuration} />}
       {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} responseDelay={getTiming(1).responseDelay} stopDuration={getTiming(1).stopDuration} />}
@@ -236,7 +239,7 @@ export function SpeakingSectionWrapper({
       {screen === 'q7-prep' && <SpeakingQ7Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} audioPlayDuration={getTiming(6).audioPlayDuration} />}
       {screen === 'q7-record' && <SpeakingQ7Record onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} responseDelay={getTiming(6).responseDelay} stopDuration={getTiming(6).stopDuration} />}
       {screen === 'take-interview-intro' && <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} />}
-      {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} imageUrl={getImageUrl(7)} />}
+      {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} imageUrl={getIntroImageUrl(7)} introAudioUrl={getIntroAudioUrl(7)} questionText={getQuestionText(7)} />}
       {screen === 'q8-prep' && <SpeakingQ8Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} audioPlayDuration={getTiming(7).audioPlayDuration} />}
       {screen === 'q8-record' && <SpeakingQ8Record onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} responseDelay={getTiming(7).responseDelay} stopDuration={getTiming(7).stopDuration} />}
       {screen === 'q9-prep' && <SpeakingQ9Prep onNext={goNext} onHome={onHome} {...volumeProps} imageUrl={getImageUrl(8)} questionText={getQuestionText(8)} audioPlayDuration={getTiming(8).audioPlayDuration} />}

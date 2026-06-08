@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import researcherImage from 'figma:asset/f0cb6fbcd7264092b068d09a76465a605c5d621f.png';
 import { VolumeControl } from './VolumeControl';
 
@@ -6,16 +6,47 @@ interface SpeakingInterviewIntroProps {
   onNext: () => void;
   onHome?: () => void;
   onVolumeClick?: () => void;
+  imageUrl?: string;      // CMS intro image (overrides hardcoded researcher)
+  introAudioUrl?: string; // CMS intro audio (replaces TTS)
+  questionText?: string;  // CMS heading text
 }
 
-export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntroProps) {
+export function SpeakingInterviewIntro({
+  onNext,
+  onHome,
+  imageUrl,
+  introAudioUrl,
+  questionText,
+}: SpeakingInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Text to read
-    const textToRead = `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
+    // ── Real audio from CMS ──────────────────────────────────────────────────
+    if (introAudioUrl) {
+      const audio = new Audio(introAudioUrl);
+      audioRef.current = audio;
 
-    // Use Web Speech API to read the text
+      audio.onplay  = () => setIsAudioPlaying(true);
+      audio.onended = () => {
+        setIsAudioPlaying(false);
+        setTimeout(() => onNext(), 500);
+      };
+      audio.onerror = () => { setIsAudioPlaying(false); onNext(); };
+
+      const t = setTimeout(() => audio.play().catch(() => onNext()), 500);
+      return () => {
+        clearTimeout(t);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+
+    // ── TTS fallback ─────────────────────────────────────────────────────────
+    const textToRead = questionText ||
+      `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
+
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = 1.0;
@@ -23,47 +54,44 @@ export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntr
       utterance.volume = 1.0;
       utterance.lang = 'en-US';
 
-      // When speech ends, automatically move to next screen
-      utterance.onend = () => {
-        setTimeout(() => {
-          onNext();
-        }, 500);
+      utterance.onstart = () => setIsAudioPlaying(true);
+      utterance.onend   = () => {
+        setIsAudioPlaying(false);
+        setTimeout(() => onNext(), 500);
       };
 
-      // Start speaking after a short delay
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 500);
+      const t = setTimeout(() => window.speechSynthesis.speak(utterance), 500);
+      const fallback = window.setTimeout(() => {
+        window.speechSynthesis.cancel();
+        onNext();
+      }, 15000);
 
-      // Cleanup function
       return () => {
+        clearTimeout(t);
+        clearTimeout(fallback);
         window.speechSynthesis.cancel();
       };
     } else {
-      // Fallback: auto-advance after reading time if speech synthesis is not available
-      const timer = setTimeout(() => {
-        onNext();
-      }, 6000);
-
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => onNext(), 6000);
+      return () => clearTimeout(t);
     }
-  }, [onNext]);
+  }, [introAudioUrl, onNext, questionText]);
+
+  const displayText = questionText ||
+    'You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.';
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
-        <div className="flex items-center">
-          <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={onHome}
-          >
-            *toefl ibt
-          </div>
+        <div
+          className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onHome}
+        >
+          *toefl ibt
         </div>
-        
         <div className="flex items-center gap-3">
-          <button 
+          <button
             className="flex items-center gap-3 bg-[#0A6068] border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
             onClick={() => setShowVolumeControl(true)}
           >
@@ -72,9 +100,7 @@ export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntr
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           </button>
-          
-          {/* Next Button */}
-          <button 
+          <button
             onClick={onNext}
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
           >
@@ -101,21 +127,28 @@ export function SpeakingInterviewIntro({ onNext, onHome }: SpeakingInterviewIntr
       <div className="flex-1 flex flex-col items-center justify-start bg-white p-12 pt-16">
         <div className="max-w-4xl w-full">
           <p className="text-gray-900 text-2xl mb-12 leading-relaxed text-center">
-            You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.
+            {displayText}
           </p>
-          
-          {/* Researcher Image */}
+
           <div className="flex justify-center">
-            <img 
-              src={researcherImage} 
-              alt="Researcher" 
+            <img
+              src={imageUrl || researcherImage}
+              alt="Interviewer"
               className="border-2 border-gray-300 max-w-md"
             />
           </div>
+
+          {isAudioPlaying && (
+            <div className="flex items-center justify-center gap-3 text-[#148b8f] mt-8">
+              <svg className="h-7 w-7 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+              <span className="text-lg font-semibold">Playing audio...</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Volume Control Modal */}
       {showVolumeControl && (
         <VolumeControl onClose={() => setShowVolumeControl(false)} />
       )}
