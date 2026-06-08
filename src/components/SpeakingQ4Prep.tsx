@@ -12,24 +12,53 @@ interface SpeakingQ4PrepProps {
   audioPlayDuration?: number; // seconds
 }
 
-export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, questionText, audioPlayDuration }: SpeakingQ4PrepProps) {
+export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, questionText, audioPlayDuration, audioUrl }: SpeakingQ4PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
-    // Simulate audio playback for 3 seconds
+    // If a real audio URL is provided from CMS, play it
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      const audioTimer = setTimeout(() => {
+        setIsAudioPlaying(true);
+        audio.play().catch(() => {});
+      }, 1000);
+
+      audio.onended = () => {
+        setIsAudioPlaying(false);
+        setTimeout(() => onNext(), 500);
+      };
+      audio.onerror = () => {
+        // Fallback to timer if audio fails
+        const fallback = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+        return () => clearTimeout(fallback);
+      };
+
+      const maxTimer = setTimeout(() => {
+        audio.pause();
+        onNext();
+      }, (audioPlayDuration ? audioPlayDuration * 1000 : 30000) + 1500);
+
+      return () => {
+        clearTimeout(audioTimer);
+        clearTimeout(maxTimer);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+
+    // No CMS audio — simulate with timer
     const audioTimer = setTimeout(() => {
       setIsAudioPlaying(true);
-      
-      // After audio finishes (3 seconds), automatically go to recording screen
-      const nextTimer = setTimeout(() => {
-        onNext();
-      }, (audioPlayDuration ? audioPlayDuration * 1000 : 5000));
-      
-      return () => clearTimeout(nextTimer);
     }, 1000);
-    
-    return () => clearTimeout(audioTimer);
-  }, [onNext]);
+    const nextTimer = setTimeout(() => {
+      onNext();
+    }, (audioPlayDuration ? audioPlayDuration * 1000 : 5000));
+    return () => {
+      clearTimeout(audioTimer);
+      clearTimeout(nextTimer);
+    };
+  }, [audioUrl, onNext, audioPlayDuration]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

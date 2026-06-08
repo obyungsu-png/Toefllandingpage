@@ -65,6 +65,9 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
                 </button>
               </div>
 
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
+                🔒 녹음 파일은 서비스 운영 및 개인정보 보호를 위해 <strong className="text-gray-600">30일 후 자동 파기</strong>됩니다.
+              </div>
               <p>You may now close this browser tab or select Finish.</p>
             </div>
           </div>

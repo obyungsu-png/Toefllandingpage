@@ -14,9 +14,7 @@ export function SpeakingStopOverlay({ isOpen }: SpeakingStopOverlayProps) {
           <p>Response time has ended.</p>
           <p>Please wait. We are currently saving your response.</p>
         </div>
-        <p className="mt-8 text-[11px] leading-relaxed text-gray-400">
-          녹음 파일은 서비스 운영 및 개인정보 보호를 위해 <strong className="text-gray-500">30일 후 자동 파기</strong>됩니다.
-        </p>
+
       </div>
     </div>
   );
