@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 
 interface SpeakingTakeInterviewIntroProps {
@@ -9,42 +9,60 @@ interface SpeakingTakeInterviewIntroProps {
 
 export function SpeakingTakeInterviewIntro({ onNext, onHome }: SpeakingTakeInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   useEffect(() => {
-    // Text to read
     const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    let ttsEnded = false;
 
-    // Use Web Speech API to read the text
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
-      utterance.lang = 'en-US';
+      utterance.lang = 'en-GB'; // British English
 
-      // When speech ends, automatically move to next screen
-      utterance.onend = () => {
-        setTimeout(() => {
-          onNext();
-        }, 500);
+      // Prefer British female voice
+      const applyFemaleVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = [
+          'Google UK English Female',
+          'Microsoft Susan - English (United Kingdom)',
+          'Kate', 'Serena', 'Stephanie',
+        ];
+        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
+        if (!v) v = voices.find(voice =>
+          voice.lang.includes('en-GB') &&
+          (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+        );
+        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
+        if (v) utterance.voice = v;
       };
 
-      // Start speaking after a short delay
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 500);
+      if (window.speechSynthesis.getVoices().length > 0) applyFemaleVoice();
+      window.speechSynthesis.onvoiceschanged = applyFemaleVoice;
 
-      // Cleanup function
+      utterance.onstart = () => setIsAudioPlaying(true);
+      utterance.onend = () => {
+        setIsAudioPlaying(false);
+        ttsEnded = true;
+        setTimeout(() => onNext(), 500);
+      };
+
+      setTimeout(() => window.speechSynthesis.speak(utterance), 500);
+
+      fallbackTimer = window.setTimeout(() => {
+        if (!ttsEnded) { window.speechSynthesis.cancel(); onNext() }
+      }, 18000);
+
       return () => {
         window.speechSynthesis.cancel();
+        if (fallbackTimer) clearTimeout(fallbackTimer);
       };
     } else {
-      // Fallback: auto-advance after reading time if speech synthesis is not available
-      const timer = setTimeout(() => {
-        onNext();
-      }, 5000);
-
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => onNext(), 6000);
+      return () => clearTimeout(t);
     }
   }, [onNext]);
 

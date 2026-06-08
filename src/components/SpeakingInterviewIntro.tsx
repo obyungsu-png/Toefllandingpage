@@ -52,7 +52,26 @@ export function SpeakingInterviewIntro({
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
-      utterance.lang = 'en-US';
+      utterance.lang = 'en-GB'; // British English
+
+      // Prefer British female voice
+      const applyFemaleVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = [
+          'Google UK English Female',
+          'Microsoft Susan - English (United Kingdom)',
+          'Kate', 'Serena', 'Stephanie',
+        ];
+        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
+        if (!v) v = voices.find(voice =>
+          voice.lang.includes('en-GB') &&
+          (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+        );
+        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
+        if (v) utterance.voice = v;
+      };
+      if (window.speechSynthesis.getVoices().length > 0) applyFemaleVoice();
+      window.speechSynthesis.onvoiceschanged = applyFemaleVoice;
 
       utterance.onstart = () => setIsAudioPlaying(true);
       utterance.onend   = () => {
@@ -64,7 +83,7 @@ export function SpeakingInterviewIntro({
       const fallback = window.setTimeout(() => {
         window.speechSynthesis.cancel();
         onNext();
-      }, 15000);
+      }, 18000);
 
       return () => {
         clearTimeout(t);
