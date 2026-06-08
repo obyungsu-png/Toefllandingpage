@@ -16,7 +16,7 @@ interface SpeakingQ5RecordProps {
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
-export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ5RecordProps) {
+export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration }: SpeakingQ5RecordProps) {
   const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);

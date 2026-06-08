@@ -14,7 +14,7 @@ interface SpeakingQ3PrepProps {
   audioPlayDuration?: number; // seconds (overrides default 5s)
 }
 
-export function SpeakingQ3Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ3PrepProps) {
+export function SpeakingQ3Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration }: SpeakingQ3PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {

@@ -13,7 +13,7 @@ interface SpeakingQ9PrepProps {
   audioPlayDuration?: number; // seconds (overrides default 5s)
 }
 
-export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ9PrepProps) {
+export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration }: SpeakingQ9PrepProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   
   useEffect(() => {

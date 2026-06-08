@@ -16,7 +16,7 @@ interface SpeakingQ8RecordProps {
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
-export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl }: SpeakingQ8RecordProps) {
+export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration }: SpeakingQ8RecordProps) {
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);

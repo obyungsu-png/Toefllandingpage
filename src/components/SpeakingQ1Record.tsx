@@ -16,7 +16,7 @@ interface SpeakingQ1RecordProps {
   audioUrl?: string;
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl }: SpeakingQ1RecordProps) {
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);

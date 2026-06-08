@@ -11,7 +11,7 @@ interface SpeakingQ1Props {
   questionText?: string; // CMS-managed image URL
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, questionText }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
