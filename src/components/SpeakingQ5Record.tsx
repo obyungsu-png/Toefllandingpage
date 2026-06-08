@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import speakingImage from 'figma:asset/2a387faeacd632f6736d88d2369b0263c8a292d4.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
+import { useAudioRecorder } from './useAudioRecorder';
+import { playBeep } from '../utils/beep';
+import { uploadRecording } from '../utils/uploadRecording';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ5RecordProps {
@@ -20,14 +23,18 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const [timeRemaining, setTimeRemaining] = useState(8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
+  const recorder = useAudioRecorder();
+  const uploadedRef = useRef(false);
 
   useEffect(() => {
-    // Give a short buffer between prompt audio and recording.
-    const startTimer = setTimeout(() => {
+    const delay = responseDelay ? responseDelay * 1000 : 3000;
+    const startTimer = setTimeout(async () => {
+      await playBeep(880, 200, 0.4);   // 삐 소리
       setIsRecording(true);
-    }, (responseDelay ? responseDelay * 1000 : 3000));
-
+      recorder.startRecording();
+    }, delay);
     return () => clearTimeout(startTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -37,10 +44,17 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           if (prev <= 1) {
             clearInterval(timer);
             setIsRecording(false);
+            recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => {
-              onNext();
-            }, (stopDuration ? stopDuration * 1000 : 2500));
+            // Upload recording, then advance
+            const wait = stopDuration ? stopDuration * 1000 : 2500;
+            (async () => {
+              if (!uploadedRef.current && recorder.audioBlob) {
+                uploadedRef.current = true;
+                await uploadRecording(recorder.audioBlob, 5);
+              }
+              setTimeout(() => onNext(), wait);
+            })();
             return 0;
           }
           return prev - 1;
@@ -114,6 +128,18 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         <div className="flex justify-center">
           <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
         </div>
+
+        {/* Recording indicator */}
+        {recorder.isRecording && (
+          <div className="flex justify-center mt-3">
+            <span className="flex items-center gap-2 text-red-600 font-semibold text-sm">
+              <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" /> 녹음 중...
+            </span>
+          </div>
+        )}
+        {recorder.status === 'denied' && (
+          <p className="text-center text-xs text-red-500 mt-2">{recorder.error}</p>
+        )}
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>

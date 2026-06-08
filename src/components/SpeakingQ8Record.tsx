@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import interviewerImage from 'figma:asset/87b5ac43797c8eb788ebce8e397499eb2b0bea1b.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
+import { useAudioRecorder } from './useAudioRecorder';
+import { playBeep } from '../utils/beep';
+import { uploadRecording } from '../utils/uploadRecording';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ8RecordProps {
@@ -20,6 +23,8 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
+  const recorder = useAudioRecorder();
+  const uploadedRef = useRef(false);
 
   useEffect(() => {
     const startTimer = setTimeout(() => {
@@ -36,10 +41,17 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           if (prev <= 1) {
             clearInterval(timer);
             setIsRecording(false);
+            recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => {
-              onNext();
-            }, (stopDuration ? stopDuration * 1000 : 2500));
+            // Upload recording, then advance
+            const wait = stopDuration ? stopDuration * 1000 : 2500;
+            (async () => {
+              if (!uploadedRef.current && recorder.audioBlob) {
+                uploadedRef.current = true;
+                await uploadRecording(recorder.audioBlob, 8);
+              }
+              setTimeout(() => onNext(), wait);
+            })();
             return 0;
           }
           return prev - 1;

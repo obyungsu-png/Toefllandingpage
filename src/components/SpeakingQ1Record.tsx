@@ -5,6 +5,8 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { useAudioRecorder } from './useAudioRecorder';
+import { playBeep } from '../utils/beep';
+import { uploadRecording } from '../utils/uploadRecording';
 
 interface SpeakingQ1RecordProps {
   onNext: () => void;
@@ -22,6 +24,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
+  const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Play the prompt audio first, then start recording
@@ -29,10 +32,14 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     if (audioUrl && promptAudioRef.current) {
       promptAudioRef.current.play().catch(() => {});
     }
-    const startTimer = setTimeout(() => {
+    const delay = audioUrl
+      ? (responseDelay ? responseDelay * 1000 + 1000 : 4000)
+      : (responseDelay ? responseDelay * 1000 : 3000);
+    const startTimer = setTimeout(async () => {
+      await playBeep(880, 200, 0.4);
       setIsRecording(true);
       recorder.startRecording();
-    }, audioUrl ? (responseDelay ? responseDelay * 1000 + 1000 : 4000) : (responseDelay ? responseDelay * 1000 : 3000));
+    }, delay);
 
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,9 +54,14 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => {
-              onNext();
-            }, (stopDuration ? stopDuration * 1000 : 2500));
+            const wait = stopDuration ? stopDuration * 1000 : 2500;
+            (async () => {
+              if (!uploadedRef.current && recorder.audioBlob) {
+                uploadedRef.current = true;
+                await uploadRecording(recorder.audioBlob, 1);
+              }
+              setTimeout(() => onNext(), wait);
+            })();
             return 0;
           }
           return prev - 1;
