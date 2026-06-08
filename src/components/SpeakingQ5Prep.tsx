@@ -28,7 +28,7 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
       audio.onended = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 500);
+        setTimeout(() => onNext(), 300);
       };
       audio.onerror = () => {
         // Fallback to timer if audio fails

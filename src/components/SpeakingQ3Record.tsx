@@ -26,9 +26,9 @@ export function SpeakingQ3Record({ onNext, onHome, imageUrl, questionText, respo
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 3000;
+    const delay = responseDelay ? responseDelay * 1000 : 1500;
     const startTimer = setTimeout(async () => {
-      await playBeep(880, 200, 0.4);   // 삐 소리
+      await playBeep();   // 삐 소리
       setIsRecording(true);
       recorder.startRecording();
     }, delay);

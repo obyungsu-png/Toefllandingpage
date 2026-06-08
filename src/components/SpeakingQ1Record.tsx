@@ -34,9 +34,9 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     }
     const delay = audioUrl
       ? (responseDelay ? responseDelay * 1000 + 1000 : 4000)
-      : (responseDelay ? responseDelay * 1000 : 3000);
+      : (responseDelay ? responseDelay * 1000 : 1500);
     const startTimer = setTimeout(async () => {
-      await playBeep(880, 200, 0.4);
+      await playBeep();
       setIsRecording(true);
       recorder.startRecording();
     }, delay);

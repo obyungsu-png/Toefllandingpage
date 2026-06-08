@@ -29,7 +29,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   useEffect(() => {
     const startTimer = setTimeout(() => {
       setIsRecording(true);
-    }, (responseDelay ? responseDelay * 1000 : 3000));
+    }, (responseDelay ? responseDelay * 1000 : 1500));
 
     return () => clearTimeout(startTimer);
   }, []);
