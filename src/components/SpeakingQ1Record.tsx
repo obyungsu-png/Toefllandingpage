@@ -18,9 +18,9 @@ interface SpeakingQ1RecordProps {
   audioUrl?: string;
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration }: SpeakingQ1RecordProps) {
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
-  const [timeRemaining, setTimeRemaining] = useState(8);
+  const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
@@ -141,7 +141,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
         </div>
         
         <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
         </div>
       </div>
 

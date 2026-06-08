@@ -19,8 +19,8 @@ interface SpeakingQ7RecordProps {
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
-export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration }: SpeakingQ7RecordProps) {
-  const [timeRemaining, setTimeRemaining] = useState(8);
+export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ7RecordProps) {
+  const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
@@ -126,7 +126,7 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         
         {/* Response Time Box */}
         <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
         </div>
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />

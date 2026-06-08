@@ -17,9 +17,9 @@ interface SpeakingQ2RecordProps {
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
 }
 
-export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, responseDelay, stopDuration }: SpeakingQ2RecordProps) {
+export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ2RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
-  const [timeRemaining, setTimeRemaining] = useState(8);
+  const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
@@ -136,7 +136,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
         
         {/* Response Time Box */}
         <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
         </div>
       </div>
 

@@ -96,15 +96,20 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
         </div>
         <div className="flex justify-center mb-6">
-          {imageUrl ? (
-            <img src={imageUrl} alt="Interviewer" className="border-2 border-black w-96 h-96 object-cover" />
-          ) : (
-            <div className="border-2 border-black w-96 h-96 flex items-center justify-center bg-gray-100">
-              <svg className="w-20 h-20 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+          <div className="border-2 border-gray-300 w-96 h-96 flex items-center justify-center bg-gray-50 overflow-hidden">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Interviewer"
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            ) : (
+              <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
               </svg>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <div className="flex flex-col items-center gap-4 mt-2">
           {isAudioPlaying && (
