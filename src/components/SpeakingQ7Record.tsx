@@ -128,18 +128,6 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         <div className="flex justify-center">
           <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={8} isRecording={isRecording} />
         </div>
-
-        {/* Recording indicator */}
-        {recorder.isRecording && (
-          <div className="flex justify-center mt-3">
-            <span className="flex items-center gap-2 text-red-600 font-semibold text-sm">
-              <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" /> 녹음 중...
-            </span>
-          </div>
-        )}
-        {recorder.status === 'denied' && (
-          <p className="text-center text-xs text-red-500 mt-2">{recorder.error}</p>
-        )}
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>
