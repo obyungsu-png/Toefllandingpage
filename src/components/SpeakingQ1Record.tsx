@@ -54,14 +54,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            const wait = stopDuration ? stopDuration * 1000 : 2500;
-            (async () => {
-              if (!uploadedRef.current && recorder.audioBlob) {
-                uploadedRef.current = true;
-                await uploadRecording(recorder.audioBlob, 1);
-              }
-              setTimeout(() => onNext(), wait);
-            })();
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 2500);
             return 0;
           }
           return prev - 1;
@@ -72,6 +65,14 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, timeRemaining, onNext]);
+
+  // Upload recording when blob is ready after stop
+  useEffect(() => {
+    if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
+      uploadedRef.current = true;
+      uploadRecording(recorder.audioBlob, 1).catch(() => {});
+    }
+  }, [showStopOverlay, recorder.audioBlob]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

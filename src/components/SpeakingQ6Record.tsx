@@ -46,15 +46,7 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            // Upload recording, then advance
-            const wait = stopDuration ? stopDuration * 1000 : 2500;
-            (async () => {
-              if (!uploadedRef.current && recorder.audioBlob) {
-                uploadedRef.current = true;
-                await uploadRecording(recorder.audioBlob, 6);
-              }
-              setTimeout(() => onNext(), wait);
-            })();
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 2500);
             return 0;
           }
           return prev - 1;
@@ -64,6 +56,14 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
       return () => clearInterval(timer);
     }
   }, [isRecording, timeRemaining, onNext]);
+
+  // Upload recording when blob is ready after stop
+  useEffect(() => {
+    if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
+      uploadedRef.current = true;
+      uploadRecording(recorder.audioBlob, 6).catch(() => {});
+    }
+  }, [showStopOverlay, recorder.audioBlob]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
