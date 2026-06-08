@@ -4,7 +4,7 @@ export type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'stopped' | '
 
 export interface UseAudioRecorderResult {
   status: RecorderStatus;
-  audioUrl: string | null;       // in-memory blob URL of last recording
+  audioUrl: string | null;
   audioBlob: Blob | null;
   isRecording: boolean;
   error: string | null;
@@ -14,29 +14,38 @@ export interface UseAudioRecorderResult {
 }
 
 /**
- * Temporary (in-memory) audio recorder.
- * Uses the browser MediaRecorder API. Recordings live only for the session
- * as blob URLs — they are NOT uploaded or persisted anywhere.
+ * Codec priority order (lowest file size that works):
+ *  1. audio/webm;codecs=opus  — ~48kbps, best compression, Chrome/Firefox/Edge
+ *  2. audio/webm               — opus by default on most browsers
+ *  3. audio/mp4                — Safari fallback (AAC codec)
+ *  4. ''                       — browser default
  */
+function pickMimeType(): string {
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+  ];
+  for (const t of candidates) {
+    if (MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return '';
+}
+
 export function useAudioRecorder(): UseAudioRecorderResult {
-  const [status, setStatus] = useState<RecorderStatus>('idle');
+  const [status, setStatus]     = useState<RecorderStatus>('idle');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]       = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef        = useRef<Blob[]>([]);
+  const streamRef        = useRef<MediaStream | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
+      streamRef.current?.getTracks().forEach(t => t.stop());
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -44,13 +53,16 @@ export function useAudioRecorder(): UseAudioRecorderResult {
   const startRecording = useCallback(async () => {
     setError(null);
 
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === 'undefined'
+    ) {
       setStatus('unsupported');
       setError('이 브라우저는 녹음을 지원하지 않습니다.');
       return;
     }
 
-    // Revoke previous recording URL
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -59,16 +71,28 @@ export function useAudioRecorder(): UseAudioRecorderResult {
 
     try {
       setStatus('requesting');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Request mic with voice-optimized constraints
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,       // mono — halves the data
+          sampleRate: 16000,     // 16kHz sufficient for speech
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       streamRef.current = stream;
 
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : MediaRecorder.isTypeSupported('audio/mp4')
-        ? 'audio/mp4'
-        : '';
+      const mimeType = pickMimeType();
 
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      // audioBitsPerSecond ~48kbps (opus is very efficient at this rate)
+      const recorderOptions: MediaRecorderOptions = {
+        ...(mimeType ? { mimeType } : {}),
+        audioBitsPerSecond: 48_000,
+      };
+
+      const recorder = new MediaRecorder(stream, recorderOptions);
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
@@ -77,19 +101,16 @@ export function useAudioRecorder(): UseAudioRecorderResult {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' });
-        const url = URL.createObjectURL(blob);
+        const blobType = mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: blobType });
         setAudioBlob(blob);
-        setAudioUrl(url);
+        setAudioUrl(URL.createObjectURL(blob));
         setStatus('stopped');
-        // Stop all mic tracks (turn off the recording indicator)
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(t => t.stop());
-          streamRef.current = null;
-        }
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
       };
 
-      recorder.start();
+      recorder.start(250); // collect chunks every 250ms
       setStatus('recording');
     } catch (err: any) {
       console.error('Recording error:', err);
@@ -104,8 +125,8 @@ export function useAudioRecorder(): UseAudioRecorderResult {
   }, [audioUrl]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current?.state !== 'inactive') {
+      mediaRecorderRef.current?.stop();
     }
   }, []);
 
@@ -118,14 +139,5 @@ export function useAudioRecorder(): UseAudioRecorderResult {
     chunksRef.current = [];
   }, [audioUrl]);
 
-  return {
-    status,
-    audioUrl,
-    audioBlob,
-    isRecording: status === 'recording',
-    error,
-    startRecording,
-    stopRecording,
-    resetRecording,
-  };
+  return { status, audioUrl, audioBlob, isRecording: status === 'recording', error, startRecording, stopRecording, resetRecording };
 }

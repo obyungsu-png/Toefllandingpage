@@ -1567,6 +1567,67 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
+        {/* Speaking 설정 — image upload + intro section (Edit form) */}
+        {section === 'Speaking' && (
+          <div className="border-2 border-dashed border-rose-200 rounded-xl p-4 space-y-3 bg-rose-50/30">
+            <p className="text-sm font-bold text-rose-700 flex items-center gap-1.5">
+              🎤 Speaking 설정
+              <span className="text-xs font-normal text-gray-500">— 1-7번 Listen &amp; Repeat: 들려주고 따라 읽으면 녹음됩니다</span>
+            </p>
+            {/* 문제 이미지 */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">📷 문제 이미지 (선택)</label>
+              {(formData as any).imageUrl && (
+                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                  <img src={(formData as any).imageUrl} alt="question" className="w-14 h-14 object-cover rounded" />
+                  <div className="flex-1 text-xs text-gray-600 truncate">{((formData as any).imageUrl || '').split('/').pop()}</div>
+                  <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '', imageFile: null } as any)}
+                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                </div>
+              )}
+              <input type="file" accept="image/*" className="text-sm w-full"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) } as any); }}
+              />
+            </div>
+            {/* 인트로 전용 (Listen and Repeat / Take an Interview) */}
+            {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
+              <div className="border border-rose-200 rounded-lg p-3 space-y-3 bg-white">
+                <p className="text-xs font-bold text-rose-600">🎬 인트로 화면 전용 (문제 화면과 다른 이미지·음성)</p>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 인트로 이미지</label>
+                  {(formData as any).introImageUrl && (
+                    <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
+                      <img src={(formData as any).introImageUrl} alt="intro" className="w-14 h-14 object-cover rounded" />
+                      <div className="flex-1 text-xs text-gray-600 truncate">{((formData as any).introImageUrl || '').split('/').pop()}</div>
+                      <button type="button" onClick={() => setFormData({ ...formData, introImageUrl: '', introImageFile: null } as any)}
+                        className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" className="text-sm w-full"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introImageFile: f, introImageUrl: URL.createObjectURL(f) } as any); }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 인트로 오디오 (TTS 대체)</label>
+                  {(formData as any).introAudioUrl && (
+                    <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
+                      <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
+                      <button type="button" onClick={() => setFormData({ ...formData, introAudioUrl: '', introAudioFile: null } as any)}
+                        className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                    </div>
+                  )}
+                  <input type="file" accept="audio/*" className="text-sm w-full"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="text-xs text-gray-500 bg-white rounded-lg p-2.5 border border-rose-100">
+              💡 <strong>음성</strong>은 아래 <strong>Audio File</strong>, <strong>동영상</strong>은 <strong>Video File</strong>에 업로드하세요.
+            </div>
+          </div>
+        )}
+
         {/* Audio Upload (for Listening/Speaking) */}
         {(section === 'Listening' || section === 'Speaking') && (
           <div>
@@ -2600,8 +2661,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         </div>
 
-        {/* Module Selector — Writing 제외 */}
-        {section !== 'Writing' && (
+        {/* Module Selector — Reading 전용 */}
+        {section === 'Reading' && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
