@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import interviewerImage from 'figma:asset/87b5ac43797c8eb788ebce8e397499eb2b0bea1b.png';
 import { VolumeControl } from './VolumeControl';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { useAudioRecorder } from './useAudioRecorder';
@@ -113,11 +111,15 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
         </div>
         <div className="flex justify-center mb-6">
-          <ImageWithFallback
-            src={imageUrl || interviewerImage}
-            alt="Interviewer"
-            className="border-2 border-black w-96 h-96 object-cover"
-          />
+          {imageUrl ? (
+            <img src={imageUrl} alt="Interviewer" className="border-2 border-black w-96 h-96 object-cover" />
+          ) : (
+            <div className="border-2 border-black w-96 h-96 flex items-center justify-center bg-gray-100">
+              <svg className="w-20 h-20 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+            </div>
+          )}
         </div>
         <div className="flex justify-center">
           <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={45} isRecording={isRecording} />
