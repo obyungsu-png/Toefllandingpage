@@ -26,7 +26,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 1500;
+    const delay = responseDelay ? responseDelay * 1000 : 800;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
       setIsRecording(true);

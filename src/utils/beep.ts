@@ -3,7 +3,7 @@
  * freq: Hz (default 880 = A5, TOEFL 시험과 유사한 고음)
  * duration: ms (default 200)
  */
-export function playBeep(freq = 880, duration = 300, volume = 0.85): Promise<void> {
+export function playBeep(freq = 880, duration = 300, volume = 1.0): Promise<void> {
   return new Promise((resolve) => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
