@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import interviewerImage from 'figma:asset/a46daf78e44986fc846d20ebe5f22f157d44e0b9.png';
+import interviewerImage from 'figma:asset/87b5ac43797c8eb788ebce8e397499eb2b0bea1b.png';
+import { VolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ10PrepProps {
@@ -8,61 +9,76 @@ interface SpeakingQ10PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
-  imageUrl?: string; // CMS-managed image URL
-  questionText?: string;     // text shown above the image
-  audioPlayDuration?: number; // seconds (overrides default 5s)
+  imageUrl?: string;
+  questionText?: string;
+  audioPlayDuration?: number;
+  audioUrl?: string;
 }
 
-export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration }: SpeakingQ10PrepProps) {
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  
-  useEffect(() => {
-    const videoTimer = setTimeout(() => {
-      setIsVideoPlaying(true);
-    }, 1000);
+export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl }: SpeakingQ10PrepProps) {
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
-    const nextTimer = setTimeout(() => {
-      onNext();
-    }, (audioPlayDuration ? audioPlayDuration * 1000 : 7000));
-    
-    return () => {
-      clearTimeout(videoTimer);
-      clearTimeout(nextTimer);
-    };
-  }, [onNext]);
+  useEffect(() => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      const startTimer = setTimeout(() => {
+        setIsAudioPlaying(true);
+        audio.play().catch(() => {});
+      }, 800);
+      audio.onended = () => {
+        setIsAudioPlaying(false);
+        setTimeout(() => onNext(), 300);
+      };
+      audio.onerror = () => {
+        setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 7000);
+      };
+      const maxTimer = setTimeout(() => {
+        audio.pause();
+        onNext();
+      }, (audioPlayDuration ? audioPlayDuration * 1000 : 30000) + 1500);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(maxTimer);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+    // No CMS audio — simulate
+    const t1 = setTimeout(() => setIsAudioPlaying(true), 800);
+    const t2 = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 7000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [audioUrl, onNext, audioPlayDuration]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
-        <div className="flex items-center">
-          <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={onHome}
-          >
-            *toefl ibt
-          </div>
+        <div
+          className="text-white text-2xl font-[\'Inter\',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onHome}
+        >
+          *toefl ibt
         </div>
-        
         <div className="flex items-center gap-3">
-          {onVolumeClick && (
-            <button 
-              ref={volumeButtonRef}
-              className={`flex items-center gap-3 rounded-lg px-5 py-2 border transition-colors ${
-                isVolumeOpen
-                  ? 'bg-white border-[#0A6068]'
-                  : 'bg-[#0A6068] border-white hover:bg-[#084d52]'
-              }`}
-              onClick={onVolumeClick}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${isVolumeOpen ? 'text-[#0A6068]' : 'text-white'}`}>
-                Volume
-              </span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isVolumeOpen ? '#0A6068' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-          )}
+          <button
+            ref={volumeButtonRef}
+            className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+            onClick={onVolumeClick}
+          >
+            <span className="text-white font-[\'Inter\',_sans-serif] font-semibold text-base">Volume</span>
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </button>
+          <button
+            onClick={onNext}
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+          >
+            <span className="text-[#0A6068] font-[\'Inter\',_sans-serif] font-semibold text-base">Next</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -70,41 +86,34 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
       <div className="bg-white border-b border-gray-300">
         <div className="px-8 py-3">
           <div className="flex gap-8">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-              Speaking
-            </div>
-            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 10 of 11
-            </div>
+            <div className="text-gray-700 font-[\'Inter\',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Speaking</div>
+            <div className="text-gray-500 text-sm font-[\'Inter\',_sans-serif] font-medium self-end pb-2">Question 10 of 11</div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-white p-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
-        
-        {/* Interviewer Video */}
-        <div className="flex justify-center mb-12">
-          <div className="relative">
-            <ImageWithFallback
-              src={imageUrl || interviewerImage}
-              alt="Interviewer"
-              className="border-4 border-gray-400 max-w-md"
-            />
-            {isVideoPlaying && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-black/50 rounded-full p-4">
-                  <svg className="w-12 h-12 text-white animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-              </div>
-            )}
-          </div>
+      <div className="flex-1 flex flex-col bg-white pt-10 px-12">
+        <div className="pb-6">
+          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
         </div>
-
-        {isVideoPlaying && <div className="text-xl font-semibold text-[#1e6b73]">Playing audio. Recording will begin shortly...</div>}
+        <div className="flex justify-center mb-6">
+          <ImageWithFallback
+            src={imageUrl || interviewerImage}
+            alt="Interviewer"
+            className="border-2 border-black w-96 h-96 object-cover"
+          />
+        </div>
+        <div className="flex flex-col items-center gap-4 mt-2">
+          {isAudioPlaying && (
+            <div className="flex items-center gap-3 text-[#148b8f]">
+              <svg className="h-7 w-7 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+              <span className="text-xl font-semibold">Playing audio...</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
