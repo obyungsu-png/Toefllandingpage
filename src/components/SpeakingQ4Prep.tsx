@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import speakingImage from 'figma:asset/8b35efa9f817161ac6e1896bb66d8010374d8d93.png';
 import { VolumeControl } from './VolumeControl';
 
 interface SpeakingQ4PrepProps {
@@ -8,8 +7,10 @@ interface SpeakingQ4PrepProps {
   onVolumeClick?: () => void;
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
-  questionText?: string;     // text shown above the image
-  audioPlayDuration?: number; // seconds
+  imageUrl?: string;
+  audioUrl?: string;
+  questionText?: string;
+  audioPlayDuration?: number;
 }
 
 export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, questionText, audioPlayDuration, audioUrl }: SpeakingQ4PrepProps) {
@@ -103,11 +104,16 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         
         {/* Image - Square */}
         <div className="flex justify-center mb-8">
-          <img 
-            src={speakingImage} 
-            alt="Speaking scene" 
-            className="border-2 border-black w-96 h-96 object-cover"
-          />
+          <div className="border-2 border-black w-96 h-96 flex items-center justify-center bg-gray-50 overflow-hidden">
+            {imageUrl ? (
+              <img src={imageUrl} alt="Speaking scene" className="w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            ) : (
+              <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+            )}
+          </div>
         </div>
         
         {/* Audio playing indicator */}

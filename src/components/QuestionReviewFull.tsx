@@ -239,6 +239,14 @@ export function QuestionReviewFull({
 
   // Speaking-specific state
   const [speakingModelPlaying, setSpeakingModelPlaying] = useState(false);
+  // Real recordings from sessionStorage (populated during the speaking session)
+  const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+      setSpeakingRecordings(stored);
+    } catch {}
+  }, []);
   const [speakingUserPlaying, setSpeakingUserPlaying] = useState(false);
   const [speakingMaterialPlaying, setSpeakingMaterialPlaying] = useState(false);
   const [modelProgress, setModelProgress] = useState(0);
@@ -1610,32 +1618,31 @@ export function QuestionReviewFull({
                   </div>
 
                   {/* My Recording Card */}
-                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-5 mb-6">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
-                        <Mic className="w-5 h-5 text-blue-600" />
+                  {(() => {
+                    const qNum = activeModule === 1
+                      ? currentQuestionIndex + 1
+                      : currentQuestionIndex + 8;
+                    const recUrl = speakingRecordings[String(qNum)];
+                    return (
+                      <div className="bg-blue-50 rounded-xl border border-blue-200 p-5 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
+                            <Mic className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
+                            My Recording — Q{qNum}
+                          </span>
+                        </div>
+                        {recUrl ? (
+                          <audio controls src={recUrl} className="w-full h-10" />
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">
+                            녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
+                          </p>
+                        )}
                       </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
-                        My Recording
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setSpeakingUserPlaying(!speakingUserPlaying)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 bg-blue-500"
-                      >
-                        {speakingUserPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                      </button>
-                      <span className="text-xs text-gray-500 w-8">0:00</span>
-                      <div className="flex-1 h-1.5 bg-blue-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all bg-blue-500"
-                          style={{ width: `${userProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-8">0:{String(currentSpeakingQ.userAudioDuration).padStart(2, '0')}</span>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               </>
 
