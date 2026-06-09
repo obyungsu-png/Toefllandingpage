@@ -28,8 +28,17 @@ export async function uploadRecording(
     }
 
     const { data } = supabase.storage.from('recordings').getPublicUrl(path);
-    console.log(`[uploadRecording] ✅ 성공: ${data?.publicUrl}`);
-    return data?.publicUrl ?? null;
+    const url = data?.publicUrl ?? null;
+    if (url) {
+      // Save to sessionStorage so End Session screen can show playback
+      try {
+        const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+        stored[String(questionNumber)] = url;
+        sessionStorage.setItem('speakingRecordings', JSON.stringify(stored));
+      } catch {}
+    }
+    console.log(`[uploadRecording] ✅ 성공: ${url}`);
+    return url;
   } catch (e) {
     console.error('[uploadRecording] ❌ 예외:', e);
     return null;

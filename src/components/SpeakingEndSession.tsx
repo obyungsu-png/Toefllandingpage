@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { TPOTest } from './ContentManagement';
 import { generateTestPdf } from '../utils/generateTestPdf';
 
@@ -8,13 +9,23 @@ interface SpeakingEndSessionProps {
 }
 
 export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSessionProps) {
+  const [recordings, setRecordings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+      setRecordings(stored);
+    } catch {}
+  }, []);
+
   const handleDownload = (mode: 'standard' | 'annotated') => {
-    if (!testData) {
-      alert('Test data was not found.');
-      return;
-    }
+    if (!testData) { alert('Test data was not found.'); return; }
     generateTestPdf(testData, mode);
   };
+
+  const questionNums = Object.keys(recordings)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
@@ -41,6 +52,32 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
             <div className="mt-4 h-px bg-gray-200" />
 
             <div className="mt-8 space-y-6 text-[18px] leading-8 text-gray-700">
+
+              {/* ── 녹음 재생 섹션 ── */}
+              {questionNums.length > 0 && (
+                <div className="rounded-2xl border border-[#1e6b73]/30 bg-[#f0fafa] px-5 py-5">
+                  <p className="text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
+                  <div className="space-y-3">
+                    {questionNums.map(n => (
+                      <div key={n} className="flex items-center gap-4 rounded-xl bg-white border border-gray-200 px-4 py-3">
+                        <span className="text-sm font-bold text-[#1e6b73] w-8 shrink-0">Q{n}</span>
+                        <audio
+                          controls
+                          src={recordings[String(n)]}
+                          className="flex-1 h-9"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {questionNums.length === 0 && (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-base text-gray-500">
+                  ℹ️ 녹음 파일이 없습니다. Supabase Storage에 <strong>recordings</strong> 버킷이 생성되어 있는지 확인해 주세요.
+                </div>
+              )}
+
               <p>You can download the full test materials created from the CMS content for this test.</p>
 
               <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5">
