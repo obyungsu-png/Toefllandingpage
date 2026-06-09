@@ -19,14 +19,14 @@ interface SpeakingQ4RecordProps {
 
 export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ4RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
-  const [timeRemaining, setTimeRemaining] = useState(duration || 8);
+  const [timeRemaining, setTimeRemaining] = useState(duration || 10);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 1200;
+    const delay = responseDelay ? responseDelay * 1000 : 1500;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
       setIsRecording(true);
@@ -45,7 +45,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 2500);
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;
@@ -123,7 +123,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
         
         {/* Response Time Box */}
         <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 10} isRecording={isRecording} />
         </div>
       </div>
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />

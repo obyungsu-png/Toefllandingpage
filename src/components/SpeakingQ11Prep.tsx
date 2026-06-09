@@ -21,22 +21,16 @@ export function SpeakingQ11Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
       const audio = new Audio(audioUrl);
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => {});
+        audio.play().catch(() => { onNext(); });
       }, 800);
+      // Let audio play fully — no forced cutoff
       audio.onended = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 300);
+        setTimeout(() => onNext(), 400);
       };
-      audio.onerror = () => {
-        setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 7000);
-      };
-      const maxTimer = setTimeout(() => {
-        audio.pause();
-        onNext();
-      }, (audioPlayDuration ? audioPlayDuration * 1000 : 30000) + 1500);
+      audio.onerror = () => { onNext(); };
       return () => {
         clearTimeout(startTimer);
-        clearTimeout(maxTimer);
         audio.pause();
         audio.src = '';
       };

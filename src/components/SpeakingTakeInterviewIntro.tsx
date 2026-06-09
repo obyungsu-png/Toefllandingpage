@@ -54,7 +54,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome }: SpeakingTakeInter
 
       fallbackTimer = window.setTimeout(() => {
         if (!ttsEnded) { window.speechSynthesis.cancel(); onNext() }
-      }, 18000);
+      }, 30000);
 
       return () => {
         window.speechSynthesis.cancel();

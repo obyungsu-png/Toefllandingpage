@@ -26,7 +26,7 @@ export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 1200;
+    const delay = responseDelay ? responseDelay * 1000 : 1500;
     const startTimer = setTimeout(async () => {
       await playBeep();
       setIsRecording(true);
@@ -45,7 +45,7 @@ export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 2500);
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;

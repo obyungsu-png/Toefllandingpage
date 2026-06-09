@@ -35,15 +35,8 @@ export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         const fallback = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 5000);
         return () => clearTimeout(fallback);
       };
-
-      const maxTimer = setTimeout(() => {
-        audio.pause();
-        onNext();
-      }, (audioPlayDuration ? audioPlayDuration * 1000 : 30000) + 1500);
-
       return () => {
         clearTimeout(audioTimer);
-        clearTimeout(maxTimer);
         audio.pause();
         audio.src = '';
       };

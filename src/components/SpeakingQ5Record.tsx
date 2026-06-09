@@ -20,14 +20,14 @@ interface SpeakingQ5RecordProps {
 }
 
 export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ5RecordProps) {
-  const [timeRemaining, setTimeRemaining] = useState(duration || 8);
+  const [timeRemaining, setTimeRemaining] = useState(duration || 10);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 1200;
+    const delay = responseDelay ? responseDelay * 1000 : 1500;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
       setIsRecording(true);
@@ -46,7 +46,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 2500);
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;
@@ -126,7 +126,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         
         {/* Response Time Box */}
         <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
+          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 10} isRecording={isRecording} />
         </div>
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />
