@@ -68,6 +68,14 @@ Deno.serve(async (req) => {
 
   console.log(`[cleanup-recordings] Deleted ${toDelete.length} files older than ${RETENTION_DAYS} days.`);
 
+  // Also purge expired rows from the speaking_recordings table
+  const { error: dbErr, count } = await supabase
+    .from('speaking_recordings')
+    .delete({ count: 'exact' })
+    .lt('expires_at', new Date().toISOString());
+
+  if (!dbErr) console.log(`[cleanup-recordings] Purged ${count ?? 0} expired DB rows.`);
+
   return new Response(
     JSON.stringify({ deleted: toDelete.length, files: toDelete }),
     { headers: { 'Content-Type': 'application/json' } },

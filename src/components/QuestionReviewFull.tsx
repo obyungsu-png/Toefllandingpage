@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic } from 'lucide-react';
 import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { loadRecordings } from '../utils/uploadRecording';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
@@ -239,14 +240,19 @@ export function QuestionReviewFull({
 
   // Speaking-specific state
   const [speakingModelPlaying, setSpeakingModelPlaying] = useState(false);
-  // Real recordings from sessionStorage (populated during the speaking session)
+  // Real recordings — load from DB (30-day retention) with sessionStorage fallback
   const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
   useEffect(() => {
-    try {
-      const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
-      setSpeakingRecordings(stored);
-    } catch {}
-  }, []);
+    if (activeSection !== 'Speaking') return;
+    const testType   = currentTPOTest?.testType   ?? sessionStorage.getItem('current_test_type')   ?? 'tpo';
+    const testNumber = currentTPOTest?.testNumber  ?? Number(sessionStorage.getItem('current_test_number') ?? 0);
+    loadRecordings(String(testType), Number(testNumber))
+      .then(setSpeakingRecordings)
+      .catch(() => {
+        try { setSpeakingRecordings(JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}')); }
+        catch {}
+      });
+  }, [activeSection, currentTPOTest]);
   const [speakingUserPlaying, setSpeakingUserPlaying] = useState(false);
   const [speakingMaterialPlaying, setSpeakingMaterialPlaying] = useState(false);
   const [modelProgress, setModelProgress] = useState(0);

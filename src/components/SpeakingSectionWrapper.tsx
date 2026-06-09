@@ -120,6 +120,15 @@ export function SpeakingSectionWrapper({
     }
   }, []);
 
+  // Save test context so uploadRecording can tag files correctly
+  useEffect(() => {
+    if (testData) {
+      sessionStorage.setItem('current_test_type', String(testData.testType || 'tpo'));
+      sessionStorage.setItem('current_test_number', String(testData.testNumber || '0'));
+      sessionStorage.removeItem('speakingRecordings'); // clear previous session
+    }
+  }, [testData]);
+
   // Auto-save when screen changes
   useEffect(() => {
     const screenIndex = SPEAKING_SCREEN_ORDER.indexOf(screen);
