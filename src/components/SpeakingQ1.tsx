@@ -78,7 +78,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
 
       fallbackTimer = window.setTimeout(() => {
         if (!ttsEnded) { window.speechSynthesis.cancel(); onNext?.(); }
-      }, 12000);
+      }, 30000);
 
       return () => {
         window.speechSynthesis.cancel();
