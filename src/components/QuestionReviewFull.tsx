@@ -411,15 +411,13 @@ export function QuestionReviewFull({
           taskGroup: isInterview ? 'Take an Interview' : 'Listen and Speak',
           prompt: question.questionText || question.text || (isInterview ? `Interview task ${index - 6}` : `Listen and Speak task ${index + 1}`),
           modelLabel: 'Model Answer',
-          currentVoice: isInterview ? 'Morgan Freeman' : 'Donald Trump',
-          voiceAvatar: isInterview
-            ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face'
-            : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
-          modelAudioDuration: Number(question.duration) || (isInterview ? 18 : 12),
-          userAudioDuration: isInterview ? 15 : 8,
+          currentVoice: isInterview ? 'Interviewer' : 'Speaker',
+          voiceAvatar: question.introImageUrl || question.imageUrl || '',
+          modelAudioDuration: Number(question.duration) || (isInterview ? 45 : 8),
+          userAudioDuration: Number(question.duration) || (isInterview ? 45 : 8),
           showTextDefault: !isInterview,
-          materialImage: question.passageImageUrl || question.imageUrl,
-          materialAudioDuration: question.passageAudioUrl ? 5 : undefined,
+          materialImage: question.imageUrl || question.introImageUrl,
+          materialAudioDuration: question.audioUrl ? 5 : undefined,
           transcript: question.passageText || question.translationNote || question.questionText || question.text,
         };
       })
@@ -601,6 +599,11 @@ export function QuestionReviewFull({
   const currentSpeakingQ = speakingQs[currentQuestionIndex] || speakingQs[0];
   const currentWritingConv = writingConversations[currentQuestionIndex % writingConversations.length];
   const currentWritingBuildSentence = writingBuildSentenceQuestions[currentQuestionIndex] || writingBuildSentenceQuestions[0];
+
+  // CMS Writing questions (Email / Academic Discussion) for dynamic review
+  const writingCmsQuestions = (activeSection === 'Writing' ? (currentSection?.questions || []) : []) as any[];
+  const cmsEmailQ = writingCmsQuestions.find(q => q.questionType === 'Write an Email');
+  const cmsAcademicQ = writingCmsQuestions.find(q => q.questionType === 'Academic Discussion');
 
   const renderCompleteWordsPassage = () => {
     if (!readingCompleteWordsConfig) return null;
@@ -1437,7 +1440,7 @@ export function QuestionReviewFull({
                 {/* Left: Professor prompt */}
                 <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
                   <p className="text-base text-gray-800 leading-relaxed mb-4 font-serif">
-                    Your professor is teaching a class on social studies. Write a post responding to the professor's question.
+                    {cmsAcademicQ?.questionText || "Your professor is teaching a class. Write a post responding to the professor's question."}
                   </p>
                   <div className="mb-4">
                     <p className="text-base font-semibold text-gray-900 mb-2 font-serif">In your response, you should do the following.</p>
@@ -1455,17 +1458,17 @@ export function QuestionReviewFull({
                   <p className="text-base text-gray-800 mb-6 font-serif">An effective response will contain at least 100 words.</p>
                   <div className="border-t border-gray-300 pt-6">
                     <div className="flex flex-col items-center mb-4">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] mb-2">
-                        <ImageWithFallback
-                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face"
-                          alt="Professor"
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] mb-2 bg-gray-100 flex items-center justify-center">
+                        {cmsAcademicQ?.professorImageUrl ? (
+                          <img src={cmsAcademicQ.professorImageUrl} alt="Professor" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        )}
                       </div>
-                      <p className="font-bold text-lg text-gray-900 font-serif">Dr. Achebe</p>
+                      <p className="font-bold text-lg text-gray-900 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
                     </div>
                     <p className="text-base text-gray-800 leading-relaxed font-serif">
-                      Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?
+                      {cmsAcademicQ?.professorMessage || cmsAcademicQ?.questionText || '(No professor message in CMS)'}
                     </p>
                   </div>
                 </div>
@@ -1473,28 +1476,34 @@ export function QuestionReviewFull({
                 <div className="md:w-2/3 p-4 md:p-8 overflow-auto bg-[#f8f7f3]">
                   <div className="space-y-4 mb-6">
                     <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                        <ImageWithFallback
-                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face"
-                          alt="Student 1"
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                        {cmsAcademicQ?.student1ImageUrl ? (
+                          <img src={cmsAcademicQ.student1ImageUrl} alt="Student 1" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        )}
                       </div>
-                      <p className="text-base text-gray-800 leading-relaxed font-serif">
-                        Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.
-                      </p>
+                      <div className="flex-1">
+                        {cmsAcademicQ?.student1Name && <p className="font-bold text-sm text-gray-700 font-serif mb-1">{cmsAcademicQ.student1Name}</p>}
+                        <p className="text-base text-gray-800 leading-relaxed font-serif">
+                          {cmsAcademicQ?.student1Message || '(No student 1 message in CMS)'}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b]">
-                        <ImageWithFallback
-                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face"
-                          alt="Student 2"
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                        {cmsAcademicQ?.student2ImageUrl ? (
+                          <img src={cmsAcademicQ.student2ImageUrl} alt="Student 2" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        )}
                       </div>
-                      <p className="text-base text-gray-800 leading-relaxed font-serif">
-                        I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.
-                      </p>
+                      <div className="flex-1">
+                        {cmsAcademicQ?.student2Name && <p className="font-bold text-sm text-gray-700 font-serif mb-1">{cmsAcademicQ.student2Name}</p>}
+                        <p className="text-base text-gray-800 leading-relaxed font-serif">
+                          {cmsAcademicQ?.student2Message || '(No student 2 message in CMS)'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#ddd4c4]">
