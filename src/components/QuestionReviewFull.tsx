@@ -242,17 +242,6 @@ export function QuestionReviewFull({
   const [speakingModelPlaying, setSpeakingModelPlaying] = useState(false);
   // Real recordings — load from DB (30-day retention) with sessionStorage fallback
   const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (activeSection !== 'Speaking') return;
-    const testType   = currentTPOTest?.testType   ?? sessionStorage.getItem('current_test_type')   ?? 'tpo';
-    const testNumber = currentTPOTest?.testNumber  ?? Number(sessionStorage.getItem('current_test_number') ?? 0);
-    loadRecordings(String(testType), Number(testNumber))
-      .then(setSpeakingRecordings)
-      .catch(() => {
-        try { setSpeakingRecordings(JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}')); }
-        catch {}
-      });
-  }, [activeSection, currentTPOTest]);
   const [speakingUserPlaying, setSpeakingUserPlaying] = useState(false);
   const [speakingMaterialPlaying, setSpeakingMaterialPlaying] = useState(false);
   const [modelProgress, setModelProgress] = useState(0);
@@ -271,6 +260,19 @@ export function QuestionReviewFull({
   })();
   
   const currentTPOTest = tpoTests.find((test: any) => test.testNumber === tpoNumber);
+
+  // Load speaking recordings once currentTPOTest is available
+  useEffect(() => {
+    if (activeSection !== 'Speaking') return;
+    const testType   = currentTPOTest?.testType   ?? sessionStorage.getItem('current_test_type')   ?? 'tpo';
+    const testNumber = currentTPOTest?.testNumber  ?? Number(sessionStorage.getItem('current_test_number') ?? 0);
+    loadRecordings(String(testType), Number(testNumber))
+      .then(setSpeakingRecordings)
+      .catch(() => {
+        try { setSpeakingRecordings(JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}')); }
+        catch {}
+      });
+  }, [activeSection, currentTPOTest]);
   const currentSection = currentTPOTest?.sections?.find((s: any) => s.sectionType === activeSection);
   const passageText = currentSection?.passages?.[0]?.content || null;
   const readingCompleteWordsQuestions = (currentSection?.questions || []).filter((question: any) =>
