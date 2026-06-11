@@ -580,7 +580,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
               <h3 className="font-bold text-lg">점수 분석</h3>
             </div>
             
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-3">
               {/* Progress Bar */}
               <div>
                 <div className="flex justify-between text-sm mb-2">
@@ -884,11 +884,16 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
           </p>
 
           <div className="bg-white rounded-lg p-3 mb-3 sm:p-6 sm:mb-5 border-2" style={{ borderColor: themeColor }}>
-            <p className="text-lg sm:text-3xl font-bold text-center leading-snug" style={{ color: themeColor }}>
-              {currentQuestion.questionFormat === 'eng_to_kor' && currentQuestion.word.english}
-              {currentQuestion.questionFormat === 'kor_to_eng' && currentQuestion.word.korean}
-              {currentQuestion.questionFormat === 'definition_to_eng' && currentQuestion.word.definition}
-            </p>
+            {currentQuestion.questionFormat === 'definition_to_eng' ? (
+              <p className="text-sm sm:text-xl font-semibold text-center leading-snug" style={{ color: themeColor }}>
+                {currentQuestion.word.definition}
+              </p>
+            ) : (
+              <p className="text-2xl sm:text-3xl font-bold text-center" style={{ color: themeColor }}>
+                {currentQuestion.questionFormat === 'eng_to_kor' && currentQuestion.word.english}
+                {currentQuestion.questionFormat === 'kor_to_eng' && currentQuestion.word.korean}
+              </p>
+            )}
           </div>
 
           {/* Answer Options */}
