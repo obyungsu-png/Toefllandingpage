@@ -580,7 +580,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
               <h3 className="font-bold text-lg">점수 분석</h3>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {/* Progress Bar */}
               <div>
                 <div className="flex justify-between text-sm mb-2">
@@ -840,9 +840,9 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto p-8">
+      <div className="max-w-3xl mx-auto p-3 sm:p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-6">
           <h1 className="text-2xl font-bold" style={{ color: themeColor }}>
             TOEFL 어휘 테스트
           </h1>
@@ -852,7 +852,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         </div>
 
         {/* Progress */}
-        <div className="mb-8">
+        <div className="mb-3 sm:mb-8">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-600">
               문제 {currentQuestionIndex + 1} / {questions.length}
@@ -870,8 +870,8 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         </div>
 
         {/* Question */}
-        <div className="bg-gray-50 rounded-xl p-8 mb-8">
-          <h2 className="text-2xl font-bold mb-6" style={{ color: themeColor }}>
+        <div className="bg-gray-50 rounded-xl p-4 mb-3 sm:p-8 sm:mb-8">
+          <p className="text-xs font-medium mb-2 sm:text-xl sm:font-bold sm:mb-5 text-gray-500">
             {currentQuestion.questionFormat === 'eng_to_kor' && (
               <>다음 영어 단어의 한글 뜻을 고르세요:</>
             )}
@@ -881,10 +881,10 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
             {currentQuestion.questionFormat === 'definition_to_eng' && (
               <>다음 영영 정의에 해당하는 영어 단어를 고르세요:</>
             )}
-          </h2>
+          </p>
 
-          <div className="bg-white rounded-lg p-6 mb-6 border-2" style={{ borderColor: themeColor }}>
-            <p className="text-3xl font-bold text-center" style={{ color: themeColor }}>
+          <div className="bg-white rounded-lg p-3 mb-3 sm:p-6 sm:mb-5 border-2" style={{ borderColor: themeColor }}>
+            <p className="text-lg sm:text-3xl font-bold text-center leading-snug" style={{ color: themeColor }}>
               {currentQuestion.questionFormat === 'eng_to_kor' && currentQuestion.word.english}
               {currentQuestion.questionFormat === 'kor_to_eng' && currentQuestion.word.korean}
               {currentQuestion.questionFormat === 'definition_to_eng' && currentQuestion.word.definition}
@@ -898,7 +898,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
                 <button
                   key={index}
                   onClick={() => handleMultipleChoiceAnswer(option)}
-                  className="w-full p-4 rounded-lg border-2 text-left transition-all hover:shadow-md"
+                  className="w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all hover:shadow-md"
                   style={{
                     borderColor: userAnswers[currentQuestionIndex] === option ? themeColor : '#e5e7eb',
                     backgroundColor: userAnswers[currentQuestionIndex] === option ? `${themeColor}10` : 'white'
