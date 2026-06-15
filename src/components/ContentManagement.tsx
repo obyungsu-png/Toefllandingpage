@@ -87,6 +87,7 @@ export interface TPOQuestion {
   emailTo?: string;            // To 줄
   questionGroupId?: string;
   translationNote?: string;
+  scriptText?: string; // Listening dictation/transcript script (shown in Review Script tab)
   analysisNote?: string;
   vocabularyNote?: string;
 }
@@ -1063,6 +1064,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     correctAnswer: '',
     explanation: '',
     translationNote: '',
+    scriptText: '',
     analysisNote: '',
     vocabularyNote: '',
     passageText: '',
@@ -1135,6 +1137,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       emailSubject: (formData as any).emailSubject || undefined,
       emailTo: (formData as any).emailTo || undefined,
       translationNote: (formData as any).translationNote || undefined,
+      scriptText: (formData as any).scriptText || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -2271,14 +2274,16 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {section === 'Listening' ? 'Dictation Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 받아쓰기 스크립트)' : '(Korean translation of the passage/question)'}</span>
+              {section === 'Listening' ? 'Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 스크립트 — Review의 Script 탭에 표시)' : '(Korean translation of the passage/question)'}</span>
             </label>
             <textarea
-              value={(formData as any).translationNote || ''}
-              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value } as any)}
+              value={section === 'Listening' ? ((formData as any).scriptText || '') : ((formData as any).translationNote || '')}
+              onChange={(e) => setFormData(section === 'Listening'
+                ? { ...formData, scriptText: e.target.value } as any
+                : { ...formData, translationNote: e.target.value } as any)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
               rows={3}
-              placeholder="지문/문제의 한국어 번역을 입력하세요..."
+              placeholder={section === 'Listening' ? '리스닝 오디오의 스크립트(대본)를 입력하세요...' : '지문/문제의 한국어 번역을 입력하세요...'}
             />
           </div>
           <div>
@@ -2413,6 +2418,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     emailSubject: question.emailSubject || '',
     emailTo: question.emailTo || '',
     translationNote: question.translationNote || '',
+    scriptText: (question as any).scriptText || '',
     analysisNote: (question as any).analysisNote || '',
     vocabularyNote: question.vocabularyNote || '',
     colorTheme: (() => {
@@ -2489,6 +2495,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       student2Message: (formData as any).student2Message || undefined,
       student2ImageUrl: (formData as any).student2ImageUrl || undefined,
       translationNote: (formData as any).translationNote || undefined,
+      scriptText: (formData as any).scriptText || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -3345,14 +3352,16 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {section === 'Listening' ? 'Dictation Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 받아쓰기 스크립트)' : '(Korean translation of the passage/question)'}</span>
+              {section === 'Listening' ? 'Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 스크립트 — Review의 Script 탭에 표시)' : '(Korean translation of the passage/question)'}</span>
             </label>
             <textarea
-              value={(formData as any).translationNote || ''}
-              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value } as any)}
+              value={section === 'Listening' ? ((formData as any).scriptText || '') : ((formData as any).translationNote || '')}
+              onChange={(e) => setFormData(section === 'Listening'
+                ? { ...formData, scriptText: e.target.value } as any
+                : { ...formData, translationNote: e.target.value } as any)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
               rows={3}
-              placeholder="지문/문제의 한국어 번역을 입력하세요..."
+              placeholder={section === 'Listening' ? '리스닝 오디오의 스크립트(대본)를 입력하세요...' : '지문/문제의 한국어 번역을 입력하세요...'}
             />
           </div>
           <div>

@@ -27,6 +27,7 @@ interface ReviewQuestion {
   isCorrect: boolean;
   hasAudio?: boolean;
   audioText?: string;
+  scriptText?: string;
   passageText?: string;
   imageUrl?: string;
 }
@@ -348,7 +349,8 @@ export function QuestionReviewFull({
           explanation: wrong?.explanation,
           isCorrect: !isWrong,
           hasAudio: activeSection === 'Listening',
-          audioText: realQ.audioText || (activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined),
+          audioText: realQ.scriptText || realQ.audioText || undefined,
+          scriptText: realQ.scriptText,
           passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
         });
@@ -1028,7 +1030,7 @@ export function QuestionReviewFull({
             {activeSection === 'Listening' && (() => {
               const realQ = (currentSection?.questions || [])[currentQuestionIndex];
               const imageUrl = currentQuestion?.imageUrl || realQ?.imageUrl;
-              const transcript = realQ?.audioText || realQ?.transcript || currentQuestion?.audioText || currentQuestion?.text;
+              const transcript = realQ?.scriptText || realQ?.audioText || realQ?.transcript || currentQuestion?.audioText;
               const translation = realQ?.translation || realQ?.koreanTranslation;
               const keyWords: string[] = realQ?.keyWords || realQ?.vocabulary || [];
               const analysis = realQ?.analysis || realQ?.explanation || currentQuestion?.explanation;
@@ -1083,7 +1085,7 @@ export function QuestionReviewFull({
                     {/* Feature Tabs: Dictation / Key Words / Analysis / Practice */}
                     <div className="grid grid-cols-4 gap-2 mb-3">
                       {[
-                        { key: 'transcript', label: 'Dictation', icon: '🔊' },
+                        { key: 'transcript', label: 'Script', icon: '🔊' },
                         { key: 'keywords', label: 'Key Words', icon: '✨' },
                         { key: 'analysis', label: 'Analysis', icon: '📄' },
                         { key: 'translation', label: 'Translation', icon: '🌐' },
@@ -1112,7 +1114,7 @@ export function QuestionReviewFull({
                       <div className="bg-white rounded-lg border border-gray-200 p-4 animate-[fadeSlideUp_0.2s_ease-out]">
                         {listeningTab === 'transcript' && (
                           <>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">📝 Transcript</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">📝 Script</p>
                             <p className="text-sm italic leading-relaxed" style={{ color: themeColor }}>
                               {transcript || 'CMS에 등록된 스크립트가 없습니다.'}
                             </p>
