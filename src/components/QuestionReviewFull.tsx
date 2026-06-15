@@ -1222,18 +1222,32 @@ export function QuestionReviewFull({
                   )}
 
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <div className="flex flex-col gap-2 text-lg md:text-xl">
-                      <span className="text-gray-600">
-                        My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
-                          {currentQuestion?.userAnswer}
-                        </strong>
-                      </span>
-                      <span className="text-gray-600">
-                        Correct Answer: <strong className="text-emerald-600">
-                          {currentQuestion?.correctAnswer}
-                        </strong>
-                      </span>
-                    </div>
+                    {(() => {
+                      // Convert full-text answer to letter (A/B/C/D) using option index
+                      const toLetter = (ans: string | undefined) => {
+                        if (!ans) return '-';
+                        const opts = currentQuestion?.options || [];
+                        const idx = opts.findIndex(o => o === ans);
+                        if (idx >= 0) return String.fromCharCode(65 + idx);
+                        // Already a letter?
+                        if (/^[A-D]$/i.test(ans.trim())) return ans.trim().toUpperCase();
+                        return ans;
+                      };
+                      return (
+                        <div className="flex flex-col gap-2 text-lg md:text-xl">
+                          <span className="text-gray-600">
+                            My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
+                              {toLetter(currentQuestion?.userAnswer)}
+                            </strong>
+                          </span>
+                          <span className="text-gray-600">
+                            Correct Answer: <strong className="text-emerald-600">
+                              {toLetter(currentQuestion?.correctAnswer)}
+                            </strong>
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <button
                       onClick={() => toggleBookmark(currentQuestion?.id || '')}
                       className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
