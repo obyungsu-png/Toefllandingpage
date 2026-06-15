@@ -30,6 +30,7 @@ interface ReviewQuestion {
   scriptText?: string;
   passageText?: string;
   imageUrl?: string;
+  audioUrl?: string;
 }
 
 // Writing conversation data
@@ -73,6 +74,7 @@ interface SpeakingQuestion {
   showTextDefault: boolean;
   materialImage?: string;
   materialAudioDuration?: number;
+  audioUrl?: string;
   transcript?: string;
 }
 
@@ -351,6 +353,7 @@ export function QuestionReviewFull({
           hasAudio: activeSection === 'Listening',
           audioText: realQ.scriptText || realQ.audioText || undefined,
           scriptText: realQ.scriptText,
+          audioUrl: realQ.audioUrl,
           passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
         });
@@ -420,7 +423,8 @@ export function QuestionReviewFull({
           showTextDefault: !isInterview,
           materialImage: question.imageUrl || question.introImageUrl,
           materialAudioDuration: question.audioUrl ? 5 : undefined,
-          transcript: question.passageText || question.translationNote || question.questionText || question.text,
+          audioUrl: question.introAudioUrl || question.audioUrl,
+          transcript: question.passageText || question.scriptText || question.questionText || question.text,
         };
       })
     : [];
@@ -1054,33 +1058,13 @@ export function QuestionReviewFull({
                     )}
 
                     {/* Audio Player */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0"
-                        style={{ backgroundColor: themeColor }}
-                      >
-                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                          <span>0:{String(Math.floor(audioProgress / 20)).padStart(2, '0')}</span>
-                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{ width: `${audioProgress}%`, backgroundColor: themeColor }}
-                            />
-                          </div>
-                          <span>0:05</span>
-                        </div>
+                    {currentQuestion?.audioUrl ? (
+                      <audio controls src={currentQuestion.audioUrl} className="w-full h-10 mb-3" />
+                    ) : (
+                      <div className="mb-3 text-xs text-gray-400 italic px-1">
+                        CMS에 등록된 오디오가 없습니다.
                       </div>
-                      <button
-                        onClick={() => setPlaybackRate(playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1)}
-                        className="text-xs font-medium border border-gray-300 rounded-full px-2 py-0.5 text-gray-600 hover:bg-gray-100 transition-colors"
-                      >
-                        {playbackRate}x
-                      </button>
-                    </div>
+                    )}
 
                     {/* Feature Tabs: Dictation / Key Words / Analysis / Practice */}
                     <div className="grid grid-cols-4 gap-2 mb-3">
@@ -1562,20 +1546,11 @@ export function QuestionReviewFull({
                 </div>
 
                 {/* Question audio player */}
-                <div className="flex items-center gap-3 max-w-xl mx-auto">
-                  <button
-                    onClick={() => setSpeakingModelPlaying(!speakingModelPlaying)}
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-white shrink-0"
-                    style={{ backgroundColor: themeColor }}
-                  >
-                    {speakingModelPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                  </button>
-                  <span className="text-sm text-gray-500 w-10">0:00</span>
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${modelProgress}%`, backgroundColor: themeColor }} />
-                  </div>
-                  <span className="text-sm text-gray-500 w-10">0:{String(currentSpeakingQ.modelAudioDuration).padStart(2, '0')}</span>
-                </div>
+                {currentSpeakingQ.audioUrl ? (
+                  <audio controls src={currentSpeakingQ.audioUrl} className="w-full h-11 max-w-xl mx-auto block" />
+                ) : (
+                  <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
+                )}
 
                 {/* Script toggle */}
                 <div className="text-center mt-4">
