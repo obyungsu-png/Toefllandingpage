@@ -262,7 +262,16 @@ export function QuestionReviewFull({
     return match ? parseInt(match[1]) : null;
   })();
   
-  const currentTPOTest = tpoTests.find((test: any) => test.testNumber === tpoNumber);
+  // Find the matching test: by testNumber, or by exact testName match (covers Test/Training)
+  const currentTPOTest = tpoTests.find((test: any) =>
+    test.testNumber === tpoNumber ||
+    test.testName === result.testName ||
+    `${test.testType} ${test.testNumber}` === result.testName
+  ) || tpoTests.find((test: any) => test.testNumber === tpoNumber);
+
+  if (typeof window !== 'undefined') {
+    console.log('[Review] testName:', result.testName, '→ matched test:', currentTPOTest?.testName || currentTPOTest?.testNumber || 'NONE', '| tests available:', tpoTests.length);
+  }
 
   // Load speaking recordings once currentTPOTest is available
   useEffect(() => {
@@ -423,7 +432,7 @@ export function QuestionReviewFull({
           showTextDefault: !isInterview,
           materialImage: question.imageUrl || question.introImageUrl,
           materialAudioDuration: question.audioUrl ? 5 : undefined,
-          audioUrl: question.introAudioUrl || question.audioUrl,
+          audioUrl: question.audioUrl,
           transcript: question.passageText || question.scriptText || question.questionText || question.text,
         };
       })
@@ -1058,6 +1067,7 @@ export function QuestionReviewFull({
                     )}
 
                     {/* Audio Player */}
+                    {(() => { if (typeof window !== 'undefined') console.log('[Review] Listening Q', currentQuestion?.number, 'audioUrl:', currentQuestion?.audioUrl || 'NONE'); return null; })()}
                     {currentQuestion?.audioUrl ? (
                       <audio controls src={currentQuestion.audioUrl} className="w-full h-10 mb-3" />
                     ) : (
