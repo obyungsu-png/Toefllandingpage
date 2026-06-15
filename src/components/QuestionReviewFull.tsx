@@ -1283,8 +1283,8 @@ export function QuestionReviewFull({
           <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto">
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
-              <>
-                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+              <div className="w-full max-w-3xl mx-auto p-4 md:p-8">
+                <div className="bg-white">
                   <h2 className="text-2xl font-bold text-black mb-8 text-center">Make an appropriate sentence.</h2>
 
                   <div className="space-y-8 mt-6 px-2 md:px-8">
@@ -1356,28 +1356,21 @@ export function QuestionReviewFull({
                   </div>
                 </div>
 
-                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-gray-50">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Review Note</h3>
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-600 leading-relaxed">
-                    순서 맞추기 유형(1-10번)은 실제 Writing Build a Sentence 형식을 그대로 반영했습니다. 각 문항의 질문과 단어 묶음을 확인하면서 문장 구조를 복기해보세요.
-                  </div>
-
-                  {/* Nav buttons */}
-                  <div className="flex justify-between mt-8">
-                    <button
-                      onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-                      disabled={currentQuestionIndex === 0}
-                      className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
-                    >← Previous</button>
-                    <button
-                      onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
-                      disabled={currentQuestionIndex === totalQuestions - 1}
-                      className="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 transition-all"
-                      style={{ backgroundColor: themeColor }}
-                    >Next →</button>
-                  </div>
+                {/* Nav buttons */}
+                <div className="flex justify-between mt-10">
+                  <button
+                    onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
+                  >← Previous</button>
+                  <button
+                    onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
+                    disabled={currentQuestionIndex === totalQuestions - 1}
+                    className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 transition-all"
+                    style={{ backgroundColor: themeColor }}
+                  >Next →</button>
                 </div>
-              </>
+              </div>
             )}
 
             {/* ---- Writing 2: Writing an Email ---- */}
