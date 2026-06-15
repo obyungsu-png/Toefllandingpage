@@ -762,7 +762,7 @@ export function QuestionReviewFull({
         </div>
 
         {/* Module/Task Tabs */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center">
           <div className="flex gap-4">
             {(activeSection === 'Writing' ? [1, 2, 3] : [1, 2]).map(mod => (
               <button
@@ -781,9 +781,9 @@ export function QuestionReviewFull({
         </div>
 
         {/* Question Navigation + Stats */}
-        <div className="flex items-center justify-between mt-3">
+        <div className="relative flex items-center justify-center mt-3">
           {/* Question Pills */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 justify-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
               return (
@@ -850,7 +850,7 @@ export function QuestionReviewFull({
           </div>
 
           {/* Stats */}
-          <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 ml-4">
+          <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 absolute right-0">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
                 <span className="text-gray-500 text-xs">Score</span>
