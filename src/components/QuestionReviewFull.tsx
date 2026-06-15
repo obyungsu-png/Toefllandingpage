@@ -1377,37 +1377,34 @@ export function QuestionReviewFull({
             {activeModule === 2 && (
               <>
                 {/* Left: Prompt */}
-                <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-base text-gray-800 leading-relaxed mb-4">
-                    A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.
+                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-lg text-gray-800 leading-relaxed mb-4">
+                    {cmsEmailQ?.emailScenario || 'A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.'}
                   </p>
-                  <p className="text-base text-gray-800 font-bold mb-3">
-                    Write an email to the editor of the magazine. In your email, do the following.
+                  <p className="text-lg text-gray-800 font-bold mb-3">
+                    {cmsEmailQ?.emailInstruction || 'Write an email to the editor of the magazine. In your email, do the following.'}
                   </p>
                   <ul className="space-y-2 mb-4">
-                    <li className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                      <span className="text-base text-gray-800">Tell the editor what you like about the new magazine.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                      <span className="text-base text-gray-800">Describe the problem you experienced.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                      <span className="text-base text-gray-800">Ask about the status of your submissions.</span>
-                    </li>
+                    {(Array.isArray(cmsEmailQ?.emailBullets) && cmsEmailQ.emailBullets.length
+                      ? cmsEmailQ.emailBullets
+                      : ['Tell the editor what you like about the new magazine.', 'Describe the problem you experienced.', 'Ask about the status of your submissions.']
+                    ).map((bullet: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black mt-2.5 flex-shrink-0" />
+                        <span className="text-lg text-gray-800">{bullet}</span>
+                      </li>
+                    ))}
                   </ul>
-                  <p className="text-base text-gray-800">Write as much as you can and in complete sentences.</p>
+                  <p className="text-lg text-gray-800">Write as much as you can and in complete sentences.</p>
                 </div>
                 {/* Right: Email response area */}
-                <div className="md:w-2/3 p-4 md:p-8 overflow-auto bg-gray-50">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Your Response:</h3>
-                  <div className="mb-3 text-sm text-gray-700">
-                    <span className="font-bold">To:</span> editor@sunshinepoetymagazine.com
+                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-gray-50">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Your Response:</h3>
+                  <div className="mb-3 text-base text-gray-700">
+                    <span className="font-bold">To:</span> {cmsEmailQ?.emailTo || 'editor@sunshinepoetymagazine.com'}
                   </div>
-                  <div className="mb-5 text-sm text-gray-700">
-                    <span className="font-bold">Subject:</span> Problem using submission form
+                  <div className="mb-5 text-base text-gray-700">
+                    <span className="font-bold">Subject:</span> {cmsEmailQ?.emailSubject || 'Problem using submission form'}
                   </div>
                   <div className="bg-white border border-gray-300 rounded-lg p-4 min-h-48 text-sm text-gray-500 italic">
                     {result.wrongAnswers[0]?.userAnswer || '(No written response stored)'}
@@ -1528,138 +1525,116 @@ export function QuestionReviewFull({
 
         {/* ===== SPEAKING CONTENT ===== */}
         {activeSection === 'Speaking' && currentSpeakingQ && (
-          <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
-            {/* Left: Speaking Question */}
-            <div className="flex-1 min-w-0">
-              <>
-                <div
-                  key={currentSpeakingQ.id}
-                  className="animate-[fadeIn_0.2s_ease-out]"
-                >
-                  {/* Question header with bookmark */}
-                  <div className="flex items-center justify-between mb-6">
-                    <p className="text-sm text-gray-500">
-                      Question {currentQuestionIndex + 1} of {speakingQuestionCount}
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+            <div key={currentSpeakingQ.id} className="animate-[fadeIn_0.2s_ease-out]">
+              {/* Question header */}
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-base text-gray-500">
+                  Question {currentQuestionIndex + 1} of {speakingQuestionCount}
+                </p>
+                <span className="px-4 py-1.5 rounded-full text-sm font-bold text-white" style={{ backgroundColor: themeColor }}>
+                  {currentSpeakingQ.taskGroup}
+                </span>
+              </div>
+
+              {/* Prompt */}
+              <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-3">Prompt</p>
+                <p className="text-xl text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
+              </div>
+
+              {/* Reference image + question audio (실제 시험 화면 구조) */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 mb-6">
+                <div className="flex justify-center mb-5">
+                  <div className="w-72 h-72 rounded-xl border-2 border-gray-300 bg-white overflow-hidden flex items-center justify-center">
+                    {currentSpeakingQ.materialImage ? (
+                      <ImageWithFallback
+                        src={currentSpeakingQ.materialImage}
+                        alt="Speaking material"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Question audio player */}
+                <div className="flex items-center gap-3 max-w-xl mx-auto">
+                  <button
+                    onClick={() => setSpeakingModelPlaying(!speakingModelPlaying)}
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-white shrink-0"
+                    style={{ backgroundColor: themeColor }}
+                  >
+                    {speakingModelPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                  </button>
+                  <span className="text-sm text-gray-500 w-10">0:00</span>
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${modelProgress}%`, backgroundColor: themeColor }} />
+                  </div>
+                  <span className="text-sm text-gray-500 w-10">0:{String(currentSpeakingQ.modelAudioDuration).padStart(2, '0')}</span>
+                </div>
+
+                {/* Script toggle */}
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => setShowModelText(!showModelText)}
+                    className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    {showModelText ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <span>{showModelText ? 'Hide Script' : 'View Script'}</span>
+                  </button>
+                  {showModelText && currentSpeakingQ.transcript && (
+                    <p className="text-base text-gray-700 leading-relaxed mt-3 p-4 bg-white rounded-lg border border-gray-200 animate-[fadeIn_0.2s_ease-out]">
+                      {currentSpeakingQ.transcript}
                     </p>
-                    <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColor }}>
-                      {currentSpeakingQ.taskGroup}
-                    </span>
-                  </div>
+                  )}
+                </div>
+              </div>
 
-                  <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">Prompt</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{currentSpeakingQ.prompt}</p>
-                  </div>
-
-                  <div className="flex items-center justify-end mb-6">
-                    <button
-                      onClick={() => toggleBookmark(currentSpeakingQ.id)}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
-                    >
-                      {bookmarkedQuestions.has(currentSpeakingQ.id) ? (
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      ) : (
-                        <StarOff className="w-4 h-4" />
-                      )}
-                      <span>{bookmarkedQuestions.has(currentSpeakingQ.id) ? 'Bookmarked' : 'Bookmark'}</span>
-                    </button>
-                  </div>
-
-                  {/* Model Answer Card */}
-                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <ImageWithFallback
-                          src={currentSpeakingQ.voiceAvatar}
-                          alt="Model"
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColor }}>
-                          {currentSpeakingQ.modelLabel}
-                        </span>
+              {/* My Recording */}
+              {(() => {
+                const qNum = activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8;
+                const recUrl = speakingRecordings[String(qNum)];
+                return (
+                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 mb-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-full bg-blue-200 flex items-center justify-center">
+                        <Mic className="w-5 h-5 text-blue-600" />
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>Voice:</span>
-                        <ImageWithFallback
-                          src={currentSpeakingQ.voiceAvatar}
-                          alt={currentSpeakingQ.currentVoice}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                        <span className="font-medium text-gray-700">{currentSpeakingQ.currentVoice}</span>
-                        <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: themeColor }}>
-                          Switch
-                        </span>
-                      </div>
+                      <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-blue-500 text-white">
+                        My Recording — Q{qNum}
+                      </span>
                     </div>
-
-                    {/* Show/Hide text toggle */}
-                    <button
-                      onClick={() => setShowModelText(!showModelText)}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
-                    >
-                      {showModelText ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      <span>{showModelText ? 'Hide Text' : 'Show Text'}</span>
-                    </button>
-
-                    {showModelText && currentSpeakingQ.transcript && (
-                      <p
-                        className="text-sm text-gray-700 leading-relaxed mb-3 animate-[fadeIn_0.2s_ease-out]"
-                      >
-                        {currentSpeakingQ.transcript}
+                    {recUrl ? (
+                      <audio controls src={recUrl} className="w-full h-11" />
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">
+                        녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
                       </p>
                     )}
-
-                    {/* Model Audio Player */}
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setSpeakingModelPlaying(!speakingModelPlaying)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0"
-                        style={{ backgroundColor: themeColor }}
-                      >
-                        {speakingModelPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                      </button>
-                      <span className="text-xs text-gray-500 w-8">0:00</span>
-                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${modelProgress}%`, backgroundColor: themeColor }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-8">0:{String(currentSpeakingQ.modelAudioDuration).padStart(2, '0')}</span>
-                    </div>
                   </div>
+                );
+              })()}
 
-                  {/* My Recording Card */}
-                  {(() => {
-                    const qNum = activeModule === 1
-                      ? currentQuestionIndex + 1
-                      : currentQuestionIndex + 8;
-                    const recUrl = speakingRecordings[String(qNum)];
-                    return (
-                      <div className="bg-blue-50 rounded-xl border border-blue-200 p-5 mb-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
-                            <Mic className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
-                            My Recording — Q{qNum}
-                          </span>
-                        </div>
-                        {recUrl ? (
-                          <audio controls src={recUrl} className="w-full h-10" />
-                        ) : (
-                          <p className="text-xs text-gray-400 italic">
-                            녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </>
+              {/* Bookmark + Nav */}
+              <div className="flex items-center justify-end mb-4">
+                <button
+                  onClick={() => toggleBookmark(currentSpeakingQ.id)}
+                  className="flex items-center gap-1 text-base text-gray-500 hover:text-yellow-500 transition-colors"
+                >
+                  {bookmarkedQuestions.has(currentSpeakingQ.id) ? (
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                  ) : (
+                    <StarOff className="w-5 h-5" />
+                  )}
+                  <span>{bookmarkedQuestions.has(currentSpeakingQ.id) ? 'Bookmarked' : 'Bookmark'}</span>
+                </button>
+              </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex justify-between mt-4 pb-6">
+              <div className="flex justify-between pb-6">
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
@@ -1675,87 +1650,6 @@ export function QuestionReviewFull({
                 >
                   Next →
                 </button>
-              </div>
-            </div>
-
-            {/* Right Panel: Reference Material */}
-            <div className="w-full md:w-80 shrink-0">
-              <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                <h4 className="text-sm font-bold text-gray-800 mb-3">Reference Material:</h4>
-                <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-600">
-                  TPO Speaking structure verified: Listen and Speak 7 questions, Take an Interview 4 questions.
-                </div>
-                
-                {currentSpeakingQ.materialImage && (
-                  <div className="rounded-lg overflow-hidden mb-4 border border-gray-200">
-                    <ImageWithFallback
-                      src={currentSpeakingQ.materialImage}
-                      alt="Reference material"
-                      className="w-full h-40 object-cover"
-                    />
-                  </div>
-                )}
-
-                {/* Material Audio Player */}
-                {currentSpeakingQ.materialAudioDuration && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <button
-                      onClick={() => setSpeakingMaterialPlaying(!speakingMaterialPlaying)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0"
-                      style={{ backgroundColor: themeColor }}
-                    >
-                      {speakingMaterialPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
-                    </button>
-                    <span className="text-xs text-gray-500">0:00</span>
-                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${materialProgress}%`, backgroundColor: themeColor }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500">0:{String(currentSpeakingQ.materialAudioDuration).padStart(2, '0')}</span>
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowTranslation(!showTranslation)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
-                      showTranslation
-                        ? 'text-white border-transparent'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-                    }`}
-                    style={{ backgroundColor: showTranslation ? themeColor : undefined }}
-                  >
-                    Show Translation
-                  </button>
-                  <button
-                    onClick={() => setShowFullText(!showFullText)}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all flex items-center justify-center gap-1 ${
-                      showFullText
-                        ? 'text-white border-transparent'
-                        : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-                    }`}
-                    style={{ backgroundColor: showFullText ? themeColor : undefined }}
-                  >
-                    {showFullText ? 'Hide Text' : 'View Full Text'}
-                    {showFullText ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                </div>
-
-                {/* Full text content */}
-                <>
-                  {showFullText && currentSpeakingQ.transcript && (
-                    <div
-                      className="overflow-hidden mt-3 animate-[fadeSlideUp_0.2s_ease-out]"
-                    >
-                      <p className="text-sm text-gray-700 leading-relaxed p-3 bg-white rounded-lg border border-gray-200">
-                        {currentSpeakingQ.transcript}
-                      </p>
-                    </div>
-                  )}
-                </>
               </div>
             </div>
           </div>
