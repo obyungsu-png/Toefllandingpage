@@ -1278,7 +1278,7 @@ export function QuestionReviewFull({
 
         {/* ===== WRITING CONTENT ===== */}
         {activeSection === 'Writing' && (
-          <div className="flex-1 flex flex-col md:flex-row overflow-auto">
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto">
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
               <>
