@@ -318,7 +318,6 @@ export function QuestionReviewFull({
   const questions: ReviewQuestion[] = (() => {
     if (activeSection === 'Writing' || activeSection === 'Speaking') return [];
     const qs: ReviewQuestion[] = [];
-    const totalQ = result.totalQuestions; // Use actual total, not just correct count
     const wrongQs = result.wrongAnswers;
     const wrongIds = new Set(wrongQs.map(w => w.questionId));
     
@@ -337,9 +336,11 @@ export function QuestionReviewFull({
       : allRealQuestions;
     
     // For Reading Module 1, realQuestions are Q11-Q20 (FillBlanks excluded above)
-    // So realQuestions[0] = Q11, realQuestions[1] = Q12, etc.
-    // We need to offset: for i=10 (Q11), use realQuestions[0]; for i=0..9, no CMS question (FillBlanks handled separately)
     const readingM1Offset = (activeSection === 'Reading' && activeModule === 1) ? 10 : 0;
+
+    // Total = max(result total, CMS question count for this module) so all CMS questions show
+    const cmsCount = realQuestions.length + readingM1Offset;
+    const totalQ = Math.max(result.totalQuestions || 0, cmsCount);
 
     for (let i = 0; i < totalQ; i++) {
       const realQ = realQuestions[i - readingM1Offset];
@@ -1304,12 +1305,12 @@ export function QuestionReviewFull({
                           : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
-                      <div className="text-lg text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                      <div className="text-xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
                     </div>
 
                     {/* Avatar 2 + word chips */}
-                    <div className="flex items-start gap-4 md:gap-6">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center mt-1">
+                    <div className="flex items-center gap-4 md:gap-6">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar2ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar2ImageUrl} alt="A" className="w-full h-full object-cover" />
                           : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
@@ -1317,50 +1318,57 @@ export function QuestionReviewFull({
                       </div>
                       <div className="flex-1">
                         {/* Word bank */}
-                        <div className="flex flex-wrap gap-2 mb-6">
+                        <div className="flex flex-wrap gap-2">
                           {currentWritingBuildSentence.words.map((word, idx) => {
                             const isPrefilled = word.startsWith('[') && word.endsWith(']');
                             const display = word.replace(/^\[|\]$/g, '');
                             return isPrefilled
-                              ? <span key={idx} className="text-[15px] font-medium text-gray-700">{display}</span>
-                              : <span key={idx} className="px-3 py-1 border border-gray-300 rounded text-[15px] text-gray-700 bg-gray-50">{display}</span>;
+                              ? <span key={idx} className="text-xl font-medium text-gray-700">{display}</span>
+                              : <span key={idx} className="px-3 py-1.5 border border-gray-300 rounded text-xl text-gray-700 bg-gray-50">{display}</span>;
                           })}
                         </div>
-
-                        {/* Correct Answer */}
-                        {currentWritingBuildSentence.correctAnswer && (
-                          <div className="mb-3">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">정답</p>
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2.5 text-[15px] font-medium text-emerald-800">
-                              {currentWritingBuildSentence.correctAnswer}{currentWritingBuildSentence.sentenceEnding || '.'}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* User's answer from wrongAnswers */}
-                        {(() => {
-                          const qNum = currentQuestionIndex + 1;
-                          const wrongEntry = result.wrongAnswers.find(
-                            w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
-                          );
-                          const userAns = wrongEntry?.userAnswer;
-                          const isWrong = !!wrongEntry;
-                          if (!userAns && !currentWritingBuildSentence.correctAnswer) return null;
-                          return (
-                            <div>
-                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내 답</p>
-                              <div className={`rounded-lg px-4 py-2.5 text-[15px] border ${
-                                isWrong
-                                  ? 'bg-red-50 border-red-200 text-red-800'
-                                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                              }`}>
-                                {userAns || '(미제출)'}
-                              </div>
-                            </div>
-                          );
-                        })()}
                       </div>
                     </div>
+
+                  </div>
+
+                  {/* Correct Answer + My Answer (below conversation) */}
+                  <div className="mt-8 space-y-4 px-2 md:px-8">
+                    {currentWritingBuildSentence.correctAnswer && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">정답</p>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-lg font-medium text-emerald-800">
+                          {currentWritingBuildSentence.correctAnswer}{currentWritingBuildSentence.sentenceEnding || '.'}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* User's answer + grading */}
+                    {(() => {
+                      const qNum = currentQuestionIndex + 1;
+                      const wrongEntry = result.wrongAnswers.find(
+                        w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
+                      );
+                      const userAns = wrongEntry?.userAnswer;
+                      const isWrong = !!wrongEntry;
+                      return (
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">내 답</p>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {isWrong ? '✕ 오답' : '✓ 정답'}
+                            </span>
+                          </div>
+                          <div className={`rounded-lg px-4 py-3 text-lg border ${
+                            isWrong
+                              ? 'bg-red-50 border-red-200 text-red-800'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          }`}>
+                            {userAns || (isWrong ? '(미제출)' : `${currentWritingBuildSentence.correctAnswer}${currentWritingBuildSentence.sentenceEnding || '.'}`)}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1408,15 +1416,17 @@ export function QuestionReviewFull({
                 {/* Right: Email response area */}
                 <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-gray-50">
                   <h3 className="text-2xl font-bold text-gray-800 mb-4">Your Response:</h3>
-                  <div className="mb-3 text-base text-gray-700">
+                  <div className="mb-3 text-lg text-gray-700">
                     <span className="font-bold">To:</span> {cmsEmailQ?.emailTo || 'editor@sunshinepoetymagazine.com'}
                   </div>
-                  <div className="mb-5 text-base text-gray-700">
+                  <div className="mb-5 text-lg text-gray-700">
                     <span className="font-bold">Subject:</span> {cmsEmailQ?.emailSubject || 'Problem using submission form'}
                   </div>
-                  <div className="bg-white border border-gray-300 rounded-lg p-4 min-h-48 text-sm text-gray-500 italic">
-                    {result.wrongAnswers[0]?.userAnswer || '(No written response stored)'}
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
+                  <div className={`bg-white border rounded-lg p-5 min-h-48 text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 border-gray-300' : 'text-gray-400 italic border-gray-200'}`}>
+                    {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
+                  <p className="text-xs text-gray-400 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
                   <div className="flex justify-end mt-4">
                     <button
                       onClick={() => toggleBookmark('writing-email')}
@@ -1438,8 +1448,8 @@ export function QuestionReviewFull({
             {activeModule === 3 && (
               <>
                 {/* Left: Professor prompt */}
-                <div className="md:w-1/3 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-base text-gray-800 leading-relaxed mb-4 font-serif">
+                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-lg text-gray-800 leading-relaxed mb-4 font-serif">
                     {cmsAcademicQ?.questionText || "Your professor is teaching a class. Write a post responding to the professor's question."}
                   </p>
                   <div className="mb-4">
@@ -1473,7 +1483,7 @@ export function QuestionReviewFull({
                   </div>
                 </div>
                 {/* Right: Student responses + user response */}
-                <div className="md:w-2/3 p-4 md:p-8 overflow-auto bg-[#f8f7f3]">
+                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-[#f8f7f3]">
                   <div className="space-y-4 mb-6">
                     <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
                       <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
@@ -1484,8 +1494,8 @@ export function QuestionReviewFull({
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student1Name && <p className="font-bold text-sm text-gray-700 font-serif mb-1">{cmsAcademicQ.student1Name}</p>}
-                        <p className="text-base text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student1Name && <p className="font-bold text-base text-gray-700 font-serif mb-1">{cmsAcademicQ.student1Name}</p>}
+                        <p className="text-lg text-gray-800 leading-relaxed font-serif">
                           {cmsAcademicQ?.student1Message || '(No student 1 message in CMS)'}
                         </p>
                       </div>
@@ -1499,18 +1509,20 @@ export function QuestionReviewFull({
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student2Name && <p className="font-bold text-sm text-gray-700 font-serif mb-1">{cmsAcademicQ.student2Name}</p>}
-                        <p className="text-base text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student2Name && <p className="font-bold text-base text-gray-700 font-serif mb-1">{cmsAcademicQ.student2Name}</p>}
+                        <p className="text-lg text-gray-800 leading-relaxed font-serif">
                           {cmsAcademicQ?.student2Message || '(No student 2 message in CMS)'}
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#ddd4c4]">
-                    <h3 className="text-xl font-bold text-gray-800 mb-3 font-serif">Your Response:</h3>
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 min-h-40 text-sm text-gray-500 italic font-serif">
-                      {result.wrongAnswers[1]?.userAnswer || '(No written response stored)'}
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3 font-serif">Your Response:</h3>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
+                    <div className={`border rounded-xl p-5 min-h-40 text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 text-gray-800 border-gray-200' : 'bg-gray-50 text-gray-400 italic border-gray-200'}`}>
+                      {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
+                    <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
                     <div className="flex justify-end mt-4">
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
