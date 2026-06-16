@@ -1292,39 +1292,39 @@ export function QuestionReviewFull({
           <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto">
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
-              <div className="w-full max-w-3xl mx-auto p-4 md:p-8">
+              <div className="w-full max-w-5xl mx-auto p-6 md:p-12">
                 <div className="bg-white">
-                  <h2 className="text-2xl font-bold text-black mb-8 text-center">Make an appropriate sentence.</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-black mb-10 text-center">Make an appropriate sentence.</h2>
 
-                  <div className="space-y-8 mt-6 px-2 md:px-8">
+                  <div className="space-y-10 mt-8 px-2 md:px-8">
                     {/* Avatar 1 + prompt */}
-                    <div className="flex items-center gap-4 md:gap-6">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                    <div className="flex items-center gap-5 md:gap-8">
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar1ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar1ImageUrl} alt="Q" className="w-full h-full object-cover" />
-                          : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
-                      <div className="text-xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                      <div className="text-2xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
                     </div>
 
                     {/* Avatar 2 + word chips */}
-                    <div className="flex items-center gap-4 md:gap-6">
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                    <div className="flex items-center gap-5 md:gap-8">
+                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar2ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar2ImageUrl} alt="A" className="w-full h-full object-cover" />
-                          : <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
                       <div className="flex-1">
                         {/* Word bank */}
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5">
                           {currentWritingBuildSentence.words.map((word, idx) => {
                             const isPrefilled = word.startsWith('[') && word.endsWith(']');
                             const display = word.replace(/^\[|\]$/g, '');
                             return isPrefilled
-                              ? <span key={idx} className="text-xl font-medium text-gray-700">{display}</span>
-                              : <span key={idx} className="px-3 py-1.5 border border-gray-300 rounded text-xl text-gray-700 bg-gray-50">{display}</span>;
+                              ? <span key={idx} className="text-2xl font-medium text-gray-700">{display}</span>
+                              : <span key={idx} className="px-4 py-2 border border-gray-300 rounded-lg text-2xl text-gray-700 bg-gray-50">{display}</span>;
                           })}
                         </div>
                       </div>
@@ -1333,43 +1333,57 @@ export function QuestionReviewFull({
                   </div>
 
                   {/* Correct Answer + My Answer (below conversation) */}
-                  <div className="mt-8 space-y-4 px-2 md:px-8">
-                    {currentWritingBuildSentence.correctAnswer && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">정답</p>
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-lg font-medium text-emerald-800">
-                          {currentWritingBuildSentence.correctAnswer}{currentWritingBuildSentence.sentenceEnding || '.'}
-                        </div>
-                      </div>
-                    )}
+                  {(() => {
+                    // Reconstruct correct answer from words array if correctAnswer is missing
+                    const reconstructFromWords = () => {
+                      const parts = currentWritingBuildSentence.words.map(w =>
+                        w.startsWith('[') && w.endsWith(']') ? w.slice(1, -1) : w
+                      );
+                      return parts.join(' ');
+                    };
+                    const correctText = currentWritingBuildSentence.correctAnswer || reconstructFromWords();
+                    const ending = currentWritingBuildSentence.sentenceEnding || '.';
+                    const fullCorrect = `${correctText}${ending}`;
+                    return (
+                      <div className="mt-10 space-y-5 px-2 md:px-8">
+                        {correctText && (
+                          <div>
+                            <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">정답</p>
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 text-xl font-medium text-emerald-800">
+                              {fullCorrect}
+                            </div>
+                          </div>
+                        )}
 
-                    {/* User's answer + grading */}
-                    {(() => {
-                      const qNum = currentQuestionIndex + 1;
-                      const wrongEntry = result.wrongAnswers.find(
-                        w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
-                      );
-                      const userAns = wrongEntry?.userAnswer;
-                      const isWrong = !!wrongEntry;
-                      return (
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">내 답</p>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {isWrong ? '✕ 오답' : '✓ 정답'}
-                            </span>
-                          </div>
-                          <div className={`rounded-lg px-4 py-3 text-lg border ${
-                            isWrong
-                              ? 'bg-red-50 border-red-200 text-red-800'
-                              : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                          }`}>
-                            {userAns || (isWrong ? '(미제출)' : `${currentWritingBuildSentence.correctAnswer}${currentWritingBuildSentence.sentenceEnding || '.'}`)}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+                        {/* User's answer + grading */}
+                        {(() => {
+                          const qNum = currentQuestionIndex + 1;
+                          const wrongEntry = result.wrongAnswers.find(
+                            w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
+                          );
+                          const userAns = wrongEntry?.userAnswer;
+                          const isWrong = !!wrongEntry;
+                          return (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">내 답</p>
+                                <span className={`text-sm font-bold px-3 py-1 rounded-full ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                  {isWrong ? '✕ 오답' : '✓ 정답'}
+                                </span>
+                              </div>
+                              <div className={`rounded-xl px-5 py-4 text-xl border ${
+                                isWrong
+                                  ? 'bg-red-50 border-red-200 text-red-800'
+                                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                              }`}>
+                                {userAns || (isWrong ? '(미제출)' : fullCorrect)}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Nav buttons */}
