@@ -43,6 +43,7 @@ import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 import { HistorySection, TestResult } from './components/HistorySection';
 import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
+import { ToeflAiWidget } from './components/ToeflAiWidget';
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
 import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
@@ -7861,6 +7862,15 @@ function AppContent() {
           translationNote={activeReviewPanel.translationNote}
           analysisNote={activeReviewPanel.analysisNote}
           vocabularyNote={activeReviewPanel.vocabularyNote}
+        />
+      )}
+
+      {/* AI 튜터 위젯 — TPO/Test 리뷰 화면. 기존 우측 ReviewAssistantPanel과 겹치지 않게 좌측 하단 배치 */}
+      {activeReviewPanel && !reviewTrainingRequest && (
+        <ToeflAiWidget
+          position="left"
+          zIndex={86}
+          contextLabel={`${activeReviewPanel.section}${activeReviewPanel.questionType ? ' · ' + activeReviewPanel.questionType : ''}`}
         />
       )}
 

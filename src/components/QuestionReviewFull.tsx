@@ -4,6 +4,7 @@ import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown
 import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { loadRecordings } from '../utils/uploadRecording';
+import { ToeflAiWidget } from './ToeflAiWidget';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
@@ -1685,6 +1686,13 @@ export function QuestionReviewFull({
       <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-400 shrink-0">
         © {new Date().getFullYear()} TOEFL TPO Practice Platform. All Rights Reserved.
       </div>
+
+      {/* AI 튜터 위젯 — History 리뷰 결과 화면. 우측 하단 FAB + 슬라이드인 팝업 */}
+      <ToeflAiWidget
+        position="right"
+        zIndex={60}
+        contextLabel={`Review · ${activeSection} (Q${currentQuestionIndex + 1})`}
+      />
     </div>
   );
 }
