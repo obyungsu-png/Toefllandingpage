@@ -355,6 +355,7 @@ function AppContent() {
   const [activeSpeakingScreen, setActiveSpeakingScreen] = useState<SpeakingScreen | null>(null);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [reviewTrainingRequest, setReviewTrainingRequest] = useState<ReviewPatternTrainingRequest | null>(null);
+  const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
   const [currentListeningReviewScreen, setCurrentListeningReviewScreen] = useState<M1Screen | M2Screen | null>(null);
   const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
   const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
@@ -1845,7 +1846,7 @@ function AppContent() {
       : null);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string } | null = null;
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; questionData?: any } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
@@ -1870,6 +1871,7 @@ function AppContent() {
         translationNote: reviewQuestion?.translationNote,
         analysisNote: (reviewQuestion as any)?.analysisNote,
         vocabularyNote: reviewQuestion?.vocabularyNote,
+        questionData: reviewQuestion || undefined,
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
       const screen = currentListeningReviewScreen || activeListeningM2Screen || activeListeningM1Screen || 'intro';
@@ -1897,6 +1899,7 @@ function AppContent() {
           translationNote: reviewQuestion?.translationNote,
           analysisNote: (reviewQuestion as any)?.analysisNote,
           vocabularyNote: reviewQuestion?.vocabularyNote,
+          questionData: reviewQuestion || undefined,
         };
       }
     } else if (activeWritingScreen) {
@@ -1924,6 +1927,7 @@ function AppContent() {
           contentKey: `writing-${screen}`,
           questionType: writingQuestionType,
           difficulty: reviewQuestion?.difficulty,
+          questionData: reviewQuestion || undefined,
         };
       }
     } else if (activeSpeakingScreen) {
@@ -1943,6 +1947,7 @@ function AppContent() {
           contentKey: `speaking-${screen}`,
           questionType: speakingQuestionType,
           difficulty: reviewQuestion?.difficulty,
+          questionData: reviewQuestion || undefined,
         };
       }
     }
@@ -7859,18 +7864,23 @@ function AppContent() {
           questionType={activeReviewPanel.questionType}
           currentDifficulty={activeReviewPanel.difficulty}
           onStartTraining={setReviewTrainingRequest}
+          onOpenAiTutor={() => setIsAiTutorOpen(true)}
           translationNote={activeReviewPanel.translationNote}
           analysisNote={activeReviewPanel.analysisNote}
           vocabularyNote={activeReviewPanel.vocabularyNote}
         />
       )}
 
-      {/* AI 튜터 위젯 — TPO/Test 리뷰 화면. 기존 우측 ReviewAssistantPanel과 겹치지 않게 좌측 하단 배치 */}
+      {/* AI 튜터 위젯 — ReviewAssistantPanel의 오른쪽 통합 아이콘 바에서 열림 */}
       {activeReviewPanel && !reviewTrainingRequest && (
         <ToeflAiWidget
-          position="left"
+          position="right"
           zIndex={86}
+          showFab={false}
+          open={isAiTutorOpen}
+          onOpenChange={setIsAiTutorOpen}
           contextLabel={`${activeReviewPanel.section}${activeReviewPanel.questionType ? ' · ' + activeReviewPanel.questionType : ''}`}
+          questionData={activeReviewPanel.questionData}
         />
       )}
 

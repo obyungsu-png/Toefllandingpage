@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { X, Sparkles, Send, Bot, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,7 +11,7 @@ import { Input } from './ui/input';
 // ───────────────────────────────────────────────────────────────────────────
 const AI_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const AI_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
-const AI_MODEL = 'glm-z1-flash';
+const AI_MODEL = 'glm-5.2';
 
 const BASE_SYSTEM_PROMPT =
   '당신은 TOEFL 응시자(한국어 사용자)를 위한 전문 튜터 AI입니다. ' +
@@ -18,8 +19,185 @@ const BASE_SYSTEM_PROMPT =
   '에세이/스피킹 답안 피드백 등 TOEFL 학습 전반에 대해 한국어로 친절하고 정확하게 답변해주세요. ' +
   '답변은 간결하고 실용적이며, 가능하면 영어 예문과 한글 설명을 함께 제공해 주세요.';
 
+// ───────────────────────────────────────────────────────────────────────────
+//  출력 형식 지시 — 마크다운 기호 대신 <b>, <u> 태그 사용
+// ───────────────────────────────────────────────────────────────────────────
+const OUTPUT_FORMAT_INSTRUCTION =
+  '[출력 형식] 마크다운 기호(#, ##, ###, **, *, `, - 등)를 절대 사용하지 마세요. 대신 아래 규칙을 따르세요:\n' +
+  '1) 강조하거나 굵게 표시할 단어/핵심 용어는 <b>단어</b> 로 감싸세요.\n' +
+  '2) 항목명이나 라벨(예: 정답, 해설, 핵심 어휘, 오답 이유)은 <u>항목명</u> 으로 밑줄을 표시하세요.\n' +
+  '3) 목록은 줄 앞에 "1." "2." 같은 숫자나 "-" 기호 없이, 각 항목을 새 줄로 작성하세요.\n' +
+  '4) 제목/소제목은 별도 기호 없이 한 줄로 작성하면 됩니다.\n' +
+  '5) 줄바꿈으로만 구조를 표현하세요. 한국어로 친절하게 답변하세요.';
+
+// ───────────────────────────────────────────────────────────────────────────
+//  문제 데이터 → 컨텍스트 문자열 변환
+// ───────────────────────────────────────────────────────────────────────────
+function buildQuestionContext(questionData: any, contextLabel?: string): string {
+  if (!questionData || typeof questionData !== 'object') return '';
+  const q: any = { ...questionData };
+  // 노이즈(이미지/오디오 URL, id 등) 제거
+  const noisyKeys = [
+    'imageUrl', 'introImageUrl', 'audioUrl', 'avatar1ImageUrl', 'avatar2ImageUrl',
+    'voiceAvatar', 'materialImage', 'id', 'image', 'audio', 'materialAudioDuration',
+    'modelAudioDuration', 'userAudioDuration', 'currentVoice', 'modelLabel',
+    'showTextDefault', 'slotCount', 'sentenceEnding', 'words',
+  ];
+  noisyKeys.forEach((k) => { try { delete q[k]; } catch { /* noop */ } });
+
+  const parts: string[] = [];
+  const push = (label: string, val: any) => {
+    if (val === undefined || val === null || val === '') return;
+    if (Array.isArray(val)) {
+      if (val.length === 0) return;
+      const arr = val.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v)));
+      parts.push(`${label}: ${arr.join(' | ')}`);
+    } else if (typeof val === 'object') {
+      // 중첩 객체는 간단히 키=값 직렬화
+      const entries = Object.entries(val)
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : String(v)}`);
+      if (entries.length) parts.push(`${label}: ${entries.join(', ')}`);
+    } else {
+      parts.push(`${label}: ${String(val)}`);
+    }
+  };
+
+  push('영역', contextLabel);
+  push('문제 번호', q.questionNumber ?? q.number);
+  push('문제 유형', q.questionType);
+  push('난이도', q.difficulty);
+  push('문제/질문', q.text || q.questionText || q.prompt || q.question || q.stem);
+  push('지문', q.passageText || q.passage || q.readingPassage || q.passage_text);
+  push('선택지', q.options || q.choices || q.answers || q.answerOptions);
+  push('정답', q.correctAnswer || q.answer || q.correctAnswers || q.correct_answer);
+  push('빈칸 정답', q.blanks);
+  push('해설', q.explanation || q.analysisNote);
+  push('번역 노트', q.translationNote);
+  push('어휘 노트', q.vocabularyNote);
+  push('오디오 스크립트', q.audioText || q.transcript || q.scriptText || q.audio_text);
+  push('지문 제목', q.passageTitle || q.interstitialTitle);
+  // Writing - Write an Email
+  push('이메일 상황', q.emailScenario);
+  push('이메일 지시', q.emailInstruction);
+  push('이메일 조건', q.emailBullets);
+  push('이메일 제목/수신', [q.emailSubject, q.emailTo].filter(Boolean).join(' / '));
+  // Writing - Academic Discussion
+  push('교수 발언', q.professorName ? `${q.professorName}: ${q.professorMessage}` : q.professorMessage);
+  push('학생1 발언', q.student1Name ? `${q.student1Name}: ${q.student1Message}` : q.student1Message);
+  push('학생2 발언', q.student2Name ? `${q.student2Name}: ${q.student2Message}` : q.student2Message);
+
+  return parts.join('\n');
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+//  리치 텍스트 렌더링 — <b>, <u> 태그 + 잔류 마크다운을 색상/굵기/밑줄로 변환
+// ───────────────────────────────────────────────────────────────────────────
+function renderInline(text: string, keyPrefix: string): ReactNode[] {
+  const tokens: ReactNode[] = [];
+  // <b>..</b>, <u>..</u>, **..**, *..*, `..` 토큰 분할
+  const regex = /(<b>[\s\S]*?<\/b>)|(<u>[\s\S]*?<\/u>)|(\*\*[^*]+\*\*)|(\*[^*\n]+\*)|(`[^`]+`)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let i = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push(text.slice(lastIndex, match.index));
+    }
+    const m = match[0];
+    if (m.startsWith('<b>')) {
+      tokens.push(
+        <strong key={`${keyPrefix}-b-${i}`} style={{ color: '#0d9488', fontWeight: 700 }}>
+          {m.slice(3, -4)}
+        </strong>
+      );
+    } else if (m.startsWith('<u>')) {
+      tokens.push(
+        <span key={`${keyPrefix}-u-${i}`} style={{ textDecoration: 'underline', textDecorationColor: '#2563eb', color: '#1d4ed8', fontWeight: 600 }}>
+          {m.slice(3, -4)}
+        </span>
+      );
+    } else if (m.startsWith('**')) {
+      tokens.push(
+        <strong key={`${keyPrefix}-s-${i}`} style={{ color: '#0d9488', fontWeight: 700 }}>
+          {m.slice(2, -2)}
+        </strong>
+      );
+    } else if (m.startsWith('*')) {
+      tokens.push(
+        <em key={`${keyPrefix}-i-${i}`} style={{ fontStyle: 'italic', color: '#475569', fontWeight: 500 }}>
+          {m.slice(1, -1)}
+        </em>
+      );
+    } else if (m.startsWith('`')) {
+      tokens.push(
+        <code key={`${keyPrefix}-c-${i}`} style={{ background: '#e5e7eb', padding: '1px 5px', borderRadius: 4, fontSize: '13px', color: '#be185d' }}>
+          {m.slice(1, -1)}
+        </code>
+      );
+    }
+    lastIndex = regex.lastIndex;
+    i++;
+  }
+  if (lastIndex < text.length) tokens.push(text.slice(lastIndex));
+  return tokens;
+}
+
+function renderRichContent(content: string): ReactNode {
+  const lines = content.split('\n');
+  const blocks: ReactNode[] = [];
+  let listBuffer: ReactNode[] = [];
+  let listType: 'ol' | null = null;
+
+  const flushList = (key: string) => {
+    if (listBuffer.length > 0) {
+      blocks.push(
+        <ol key={key} style={{ margin: '4px 0', paddingLeft: '20px' }}>
+          {listBuffer.map((li, i) => (
+            <li key={i} style={{ marginBottom: 2 }}>{li}</li>
+          ))}
+        </ol>
+      );
+      listBuffer = [];
+      listType = null;
+    }
+  };
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    const hMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+    const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
+
+    if (hMatch) {
+      flushList(`l-${idx}`);
+      const level = hMatch[1].length;
+      const size = level <= 1 ? 17 : level === 2 ? 16 : 15;
+      blocks.push(
+        <div key={`h-${idx}`} style={{ fontWeight: 700, fontSize: size, color: '#0f766e', margin: '8px 0 4px' }}>
+          {renderInline(hMatch[2], `h-${idx}`)}
+        </div>
+      );
+    } else if (numMatch) {
+      listType = 'ol';
+      listBuffer.push(renderInline(numMatch[2], `n-${idx}`));
+    } else if (trimmed === '') {
+      flushList(`l-${idx}`);
+      blocks.push(<div key={`sp-${idx}`} style={{ height: 6 }} />);
+    } else {
+      flushList(`l-${idx}`);
+      blocks.push(
+        <div key={`p-${idx}`} style={{ margin: '2px 0' }}>
+          {renderInline(line, `p-${idx}`)}
+        </div>
+      );
+    }
+  });
+  flushList('l-final');
+  return <>{blocks}</>;
+}
+
 const suggestedQuestions = [
-  '이 문제의 정답 근거를 해설해 줘',
+  '이 문제를 분석해줘',
   '틀린 이유와 다음에 주의할 점은?',
   '이 지문의 핵심 어휘를 알려줘',
   '스피킹/라이팅 답안을 교정해 줘',
@@ -36,22 +214,35 @@ interface ToeflAiWidgetProps {
   position?: 'left' | 'right';
   /** 현재 리뷰 컨텍스트(예: "Reading · Read an Academic Passage") — 시스템 프롬프트에 주입 */
   contextLabel?: string;
+  /** 현재 보고 있는 문제 원본 데이터 — AI가 해당 문제에 대해 답변하도록 컨텍스트로 주입 */
+  questionData?: any;
   /** z-index 오버레이 충돌 회피용 */
   zIndex?: number;
+  /** 외부에서 열림 상태를 제어할 때 사용 (controlled). 미지정 시 내부 state 사용 */
+  open?: boolean;
+  /** 열림 상태 변화를 부모에게 알림 */
+  onOpenChange?: (open: boolean) => void;
+  /** 독립 FAB 버튼 표시 여부. 다른 패널에 통합할 때 false로 설정 */
+  showFab?: boolean;
 }
 
-export function ToeflAiWidget({ position = 'right', contextLabel, zIndex = 90 }: ToeflAiWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true }: ToeflAiWidgetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = (value: boolean) => {
+    setInternalOpen(value);
+    onOpenChange?.(value);
+  };
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // 컨텍스트가 바뀌면 대화 초기화
+  // 컨텍스트(또는 문제 데이터)가 바뀌면 대화 초기화
   useEffect(() => {
     setChatMessages([]);
     setChatInput('');
-  }, [contextLabel]);
+  }, [contextLabel, questionData]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,9 +265,34 @@ export function ToeflAiWidget({ position = 'right', contextLabel, zIndex = 90 }:
     setChatMessages(newHistory);
     setIsAiLoading(true);
 
-    const systemPrompt = contextLabel
-      ? `${BASE_SYSTEM_PROMPT}\n\n[현재 학습 컨텍스트] ${contextLabel}\n사용자가 보고 있는 문제/영역과 관련된 질문일 경우, 해당 컨텍스트를 반영하여 답변해 주세요.`
-      : BASE_SYSTEM_PROMPT;
+    const questionContext = buildQuestionContext(questionData, contextLabel);
+
+    const contextParts = [BASE_SYSTEM_PROMPT];
+    if (contextLabel) {
+      contextParts.push(`[현재 학습 컨텍스트] ${contextLabel}`);
+    }
+    if (questionContext) {
+      contextParts.push(
+        `[현재 사용자가 보고 있는 문제 데이터]\n${questionContext}\n\n` +
+          '★ 중요: 사용자가 지금 리뷰(복습) 화면에 있으며, 위 데이터가 화면에 표시된 문제입니다. ' +
+          '사용자의 질문은 위 문제와 관련된 것으로 간주하고, 반드시 이 문제 데이터(지문·질문·선택지·정답·해설·스크립트 등)를 먼저 분석한 뒤 답변하세요. ' +
+          '사용자가 "이 문제", "이거", "정답 근거", "틀린 이유", "해설해 줘", "왜 틀렸어" 등 모호하게 물어도 모두 위 문제를 가리키는 것입니다. ' +
+          '답변할 때는 문제의 구체적 내용(지문 문장, 선택지 텍스트, 정답 등)을 인용하여 근거를 명확히 제시하세요. ' +
+          '위 데이터에 없는 정보가 필요할 때만 보편적 TOEFL 지식을 보충하되, 문제 데이터가 항상 우선입니다.\n\n' +
+          '◆ "이 문제를 분석해줘"와 같은 분석 요청에는 다음 네 가지를 모두 포함하여 정성껏 풀어주세요:\n' +
+          '  1) 분석 — 문제 유형·난이도·요구사항, 이 문제가 무엇을 묻는지, 어떤 능력을 평가하는지\n' +
+          '  2) 정답 근거 — 정답이 왜 맞는지 지문/자료의 구체적 문장을 인용하여 단계적으로 증명\n' +
+          '  3) 해설 — 핵심 문장과 중요 어휘·표현을 한국어로 풀이하고 의미를 설명\n' +
+          '  4) 오답 분석 — 나머지 선택지가 각각 왜 틀렸는지 이유를 짚어주세요\n' +
+          '분석은 위 문제 데이터를 바탕으로 작성하고, 일반론만 나열하지 마세요.'
+      );
+    } else {
+      contextParts.push(
+        '현재 보고 있는 구체적 문제 데이터가 제공되지 않았으므로, 컨텍스트 라벨과 일반적 TOEFL 지식을 바탕으로 답변하세요.'
+      );
+    }
+    contextParts.push(OUTPUT_FORMAT_INSTRUCTION);
+    const systemPrompt = contextParts.join('\n\n');
 
     try {
       const response = await fetch(AI_API_ENDPOINT, {
@@ -253,19 +469,21 @@ export function ToeflAiWidget({ position = 'right', contextLabel, zIndex = 90 }:
         }
       `}</style>
 
-      {/* AI 도움 버튼 (이모티콘 FAB) */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`toefl-ai-fab fixed bottom-6 ${fabSideClass}`}
-        style={{ zIndex }}
-        aria-label="AI 튜터에게 물어보세요"
-        title="AI 튜터에게 물어보세요"
-      >
-        <span className="toefl-ai-fab-eyes">
-          <span></span>
-          <span></span>
-        </span>
-      </button>
+      {/* AI 도움 버튼 (이모티콘 FAB) — 통합 모드에서는 숨김 */}
+      {showFab && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className={`toefl-ai-fab fixed bottom-6 ${fabSideClass}`}
+          style={{ zIndex }}
+          aria-label="AI 튜터에게 물어보세요"
+          title="AI 튜터에게 물어보세요"
+        >
+          <span className="toefl-ai-fab-eyes">
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+      )}
 
       {/* AI 패널 (슬라이드인) */}
       {isOpen && (
@@ -323,14 +541,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, zIndex = 90 }:
                           {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                         </div>
                         <div className={`toefl-chat-bubble ${msg.role === 'user' ? 'user' : 'ai'}`}>
-                          {msg.role === 'assistant'
-                            ? cleanContent.split('\n').map((line, i) => (
-                                <span key={i}>
-                                  {line}
-                                  {i < cleanContent.split('\n').length - 1 && <br />}
-                                </span>
-                              ))
-                            : cleanContent}
+                          {msg.role === 'assistant' ? renderRichContent(cleanContent) : cleanContent}
                         </div>
                       </div>
                     );

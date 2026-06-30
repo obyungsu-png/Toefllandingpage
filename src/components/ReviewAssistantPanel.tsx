@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ClipboardList, FileText, Languages, MessageSquareText, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -18,6 +18,8 @@ interface ReviewAssistantPanelProps {
   questionType?: string;
   currentDifficulty?: ReviewDifficulty;
   onStartTraining: (request: ReviewPatternTrainingRequest) => void;
+  /** AI 튜터 패널 열기 (오른쪽 통합 아이콘 바의 AI 버튼) */
+  onOpenAiTutor?: () => void;
   // CMS question data for Translation, Analysis, Key Words
   translationNote?: string;
   analysisNote?: string;
@@ -32,12 +34,12 @@ interface DictationExercise {
 }
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
-  reading: ['Translation', 'Analysis', 'Key Words', 'Practice'],
-  listening: ['Dictation', 'Key Words', 'Analysis', 'Practice'],
+  reading: ['Practice'],
+  listening: ['Dictation', 'Practice'],
   'writing-basic': ['Practice'],
-  'writing-guided': ['Analysis', 'Expressions', 'Template', 'Practice'],
-  'speaking-repeat': ['Dictation', 'Key Words', 'Practice'],
-  'speaking-interview': ['Analysis', 'Expressions', 'Template', 'Practice'],
+  'writing-guided': ['Expressions', 'Template', 'Practice'],
+  'speaking-repeat': ['Dictation', 'Practice'],
+  'speaking-interview': ['Expressions', 'Template', 'Practice'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -198,7 +200,7 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, translationNote, analysisNote, vocabularyNote }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
@@ -462,6 +464,29 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             </button>
           );
         })}
+
+        {/* AI 튜터 버튼 — 오른쪽 통합 아이콘 바에 배치 */}
+        {onOpenAiTutor && (
+          <button
+            type="button"
+            title="AI 튜터"
+            onClick={onOpenAiTutor}
+            className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
+          >
+            <span
+              className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
+              style={{
+                background: 'radial-gradient(circle at 35% 30%, #cfe0ff 0%, #a9c6ff 35%, #8fd6ee 70%, #bfe9ff 100%)',
+                boxShadow: '0 6px 18px rgba(102, 126, 234, 0.30)',
+              }}
+            >
+              <Bot className="h-5 w-5" style={{ color: '#2d2d3a' }} />
+            </span>
+            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#667eea]">
+              AI 튜터
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ── Content panel: wide, above icons, below question/answers ── */}
