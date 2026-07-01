@@ -762,7 +762,7 @@ export function QuestionReviewFull({
             {sectionTabs.map(tab => (
               <button
                 key={tab}
-                className={`px-3 md:px-10 py-1.5 md:py-3 rounded-full text-xs md:text-lg font-bold transition-all cursor-pointer ${
+                className={`px-4 md:px-10 py-2 md:py-3 rounded-full text-sm md:text-lg font-bold transition-all cursor-pointer ${
                   activeSection === tab
                     ? 'text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800'
