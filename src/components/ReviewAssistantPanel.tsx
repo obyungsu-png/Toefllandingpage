@@ -421,7 +421,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const panelWidthClass = 'max-w-[34rem] sm:max-w-[42rem]';
 
   return (
-    <div className="fixed right-4 bottom-6 z-[85] flex flex-col items-end gap-2">
+    <div className="fixed right-4 bottom-20 md:bottom-6 z-[85] flex flex-col items-end gap-2">
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
       <div className="flex flex-row gap-3 shrink-0">
         {tabs.map((tab) => {

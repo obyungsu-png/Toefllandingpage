@@ -757,12 +757,12 @@ export function QuestionReviewFull({
         </button>
 
         {/* Section Tabs */}
-        <div className="flex justify-center mb-3">
-          <div className="inline-flex bg-gray-100 rounded-full p-1">
+        <div className="flex justify-center mb-2 md:mb-3">
+          <div className="inline-flex bg-gray-100 rounded-full p-0.5 md:p-1">
             {sectionTabs.map(tab => (
               <button
                 key={tab}
-                className={`px-6 md:px-10 py-3 rounded-full text-base md:text-lg font-bold transition-all cursor-pointer ${
+                className={`px-3 md:px-10 py-1.5 md:py-3 rounded-full text-xs md:text-lg font-bold transition-all cursor-pointer ${
                   activeSection === tab
                     ? 'text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-800'
@@ -780,12 +780,12 @@ export function QuestionReviewFull({
 
         {/* Module/Task Tabs */}
         <div className="flex items-center justify-center">
-          <div className="flex gap-4">
+          <div className="flex gap-3 md:gap-4">
             {(activeSection === 'Writing' ? [1, 2, 3] : [1, 2]).map(mod => (
               <button
                 key={mod}
                 onClick={() => { setActiveModule(mod); setCurrentQuestionIndex(0); }}
-                className={`text-lg md:text-xl font-medium pb-2 border-b-2 transition-all ${
+                className={`text-xs md:text-xl font-medium pb-1.5 md:pb-2 border-b-2 transition-all ${
                   activeModule === mod
                     ? 'border-gray-900 text-gray-900'
                     : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -807,7 +807,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-9 h-9 md:w-10 md:h-10 rounded-full text-sm md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
@@ -827,7 +827,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-9 h-9 md:w-10 md:h-10 rounded-full text-sm md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
@@ -848,7 +848,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-9 h-9 md:w-10 md:h-10 rounded-full text-sm md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : isCorrect
@@ -1162,24 +1162,24 @@ export function QuestionReviewFull({
                   key={currentQuestion?.id}
                   className="animate-[fadeIn_0.2s_ease-out]"
                 >
-                  <p className="text-base md:text-lg font-medium text-gray-500 mb-4">
+                  <p className="text-xs md:text-lg font-medium text-gray-500 mb-3 md:mb-4">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-2xl md:text-3xl font-semibold text-gray-900 mb-6 leading-relaxed">
+                  <p className="text-lg md:text-3xl font-semibold text-gray-900 mb-4 md:mb-6 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                     {currentQuestion?.options.map((option, idx) => {
                       const optionLetter = String.fromCharCode(65 + idx);
                       const isUserAnswer = option === currentQuestion.userAnswer || optionLetter === currentQuestion.userAnswer;
                       const isCorrectAnswer = option === currentQuestion.correctAnswer || optionLetter === currentQuestion.correctAnswer;
-                      
+
                       return (
                         <div
                           key={idx}
-                          className={`flex items-start gap-3 p-5 rounded-lg border transition-all ${
+                          className={`flex items-start gap-2 md:gap-3 p-3 md:p-5 rounded-lg border transition-all ${
                             isCorrectAnswer
                               ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1187,7 +1187,7 @@ export function QuestionReviewFull({
                               : 'bg-white border-gray-200'
                           }`}
                         >
-                          <span className={`text-lg md:text-xl font-bold mt-0.5 ${
+                          <span className={`text-sm md:text-xl font-bold mt-0.5 ${
                             isCorrectAnswer
                               ? 'text-emerald-600'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1196,7 +1196,7 @@ export function QuestionReviewFull({
                           }`}>
                             {optionLetter}.
                           </span>
-                          <span className={`text-lg md:text-xl flex-1 ${
+                          <span className={`text-sm md:text-xl flex-1 ${
                             isCorrectAnswer
                               ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1236,7 +1236,7 @@ export function QuestionReviewFull({
                         return ans;
                       };
                       return (
-                        <div className="flex flex-col gap-2 text-lg md:text-xl">
+                        <div className="flex flex-col gap-1.5 md:gap-2 text-sm md:text-xl">
                           <span className="text-gray-600">
                             My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
                               {toLetter(currentQuestion?.userAnswer)}
@@ -1266,18 +1266,18 @@ export function QuestionReviewFull({
               </>
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pb-6">
+              <div className="flex justify-between mt-6 md:mt-8 pb-6">
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 md:px-7 py-2.5 md:py-3.5 rounded-lg text-sm md:text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   ← Previous
                 </button>
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
                   disabled={currentQuestionIndex === totalQuestions - 1}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 md:px-7 py-2.5 md:py-3.5 rounded-lg text-sm md:text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   style={{ backgroundColor: themeColor }}
                 >
                   Next →

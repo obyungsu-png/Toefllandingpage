@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { X, Sparkles, Send, Bot, User } from 'lucide-react';
+import { ChevronLeft, Sparkles, Send, Bot, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -473,7 +473,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       {showFab && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`toefl-ai-fab fixed bottom-6 ${fabSideClass}`}
+          className={`toefl-ai-fab fixed bottom-20 md:bottom-6 ${fabSideClass}`}
           style={{ zIndex }}
           aria-label="AI 튜터에게 물어보세요"
           title="AI 튜터에게 물어보세요"
@@ -507,8 +507,12 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                   )}
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
-                <X className="w-5 h-5" />
+              <button
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                돌아가기
               </button>
             </div>
 

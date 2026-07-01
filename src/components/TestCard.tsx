@@ -181,7 +181,7 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
       </div>
 
       {/* Date Memo - read only, managed by admin via CMS */}
-      {dateMemo && (
+      {dateMemo && !/demonstration/i.test(dateMemo) && (
         <div className="px-3 sm:px-4 py-1.5 bg-[#f0fafa] border-b border-[#d1e8e8] flex items-center gap-1.5">
           <CalendarDays className="w-3 h-3 text-[#2d7a7c] shrink-0" />
           <span className="text-[10px] sm:text-xs text-[#2d7a7c] font-medium">{dateMemo}</span>
