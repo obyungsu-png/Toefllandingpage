@@ -333,24 +333,43 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         body: JSON.stringify(requestBody),
       });
 
+      // HTTP 상태 코드 체크
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('API 호출 횟수가 제한되었어요. 잠시 후(1~2분) 다시 시도해주세요.');
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('인증 오류가 발생했어요. API 키를 확인해주세요.');
+        }
+        const errText = await response.text().catch(() => '');
+        throw new Error(`서버 오류 (${response.status}): ${errText.slice(0, 100)}`);
+      }
+
       const data = await response.json();
 
-      if (data.choices && data.choices[0]) {
+      if (data.choices && data.choices[0] && data.choices[0].message?.content) {
         const reply = data.choices[0].message.content;
         setChatMessages((prev) => [
           ...prev,
           { role: 'assistant', content: reply, timestamp: Date.now() },
         ]);
+      } else if (data.error?.message) {
+        throw new Error(data.error.message);
       } else {
-        throw new Error('Invalid response');
+        console.warn('Unexpected API response:', JSON.stringify(data).slice(0, 300));
+        throw new Error('AI 응답을 처리할 수 없어요. 모델을 변경하거나 다시 시도해보세요.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('TOEFL AI error:', err);
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: '죄송해요, 일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요. 😢',
+          content: err.message.includes('429')
+            ? '⏳ API 사용량이 잠시 제한되었어요. 1~2분 뒤에 다시 시도하거나, Claude 모델로 전환해보세요.'
+            : err.message.includes('인증')
+            ? '🔑 인증 오류가 발생했어요. 관리자에게 문의해 주세요.'
+            : `죄송해요, 오류가 발생했어요: ${err.message}. 잠시 후 다시 시도해주세요.`,
           timestamp: Date.now(),
         },
       ]);

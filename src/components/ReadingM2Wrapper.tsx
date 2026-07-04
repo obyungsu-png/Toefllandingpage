@@ -106,20 +106,20 @@ function ArtWorkshopEmail() {
       <div className="border-2 md:border-4 border-[#1e6b73] rounded-lg overflow-hidden bg-white">
         <div className="bg-white">
           <div className="flex border-b-2 border-[#1e6b73]">
-            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">To:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">edward56L@dmail.com</div>
+            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">To:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">edward56L@dmail.com</div>
           </div>
           <div className="flex border-b-2 border-[#1e6b73]">
-            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">From:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">artforeveryone@dmail.com</div>
+            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">From:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">artforeveryone@dmail.com</div>
           </div>
           <div className="flex border-b-2 border-[#1e6b73]">
-            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Date:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">10/09/2025</div>
+            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">Date:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">10/09/2025</div>
           </div>
           <div className="flex border-b-2 border-[#1e6b73]">
-            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Subject:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">Art Workshop Reservation Confirmation</div>
+            <div className="bg-[#1e6b73] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">Subject:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">Art Workshop Reservation Confirmation</div>
           </div>
         </div>
         <div className="p-3 sm:p-6 bg-white border-2 sm:border-4 border-[#1e6b73] m-1 sm:m-2 max-h-[400px] overflow-y-auto">
@@ -142,16 +142,16 @@ function GrandOpeningEmail() {
       <div className="border-2 md:border-4 border-[#9d5a2f] rounded-lg overflow-hidden bg-white">
         <div className="bg-white">
           <div className="flex border-b-2 border-[#9d5a2f]">
-            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">To:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">nguyenbooklover@dmail.com</div>
+            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">To:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">nguyenbooklover@dmail.com</div>
           </div>
           <div className="flex border-b-2 border-[#9d5a2f]">
-            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">From:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">part.gymworkers@dmail.com</div>
+            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">From:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">part.gymworkers@dmail.com</div>
           </div>
           <div className="flex border-b-2 border-[#9d5a2f]">
-            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-sm sm:text-base">Subject:</div>
-            <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-sm sm:text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
+            <div className="bg-[#9d5a2f] text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-sm sm:text-base">Subject:</div>
+            <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-sm sm:text-base">You're Invited – Bring Friends & Family to Our Grand Opening!</div>
           </div>
         </div>
         <div className="p-3 md:p-5 bg-white border-2 md:border-4 border-[#9d5a2f] m-1 md:m-2 max-h-[450px] overflow-y-auto text-sm sm:text-base">

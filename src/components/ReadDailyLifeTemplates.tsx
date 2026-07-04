@@ -872,8 +872,8 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
           <div className="bg-white">
             {['to', 'from', 'date', 'subject'].map(key => f[key] ? (
               <div key={key} className="flex border-b-2" style={{ borderColor: c }}>
-                <div className="text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-2 w-16 sm:w-24 text-xs sm:text-sm capitalize" style={{ backgroundColor: c }}>{key}:</div>
-                <div className="flex-1 bg-white px-2 sm:px-4 py-2 font-['Inter',_sans-serif] text-xs sm:text-sm">{f[key]}</div>
+                <div className="text-white font-['Inter',_sans-serif] font-bold px-2 sm:px-4 py-1 sm:py-1.5 w-20 sm:w-[104px] text-xs sm:text-sm capitalize" style={{ backgroundColor: c }}>{key}:</div>
+                <div className="flex-1 bg-white px-2 sm:px-4 py-1 sm:py-1.5 font-['Inter',_sans-serif] text-xs sm:text-sm">{f[key]}</div>
               </div>
             ) : null)}
           </div>
