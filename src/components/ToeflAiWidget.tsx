@@ -14,7 +14,7 @@ const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
 const GLM_MODEL = 'glm-z1-flash';
 
 const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
-const CLAUDE_MODEL = 'claude-sonnet-5-20250514';
+const CLAUDE_MODEL = 'claude-sonnet-5';
 
 type AiModel = 'glm' | 'claude';
 

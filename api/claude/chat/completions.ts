@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         Authorization: `Bearer ${CLAUDE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-5-20250514',
+        model: model || 'claude-sonnet-5',
         messages,
         max_tokens: max_tokens || 2500,
         temperature: temperature || 0.7,

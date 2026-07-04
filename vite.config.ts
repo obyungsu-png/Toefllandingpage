@@ -111,5 +111,15 @@
     server: {
       port: 3000,
       open: true,
+      proxy: {
+        '/api/claude': {
+          target: 'https://apiclaude.cc',
+          changeOrigin: true,
+          rewrite: (path) => '/v1/chat/completions',
+          headers: {
+            Authorization: 'Bearer sk-7bb2bdf867bc08ac04bae5cd03dbc96351d08d6f0ec80716596a22b7a74b06f9',
+          },
+        },
+      },
     },
   });
