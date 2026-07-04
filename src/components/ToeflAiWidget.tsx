@@ -24,21 +24,10 @@ const MODEL_OPTIONS: { key: AiModel; label: string; modelId: string }[] = [
 ];
 
 const BASE_SYSTEM_PROMPT =
-  '당신은 TOEFL 응시자(한국어 사용자)를 위한 전문 튜터 AI입니다. ' +
-  'Reading / Listening / Speaking / Writing 영역의 문제 풀이, 오답 분석, 학습 전략, 어휘·문법, ' +
-  '에세이/스피킹 답안 피드백 등 TOEFL 학습 전반에 대해 한국어로 친절하고 정확하게 답변해주세요. ' +
-  '답변은 간결하고 실용적이며, 가능하면 영어 예문과 한글 설명을 함께 제공해 주세요.';
+  'TOEFL 튜터 AI. 한국어로 간결·실용적으로 답변. 영어 예문+한글 설명. Reading/Listening/Speaking/Writing 전문.';
 
-// ───────────────────────────────────────────────────────────────────────────
-//  출력 형식 지시 — 마크다운 기호 대신 <b>, <u> 태그 사용
-// ───────────────────────────────────────────────────────────────────────────
 const OUTPUT_FORMAT_INSTRUCTION =
-  '[출력 형식] 마크다운 기호(#, ##, ###, **, *, `, - 등)를 절대 사용하지 마세요. 대신 아래 규칙을 따르세요:\n' +
-  '1) 강조하거나 굵게 표시할 단어/핵심 용어는 <b>단어</b> 로 감싸세요.\n' +
-  '2) 항목명이나 라벨(예: 정답, 해설, 핵심 어휘, 오답 이유)은 <u>항목명</u> 으로 밑줄을 표시하세요.\n' +
-  '3) 목록은 줄 앞에 "1." "2." 같은 숫자나 "-" 기호 없이, 각 항목을 새 줄로 작성하세요.\n' +
-  '4) 제목/소제목은 별도 기호 없이 한 줄로 작성하면 됩니다.\n' +
-  '5) 줄바꿈으로만 구조를 표현하세요. 한국어로 친절하게 답변하세요.';
+  '[형식] 마크다운(#,**,*,`) 금지. <b>강조</b>, <u>항목명</u> 사용. 목록은 새 줄만. 줄바꿈으로 구조화.';
 
 // ───────────────────────────────────────────────────────────────────────────
 //  문제 데이터 → 컨텍스트 문자열 변환
@@ -246,6 +235,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -275,41 +265,23 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     ];
     setChatMessages(newHistory);
     setIsAiLoading(true);
+    setStreamingText('');
 
     const questionContext = buildQuestionContext(questionData, contextLabel);
 
     const contextParts = [BASE_SYSTEM_PROMPT];
-    if (contextLabel) {
-      contextParts.push(`[현재 학습 컨텍스트] ${contextLabel}`);
-    }
     if (questionContext) {
-      contextParts.push(
-        `[현재 사용자가 보고 있는 문제 데이터]\n${questionContext}\n\n` +
-          '★ 중요: 사용자가 지금 리뷰(복습) 화면에 있으며, 위 데이터가 화면에 표시된 문제입니다. ' +
-          '사용자의 질문은 위 문제와 관련된 것으로 간주하고, 반드시 이 문제 데이터(지문·질문·선택지·정답·해설·스크립트 등)를 먼저 분석한 뒤 답변하세요. ' +
-          '사용자가 "이 문제", "이거", "정답 근거", "틀린 이유", "해설해 줘", "왜 틀렸어" 등 모호하게 물어도 모두 위 문제를 가리키는 것입니다. ' +
-          '답변할 때는 문제의 구체적 내용(지문 문장, 선택지 텍스트, 정답 등)을 인용하여 근거를 명확히 제시하세요. ' +
-          '위 데이터에 없는 정보가 필요할 때만 보편적 TOEFL 지식을 보충하되, 문제 데이터가 항상 우선입니다.\n\n' +
-          '◆ "이 문제를 분석해줘"와 같은 분석 요청에는 다음 네 가지를 모두 포함하여 정성껏 풀어주세요:\n' +
-          '  1) 분석 — 문제 유형·난이도·요구사항, 이 문제가 무엇을 묻는지, 어떤 능력을 평가하는지\n' +
-          '  2) 정답 근거 — 정답이 왜 맞는지 지문/자료의 구체적 문장을 인용하여 단계적으로 증명\n' +
-          '  3) 해설 — 핵심 문장과 중요 어휘·표현을 한국어로 풀이하고 의미를 설명\n' +
-          '  4) 오답 분석 — 나머지 선택지가 각각 왜 틀렸는지 이유를 짚어주세요\n' +
-          '분석은 위 문제 데이터를 바탕으로 작성하고, 일반론만 나열하지 마세요.'
-      );
-    } else {
-      contextParts.push(
-        '현재 보고 있는 구체적 문제 데이터가 제공되지 않았으므로, 컨텍스트 라벨과 일반적 TOEFL 지식을 바탕으로 답변하세요.'
-      );
+      contextParts.push(`[문제]\n${questionContext}\n반드시 위 문제 데이터 기반으로 답변. 정답 근거·해설·오답 분석 포함.`);
+    } else if (contextLabel) {
+      contextParts.push(`[컨텍스트] ${contextLabel}`);
     }
     contextParts.push(OUTPUT_FORMAT_INSTRUCTION);
-    const systemPrompt = contextParts.join('\n\n');
+    const systemPrompt = contextParts.join('\n');
 
     try {
-      // 선택된 모델에 따라 엔드포인트/키/파라미터 결정
       const isClaude = selectedModel === 'claude';
       const endpoint = isClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
-      const apiKey = isClaude ? '' : GLM_API_KEY; // Claude는 프록시에서 키 처리
+      const apiKey = isClaude ? '' : GLM_API_KEY;
       const modelId = isClaude ? CLAUDE_MODEL : GLM_MODEL;
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -319,12 +291,12 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         model: modelId,
         messages: [
           { role: 'system', content: systemPrompt },
-          ...newHistory.slice(-4).map((msg) => ({ role: msg.role, content: msg.content })),
+          ...newHistory.slice(-2).map((msg) => ({ role: msg.role, content: msg.content })),
         ],
-        max_tokens: 2500,
-        temperature: 0.7,
+        max_tokens: 1200,
+        temperature: 0.6,
+        stream: true,
       };
-      // GLM 전용 파라미터
       if (!isClaude) requestBody.reasoning = { effort: 'low' };
 
       const response = await fetch(endpoint, {
@@ -333,32 +305,49 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         body: JSON.stringify(requestBody),
       });
 
-      // HTTP 상태 코드 체크
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('API 호출 횟수가 제한되었어요. 잠시 후(1~2분) 다시 시도해주세요.');
-        }
-        if (response.status === 401 || response.status === 403) {
-          throw new Error('인증 오류가 발생했어요. API 키를 확인해주세요.');
-        }
+        if (response.status === 429) throw new Error('API 호출 횟수가 제한되었어요. 잠시 후 다시 시도해주세요.');
+        if (response.status === 401 || response.status === 403) throw new Error('인증 오류가 발생했어요.');
         const errText = await response.text().catch(() => '');
         throw new Error(`서버 오류 (${response.status}): ${errText.slice(0, 100)}`);
       }
 
-      const data = await response.json();
+      // SSE 스트리밍 읽기
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('스트리밍 응답을 읽을 수 없어요.');
 
-      if (data.choices && data.choices[0] && data.choices[0].message?.content) {
-        const reply = data.choices[0].message.content;
-        setChatMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: reply, timestamp: Date.now() },
-        ]);
-      } else if (data.error?.message) {
-        throw new Error(data.error.message);
-      } else {
-        console.warn('Unexpected API response:', JSON.stringify(data).slice(0, 300));
-        throw new Error('AI 응답을 처리할 수 없어요. 모델을 변경하거나 다시 시도해보세요.');
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === 'data: [DONE]') continue;
+          if (!trimmed.startsWith('data: ')) continue;
+
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullText += delta;
+              setStreamingText(fullText);
+            }
+          } catch { /* 불완전 JSON — 다음 chunk에서 처리 */ }
+        }
       }
+
+      // 스트리밍 완료 → 최종 메시지 저장
+      const finalContent = fullText || 'AI 응답을 받지 못했어요. 다시 시도해주세요.';
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: finalContent, timestamp: Date.now() }]);
+      setStreamingText('');
     } catch (err: any) {
       console.error('TOEFL AI error:', err);
       setChatMessages((prev) => [
@@ -373,6 +362,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           timestamp: Date.now(),
         },
       ]);
+      setStreamingText('');
     } finally {
       setIsAiLoading(false);
     }
@@ -606,7 +596,17 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                       </div>
                     );
                   })}
-                  {isAiLoading && (
+                  {isAiLoading && streamingText && (
+                    <div className="flex gap-2 flex-row">
+                      <div className="toefl-ai-avatar">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                      <div className="toefl-chat-bubble ai">
+                        {renderRichContent(streamingText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim())}
+                      </div>
+                    </div>
+                  )}
+                  {isAiLoading && !streamingText && (
                     <div className="flex gap-2 flex-row">
                       <div className="toefl-ai-avatar animate-pulse">
                         <Bot className="w-4 h-4" />
