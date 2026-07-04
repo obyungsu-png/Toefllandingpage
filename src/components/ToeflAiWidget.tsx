@@ -5,13 +5,23 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 
 // ───────────────────────────────────────────────────────────────────────────
-//  API 설정 (참조: AiAssistantWidget.tsx)
-//  - GLM(zhipu) chat completions 엔드포인트 사용
-//  - API 키/모델만 교체하면 다른 LLM으로 쉽게 교체 가능
+//  API 설정 — GLM + Claude 듀블 모델 지원
+//  - GLM: 직접 호출 (CORS 허용)
+//  - Claude: Vercel 서버리스 프록시 경유 (CORS 차단 → 프록시 필요)
 // ───────────────────────────────────────────────────────────────────────────
-const AI_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const AI_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
-const AI_MODEL = 'glm-5.2';
+const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
+const GLM_MODEL = 'glm-z1-flash';
+
+const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
+const CLAUDE_MODEL = 'claude-sonnet-5-20250514';
+
+type AiModel = 'glm' | 'claude';
+
+const MODEL_OPTIONS: { key: AiModel; label: string; modelId: string }[] = [
+  { key: 'glm', label: 'GLM Flash', modelId: GLM_MODEL },
+  { key: 'claude', label: 'Claude Sonnet 5', modelId: CLAUDE_MODEL },
+];
 
 const BASE_SYSTEM_PROMPT =
   '당신은 TOEFL 응시자(한국어 사용자)를 위한 전문 튜터 AI입니다. ' +
@@ -236,6 +246,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // 컨텍스트(또는 문제 데이터)가 바뀌면 대화 초기화
@@ -295,21 +306,31 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     const systemPrompt = contextParts.join('\n\n');
 
     try {
-      const response = await fetch(AI_API_ENDPOINT, {
+      // 선택된 모델에 따라 엔드포인트/키/파라미터 결정
+      const isClaude = selectedModel === 'claude';
+      const endpoint = isClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
+      const apiKey = isClaude ? '' : GLM_API_KEY; // Claude는 프록시에서 키 처리
+      const modelId = isClaude ? CLAUDE_MODEL : GLM_MODEL;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+
+      const requestBody: Record<string, any> = {
+        model: modelId,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...newHistory.slice(-4).map((msg) => ({ role: msg.role, content: msg.content })),
+        ],
+        max_tokens: 2500,
+        temperature: 0.7,
+      };
+      // GLM 전용 파라미터
+      if (!isClaude) requestBody.reasoning = { effort: 'low' };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${AI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: AI_MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...newHistory.map((msg) => ({ role: msg.role, content: msg.content })),
-          ],
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
+        headers,
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -514,6 +535,22 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                 <ChevronLeft className="w-3.5 h-3.5" />
                 돌아가기
               </button>
+            </div>
+            {/* ── 모델 선택 바 ── */}
+            <div className="flex items-center gap-1.5 px-5 py-2 border-b bg-gray-50/80">
+              {MODEL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setSelectedModel(opt.key)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-150 ${
+                    selectedModel === opt.key
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'bg-white text-gray-500 border border-gray-200 hover:border-teal-400 hover:text-teal-600'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             {chatMessages.length === 0 ? (
