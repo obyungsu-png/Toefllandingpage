@@ -11,7 +11,7 @@ import { Input } from './ui/input';
 // ───────────────────────────────────────────────────────────────────────────
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
-const GLM_MODEL = 'glm-z1-flash';
+const GLM_MODEL = 'glm-4-flash';
 
 const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
 const CLAUDE_MODEL = 'claude-sonnet-5';
@@ -19,7 +19,7 @@ const CLAUDE_MODEL = 'claude-sonnet-5';
 type AiModel = 'glm' | 'claude';
 
 const MODEL_OPTIONS: { key: AiModel; label: string; modelId: string }[] = [
-  { key: 'glm', label: 'GLM Flash', modelId: GLM_MODEL },
+  { key: 'glm', label: 'GLM Flash (빠름)', modelId: GLM_MODEL },
   { key: 'claude', label: 'Claude Sonnet 5', modelId: CLAUDE_MODEL },
 ];
 
@@ -246,8 +246,8 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   }, [contextLabel, questionData]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isAiLoading]);
+    chatEndRef.current?.scrollIntoView({ behavior: isAiLoading ? 'auto' : 'smooth' });
+  }, [chatMessages, isAiLoading, streamingText]);
 
   const handleSuggestedQuestion = (q: string) => {
     setChatInput(q);
@@ -297,7 +297,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         temperature: 0.6,
         stream: true,
       };
-      if (!isClaude) requestBody.reasoning = { effort: 'low' };
+      // glm-4-flash는 reasoning 파라미터 없음
 
       const response = await fetch(endpoint, {
         method: 'POST',
