@@ -35,13 +35,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         model: model || 'claude-sonnet-5',
         messages,
-        max_tokens: max_tokens || 2500,
-        temperature: temperature || 0.7,
+        max_tokens: max_tokens || 1200,
+        temperature: temperature || 0.6,
         stream: stream || false,
       }),
     });
 
-    // 스트리밍 응답 처리
+    // 스트리밍 응답 — 청크 단위 실시간 파이핑
     if (stream) {
       res.writeHead(200, {
         ...CORS_HEADERS,
@@ -50,19 +50,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Connection': 'keep-alive',
       });
 
+      // HTTP status 에러는 SSE 내에 error 이벤트로 전송
+      if (!response.ok) {
+        const errText = await response.text();
+        res.write(`data: {"error":{"message":"${errText.slice(0, 200)}","type":"api_error","code":"${response.status}"}}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+        return;
+      }
+
       const reader = response.body;
       if (!reader) {
         res.end();
         return;
       }
 
-      // Node.js环境下需要使用不同的方式处理streaming
-      const text = await response.text();
-      const lines = text.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          res.write(line + '\n\n');
-        }
+      // 실시간 청크 파이핑 — 전체 대기 없이 즉시 전송
+      for await (const chunk of reader as AsyncIterable<Buffer>) {
+        res.write(chunk);
       }
       res.end();
       return;
