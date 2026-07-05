@@ -125,9 +125,14 @@ export function SpeakingSectionWrapper({
     if (testData) {
       sessionStorage.setItem('current_test_type', String(testData.testType || 'tpo').toLowerCase());
       sessionStorage.setItem('current_test_number', String(testData.testNumber || '0'));
-      sessionStorage.removeItem('speakingRecordings'); // clear previous session
     }
   }, [testData]);
+
+  // Clear previous session's recordings only ONCE when speaking section first mounts
+  useEffect(() => {
+    sessionStorage.removeItem('speakingRecordings');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-save when screen changes
   useEffect(() => {

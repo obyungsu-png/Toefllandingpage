@@ -290,46 +290,68 @@ function ensureSpace(pdf: jsPDF, y: number, required: number) {
 function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: number) {
   let y = ensureSpace(pdf, startY, 16);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(14);
+  pdf.setFontSize(17);
   pdf.text(section.sectionType, 14, y);
-  y += 8;
+  y += 9;
 
   if (section.instructions) {
     pdf.setFont('helvetica', 'italic');
-    pdf.setFontSize(9);
-    y = addWrappedText(pdf, section.instructions, 14, y, 182, 5);
-    y += 2;
+    pdf.setFontSize(11);
+    y = addWrappedText(pdf, section.instructions, 14, y, 182, 6);
+    y += 3;
   }
 
-  for (const question of section.questions) {
+  // Sort questions: Module 1 first, then Module 2
+  const isModule2 = (q: TPOQuestion) => (q.questionType || '').toLowerCase().includes('module 2');
+  const sortedQuestions = [...section.questions].sort((a, b) => {
+    const am = isModule2(a) ? 1 : 0;
+    const bm = isModule2(b) ? 1 : 0;
+    return am - bm;
+  });
+
+  let lastModule = -1;
+  for (const question of sortedQuestions) {
+    // Print module header when it changes
+    const mod = isModule2(question) ? 2 : 1;
+    if (mod !== lastModule) {
+      y = ensureSpace(pdf, y, 12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.setTextColor(20, 139, 143);
+      pdf.text(`Module ${mod}`, 14, y);
+      pdf.setTextColor(0, 0, 0);
+      y += 8;
+      lastModule = mod;
+    }
+
     const lines = questionLines(question, section, mode);
     for (const line of lines) {
-      y = ensureSpace(pdf, y, 10);
+      y = ensureSpace(pdf, y, 11);
       const x = line.indent ? 18 : 14;
       const maxW = line.indent ? 178 : 182;
 
       if (line.link) {
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
+        pdf.setFontSize(12);
         pdf.setTextColor(37, 99, 235);
         pdf.textWithLink(line.text, x, y, { url: line.link });
         pdf.setTextColor(0, 0, 0);
-        y += 5.5;
+        y += 6.5;
       } else if (line.heading) {
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(11);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 6);
+        pdf.setFontSize(13);
+        y = addWrappedText(pdf, line.text, x, y, maxW, 7);
       } else if (line.bold) {
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(10);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 5.5);
+        pdf.setFontSize(12);
+        y = addWrappedText(pdf, line.text, x, y, maxW, 6.5);
       } else {
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 5.5);
+        pdf.setFontSize(12);
+        y = addWrappedText(pdf, line.text, x, y, maxW, 6.5);
       }
     }
-    y += 4; // gap between questions
+    y += 5; // gap between questions
   }
 
   return y + 4;
