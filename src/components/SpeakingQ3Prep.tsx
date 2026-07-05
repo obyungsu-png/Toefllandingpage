@@ -25,7 +25,7 @@ export function SpeakingQ3Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       const audioTimer = setTimeout(() => {
         setIsAudioPlaying(true);
         audio.play().catch(() => {});
-      }, 1000);
+      }, 500);
 
       audio.onended = () => {
         setIsAudioPlaying(false);

@@ -44,8 +44,11 @@ export function SpeakingResponseTimer({
             />
           </svg>
 
-          <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-[0_1px_4px_rgba(20,139,143,0.18)]">
-            <svg className="h-4 w-4 text-[#148b8f]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <div className={`relative flex h-7 w-7 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(20,139,143,0.18)] ${isRecording ? 'bg-red-500' : 'bg-white'}`}>
+            {isRecording && (
+              <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-60" />
+            )}
+            <svg className={`relative h-4 w-4 ${isRecording ? 'text-white' : 'text-[#148b8f]'}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
             </svg>
@@ -55,6 +58,12 @@ export function SpeakingResponseTimer({
         <span className="text-[22px] font-bold leading-none tracking-[0.01em] text-[#10213a] sm:text-[28px]">
           {formatTime(timeRemaining)}
         </span>
+        {isRecording && (
+          <span className="flex items-center gap-1.5 text-red-500 font-bold text-sm">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            REC
+          </span>
+        )}
       </div>
     </div>
   );
