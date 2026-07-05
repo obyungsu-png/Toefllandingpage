@@ -1053,10 +1053,10 @@ export function QuestionReviewFull({
                 <div className="w-full md:w-1/2 order-1 md:order-none">
                   <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-5 h-full overflow-y-auto">
                     {/* Listening Image (CMS) — full face visible */}
-                    {imageUrl ? (
+                    {currentQuestion?.imageUrl ? (
                       <div className="rounded-lg overflow-hidden mb-4 border border-gray-200 bg-white flex items-center justify-center" style={{ maxHeight: '320px' }}>
                         <img
-                          src={imageUrl}
+                          src={currentQuestion.imageUrl}
                           alt="Listening question context"
                           className="w-full h-auto object-contain"
                           style={{ maxHeight: '320px' }}

@@ -38,7 +38,11 @@ export async function uploadRecording(
       .upload(path, blob, { upsert: false, contentType: blob.type });
 
     if (storageErr) {
-      console.error(`[uploadRecording] ❌ Storage 실패: ${storageErr.message}`);
+      if (storageErr.message?.includes('Bucket not found')) {
+        console.error(`[uploadRecording] ❌ 버킷 없음: Supabase Dashboard → Storage에서 'recordings' 버킷을 Public으로 생성하세요.`);
+      } else {
+        console.error(`[uploadRecording] ❌ Storage 실패: ${storageErr.message}`);
+      }
       return null;
     }
 
