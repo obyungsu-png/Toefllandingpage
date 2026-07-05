@@ -231,9 +231,93 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Shared Speaking question media sizing */
+.speaking-picture-card {
+  width: min(100%, 52.75rem);
+  margin-left: auto;
+  margin-right: auto;
+  overflow: hidden;
+  border: 1px solid rgb(243 244 246);
+  border-radius: 0.75rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.speaking-picture-media,
+.speaking-picture-placeholder {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.speaking-picture-media {
+  object-fit: cover;
+}
+
+.speaking-picture-placeholder {
+  background: rgb(243 244 246);
+}
+
+@media (max-width: 639px) {
+  .speaking-question-content {
+    padding: 1rem 0 1.25rem !important;
+    gap: 0.75rem !important;
+    row-gap: 0.75rem !important;
+  }
+
+  .speaking-question-card {
+    margin: 0 auto 0.25rem !important;
+    width: min(100% - 1rem, 24rem) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0.25rem 0.25rem 0.5rem !important;
+  }
+
+  .speaking-question-label {
+    display: none !important;
+  }
+
+  .speaking-question-text {
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    text-overflow: ellipsis !important;
+    font-size: clamp(1.55rem, 7vw, 2.05rem) !important;
+    line-height: 1.15 !important;
+    font-weight: 800 !important;
+    color: #111827 !important;
+  }
+
+  .speaking-picture-card {
+    width: min(100%, 24.25rem);
+    border-radius: 0;
+    border: 3px solid #000000;
+    box-shadow: none;
+  }
+
+  .speaking-timer-wrap {
+    padding-top: 0.75rem !important;
+  }
+}
+
 /* TOEFL Test Frame - Mobile responsive header, buttons & tabs
    Targets all reading question screens (h-16 teal headers) globally */
 @media (max-width: 639px) {
+  .bg-\[\#1e6b73\].h-12 [class*="tracking-wide"],
+  .bg-\[\#1e6b73\].h-16 [class*="tracking-wide"] {
+    white-space: nowrap !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+  }
+
+  .bg-\[\#1e6b73\].h-12,
+  .bg-\[\#1e6b73\].h-16 {
+    overflow: hidden !important;
+  }
+
   /* Header bar: shrink height & padding */
   .bg-\[\#1e6b73\].h-16 {
     height: 3rem !important;

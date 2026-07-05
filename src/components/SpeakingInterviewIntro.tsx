@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
 
@@ -115,6 +115,12 @@ export function SpeakingInterviewIntro({
           <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking</p>
           <p className="text-xs text-gray-500 leading-tight">Interview Introduction</p>
         </div>
+        {isReviewMode && (
+          <button onClick={onNext} className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors flex-shrink-0">
+            Next
+            <ChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Main Content */}

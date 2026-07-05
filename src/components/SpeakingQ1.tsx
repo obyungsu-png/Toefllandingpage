@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
-import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ1Props {
@@ -118,24 +117,30 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
             <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
           </svg>
         </button>
+        {isReviewMode && onNext && (
+          <button onClick={onNext} className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors flex-shrink-0">
+            Next
+            <ChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto px-4 py-4 space-y-4">
-        {/* Question Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
-          <p className="text-base text-gray-800 leading-relaxed text-center">
+      <div className="flex-1 overflow-auto px-3 py-2 sm:px-4 sm:py-4 space-y-2 sm:space-y-4">
+        {/* Question Card - compact on mobile */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2.5 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-teal-600 font-semibold mb-1 uppercase tracking-wider">Question</p>
+          <p className="text-xs sm:text-sm text-gray-800 leading-snug line-clamp-2 text-center">
             {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
           </p>
         </div>
 
-        {/* Image Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Image Card - square, constrained on mobile */}
+        <div className="speaking-picture-card mx-auto" style={{ maxWidth: 'min(100%, 20rem)' }}>
           <ImageWithFallback
             src={imageUrl || zooMapImage}
             alt="Zoo Map"
-            className="w-full aspect-square object-cover"
+            className="speaking-picture-media"
           />
         </div>
 
@@ -151,7 +156,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       </div>
 
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
-      <MobileQuestionNav onNext={onNext} onHome={onHome} />
     </div>
   );
 }

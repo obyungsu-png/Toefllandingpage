@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, Volume2, ChevronRight, Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
@@ -28,14 +29,19 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
   const recorder = useAudioRecorder();
   const [reviewPhase, setReviewPhase] = useState<"idle" | "listening" | "buttons" | "recording" | "done">('idle');
   const uploadedRef = useRef(false);
+  const reviewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isReviewPlaying, setIsReviewPlaying] = useState(false);
 
   // Review mode: play existing recording first, else normal flow
   useEffect(() => {
     if (isReviewMode && existingRecordingUrl) {
       setReviewPhase('listening');
       const audio = new Audio(existingRecordingUrl);
-      audio.onended = () => setReviewPhase('buttons');
-      audio.onerror = () => setReviewPhase('buttons');
+      reviewAudioRef.current = audio;
+      audio.onplay = () => setIsReviewPlaying(true);
+      audio.onpause = () => setIsReviewPlaying(false);
+      audio.onended = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
+      audio.onerror = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
       audio.play().catch(() => setReviewPhase('buttons'));
       return () => { audio.pause(); audio.src = ''; };
     }
@@ -49,6 +55,15 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const toggleReviewPlay = () => {
+    if (!reviewAudioRef.current) return;
+    if (isReviewPlaying) {
+      reviewAudioRef.current.pause();
+    } else {
+      reviewAudioRef.current.play().catch(() => {});
+    }
+  };
 
   useEffect(() => {
     if (isRecording && timeRemaining > 0) {
@@ -91,22 +106,28 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
           <p className="text-xs text-gray-500 leading-tight">Question 10 of 11</p>
         </div>
         {onVolumeClick && <button ref={volumeButtonRef} onClick={onVolumeClick} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 transition-colors"><Volume2 size={18} /></button>}
+        {isReviewMode && (
+          <button onClick={onNext} className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors flex-shrink-0">
+            Next
+            <ChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-auto px-4 py-4 space-y-4">
-        {/* Question Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
-          <p className="text-base text-gray-800 leading-relaxed">{questionText || 'Listen and repeat only once.'}</p>
+      <div className="flex-1 overflow-auto px-3 py-2 sm:px-4 sm:py-4 space-y-2 sm:space-y-4">
+        {/* Question Card - compact on mobile */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2.5 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-teal-600 font-semibold mb-1 uppercase tracking-wider">Question</p>
+          <p className="text-xs sm:text-sm text-gray-800 leading-snug line-clamp-2">{questionText || 'Listen and repeat only once.'}</p>
         </div>
 
-        {/* Image Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Image Card - square, constrained on mobile */}
+        <div className="speaking-picture-card mx-auto" style={{ maxWidth: 'min(100%, 20rem)' }}>
           {imageUrl ? (
-              <img src={imageUrl} alt="Question" className="w-full aspect-square object-cover" />
+              <img src={imageUrl} alt="Question" className="speaking-picture-media" />
             ) : (
-              <div className="w-full aspect-square flex items-center justify-center bg-gray-100">
+              <div className="speaking-picture-placeholder">
                 <svg className="w-12 h-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                 </svg>
@@ -126,18 +147,23 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
           </div>
         )}
 
-        {/* Listening indicator */}
+        {/* Listening indicator with Play/Pause control */}
         {isReviewMode && reviewPhase === 'listening' && (
-          <div className="flex items-center justify-center gap-2 py-2 text-teal-600 text-sm font-medium">
-            <svg className="w-5 h-5 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            Playing your recording...
+          <div className="flex items-center justify-center gap-2 py-2">
+            <button
+              onClick={toggleReviewPlay}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            >
+              {isReviewPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+            </button>
+            <span className="text-teal-600 text-sm font-medium">
+              {isReviewPlaying ? 'Playing your recording...' : 'Paused'}
+            </span>
           </div>
         )}
 
         {/* Timer */}
-        <div className="flex justify-center pt-2">
+        <div className="speaking-timer-wrap flex justify-center pt-2">
           <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 45} isRecording={isRecording} />
         </div>
       </div>

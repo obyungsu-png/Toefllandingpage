@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 
 interface SpeakingQ4PrepProps {
@@ -17,12 +17,14 @@ interface SpeakingQ4PrepProps {
 
 export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, isReviewMode = false}: SpeakingQ4PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
     let advanceTimer: ReturnType<typeof setTimeout>;
 
     if (audioUrl) {
       const audio = new Audio(audioUrl);
+      audioRef.current = audio;
       let ended = false;
 
       audio.onended = () => {
@@ -56,6 +58,17 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     }
   }, [audioUrl, isReviewMode, onNext]);
 
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+      setIsAudioPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsAudioPlaying(true);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Compact Header */}
@@ -67,6 +80,12 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           <p className="text-sm font-semibold text-gray-900 leading-tight truncate">Speaking</p>
           <p className="text-xs text-gray-500 leading-tight">Question 4 of 11</p>
         </div>
+        {isReviewMode && (
+          <button onClick={onNext} className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors flex-shrink-0">
+            Next
+            <ChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Main Content */}
@@ -79,22 +98,27 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
         {/* Image Card */}
         <div className="flex justify-center mb-4">
-          <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="speaking-picture-card">
               <ImageWithFallback
                 src={imageUrl || speakingImage}
                 alt="Speaking scene"
-                className="w-full aspect-square object-cover"
+                className="speaking-picture-media"
               />
             </div>
         </div>
 
-        {/* Audio playing indicator */}
-        {isAudioPlaying && (
-          <div className="flex items-center justify-center gap-3 text-teal-600">
-            <svg className="w-7 h-7 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            <span className="text-lg font-semibold">Playing audio...</span>
+        {/* Audio Play/Pause control */}
+        {audioUrl && (
+          <div className="flex items-center justify-center gap-3 py-2">
+            <button
+              onClick={togglePlay}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+            >
+              {isAudioPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+            </button>
+            <span className="text-teal-600 text-sm font-medium">
+              {isAudioPlaying ? 'Playing audio...' : 'Paused'}
+            </span>
           </div>
         )}
 

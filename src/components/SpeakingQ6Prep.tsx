@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/624a6b7dc8cfb75f631c120b5cf434ca61f8cecd.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -68,23 +68,29 @@ export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           <p className="text-sm font-semibold text-gray-900 leading-tight truncate">Speaking</p>
           <p className="text-xs text-gray-500 leading-tight">Question 6 of 11</p>
         </div>
+        {isReviewMode && (
+          <button onClick={onNext} className="flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors flex-shrink-0">
+            Next
+            <ChevronRight size={16} />
+          </button>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-auto px-4 py-6">
+      <div className="speaking-question-content flex-1 flex flex-col overflow-auto px-4 py-6">
         {/* Question Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
-          <p className="text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
-          <p className="text-base text-gray-800 leading-relaxed">{questionText || 'Listen and repeat only once.'}</p>
+        <div className="speaking-question-card bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+          <p className="speaking-question-label text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
+          <p className="speaking-question-text text-base text-gray-800 leading-relaxed">{questionText || 'Listen and repeat only once.'}</p>
         </div>
 
         {/* Image Card */}
         <div className="flex justify-center mb-4">
-          <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="speaking-picture-card">
               <ImageWithFallback
                 src={imageUrl || speakingImage}
                 alt="Speaking scene"
-                className="w-full aspect-square object-cover"
+                className="speaking-picture-media"
               />
             </div>
         </div>
