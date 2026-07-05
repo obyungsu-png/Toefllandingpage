@@ -34,7 +34,6 @@ export function WritingBuildSentenceBase({
   questionNumber,
   defaultQuestionText,
   defaultWords,
-  slotCount,
 }: WritingBuildSentenceBaseProps) {
   const sourceWords = words && words.length > 0 ? words : defaultWords;
   
@@ -50,6 +49,7 @@ export function WritingBuildSentenceBase({
   const [showTime, setShowTime] = useState<boolean>(true);
   const [draggedWord, setDraggedWord] = useState<string | null>(null);
   const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const draggedWordRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -104,17 +104,47 @@ export function WritingBuildSentenceBase({
 
   const canUseWord = (word: string) => getUsedCount(word) < draggableWords.filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
 
+  const placeWordInSlot = (word: string, index: number) => {
+    if (!word || sentenceSlots[index] !== null || !canUseWord(word)) {
+      return false;
+    }
+
+    const newSlots = [...sentenceSlots];
+    newSlots[index] = index === 0 ? capitalizeFirst(word) : word;
+    setSentenceSlots(newSlots);
+    setSelectedSlotIndex(null);
+    return true;
+  };
+
+  const getFirstEmptySlotIndex = () => sentenceSlots.findIndex(slot => slot === null);
+
+  const handleWordTap = (word: string) => {
+    if (!canUseWord(word)) {
+      return;
+    }
+
+    const targetIndex = selectedSlotIndex !== null && sentenceSlots[selectedSlotIndex] === null
+      ? selectedSlotIndex
+      : getFirstEmptySlotIndex();
+
+    if (targetIndex !== -1) {
+      placeWordInSlot(word, targetIndex);
+    }
+  };
+
   const handleSlotClick = (index: number) => {
     if (!sentenceSlots[index]) {
+      setSelectedSlotIndex(prev => (prev === index ? null : index));
       return;
     }
 
     const newSlots = [...sentenceSlots];
     newSlots[index] = null;
     setSentenceSlots(newSlots);
+    setSelectedSlotIndex(index);
   };
 
-  const getEmptySlotWidth = () => '120px';
+  const getEmptySlotWidth = () => 'clamp(72px, 24vw, 120px)';
 
   const handleDragStart = (e: React.DragEvent, word: string) => {
     if (!canUseWord(word)) {
@@ -150,15 +180,7 @@ export function WritingBuildSentenceBase({
     setDragOverSlotIndex(null);
 
     const droppedWord = draggedWordRef.current || draggedWord || e.dataTransfer.getData('text/plain');
-    if (!droppedWord || sentenceSlots[index] !== null || !canUseWord(droppedWord)) {
-      draggedWordRef.current = null;
-      setDraggedWord(null);
-      return;
-    }
-
-    const newSlots = [...sentenceSlots];
-    newSlots[index] = index === 0 ? capitalizeFirst(droppedWord) : droppedWord;
-    setSentenceSlots(newSlots);
+    placeWordInSlot(droppedWord, index);
     draggedWordRef.current = null;
     setDraggedWord(null);
   };
@@ -167,6 +189,26 @@ export function WritingBuildSentenceBase({
     draggedWordRef.current = null;
     setDraggedWord(null);
     setDragOverSlotIndex(null);
+  };
+
+  const getSlotHighlightClass = (index: number, hasWord: boolean) => {
+    if (dragOverSlotIndex === index && !hasWord) {
+      return 'bg-[#eef4f3] ring-2 ring-[#2a8a8d]/40';
+    }
+
+    if (selectedSlotIndex === index && !hasWord) {
+      return 'bg-[#eaf6f5] ring-2 ring-[#1e6b73]/45';
+    }
+
+    return '';
+  };
+
+  const getSlotBorderClass = (index: number, hasWord: boolean) => {
+    if ((dragOverSlotIndex === index || selectedSlotIndex === index) && !hasWord) {
+      return 'border-[#1e6b73]';
+    }
+
+    return 'border-gray-800';
   };
 
   return (
@@ -247,13 +289,13 @@ export function WritingBuildSentenceBase({
 
       <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-8 md:mb-16 text-center">
+          <h2 className="text-xl md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-6 md:mb-16 text-center">
             Make an appropriate sentence.
           </h2>
 
-          <div className="space-y-8 md:space-y-12 mt-16 md:mt-28 px-2 md:pl-12 md:pr-8">
+          <div className="space-y-8 md:space-y-12 mt-6 md:mt-28 px-1 md:pl-12 md:pr-8">
             <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
+              <div className="w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
                 {avatar1ImageUrl ? (
                   <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
                 ) : (
@@ -269,8 +311,8 @@ export function WritingBuildSentenceBase({
               </div>
             </div>
 
-            <div className="flex items-end gap-4 md:gap-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
+            <div className="flex items-start gap-3 md:items-end md:gap-6">
+              <div className="w-16 h-16 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mt-1 md:mt-0 md:mb-[-4px]">
                 {avatar2ImageUrl ? (
                   <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
                 ) : (
@@ -300,18 +342,19 @@ export function WritingBuildSentenceBase({
                       return (
                         <div
                           key={`slot-${si}`}
-                          onClick={() => word ? handleSlotClick(si) : undefined}
+                          onClick={() => handleSlotClick(si)}
                           onDragEnter={(e) => handleDragEnter(e, si)}
                           onDragOver={(e) => handleDragOver(e, si)}
                           onDragLeave={() => { if (dragOverSlotIndex === si) setDragOverSlotIndex(null); }}
                           onDrop={(e) => handleDrop(e, si)}
-                          className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
+                          className={`relative inline-flex min-h-[44px] flex-col justify-end rounded-sm transition-colors ${word ? 'cursor-pointer' : 'cursor-pointer'}`}
                           style={{ minWidth: word ? '0px' : getEmptySlotWidth(), width: word ? 'fit-content' : getEmptySlotWidth(), paddingBottom: '4px' }}
+                          aria-label={word ? `${word} 제거` : `${si + 1}번째 빈칸 선택`}
                         >
-                          <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
+                          <div className={`rounded-sm py-1.5 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-1.5 md:px-2'} ${getSlotHighlightClass(si, Boolean(word))}`}>
                             <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
                           </div>
-                          <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${getSlotBorderClass(si, Boolean(word))}`}></div>
                         </div>
                       );
                     });
@@ -330,13 +373,15 @@ export function WritingBuildSentenceBase({
                   <button
                     key={`${word}-${index}`}
                     type="button"
+                    onClick={() => handleWordTap(word)}
                     draggable={!isSelected}
                     onDragStart={(e) => handleDragStart(e, word)}
                     onDragEnd={handleDragEnd}
-                    className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
+                    disabled={isSelected}
+                    className={`rounded-md px-3 py-2 text-left transition-colors md:px-4 md:py-1.5 ${
                       isSelected
                         ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
-                        : 'bg-transparent text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
+                        : 'bg-[#fbfaf7] text-[#343434] cursor-pointer shadow-sm active:bg-[#eaf6f5] md:cursor-grab md:active:cursor-grabbing md:bg-transparent md:shadow-none md:hover:bg-[#faf7f0]'
                     }`}
                   >
                     <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
