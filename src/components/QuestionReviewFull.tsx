@@ -1044,7 +1044,6 @@ export function QuestionReviewFull({
             {/* Left Panel: Audio Player (for Listening) - Equal width 50% */}
             {activeSection === 'Listening' && (() => {
               const realQ = (currentSection?.questions || [])[currentQuestionIndex];
-              const imageUrl = currentQuestion?.imageUrl || realQ?.imageUrl;
               const transcript = realQ?.scriptText || realQ?.audioText || realQ?.transcript || currentQuestion?.audioText;
               const translation = realQ?.translation || realQ?.koreanTranslation;
               const keyWords: string[] = realQ?.keyWords || realQ?.vocabulary || [];
