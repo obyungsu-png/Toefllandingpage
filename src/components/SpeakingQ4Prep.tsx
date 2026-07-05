@@ -13,7 +13,7 @@ interface SpeakingQ4PrepProps {
   audioPlayDuration?: number;
 }
 
-export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, questionText, audioPlayDuration, audioUrl }: SpeakingQ4PrepProps) {
+export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl }: SpeakingQ4PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
