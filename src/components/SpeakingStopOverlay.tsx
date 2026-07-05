@@ -6,7 +6,7 @@ export function SpeakingStopOverlay({ isOpen }: SpeakingStopOverlayProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/38 px-4 pt-16 sm:pt-20">
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/38 px-4 pt-16 sm:pt-20">
       <div className="w-full max-w-[300px] rounded-[16px] bg-white px-5 py-4 shadow-[0_10px_28px_rgba(0,0,0,0.22)] sm:max-w-[420px] sm:rounded-[24px] sm:px-9 sm:py-8">
         <h2 className="text-sm font-semibold tracking-[-0.01em] text-[#3f454b] animate-pulse sm:text-xl">Stop Speaking</h2>
         <div className="mt-2 h-px bg-[#edf0f2] sm:mt-3" />

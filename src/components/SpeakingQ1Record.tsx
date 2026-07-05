@@ -121,6 +121,11 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const reRecordTimerRef = useRef<ReturnType<typeof setTimeout>>();
   
   const handleReRecord = () => {
+    // Stop current recording if active
+    if (isRecording) {
+      recorder.stopRecording();
+      setIsRecording(false);
+    }
     setReviewPhase('recording');
     clearTimeout(reRecordTimerRef.current);
     const delay = responseDelay ? responseDelay * 1000 : 2000;
@@ -174,7 +179,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
         </div>
 
         {/* Record / Skip buttons (review mode) */}
-        {isReviewMode && reviewPhase === 'buttons' && (
+        {isReviewMode && (reviewPhase === 'buttons' || reviewPhase === 'recording') && (
           <div className="flex gap-3">
             <button onClick={handleReRecord} className="flex-1 bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm">
               {existingRecordingUrl ? 'Re-record' : 'Record'}
