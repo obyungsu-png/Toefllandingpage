@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { MobileFooter } from './MobileFooter';
 
 interface WritingResultSummaryProps {
   onFinish: () => void;
@@ -138,19 +139,21 @@ export function WritingResultSummary({ onFinish, onHome, writingQuestions = [] }
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Header */}
       <div className="flex items-center gap-2 bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm">
-        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors" aria-label="Home">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 leading-tight">Writing Results</p>
           <p className="text-xs text-gray-500 leading-tight">Review your answers</p>
         </div>
-        <button
-          onClick={onFinish}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
-        >
-          Finish
-        </button>
+        {!isMobile && (
+          <button
+            onClick={onFinish}
+            className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
+          >
+            Finish
+          </button>
+        )}
       </div>
 
       {/* Score Summary Card */}
@@ -197,7 +200,7 @@ export function WritingResultSummary({ onFinish, onHome, writingQuestions = [] }
       )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto px-4 py-4">
+      <div className={`flex-1 overflow-auto px-4 py-4 ${isMobile ? 'pb-20' : ''}`}>
         <div className="mx-auto max-w-lg">
           {/* Desktop: show all */}
           {!isMobile ? (
@@ -221,12 +224,24 @@ export function WritingResultSummary({ onFinish, onHome, writingQuestions = [] }
         </div>
       </div>
 
-      {/* Bottom note */}
-      <div className="px-4 py-3 border-t border-gray-200 bg-white">
-        <p className="text-xs text-gray-400 text-center">
-          Results are also saved to your History for later review.
-        </p>
-      </div>
+      {/* Bottom note (desktop only) */}
+      {!isMobile && (
+        <div className="px-4 py-3 border-t border-gray-200 bg-white">
+          <p className="text-xs text-gray-400 text-center">
+            Results are also saved to your History for later review.
+          </p>
+        </div>
+      )}
+
+      {/* Mobile Footer with Finish */}
+      {isMobile && (
+        <MobileFooter
+          onNext={onFinish}
+          onHome={onHome}
+          showBack={false}
+          nextLabel="Finish"
+        />
+      )}
     </div>
   );
 }

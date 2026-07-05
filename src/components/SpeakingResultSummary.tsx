@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { TPOTest } from './ContentManagement';
 import { generateTestPdf } from '../utils/generateTestPdf';
+import { MobileFooter } from './MobileFooter';
 
 interface SpeakingResultSummaryProps {
   onFinish: () => void;
@@ -11,12 +12,17 @@ interface SpeakingResultSummaryProps {
 
 export function SpeakingResultSummary({ onFinish, onHome, testData, questions = [] }: SpeakingResultSummaryProps) {
   const [recordings, setRecordings] = useState<Record<string, string>>({});
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     try {
       const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
       setRecordings(stored);
     } catch {}
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleDownload = (mode: 'standard' | 'annotated') => {
@@ -58,22 +64,24 @@ export function SpeakingResultSummary({ onFinish, onHome, testData, questions = 
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
       {/* Compact Header */}
       <div className="flex items-center gap-2 bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm">
-        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors" aria-label="Home">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking Results</p>
           <p className="text-xs text-gray-500 leading-tight">Review your recordings</p>
         </div>
-        <button
-          onClick={onFinish}
-          className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
-        >
-          Finish
-        </button>
+        {!isMobile && (
+          <button
+            onClick={onFinish}
+            className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
+          >
+            Finish
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-auto px-4 py-6">
+      <div className={`flex-1 overflow-auto px-4 py-6 ${isMobile ? 'pb-24' : ''}`}>
         <div className="mx-auto max-w-lg space-y-5">
           {/* Title */}
           <div>
@@ -138,6 +146,16 @@ export function SpeakingResultSummary({ onFinish, onHome, testData, questions = 
           </div>
         </div>
       </div>
+
+      {/* Mobile Footer with Finish */}
+      {isMobile && (
+        <MobileFooter
+          onNext={onFinish}
+          onHome={onHome}
+          showBack={false}
+          nextLabel="Finish"
+        />
+      )}
     </div>
   );
 }
