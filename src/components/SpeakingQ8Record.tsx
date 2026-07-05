@@ -17,11 +17,12 @@ interface SpeakingQ8RecordProps {
   questionText?: string;
   responseDelay?: number;
   stopDuration?: number;
+  duration?: number;
   isReviewMode?: boolean;
   existingRecordingUrl?: string;
 }
 
-export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false, existingRecordingUrl }: SpeakingQ8RecordProps) {
+export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, existingRecordingUrl }: SpeakingQ8RecordProps) {
 
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
@@ -32,20 +33,25 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const reviewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isReviewPlaying, setIsReviewPlaying] = useState(false);
 
-  // Review mode: play existing recording first, else normal flow
+  // Review mode: play existing recording first when available, otherwise show choice buttons
   useEffect(() => {
-    if (isReviewMode && existingRecordingUrl) {
-      setReviewPhase('listening');
-      const audio = new Audio(existingRecordingUrl);
-      reviewAudioRef.current = audio;
-      audio.onplay = () => setIsReviewPlaying(true);
-      audio.onpause = () => setIsReviewPlaying(false);
-      audio.onended = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
-      audio.onerror = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
-      audio.play().catch(() => setReviewPhase('buttons'));
-      return () => { audio.pause(); audio.src = ''; };
+    if (isReviewMode) {
+      if (existingRecordingUrl) {
+        setReviewPhase('listening');
+        const audio = new Audio(existingRecordingUrl);
+        reviewAudioRef.current = audio;
+        audio.onplay = () => setIsReviewPlaying(true);
+        audio.onpause = () => setIsReviewPlaying(false);
+        audio.onended = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
+        audio.onerror = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
+        audio.play().catch(() => setReviewPhase('buttons'));
+        return () => { audio.pause(); audio.src = ''; };
+      }
+
+      setReviewPhase('buttons');
+      return;
     }
-    // Normal mode or review without existing recording: auto-start
+
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
       await playBeep();
@@ -85,6 +91,20 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
       return () => clearInterval(timer);
     }
   }, [isRecording, timeRemaining, onNext]);
+  const reRecordTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  
+  const handleReRecord = () => {
+    setReviewPhase('recording');
+    clearTimeout(reRecordTimerRef.current);
+    const delay = responseDelay ? responseDelay * 1000 : 2000;
+    reRecordTimerRef.current = setTimeout(async () => {
+      await playBeep();
+      setIsRecording(true);
+      recorder.startRecording();
+    }, delay);
+  };
+
+
 
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
@@ -135,14 +155,14 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             )}
         </div>
 
-        {/* Re-record / Keep buttons (review mode) */}
+        {/* Record / Skip buttons (review mode) */}
         {isReviewMode && reviewPhase === 'buttons' && (
           <div className="flex gap-3">
             <button onClick={handleReRecord} className="flex-1 bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm">
-              Re-record
+              {existingRecordingUrl ? 'Re-record' : 'Record'}
             </button>
             <button onClick={() => { setReviewPhase('done'); onNext(); }} className="flex-1 bg-white text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 border border-gray-200 transition-colors text-sm">
-              Keep
+              {existingRecordingUrl ? 'Keep' : 'Skip'}
             </button>
           </div>
         )}

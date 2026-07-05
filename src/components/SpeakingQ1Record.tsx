@@ -16,6 +16,7 @@ interface SpeakingQ1RecordProps {
   questionText?: string;  // text shown above the image
   responseDelay?: number; // seconds before recording starts (default 3)
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
+  duration?: number;
   audioUrl?: string;
   isReviewMode?: boolean;
   existingRecordingUrl?: string;
@@ -34,7 +35,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const reviewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isReviewPlaying, setIsReviewPlaying] = useState(false);
 
-  // Play the prompt audio first, THEN wait delay, THEN beep
+  // Play prompt audio in normal mode; review mode starts from existing playback or choice buttons
   useEffect(() => {
     let startTimer: ReturnType<typeof setTimeout>;
 
@@ -47,16 +48,19 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       }, delay);
     };
 
-    if (isReviewMode && existingRecordingUrl) {
-      // Review mode: play existing recording, then show buttons
-      setReviewPhase('listening');
-      const reviewAudio = new Audio(existingRecordingUrl);
-      reviewAudioRef.current = reviewAudio;
-      reviewAudio.onplay = () => setIsReviewPlaying(true);
-      reviewAudio.onpause = () => setIsReviewPlaying(false);
-      reviewAudio.onended = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
-      reviewAudio.onerror = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
-      reviewAudio.play().catch(() => setReviewPhase('buttons'));
+    if (isReviewMode) {
+      if (existingRecordingUrl) {
+        setReviewPhase('listening');
+        const reviewAudio = new Audio(existingRecordingUrl);
+        reviewAudioRef.current = reviewAudio;
+        reviewAudio.onplay = () => setIsReviewPlaying(true);
+        reviewAudio.onpause = () => setIsReviewPlaying(false);
+        reviewAudio.onended = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
+        reviewAudio.onerror = () => { setIsReviewPlaying(false); setReviewPhase('buttons'); };
+        reviewAudio.play().catch(() => setReviewPhase('buttons'));
+      } else {
+        setReviewPhase('buttons');
+      }
     } else if (audioUrl) {
       const audio = new Audio(audioUrl);
       promptAudioRef.current = audio;
@@ -169,14 +173,14 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
           <ImageWithFallback src={imageUrl || zooMapImage} alt="Speaking scene" className="speaking-picture-media" />
         </div>
 
-        {/* Re-record / Keep buttons (review mode) */}
+        {/* Record / Skip buttons (review mode) */}
         {isReviewMode && reviewPhase === 'buttons' && (
           <div className="flex gap-3">
             <button onClick={handleReRecord} className="flex-1 bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm">
-              Re-record
+              {existingRecordingUrl ? 'Re-record' : 'Record'}
             </button>
             <button onClick={() => { setReviewPhase('done'); onNext(); }} className="flex-1 bg-white text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 border border-gray-200 transition-colors text-sm">
-              Keep
+              {existingRecordingUrl ? 'Keep' : 'Skip'}
             </button>
           </div>
         )}
