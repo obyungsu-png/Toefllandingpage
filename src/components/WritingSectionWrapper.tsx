@@ -16,6 +16,7 @@ import { WritingEmailQ1 } from './WritingEmailQ1';
 import { WritingAcademicDiscussionIntro } from './WritingAcademicDiscussionIntro';
 import { WritingAcademicDiscussionQ2 } from './WritingAcademicDiscussionQ2';
 import { WritingEnd } from './WritingEnd';
+import { WritingResultSummary } from './WritingResultSummary';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 
@@ -31,7 +32,8 @@ export type WritingScreen =
   | 'bs-q6' | 'bs-q7' | 'bs-q8' | 'bs-q9' | 'bs-q10'
   | 'email-intro' | 'email-q1'
   | 'academic-intro' | 'academic-q2'
-  | 'end';
+  | 'end'
+  | 'result-summary';
 
 const WRITING_SCREEN_ORDER: WritingScreen[] = [
   'intro',
@@ -41,6 +43,7 @@ const WRITING_SCREEN_ORDER: WritingScreen[] = [
   'email-intro', 'email-q1',
   'academic-intro', 'academic-q2',
   'end',
+  'result-summary',
 ];
 
 interface WritingSectionWrapperProps {
@@ -324,7 +327,14 @@ export function WritingSectionWrapper({
           />
         );
       })()}
-      {screen === 'end' && <WritingEnd onNext={onComplete} onHome={onHome} />}
+      {screen === 'end' && <WritingEnd onNext={goNext} onHome={onHome} />}
+      {screen === 'result-summary' && (
+        <WritingResultSummary
+          onFinish={onComplete}
+          onHome={onHome}
+          writingQuestions={writingQuestions}
+        />
+      )}
     </>
   );
 }

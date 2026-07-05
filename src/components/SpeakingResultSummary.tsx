@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import type { TPOTest } from './ContentManagement';
 import { generateTestPdf } from '../utils/generateTestPdf';
 
-interface SpeakingEndSessionProps {
-  onHome: () => void;
+interface SpeakingResultSummaryProps {
   onFinish: () => void;
+  onHome: () => void;
   testData: TPOTest | null;
+  questions?: any[];
 }
 
-export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSessionProps) {
+export function SpeakingResultSummary({ onFinish, onHome, testData, questions = [] }: SpeakingResultSummaryProps) {
   const [recordings, setRecordings] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -26,23 +27,26 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
   const listenAndSpeakNums = Array.from({ length: 7 }, (_, i) => i + 1);
   const interviewNums = Array.from({ length: 4 }, (_, i) => i + 8);
   const hasAnyRecording = Object.keys(recordings).length > 0;
+
   const renderRecordingRows = (nums: number[]) => (
     <div className="space-y-3">
       {nums.map(n => {
         const src = recordings[String(n)];
+        const cmsQ = questions?.[n - 1];
         return (
-          <div key={n} className="flex items-center gap-4 rounded-xl bg-white border border-gray-200 px-4 py-3">
-            <span className="text-sm font-bold text-[#1e6b73] w-8 shrink-0">Q{n}</span>
-            {src ? (
-              <audio
-                controls
-                src={src}
-                className="flex-1 h-9"
-              />
-            ) : (
-              <div className="flex-1 h-9 rounded-full bg-gray-100 px-4 flex items-center text-sm text-gray-400">
-                No recording saved
-              </div>
+          <div key={n} className="rounded-xl bg-white border border-gray-200 px-4 py-3 space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-[#1e6b73] w-8 shrink-0">Q{n}</span>
+              {src ? (
+                <audio controls src={src} className="flex-1 h-9" />
+              ) : (
+                <div className="flex-1 h-9 rounded-full bg-gray-100 px-4 flex items-center text-sm text-gray-400">
+                  No recording saved
+                </div>
+              )}
+            </div>
+            {cmsQ?.questionText && (
+              <p className="text-xs text-gray-500 ml-11 line-clamp-2">{cmsQ.questionText}</p>
             )}
           </div>
         );
@@ -58,14 +62,14 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking</p>
-          <p className="text-xs text-gray-500 leading-tight">Session Complete</p>
+          <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking Results</p>
+          <p className="text-xs text-gray-500 leading-tight">Review your recordings</p>
         </div>
         <button
           onClick={onFinish}
           className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
         >
-          View Results
+          Finish
         </button>
       </div>
 
@@ -73,11 +77,15 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
         <div className="mx-auto max-w-lg space-y-5">
           {/* Title */}
           <div>
-            <h1 className="text-xl font-bold text-gray-900">End of Session</h1>
-            <p className="text-sm text-gray-500 mt-1">Your Speaking practice is complete. Review your recordings below.</p>
+            <h1 className="text-xl font-bold text-gray-900">Speaking Results</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {hasAnyRecording
+                ? `${Object.keys(recordings).length} of 11 recordings saved. Review them below.`
+                : 'No recordings saved yet.'}
+            </p>
           </div>
 
-          {/* ── Recordings Card ── */}
+          {/* Recordings Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
               <span className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
@@ -124,12 +132,10 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
             </div>
           </div>
 
-          {/* Retention notice */}
+          {/* Bottom note */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
-            Recordings are automatically deleted after <strong className="text-gray-700">30 days</strong> for privacy.
+            Results are also saved to your <strong className="text-gray-700">History</strong> for later review. Recordings are automatically deleted after 30 days.
           </div>
-
-          <p className="text-xs text-gray-400 text-center">You may now close this tab or select Finish.</p>
         </div>
       </div>
     </div>

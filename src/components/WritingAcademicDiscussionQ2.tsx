@@ -84,6 +84,13 @@ export function WritingAcademicDiscussionQ2({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Save answer to global window for result summary access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__writingDiscussionAnswer = response;
+    }
+  }, [response]);
+
   const handleNextClick = () => {
     setShowTimeDialog(true);
   };

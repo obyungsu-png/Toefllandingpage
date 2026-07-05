@@ -58,6 +58,13 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Save answer to global window for result summary access
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__writingEmailAnswer = emailBody;
+    }
+  }, [emailBody]);
+
   const handleNextClick = () => {
     setShowTimeDialog(true);
   };

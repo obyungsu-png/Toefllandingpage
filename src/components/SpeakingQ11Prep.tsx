@@ -33,7 +33,14 @@ export function SpeakingQ11Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
         setTimeout(() => { if (!isReviewMode) onNext(); }, 400);
       };
       audio.onerror = () => { if (!isReviewMode) onNext(); };
-      
+      return () => {
+        clearTimeout(startTimer);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+  }, [audioUrl, videoUrl, isReviewMode, onNext]);
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Compact Header */}

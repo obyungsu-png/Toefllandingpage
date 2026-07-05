@@ -1643,6 +1643,34 @@ function AppContent() {
       if (typeof window !== 'undefined') {
         (window as any).__writingBsAnswers = {};
       }
+
+      // Collect Email answer from window
+      const emailAnswer = (typeof window !== 'undefined' && (window as any).__writingEmailAnswer) || '';
+      if (emailAnswer) {
+        wrongAnswers.push({
+          questionId: 'writing-email-1',
+          questionText: 'Write an Email',
+          userAnswer: emailAnswer,
+          correctAnswer: '',
+        });
+      }
+      if (typeof window !== 'undefined') {
+        (window as any).__writingEmailAnswer = '';
+      }
+
+      // Collect Academic Discussion answer from window
+      const discussionAnswer = (typeof window !== 'undefined' && (window as any).__writingDiscussionAnswer) || '';
+      if (discussionAnswer) {
+        wrongAnswers.push({
+          questionId: 'writing-discussion-2',
+          questionText: 'Academic Discussion',
+          userAnswer: discussionAnswer,
+          correctAnswer: '',
+        });
+      }
+      if (typeof window !== 'undefined') {
+        (window as any).__writingDiscussionAnswer = '';
+      }
     }
 
     // Clear shared answers after saving

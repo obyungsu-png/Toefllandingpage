@@ -44,7 +44,18 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
       }, 400);
 
-      
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(advanceTimer);
+        if (!ended) {
+          ended = true;
+          audio.pause();
+          audio.src = '';
+        }
+      };
+    }
+  }, [audioUrl, isReviewMode, onNext]);
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Compact Header */}

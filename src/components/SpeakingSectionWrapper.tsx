@@ -26,6 +26,7 @@ import { SpeakingQ10Record } from './SpeakingQ10Record';
 import { SpeakingQ11Prep } from './SpeakingQ11Prep';
 import { SpeakingQ11Record } from './SpeakingQ11Record';
 import { SpeakingEndSession } from './SpeakingEndSession';
+import { SpeakingResultSummary } from './SpeakingResultSummary';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
@@ -52,7 +53,8 @@ export type SpeakingScreen =
   | 'q9-prep' | 'q9-record'
   | 'q10-prep' | 'q10-record'
   | 'q11-prep' | 'q11-record'
-  | 'end-session';
+  | 'end-session'
+  | 'result-summary';
 
 const SPEAKING_SCREEN_ORDER: SpeakingScreen[] = [
   'intro', 'listen-repeat-intro',
@@ -69,6 +71,7 @@ const SPEAKING_SCREEN_ORDER: SpeakingScreen[] = [
   'q10-prep', 'q10-record',
   'q11-prep', 'q11-record',
   'end-session',
+  'result-summary',
 ];
 
 interface SpeakingSectionWrapperProps {
@@ -283,7 +286,15 @@ export function SpeakingSectionWrapper({
       {screen === 'q10-record' && <SpeakingQ10Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(10)} imageUrl={getImageUrl(9)} questionText={getQuestionText(9)} responseDelay={getTiming(9).responseDelay} stopDuration={getTiming(9).stopDuration} duration={getDuration(9)} />}
       {screen === 'q11-prep' && <SpeakingQ11Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(10)} audioUrl={getAudioUrl(10)} videoUrl={getVideoUrl(10)} questionText={getQuestionText(10)} audioPlayDuration={getTiming(10).audioPlayDuration} />}
       {screen === 'q11-record' && <SpeakingQ11Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(11)} imageUrl={getImageUrl(10)} questionText={getQuestionText(10)} responseDelay={getTiming(10).responseDelay} stopDuration={getTiming(10).stopDuration} duration={getDuration(10)} />}
-      {screen === 'end-session' && <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />}
+      {screen === 'end-session' && <SpeakingEndSession onHome={onHome} onFinish={goNext} testData={testData} />}
+      {screen === 'result-summary' && (
+        <SpeakingResultSummary
+          onFinish={onComplete}
+          onHome={onHome}
+          testData={testData}
+          questions={sortedQuestions}
+        />
+      )}
 
       
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />

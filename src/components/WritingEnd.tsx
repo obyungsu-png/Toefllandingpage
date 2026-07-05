@@ -24,7 +24,7 @@ export function WritingEnd({ onNext, onHome }: WritingEndProps) {
           className="flex items-center gap-2 bg-white border-2 border-white rounded-lg px-6 py-2 hover:bg-gray-100 transition-colors"
           onClick={onNext}
         >
-          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
+          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">View Results</span>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
             <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
           </svg>
@@ -61,6 +61,7 @@ export function WritingEnd({ onNext, onHome }: WritingEndProps) {
           onNext={onNext}
           onHome={onHome}
           showBack={false}
+          nextLabel="View Results"
         />
       )}
     </div>
