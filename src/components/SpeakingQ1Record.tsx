@@ -70,7 +70,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => setShowStopOverlay(false), stopDuration ? stopDuration * 1000 : 3000);
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;

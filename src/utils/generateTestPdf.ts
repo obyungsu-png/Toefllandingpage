@@ -296,9 +296,13 @@ function questionLines(question: TPOQuestion, section: TPOSection, mode: PdfMode
 
 function addWrappedText(pdf: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 5.5) {
   if (!text?.trim()) return y;
-  const lines = pdf.splitTextToSize(text, maxWidth);
-  pdf.text(lines, x, y);
-  return y + lines.length * lineHeight;
+  const lines = pdf.splitTextToSize(text, maxWidth) as string[];
+  for (const line of lines) {
+    y = ensureSpace(pdf, y, lineHeight);
+    pdf.text(line, x, y);
+    y += lineHeight;
+  }
+  return y;
 }
 
 function ensureSpace(pdf: jsPDF, y: number, required: number) {
@@ -345,6 +349,7 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
     }
 
     const lines = questionLines(question, section, mode);
+    y = ensureSpace(pdf, y, Math.min(120, Math.max(24, lines.length * 7)));
     for (const line of lines) {
       y = ensureSpace(pdf, y, 11);
       const x = line.indent ? 18 : 14;

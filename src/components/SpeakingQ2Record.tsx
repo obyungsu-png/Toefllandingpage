@@ -45,7 +45,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => setShowStopOverlay(false), stopDuration ? stopDuration * 1000 : 3000);
+            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;
