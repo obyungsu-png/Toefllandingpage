@@ -74,7 +74,12 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
         setTimeout(() => onNext?.(), 500);
       };
 
-      setTimeout(() => window.speechSynthesis.speak(utterance), 500);
+      // Ensure speech synthesis is not paused
+      window.speechSynthesis.cancel();
+      setTimeout(() => {
+        window.speechSynthesis.cancel();
+        setTimeout(() => window.speechSynthesis.speak(utterance), 100);
+      }, 800);
 
       fallbackTimer = window.setTimeout(() => {
         if (!ttsEnded) { window.speechSynthesis.cancel(); onNext?.(); }
