@@ -46,7 +46,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+            setTimeout(() => setShowStopOverlay(false), stopDuration ? stopDuration * 1000 : 3000);
             return 0;
           }
           return prev - 1;
