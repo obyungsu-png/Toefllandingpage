@@ -44,7 +44,10 @@ export function SpeakingResponseTimer({
             />
           </svg>
 
-          <div className={`relative flex h-7 w-7 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(20,139,143,0.18)] ${isRecording ? 'bg-red-500' : 'bg-white'}`}>
+          <div
+            className={`relative flex h-7 w-7 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(20,139,143,0.18)] ${isRecording ? 'bg-red-500' : 'bg-white'}`}
+            style={isRecording ? { animation: 'recBlink 0.9s ease-in-out infinite' } : undefined}
+          >
             {isRecording && (
               <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-60" />
             )}
@@ -59,12 +62,19 @@ export function SpeakingResponseTimer({
           {formatTime(timeRemaining)}
         </span>
         {isRecording && (
-          <span className="flex items-center gap-1.5 text-red-500 font-bold text-sm">
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="flex items-center gap-1.5 text-red-500 font-bold text-sm" style={{ animation: 'recBlink 0.9s ease-in-out infinite' }}>
+            <span className="h-2 w-2 rounded-full bg-red-500" />
             REC
           </span>
         )}
       </div>
+
+      <style>{`
+        @keyframes recBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
+        }
+      `}</style>
     </div>
   );
 }
