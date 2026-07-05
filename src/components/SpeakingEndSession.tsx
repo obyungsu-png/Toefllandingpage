@@ -23,9 +23,32 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
     generateTestPdf(testData, mode);
   };
 
-  const questionNums = Object.keys(recordings)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const listenAndSpeakNums = Array.from({ length: 7 }, (_, i) => i + 1);
+  const interviewNums = Array.from({ length: 4 }, (_, i) => i + 8);
+  const hasAnyRecording = Object.keys(recordings).length > 0;
+  const renderRecordingRows = (nums: number[]) => (
+    <div className="space-y-3">
+      {nums.map(n => {
+        const src = recordings[String(n)];
+        return (
+          <div key={n} className="flex items-center gap-4 rounded-xl bg-white border border-gray-200 px-4 py-3">
+            <span className="text-sm font-bold text-[#1e6b73] w-8 shrink-0">Q{n}</span>
+            {src ? (
+              <audio
+                controls
+                src={src}
+                className="flex-1 h-9"
+              />
+            ) : (
+              <div className="flex-1 h-9 rounded-full bg-gray-100 px-4 flex items-center text-sm text-gray-400">
+                No recording saved
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
@@ -54,27 +77,23 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
             <div className="mt-8 space-y-6 text-[18px] leading-8 text-gray-700">
 
               {/* ── 녹음 재생 섹션 ── */}
-              {questionNums.length > 0 && (
-                <div className="rounded-2xl border border-[#1e6b73]/30 bg-[#f0fafa] px-5 py-5">
-                  <p className="text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
-                  <div className="space-y-3">
-                    {questionNums.map(n => (
-                      <div key={n} className="flex items-center gap-4 rounded-xl bg-white border border-gray-200 px-4 py-3">
-                        <span className="text-sm font-bold text-[#1e6b73] w-8 shrink-0">Q{n}</span>
-                        <audio
-                          controls
-                          src={recordings[String(n)]}
-                          className="flex-1 h-9"
-                        />
-                      </div>
-                    ))}
+              <div className="rounded-2xl border border-[#1e6b73]/30 bg-[#f0fafa] px-5 py-5">
+                <p className="text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-base font-semibold text-[#1e6b73] mb-3">Listen and Speak</p>
+                    {renderRecordingRows(listenAndSpeakNums)}
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-[#1e6b73] mb-3">Interview</p>
+                    {renderRecordingRows(interviewNums)}
                   </div>
                 </div>
-              )}
+              </div>
 
-              {questionNums.length === 0 && (
+              {!hasAnyRecording && (
                 <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-base text-gray-500">
-                  ℹ️ 녹음 파일이 없습니다. Supabase Storage에 <strong>recordings</strong> 버킷이 생성되어 있는지 확인해 주세요.
+                  ℹ️ 저장된 녹음 파일이 아직 없습니다. Supabase Storage에 <strong>recordings</strong> 버킷이 생성되어 있는지 확인해 주세요.
                 </div>
               )}
 

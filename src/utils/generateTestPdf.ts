@@ -25,6 +25,12 @@ function cleanFillBlanks(text: string) {
   return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => `${prefix}${answer}`);
 }
 
+function countFillBlanks(text?: string) {
+  if (!text) return 0;
+  return [...text.matchAll(/\[[^\]]+:(\d+)\]/g)]
+    .reduce((max, match) => Math.max(max, Number(match[1]) || 0), 0);
+}
+
 // ── Passage parsers ─────────────────────────────────────────────────────────
 
 // Reading Module 2: {"title":"...","passage":"...","questions":[...]}
@@ -93,7 +99,9 @@ function formatTemplatePassage(passageText: string): string[] | null {
 
 function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   const lines: PdfLine[] = [];
-  lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
+  const blankCount = countFillBlanks(question.questionText) || countFillBlanks(question.passageText);
+  const isFillBlankSet = question.questionNumber === 1 && blankCount >= 10;
+  lines.push({ text: isFillBlankSet ? `Q1-Q10  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // Module 2: passage stored as JSON {title, passage, questions:[]}
   if (question.passageText) {
@@ -115,6 +123,13 @@ function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
 
   if (question.passageTitle) lines.push({ text: question.passageTitle, bold: true });
   if (question.questionText) lines.push({ text: `Q: ${cleanFillBlanks(question.questionText)}` });
+
+  if (isFillBlankSet) {
+    lines.push({ text: 'Answer blanks:', bold: true });
+    Array.from({ length: 10 }, (_, i) => i + 1).forEach(n => {
+      lines.push({ text: `${n}. ______________________________`, indent: true });
+    });
+  }
 
   if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
   if (question.options?.length) {
