@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React
+import { Pause, Play } from 'lucide-react';, { useState, useEffect, useRef } from 'react';
 import { MobileFooter } from './MobileFooter';
 import { RadioOption } from './RadioOption';
 
@@ -38,12 +39,21 @@ export function ListeningM2Q11({ onBack, onNext, onHome, onVolumeClick, imageUrl
   }, [audioUrl]);
 
   const handlePlayAudio = () => {
-    if (!audioUrl || isPlaying) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    audio.play().then(() => setIsPlaying(true)).catch(() => {});
-    audio.onended = () => setIsPlaying(false);
+    if (!audioUrl) return;
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.onended = () => setIsPlaying(false);
+    }
   };
 
 

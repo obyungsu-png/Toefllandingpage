@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React
+import { Pause, Play } from 'lucide-react';, { useEffect, useRef, useState } from 'react';
 import { MobileFooter } from './MobileFooter';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
@@ -41,12 +42,21 @@ export function ListeningM2Conversation({ onBack, onNext, onHome, onVolumeClick,
   const canGoNext = !audioUrl || audioEnded;
 
   const handleReplay = () => {
-    if (!audioUrl || isPlaying) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    audio.play().then(() => setIsPlaying(true)).catch(() => {});
-    audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+    if (!audioUrl) return;
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+    }
   };
 
   return (
