@@ -1,6 +1,7 @@
 import { Volume2, ChevronLeft } from 'lucide-react';
 import { useEffect } from 'react';
 import { VolumeControl } from './VolumeControl';
+import { MobileQuestionNav } from './MobileQuestionNav';
 
 interface SpeakingListenRepeatIntroProps {
   onNext: () => void;
@@ -135,6 +136,11 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       {/* Volume Control Modal */}
       {isVolumeOpen && onVolumeClick && (
         <VolumeControl isOpen={isVolumeOpen} onClose={onVolumeClick} buttonRef={volumeButtonRef} />
+      )}
+
+      {/* Review mode navigation */}
+      {isReviewMode && onLogoClick && (
+        <MobileQuestionNav onNext={onNext} onHome={onLogoClick} hideBack />
       )}
     </div>
   );

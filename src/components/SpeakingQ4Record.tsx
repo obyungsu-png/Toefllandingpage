@@ -127,7 +127,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
             <button onClick={handleReRecord} className="flex-1 bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm">
               Re-record
             </button>
-            <button onClick={() => setReviewPhase('done')} className="flex-1 bg-white text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 border border-gray-200 transition-colors text-sm">
+            <button onClick={() => { setReviewPhase('done'); onNext(); }} className="flex-1 bg-white text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 border border-gray-200 transition-colors text-sm">
               Keep
             </button>
           </div>

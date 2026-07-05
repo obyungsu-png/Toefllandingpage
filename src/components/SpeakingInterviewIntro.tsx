@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
+import { MobileQuestionNav } from './MobileQuestionNav';
 
 interface SpeakingInterviewIntroProps {
   onNext: () => void;
@@ -149,6 +151,11 @@ export function SpeakingInterviewIntro({
       {/* Volume Control Modal */}
       {showVolumeControl && (
         <VolumeControl onClose={() => setShowVolumeControl(false)} />
+      )}
+
+      {/* Review mode navigation */}
+      {isReviewMode && onHome && (
+        <MobileQuestionNav onNext={onNext} onHome={onHome} hideBack />
       )}
     </div>
   );
