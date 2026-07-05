@@ -27,7 +27,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const uploadedRef = useRef(false);
 
   useEffect(() => {
-    const delay = responseDelay ? responseDelay * 1000 : 2500;
+    const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
       setIsRecording(true);
