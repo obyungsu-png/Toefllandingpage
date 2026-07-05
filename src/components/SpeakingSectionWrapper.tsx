@@ -30,6 +30,7 @@ import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 import { TPOQuestion, TPOTest } from './ContentManagement';
+import { loadRecordings } from '../utils/uploadRecording';
 
 // ============================================================================
 // Speaking Section - All Screens Wrapper
@@ -91,6 +92,7 @@ export function SpeakingSectionWrapper({
 }: SpeakingSectionWrapperProps) {
   const [screen, setScreen] = useState<SpeakingScreen>(initialScreen);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
+  const [existingRecordings, setExistingRecordings] = useState<Record<string, string>>({});
 
   const sortedQuestions = useMemo(() => {
     return [...questions].sort((a, b) => {
@@ -135,6 +137,17 @@ export function SpeakingSectionWrapper({
     sessionStorage.removeItem('speakingRecordings');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Review mode: load existing recordings from Supabase
+  useEffect(() => {
+    if (isReviewMode && testData) {
+      const testType = String(testData.testType || 'tpo').toLowerCase();
+      const testNumber = Number(testData.testNumber || 0);
+      loadRecordings(testType, testNumber).then(urls => {
+        setExistingRecordings(urls);
+      }).catch(() => {});
+    }
+  }, [isReviewMode, testData]);
 
   // Auto-save when screen changes
   useEffect(() => {
@@ -227,6 +240,9 @@ export function SpeakingSectionWrapper({
   const getDuration = (questionIndex: number) => {
     return sortedQuestions[questionIndex]?.duration;
   };
+  const getRecordingUrl = (questionNumber: number) => {
+    return existingRecordings[String(questionNumber)] || undefined;
+  };
 
   return (
     <>
@@ -244,29 +260,29 @@ export function SpeakingSectionWrapper({
         <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />
       )}
       {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(0)} introAudioUrl={getIntroAudioUrl(0)} questionText={getQuestionText(0)} />}
-      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} questionText={getQuestionText(0)} responseDelay={getTiming(0).responseDelay} stopDuration={getTiming(0).stopDuration} duration={getDuration(0)} />}
+      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} existingRecordingUrl={getRecordingUrl(1)} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} questionText={getQuestionText(0)} responseDelay={getTiming(0).responseDelay} stopDuration={getTiming(0).stopDuration} duration={getDuration(0)} />}
       {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(1)} audioUrl={getAudioUrl(1)} questionText={getQuestionText(1)} audioPlayDuration={getTiming(1).audioPlayDuration} />}
-      {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} responseDelay={getTiming(1).responseDelay} stopDuration={getTiming(1).stopDuration} duration={getDuration(1)} />}
+      {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} existingRecordingUrl={getRecordingUrl(2)} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} responseDelay={getTiming(1).responseDelay} stopDuration={getTiming(1).stopDuration} duration={getDuration(1)} />}
       {screen === 'q3-prep' && <SpeakingQ3Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(2)} audioUrl={getAudioUrl(2)} questionText={getQuestionText(2)} audioPlayDuration={getTiming(2).audioPlayDuration} />}
-      {screen === 'q3-record' && <SpeakingQ3Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(2)} questionText={getQuestionText(2)} responseDelay={getTiming(2).responseDelay} stopDuration={getTiming(2).stopDuration} duration={getDuration(2)} />}
+      {screen === 'q3-record' && <SpeakingQ3Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} existingRecordingUrl={getRecordingUrl(3)} imageUrl={getImageUrl(2)} questionText={getQuestionText(2)} responseDelay={getTiming(2).responseDelay} stopDuration={getTiming(2).stopDuration} duration={getDuration(2)} />}
       {screen === 'q4-prep' && <SpeakingQ4Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(3)} audioUrl={getAudioUrl(3)} questionText={getQuestionText(3)} audioPlayDuration={getTiming(3).audioPlayDuration} />}
-      {screen === 'q4-record' && <SpeakingQ4Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(3)} questionText={getQuestionText(3)} responseDelay={getTiming(3).responseDelay} stopDuration={getTiming(3).stopDuration} duration={getDuration(3)} />}
+      {screen === 'q4-record' && <SpeakingQ4Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} existingRecordingUrl={getRecordingUrl(4)} imageUrl={getImageUrl(3)} questionText={getQuestionText(3)} responseDelay={getTiming(3).responseDelay} stopDuration={getTiming(3).stopDuration} duration={getDuration(3)} />}
       {screen === 'q5-prep' && <SpeakingQ5Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(4)} audioUrl={getAudioUrl(4)} questionText={getQuestionText(4)} audioPlayDuration={getTiming(4).audioPlayDuration} />}
-      {screen === 'q5-record' && <SpeakingQ5Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(4)} questionText={getQuestionText(4)} responseDelay={getTiming(4).responseDelay} stopDuration={getTiming(4).stopDuration} duration={getDuration(4)} />}
+      {screen === 'q5-record' && <SpeakingQ5Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(5)} imageUrl={getImageUrl(4)} questionText={getQuestionText(4)} responseDelay={getTiming(4).responseDelay} stopDuration={getTiming(4).stopDuration} duration={getDuration(4)} />}
       {screen === 'q6-prep' && <SpeakingQ6Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(5)} audioUrl={getAudioUrl(5)} questionText={getQuestionText(5)} audioPlayDuration={getTiming(5).audioPlayDuration} />}
-      {screen === 'q6-record' && <SpeakingQ6Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(5)} questionText={getQuestionText(5)} responseDelay={getTiming(5).responseDelay} stopDuration={getTiming(5).stopDuration} duration={getDuration(5)} />}
+      {screen === 'q6-record' && <SpeakingQ6Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(6)} imageUrl={getImageUrl(5)} questionText={getQuestionText(5)} responseDelay={getTiming(5).responseDelay} stopDuration={getTiming(5).stopDuration} duration={getDuration(5)} />}
       {screen === 'q7-prep' && <SpeakingQ7Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} audioUrl={getAudioUrl(6)} questionText={getQuestionText(6)} audioPlayDuration={getTiming(6).audioPlayDuration} />}
-      {screen === 'q7-record' && <SpeakingQ7Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} responseDelay={getTiming(6).responseDelay} stopDuration={getTiming(6).stopDuration} duration={getDuration(6)} />}
+      {screen === 'q7-record' && <SpeakingQ7Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(7)} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} responseDelay={getTiming(6).responseDelay} stopDuration={getTiming(6).stopDuration} duration={getDuration(6)} />}
       {screen === 'take-interview-intro' && <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />}
       {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(7)} introAudioUrl={getIntroAudioUrl(7)} questionText={getQuestionText(7)} />}
       {screen === 'q8-prep' && <SpeakingQ8Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} audioUrl={getAudioUrl(7)} videoUrl={getVideoUrl(7)} questionText={getQuestionText(7)} audioPlayDuration={getTiming(7).audioPlayDuration} />}
-      {screen === 'q8-record' && <SpeakingQ8Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} responseDelay={getTiming(7).responseDelay} stopDuration={getTiming(7).stopDuration} duration={getDuration(7)} />}
+      {screen === 'q8-record' && <SpeakingQ8Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(8)} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} responseDelay={getTiming(7).responseDelay} stopDuration={getTiming(7).stopDuration} duration={getDuration(7)} />}
       {screen === 'q9-prep' && <SpeakingQ9Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(8)} audioUrl={getAudioUrl(8)} videoUrl={getVideoUrl(8)} questionText={getQuestionText(8)} audioPlayDuration={getTiming(8).audioPlayDuration} />}
-      {screen === 'q9-record' && <SpeakingQ9Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(8)} questionText={getQuestionText(8)} responseDelay={getTiming(8).responseDelay} stopDuration={getTiming(8).stopDuration} duration={getDuration(8)} />}
+      {screen === 'q9-record' && <SpeakingQ9Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(9)} imageUrl={getImageUrl(8)} questionText={getQuestionText(8)} responseDelay={getTiming(8).responseDelay} stopDuration={getTiming(8).stopDuration} duration={getDuration(8)} />}
       {screen === 'q10-prep' && <SpeakingQ10Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(9)} audioUrl={getAudioUrl(9)} videoUrl={getVideoUrl(9)} questionText={getQuestionText(9)} audioPlayDuration={getTiming(9).audioPlayDuration} />}
-      {screen === 'q10-record' && <SpeakingQ10Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(9)} questionText={getQuestionText(9)} responseDelay={getTiming(9).responseDelay} stopDuration={getTiming(9).stopDuration} duration={getDuration(9)} />}
+      {screen === 'q10-record' && <SpeakingQ10Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(10)} imageUrl={getImageUrl(9)} questionText={getQuestionText(9)} responseDelay={getTiming(9).responseDelay} stopDuration={getTiming(9).stopDuration} duration={getDuration(9)} />}
       {screen === 'q11-prep' && <SpeakingQ11Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(10)} audioUrl={getAudioUrl(10)} videoUrl={getVideoUrl(10)} questionText={getQuestionText(10)} audioPlayDuration={getTiming(10).audioPlayDuration} />}
-      {screen === 'q11-record' && <SpeakingQ11Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(10)} questionText={getQuestionText(10)} responseDelay={getTiming(10).responseDelay} stopDuration={getTiming(10).stopDuration} duration={getDuration(10)} />}
+      {screen === 'q11-record' && <SpeakingQ11Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} existingRecordingUrl={getRecordingUrl(11)} imageUrl={getImageUrl(10)} questionText={getQuestionText(10)} responseDelay={getTiming(10).responseDelay} stopDuration={getTiming(10).stopDuration} duration={getDuration(10)} />}
       {screen === 'end-session' && <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />}
 
       

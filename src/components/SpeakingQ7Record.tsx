@@ -18,19 +18,31 @@ interface SpeakingQ7RecordProps {
   responseDelay?: number; // seconds before recording starts (default 3)
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
   isReviewMode?: boolean;
+  existingRecordingUrl?: string;
 }
 
-export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false}: SpeakingQ7RecordProps) {
+export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, existingRecordingUrl }: SpeakingQ7RecordProps) {
   const [timeRemaining, setTimeRemaining] = useState(duration || 12);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
+  const [reviewPhase, setReviewPhase] = useState<"idle" | "listening" | "buttons" | "recording" | "done">('idle');
   const uploadedRef = useRef(false);
 
+  // Review mode: play existing recording first, else normal flow
   useEffect(() => {
+    if (isReviewMode && existingRecordingUrl) {
+      setReviewPhase('listening');
+      const audio = new Audio(existingRecordingUrl);
+      audio.onended = () => setReviewPhase('buttons');
+      audio.onerror = () => setReviewPhase('buttons');
+      audio.play().catch(() => setReviewPhase('buttons'));
+      return () => { audio.pause(); audio.src = ''; };
+    }
+    // Normal mode or review without existing recording: auto-start
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
-      await playBeep();   // 삐 소리
+      await playBeep();
       setIsRecording(true);
       recorder.startRecording();
     }, delay);
@@ -59,6 +71,19 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
       return () => clearInterval(timer);
     }
   }, [isRecording, timeRemaining, onNext]);
+
+  const reRecordTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  
+  const handleReRecord = () => {
+    setReviewPhase('recording');
+    clearTimeout(reRecordTimerRef.current);
+    const delay = responseDelay ? responseDelay * 1000 : 2000;
+    reRecordTimerRef.current = setTimeout(async () => {
+      await playBeep();
+      setIsRecording(true);
+      recorder.startRecording();
+    }, delay);
+  };
 
   // Upload recording when blob is ready after stop
   useEffect(() => {
@@ -128,11 +153,25 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         </div>
         
         {/* Response Time Box */}
-        {!isReviewMode && (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
+        {isReviewMode && reviewPhase === 'buttons' && (
+          <div className="flex justify-center gap-4 mb-4">
+            <button
+              onClick={handleReRecord}
+              className="bg-[#1e6b73] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#084d52] transition-colors"
+            >
+              Re-record
+            </button>
+            <button
+              onClick={() => setReviewPhase('done')}
+              className="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300"
+            >
+              Keep
+            </button>
           </div>
         )}
+        <div className="flex justify-center">
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
+          </div>
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>

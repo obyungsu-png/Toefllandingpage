@@ -17,16 +17,28 @@ interface SpeakingQ9RecordProps {
   responseDelay?: number;
   stopDuration?: number;
   isReviewMode?: boolean;
+  existingRecordingUrl?: string;
 }
 
-export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false}: SpeakingQ9RecordProps) {
+export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false, existingRecordingUrl }: SpeakingQ9RecordProps) {
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
+  const [reviewPhase, setReviewPhase] = useState<"idle" | "listening" | "buttons" | "recording" | "done">('idle');
   const uploadedRef = useRef(false);
 
+  // Review mode: play existing recording first, else normal flow
   useEffect(() => {
+    if (isReviewMode && existingRecordingUrl) {
+      setReviewPhase('listening');
+      const audio = new Audio(existingRecordingUrl);
+      audio.onended = () => setReviewPhase('buttons');
+      audio.onerror = () => setReviewPhase('buttons');
+      audio.play().catch(() => setReviewPhase('buttons'));
+      return () => { audio.pause(); audio.src = ''; };
+    }
+    // Normal mode or review without existing recording: auto-start
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
       await playBeep();
@@ -129,11 +141,25 @@ export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             )}
           </div>
         </div>
-        {!isReviewMode && (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={45} isRecording={isRecording} />
+        {isReviewMode && reviewPhase === 'buttons' && (
+          <div className="flex justify-center gap-4 mb-4">
+            <button
+              onClick={handleReRecord}
+              className="bg-[#1e6b73] text-white font-semibold px-6 py-2 rounded-lg hover:bg-[#084d52] transition-colors"
+            >
+              Re-record
+            </button>
+            <button
+              onClick={() => setReviewPhase('done')}
+              className="bg-gray-200 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors border border-gray-300"
+            >
+              Keep
+            </button>
           </div>
         )}
+        <div className="flex justify-center">
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={45} isRecording={isRecording} />
+          </div>
       </div>
 
       <SpeakingStopOverlay isOpen={showStopOverlay} />
