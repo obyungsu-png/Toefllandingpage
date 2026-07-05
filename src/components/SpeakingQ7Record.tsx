@@ -17,9 +17,10 @@ interface SpeakingQ7RecordProps {
   questionText?: string;  // text shown above the image
   responseDelay?: number; // seconds before recording starts (default 3)
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
+  isReviewMode?: boolean;
 }
 
-export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration }: SpeakingQ7RecordProps) {
+export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false}: SpeakingQ7RecordProps) {
   const [timeRemaining, setTimeRemaining] = useState(duration || 12);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
@@ -46,7 +47,9 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             setIsRecording(false);
             recorder.stopRecording();
             setShowStopOverlay(true);
-            setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+            if (!isReviewMode) {
+              setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+            }
             return 0;
           }
           return prev - 1;
@@ -125,9 +128,11 @@ export function SpeakingQ7Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         </div>
         
         {/* Response Time Box */}
-        <div className="flex justify-center">
-          <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
-        </div>
+        {!isReviewMode && (
+          <div className="flex justify-center">
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
+          </div>
+        )}
       </div>
       <SpeakingStopOverlay isOpen={showStopOverlay} />
     </div>

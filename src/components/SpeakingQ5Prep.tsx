@@ -12,9 +12,10 @@ interface SpeakingQ5PrepProps {
   questionText?: string;     // text shown above the image
   audioPlayDuration?: number; // seconds (overrides default 5s)
   audioUrl?: string;         // CMS audio to play on this screen
+  isReviewMode?: boolean;
 }
 
-export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl }: SpeakingQ5PrepProps) {
+export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, isReviewMode = false}: SpeakingQ5PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
@@ -28,19 +29,19 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        onNext(); // audio finished — move to record screen (beep waits there)
+        if (!isReviewMode) onNext(); // audio finished — move to record screen (beep waits there)
       };
       audio.onerror = () => {
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        onNext();
+        if (!isReviewMode) onNext();
       };
 
       // Start playing shortly after mount
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => { if (!ended) { ended = true; onNext(); } });
+        audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
       }, 400);
 
       return () => {
@@ -53,7 +54,7 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
     // No CMS audio — simulate then advance
     const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
-    advanceTimer = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+    advanceTimer = setTimeout(() => { if (!isReviewMode) onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
     return () => {
       clearTimeout(startTimer);
       clearTimeout(advanceTimer);

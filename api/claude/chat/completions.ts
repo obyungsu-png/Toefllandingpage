@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const CLAUDE_API_URL = 'https://apiclaude.cc/v1/chat/completions';
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || 'sk-7bb2bdf867bc08ac04bae5cd03dbc96351d08d6f0ec80716596a22b7a74b06f9';
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || 'sk-3bd59126ffdfa8ed1fcca872704a87bd00f8a81e00edb4b0126551f2dd8cb070';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',

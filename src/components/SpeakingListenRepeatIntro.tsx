@@ -8,9 +8,10 @@ interface SpeakingListenRepeatIntroProps {
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
   onLogoClick?: () => void;
+  isReviewMode?: boolean;
 }
 
-export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick }: SpeakingListenRepeatIntroProps) {
+export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false }: SpeakingListenRepeatIntroProps) {
   useEffect(() => {
     // Text to read
     const textToRead = `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
@@ -69,11 +70,13 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       // Also set voice when voices are loaded (for some browsers)
       window.speechSynthesis.onvoiceschanged = setVoice;
 
-      // When speech ends, automatically move to next screen
+      // When speech ends, automatically move to next screen (only in start mode)
       utterance.onend = () => {
-        setTimeout(() => {
-          onNext();
-        }, 500);
+        if (!isReviewMode) {
+          setTimeout(() => {
+            onNext();
+          }, 500);
+        }
       };
 
       // Start speaking after a short delay
@@ -89,7 +92,7 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       // Fallback: auto-advance after reading time if speech synthesis is not available
       const estimatedReadingTime = (textToRead.split(' ').length / 150) * 60 * 1000; // ~150 words per minute
       const timer = setTimeout(() => {
-        onNext();
+        if (!isReviewMode) onNext();
       }, estimatedReadingTime);
 
       return () => clearTimeout(timer);

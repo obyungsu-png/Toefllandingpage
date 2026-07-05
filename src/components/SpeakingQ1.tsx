@@ -10,9 +10,10 @@ interface SpeakingQ1Props {
   imageUrl?: string;
   introAudioUrl?: string; // CMS-managed intro audio (replaces TTS)
   questionText?: string;  // CMS-managed heading text
+  isReviewMode?: boolean;
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionText }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionText, isReviewMode = false }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -26,15 +27,15 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       audio.onplay  = () => setIsAudioPlaying(true);
       audio.onended = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext?.(), 500);
+        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
       };
       audio.onerror = () => {
         // fallback to TTS if audio fails
         setIsAudioPlaying(false);
-        onNext?.();
+        if (!isReviewMode) onNext?.();
       };
 
-      const t = setTimeout(() => audio.play().catch(() => onNext?.()), 500);
+      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNext?.(); }), 500);
       return () => {
         clearTimeout(t);
         audio.pause();
@@ -71,7 +72,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       utterance.onend = () => {
         setIsAudioPlaying(false);
         ttsEnded = true;
-        setTimeout(() => onNext?.(), 500);
+        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
       };
 
       // Ensure speech synthesis is not paused
@@ -82,7 +83,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       }, 800);
 
       fallbackTimer = window.setTimeout(() => {
-        if (!ttsEnded) { window.speechSynthesis.cancel(); onNext?.(); }
+        if (!ttsEnded) { window.speechSynthesis.cancel(); if (!isReviewMode) onNext?.(); }
       }, 20000);
 
       return () => {
@@ -91,6 +92,9 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       };
     } else {
       setIsAudioPlaying(false);
+      if (!isReviewMode) {
+        fallbackTimer = window.setTimeout(() => onNext?.(), 5000);
+      }
       return () => { if (fallbackTimer) clearTimeout(fallbackTimer); };
     }
   }, [introAudioUrl, onNext, questionText]);

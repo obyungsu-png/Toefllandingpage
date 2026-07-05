@@ -12,9 +12,10 @@ interface SpeakingQ9PrepProps {
   audioPlayDuration?: number;
   audioUrl?: string;
   videoUrl?: string;
+  isReviewMode?: boolean;
 }
 
-export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl }: SpeakingQ9PrepProps) {
+export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false}: SpeakingQ9PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   useEffect(() => {
@@ -23,14 +24,14 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       const audio = new Audio(soundSrc);
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => { onNext(); });
+        audio.play().catch(() => { if (!isReviewMode) onNext(); });
       }, 800);
       // Let audio play fully — no forced cutoff
       audio.onended = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 400);
+        setTimeout(() => { if (!isReviewMode) onNext(); }, 400);
       };
-      audio.onerror = () => { onNext(); };
+      audio.onerror = () => { if (!isReviewMode) onNext(); };
       return () => {
         clearTimeout(startTimer);
         audio.pause();
@@ -39,7 +40,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     }
     // No CMS audio — simulate
     const t1 = setTimeout(() => setIsAudioPlaying(true), 800);
-    const t2 = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 7000);
+    const t2 = setTimeout(() => { if (!isReviewMode) onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 7000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 

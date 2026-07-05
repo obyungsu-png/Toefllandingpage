@@ -8,6 +8,7 @@ interface SpeakingInterviewIntroProps {
   imageUrl?: string;      // CMS intro image (overrides hardcoded researcher)
   introAudioUrl?: string; // CMS intro audio (replaces TTS)
   questionText?: string;  // CMS heading text
+  isReviewMode?: boolean;
 }
 
 export function SpeakingInterviewIntro({
@@ -16,6 +17,7 @@ export function SpeakingInterviewIntro({
   imageUrl,
   introAudioUrl,
   questionText,
+  isReviewMode = false,
 }: SpeakingInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -30,11 +32,11 @@ export function SpeakingInterviewIntro({
       audio.onplay  = () => setIsAudioPlaying(true);
       audio.onended = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 500);
+        if (!isReviewMode) setTimeout(() => onNext(), 500);
       };
-      audio.onerror = () => { setIsAudioPlaying(false); onNext(); };
+      audio.onerror = () => { setIsAudioPlaying(false); if (!isReviewMode) onNext(); };
 
-      const t = setTimeout(() => audio.play().catch(() => onNext()), 500);
+      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNext(); }), 500);
       return () => {
         clearTimeout(t);
         audio.pause();
@@ -75,13 +77,13 @@ export function SpeakingInterviewIntro({
       utterance.onstart = () => setIsAudioPlaying(true);
       utterance.onend   = () => {
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 500);
+        if (!isReviewMode) setTimeout(() => onNext(), 500);
       };
 
       const t = setTimeout(() => window.speechSynthesis.speak(utterance), 500);
       const fallback = window.setTimeout(() => {
         window.speechSynthesis.cancel();
-        onNext();
+        if (!isReviewMode) onNext();
       }, 30000);
 
       return () => {
@@ -90,7 +92,7 @@ export function SpeakingInterviewIntro({
         window.speechSynthesis.cancel();
       };
     } else {
-      const t = setTimeout(() => onNext(), 6000);
+      const t = setTimeout(() => { if (!isReviewMode) onNext(); }, 6000);
       return () => clearTimeout(t);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount

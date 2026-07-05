@@ -7848,6 +7848,7 @@ function AppContent() {
           onScreenChange={setCurrentSpeakingReviewScreen}
           questions={getCurrentSectionData('Speaking')?.questions || []}
           testData={getCurrentTestData()}
+          isReviewMode={isReviewMode}
           onHome={() => {
             setActiveSpeakingScreen(null);
             clearReviewContext();

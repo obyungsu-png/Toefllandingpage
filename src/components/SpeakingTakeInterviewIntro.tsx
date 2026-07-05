@@ -5,9 +5,10 @@ interface SpeakingTakeInterviewIntroProps {
   onNext: () => void;
   onHome?: () => void;
   onVolumeClick?: () => void;
+  isReviewMode?: boolean;
 }
 
-export function SpeakingTakeInterviewIntro({ onNext, onHome }: SpeakingTakeInterviewIntroProps) {
+export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false }: SpeakingTakeInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
@@ -47,13 +48,13 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome }: SpeakingTakeInter
       utterance.onend = () => {
         setIsAudioPlaying(false);
         ttsEnded = true;
-        setTimeout(() => onNext(), 500);
+        if (!isReviewMode) setTimeout(() => onNext(), 500);
       };
 
       setTimeout(() => window.speechSynthesis.speak(utterance), 500);
 
       fallbackTimer = window.setTimeout(() => {
-        if (!ttsEnded) { window.speechSynthesis.cancel(); onNext() }
+        if (!ttsEnded) { window.speechSynthesis.cancel(); if (!isReviewMode) onNext() }
       }, 30000);
 
       return () => {
@@ -61,7 +62,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome }: SpeakingTakeInter
         if (fallbackTimer) clearTimeout(fallbackTimer);
       };
     } else {
-      const t = setTimeout(() => onNext(), 6000);
+      const t = setTimeout(() => { if (!isReviewMode) onNext(); }, 6000);
       return () => clearTimeout(t);
     }
   }, [onNext]);
