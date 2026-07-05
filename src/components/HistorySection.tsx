@@ -1109,6 +1109,72 @@ export function HistorySection({
                     <p className="text-sm font-medium">No {scoreModalSection} data</p>
                     <p className="text-xs mt-1">This section has not been completed yet</p>
                   </div>
+                ) : scoreModalSection === 'Speaking' ? (
+                  /* ===== SPEAKING SPECIAL VIEW ===== */
+                  <div className="px-5 md:px-6 pt-5 pb-4 space-y-4">
+                    {/* Circular Score */}
+                    <div className="flex justify-center">
+                      <div className="relative w-[140px] h-[140px]">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
+                          <circle cx="70" cy="70" r="62" fill="none" stroke="#E5E7EB" strokeWidth="10" />
+                          <circle
+                            cx="70" cy="70" r="62"
+                            fill="none"
+                            stroke={color}
+                            strokeWidth="10"
+                            strokeLinecap="round"
+                            strokeDasharray={2 * Math.PI * 62}
+                            strokeDashoffset={2 * Math.PI * 62 * (1 - Math.min(curResult?.score || 0, 100) / 100)}
+                            className="transition-all duration-1000 ease-out"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-4xl font-bold" style={{ color }}>{curResult?.score || 0}</span>
+                          <span className="text-xs text-gray-400">Score</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: 'Questions', value: totalQ, color: 'text-gray-700', bg: 'bg-gray-50' },
+                        { label: 'Answered', value: correctQ, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        { label: 'Score', value: `${curResult?.score || 0}%`, color: 'text-teal-600', bg: 'bg-teal-50' },
+                      ].map(({ label, value, color: c, bg }) => (
+                        <div key={label} className={`${bg} rounded-xl py-4 text-center`}>
+                          <p className={`text-2xl font-bold ${c}`}>{value}</p>
+                          <p className="text-xs text-gray-500 mt-1">{label}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Question list — click to jump to review */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                        Click a question to review in detail
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from({ length: totalQ }, (_, i) => i + 1).map(qNum => {
+                          const isWrong = qList[qNum - 1]?.isWrong;
+                          return (
+                            <button
+                              key={qNum}
+                              onClick={() => handleJumpToQuestion('Speaking', qNum - 1)}
+                              className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
+                                isWrong
+                                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                  : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                              }`}
+                              title={`Q${qNum} — ${isWrong ? 'Needs practice' : 'Completed'} · Click to review`}
+                            >
+                              {qNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     {/* Score Summary */}

@@ -51,82 +51,85 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
-        <div
-          className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={onHome}
-        >
-          *toefl ibt
+    <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
+      {/* Compact Header */}
+      <div className="flex items-center gap-2 bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm">
+        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking</p>
+          <p className="text-xs text-gray-500 leading-tight">Session Complete</p>
         </div>
         <button
           onClick={onFinish}
-          className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+          className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-sm"
         >
-          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Finish</span>
+          Finish
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white px-6 py-10 md:px-12 md:py-14">
-        <div className="mx-auto max-w-4xl">
-          <div className="h-6 w-full bg-[#12757a]" />
-          <div className="border border-gray-200 border-t-0 px-8 py-10 md:px-12 md:py-12">
-            <h1 className="text-4xl font-semibold text-gray-700">End of session</h1>
-            <div className="mt-4 h-px bg-gray-200" />
+      <div className="flex-1 overflow-auto px-4 py-6">
+        <div className="mx-auto max-w-lg space-y-5">
+          {/* Title */}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">End of Session</h1>
+            <p className="text-sm text-gray-500 mt-1">Your Speaking practice is complete. Review your recordings below.</p>
+          </div>
 
-            <div className="mt-8 space-y-6 text-[18px] leading-8 text-gray-700">
-
-              {/* ── 녹음 재생 섹션 ── */}
-              <div className="rounded-2xl border border-[#1e6b73]/30 bg-[#f0fafa] px-5 py-5">
-                <p className="text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-base font-semibold text-[#1e6b73] mb-3">Listen and Speak</p>
-                    {renderRecordingRows(listenAndSpeakNums)}
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold text-[#1e6b73] mb-3">Interview</p>
-                    {renderRecordingRows(interviewNums)}
-                  </div>
-                </div>
+          {/* ── Recordings Card ── */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+              </span>
+              My Recordings
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-3">Listen and Speak</p>
+                {renderRecordingRows(listenAndSpeakNums)}
               </div>
-
-              {!hasAnyRecording && (
-                <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-base text-gray-500">
-                  ℹ️ 저장된 녹음 파일이 아직 없습니다. Supabase Storage에 <strong>recordings</strong> 버킷이 생성되어 있는지 확인해 주세요.
-                </div>
-              )}
-
-              <p>You can download the full test materials created from the CMS content for this test.</p>
-
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5">
-                <p className="text-xl font-semibold text-gray-800">Full Test PDF</p>
-                <p className="mt-1 text-base text-gray-600">Downloads all sections with the questions as entered in CMS.</p>
-                <button
-                  onClick={() => handleDownload('standard')}
-                  className="mt-4 inline-flex rounded-lg border border-[#1e6b73] bg-white px-4 py-2 text-base font-semibold text-[#1e6b73] hover:bg-[#ecf8f8]"
-                >
-                  Download PDF
-                </button>
+              <div>
+                <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-3">Interview</p>
+                {renderRecordingRows(interviewNums)}
               </div>
-
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5">
-                <p className="text-xl font-semibold text-gray-800">Annotated PDF</p>
-                <p className="mt-1 text-base text-gray-600">Downloads all sections with correct answers and CMS notes/explanations.</p>
-                <button
-                  onClick={() => handleDownload('annotated')}
-                  className="mt-4 inline-flex rounded-lg border border-[#1e6b73] bg-white px-4 py-2 text-base font-semibold text-[#1e6b73] hover:bg-[#ecf8f8]"
-                >
-                  Download Annotated PDF
-                </button>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-                🔒 녹음 파일은 서비스 운영 및 개인정보 보호를 위해 <strong className="text-gray-600">30일 후 자동 파기</strong>됩니다.
-              </div>
-              <p>You may now close this browser tab or select Finish.</p>
             </div>
           </div>
+
+          {!hasAnyRecording && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+              No recordings saved yet. Make sure the Supabase Storage recordings bucket is configured.
+            </div>
+          )}
+
+          {/* PDF Downloads */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Download Materials</h2>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleDownload('standard')}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span>Full Test PDF</span>
+                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </button>
+              <button
+                onClick={() => handleDownload('annotated')}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span>Annotated PDF (with answers)</span>
+                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Retention notice */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+            Recordings are automatically deleted after <strong className="text-gray-700">30 days</strong> for privacy.
+          </div>
+
+          <p className="text-xs text-gray-400 text-center">You may now close this tab or select Finish.</p>
         </div>
       </div>
     </div>

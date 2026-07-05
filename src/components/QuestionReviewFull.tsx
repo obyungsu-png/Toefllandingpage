@@ -1571,16 +1571,16 @@ export function QuestionReviewFull({
                 </span>
               </div>
 
-              {/* Prompt */}
-              <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-3">Prompt</p>
-                <p className="text-xl text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
+              {/* Prompt Card */}
+              <div className="mb-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 mb-2">Prompt</p>
+                <p className="text-base text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
               </div>
 
-              {/* Reference image + question audio (실제 시험 화면 구조) */}
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 mb-6">
-                <div className="flex justify-center mb-5">
-                  <div className="w-72 h-72 rounded-xl border-2 border-gray-300 bg-white overflow-hidden flex items-center justify-center">
+              {/* Reference image + question audio Card */}
+              <div className="rounded-xl border border-gray-200 bg-white p-5 mb-4 shadow-sm">
+                <div className="flex justify-center mb-4">
+                  <div className="w-full max-w-xs aspect-square rounded-xl border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
                     {currentSpeakingQ.materialImage ? (
                       <ImageWithFallback
                         src={currentSpeakingQ.materialImage}
@@ -1588,16 +1588,52 @@ export function QuestionReviewFull({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-16 h-16 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                       </svg>
                     )}
                   </div>
                 </div>
 
-                {/* Question audio player */}
+                {/* Question audio with progress bar */}
                 {currentSpeakingQ.audioUrl ? (
-                  <audio controls src={currentSpeakingQ.audioUrl} className="w-full h-11 max-w-xl mx-auto block" />
+                  <div className="max-w-xl mx-auto space-y-2">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          const audio = document.getElementById('speaking-model-audio') as HTMLAudioElement;
+                          if (audio) {
+                            if (speakingModelPlaying) { audio.pause(); setSpeakingModelPlaying(false); }
+                            else { audio.play(); setSpeakingModelPlaying(true); }
+                          }
+                        }}
+                        className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 hover:bg-teal-200 transition-colors"
+                      >
+                        {speakingModelPlaying ? <Pause className="w-4 h-4 text-teal-600" /> : <Play className="w-4 h-4 text-teal-600 ml-0.5" />}
+                      </button>
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-teal-500 rounded-full transition-all duration-300"
+                          style={{ width: `${modelProgress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400 w-10 text-right tabular-nums">
+                        {currentSpeakingQ.modelAudioDuration || 0}s
+                      </span>
+                    </div>
+                    <audio
+                      id="speaking-model-audio"
+                      src={currentSpeakingQ.audioUrl}
+                      onTimeUpdate={(e) => {
+                        const audio = e.currentTarget;
+                        setModelProgress((audio.currentTime / (audio.duration || 1)) * 100);
+                      }}
+                      onEnded={() => { setSpeakingModelPlaying(false); setModelProgress(0); }}
+                      onPlay={() => setSpeakingModelPlaying(true)}
+                      onPause={() => setSpeakingModelPlaying(false)}
+                      className="hidden"
+                    />
+                  </div>
                 ) : (
                   <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
                 )}
@@ -1606,39 +1642,136 @@ export function QuestionReviewFull({
                 <div className="text-center mt-4">
                   <button
                     onClick={() => setShowModelText(!showModelText)}
-                    className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showModelText ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {showModelText ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     <span>{showModelText ? 'Hide Script' : 'View Script'}</span>
                   </button>
                   {showModelText && currentSpeakingQ.transcript && (
-                    <p className="text-base text-gray-700 leading-relaxed mt-3 p-4 bg-white rounded-lg border border-gray-200 animate-[fadeIn_0.2s_ease-out]">
+                    <p className="text-sm text-gray-700 leading-relaxed mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100 animate-[fadeIn_0.2s_ease-out]">
                       {currentSpeakingQ.transcript}
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* My Recording */}
+              {/* ===== MY RECORDING CARD with Score Ring ===== */}
               {(() => {
                 const qNum = activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8;
                 const recUrl = speakingRecordings[String(qNum)];
+                // Simulated score for demo — in production, load from DB
+                const demoScore = (() => {
+                  const scores: Record<string, number> = { '1': 82, '2': 75, '3': 68, '4': 90, '5': 79, '6': 85, '7': 72, '8': 80, '9': 67, '10': 88, '11': 76 };
+                  return scores[String(qNum)] || Math.floor(60 + Math.random() * 30);
+                })();
+                const scoreColor = demoScore >= 80 ? '#0D9488' : demoScore >= 65 ? '#F59E0B' : '#EF4444';
+                const scoreLabel = demoScore >= 80 ? 'Great' : demoScore >= 65 ? 'Good' : 'Practice';
+                const circumference = 2 * Math.PI * 54; // r=54
+
                 return (
-                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 mb-6">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-11 h-11 rounded-full bg-blue-200 flex items-center justify-center">
-                        <Mic className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-blue-500 text-white">
-                        My Recording — Q{qNum}
-                      </span>
-                    </div>
+                  <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <Mic className="w-4 h-4 text-teal-600" />
+                      My Recording — Q{qNum}
+                    </h3>
+
                     {recUrl ? (
-                      <audio controls src={recUrl} className="w-full h-11" />
+                      <>
+                        {/* Score Ring + Audio Player */}
+                        <div className="flex items-center gap-6 mb-4">
+                          {/* Circular Score */}
+                          <div className="relative w-[124px] h-[124px] flex-shrink-0">
+                            <svg className="w-full h-full -rotate-90" viewBox="0 0 124 124">
+                              <circle cx="62" cy="62" r="54" fill="none" stroke="#E5E7EB" strokeWidth="8" />
+                              <circle
+                                cx="62" cy="62" r="54"
+                                fill="none"
+                                stroke={scoreColor}
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={circumference * (1 - demoScore / 100)}
+                                className="transition-all duration-1000 ease-out"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className="text-2xl font-bold" style={{ color: scoreColor }}>{demoScore}</span>
+                              <span className="text-xs text-gray-400">{scoreLabel}</span>
+                            </div>
+                          </div>
+
+                          {/* Audio Player with Progress Bar */}
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => {
+                                  const audio = document.getElementById(`speaking-user-audio-${qNum}`) as HTMLAudioElement;
+                                  if (audio) {
+                                    if (speakingUserPlaying) { audio.pause(); setSpeakingUserPlaying(false); }
+                                    else { audio.play(); setSpeakingUserPlaying(true); }
+                                  }
+                                }}
+                                className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 hover:bg-teal-200 transition-colors"
+                              >
+                                {speakingUserPlaying ? <Pause className="w-4 h-4 text-teal-600" /> : <Play className="w-4 h-4 text-teal-600 ml-0.5" />}
+                              </button>
+                              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-teal-500 rounded-full transition-all duration-300"
+                                  style={{ width: `${userProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-400 w-10 text-right tabular-nums">
+                                {currentSpeakingQ.userAudioDuration || '--'}s
+                              </span>
+                            </div>
+                            <audio
+                              id={`speaking-user-audio-${qNum}`}
+                              src={recUrl}
+                              onTimeUpdate={(e) => {
+                                const audio = e.currentTarget;
+                                setUserProgress((audio.currentTime / (audio.duration || 1)) * 100);
+                              }}
+                              onEnded={() => { setSpeakingUserPlaying(false); setUserProgress(0); }}
+                              onPlay={() => setSpeakingUserPlaying(true)}
+                              onPause={() => setSpeakingUserPlaying(false)}
+                              className="hidden"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Word-by-word comparison (simulated) */}
+                        {currentSpeakingQ.transcript && (
+                          <div className="border-t border-gray-100 pt-4">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Word Analysis</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {currentSpeakingQ.transcript.split(' ').map((word, i) => {
+                                const wordScore = Math.floor(50 + Math.random() * 45); // simulated
+                                const isGood = wordScore >= 75;
+                                return (
+                                  <span
+                                    key={i}
+                                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                                      isGood
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    }`}
+                                    title={`"${word}" — ${wordScore}% match`}
+                                  >
+                                    {word}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     ) : (
-                      <p className="text-sm text-gray-400 italic">
-                        녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
-                      </p>
+                      <div className="flex flex-col items-center py-8 text-gray-400">
+                        <Mic className="w-10 h-10 mb-2 opacity-40" />
+                        <p className="text-sm">No recording yet</p>
+                        <p className="text-xs mt-1">Complete the Speaking session to see your recording here</p>
+                      </div>
                     )}
                   </div>
                 );
@@ -1648,12 +1781,12 @@ export function QuestionReviewFull({
               <div className="flex items-center justify-end mb-4">
                 <button
                   onClick={() => toggleBookmark(currentSpeakingQ.id)}
-                  className="flex items-center gap-1 text-base text-gray-500 hover:text-yellow-500 transition-colors"
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-yellow-500 transition-colors"
                 >
                   {bookmarkedQuestions.has(currentSpeakingQ.id) ? (
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   ) : (
-                    <StarOff className="w-5 h-5" />
+                    <StarOff className="w-4 h-4" />
                   )}
                   <span>{bookmarkedQuestions.has(currentSpeakingQ.id) ? 'Bookmarked' : 'Bookmark'}</span>
                 </button>
@@ -1663,14 +1796,14 @@ export function QuestionReviewFull({
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-6 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   ← Previous
                 </button>
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.min(speakingQuestionCount - 1, currentQuestionIndex + 1))}
                   disabled={currentQuestionIndex === speakingQuestionCount - 1}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-6 py-3 rounded-xl text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   style={{ backgroundColor: themeColor }}
                 >
                   Next →
