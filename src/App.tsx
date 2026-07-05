@@ -1846,7 +1846,7 @@ function AppContent() {
       : null);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; questionData?: any } | null = null;
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; questionData?: any } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
@@ -1871,6 +1871,8 @@ function AppContent() {
         translationNote: reviewQuestion?.translationNote,
         analysisNote: (reviewQuestion as any)?.analysisNote,
         vocabularyNote: reviewQuestion?.vocabularyNote,
+        audioUrl: reviewQuestion?.audioUrl || undefined,
+        scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || undefined,
         questionData: reviewQuestion || undefined,
       };
     } else if (activeListeningM1Screen || activeListeningM2Screen) {
@@ -1899,6 +1901,8 @@ function AppContent() {
           translationNote: reviewQuestion?.translationNote,
           analysisNote: (reviewQuestion as any)?.analysisNote,
           vocabularyNote: reviewQuestion?.vocabularyNote,
+          audioUrl: reviewQuestion?.audioUrl || undefined,
+          scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || undefined,
           questionData: reviewQuestion || undefined,
         };
       }
@@ -1947,6 +1951,8 @@ function AppContent() {
           contentKey: `speaking-${screen}`,
           questionType: speakingQuestionType,
           difficulty: reviewQuestion?.difficulty,
+          audioUrl: reviewQuestion?.audioUrl || undefined,
+          scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || (reviewQuestion as any)?.questionText || undefined,
           questionData: reviewQuestion || undefined,
         };
       }
@@ -7868,6 +7874,8 @@ function AppContent() {
           translationNote={activeReviewPanel.translationNote}
           analysisNote={activeReviewPanel.analysisNote}
           vocabularyNote={activeReviewPanel.vocabularyNote}
+          audioUrl={activeReviewPanel.audioUrl}
+          scriptText={activeReviewPanel.scriptText}
         />
       )}
 

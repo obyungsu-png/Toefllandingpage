@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Play, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -24,6 +24,10 @@ interface ReviewAssistantPanelProps {
   translationNote?: string;
   analysisNote?: string;
   vocabularyNote?: string;
+  /** Play Audio용 — 현재 문제의 오디오 URL (리스닝/스피킹) */
+  audioUrl?: string;
+  /** Dictation용 — CMS 스크립트/전사본 텍스트 */
+  scriptText?: string;
 }
 
 interface DictationExercise {
@@ -38,8 +42,8 @@ const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   listening: ['Dictation', 'Practice'],
   'writing-basic': ['Practice'],
   'writing-guided': ['Expressions', 'Template', 'Practice'],
-  'speaking-repeat': ['Dictation', 'Practice'],
-  'speaking-interview': ['Expressions', 'Template', 'Practice'],
+  'speaking-repeat': ['Dictation'],
+  'speaking-interview': ['Expressions', 'Template'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -87,7 +91,49 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
   },
 };
 
-function buildDictationExercise(variant: ReviewVariant): DictationExercise {
+function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): DictationExercise {
+  // CMS 스크립트가 있으면 실제 데이터 사용
+  if (cmsScript) {
+    const sentence = cmsScript.trim().split('\n')[0].trim(); // 첫 줄만 사용
+    const words = sentence.split(/\s+/).filter(w => w);
+    // 3~4개 단어를 빈칸으로 (긴 문장일수록 더 많은 빈칸)
+    const blankCount = Math.min(Math.max(3, Math.floor(words.length / 3)), Math.floor(words.length * 0.5));
+    const blankIndices: number[] = [];
+    // 중간~끝쪽에서 균등하게 선택 (처음/마지막 제외)
+    const step = Math.max(1, Math.floor((words.length - 2) / blankCount));
+    for (let i = step; i < words.length - 1 && blankIndices.length < blankCount; i += step) {
+      // 짧은 단어(2글자 이하), 구두점 제외 후 선택
+      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
+      if (word.length > 2) blankIndices.push(i);
+    }
+    // 부족하면 뒤에서 채우기
+    for (let i = words.length - 2; i >= 1 && blankIndices.length < blankCount; i--) {
+      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
+      if (!blankIndices.includes(i) && word.length > 2) blankIndices.push(i);
+    }
+    if (blankIndices.length === 0) { blankIndices.push(1); } // 최소 1개
+
+    const blanks = blankIndices.map(idx => words[idx]);
+    const segments: string[] = [''];
+    let bi = 0;
+    words.forEach((w, idx) => {
+      if (blankIndices.includes(idx)) {
+        segments[bi] += ' ';
+        segments.push('');
+        bi++;
+      } else {
+        segments[bi] += (segments[bi] ? ' ' : '') + w;
+      }
+    });
+    return {
+      prompt: '오디오를 듣고, 들리는 내용을 빈칸에 입력하세요.',
+      fullSentence: sentence,
+      blanks,
+      segments,
+    };
+  }
+
+  // fallback: 하드코딩된 예문
   if (variant === 'speaking-repeat') {
     return {
       prompt: '음성 아이콘을 누르고, 들리는 문장을 빈칸에 입력하세요.',
@@ -200,15 +246,17 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote, audioUrl, scriptText }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const dictationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const theme = PANEL_THEME[section];
 
-  const dictationExercise = useMemo(() => buildDictationExercise(variant), [variant]);
+  const dictationExercise = useMemo(() => buildDictationExercise(variant, scriptText || translationNote), [variant, scriptText, translationNote]);
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
   const activeTabMeta = activeTab ? getTabMeta(activeTab) : null;
 
@@ -218,11 +266,37 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setDictationChecked(false);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
+  // Play Audio — Listening/Speaking 섹션의 오디오 재생 (Play Audio 버튼)
+  const handlePlayAudio = () => {
+    if (!audioUrl || isPlayingAudio) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    audio.play().then(() => setIsPlayingAudio(true)).catch(() => {});
+    audio.onended = () => setIsPlayingAudio(false);
+  };
+
+  // Dictation 오디오 — CMS 오디오 우선, 없으면 TTS fallback
   const playDictation = () => {
-    if (!('speechSynthesis' in window)) {
+    if (audioUrl) {
+      // CMS 실제 오디오가 있으면 그걸 사용
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play().catch(() => {});
       return;
     }
 
+    // TTS fallback
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(dictationExercise.fullSentence);
     utterance.rate = 0.85;
@@ -466,6 +540,32 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         })}
 
         {/* AI 튜터 버튼 — 오른쪽 통합 아이콘 바에 배치 */}
+        {audioUrl && (
+          <button
+            type="button"
+            title={isPlayingAudio ? 'Playing...' : 'Play Audio'}
+            onClick={handlePlayAudio}
+            disabled={isPlayingAudio}
+            className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
+          >
+            <span
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isPlayingAudio ? 'animate-pulse' : ''}`}
+              style={{
+                background: isPlayingAudio
+                  ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
+                  : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
+                boxShadow: isPlayingAudio ? `0 6px 18px ${theme.accent}33` : '0 2px 8px rgba(15,23,42,0.08)',
+              }}
+            >
+              <Play className={`h-5 w-5 ${isPlayingAudio ? 'text-white' : theme.accent}`} />
+            </span>
+            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
+              style={{ color: isPlayingAudio ? theme.accent : '#94a3b8' }}>
+              {isPlayingAudio ? 'Playing' : 'Play'}
+            </span>
+          </button>
+        )}
+
         {onOpenAiTutor && (
           <button
             type="button"
