@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
+import { ChevronLeft } from 'lucide-react';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -14,6 +15,7 @@ interface SpeakingQ1Props {
 }
 
 export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionText, isReviewMode = false }: SpeakingQ1Props) {
+
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -99,78 +101,53 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
     }
   }, [introAudioUrl, onNext, questionText]);
 
+  
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
-        <div className="flex items-center">
-          <div
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={onHome}
-          >
-            *toefl ibt
-          </div>
+    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+      {/* Compact Header */}
+      <div className="flex items-center gap-2 bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm">
+        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">Speaking</p>
+          <p className="text-xs text-gray-500 leading-tight">Question 1 of 11</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            ref={buttonRef}
-            onClick={toggleVolume}
-            className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-          >
-            <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Volume</span>
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-          </button>
-          <button
-            onClick={onNext}
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Navigation tabs */}
-      <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
-          <div className="flex gap-8">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-              Speaking
-            </div>
-          </div>
-        </div>
+        <button ref={buttonRef} onClick={toggleVolume} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 transition-colors">
+          <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+          </svg>
+        </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-white p-12">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+      <div className="flex-1 overflow-auto px-4 py-4 space-y-4">
+        {/* Question Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <p className="text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
+          <p className="text-base text-gray-800 leading-relaxed text-center">
             {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
-          </h1>
-
-          <div className="flex justify-center my-8">
-            <ImageWithFallback
-              src={imageUrl || zooMapImage}
-              alt="Zoo Map"
-              className="border-2 border-gray-400 w-96 h-96 object-cover"
-            />
-          </div>
-
-          <div className="mt-10 flex flex-col items-center gap-5">
-            {isAudioPlaying && (
-              <div className="flex items-center gap-3 text-[#148b8f]">
-                <svg className="h-8 w-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                </svg>
-                <span className="text-xl font-semibold">Playing audio...</span>
-              </div>
-            )}
-          </div>
+          </p>
         </div>
+
+        {/* Image Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <ImageWithFallback
+            src={imageUrl || zooMapImage}
+            alt="Zoo Map"
+            className="w-full aspect-square object-cover"
+          />
+        </div>
+
+        {/* Audio playing indicator */}
+        {isAudioPlaying && (
+          <div className="flex items-center justify-center gap-3 text-teal-600">
+            <svg className="h-7 w-7 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <span className="text-lg font-semibold">Playing audio...</span>
+          </div>
+        )}
       </div>
 
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />

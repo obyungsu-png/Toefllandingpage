@@ -1,3 +1,4 @@
+import { ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import speakingImage from 'figma:asset/2a387faeacd632f6736d88d2369b0263c8a292d4.png';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -44,96 +45,55 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
       }, 400);
 
-      return () => {
-        clearTimeout(startTimer);
-        clearTimeout(advanceTimer);
-        audio.pause();
-        audio.src = '';
-      };
-    }
-
-    // No CMS audio — simulate then advance
-    const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
-    advanceTimer = setTimeout(() => { if (!isReviewMode) onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(advanceTimer);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
-
+      
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
-        <div className="flex items-center">
-          <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={onHome}
-          >
-            *toefl ibt
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {onVolumeClick && (
-            <button 
-              ref={volumeButtonRef}
-              className={`flex items-center gap-3 rounded-3xl px-6 py-2 border-4 transition-colors ${
-                isVolumeOpen 
-                  ? 'bg-white border-[#1e6b73]' 
-                  : 'bg-[#0A6068] border-[#0A6068] hover:bg-[#084d52]'
-              }`}
-              onClick={onVolumeClick}
-            >
-              <span className={`font-['Inter',_sans-serif] font-semibold text-base ${
-                isVolumeOpen ? 'text-[#1e6b73]' : 'text-white'
-              }`}>Volume</span>
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill={isVolumeOpen ? '#1e6b73' : 'white'}>
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation tabs */}
-      <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
-          <div className="flex gap-8">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-              Speaking
-            </div>
-            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 5 of 11
-            </div>
-          </div>
+    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+      {/* Compact Header */}
+      <div className="flex items-center gap-2 bg-white border-b border-gray-200 px-3 py-2.5 shadow-sm">
+        <button onClick={onHome} className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 flex-shrink-0 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 leading-tight truncate">Speaking</p>
+          <p className="text-xs text-gray-500 leading-tight">Question 5 of 11</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white pt-12 px-12">
-        {/* Title at top center */}
-        <div className="pb-8">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
+      <div className="flex-1 flex flex-col overflow-auto px-4 py-6">
+        {/* Question Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+          <p className="text-xs text-teal-600 font-semibold mb-1.5 uppercase tracking-wider">Question</p>
+          <p className="text-base text-gray-800 leading-relaxed">{questionText || 'Listen and repeat only once.'}</p>
         </div>
-        
-        {/* Image - Square */}
-          <div className="flex justify-center mb-8">
-          <ImageWithFallback
-            src={imageUrl || speakingImage}
-            alt="Speaking scene"
-            className="border-2 border-black w-96 h-96 object-cover"
-          />
+
+        {/* Image Card */}
+        <div className="flex justify-center mb-4">
+          <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <ImageWithFallback
+                src={imageUrl || speakingImage}
+                alt="Speaking scene"
+                className="w-full aspect-square object-cover"
+              />
+            </div>
         </div>
-        
+
         {/* Audio playing indicator */}
         {isAudioPlaying && (
-          <div className="flex items-center justify-center gap-3 text-[#1e6b73]">
-            <svg className="w-8 h-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+          <div className="flex items-center justify-center gap-3 text-teal-600">
+            <svg className="w-7 h-7 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
-            <span className="text-xl font-semibold">Playing audio...</span>
+            <span className="text-lg font-semibold">Playing audio...</span>
           </div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Volume Control Dropdown */}
+        {isVolumeOpen && onVolumeClick && (
+          <VolumeControl isOpen={isVolumeOpen} onClose={onVolumeClick} buttonRef={volumeButtonRef} />
         )}
       </div>
     </div>
