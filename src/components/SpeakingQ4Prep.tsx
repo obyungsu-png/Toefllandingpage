@@ -52,7 +52,7 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       clearTimeout(audioTimer);
       clearTimeout(nextTimer);
     };
-  }, [audioUrl, onNext, audioPlayDuration]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

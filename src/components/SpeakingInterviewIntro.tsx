@@ -93,7 +93,7 @@ export function SpeakingInterviewIntro({
       const t = setTimeout(() => onNext(), 6000);
       return () => clearTimeout(t);
     }
-  }, [introAudioUrl, onNext, questionText]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
   const displayText = questionText ||
     'You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.';

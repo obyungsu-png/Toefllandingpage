@@ -39,7 +39,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     const t1 = setTimeout(() => setIsAudioPlaying(true), 800);
     const t2 = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 7000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [audioUrl, onNext, audioPlayDuration]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
