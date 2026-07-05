@@ -34,7 +34,7 @@ export async function uploadRecording(
 
     // 1. Upload file to Storage
     const { error: storageErr } = await supabase.storage
-      .from('recordings')
+      .from('RECORDINGS')
       .upload(path, blob, { upsert: false, contentType: blob.type });
 
     if (storageErr) {
@@ -46,7 +46,7 @@ export async function uploadRecording(
       return null;
     }
 
-    const { data } = supabase.storage.from('recordings').getPublicUrl(path);
+    const { data } = supabase.storage.from('RECORDINGS').getPublicUrl(path);
     const url = data?.publicUrl ?? null;
     if (!url) return null;
 
