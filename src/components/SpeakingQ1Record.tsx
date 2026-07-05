@@ -27,21 +27,37 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Play the prompt audio first, then start recording
+  // Play the prompt audio first, THEN wait delay, THEN beep
   useEffect(() => {
-    if (audioUrl && promptAudioRef.current) {
-      promptAudioRef.current.play().catch(() => {});
-    }
-    const delay = audioUrl
-      ? (responseDelay ? responseDelay * 1000 + 1000 : 2000)
-      : (responseDelay ? responseDelay * 1000 : 2000);
-    const startTimer = setTimeout(async () => {
-      await playBeep();
-      setIsRecording(true);
-      recorder.startRecording();
-    }, delay);
+    let startTimer: ReturnType<typeof setTimeout>;
 
-    return () => clearTimeout(startTimer);
+    const startDelayAndBeep = () => {
+      const delay = responseDelay ? responseDelay * 1000 : 2000;
+      startTimer = setTimeout(async () => {
+        await playBeep();
+        setIsRecording(true);
+        recorder.startRecording();
+      }, delay);
+    };
+
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      promptAudioRef.current = audio;
+      audio.onended = () => startDelayAndBeep();
+      audio.onerror = () => startDelayAndBeep();
+      audio.play().catch(() => startDelayAndBeep());
+    } else {
+      // No audio — just wait and beep
+      startDelayAndBeep();
+    }
+
+    return () => {
+      clearTimeout(startTimer);
+      if (promptAudioRef.current) {
+        promptAudioRef.current.pause();
+        promptAudioRef.current.src = '';
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
