@@ -19,40 +19,45 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   
   useEffect(() => {
-    // If a real audio URL is provided from CMS, play it
+    let advanceTimer: ReturnType<typeof setTimeout>;
+
     if (audioUrl) {
       const audio = new Audio(audioUrl);
-      const audioTimer = setTimeout(() => {
-        setIsAudioPlaying(true);
-        audio.play().catch(() => {});
-      }, 500);
+      let ended = false;
 
       audio.onended = () => {
+        if (ended) return;
+        ended = true;
         setIsAudioPlaying(false);
-        setTimeout(() => onNext(), 300);
+        onNext(); // audio finished — move to record screen (beep waits there)
       };
       audio.onerror = () => {
-        // Fallback to timer if audio fails
-        const fallback = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 5000);
-        return () => clearTimeout(fallback);
+        if (ended) return;
+        ended = true;
+        setIsAudioPlaying(false);
+        onNext();
       };
+
+      // Start playing shortly after mount
+      const startTimer = setTimeout(() => {
+        setIsAudioPlaying(true);
+        audio.play().catch(() => { if (!ended) { ended = true; onNext(); } });
+      }, 400);
+
       return () => {
-        clearTimeout(audioTimer);
+        clearTimeout(startTimer);
+        clearTimeout(advanceTimer);
         audio.pause();
         audio.src = '';
       };
     }
 
-    // No CMS audio — simulate with timer
-    const audioTimer = setTimeout(() => {
-      setIsAudioPlaying(true);
-    }, 1000);
-    const nextTimer = setTimeout(() => {
-      onNext();
-    }, (audioPlayDuration ? audioPlayDuration * 1000 : 5000));
+    // No CMS audio — simulate then advance
+    const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
+    advanceTimer = setTimeout(() => onNext(), audioPlayDuration ? audioPlayDuration * 1000 : 5000);
     return () => {
-      clearTimeout(audioTimer);
-      clearTimeout(nextTimer);
+      clearTimeout(startTimer);
+      clearTimeout(advanceTimer);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 

@@ -11,14 +11,16 @@ interface SpeakingQ8PrepProps {
   questionText?: string;
   audioPlayDuration?: number;
   audioUrl?: string;
+  videoUrl?: string;
 }
 
-export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl }: SpeakingQ8PrepProps) {
+export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl }: SpeakingQ8PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   useEffect(() => {
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
+    const soundSrc = audioUrl || videoUrl;
+    if (soundSrc) {
+      const audio = new Audio(soundSrc);
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
         audio.play().catch(() => { onNext(); });
