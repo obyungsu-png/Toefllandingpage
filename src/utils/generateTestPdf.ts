@@ -25,6 +25,14 @@ function cleanFillBlanks(text: string) {
   return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => `${prefix}${answer}`);
 }
 
+// Fill-in-blank markers: "gu[ides:4]" → "gu____" for student PDF handouts
+function renderFillBlanks(text: string) {
+  return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => {
+    const blank = '_'.repeat(Math.max(3, String(answer).length));
+    return `${prefix}${blank}`;
+  });
+}
+
 function countFillBlanks(text?: string) {
   if (!text) return 0;
   return [...text.matchAll(/\[[^\]]+:(\d+)\]/g)]
@@ -100,7 +108,8 @@ function formatTemplatePassage(passageText: string): string[] | null {
 function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   const lines: PdfLine[] = [];
   const blankCount = countFillBlanks(question.questionText) || countFillBlanks(question.passageText);
-  const isFillBlankSet = question.questionNumber === 1 && blankCount >= 10;
+  const isCompleteWords = /complete words/i.test(question.questionType || '');
+  const isFillBlankSet = question.questionNumber === 1 && (blankCount >= 10 || isCompleteWords);
   lines.push({ text: isFillBlankSet ? `Q1-Q10  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // Module 2: passage stored as JSON {title, passage, questions:[]}
@@ -116,19 +125,15 @@ function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
         lines.push({ text: 'Passage:' });
         tpl.forEach(t => lines.push({ text: t }));
       } else {
-        lines.push({ text: cleanFillBlanks(question.passageText) });
+        lines.push({ text: isFillBlankSet ? renderFillBlanks(question.passageText) : cleanFillBlanks(question.passageText) });
       }
     }
   }
 
   if (question.passageTitle) lines.push({ text: question.passageTitle, bold: true });
-  if (question.questionText) lines.push({ text: `Q: ${cleanFillBlanks(question.questionText)}` });
-
-  if (isFillBlankSet) {
-    lines.push({ text: 'Answer blanks:', bold: true });
-    Array.from({ length: 10 }, (_, i) => i + 1).forEach(n => {
-      lines.push({ text: `${n}. ______________________________`, indent: true });
-    });
+  if (question.questionText) {
+    const questionText = isFillBlankSet ? renderFillBlanks(question.questionText) : cleanFillBlanks(question.questionText);
+    lines.push({ text: isFillBlankSet ? questionText : `Q: ${questionText}` });
   }
 
   if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });

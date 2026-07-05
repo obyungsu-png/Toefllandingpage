@@ -12,7 +12,7 @@ export function SpeakingStopOverlay({ isOpen }: SpeakingStopOverlayProps) {
         <div className="mt-3 h-px bg-[#edf0f2]" />
         <div className="mt-5 space-y-3 text-[16px] leading-7 text-[#666e75]">
           <p>Response time has ended.</p>
-          <p>Saving response.</p>
+          <p className="animate-pulse">Please wait. We are currently saving response.</p>
         </div>
       </div>
     </div>
