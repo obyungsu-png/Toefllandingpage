@@ -238,12 +238,26 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [streamingText, setStreamingText] = useState('');
   const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // questionData를 참조가 아닌 값으로 비교 (부모 리렌더링 시 새 객체 참조로 인한 초기화 방지)
+  const questionDataKey = questionData ? JSON.stringify(questionData) : '';
 
   // 컨텍스트(또는 문제 데이터)가 바뀌면 대화 초기화
   useEffect(() => {
     setChatMessages([]);
     setChatInput('');
-  }, [contextLabel, questionData]);
+  }, [contextLabel, questionDataKey]);
+
+  // 언마운트 시 진행 중인 스트리밍 요청 중단
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: isAiLoading ? 'auto' : 'smooth' });
@@ -266,6 +280,13 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     setChatMessages(newHistory);
     setIsAiLoading(true);
     setStreamingText('');
+
+    // 진행 중인 이전 요청이 있으면 중단
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const questionContext = buildQuestionContext(questionData, contextLabel);
 
@@ -303,6 +324,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         method: 'POST',
         headers,
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -349,6 +371,10 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       setChatMessages((prev) => [...prev, { role: 'assistant', content: finalContent, timestamp: Date.now() }]);
       setStreamingText('');
     } catch (err: any) {
+      // AbortError는 언마운트/중단 시 발생하므로 무시
+      if (err?.name === 'AbortError') {
+        return;
+      }
       console.error('TOEFL AI error:', err);
       setChatMessages((prev) => [
         ...prev,
@@ -365,6 +391,9 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       setStreamingText('');
     } finally {
       setIsAiLoading(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   };
 
