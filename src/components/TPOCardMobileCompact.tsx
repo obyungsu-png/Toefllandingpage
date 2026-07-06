@@ -79,7 +79,7 @@ export function TPOCardMobileCompact({
   return (
     <div className={`rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all ${isLocked ? 'opacity-70' : ''}`}>
       {/* Single-line header row */}
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-[#334155] to-[#475569]">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c]">
         <p className="font-bold text-white text-[15px] whitespace-nowrap shrink-0">
           {customTitle || `TPO ${number}`}
         </p>
@@ -95,7 +95,7 @@ export function TPOCardMobileCompact({
         )}
 
         {isLocked && (
-          <button onClick={onUnlockClick} className="ml-auto flex items-center gap-1 bg-white/90 text-[#334155] text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0">
+          <button onClick={onUnlockClick} className="ml-auto flex items-center gap-1 bg-white/90 text-[#1e6b73] text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0">
             <Lock className="w-3 h-3" />
             Unlock
           </button>
@@ -117,7 +117,7 @@ export function TPOCardMobileCompact({
                     !hasContent
                       ? 'bg-white/10 text-white/30 cursor-not-allowed'
                       : isActive
-                      ? 'bg-white text-[#334155] shadow-md scale-110'
+                      ? 'bg-white text-[#1e6b73] shadow-md scale-110'
                       : 'bg-white/20 text-white hover:bg-white/30'
                   }`}
                 >
@@ -133,7 +133,7 @@ export function TPOCardMobileCompact({
       </div>
 
       {dateMemo && !/demonstration/i.test(dateMemo) && (
-        <div className="px-3 py-1 bg-[#f8f9fa] text-[10px] text-[#475569] font-medium truncate">
+        <div className="px-3 py-1 bg-[#f0fafa] text-[10px] text-[#2d7a7c] font-medium truncate">
           {dateMemo}
         </div>
       )}
@@ -154,7 +154,7 @@ export function TPOCardMobileCompact({
             )}
             <button
               onClick={() => handleStart(openSection)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#334155] text-white text-xs font-bold shadow-sm active:scale-95 transition-transform"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#1e6b73] text-white text-xs font-bold shadow-sm active:scale-95 transition-transform"
             >
               <Play className="w-3.5 h-3.5" />
               Start

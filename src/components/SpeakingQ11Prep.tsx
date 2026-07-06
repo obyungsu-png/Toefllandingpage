@@ -146,13 +146,13 @@ export function SpeakingQ11Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
 
       </div>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white pt-6 md:pt-12 px-4 md:px-12">
-        <div className="pb-4 md:pb-8">
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
+      <div className="flex-1 flex flex-col bg-white p-4 md:p-12 overflow-y-auto">
+        <div className="mb-2 md:mb-4 flex-shrink-0">
+          <h1 className="text-base md:text-xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
+        <div className="flex justify-center mb-4 md:mb-6 flex-shrink-0">
+          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
             {imageUrl ? (
               <img src={imageUrl} alt="Interviewer" className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -164,7 +164,7 @@ export function SpeakingQ11Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
           </div>
         </div>
 
-        <div className="flex justify-center pb-8">
+        <div className="flex justify-center pb-4 md:pb-6">
           <SpeakingResponseTimer
             timeRemaining={Math.max(0, Math.ceil((audioDuration || audioPlayDuration || 45) - audioElapsed))}
             totalDuration={Math.ceil(audioDuration || audioPlayDuration || 45)}

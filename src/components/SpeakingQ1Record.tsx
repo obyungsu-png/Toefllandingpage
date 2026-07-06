@@ -177,7 +177,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
           <h1 className="text-base md:text-xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
-          <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
             <ImageWithFallback
               src={imageUrl ?? zooMapImage}
               alt="Speaking scene"

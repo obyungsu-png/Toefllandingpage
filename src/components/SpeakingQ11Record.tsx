@@ -137,12 +137,12 @@ export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
 
       </div>
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white pt-10 px-4 md:px-12">
-        <div className="pb-6">
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
+      <div className="flex-1 flex flex-col bg-white pt-6 md:pt-8 overflow-y-auto">
+        <div className="pb-4 md:pb-6 flex-shrink-0">
+          <h1 className="text-base md:text-xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
         </div>
-        <div className="flex justify-center mb-6">
-          <div className="border-2 border-gray-300 w-96 h-96 flex items-center justify-center bg-gray-50 overflow-hidden">
+        <div className="flex justify-center mb-4 md:mb-6">
+          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
             {imageUrl ? (
               <img
                 src={imageUrl}

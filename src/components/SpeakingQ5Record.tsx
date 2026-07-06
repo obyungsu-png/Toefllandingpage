@@ -159,7 +159,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         
         {/* Image */}
           <div className="flex justify-center mb-4 md:mb-8">
-          <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
+          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
           <ImageWithFallback
             src={imageUrl || speakingImage}
             alt="Speaking scene"
