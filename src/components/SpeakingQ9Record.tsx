@@ -125,9 +125,9 @@ export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white pt-10 px-12">
+      <div className="flex-1 flex flex-col bg-white pt-10 px-4 md:px-12">
         <div className="pb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer\'s questions."}</h1>
         </div>
         <div className="flex justify-center mb-6">
           <div className="border-2 border-gray-300 w-96 h-96 flex items-center justify-center bg-gray-50 overflow-hidden">

@@ -149,7 +149,7 @@ export function SpeakingInterviewIntro({
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-start bg-white p-12 pt-16">
         <div className="max-w-4xl w-full">
-          <p className="text-gray-900 text-2xl mb-12 leading-relaxed text-center">
+          <p className="text-gray-900 text-base md:text-2xl mb-12 leading-relaxed text-center">
             {displayText}
           </p>
 

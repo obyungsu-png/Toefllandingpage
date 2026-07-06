@@ -123,16 +123,16 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center bg-white p-12">
         <div className="max-w-2xl w-full">
-          <h1 className="text-4xl font-bold text-gray-900 mb-12">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12">
             Take an Interview
           </h1>
           
-          <div className="border-t-2 border-gray-300 pt-8">
-            <p className="text-gray-700 text-xl mb-6 leading-relaxed">
+          <div className="border-t-2 border-gray-300 pt-6 md:pt-8">
+            <p className="text-gray-700 text-sm md:text-xl mb-4 md:mb-6 leading-relaxed">
               An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed.
             </p>
             
-            <p className="text-gray-700 text-xl leading-relaxed">
+            <p className="text-gray-700 text-sm md:text-xl leading-relaxed">
               No time for preparation will be provided.
             </p>
           </div>

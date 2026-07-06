@@ -137,10 +137,10 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white pt-12 px-12">
+      <div className="flex-1 flex flex-col bg-white pt-6 md:pt-12 px-4 md:px-12">
         {/* Title at top center */}
         <div className="pb-8">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         
         {/* Image - Square */}

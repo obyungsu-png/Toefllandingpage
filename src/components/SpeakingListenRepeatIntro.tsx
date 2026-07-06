@@ -158,7 +158,7 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-[#F5F5F5] p-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-['Inter',_sans-serif] text-gray-800 mb-8 pb-4 border-b-2 border-gray-300">Listen and Repeat</h1>
+          <h1 className="text-2xl md:text-4xl font-['Inter',_sans-serif] text-gray-800 mb-4 md:mb-8 pb-4 border-b-2 border-gray-300">Listen and Repeat</h1>
           
           <div className="mb-8">
             <p className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed mb-6">

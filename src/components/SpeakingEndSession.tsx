@@ -71,14 +71,14 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
         <div className="mx-auto max-w-4xl">
           <div className="h-6 w-full bg-[#12757a]" />
           <div className="border border-gray-200 border-t-0 px-8 py-10 md:px-12 md:py-12">
-            <h1 className="text-4xl font-semibold text-gray-700">End of session</h1>
+            <h1 className="text-2xl md:text-4xl font-semibold text-gray-700">End of session</h1>
             <div className="mt-4 h-px bg-gray-200" />
 
             <div className="mt-8 space-y-6 text-[18px] leading-8 text-gray-700">
 
               {/* ── 녹음 재생 섹션 ── */}
               <div className="rounded-2xl border border-[#1e6b73]/30 bg-[#f0fafa] px-5 py-5">
-                <p className="text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
+                <p className="text-sm md:text-xl font-semibold text-[#1e6b73] mb-4">🎙️ 내 녹음 듣기</p>
                 <div className="space-y-6">
                   <div>
                     <p className="text-base font-semibold text-[#1e6b73] mb-3">Listen and Speak</p>
@@ -100,7 +100,7 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
               <p>You can download the full test materials created from the CMS content for this test.</p>
 
               <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5">
-                <p className="text-xl font-semibold text-gray-800">Full Test PDF</p>
+                <p className="text-sm md:text-xl font-semibold text-gray-800">Full Test PDF</p>
                 <p className="mt-1 text-base text-gray-600">Downloads all sections with the questions as entered in CMS.</p>
                 <button
                   onClick={() => handleDownload('standard')}
@@ -111,7 +111,7 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
               </div>
 
               <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-5">
-                <p className="text-xl font-semibold text-gray-800">Annotated PDF</p>
+                <p className="text-sm md:text-xl font-semibold text-gray-800">Annotated PDF</p>
                 <p className="mt-1 text-base text-gray-600">Downloads all sections with correct answers and CMS notes/explanations.</p>
                 <button
                   onClick={() => handleDownload('annotated')}

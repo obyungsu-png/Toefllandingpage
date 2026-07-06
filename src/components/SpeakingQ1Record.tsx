@@ -162,7 +162,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white">
         <div className="pt-8 pb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
           <div className="flex justify-center mb-8">
           <ImageWithFallback 

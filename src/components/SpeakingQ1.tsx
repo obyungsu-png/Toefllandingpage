@@ -152,7 +152,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-8 text-center">
             {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
           </h1>
 
