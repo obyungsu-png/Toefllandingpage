@@ -126,7 +126,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
           </h1>
 
           <div className="flex justify-center my-6 md:my-8">
-            <div className="w-72 h-72 md:w-[420px] md:h-[420px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
+            <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
               <ImageWithFallback
                 src={imageUrl || zooMapImage}
                 alt="Zoo Map"

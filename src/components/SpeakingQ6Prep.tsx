@@ -150,7 +150,7 @@ export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         </div>
 
         <div className="flex justify-center mb-8">
-          <div className="w-72 h-72 md:w-[420px] md:h-[420px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
+          <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
             {imageUrl ? (
               <img src={imageUrl} alt="Speaking scene" className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
