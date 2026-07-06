@@ -107,22 +107,6 @@ export function SpeakingQ6Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
               />
             </div>
         </div>
-
-        {/* Audio Play/Pause control */}
-        {audioUrl && (
-          <div className="flex items-center justify-center gap-3 py-2">
-            <button
-              onClick={togglePlay}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors"
-            >
-              {isAudioPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
-            </button>
-            <span className="text-teal-600 text-sm font-medium">
-              {isAudioPlaying ? 'Playing audio...' : 'Paused'}
-            </span>
-          </div>
-        )}
-
         {/* Spacer */}
         <div className="flex-1" />
 

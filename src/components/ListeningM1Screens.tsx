@@ -537,25 +537,30 @@ function QuestionScreen({
       </div>
       {/* Must Answer Modal */}
       {showMustAnswer && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">⚠️</span>
-              <h3 className="text-2xl font-bold text-gray-900">Must Answer</h3>
-            </div>
-            <hr className="mb-6 border-gray-200" />
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              You must enter an answer before you can leave this question.
-            </p>
-            <div className="flex justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" style={{ animation: 'mustAnswerFadeIn 0.2s ease' }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-7 sm:p-8" style={{ animation: 'mustAnswerPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Must Answer</h3>
+              <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+                You must enter an answer before you can leave this question.
+              </p>
               <button
                 onClick={() => setShowMustAnswer(false)}
-                className="px-8 py-3 bg-[#1e6b73] text-white font-semibold rounded-full border-2 border-[#164f54] hover:bg-[#164f54] transition-colors text-lg"
+                className="w-full py-3 bg-[#1e6b73] text-white font-semibold rounded-xl hover:bg-[#164f54] active:scale-[0.98] transition-all text-base shadow-sm"
               >
                 Return to Question
               </button>
             </div>
           </div>
+          <style>{`
+            @keyframes mustAnswerFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes mustAnswerPopIn { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          `}</style>
         </div>
       )}
       <MobileFooter onHome={onHome} onBack={onBack} onNext={handleNext} />

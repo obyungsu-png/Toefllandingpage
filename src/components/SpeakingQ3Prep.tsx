@@ -143,21 +143,6 @@ export function SpeakingQ3Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
             className="border-2 border-black w-96 h-96 object-cover"
           />
         </div>
-        
-        {/* Audio Play/Pause control */}
-        {audioUrl && (
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={togglePlay}
-              className="flex items-center justify-center w-12 h-12 rounded-full bg-[#1e6b73] text-white hover:bg-[#164f56] transition-colors"
-            >
-              {isAudioPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
-            </button>
-            <span className="text-[#1e6b73] text-lg font-semibold">
-              {isAudioPlaying ? 'Playing audio...' : 'Paused'}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Volume Control Dropdown */}
