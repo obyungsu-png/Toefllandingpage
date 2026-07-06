@@ -156,12 +156,14 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         </div>
         
         {/* Image - Square */}
-          <div className="flex justify-center mb-8">
-          <ImageWithFallback 
-            src={imageUrl || speakingImage} 
-            alt="Speaking scene" 
-            className="border-2 border-black w-96 h-96 object-cover"
+          <div className="flex justify-center mb-4 md:mb-8">
+          <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
+          <ImageWithFallback
+            src={imageUrl || speakingImage}
+            alt="Speaking scene"
+            className="w-full h-full object-cover"
           />
+        </div>
         </div>
 
         <div className="flex justify-center pb-8">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingInterviewIntroProps {
   onNext: () => void;
@@ -49,56 +50,14 @@ export function SpeakingInterviewIntro({
     const textToRead = questionText ||
       `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
 
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.lang = 'en-GB'; // British English
-
-      // Prefer British female voice
-      const applyFemaleVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = [
-          'Google UK English Female',
-          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-          'Microsoft Libby Online (Natural) - English (United Kingdom)',
-          'Microsoft Susan - English (United Kingdom)',
-          'Kate', 'Serena', 'Stephanie',
-        ];
-        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
-        if (!v) v = voices.find(voice =>
-          voice.lang.includes('en-GB') &&
-          (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-        );
-        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
-        if (v) utterance.voice = v;
-      };
-      if (window.speechSynthesis.getVoices().length > 0) applyFemaleVoice();
-      window.speechSynthesis.onvoiceschanged = applyFemaleVoice;
-
-      utterance.onstart = () => setIsAudioPlaying(true);
-      utterance.onend   = () => {
+    return speakWithBritishFemaleVoice({
+      text: textToRead,
+      onstart: () => setIsAudioPlaying(true),
+      onend: () => {
         setIsAudioPlaying(false);
         if (!isReviewMode) setTimeout(() => onNext(), 500);
-      };
-
-      const t = setTimeout(() => window.speechSynthesis.speak(utterance), 500);
-      const fallback = window.setTimeout(() => {
-        window.speechSynthesis.cancel();
-        if (!isReviewMode) onNext();
-      }, 30000);
-
-      return () => {
-        clearTimeout(t);
-        clearTimeout(fallback);
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel();
-      };
-    } else {
-      const t = setTimeout(() => { if (!isReviewMode) onNext(); }, 6000);
-      return () => clearTimeout(t);
-    }
+      },
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
   const displayText = questionText ||
@@ -158,14 +117,14 @@ export function SpeakingInterviewIntro({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-start bg-white p-4 md:p-12 pt-6 md:pt-16 overflow-auto">
+      <div className="flex-1 flex flex-col items-center justify-start bg-white p-4 md:p-12 pt-4 md:pt-16 overflow-auto">
         <div className="max-w-4xl w-full">
-          <p className="text-gray-900 text-base md:text-2xl mb-6 md:mb-12 leading-relaxed text-center">
+          <p className="text-sm md:text-2xl text-gray-900 mb-4 md:mb-12 leading-snug md:leading-relaxed text-center">
             {displayText}
           </p>
 
           <div className="flex justify-center">
-            <div className="w-64 h-64 md:w-96 md:h-96 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
               {imageUrl ? (
                 <img src={imageUrl} alt="Interviewer" className="w-full h-full object-cover"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />

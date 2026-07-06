@@ -4,6 +4,7 @@ import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingQ1Props {
   onNext?: () => void;
@@ -47,61 +48,16 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
     // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
     const textToRead = questionText ||
       "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
-    let fallbackTimer: number | undefined;
-    let ttsEnded = false;
 
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.lang = 'en-GB';
-
-      const setVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = ['Google UK English Female','Microsoft Sonia Online (Natural) - English (United Kingdom)','Microsoft Libby Online (Natural) - English (United Kingdom)','Microsoft Susan - English (United Kingdom)','Kate','Serena','Stephanie'];
-        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
-        if (!v) v = voices.find(voice => voice.lang.includes('en-GB') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')));
-        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
-        if (v) utterance.voice = v;
-      };
-
-      if (window.speechSynthesis.getVoices().length > 0) setVoice();
-      window.speechSynthesis.onvoiceschanged = setVoice;
-
-      utterance.onstart = () => setIsAudioPlaying(true);
-      utterance.onend = () => {
+    setIsAudioPlaying(true);
+    return speakWithBritishFemaleVoice({
+      text: textToRead,
+      onstart: () => setIsAudioPlaying(true),
+      onend: () => {
         setIsAudioPlaying(false);
-        ttsEnded = true;
         if (!isReviewMode) setTimeout(() => onNext?.(), 500);
-      };
-
-      // Ensure speech synthesis is not paused
-      window.speechSynthesis.cancel();
-      let innerSpeakTimer: ReturnType<typeof setTimeout> | undefined;
-      const outerSpeakTimer = setTimeout(() => {
-        window.speechSynthesis.cancel();
-        innerSpeakTimer = setTimeout(() => window.speechSynthesis.speak(utterance), 100);
-      }, 800);
-
-      fallbackTimer = window.setTimeout(() => {
-        if (!ttsEnded) { window.speechSynthesis.cancel(); if (!isReviewMode) onNext?.(); }
-      }, 20000);
-
-      return () => {
-        clearTimeout(outerSpeakTimer);
-        clearTimeout(innerSpeakTimer);
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel();
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-      };
-    } else {
-      setIsAudioPlaying(false);
-      if (!isReviewMode) {
-        fallbackTimer = window.setTimeout(() => onNext?.(), 5000);
-      }
-      return () => { if (fallbackTimer) clearTimeout(fallbackTimer); };
-    }
+      },
+    });
   }, [introAudioUrl, onNext, questionText]);
 
   return (
@@ -163,18 +119,20 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
 
       </div>
       {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-white p-12">
+      <div className="flex-1 overflow-auto bg-white p-4 md:p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-8 text-center">
+          <h1 className="text-base md:text-xl font-bold text-gray-900 mb-4 md:mb-8 text-center">
             {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
           </h1>
 
-          <div className="flex justify-center my-8">
-            <ImageWithFallback
-              src={imageUrl || zooMapImage}
-              alt="Zoo Map"
-              className="border-2 border-gray-400 w-96 h-96 object-cover"
-            />
+          <div className="flex justify-center my-6 md:my-8">
+            <div className="w-56 h-44 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
+              <ImageWithFallback
+                src={imageUrl || zooMapImage}
+                alt="Zoo Map"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>

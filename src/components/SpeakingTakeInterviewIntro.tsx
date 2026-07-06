@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingTakeInterviewIntroProps {
   onNext: () => void;
@@ -15,62 +16,15 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
 
   useEffect(() => {
     const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
-    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-    let speakTimer: ReturnType<typeof setTimeout> | undefined;
-    let ttsEnded = false;
 
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.lang = 'en-GB'; // British English
-
-      // Prefer high-quality British female voice
-      const applyFemaleVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = [
-          'Google UK English Female',
-          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-          'Microsoft Libby Online (Natural) - English (United Kingdom)',
-          'Microsoft Susan - English (United Kingdom)',
-          'Kate', 'Serena', 'Stephanie',
-        ];
-        let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
-        if (!v) v = voices.find(voice =>
-          voice.lang.includes('en-GB') &&
-          (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-        );
-        if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
-        if (v) utterance.voice = v;
-      };
-
-      if (window.speechSynthesis.getVoices().length > 0) applyFemaleVoice();
-      window.speechSynthesis.onvoiceschanged = applyFemaleVoice;
-
-      utterance.onstart = () => setIsAudioPlaying(true);
-      utterance.onend = () => {
+    return speakWithBritishFemaleVoice({
+      text: textToRead,
+      onstart: () => setIsAudioPlaying(true),
+      onend: () => {
         setIsAudioPlaying(false);
-        ttsEnded = true;
         if (!isReviewMode) setTimeout(() => onNext(), 500);
-      };
-
-      speakTimer = setTimeout(() => window.speechSynthesis.speak(utterance), 500);
-
-      fallbackTimer = window.setTimeout(() => {
-        if (!ttsEnded) { window.speechSynthesis.cancel(); if (!isReviewMode) onNext() }
-      }, 30000);
-
-      return () => {
-        clearTimeout(speakTimer);
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel();
-      };
-    } else {
-      const t = setTimeout(() => { if (!isReviewMode) onNext(); }, 6000);
-      return () => clearTimeout(t);
-    }
+      },
+    });
   }, [onNext]);
 
   return (

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingIntroProps {
   onNext: () => void;
@@ -12,71 +13,11 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
   const hasSpokenRef = useRef(false);
 
   useEffect(() => {
-    // Speak the instructions using British female voice
-    if (!hasSpokenRef.current && 'speechSynthesis' in window) {
+    if (!hasSpokenRef.current) {
       hasSpokenRef.current = true;
-      
       const text = "In the speaking section, you will answer 11 questions to demonstrate how well you can speak English. There are two types of tasks: Listen and Repeat, where you listen and repeat what you heard, and Take an Interview, where you answer questions from the interviewer.";
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Get available voices and find a high-quality British female voice
-      const setVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-
-        const preferredNames = [
-          'Google UK English Female',
-          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-          'Microsoft Libby Online (Natural) - English (United Kingdom)',
-          'Microsoft Susan - English (United Kingdom)',
-        ];
-        let chosen = voices.find(voice => preferredNames.some(p => voice.name.includes(p)));
-
-        // Try to find British English female voice
-        if (!chosen) {
-          chosen = voices.find(voice => 
-            (voice.lang === 'en-GB' || voice.lang === 'en-UK') && 
-            (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-          );
-        }
-        
-        // Fallback to any British voice
-        const britishVoice = voices.find(voice => 
-          voice.lang === 'en-GB' || voice.lang === 'en-UK'
-        );
-        
-        // Fallback to any female voice
-        const femaleVoice = voices.find(voice => 
-          voice.name.toLowerCase().includes('female') || 
-          voice.name.toLowerCase().includes('woman') ||
-          voice.name.toLowerCase().includes('samantha') ||
-          voice.name.toLowerCase().includes('victoria')
-        );
-        
-        utterance.voice = chosen || britishVoice || femaleVoice || voices[0];
-        utterance.lang = 'en-GB';
-        utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1.0;
-        
-        window.speechSynthesis.speak(utterance);
-      };
-      
-      // Load voices (some browsers load them asynchronously)
-      if (window.speechSynthesis.getVoices().length > 0) {
-        setVoice();
-      } else {
-        window.speechSynthesis.onvoiceschanged = setVoice;
-      }
+      return speakWithBritishFemaleVoice({ text, rate: 0.9 });
     }
-    
-    // Cleanup — stop any speech and remove the voice-loaded listener so it can't
-    // fire after this screen is gone and overlap the next screen's audio
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
-    };
   }, []);
   
   return (

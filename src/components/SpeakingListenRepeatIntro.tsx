@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingListenRepeatIntroProps {
   onNext: () => void;
@@ -13,91 +14,14 @@ interface SpeakingListenRepeatIntroProps {
 
 export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false }: SpeakingListenRepeatIntroProps) {
   useEffect(() => {
-    // Text to read
     const textToRead = `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
 
-    let speakTimer: ReturnType<typeof setTimeout> | undefined;
-    let advanceTimer: ReturnType<typeof setTimeout> | undefined;
-
-    // Use Web Speech API to read the text
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.lang = 'en-GB'; // British English
-
-      // Function to find and set the best quality British female voice
-      const setVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-
-        // Priority list of high-quality British female voices
-        const preferredVoices = [
-          'Google UK English Female',
-          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-          'Microsoft Libby Online (Natural) - English (United Kingdom)',
-          'Microsoft Hazel - English (United Kingdom)',
-          'Kate', 'Serena', 'Stephanie'
-        ];
-
-        let selectedVoice = voices.find(voice =>
-          preferredVoices.some(preferred => voice.name.includes(preferred))
-        );
-
-        if (!selectedVoice) {
-          selectedVoice = voices.find(voice =>
-            voice.lang.includes('en-GB') &&
-            (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-          );
-        }
-
-        if (!selectedVoice) {
-          selectedVoice = voices.find(voice => voice.lang.includes('en-GB'));
-        }
-
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-      };
-
-      // Set voice immediately if available
-      if (window.speechSynthesis.getVoices().length > 0) {
-        setVoice();
-      }
-
-      // Also set voice when voices are loaded (for some browsers)
-      window.speechSynthesis.onvoiceschanged = setVoice;
-
-      // When speech ends, automatically move to next screen (only in start mode)
-      utterance.onend = () => {
-        if (!isReviewMode) {
-          advanceTimer = setTimeout(() => {
-            onNext();
-          }, 500);
-        }
-      };
-
-      // Start speaking after a short delay
-      speakTimer = setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 500);
-
-      // Cleanup function — stop any pending timers/speech so it never overlaps the next screen
-      return () => {
-        clearTimeout(speakTimer);
-        clearTimeout(advanceTimer);
-        window.speechSynthesis.onvoiceschanged = null;
-        window.speechSynthesis.cancel();
-      };
-    } else {
-      // Fallback: auto-advance after reading time if speech synthesis is not available
-      const estimatedReadingTime = (textToRead.split(' ').length / 150) * 60 * 1000; // ~150 words per minute
-      const timer = setTimeout(() => {
-        if (!isReviewMode) onNext();
-      }, estimatedReadingTime);
-
-      return () => clearTimeout(timer);
-    }
+    return speakWithBritishFemaleVoice({
+      text: textToRead,
+      onend: () => {
+        if (!isReviewMode) setTimeout(() => onNext(), 500);
+      },
+    });
   }, [onNext]);
 
   return (
