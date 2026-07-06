@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
+import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 
 interface SpeakingQ9PrepProps {
   onNext: () => void;
@@ -18,6 +19,8 @@ interface SpeakingQ9PrepProps {
 
 export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false}: SpeakingQ9PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioElapsed, setAudioElapsed] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -28,6 +31,9 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       const audio = new Audio(soundSrc);
       audioRef.current = audio;
       let ended = false;
+
+      audio.onloadedmetadata = () => setAudioDuration(audio.duration || 0);
+      audio.ontimeupdate = () => setAudioElapsed(audio.currentTime || 0);
 
       audio.onended = () => {
         if (ended) return;
@@ -144,6 +150,14 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
               </svg>
             )}
           </div>
+        </div>
+
+        <div className="flex justify-center pb-8">
+          <SpeakingResponseTimer
+            timeRemaining={Math.max(0, Math.ceil((audioDuration || audioPlayDuration || 45) - audioElapsed))}
+            totalDuration={Math.ceil(audioDuration || audioPlayDuration || 45)}
+            isRecording={false}
+          />
         </div>
       </div>
 

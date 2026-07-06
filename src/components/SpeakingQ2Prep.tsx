@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
 import speakingImage from 'figma:asset/a71b28147ebac8a118893f23f167e5cc4828ff8d.png';
 import { VolumeControl } from './VolumeControl';
+import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingQ2PrepProps {
@@ -19,6 +20,8 @@ interface SpeakingQ2PrepProps {
 
 export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, isReviewMode = false }: SpeakingQ2PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioElapsed, setAudioElapsed] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -28,6 +31,9 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       let ended = false;
+
+      audio.onloadedmetadata = () => setAudioDuration(audio.duration || 0);
+      audio.ontimeupdate = () => setAudioElapsed(audio.currentTime || 0);
 
       audio.onended = () => {
         if (ended) return;
@@ -143,6 +149,14 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
             src={imageUrl || speakingImage} 
             alt="Speaking scene" 
             className="border-2 border-black w-96 h-96 object-cover"
+          />
+        </div>
+
+        <div className="flex justify-center pb-8">
+          <SpeakingResponseTimer
+            timeRemaining={Math.max(0, Math.ceil((audioDuration || audioPlayDuration || 8) - audioElapsed))}
+            totalDuration={Math.ceil(audioDuration || audioPlayDuration || 8)}
+            isRecording={false}
           />
         </div>
       </div>
