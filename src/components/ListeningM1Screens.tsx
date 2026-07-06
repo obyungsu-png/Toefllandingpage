@@ -708,7 +708,9 @@ function IntroScreen({
   onHome: () => void;
   onNext: () => void;
 }) {
-  // 음성 없음 — Module1IntroScreen에서만 재생
+  useSpeechEffect(
+    'Listening. In the listening section, you will answer questions to demonstrate how well you understand spoken English. There are three types of tasks: Listen and Choose a Response, Conversations, and Lectures. You will not be able to return to previous questions.'
+  );
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -783,6 +785,8 @@ function EndModule1Screen({
   onBack: () => void;
   onNext: () => void;
 }) {
+  useSpeechEffect('This is the end of Module 1 of the Listening section. You will now begin Module 2.');
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       <ScreenHeader onHome={onHome} onBack={onBack} onNext={onNext} />
@@ -810,6 +814,10 @@ function Module2IntroScreen({
   onBack: () => void;
   onNext: () => void;
 }) {
+  useSpeechEffect(
+    'Module 2. In an actual test, the clock will show you how much time you have to complete each question. You can use Next to move to the next question. The first task is Listen and Choose a Response. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.'
+  );
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       <ScreenHeader onHome={onHome} onBack={onBack} onNext={onNext} />

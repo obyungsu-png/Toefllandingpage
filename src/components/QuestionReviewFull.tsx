@@ -241,6 +241,7 @@ export function QuestionReviewFull({
   const [audioProgress, setAudioProgress] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const progressInterval = useRef<number | null>(null);
+  const listeningAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Speaking-specific state
   const [speakingModelPlaying, setSpeakingModelPlaying] = useState(false);
@@ -254,6 +255,7 @@ export function QuestionReviewFull({
   const [showModelText, setShowModelText] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const modelInterval = useRef<number | null>(null);
+  const speakingAudioRef = useRef<HTMLAudioElement | null>(null);
   const userInterval = useRef<number | null>(null);
   const materialInterval = useRef<number | null>(null);
 
@@ -468,40 +470,7 @@ export function QuestionReviewFull({
   const timeSeconds = result.timeSpent ? result.timeSpent % 60 : 0;
   const timeDisplay = `${timeMinutes}'${String(timeSeconds).padStart(2, '0')}"`;
 
-  // Audio simulation for Listening
-  useEffect(() => {
-    if (isPlaying) {
-      progressInterval.current = window.setInterval(() => {
-        setAudioProgress(prev => {
-          if (prev >= 100) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 2;
-        });
-      }, 100);
-    } else {
-      if (progressInterval.current) clearInterval(progressInterval.current);
-    }
-    return () => {
-      if (progressInterval.current) clearInterval(progressInterval.current);
-    };
-  }, [isPlaying]);
-
-  // Speaking audio simulations
-  useEffect(() => {
-    if (speakingModelPlaying) {
-      modelInterval.current = window.setInterval(() => {
-        setModelProgress(prev => {
-          if (prev >= 100) { setSpeakingModelPlaying(false); return 0; }
-          return prev + 2;
-        });
-      }, 100);
-    } else {
-      if (modelInterval.current) clearInterval(modelInterval.current);
-    }
-    return () => { if (modelInterval.current) clearInterval(modelInterval.current); };
-  }, [speakingModelPlaying]);
+  // Listening/Speaking audio progress now comes from real <audio> onTimeUpdate — no simulation needed
 
   useEffect(() => {
     if (speakingUserPlaying) {
@@ -552,6 +521,8 @@ export function QuestionReviewFull({
     setShowFullText(false);
     setIsPlaying(false);
     setAudioProgress(0);
+    if (listeningAudioRef.current) listeningAudioRef.current.pause();
+    if (speakingAudioRef.current) speakingAudioRef.current.pause();
   }, [currentQuestionIndex]);
 
   const sectionTabs: SectionTab[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
@@ -1068,9 +1039,50 @@ export function QuestionReviewFull({
                     )}
 
                     {/* Audio Player */}
-                    {(() => { if (typeof window !== 'undefined') console.log('[Review] Listening Q', currentQuestion?.number, 'audioUrl:', currentQuestion?.audioUrl || 'NONE'); return null; })()}
                     {currentQuestion?.audioUrl ? (
-                      <audio controls src={currentQuestion.audioUrl} className="w-full h-10 mb-3" />
+                      <div className="mb-3">
+                        <audio
+                          ref={listeningAudioRef}
+                          src={currentQuestion.audioUrl}
+                          onEnded={() => { setIsPlaying(false); setAudioProgress(0); }}
+                          onTimeUpdate={(e) => {
+                            const el = e.currentTarget;
+                            if (el.duration) setAudioProgress((el.currentTime / el.duration) * 100);
+                          }}
+                          className="hidden"
+                        />
+                        <button
+                          onClick={() => {
+                            const el = listeningAudioRef.current;
+                            if (!el) return;
+                            if (isPlaying) {
+                              el.pause();
+                              setIsPlaying(false);
+                            } else {
+                              el.play().catch(() => {});
+                              setIsPlaying(true);
+                            }
+                          }}
+                          className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                        >
+                          {isPlaying ? (
+                            <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+                          ) : (
+                            <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+                          )}
+                          <span className="font-bold text-[#0d3b4a]">
+                            {isPlaying ? 'Pause Audio' : 'Play Audio'}
+                          </span>
+                          {audioProgress > 0 && (
+                            <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
+                              <div
+                                className="h-full bg-[#0d3b4a] rounded-full transition-all"
+                                style={{ width: `${audioProgress}%` }}
+                              />
+                            </div>
+                          )}
+                        </button>
+                      </div>
                     ) : (
                       <div className="mb-3 text-xs text-gray-400 italic px-1">
                         CMS에 등록된 오디오가 없습니다.
@@ -1597,7 +1609,49 @@ export function QuestionReviewFull({
 
                 {/* Question audio player */}
                 {currentSpeakingQ.audioUrl ? (
-                  <audio controls src={currentSpeakingQ.audioUrl} className="w-full h-11 max-w-xl mx-auto block" />
+                  <div className="max-w-xl mx-auto">
+                    <audio
+                      ref={speakingAudioRef}
+                      src={currentSpeakingQ.audioUrl}
+                      onEnded={() => { setSpeakingModelPlaying(false); setModelProgress(0); }}
+                      onTimeUpdate={(e) => {
+                        const el = e.currentTarget;
+                        if (el.duration) setModelProgress((el.currentTime / el.duration) * 100);
+                      }}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => {
+                        const el = speakingAudioRef.current;
+                        if (!el) return;
+                        if (speakingModelPlaying) {
+                          el.pause();
+                          setSpeakingModelPlaying(false);
+                        } else {
+                          el.play().catch(() => {});
+                          setSpeakingModelPlaying(true);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                      {speakingModelPlaying ? (
+                        <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+                      ) : (
+                        <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+                      )}
+                      <span className="font-bold text-[#0d3b4a]">
+                        {speakingModelPlaying ? 'Pause Audio' : 'Play Audio'}
+                      </span>
+                      {modelProgress > 0 && (
+                        <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
+                          <div
+                            className="h-full bg-[#0d3b4a] rounded-full transition-all"
+                            style={{ width: `${modelProgress}%` }}
+                          />
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 ) : (
                   <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
                 )}

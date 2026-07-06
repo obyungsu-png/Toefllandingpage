@@ -277,7 +277,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
 
     if (audioRef.current) {
-      audioRef.current.currentTime = 0;
+      // Resume from wherever it was paused — do NOT reset currentTime
       audioRef.current.play().then(() => setIsPlayingAudio(true)).catch(() => {});
     } else {
       const audio = new Audio(audioUrl);
