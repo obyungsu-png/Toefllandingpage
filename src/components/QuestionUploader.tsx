@@ -411,10 +411,10 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
                   📝 빈칸넣기 문제 입력 방법
                 </p>
                 <p className="text-xs text-orange-700">
-                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
-                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
-                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
-                  �?반드�?10개의 빈칸�?입력해야 합니�?
+                  빈칸 문제는 하나의 지문에 10개의 빈칸을 모두 포함하여 입력합니다.<br/>
+                  지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요.<br/>
+                  예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  반드시 10개의 빈칸을 입력해야 합니다.
                 </p>
               </div>
             )}
@@ -500,6 +500,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
           />
         </div>
+        )}
 
         {/* Image Upload (for Speaking) */}
         {(section === 'Speaking' || section === 'Listening') && (
@@ -930,10 +931,10 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
                   📝 빈칸넣기 문제 입력 방법
                 </p>
                 <p className="text-xs text-orange-700">
-                  �?1-10�?문제�?하나�?지문에 10�?빈칸�?모두 포함하여 입력합니�?br/>
-                  �?지문에�?빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세�?br/>
-                  �?�? "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
-                  �?반드�?10개의 빈칸�?입력해야 합니�?
+                  빈칸 문제는 하나의 지문에 10개의 빈칸을 모두 포함하여 입력합니다.<br/>
+                  지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요.<br/>
+                  예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  반드시 10개의 빈칸을 입력해야 합니다.
                 </p>
               </div>
             )}
@@ -1019,6 +1020,7 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
           />
         </div>
+        )}
 
         {/* Image Upload (for Speaking) */}
         {(section === 'Speaking' || section === 'Listening') && (

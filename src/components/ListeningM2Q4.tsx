@@ -1,5 +1,5 @@
-import React
-import { Pause, Play } from 'lucide-react';, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Pause, Play } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
 import { RadioOption } from './RadioOption';
