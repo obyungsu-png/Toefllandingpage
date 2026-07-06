@@ -24,6 +24,7 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
     const soundSrc = audioUrl || videoUrl;
     if (soundSrc) {
       const audio = new Audio(soundSrc);
+      audioRef.current = audio;
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
         audio.play().catch(() => { if (!isReviewMode) onNext(); });
@@ -34,7 +35,15 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
         setTimeout(() => { if (!isReviewMode) onNext(); }, 400);
       };
       audio.onerror = () => { if (!isReviewMode) onNext(); };
-      const togglePlay = () => {
+      return () => {
+        clearTimeout(startTimer);
+        audio.pause();
+        audio.src = '';
+      };
+    }
+  }, [audioUrl, videoUrl, isReviewMode, onNext]);
+
+  const togglePlay = () => {
     if (!audioRef.current) return;
     if (isAudioPlaying) {
       audioRef.current.pause();
@@ -44,14 +53,6 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
       setIsAudioPlaying(true);
     }
   };
-
-  return () => {
-        clearTimeout(startTimer);
-        audio.pause();
-        audio.src = '';
-      };
-    }
-  }, [audioUrl, videoUrl, isReviewMode, onNext]);
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">

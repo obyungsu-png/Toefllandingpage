@@ -27,6 +27,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
   const uploadedRef = useRef(false);
 
   useEffect(() => {
+    if (isReviewMode) return; // Review mode: wait for manual Record button click
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
@@ -36,6 +37,16 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Review mode only: manual record start on button press
+  const handleManualRecord = async () => {
+    uploadedRef.current = false;
+    setShowStopOverlay(false);
+    setTimeRemaining(duration || 8);
+    await playBeep();
+    setIsRecording(true);
+    recorder.startRecording();
+  };
 
   useEffect(() => {
     if (isRecording && timeRemaining > 0) {
@@ -48,6 +59,9 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
             setShowStopOverlay(true);
             if (!isReviewMode) {
               setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+            } else {
+              // Review mode: show briefly, then hide — do NOT auto-advance
+              setTimeout(() => setShowStopOverlay(false), 1800);
             }
             return 0;
           }
@@ -93,7 +107,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
           </button>
           
           {/* Next Button */}
-          {onNext && (
+          {isReviewMode && (
             <button 
               onClick={onNext}
               className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
@@ -138,9 +152,21 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
         </div>
         
         {/* Response Time Box */}
-        {!isReviewMode && (
+        {!isReviewMode ? (
           <div className="flex justify-center">
             <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
+            {!isRecording && (
+              <button
+                onClick={handleManualRecord}
+                className="px-6 py-3 rounded-xl bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors"
+              >
+                {uploadedRef.current ? 'Re-record' : 'Record'}
+              </button>
+            )}
           </div>
         )}
       </div>

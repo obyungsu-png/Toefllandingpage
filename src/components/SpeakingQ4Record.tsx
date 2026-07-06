@@ -27,6 +27,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
   const uploadedRef = useRef(false);
 
   useEffect(() => {
+    if (isReviewMode) return; // Review mode: wait for manual Record button click
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
       await playBeep();   // 삐 소리
@@ -36,6 +37,16 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
     return () => clearTimeout(startTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Review mode only: manual record start on button press
+  const handleManualRecord = async () => {
+    uploadedRef.current = false;
+    setShowStopOverlay(false);
+    setTimeRemaining(duration || 10);
+    await playBeep();
+    setIsRecording(true);
+    recorder.startRecording();
+  };
 
   useEffect(() => {
     if (isRecording && timeRemaining > 0) {
@@ -48,6 +59,9 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
             setShowStopOverlay(true);
             if (!isReviewMode) {
               setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+            } else {
+              // Review mode: show briefly, then hide — do NOT auto-advance
+              setTimeout(() => setShowStopOverlay(false), 1800);
             }
             return 0;
           }
@@ -91,6 +105,19 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           </button>
+
+          {/* Next Button */}
+          {isReviewMode && (
+            <button 
+              onClick={onNext}
+              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -125,9 +152,21 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
         </div>
         
         {/* Response Time Box */}
-        {!isReviewMode && (
+        {!isReviewMode ? (
           <div className="flex justify-center">
             <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 10} isRecording={isRecording} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 10} isRecording={isRecording} />
+            {!isRecording && (
+              <button
+                onClick={handleManualRecord}
+                className="px-6 py-3 rounded-xl bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors"
+              >
+                {uploadedRef.current ? 'Re-record' : 'Record'}
+              </button>
+            )}
           </div>
         )}
       </div>

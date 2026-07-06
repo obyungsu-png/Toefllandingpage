@@ -47,18 +47,7 @@ export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
       }, 400);
 
-      const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isAudioPlaying) {
-      audioRef.current.pause();
-      setIsAudioPlaying(false);
-    } else {
-      audioRef.current.play().catch(() => {});
-      setIsAudioPlaying(true);
-    }
-  };
-
-  return () => {
+      return () => {
         clearTimeout(startTimer);
         clearTimeout(advanceTimer);
         if (!ended) {
@@ -69,6 +58,17 @@ export function SpeakingQ7Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       };
     }
   }, [audioUrl, isReviewMode, onNext]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+      setIsAudioPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsAudioPlaying(true);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">

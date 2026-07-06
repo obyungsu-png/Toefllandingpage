@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Pause, Play } from 'lucide-react';
 import speakingImage from 'figma:asset/a71b28147ebac8a118893f23f167e5cc4828ff8d.png';
 import { VolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -18,12 +19,14 @@ interface SpeakingQ2PrepProps {
 
 export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, isReviewMode = false }: SpeakingQ2PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     let advanceTimer: ReturnType<typeof setTimeout>;
 
     if (audioUrl) {
       const audio = new Audio(audioUrl);
+      audioRef.current = audio;
       let ended = false;
 
       audio.onended = () => {
@@ -61,6 +64,17 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       clearTimeout(advanceTimer);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+      setIsAudioPlaying(false);
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsAudioPlaying(true);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -130,13 +144,18 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           />
         </div>
         
-        {/* Audio playing indicator */}
-        {isAudioPlaying && (
-          <div className="flex items-center justify-center gap-3 text-[#1e6b73]">
-            <svg className="w-8 h-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            <span className="text-xl font-semibold">Playing audio...</span>
+        {/* Audio Play/Pause control */}
+        {audioUrl && (
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={togglePlay}
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-[#1e6b73] text-white hover:bg-[#164f56] transition-colors"
+            >
+              {isAudioPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
+            </button>
+            <span className="text-[#1e6b73] text-lg font-semibold">
+              {isAudioPlaying ? 'Playing audio...' : 'Paused'}
+            </span>
           </div>
         )}
       </div>
