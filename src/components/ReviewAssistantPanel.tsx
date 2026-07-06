@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Play, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Pause, Play, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -39,7 +39,7 @@ interface DictationExercise {
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   reading: ['Practice'],
-  listening: ['Dictation', 'Practice'],
+  listening: ['Dictation'],
   'writing-basic': ['Practice'],
   'writing-guided': ['Expressions', 'Template', 'Practice'],
   'speaking-repeat': ['Dictation'],
@@ -266,19 +266,26 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setDictationChecked(false);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
-  // Play Audio — Listening/Speaking 섹션의 오디오 재생 (Play Audio 버튼)
+  // Play/Pause Audio — Listening/Speaking 섹션의 오디오 재생/일시정지 (토글)
   const handlePlayAudio = () => {
-    if (!audioUrl || isPlayingAudio) return;
+    if (!audioUrl) return;
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (isPlayingAudio) {
+      audioRef.current?.pause();
+      setIsPlayingAudio(false);
+      return;
     }
 
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    audio.play().then(() => setIsPlayingAudio(true)).catch(() => {});
-    audio.onended = () => setIsPlayingAudio(false);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => setIsPlayingAudio(true)).catch(() => {});
+    } else {
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play().then(() => setIsPlayingAudio(true)).catch(() => {});
+      audio.onended = () => setIsPlayingAudio(false);
+      audio.onpause = () => setIsPlayingAudio(false);
+    }
   };
 
   // Dictation 오디오 — CMS 오디오 우선, 없으면 TTS fallback
@@ -543,13 +550,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         {audioUrl && (
           <button
             type="button"
-            title={isPlayingAudio ? 'Playing...' : 'Play Audio'}
+            title={isPlayingAudio ? 'Pause' : 'Play Audio'}
             onClick={handlePlayAudio}
-            disabled={isPlayingAudio}
             className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isPlayingAudio ? 'animate-pulse' : ''}`}
+              className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
               style={{
                 background: isPlayingAudio
                   ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
@@ -557,11 +563,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 boxShadow: isPlayingAudio ? `0 6px 18px ${theme.accent}33` : '0 2px 8px rgba(15,23,42,0.08)',
               }}
             >
-              <Play className={`h-5 w-5 ${isPlayingAudio ? 'text-white' : theme.accent}`} />
+              {isPlayingAudio ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5" style={{ color: theme.accent }} />}
             </span>
             <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
               style={{ color: isPlayingAudio ? theme.accent : '#94a3b8' }}>
-              {isPlayingAudio ? 'Playing' : 'Play'}
+              {isPlayingAudio ? 'Pause' : 'Play'}
             </span>
           </button>
         )}
