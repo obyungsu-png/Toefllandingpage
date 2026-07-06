@@ -128,13 +128,25 @@ function AppContent() {
   // Login state
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginFormKey, setLoginFormKey] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInUserName, setLoggedInUserName] = useState<string>(''); // Store logged in user name
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    try { return localStorage.getItem('amx_isLoggedIn') === 'true'; } catch { return false; }
+  });
+  const [loggedInUserName, setLoggedInUserName] = useState<string>(() => {
+    try { return localStorage.getItem('amx_userName') || ''; } catch { return ''; }
+  });
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   
   // Registration state
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [registrationFormKey, setRegistrationFormKey] = useState(0);
+
+  // Show login popup automatically on first visit if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowLoginPopup(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Footer visibility state
   const [isFooterVisible, setIsFooterVisible] = useState(true);
@@ -8053,6 +8065,11 @@ function AppContent() {
                   setLoggedInUserName('');
                   setShowLoginForm(false);
                   setShowRegistrationForm(false);
+                  try {
+                    localStorage.removeItem('amx_isLoggedIn');
+                    localStorage.removeItem('amx_userName');
+                  } catch {}
+                  setShowLoginPopup(true);
                 }}
                 className="px-3 md:px-6 py-2 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-xs md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61] text-white hover:bg-[#004d56]"
               >
@@ -8073,6 +8090,10 @@ function AppContent() {
             setLoggedInUserName(username);
             setShowLoginForm(false);
             setShowLoginPopup(false);
+            try {
+              localStorage.setItem('amx_isLoggedIn', 'true');
+              localStorage.setItem('amx_userName', username);
+            } catch {}
           }}
           onShowRegister={() => {
             setShowLoginForm(false);
@@ -8104,6 +8125,12 @@ function AppContent() {
           setShowLoginForm(true);
           setShowRegistrationForm(false);
           setLoginFormKey(prev => prev + 1);
+        }}
+        onRegisterClick={() => {
+          setShowLoginPopup(false);
+          setShowRegistrationForm(true);
+          setShowLoginForm(false);
+          setRegistrationFormKey(prev => prev + 1);
         }}
       />
 

@@ -4,9 +4,10 @@ interface LoginPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginClick: () => void;
+  onRegisterClick?: () => void;
 }
 
-export function LoginPopup({ isOpen, onClose, onLoginClick }: LoginPopupProps) {
+export function LoginPopup({ isOpen, onClose, onLoginClick, onRegisterClick }: LoginPopupProps) {
   if (!isOpen) return null;
 
   return (
@@ -142,6 +143,19 @@ export function LoginPopup({ isOpen, onClose, onLoginClick }: LoginPopupProps) {
                 Log In
                 <ArrowRight className="w-5 h-5" />
               </button>
+
+              {/* Register link */}
+              {onRegisterClick && (
+                <p className="text-white/80 text-sm text-center mt-5">
+                  계정이 없으신가요?{' '}
+                  <button
+                    onClick={onRegisterClick}
+                    className="font-bold text-white underline underline-offset-2 hover:text-white/90"
+                  >
+                    회원가입
+                  </button>
+                </p>
+              )}
 
               {/* Bottom text */}
               <p className="text-white/60 text-xs md:text-sm text-center mt-5">
