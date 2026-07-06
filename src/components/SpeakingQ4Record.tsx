@@ -151,12 +151,12 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
       <div className="flex-1 flex flex-col bg-white">
         {/* Title at top center */}
         <div className="pt-8 pb-6">
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
+          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
         </div>
         
         {/* Image */}
           <div className="flex justify-center mb-4 md:mb-8">
-          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
+          <div className="w-72 h-72 md:w-[420px] md:h-[420px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
           <ImageWithFallback
             src={imageUrl || speakingImage}
             alt="Speaking scene"

@@ -152,7 +152,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         </div>
 
         <div className="flex justify-center mb-4 md:mb-6 flex-shrink-0">
-          <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
+          <div className="w-72 h-72 md:w-[420px] md:h-[420px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
             {imageUrl ? (
               <img src={imageUrl} alt="Interviewer" className="w-full h-full object-cover"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
