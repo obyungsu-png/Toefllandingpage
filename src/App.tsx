@@ -8082,38 +8082,57 @@ function AppContent() {
 
       {/* Login Form Below Navigation */}
       {showLoginForm && (
-        <LoginForm 
-          key={loginFormKey} 
-          onClose={() => setShowLoginForm(false)}
-          onLoginSuccess={(username) => {
-            setIsLoggedIn(true);
-            setLoggedInUserName(username);
-            setShowLoginForm(false);
-            setShowLoginPopup(false);
-            try {
-              localStorage.setItem('amx_isLoggedIn', 'true');
-              localStorage.setItem('amx_userName', username);
-            } catch {}
-          }}
-          onShowRegister={() => {
-            setShowLoginForm(false);
-            setShowRegistrationForm(true);
-            setRegistrationFormKey(prev => prev + 1);
-          }}
-        />
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto"
+          style={{ backgroundColor: 'rgba(10, 15, 20, 0.72)' }}
+        >
+          <div className="my-8">
+            <LoginForm 
+              key={loginFormKey} 
+              onClose={() => setShowLoginForm(false)}
+              onLoginSuccess={(username) => {
+                setIsLoggedIn(true);
+                setLoggedInUserName(username);
+                setShowLoginForm(false);
+                setShowLoginPopup(false);
+                try {
+                  localStorage.setItem('amx_isLoggedIn', 'true');
+                  localStorage.setItem('amx_userName', username);
+                } catch {}
+              }}
+              onShowRegister={() => {
+                setShowLoginForm(false);
+                setShowRegistrationForm(true);
+                setRegistrationFormKey(prev => prev + 1);
+              }}
+            />
+          </div>
+        </div>
       )}
 
-      {/* Registration Form Below Navigation */}
+      {/* Registration Form Modal */}
       {showRegistrationForm && (
-        <RegistrationForm 
-          key={registrationFormKey} 
-          onClose={() => setShowRegistrationForm(false)}
-          onRegisterSuccess={() => {
-            setShowRegistrationForm(false);
-            setShowLoginForm(true);
-            setLoginFormKey(prev => prev + 1);
-          }}
-        />
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto"
+          style={{ backgroundColor: 'rgba(10, 15, 20, 0.72)' }}
+        >
+          <div className="my-8">
+            <RegistrationForm 
+              key={registrationFormKey} 
+              onClose={() => setShowRegistrationForm(false)}
+              onRegisterSuccess={() => {
+                setShowRegistrationForm(false);
+                setShowLoginForm(true);
+                setLoginFormKey(prev => prev + 1);
+              }}
+              onShowLogin={() => {
+                setShowRegistrationForm(false);
+                setShowLoginForm(true);
+                setLoginFormKey(prev => prev + 1);
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {/* Login Popup */}

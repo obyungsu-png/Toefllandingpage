@@ -38,10 +38,10 @@ interface DictationExercise {
 }
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
-  reading: ['Practice'],
+  reading: [],
   listening: ['Dictation'],
-  'writing-basic': ['Practice'],
-  'writing-guided': ['Expressions', 'Template', 'Practice'],
+  'writing-basic': [],
+  'writing-guided': ['Expressions', 'Template'],
   'speaking-repeat': ['Dictation'],
   'speaking-interview': ['Expressions', 'Template'],
 };
@@ -499,8 +499,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     return null;
   };
 
-  const panelWidthClass = 'max-w-[34rem] sm:max-w-[42rem]';
-
   return (
     <div className="fixed right-4 bottom-20 md:bottom-6 z-[85] flex flex-col items-end gap-2">
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
@@ -595,25 +593,29 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         )}
       </div>
 
-      {/* ── Content panel: wide, above icons, below question/answers ── */}
+      {/* ── Content panel: right-side slide-in drawer, matching AI 튜터's style ── */}
       {activeTab && activeTabMeta && (
-        <div
-          className="relative overflow-hidden rounded-2xl border bg-white/97 p-5 shadow-2xl backdrop-blur-sm"
-          style={{
-            borderColor: theme.border,
-            width: 'min(680px, calc(100vw - 2rem))',
-            maxHeight: '50vh',
-            overflowY: 'auto',
-          }}
-        >
-          <div className="absolute right-[-30px] top-[-40px] h-28 w-28 rounded-full opacity-10 blur-2xl" style={{ backgroundColor: theme.accent }} />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-3">
+        <>
+          <div
+            className="fixed inset-0 z-[84]"
+            style={{ background: 'rgba(15, 23, 42, 0.35)', animation: 'reviewPanelFadeIn 0.2s ease' }}
+            onClick={() => setActiveTab(null)}
+          />
+          <div
+            className="fixed top-0 right-0 h-full bg-white flex flex-col z-[85]"
+            style={{
+              width: 420,
+              maxWidth: '100vw',
+              boxShadow: '-8px 0 30px rgba(0,0,0,0.15)',
+              animation: 'reviewPanelSlideIn 0.25s ease',
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }}>
                   <activeTabMeta.icon className="h-4 w-4" />
                 </div>
-                <h3 className="text-sm font-bold text-[#0f172a]">{activeTabMeta.title}</h3>
+                <h3 className="text-base font-bold text-[#0f172a]">{activeTabMeta.title}</h3>
               </div>
               <button
                 type="button"
@@ -624,11 +626,21 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 Close
               </button>
             </div>
-            <div className="max-h-[400px] overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto p-5">
               {renderActiveTab()}
             </div>
           </div>
-        </div>
+          <style>{`
+            @keyframes reviewPanelSlideIn {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+            @keyframes reviewPanelFadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          `}</style>
+        </>
       )}
     </div>
   );
