@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 import { TPOTest } from './ContentManagement';
+import { TPOCardMobileCompact } from './TPOCardMobileCompact';
 
 type TestSetRange = '1-5';
 
@@ -298,7 +299,7 @@ export function TPOPage({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6 !w-full">
+            <div className={isMobile ? 'flex flex-col gap-2 !w-full' : 'grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6 !w-full'}>
               {filteredNumbers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((number, index) => {
                 const tpoData = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
 
@@ -320,7 +321,7 @@ export function TPOPage({
                 return (
                   <div key={number} className="w-full max-w-full">
                     {isMobile ? (
-                      <TestCard
+                      <TPOCardMobileCompact
                         number={number}
                         isLocked={isContentLocked(index, 3)}
                         onUnlockClick={() => setActiveTab('Pricing')}
