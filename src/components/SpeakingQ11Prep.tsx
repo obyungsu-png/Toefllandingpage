@@ -148,7 +148,7 @@ export function SpeakingQ11Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white p-4 md:p-12 overflow-y-auto">
         <div className="mb-2 md:mb-4 flex-shrink-0">
-          <h1 className="text-base md:text-xl font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
+          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
         </div>
 
         <div className="flex justify-center mb-4 md:mb-6 flex-shrink-0">
