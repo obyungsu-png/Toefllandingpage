@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
+import { MobileSectionHeader } from './MobileSectionHeader';
 
 interface SpeakingInterviewIntroProps {
   onNext: () => void;
@@ -105,6 +106,15 @@ export function SpeakingInterviewIntro({
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      <MobileSectionHeader
+        sectionLabel="Speaking"
+        onBack={onHome}
+        onNext={onNext}
+        showNext
+        showVolume={true}
+        onVolumeClick={() => setShowVolumeControl(true)}
+      />
+      <div className="hidden md:block">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div
@@ -145,16 +155,17 @@ export function SpeakingInterviewIntro({
           </div>
         </div>
       </div>
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-start bg-white p-12 pt-16">
+      <div className="flex-1 flex flex-col items-center justify-start bg-white p-4 md:p-12 pt-6 md:pt-16 overflow-auto">
         <div className="max-w-4xl w-full">
-          <p className="text-gray-900 text-base md:text-2xl mb-12 leading-relaxed text-center">
+          <p className="text-gray-900 text-base md:text-2xl mb-6 md:mb-12 leading-relaxed text-center">
             {displayText}
           </p>
 
           <div className="flex justify-center">
-            <div className="border-2 border-gray-300 w-96 h-96 flex items-center justify-center bg-gray-50 overflow-hidden">
+            <div className="w-64 h-64 md:w-96 md:h-96 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
               {imageUrl ? (
                 <img src={imageUrl} alt="Interviewer" className="w-full h-full object-cover"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
+import { MobileSectionHeader } from './MobileSectionHeader';
 
 interface SpeakingQ4PrepProps {
   onNext: () => void;
@@ -82,6 +83,16 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      <MobileSectionHeader
+        sectionLabel="Speaking"
+        questionLabel="Question 4 of 11"
+        onBack={onHome}
+        onNext={onNext}
+        showNext={isReviewMode}
+        showVolume={!!onVolumeClick}
+        onVolumeClick={onVolumeClick}
+      />
+      <div className="hidden md:block">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div className="flex items-center">
@@ -133,6 +144,7 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         </div>
       </div>
 
+      </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white pt-6 md:pt-12 px-4 md:px-12">
         {/* Title at top center */}

@@ -5,6 +5,7 @@ import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { useAudioRecorder } from './useAudioRecorder';
 import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
+import { MobileSectionHeader } from './MobileSectionHeader';
 
 interface SpeakingQ10RecordProps {
   onNext: () => void;
@@ -81,6 +82,16 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      <MobileSectionHeader
+        sectionLabel="Speaking"
+        questionLabel="Question 10 of 11"
+        onBack={onHome}
+        onNext={onNext}
+        showNext={isReviewMode}
+        showVolume={!!onVolumeClick}
+        onVolumeClick={onVolumeClick}
+      />
+      <div className="hidden md:block">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div
@@ -124,6 +135,7 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
         </div>
       </div>
 
+      </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white pt-10 px-4 md:px-12">
         <div className="pb-6">

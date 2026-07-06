@@ -7,6 +7,7 @@ import { useAudioRecorder } from './useAudioRecorder';
 import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
+import { MobileSectionHeader } from './MobileSectionHeader';
 
 interface SpeakingQ4RecordProps {
   onNext: () => void;
@@ -83,6 +84,16 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      <MobileSectionHeader
+        sectionLabel="Speaking"
+        questionLabel="Question 4 of 11"
+        onBack={onHome}
+        onNext={onNext}
+        showNext={isReviewMode}
+        showVolume={true}
+        onVolumeClick={toggleVolume}
+      />
+      <div className="hidden md:block">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div className="flex items-center">
@@ -135,6 +146,7 @@ export function SpeakingQ4Record({ onNext, onHome, imageUrl, questionText, respo
         </div>
       </div>
 
+      </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white">
         {/* Title at top center */}
