@@ -16,6 +16,9 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
     // Text to read
     const textToRead = `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
 
+    let speakTimer: ReturnType<typeof setTimeout> | undefined;
+    let advanceTimer: ReturnType<typeof setTimeout> | undefined;
+
     // Use Web Speech API to read the text
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
@@ -24,46 +27,41 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       utterance.volume = 1.0;
       utterance.lang = 'en-GB'; // British English
 
-      // Try to select a British male voice
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Function to find and set the best British male voice
+      // Function to find and set the best quality British female voice
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        
-        // Priority list of British male voices
+
+        // Priority list of high-quality British female voices
         const preferredVoices = [
-          'Google UK English Male',
-          'Microsoft George - English (United Kingdom)',
-          'Daniel',
-          'Arthur'
+          'Google UK English Female',
+          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+          'Microsoft Libby Online (Natural) - English (United Kingdom)',
+          'Microsoft Hazel - English (United Kingdom)',
+          'Kate', 'Serena', 'Stephanie'
         ];
-        
-        // Try to find a preferred voice
-        let selectedVoice = voices.find(voice => 
+
+        let selectedVoice = voices.find(voice =>
           preferredVoices.some(preferred => voice.name.includes(preferred))
         );
-        
-        // If no preferred voice found, try any British male voice
+
         if (!selectedVoice) {
-          selectedVoice = voices.find(voice => 
-            voice.lang.includes('en-GB') && 
-            (voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('man'))
+          selectedVoice = voices.find(voice =>
+            voice.lang.includes('en-GB') &&
+            (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
           );
         }
-        
-        // If still no voice found, use any British voice
+
         if (!selectedVoice) {
           selectedVoice = voices.find(voice => voice.lang.includes('en-GB'));
         }
-        
+
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
       };
 
       // Set voice immediately if available
-      if (voices.length > 0) {
+      if (window.speechSynthesis.getVoices().length > 0) {
         setVoice();
       }
 
@@ -73,19 +71,22 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
       // When speech ends, automatically move to next screen (only in start mode)
       utterance.onend = () => {
         if (!isReviewMode) {
-          setTimeout(() => {
+          advanceTimer = setTimeout(() => {
             onNext();
           }, 500);
         }
       };
 
       // Start speaking after a short delay
-      setTimeout(() => {
+      speakTimer = setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 500);
 
-      // Cleanup function
+      // Cleanup function — stop any pending timers/speech so it never overlaps the next screen
       return () => {
+        clearTimeout(speakTimer);
+        clearTimeout(advanceTimer);
+        window.speechSynthesis.onvoiceschanged = null;
         window.speechSynthesis.cancel();
       };
     } else {

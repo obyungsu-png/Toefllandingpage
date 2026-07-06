@@ -58,7 +58,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
 
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        const preferred = ['Google UK English Female','Microsoft Susan - English (United Kingdom)','Kate','Serena','Stephanie'];
+        const preferred = ['Google UK English Female','Microsoft Sonia Online (Natural) - English (United Kingdom)','Microsoft Libby Online (Natural) - English (United Kingdom)','Microsoft Susan - English (United Kingdom)','Kate','Serena','Stephanie'];
         let v = voices.find(voice => preferred.some(p => voice.name.includes(p)));
         if (!v) v = voices.find(voice => voice.lang.includes('en-GB') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman')));
         if (!v) v = voices.find(voice => voice.lang.includes('en-GB'));
@@ -77,9 +77,10 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
 
       // Ensure speech synthesis is not paused
       window.speechSynthesis.cancel();
-      setTimeout(() => {
+      let innerSpeakTimer: ReturnType<typeof setTimeout> | undefined;
+      const outerSpeakTimer = setTimeout(() => {
         window.speechSynthesis.cancel();
-        setTimeout(() => window.speechSynthesis.speak(utterance), 100);
+        innerSpeakTimer = setTimeout(() => window.speechSynthesis.speak(utterance), 100);
       }, 800);
 
       fallbackTimer = window.setTimeout(() => {
@@ -87,6 +88,9 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       }, 20000);
 
       return () => {
+        clearTimeout(outerSpeakTimer);
+        clearTimeout(innerSpeakTimer);
+        window.speechSynthesis.onvoiceschanged = null;
         window.speechSynthesis.cancel();
         if (fallbackTimer) clearTimeout(fallbackTimer);
       };

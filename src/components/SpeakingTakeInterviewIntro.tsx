@@ -15,6 +15,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
   useEffect(() => {
     const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    let speakTimer: ReturnType<typeof setTimeout> | undefined;
     let ttsEnded = false;
 
     if ('speechSynthesis' in window) {
@@ -24,11 +25,13 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
       utterance.volume = 1.0;
       utterance.lang = 'en-GB'; // British English
 
-      // Prefer British female voice
+      // Prefer high-quality British female voice
       const applyFemaleVoice = () => {
         const voices = window.speechSynthesis.getVoices();
         const preferred = [
           'Google UK English Female',
+          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+          'Microsoft Libby Online (Natural) - English (United Kingdom)',
           'Microsoft Susan - English (United Kingdom)',
           'Kate', 'Serena', 'Stephanie',
         ];
@@ -51,15 +54,17 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
         if (!isReviewMode) setTimeout(() => onNext(), 500);
       };
 
-      setTimeout(() => window.speechSynthesis.speak(utterance), 500);
+      speakTimer = setTimeout(() => window.speechSynthesis.speak(utterance), 500);
 
       fallbackTimer = window.setTimeout(() => {
         if (!ttsEnded) { window.speechSynthesis.cancel(); if (!isReviewMode) onNext() }
       }, 30000);
 
       return () => {
-        window.speechSynthesis.cancel();
+        clearTimeout(speakTimer);
         if (fallbackTimer) clearTimeout(fallbackTimer);
+        window.speechSynthesis.onvoiceschanged = null;
+        window.speechSynthesis.cancel();
       };
     } else {
       const t = setTimeout(() => { if (!isReviewMode) onNext(); }, 6000);

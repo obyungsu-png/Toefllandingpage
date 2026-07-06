@@ -665,12 +665,27 @@ function InterstitialScreen({
 // Text-based intro/info screens
 function useSpeechEffect(text: string) {
   useEffect(() => {
+    let speakTimer: ReturnType<typeof setTimeout> | undefined;
+
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        const britishVoice = voices.find((v) => v.lang === 'en-GB' || v.lang === 'en-UK');
-        utterance.voice = britishVoice || voices[0];
+        const preferred = [
+          'Google UK English Female',
+          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+          'Microsoft Libby Online (Natural) - English (United Kingdom)',
+          'Microsoft Susan - English (United Kingdom)',
+          'Kate', 'Serena', 'Stephanie',
+        ];
+        let chosen = voices.find((v) => preferred.some((p) => v.name.includes(p)));
+        if (!chosen) {
+          chosen = voices.find((v) => v.lang.includes('en-GB') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('woman')));
+        }
+        if (!chosen) {
+          chosen = voices.find((v) => v.lang === 'en-GB' || v.lang === 'en-UK');
+        }
+        utterance.voice = chosen || voices[0];
         utterance.lang = 'en-GB';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
@@ -679,6 +694,8 @@ function useSpeechEffect(text: string) {
       else window.speechSynthesis.onvoiceschanged = setVoice;
     }
     return () => {
+      clearTimeout(speakTimer);
+      window.speechSynthesis.onvoiceschanged = null;
       if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
     };
   }, []);

@@ -20,15 +20,25 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
       
       const utterance = new SpeechSynthesisUtterance(text);
       
-      // Get available voices and find a British female voice
+      // Get available voices and find a high-quality British female voice
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        
+
+        const preferredNames = [
+          'Google UK English Female',
+          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+          'Microsoft Libby Online (Natural) - English (United Kingdom)',
+          'Microsoft Susan - English (United Kingdom)',
+        ];
+        let chosen = voices.find(voice => preferredNames.some(p => voice.name.includes(p)));
+
         // Try to find British English female voice
-        const britishFemaleVoice = voices.find(voice => 
-          (voice.lang === 'en-GB' || voice.lang === 'en-UK') && 
-          (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
-        );
+        if (!chosen) {
+          chosen = voices.find(voice => 
+            (voice.lang === 'en-GB' || voice.lang === 'en-UK') && 
+            (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('woman'))
+          );
+        }
         
         // Fallback to any British voice
         const britishVoice = voices.find(voice => 
@@ -43,10 +53,10 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
           voice.name.toLowerCase().includes('victoria')
         );
         
-        utterance.voice = britishFemaleVoice || britishVoice || femaleVoice || voices[0];
+        utterance.voice = chosen || britishVoice || femaleVoice || voices[0];
         utterance.lang = 'en-GB';
         utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1.1; // Slightly higher for female voice
+        utterance.pitch = 1.0;
         
         window.speechSynthesis.speak(utterance);
       };
@@ -59,8 +69,10 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
       }
     }
     
-    // Cleanup
+    // Cleanup — stop any speech and remove the voice-loaded listener so it can't
+    // fire after this screen is gone and overlap the next screen's audio
     return () => {
+      window.speechSynthesis.onvoiceschanged = null;
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }

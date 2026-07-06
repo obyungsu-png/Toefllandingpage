@@ -1,4 +1,4 @@
-import { BookOpen, Headphones, Pencil, Lightbulb, ArrowRight, X } from 'lucide-react';
+import { BookOpen, Headphones, Pencil, Lightbulb, ArrowRight } from 'lucide-react';
 
 interface LoginPopupProps {
   isOpen: boolean;
@@ -40,10 +40,15 @@ export function LoginPopup({ isOpen, onClose, onLoginClick, onRegisterClick }: L
           75% { transform: translateY(-4px) rotate(-5deg); }
         }
       `}</style>
+      {/* Backdrop: intentionally NOT clickable — login is required to proceed */}
       <div
         className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', animation: 'fadeIn 0.3s ease-out' }}
-        onClick={onClose}
+        style={{
+          backgroundColor: 'rgba(10, 15, 20, 0.82)',
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
+          animation: 'fadeIn 0.3s ease-out',
+        }}
       >
         {/* Floating Circle Modal Container */}
         <div
@@ -51,7 +56,6 @@ export function LoginPopup({ isOpen, onClose, onLoginClick, onRegisterClick }: L
           style={{ 
             animation: 'floatBounce 3s ease-in-out infinite, gentleSwing 4s ease-in-out infinite'
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           {/* Pulse rings in background */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#0d7377]/20 to-[#14919b]/20" 
@@ -100,13 +104,7 @@ export function LoginPopup({ isOpen, onClose, onLoginClick, onRegisterClick }: L
             <div className="absolute top-24 right-12 w-3 h-3 rounded-full bg-white/20" />
             <div className="absolute bottom-20 left-16 w-3 h-3 rounded-full bg-white/20" />
 
-            {/* Close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm hover:bg-white/30 transition-colors z-10"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+            {/* No close button — login/registration is required to continue */}
 
             {/* Content */}
             <div className="flex flex-col items-center justify-center h-full px-8 md:px-12">

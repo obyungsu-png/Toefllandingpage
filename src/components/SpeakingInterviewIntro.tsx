@@ -60,6 +60,8 @@ export function SpeakingInterviewIntro({
         const voices = window.speechSynthesis.getVoices();
         const preferred = [
           'Google UK English Female',
+          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+          'Microsoft Libby Online (Natural) - English (United Kingdom)',
           'Microsoft Susan - English (United Kingdom)',
           'Kate', 'Serena', 'Stephanie',
         ];
@@ -89,6 +91,7 @@ export function SpeakingInterviewIntro({
       return () => {
         clearTimeout(t);
         clearTimeout(fallback);
+        window.speechSynthesis.onvoiceschanged = null;
         window.speechSynthesis.cancel();
       };
     } else {
