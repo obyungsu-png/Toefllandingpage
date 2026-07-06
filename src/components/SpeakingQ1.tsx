@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
-import { MobileQuestionNav } from './MobileQuestionNav';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
@@ -138,7 +137,6 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       </div>
 
       <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
-      <MobileQuestionNav onNext={onNext} onHome={onHome} />
     </div>
   );
 }

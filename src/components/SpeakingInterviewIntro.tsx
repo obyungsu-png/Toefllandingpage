@@ -124,7 +124,7 @@ export function SpeakingInterviewIntro({
           </p>
 
           <div className="flex justify-center">
-            <div className="w-68 h-52 md:w-96 md:h-72 rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
               {imageUrl ? (
                 <img src={imageUrl} alt="Interviewer" className="w-full h-full object-cover"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
