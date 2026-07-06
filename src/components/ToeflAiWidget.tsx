@@ -503,7 +503,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       {showFab && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`toefl-ai-fab fixed bottom-28 md:bottom-6 ${fabSideClass}`}
+          className={`toefl-ai-fab fixed bottom-16 md:bottom-6 ${fabSideClass}`}
           style={{ zIndex }}
           aria-label="AI 튜터에게 물어보세요"
           title="AI 튜터에게 물어보세요"

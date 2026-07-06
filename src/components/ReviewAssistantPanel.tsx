@@ -500,7 +500,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   };
 
   return (
-    <div className="fixed right-4 bottom-20 md:bottom-6 z-[85] flex flex-col items-end gap-2">
+    <div className="fixed right-4 bottom-4 md:bottom-6 z-[85] flex flex-col items-end gap-2">
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
       <div className="flex flex-row gap-3 shrink-0">
         {tabs.map((tab) => {
