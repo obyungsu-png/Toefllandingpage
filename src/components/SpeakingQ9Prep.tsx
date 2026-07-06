@@ -33,18 +33,18 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext();
+        onNext();
       };
       audio.onerror = () => {
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext();
+        onNext();
       };
 
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
+        audio.play().catch(() => { if (!ended) { ended = true; onNext(); } });
       }, 400);
 
       return () => {
@@ -56,7 +56,7 @@ export function SpeakingQ9Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     }
 
     const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
-    advanceTimer = setTimeout(() => { if (!isReviewMode) onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+    advanceTimer = setTimeout(() => { onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
     return () => {
       clearTimeout(startTimer);
       clearTimeout(advanceTimer);

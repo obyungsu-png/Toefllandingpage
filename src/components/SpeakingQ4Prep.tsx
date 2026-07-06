@@ -31,19 +31,19 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext(); // audio finished — move to record screen (beep waits there)
+        onNext(); // audio finished — move to record screen (beep waits there)
       };
       audio.onerror = () => {
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext();
+        onNext();
       };
 
       // Start playing shortly after mount
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => { if (!ended) { ended = true; if (!isReviewMode) onNext(); } });
+        audio.play().catch(() => { if (!ended) { ended = true; onNext(); } });
       }, 400);
 
       return () => {
@@ -56,7 +56,7 @@ export function SpeakingQ4Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
 
     // No CMS audio — simulate then advance
     const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
-    advanceTimer = setTimeout(() => { if (!isReviewMode) onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+    advanceTimer = setTimeout(() => { onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
     return () => {
       clearTimeout(startTimer);
       clearTimeout(advanceTimer);
