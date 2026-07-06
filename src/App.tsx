@@ -995,86 +995,8 @@ function AppContent() {
     scheduleDebouncedSave('lmsContents', saveToSupabase);
   }, [lmsContents, isLoadingData, dataLoadedSuccessfully]);
 
-  // Save TPO tests to Supabase whenever they change
-  useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully) return;
-    
-    const saveToSupabase = async () => {
-      try {
-        const res = await fetch(
-          `${SERVER_BASE_URL}/tpo-tests`,
-          {
-            method: 'POST',
-            headers: {
-              ...getServerHeaders(),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(tpoTests)
-          }
-        );
-        if (!res.ok) console.error(`❌ Error saving TPO tests: ${res.status}`);
-        else console.log('💾 Saved TPO tests to Supabase');
-      } catch (error) {
-        console.error('❌ Error saving TPO tests:', error);
-      }
-    };
-    
-    scheduleDebouncedSave('tpoTests', saveToSupabase);
-  }, [tpoTests, isLoadingData, dataLoadedSuccessfully]);
-
-  // Save Test tests to Supabase whenever they change
-  useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully) return;
-    
-    const saveToSupabase = async () => {
-      try {
-        const res = await fetch(
-          `${SERVER_BASE_URL}/test-tests`,
-          {
-            method: 'POST',
-            headers: {
-              ...getServerHeaders(),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(testTests)
-          }
-        );
-        if (!res.ok) console.error(`❌ Error saving Test tests: ${res.status}`);
-        else console.log('💾 Saved Test tests to Supabase');
-      } catch (error) {
-        console.error('❌ Error saving Test tests:', error);
-      }
-    };
-    
-    scheduleDebouncedSave('testTests', saveToSupabase);
-  }, [testTests, isLoadingData, dataLoadedSuccessfully]);
-
-  // Save Training tests to Supabase whenever they change
-  useEffect(() => {
-    if (isLoadingData || !dataLoadedSuccessfully) return;
-
-    const saveToSupabase = async () => {
-      try {
-        const res = await fetch(
-          `${SERVER_BASE_URL}/training-tests`,
-          {
-            method: 'POST',
-            headers: {
-              ...getServerHeaders(),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(trainingTests)
-          }
-        );
-        if (!res.ok) console.error(`❌ Error saving Training tests: ${res.status}`);
-        else console.log('💾 Saved Training tests to Supabase');
-      } catch (error) {
-        console.error('❌ Error saving Training tests:', error);
-      }
-    };
-
-    scheduleDebouncedSave('trainingTests', saveToSupabase);
-  }, [trainingTests, isLoadingData, dataLoadedSuccessfully]);
+  // TPO/Test/Training tests are saved by handleAddTest/handleUpdateTest as single-test payloads.
+  // Do not auto-save these whole arrays: the server endpoints store one test at a time.
 
   // Save Reports to Supabase whenever they change
   useEffect(() => {

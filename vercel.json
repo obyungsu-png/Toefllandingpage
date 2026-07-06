@@ -2,6 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "rewrites": [
-    { "source": "/api/claude/(.*)", "destination": "/api/claude/chat/completions" }
+    { "source": "/api/claude/(.*)", "destination": "/api/claude/chat/completions" },
+    { "source": "/(.*)", "destination": "/" }
   ]
 }

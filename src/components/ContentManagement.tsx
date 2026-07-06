@@ -144,10 +144,11 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         for (const bucket of [
           { id: 'listening-audio', mime: ['audio/mpeg','audio/mp3','audio/wav','audio/ogg','audio/x-m4a'] },
           { id: 'listening-images', mime: ['image/png','image/jpeg','image/jpg','image/webp','image/gif'] },
+          { id: 'listening-video', mime: ['video/mp4','video/webm','video/ogg','video/quicktime'] },
         ]) {
           const { error } = await supabaseClient.storage.createBucket(bucket.id, {
             public: true,
-            fileSizeLimit: bucket.id === 'listening-audio' ? 52428800 : 10485760,
+            fileSizeLimit: bucket.id === 'listening-images' ? 10485760 : 52428800,
             allowedMimeTypes: bucket.mime,
           });
           if (error && !error.message.includes('already exists')) {
@@ -1194,7 +1195,13 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.videoUrl.trim()) {
       question.videoUrl = formData.videoUrl.trim();
     } else if (formData.videoFile) {
-      question.videoUrl = URL.createObjectURL(formData.videoFile);
+      try {
+        question.videoUrl = await uploadToStorage(formData.videoFile, 'listening-video');
+      } catch {
+        question.videoUrl = '';
+        alert('동영상 업로드에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
     }
 
     // Build Sentence: avatars + words
@@ -2534,7 +2541,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       (updatedQuestion as any).introAudioUrl = (formData as any).introAudioUrl.trim();
     }
     if (formData.videoFile) {
-      updatedQuestion.videoUrl = URL.createObjectURL(formData.videoFile);
+      try {
+        updatedQuestion.videoUrl = await uploadToStorage(formData.videoFile, 'listening-video');
+      } catch {
+        alert('동영상 업로드에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
     }
     // Build Sentence words + sentenceEnding
     if ((formData as any).words?.trim()) {
