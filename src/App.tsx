@@ -7922,12 +7922,12 @@ function AppContent() {
       {/* TOEFL Test Screen Overlay */}
       {showToelfTest && !showReadingSection && !showFillBlanksTest && !showReadNoticeTest && !showReadNoticeTest2 && <ToeflTestScreen />}
       {/* Header */}
-      <div className="bg-white box-border content-stretch flex flex-col h-[70px] md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full">
-        <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-3 md:px-8">
+      <div className="bg-white box-border content-stretch flex flex-col h-[56px] md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full">
+        <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-2 md:px-8">
           {/* Logo */}
           <div className="flex items-center">
             <div 
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-1.5 md:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 // Always go to LMS page
                 setShowLandingPage(false);
@@ -7936,13 +7936,13 @@ function AppContent() {
                 handleTabChange('TOEFL Prep');
               }}
             >
-              <div className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg shadow-md" style={{ backgroundColor: '#00bcd4' }}>
-                <Zap className="w-5 h-5 md:w-6 md:h-6 text-white fill-white" strokeWidth={0} />
+              <div className="flex items-center justify-center w-7 h-7 md:w-9 md:h-9 rounded-lg shadow-md" style={{ backgroundColor: '#00bcd4' }}>
+                <Zap className="w-4 h-4 md:w-6 md:h-6 text-white fill-white" strokeWidth={0} />
               </div>
               <span className="hidden md:inline text-xl md:text-2xl font-extrabold tracking-tight" style={{ color: '#005f61' }}>
                 AllMyExam<span style={{ color: '#00bcd4' }}>-TOEFL</span>
               </span>
-              <span className="md:hidden text-base font-extrabold tracking-tight" style={{ color: '#005f61' }}>
+              <span className="md:hidden text-sm font-extrabold tracking-tight" style={{ color: '#005f61' }}>
                 AME<span style={{ color: '#00bcd4' }}>-T</span>
               </span>
             </div>
@@ -7991,7 +7991,7 @@ function AppContent() {
           </div>
           
           {/* Right side - Login, Join */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4">
             {/* History Button - Visible on mobile */}
             <button 
               onClick={() => {
@@ -8004,10 +8004,10 @@ function AppContent() {
                   setShowLoginPopup(true);
                 }
               }}
-              className={`md:hidden px-3 py-2 rounded-lg font-['Inter',_sans-serif] font-bold text-xs transition-all duration-300 transform hover:scale-105 shadow-sm ${
+              className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
                 activeTab === 'History'
                   ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg' 
-                  : 'bg-white text-[#005f61] border-2 border-[#005f61] hover:bg-[#005f61] hover:text-white'
+                  : 'bg-white text-[#005f61] border border-[#005f61] hover:bg-[#005f61] hover:text-white'
               }`}
             >
               History
@@ -8021,7 +8021,7 @@ function AppContent() {
                   setShowRegistrationForm(false);
                   setLoginFormKey(prev => prev + 1);
                 }}
-                className={`px-3 md:px-6 py-2 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-xs md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
+                className={`px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
                   showLoginForm 
                     ? 'bg-[#005f61] text-white hover:bg-[#004d56]' 
                     : 'bg-transparent text-[#005f61] border-2 border-[#005f61] hover:bg-[#005f61]/10'
@@ -8030,11 +8030,11 @@ function AppContent() {
                 Login
               </button>
             ) : (
-              <div className="px-3 md:px-6 py-2 md:py-3 flex items-center gap-2">
-                <span className="text-xs md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
+              <div className="px-1.5 md:px-6 py-1 md:py-3 flex items-center gap-1">
+                <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
                   Hello!
                 </span>
-                <span className="text-xs md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
+                <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
                   {loggedInUserName}
                 </span>
               </div>
@@ -8048,7 +8048,7 @@ function AppContent() {
                   setShowLoginForm(false);
                   setRegistrationFormKey(prev => prev + 1);
                 }}
-                className={`px-3 md:px-6 py-2 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-xs md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
+                className={`px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
                   showRegistrationForm 
                     ? 'bg-[#005f61] text-white hover:bg-[#004d56]' 
                     : 'bg-[#005f61] text-white hover:bg-[#004d56]'
@@ -8071,7 +8071,7 @@ function AppContent() {
                   } catch {}
                   setShowLoginPopup(true);
                 }}
-                className="px-3 md:px-6 py-2 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-xs md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61] text-white hover:bg-[#004d56]"
+                className="px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61] text-white hover:bg-[#004d56]"
               >
                 Logout
               </button>
