@@ -1,15 +1,20 @@
-import { useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import { BarChart3, Clock, CheckCircle, XCircle, RotateCcw, ChevronRight, Calendar, Share2, Settings, TrendingUp, ChevronDown, BookOpen, Star, ChevronLeft, CheckCircle2, Flame, Eye, MessageCircle, PanelRightOpen, PanelRightClose, User, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ShareSettings, ShareConfig } from './ShareSettings';
-import { ReportSection } from './ReportSection';
 import { toast } from 'sonner@2.0.3';
 import { AdModal } from './AdModal';
 import { AdBanner } from './AdBanner';
 import { Advertisement } from './AdManagement';
-import { QuestionReviewFull } from './QuestionReviewFull';
 import { RestartConfirmModal } from './RestartConfirmModal';
 import { TestResult } from '../types/testResult';
+
+const ReportSection = lazy(() =>
+  import('./ReportSection').then(module => ({ default: module.ReportSection }))
+);
+const QuestionReviewFull = lazy(() =>
+  import('./QuestionReviewFull').then(module => ({ default: module.QuestionReviewFull }))
+);
 
 // Re-export for backward compatibility
 export type { TestResult } from '../types/testResult';
@@ -412,14 +417,16 @@ export function HistorySection({
 
   if (showQuestionReview && selectedResult) {
     return (
-      <QuestionReviewFull
-        result={selectedResult}
-        tpoTests={tpoTests}
-        onBack={handleBackFromReview}
-        themeColor={themeColor}
-        initialSection={reviewInitialSection}
-        initialIndex={reviewInitialIndex}
-      />
+      <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading review...</div>}>
+        <QuestionReviewFull
+          result={selectedResult}
+          tpoTests={tpoTests}
+          onBack={handleBackFromReview}
+          themeColor={themeColor}
+          initialSection={reviewInitialSection}
+          initialIndex={reviewInitialIndex}
+        />
+      </Suspense>
     );
   }
 
@@ -544,14 +551,16 @@ export function HistorySection({
           {/* Mobile main content */}
           <div className="flex-1 overflow-y-auto p-3">
             {activeTab === 'Report' ? (
-              <ReportSection
-                themeColor={themeColor}
-                results={results}
-                shareConfig={shareConfig}
-                onShareConfigChange={onShareConfigChange}
-                studentName={studentName}
-                onOpenShareSettings={() => setShowShareSettings(true)}
-              />
+              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
+                <ReportSection
+                  themeColor={themeColor}
+                  results={results}
+                  shareConfig={shareConfig}
+                  onShareConfigChange={onShareConfigChange}
+                  studentName={studentName}
+                  onOpenShareSettings={() => setShowShareSettings(true)}
+                />
+              </Suspense>
             ) : (
               <>
                 {/* Filters */}
@@ -660,14 +669,16 @@ export function HistorySection({
         {/* Desktop Main Content (hidden on mobile) */}
         <div className="hidden md:block flex-1 overflow-y-auto p-4 lg:p-6">
           {activeTab === 'Report' ? (
-            <ReportSection
-              themeColor={themeColor}
-              results={results}
-              shareConfig={shareConfig}
-              onShareConfigChange={onShareConfigChange}
-              studentName={studentName}
-              onOpenShareSettings={() => setShowShareSettings(true)}
-            />
+            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
+              <ReportSection
+                themeColor={themeColor}
+                results={results}
+                shareConfig={shareConfig}
+                onShareConfigChange={onShareConfigChange}
+                studentName={studentName}
+                onOpenShareSettings={() => setShowShareSettings(true)}
+              />
+            </Suspense>
           ) : (
             <>
               {/* Filters */}

@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Image as ImageIcon, FileCheck, Trash2, Settings, BookOpen, Book, Users, ChevronDown, ChevronRight, Edit, Megaphone } from 'lucide-react';
 // motion removed - using CSS animations
 import { SubscriptionManagement } from './SubscriptionManagement';
-import { ContentManagement, TPOTest } from './ContentManagement';
+import type { TPOTest } from './ContentManagement';
 import { VocabularyManagement, VocabularyDay } from './VocabularyManagement';
 import { StudentManagement, Student, VocabularyScore } from './StudentManagement';
 import { AdManagement } from './AdManagement';
 import { SATWord } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
+
+const ContentManagement = lazy(() =>
+  import('./ContentManagement').then(module => ({ default: module.ContentManagement }))
+);
 
 export interface LMSContent {
   id: string;
@@ -301,12 +305,14 @@ export function LMSSection({
 
         {/* TPO/Test Tab Content */}
         {activeTab === 'TPO/Test' && (
-          <ContentManagement
-            tpoTests={tpoTests}
-            onAddTest={onAddTest}
-            onUpdateTest={onUpdateTest}
-            onDeleteTest={onDeleteTest}
-          />
+          <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading content management...</div>}>
+            <ContentManagement
+              tpoTests={tpoTests}
+              onAddTest={onAddTest}
+              onUpdateTest={onUpdateTest}
+              onDeleteTest={onDeleteTest}
+            />
+          </Suspense>
         )}
 
         {/* Upload Tab Content */}

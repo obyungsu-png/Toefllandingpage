@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, useLocation, useNavigate } from 'react-router';
 import imgLogoPng from "figma:asset/8789442c63cae6ce8bee2e41980635b315e3d0a1.png";
 import imgImage from "figma:asset/b015191727695c9e8bd91edeb4f1203bfd9cbbf0.png";
@@ -11,10 +11,9 @@ import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.pn
 import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
 import { QuestionUploader } from './components/QuestionUploader';
-import { TrainingSection } from './components/TrainingSection';
 import { QuestionTypesSection } from './components/QuestionTypesSection';
-import { LMSSection, LMSContent } from './components/LMSSection';
-import { TPOQuestion, TPOTest } from './components/ContentManagement';
+import type { LMSContent } from './components/LMSSection';
+import type { TPOQuestion, TPOTest } from './components/ContentManagement';
 import { AdManagement, Advertisement } from './components/AdManagement';
 import { Button } from './components/ui/button';
 import { TPOPage } from './components/TPOPage';
@@ -41,7 +40,7 @@ import { RegistrationForm } from './components/RegistrationForm';
 import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
-import { HistorySection, TestResult } from './components/HistorySection';
+import type { TestResult } from './types/testResult';
 import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
 import { ToeflAiWidget } from './components/ToeflAiWidget';
 import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
@@ -56,6 +55,16 @@ type TPORange = 'TPO 1-5';
 type TestSetRange = '1-5';
 type TestBankType = 'tpo' | 'test' | 'training';
 type DeferredDataKey = 'history' | 'questionTypes' | 'training' | 'admin';
+
+const TrainingSection = lazy(() =>
+  import('./components/TrainingSection').then(module => ({ default: module.TrainingSection }))
+);
+const LMSSection = lazy(() =>
+  import('./components/LMSSection').then(module => ({ default: module.LMSSection }))
+);
+const HistorySection = lazy(() =>
+  import('./components/HistorySection').then(module => ({ default: module.HistorySection }))
+);
 
 function AppContent() {
   // React Router hooks
@@ -8441,39 +8450,77 @@ function AppContent() {
       )}
 
       {activeTab === 'Training' && (
-        <TrainingSection 
-          uploadedFiles={[]}
-          onStartTest={(testInfo) => {
-            console.log('Starting training test:', testInfo);
-            // You can add logic here to start the training test
-          }}
-          setActiveTab={handleTabChange}
-          lmsContents={lmsContents}
-          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
-          advertisements={advertisements}
-          onSaveResult={handleAddTrainingResult}
-          savedConfig={trainingConfig}
-          onSaveConfig={setTrainingConfig}
-          practiceResults={trainingResults}
-        />
+        <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading training...</div>}>
+          <TrainingSection
+            uploadedFiles={[]}
+            onStartTest={(testInfo) => {
+              console.log('Starting training test:', testInfo);
+              // You can add logic here to start the training test
+            }}
+            setActiveTab={handleTabChange}
+            lmsContents={lmsContents}
+            tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
+            advertisements={advertisements}
+            onSaveResult={handleAddTrainingResult}
+            savedConfig={trainingConfig}
+            onSaveConfig={setTrainingConfig}
+            practiceResults={trainingResults}
+          />
+        </Suspense>
       )}
 
       {activeTab === 'History' && (
-        <HistorySection 
-          themeColor="#005f61"
-          results={testResults}
-          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
-          onRetryWrongAnswers={(result) => {
-            console.log('Retrying wrong answers:', result);
-            // Logic to retry wrong answers
-          }}
-          onRestartTest={(result, startFresh) => {
-            console.log(`Restart test: ${result.testName}, startFresh: ${startFresh}`);
-            
-            // Parse test number and section from result
-            if (result.type === 'Training') {
-              const subject = result.category || 'Reading';
+        <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading history...</div>}>
+          <HistorySection
+            themeColor="#005f61"
+            results={testResults}
+            tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
+            onRetryWrongAnswers={(result) => {
+              console.log('Retrying wrong answers:', result);
+              // Logic to retry wrong answers
+            }}
+            onRestartTest={(result, startFresh) => {
+              console.log(`Restart test: ${result.testName}, startFresh: ${startFresh}`);
 
+              // Parse test number and section from result
+              if (result.type === 'Training') {
+                const subject = result.category || 'Reading';
+
+                if (startFresh) {
+                  localStorage.removeItem('test_progress_reading');
+                  localStorage.removeItem('test_progress_listening_m1');
+                  localStorage.removeItem('test_progress_listening_m2');
+                  localStorage.removeItem('test_progress_writing');
+                  localStorage.removeItem('test_progress_speaking');
+                }
+
+                handleTabChange('Training');
+                const trainingRoutes: Record<string, string> = {
+                  Reading: '/specialized-training/reading',
+                  Listening: '/specialized-training/listening',
+                  Writing: '/specialized-training/writing',
+                  Speaking: '/specialized-training/speaking',
+                  Vocabulary: '/specialized-training/vocabulary'
+                };
+                navigate(trainingRoutes[subject] || '/specialized-training');
+                toast.success(startFresh ? '트레이닝을 처음부터 다시 시작합니다!' : '트레이닝으로 이동합니다!');
+                return;
+              }
+
+              const tpoMatch = result.testName.match(/TPO\s+(\d+)/i);
+              const testMatch = result.testName.match(/Test\s+(\d+)/i);
+              const tpoNumber = result.testNumber ?? (tpoMatch ? parseInt(tpoMatch[1]) : testMatch ? parseInt(testMatch[1]) : null);
+
+              if (!tpoNumber) {
+                console.error('Could not parse test number from:', result.testName);
+                toast.error('테스트 번호를 찾을 수 없습니다.');
+                return;
+              }
+
+              const section = result.category || 'Reading';
+              const testType = result.type === 'TPO' ? 'tpo' : 'test';
+
+              // Clear progress if starting fresh
               if (startFresh) {
                 localStorage.removeItem('test_progress_reading');
                 localStorage.removeItem('test_progress_listening_m1');
@@ -8482,107 +8529,75 @@ function AppContent() {
                 localStorage.removeItem('test_progress_speaking');
               }
 
-              handleTabChange('Training');
-              const trainingRoutes: Record<string, string> = {
-                Reading: '/specialized-training/reading',
-                Listening: '/specialized-training/listening',
-                Writing: '/specialized-training/writing',
-                Speaking: '/specialized-training/speaking',
-                Vocabulary: '/specialized-training/vocabulary'
-              };
-              navigate(trainingRoutes[subject] || '/specialized-training');
-              toast.success(startFresh ? '트레이닝을 처음부터 다시 시작합니다!' : '트레이닝으로 이동합니다!');
-              return;
-            }
+              // Set current test and navigate to the appropriate section
+              setCurrentTest({ tpoNumber, section });
+              setTestBankType(testType);
 
-            const tpoMatch = result.testName.match(/TPO\s+(\d+)/i);
-            const testMatch = result.testName.match(/Test\s+(\d+)/i);
-            const tpoNumber = result.testNumber ?? (tpoMatch ? parseInt(tpoMatch[1]) : testMatch ? parseInt(testMatch[1]) : null);
-            
-            if (!tpoNumber) {
-              console.error('Could not parse test number from:', result.testName);
-              toast.error('테스트 번호를 찾을 수 없습니다.');
-              return;
-            }
-            
-            const section = result.category || 'Reading';
-            const testType = result.type === 'TPO' ? 'tpo' : 'test';
-            
-            // Clear progress if starting fresh
-            if (startFresh) {
-              localStorage.removeItem('test_progress_reading');
-              localStorage.removeItem('test_progress_listening_m1');
-              localStorage.removeItem('test_progress_listening_m2');
-              localStorage.removeItem('test_progress_writing');
-              localStorage.removeItem('test_progress_speaking');
-            }
-            
-            // Set current test and navigate to the appropriate section
-            setCurrentTest({ tpoNumber, section });
-            setTestBankType(testType);
-            
-            // Navigate to the appropriate screen based on section
-            if (section === 'Reading') {
-              setShowReadingIntro(true);
-            } else if (section === 'Listening') {
-              setActiveListeningM1Screen('intro');
-            } else if (section === 'Writing') {
-              setActiveWritingScreen('intro');
-            } else if (section === 'Speaking') {
-              setActiveSpeakingScreen('intro');
-            }
-            
-            // Switch to Test tab to show the test
-            handleTabChange(result.type === 'TPO' ? 'TPO' : 'Test');
-            
-            toast.success(startFresh ? '처음부터 새로 시작합니다!' : '저장된 위치에서 계속 진행합니다!');
-          }}
-          onViewDetail={(result) => {
-            console.log('Viewing detail:', result);
-            // Logic to view detail
-          }}
-          shareConfig={shareConfig}
-          onShareConfigChange={setShareConfig}
-          studentName={loggedInUserName || 'Student'}
-          advertisements={advertisements}
-          isLoggedIn={isLoggedIn}
-          onRequestLogin={() => setShowLoginPopup(true)}
-          onDeleteResult={(resultId) => {
-            setTestResults(prev => prev.filter(r => r.id !== resultId));
-            toast.success('기록이 삭제되었습니다.');
-          }}
-        />
+              // Navigate to the appropriate screen based on section
+              if (section === 'Reading') {
+                setShowReadingIntro(true);
+              } else if (section === 'Listening') {
+                setActiveListeningM1Screen('intro');
+              } else if (section === 'Writing') {
+                setActiveWritingScreen('intro');
+              } else if (section === 'Speaking') {
+                setActiveSpeakingScreen('intro');
+              }
+
+              // Switch to Test tab to show the test
+              handleTabChange(result.type === 'TPO' ? 'TPO' : 'Test');
+
+              toast.success(startFresh ? '처음부터 새로 시작합니다!' : '저장된 위치에서 계속 진행합니다!');
+            }}
+            onViewDetail={(result) => {
+              console.log('Viewing detail:', result);
+              // Logic to view detail
+            }}
+            shareConfig={shareConfig}
+            onShareConfigChange={setShareConfig}
+            studentName={loggedInUserName || 'Student'}
+            advertisements={advertisements}
+            isLoggedIn={isLoggedIn}
+            onRequestLogin={() => setShowLoginPopup(true)}
+            onDeleteResult={(resultId) => {
+              setTestResults(prev => prev.filter(r => r.id !== resultId));
+              toast.success('기록이 삭제되었습니다.');
+            }}
+          />
+        </Suspense>
       )}
 
       {activeTab === 'TOEFL Prep' && (
-        <LMSSection
-          contents={lmsContents}
-          onAddContent={handleAddLMSContent}
-          onUpdateContent={handleUpdateLMSContent}
-          onDeleteContent={handleDeleteLMSContent}
-          tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
-          onAddTest={handleAddTest}
-          onUpdateTest={handleUpdateTest}
-          onDeleteTest={handleDeleteTest}
-          vocabularyWords={vocabularyWords}
-          vocabularyDays={vocabularyDays}
-          onAddWord={handleAddWord}
-          onUpdateWord={handleUpdateWord}
-          onDeleteWord={handleDeleteWord}
-          onAddDay={handleAddDay}
-          onUpdateDay={handleUpdateDay}
-          onDeleteDay={handleDeleteDay}
-          students={students}
-          onAddStudent={handleAddStudent}
-          onUpdateStudent={handleUpdateStudent}
-          onDeleteStudent={handleDeleteStudent}
-          vocabularyScores={vocabularyScores}
-          onAddVocabularyScore={handleAddVocabularyScore}
-          onUpdateVocabularyScore={handleUpdateVocabularyScore}
-          onDeleteVocabularyScore={handleDeleteVocabularyScore}
-          shareConfig={shareConfig}
-          onShareConfigChange={setShareConfig}
-        />
+        <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading admin...</div>}>
+          <LMSSection
+            contents={lmsContents}
+            onAddContent={handleAddLMSContent}
+            onUpdateContent={handleUpdateLMSContent}
+            onDeleteContent={handleDeleteLMSContent}
+            tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
+            onAddTest={handleAddTest}
+            onUpdateTest={handleUpdateTest}
+            onDeleteTest={handleDeleteTest}
+            vocabularyWords={vocabularyWords}
+            vocabularyDays={vocabularyDays}
+            onAddWord={handleAddWord}
+            onUpdateWord={handleUpdateWord}
+            onDeleteWord={handleDeleteWord}
+            onAddDay={handleAddDay}
+            onUpdateDay={handleUpdateDay}
+            onDeleteDay={handleDeleteDay}
+            students={students}
+            onAddStudent={handleAddStudent}
+            onUpdateStudent={handleUpdateStudent}
+            onDeleteStudent={handleDeleteStudent}
+            vocabularyScores={vocabularyScores}
+            onAddVocabularyScore={handleAddVocabularyScore}
+            onUpdateVocabularyScore={handleUpdateVocabularyScore}
+            onDeleteVocabularyScore={handleDeleteVocabularyScore}
+            shareConfig={shareConfig}
+            onShareConfigChange={setShareConfig}
+          />
+        </Suspense>
       )}
 
       {/* Bottom Navigation - Mobile */}
