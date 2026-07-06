@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React
+import { Pause, Play } from 'lucide-react';, { useState, useEffect } from 'react';
 import { ListeningM2Q1 } from './ListeningM2Q1';
 import { ListeningM2Q2 } from './ListeningM2Q2';
 import { ListeningM2Q3 } from './ListeningM2Q3';
