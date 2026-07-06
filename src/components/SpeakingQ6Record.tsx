@@ -160,16 +160,14 @@ export function SpeakingQ6Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4">
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 12} isRecording={isRecording} />
-            {!isRecording && (
-              <button
-                onClick={handleManualRecord}
-                className="px-6 py-3 rounded-xl bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-colors"
-              >
-                {uploadedRef.current ? 'Re-record' : 'Record'}
-              </button>
-            )}
+          <div className="flex justify-center">
+            <SpeakingResponseTimer
+              timeRemaining={timeRemaining}
+              totalDuration={duration || 12}
+              isRecording={isRecording}
+              onRecordClick={!isRecording ? handleManualRecord : undefined}
+              recordLabel={uploadedRef.current ? 'Re-record' : 'Record'}
+            />
           </div>
         )}
       </div>
