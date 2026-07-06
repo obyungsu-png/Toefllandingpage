@@ -102,15 +102,17 @@ export function SpeakingQ3Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           </button>
           
           {/* Next Button */}
-          <button 
-            onClick={onNext}
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
+          {isReviewMode && (
+            <button 
+              onClick={onNext}
+              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
