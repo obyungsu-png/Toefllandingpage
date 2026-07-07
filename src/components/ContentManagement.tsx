@@ -132,6 +132,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [selectedSection, setSelectedSection] = useState<'Reading' | 'Listening' | 'Speaking' | 'Writing'>('Reading');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showBulkUploadForm, setShowBulkUploadForm] = useState(false);
+  const [showAudioSplitter, setShowAudioSplitter] = useState(false);
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
   const editFormRef = useRef<HTMLDivElement>(null);
@@ -716,6 +717,15 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           <Upload className="w-5 h-5 mr-2" />
           Bulk Upload Questions (JSON)
         </Button>
+        {(selectedSection === 'Listening' || selectedSection === 'Speaking') && (
+          <Button
+            onClick={() => setShowAudioSplitter(!showAudioSplitter)}
+            className={`shadow-lg ${showAudioSplitter ? 'bg-purple-700 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'}`}
+          >
+            <Music className="w-5 h-5 mr-2" />
+            Audio Split Upload
+          </Button>
+        )}
         {selectedSection === 'Reading' && (
           <>
             <Button
@@ -960,6 +970,21 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           />
         )}
       </>
+
+      {/* Audio Splitter Panel */}
+      {showAudioSplitter && getExistingTest() && (selectedSection === 'Listening' || selectedSection === 'Speaking') && (() => {
+        const t = getExistingTest()!;
+        const s = t.sections.find(sec => sec.sectionType === selectedSection);
+        if (!s) return null;
+        return (
+          <AudioSplitterPanel
+            test={t}
+            section={s}
+            onUpdateTest={onUpdateTest}
+            onClose={() => setShowAudioSplitter(false)}
+          />
+        );
+      })()}
 
       {/* Existing Questions List */}
       {getExistingTest() && (
@@ -3642,4 +3667,213 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
       </form>
     </div>
   );
+}
+
+// ─── Audio Splitter Panel (Listening / Speaking batch audio upload) ───
+function AudioSplitterPanel({
+  test,
+  section,
+  onUpdateTest,
+  onClose,
+}: {
+  test: TPOTest;
+  section: TPOSection;
+  onUpdateTest: (t: TPOTest) => void;
+  onClose: () => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [buffer, setBuffer] = useState<AudioBuffer | null>(null);
+  const [splitMinutes, setSplitMinutes] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const sortedQs = [...section.questions].sort((a, b) => {
+    const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+    const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+    return na - nb;
+  });
+
+  const parseSplitTimes = (): number[] => {
+    if (!splitMinutes.trim()) return [];
+    return splitMinutes.split(/[,\s]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n > 0).sort((a, b) => a - b);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setError(null);
+    try {
+      const ctx = new AudioContext();
+      const arr = await f.arrayBuffer();
+      const buf = await ctx.decodeAudioData(arr);
+      setBuffer(buf);
+      drawWaveform(buf);
+    } catch {
+      setError('오디오 파일 디코딩에 실패했습니다.');
+    }
+  };
+
+  const drawWaveform = (buf: AudioBuffer) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const cw = canvas.width = canvas.offsetWidth || 600;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d')!;
+    const data = buf.getChannelData(0);
+    const step = Math.max(1, Math.floor(data.length / cw));
+    const durations = parseSplitTimes();
+
+    if (durations.length > 0) {
+      const segs = [0, ...durations.map(d => Math.round(d * buf.sampleRate)), data.length];
+      for (let s = 0; s < segs.length - 1; s++) {
+        const x1 = (segs[s] / data.length) * cw;
+        const x2 = (segs[s + 1] / data.length) * cw;
+        ctx.fillStyle = s % 2 === 0 ? '#d1fae5' : '#e0f2fe';
+        ctx.fillRect(x1, 0, x2 - x1, 120);
+      }
+      durations.forEach(d => {
+        const x = (Math.round(d * buf.sampleRate) / data.length) * cw;
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 120); ctx.stroke();
+      });
+    }
+
+    ctx.fillStyle = splitMinutes ? '#1e6b73' : '#94a3b8';
+    for (let i = 0; i < cw; i++) {
+      let peak = 0;
+      for (let j = 0; j < step; j++) {
+        const v = Math.abs(data[i * step + j] || 0);
+        if (v > peak) peak = v;
+      }
+      const h = peak * 100;
+      ctx.fillRect(i, 60 - h / 2, 1, Math.max(1, h));
+    }
+  };
+
+  const handlePreview = () => { if (buffer) drawWaveform(buffer); };
+
+  const handleSplitUpload = async () => {
+    if (!buffer || !file) return;
+    const durations = parseSplitTimes();
+    if (durations.length === 0) { setError('분할 시점을 입력해주세요 (초 단위, 쉼표 구분)'); return; }
+    const sr = buffer.sampleRate;
+    const fullDur = buffer.duration;
+    const segs = [0, ...durations.map(d => Math.min(d, fullDur)), fullDur];
+    const count = Math.min(segs.length - 1, sortedQs.length);
+    setProcessing(true);
+    const updatedTest = { ...test };
+    const sec = updatedTest.sections.find(s => s.sectionType === section.sectionType);
+    if (!sec) { setProcessing(false); return; }
+
+    for (let i = 0; i < count; i++) {
+      setUploadingIdx(i);
+      const start = segs[i], end = segs[i + 1], segLen = Math.max(1, Math.round((end - start) * sr));
+      const offline = new OfflineAudioContext(1, segLen, sr);
+      const src = offline.createBufferSource();
+      const segBuf = offline.createBuffer(1, segLen, sr);
+      const raw = buffer.getChannelData(0).slice(Math.round(start * sr), Math.round(start * sr) + segLen);
+      segBuf.copyToChannel(new Float32Array(raw), 0);
+      src.buffer = segBuf; src.connect(offline.destination);
+      const rendered = await offline.startRendering();
+
+      const wav = audioBufferToWavBlob(rendered);
+      const f = new File([wav], `split-q${sortedQs[i]?.questionNumber || i + 1}.wav`, { type: 'audio/wav' });
+      try {
+        const url = await uploadToStorage(f, 'listening-audio');
+        const qi = sec.questions.findIndex(q => q.id === sortedQs[i].id);
+        if (qi !== -1) sec.questions[qi] = { ...sec.questions[qi], audioUrl: url };
+      } catch (err: any) { console.error(`Q${sortedQs[i]?.questionNumber} upload failed:`, err); }
+    }
+    updatedTest.updatedAt = new Date();
+    onUpdateTest(updatedTest);
+    setProcessing(false); setUploadingIdx(null);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg border border-purple-200 p-6 mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <Music className="w-5 h-5 text-purple-600" />
+          Audio Split Upload — {section.sectionType}
+        </h3>
+        <Button onClick={onClose} variant="outline" className="text-gray-600">닫기</Button>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        긴 음성 파일 하나를 업로드하고 문제 사이의 나누는 지점(초)을 입력하면 자동으로 잘라서 각 문제에 할당합니다.
+      </p>
+
+      {!file && (
+        <input type="file" accept="audio/*" onChange={handleFileChange}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3" />
+      )}
+      {file && (
+        <>
+          <p className="text-xs text-gray-500 mb-2">파일: <strong>{file.name}</strong> ({(buffer?.duration ?? 0).toFixed(1)}초)</p>
+          <canvas ref={canvasRef} className="w-full rounded border mb-3" />
+
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">분할 시점 (초 단위, 쉼표 구분)</label>
+            <input value={splitMinutes} onChange={(e) => setSplitMinutes(e.target.value)}
+              placeholder="예: 45, 90, 135, 180" onBlur={handlePreview}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+            <p className="text-[10px] text-gray-400 mt-1">
+              총 {buffer?.duration.toFixed(0) ?? 0}초 · 현재 {sortedQs.length}개 문제
+              {parseSplitTimes().length > 0 && ` → ${Math.min(parseSplitTimes().length + 1, sortedQs.length)}개 분할 예정`}
+            </p>
+          </div>
+          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          <div className="flex gap-2 justify-between">
+            <Button onClick={() => { setFile(null); setBuffer(null); setSplitMinutes(''); }} variant="outline" className="text-gray-600">
+              파일 다시 선택
+            </Button>
+            <Button onClick={handleSplitUpload} disabled={processing || parseSplitTimes().length === 0}
+              className="bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 disabled:opacity-50">
+              {processing ? `업로드 중 (${(uploadingIdx ?? 0) + 1}/${Math.min(parseSplitTimes().length + 1, sortedQs.length)})...` : '분할 & 업로드'}
+            </Button>
+          </div>
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <p className="text-xs font-semibold text-gray-500 mb-2">분할 예측:</p>
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {sortedQs.map((q, i) => {
+                const pts = parseSplitTimes();
+                const segs = pts.length > 0 ? [0, ...pts, buffer?.duration ?? 0] : [];
+                return (
+                  <div key={q.id} className="flex items-center gap-2 text-xs text-gray-600 py-1 px-2 rounded bg-gray-50">
+                    <span className="font-bold text-purple-700 shrink-0">Q{q.questionNumber}</span>
+                    <span className="truncate">{q.questionType}</span>
+                    {segs[i] != null && segs[i + 1] != null
+                      ? <span className="text-gray-400 ml-auto shrink-0">{segs[i].toFixed(1)}s → {segs[i + 1].toFixed(1)}s</span>
+                      : <span className="text-gray-300 ml-auto shrink-0">-</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
+  const nc = buffer.numberOfChannels, sr = buffer.sampleRate;
+  const data = buffer.getChannelData(0);
+  const byteRate = sr * nc * 2, blockAlign = nc * 2;
+  const dataSize = data.length * blockAlign;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buf);
+  function ws(off: number, s: string) { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); }
+  ws(0, 'RIFF'); v.setUint32(4, 36 + dataSize, true); ws(8, 'WAVE');
+  ws(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, nc, true);
+  v.setUint32(24, sr, true); v.setUint32(28, byteRate, true); v.setUint16(32, blockAlign, true); v.setUint16(34, 16, true);
+  ws(36, 'data'); v.setUint32(40, dataSize, true);
+  for (let i = 0, off = 44; i < data.length; i++, off += 2) {
+    const s = Math.max(-1, Math.min(1, data[i]));
+    v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return new Blob([buf], { type: 'audio/wav' });
 }
