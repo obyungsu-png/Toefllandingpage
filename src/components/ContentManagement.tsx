@@ -715,7 +715,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61] shadow-lg"
         >
           <Upload className="w-5 h-5 mr-2" />
-          Bulk Upload Questions (JSON)
+          Bulk Upload Questions (Text)
         </Button>
         {(selectedSection === 'Listening' || selectedSection === 'Speaking') && (
           <Button
@@ -3565,7 +3565,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
   );
 }
 
-// Bulk Upload Form Component
+
+// Bulk Upload Form Component (Text-based)
 interface BulkUploadFormProps {
   testType: 'TPO' | 'Test';
   testNumber: number;
@@ -3575,96 +3576,259 @@ interface BulkUploadFormProps {
 }
 
 function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: BulkUploadFormProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [parsed, setParsed] = useState<TPOQuestion[] | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.type === 'application/json') {
-      setFile(selectedFile);
-      setError(null);
-    } else {
-      setFile(null);
-      setError('Please upload a valid JSON file.');
+  // ─── Template per section ───
+  const getTemplate = (): string => {
+    switch (section) {
+      case 'Reading':
+        return `Q1-10: Complete Words\n난이도: 보통\n\n지문:\nWhen people think of [1], they often imagine [2]. However, modern research\nhas shown that [3] plays a more important role than [4].\n\n빈칸:\n1. answer: invention, maxLength: 10\n2. answer: technology, maxLength: 10\n3. answer: education, maxLength: 10\n4. answer: environment, maxLength: 11\n5. answer: development, maxLength: 11\n6. answer: culture, maxLength: 7\n7. answer: society, maxLength: 7\n8. answer: money, maxLength: 5\n9. answer: motivation, maxLength: 10\n10. answer: success, maxLength: 7\n\n===\n\nQ11: Read in Daily Life\n난이도: 보통\n\n지문:\nTo: All students\nFrom: Library Office\nSubject: Extended Hours\nThe library will be open until midnight during finals week.\n\n문제:\nWhat is the purpose of this email?\n\n보기:\nA. To announce new hours\nB. To ask for volunteers\nC. To complain about noise\nD. To introduce new staff\n\n정답: A\n해설: The email announces extended library hours.\n\n===\n\nQ12: Read in Daily Life\n난이도: 보통\n\n지문:\nNOTICE: The cafeteria will be closed on Friday for renovations...\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: C\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ19: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
+      case 'Listening':
+        return `Q1: Academic Lecture\n난이도: 보통\n제목: The History of Photography\n안내문: Listen to part of a lecture in an art history class.\n\n스크립트:\nProfessor: Welcome to today's lecture on the history of photography...\n\n문제:\nWhat is the main topic?\n\n보기:\nA. Modern cameras\nB. History of photography\nC. Famous photographers\nD. Art appreciation\n\n정답: B\n해설: ...\n\n===\n\nQ2: Short Conversation\n...`;
+      case 'Speaking':
+        return `Q1: Independent Task\n난이도: 보통\n시간: 45\n\n스크립트:\nSome people prefer studying alone...\n\n문제:\nDo you agree or disagree?\n\n정답: 모범 답안 텍스트\n해설: ...\n\n===\n\nQ2: Integrated Task - Reading/Listening\n...`;
+      case 'Writing':
+        return `Q1: Write an Email\n난이도: 보통\n받는이: professor@university.edu\n제목: Question about missed class\n\n상황:\nYou are a student who missed last week's class.\n\n지시문:\nWrite an email to your professor.\n\n요구사항:\n- Explain why you missed class\n- Ask about the homework\n- Request a meeting\n\n===\n\nQ2: Academic Discussion\n난이도: 어려움\n\n교수이름: Dr. Johnson\n교수메시지:\nToday we're discussing social media and education...\n\n학생1이름: Sarah\n학생1메시지:\nI think social media has more positive effects...\n\n학생2이름: Mike\n학생2메시지:\nIn my opinion, the negatives outweigh...\n\n문제:\nWrite your response.`;
+      default: return '';
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ─── Parser ───
+  const parseText = (text: string): TPOQuestion[] => {
+    const blocks = text.split(/\n?={3,}\n?/);
+    const questions: TPOQuestion[] = [];
+    let lastPassage = ''; // inherit passageText from previous Q for academic reading
 
-    if (!file) {
-      setError('No file selected.');
-      return;
-    }
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      const t = block.trim();
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const result = JSON.parse(event.target?.result as string);
-        if (Array.isArray(result) && result.every(q => typeof q === 'object' && q !== null)) {
-          const questions: TPOQuestion[] = result.map((q: any) => ({
-            id: `q-${Date.now()}-${q.questionNumber}`,
-            questionNumber: q.questionNumber,
-            questionText: q.questionText,
-            questionType: q.questionType,
-            options: q.options || [],
-            correctAnswer: q.correctAnswer || '',
-            explanation: q.explanation || '',
-            passageText: q.passageText || undefined,
-            duration: q.duration || undefined,
-            difficulty: q.difficulty || '보통',
-            blanks: q.blanks || []
-          }));
-          onSubmit(questions);
-        } else {
-          setError('Invalid JSON format. Please ensure the file contains an array of question objects.');
+      // Question number and type from first line: "Q1-10: Type" or "Q11: Type"
+      const headerMatch = t.match(/^Q(\d+(?:-\d+)?)\s*:\s*(.+)$/m);
+      if (!headerMatch) continue;
+      const qNum = headerMatch[1].trim();
+      const qType = headerMatch[2].trim();
+
+      // Helper: extract value after label
+      const after = (labels: string[]): string | undefined => {
+        for (const label of labels) {
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|===|$))`, 'im');
+          const m = t.match(re);
+          if (m && m[1].trim()) return m[1].trim();
         }
-      } catch (err) {
-        setError('Error parsing JSON file. Please check the file format.');
+        return undefined;
+      };
+
+      // Single-line fields
+      const single = (labels: string[]): string | undefined => {
+        for (const label of labels) {
+          const re = new RegExp(`^${label}\\s*(.+)$`, 'im');
+          const m = t.match(re);
+          if (m) return m[1].trim();
+        }
+        return undefined;
+      };
+
+      const difficulty = (single(['난이도:', '난이도']) || '보통') as '쉬움' | '보통' | '어려움';
+      const passageText = after(['지문:']) || undefined;
+      const scriptText = after(['스크립트:']) || undefined;
+      const questionText = after(['문제:']) || '';
+      const explanation = after(['해설:']) || undefined;
+      const durationStr = single(['시간:']);
+      const duration = durationStr ? parseInt(durationStr) : undefined;
+
+      // Options
+      const optionsBlock = after(['보기:']);
+      let options: string[] | undefined;
+      if (optionsBlock) {
+        options = optionsBlock.split('\n').map(l => l.trim()).filter(l => /^[A-D][.)]\s/.test(l));
+        if (options.length === 0) options = undefined;
       }
-    };
-    reader.readAsText(file);
+
+      // Answer
+      const answer = single(['정답:']);
+
+      // Complete Words blanks
+      let blanks: { answer: string; maxLength: number }[] | undefined;
+      const blanksBlock = after(['빈칸:']);
+      if (blanksBlock) {
+        blanks = [];
+        const bLines = blanksBlock.split('\n').filter(l => l.trim());
+        for (const line of bLines) {
+          const am = line.match(/answer\s*:\s*(.+?)\s*,?\s*maxLength\s*:\s*(\d+)/i);
+          if (am) blanks.push({ answer: am[1].trim(), maxLength: parseInt(am[2]) });
+          else {
+            // Simple: just the word
+            const w = line.replace(/^\d+[.):]?\s*/, '').trim();
+            if (w) blanks.push({ answer: w, maxLength: w.length + 2 });
+          }
+        }
+        if (blanks.length === 0) blanks = undefined;
+      }
+
+      // Passage inheritance for academic reading
+      let effectivePassage = passageText;
+      if (!effectivePassage && qType === 'Read an Academic Passage') {
+        effectivePassage = lastPassage || undefined;
+      }
+      if (effectivePassage) lastPassage = effectivePassage;
+
+      // Email fields
+      const emailTo = single(['받는이:']);
+      const emailSubject = single(['제목:']);
+      const emailScenario = after(['상황:']) || undefined;
+      const emailInstruction = after(['지시문:']) || undefined;
+      const bulletsBlock = after(['요구사항:']);
+      const emailBullets = bulletsBlock ? bulletsBlock.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(Boolean) : undefined;
+
+      // Academic Discussion
+      const profName = single(['교수이름:']);
+      const profMsg = after(['교수메시지:']) || undefined;
+      const s1Name = single(['학생1이름:']);
+      const s1Msg = after(['학생1메시지:']) || undefined;
+      const s2Name = single(['학생2이름:']);
+      const s2Msg = after(['학생2메시지:']) || undefined;
+
+      // Build a Sentence
+      const wordsStr = single(['단어:']);
+      const words = wordsStr ? wordsStr.split(/[,，]\s*/).filter(Boolean) : undefined;
+      const sentenceEnding = (single(['문장끝:']) || undefined) as '.' | '?' | undefined;
+
+      // Listening/Speaking extra
+      const passageTitle = single(['제목:']) || undefined;
+      const interstitialTitle = single(['안내문:']) || undefined;
+
+      // Parse range like "1-10" into individual or keep as string
+      const rangeMatch = qNum.match(/^(\d+)-(\d+)$/);
+      if (rangeMatch && qType === 'Complete Words' && blanks && blanks.length > 0) {
+        // Expand: one question per blank
+        const start = parseInt(rangeMatch[1]), end = parseInt(rangeMatch[2]);
+        for (let i = 0; i < blanks.length; i++) {
+          const num = start + i;
+          if (num > end) break;
+          questions.push({
+            id: `q-${Date.now()}-${num}-${Math.random().toString(36).slice(2,7)}`,
+            questionNumber: num,
+            questionText: `Complete the blank #${num}`,
+            questionType: 'Complete Words',
+            passageText: effectivePassage || undefined,
+            difficulty,
+            blanks: [blanks[i]],
+            correctAnswer: blanks[i].answer,
+          } as TPOQuestion);
+        }
+      } else {
+        questions.push({
+          id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
+          questionNumber: isNaN(parseInt(qNum)) ? qNum : parseInt(qNum),
+          questionText,
+          questionType: qType,
+          options: options || [],
+          correctAnswer: answer || '',
+          explanation,
+          passageText: effectivePassage || undefined,
+          scriptText,
+          duration,
+          difficulty,
+          blanks: blanks || undefined,
+          emailScenario, emailInstruction, emailBullets, emailSubject, emailTo,
+          professorName: profName, professorMessage: profMsg,
+          student1Name: s1Name, student1Message: s1Msg,
+          student2Name: s2Name, student2Message: s2Msg,
+          words, sentenceEnding,
+          passageTitle, interstitialTitle,
+        } as any);
+      }
+    }
+    return questions;
   };
+
+  const handleParse = () => {
+    if (!rawText.trim()) { setError('텍스트를 붙여넣어주세요.'); return; }
+    setError(null);
+    try {
+      const qs = parseText(rawText);
+      if (qs.length === 0) throw new Error('질문을 찾을 수 없습니다. Q1: 유형 형식으로 시작하는지 확인해주세요.');
+      setParsed(qs);
+    } catch (err: any) {
+      setError(err?.message || '파싱 오류');
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    const blob = new Blob([getTemplate()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${testType}${testNumber}-${section}-template.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (parsed) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
+        <h3 className="text-xl font-medium text-gray-800 mb-4">
+          {parsed.length}개 문제 파싱 완료 — {testType} {testNumber} {section}
+        </h3>
+        <div className="max-h-[32rem] overflow-y-auto space-y-2 mb-4">
+          {parsed.map((q, i) => (
+            <div key={i} className="bg-gray-50 border rounded-lg p-3 text-sm">
+              <span className="font-bold text-[#2d7a7c]">Q{q.questionNumber}</span>
+              <span className="mx-2 text-gray-400">|</span>
+              <span>{q.questionType}</span>
+              {q.difficulty && <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{q.difficulty}</span>}
+              <p className="text-gray-500 mt-1 truncate">{q.questionText || q.passageText?.slice(0, 80)}</p>
+              {q.options && q.options.length > 0 && (
+                <p className="text-xs text-gray-400 mt-0.5">보기: {q.options.join(' | ')}</p>
+              )}
+              {q.correctAnswer && <p className="text-xs text-green-600 mt-0.5">정답: {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer}</p>}
+              {q.blanks && q.blanks.length > 0 && <p className="text-xs text-purple-600 mt-0.5">빈칸 {q.blanks.length}개</p>}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 justify-between pt-4 border-t">
+          <Button onClick={() => { setParsed(null); setRawText(''); }} variant="outline" className="text-gray-600">
+            다시 입력
+          </Button>
+          <div className="flex gap-2">
+            <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
+            <Button onClick={() => onSubmit(parsed)} className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+              <Upload className="w-4 h-4 mr-2" /> {parsed.length}개 문제 저장
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
-    >
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
       <h3 className="text-xl font-medium text-gray-800 mb-4">
-        Bulk Upload {section} Questions - {testType} {testNumber}
+        Bulk Upload {section} Questions — {testType} {testNumber}
       </h3>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* File Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">JSON File</label>
-          <input
-            type="file"
-            accept="application/json"
-            onChange={handleFileChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-          />
-          {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-        </div>
-
-        {/* Form Actions */}
-        <div className="flex gap-3 justify-end pt-4 border-t">
-          <Button
-            type="button"
-            onClick={onCancel}
-            className="bg-gray-300 text-gray-700 hover:bg-gray-400"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload Questions
-          </Button>
-        </div>
-      </form>
+      <p className="text-sm text-gray-500 mb-4">
+        메모장에 작성한 텍스트를 붙여넣으세요. 문제는 <code>===</code> 구분선으로 나눕니다.
+        <button onClick={handleDownloadTemplate} className="ml-2 text-[#1e6b73] underline font-semibold">
+          ⬇ 템플릿 다운로드
+        </button>
+      </p>
+      <textarea
+        value={rawText}
+        onChange={e => setRawText(e.target.value)}
+        placeholder={getTemplate()}
+        rows={16}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm mb-3 focus:ring-2 focus:ring-[#2d7a7c]"
+      />
+      {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+      <div className="flex gap-3 justify-end pt-4 border-t">
+        <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
+        <Button onClick={handleParse} className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]">
+          <Upload className="w-4 h-4 mr-2" /> 텍스트 파싱
+        </Button>
+      </div>
     </div>
   );
 }
