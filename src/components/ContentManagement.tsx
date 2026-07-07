@@ -3952,7 +3952,68 @@ What is your opinion on the role of social media in education?
 정답: I agree with Mike that social media can be a valuable educational tool when used responsibly. While Sarah's concern about distraction is valid, the key is self-discipline and time management. In my experience, educational communities on social media have helped me find study resources and connect with classmates for group projects. However, I also think schools should teach students how to use social media productively rather than trying to ban it entirely.
 해설: 양쪽 의견 인정 + 자신의 입장 + 구체적 경험`;
       case 'Writing':
-        return `Q1: Write an Email\n난이도: 보통\n받는이: professor@university.edu\n제목: Question about missed class\n\n상황:\nYou are a student who missed last week's class.\n\n지시문:\nWrite an email to your professor.\n\n요구사항:\n- Explain why you missed class\n- Ask about the homework\n- Request a meeting\n\n===\n\nQ2: Academic Discussion\n난이도: 어려움\n\n교수이름: Dr. Johnson\n교수메시지:\nToday we're discussing social media and education...\n\n학생1이름: Sarah\n학생1메시지:\nI think social media has more positive effects...\n\n학생2이름: Mike\n학생2메시지:\nIn my opinion, the negatives outweigh...\n\n문제:\nWrite your response.`;
+        return `Q1: Write an Email
+난이도: 보통
+시간: 10
+받는이: professor@university.edu
+제목: Question about missed class
+
+상황:
+You are a student who missed last week's class due to a family emergency. You need to catch up on the material and speak with your professor.
+
+지시문:
+Write an email to your professor. In your email, do the following.
+
+요구사항:
+- Explain why you missed class
+- Ask about the homework or assignments
+- Request a meeting during office hours
+
+정답: Dear Professor Smith,
+
+I hope this email finds you well. I am writing to apologize for missing last week's class. Unfortunately, I had a family emergency that required me to travel home unexpectedly, and I was unable to attend lectures.
+
+I would like to catch up on the material I missed. Could you please let me know what homework or assignments were given during my absence? I want to make sure I submit everything on time.
+
+Additionally, I would appreciate the opportunity to meet with you during your office hours to discuss the topics covered in class. Would Wednesday at 2 PM be a convenient time for you?
+
+Thank you for your understanding, and I look forward to hearing from you soon.
+
+Best regards,
+[Your Name]
+해설: 정중한 톤, 3가지 요구사항 모두 포함, 적절한 이메일 구조 (인사, 본문, 맺음말)
+
+===
+
+Q2: Academic Discussion
+난이도: 어려움
+시간: 10
+
+교수이름: Dr. Achebe
+교수메시지:
+This week, we're discussing the role of technology in education. Some educators argue that smartphones and laptops in the classroom are distractions that hinder learning. Others believe these devices can enhance the educational experience when used properly. What is your opinion on the use of technology in the classroom?
+
+학생1이름: Paul N
+학생1메시지:
+I think technology should be limited in the classroom. When students use laptops, they're often checking social media or browsing the internet instead of taking notes. I've noticed that students who write notes by hand tend to remember the material better. Technology can be too distracting.
+
+학생2이름: Lena A
+학생2메시지:
+I disagree. Technology, when used intentionally, can be a powerful learning tool. For example, in my biology class, we use our phones to access interactive models of cells and molecules. These visual aids help us understand complex concepts that would be difficult to grasp from a textbook alone. The key is setting guidelines for appropriate use.
+
+문제:
+Write a response in which you express your opinion on the use of technology in the classroom. Support your opinion with reasons and examples from your own experience.
+
+정답: I agree with Lena that technology, when used intentionally, can greatly enhance the learning experience in the classroom. While Paul raises a valid concern about distractions, I believe the solution lies in establishing clear guidelines rather than banning devices entirely.
+
+In my own experience, technology has been invaluable in my studies. During my history class last semester, our professor encouraged us to use our laptops to access primary source documents in real time. This allowed us to analyze historical texts together as a class, which would not have been possible with printed materials alone. The interactive nature of the lesson kept everyone engaged and focused on the task.
+
+Furthermore, educational apps and online platforms have made it easier for students to collaborate outside of class. Tools like Google Docs allow groups to work on projects together, and language learning apps provide personalized practice that adapts to each student's level.
+
+However, I also acknowledge Paul's point about potential distractions. To address this, teachers could implement policies such as "laptops down" moments during important discussions or use classroom management software to monitor device usage. The goal should be to teach students responsible technology use, which is an essential skill in today's digital world.
+
+In conclusion, technology in the classroom should be embraced with thoughtful guidelines rather than restricted. When used purposefully, it can transform passive learning into an interactive and engaging experience.
+해설: 양쪽 학생 의견 인정 + 자신의 입장 + 구체적 경험 + 반론 대응 + 결론`;
       default: return '';
     }
   };
