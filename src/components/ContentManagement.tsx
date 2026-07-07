@@ -3809,7 +3809,148 @@ D. Memorizing vocabulary lists
 정답: B
 해설: Actively retrieving information strengthens memory pathways.`;
       case 'Speaking':
-        return `Q1: Independent Task\n난이도: 보통\n시간: 45\n\n스크립트:\nSome people prefer studying alone...\n\n문제:\nDo you agree or disagree?\n\n정답: 모범 답안 텍스트\n해설: ...\n\n===\n\nQ2: Integrated Task - Reading/Listening\n...`;
+        return `Q1: Listen and Repeat
+난이도: 보통
+시간: 8
+제목: Campus Announcement
+안내문: Listen and then repeat.
+
+스크립트:
+The library will be closed on Saturday for maintenance. Please return all books by Friday evening.
+
+문제:
+Listen and repeat the announcement.
+
+정답: The library will be closed on Saturday for maintenance. Please return all books by Friday evening.
+해설: 정확한 발음과 억양으로 반복
+
+===
+
+Q2: Listen and Repeat
+난이도: 보통
+시간: 8
+제목: Class Schedule Change
+안내문: Listen and then repeat.
+
+스크립트:
+Professor Smith's office hours have been moved to Wednesday afternoon from 2 to 4 PM.
+
+문제:
+Listen and repeat the announcement.
+
+정답: Professor Smith's office hours have been moved to Wednesday afternoon from 2 to 4 PM.
+
+===
+
+Q3: Listen and Repeat
+난이도: 보통
+시간: 10
+제목: Weather Advisory
+안내문: Listen and then repeat.
+
+스크립트:
+Due to heavy snow expected tomorrow, all morning classes will be delayed by two hours. The cafeteria will open at 9 AM instead of 7 AM.
+
+문제:
+Listen and repeat the announcement.
+
+정답: Due to heavy snow expected tomorrow, all morning classes will be delayed by two hours. The cafeteria will open at 9 AM instead of 7 AM.
+
+===
+
+Q6: Independent Task
+난이도: 보통
+시간: 45
+제목: Studying Alone vs. In Groups
+안내문: You will have 45 seconds to speak.
+
+문제:
+Some people prefer studying alone, while others prefer studying in groups. Which do you prefer and why? Include details and examples to support your choice.
+
+정답: I prefer studying in groups because it allows me to learn from my peers. When I study alone, I sometimes get stuck on difficult concepts. In a group, we can discuss different perspectives and help each other understand complex topics. For example, last semester my study group helped me prepare for a biology exam by quizzing each other, and I scored much higher than when I studied alone.
+해설: 45초 내에 명확한 입장 + 이유 + 예시 제시
+
+===
+
+Q7: Independent Task
+난이도: 보통
+시간: 45
+제목: Online vs. In-Person Classes
+안내문: You will have 45 seconds to speak.
+
+문제:
+Do you agree or disagree with the following statement? Online classes are as effective as in-person classes. Use specific reasons and examples to support your answer.
+
+정답: I disagree that online classes are as effective as in-person classes. In-person classes provide immediate interaction with professors and classmates, which enhances learning. For instance, in my psychology class, group discussions and real-time feedback from the professor helped me understand concepts much better than watching recorded lectures online. The social aspect of classroom learning also keeps students motivated.
+해설: 찬반 입장 명확히 + 구체적 예시
+
+===
+
+Q8: Take an Interview
+난이도: 보통
+시간: 45
+제목: Hobbies and Free Time
+안내문: Answer the interviewer's question naturally.
+
+문제:
+The interviewer asks: "What do you enjoy doing in your free time, and why?"
+
+정답: In my free time, I enjoy playing basketball with my friends. It's a great way to stay healthy and relieve stress after a long week of studying. I also like that it's a social activity — we usually grab dinner together after the game, which gives us a chance to catch up. Basketball has taught me teamwork and discipline, which I think are valuable skills both in and out of the classroom.
+해설: 자연스러운 대화톤 + 구체적 활동 + 이유
+
+===
+
+Q9: Take an Interview
+난이도: 보통
+시간: 45
+제목: Future Career Goals
+안내문: Answer the interviewer's question naturally.
+
+문제:
+The interviewer asks: "What career would you like to pursue after graduation, and what steps are you taking to achieve that goal?"
+
+정답: I'd like to become an environmental scientist after graduation. I've always been passionate about protecting nature, and this career would let me work on real-world problems like climate change. To achieve this goal, I'm majoring in Environmental Science, volunteering at a local conservation group, and planning to attend a research internship next summer. I believe these experiences will give me the skills I need.
+해설: 구체적 진로 + 현재 노력 + 미래 계획
+
+===
+
+Q10: Take an Interview
+난이도: 어려움
+시간: 45
+제목: Technology in Education
+안내문: Answer the interviewer's question naturally.
+
+문제:
+The interviewer asks: "Do you think technology has improved education? Give specific examples to support your opinion."
+
+정답: Yes, I believe technology has significantly improved education. One major benefit is access to information — students can now find academic papers, tutorials, and online courses from anywhere in the world. For example, during the pandemic, online learning platforms allowed me to continue my studies without interruption. Technology also enables personalized learning; apps like Duolingo adapt to each student's pace. However, I think it's important to balance screen time with face-to-face interaction.
+해설: 찬성 입장 + 구체적 예시 + 균형점 언급
+
+===
+
+Q11: Academic Discussion
+난이도: 어려움
+시간: 60
+제목: Social Media Impact
+안내문: Express your opinion on the discussion topic.
+
+교수이름: Dr. Johnson
+교수메시지:
+Today we're discussing the impact of social media on education. Some argue that social media is a distraction that hurts academic performance, while others believe it can be a valuable learning tool. What's your opinion?
+
+학생1이름: Sarah
+학생1메시지:
+I think social media has more negative effects. Students spend too much time scrolling through feeds instead of studying, and it reduces their attention span.
+
+학생2이름: Mike
+학생2메시지:
+I see it differently. Social media can connect students with educational communities. I've joined study groups on Facebook where we share resources and help each other.
+
+문제:
+What is your opinion on the role of social media in education?
+
+정답: I agree with Mike that social media can be a valuable educational tool when used responsibly. While Sarah's concern about distraction is valid, the key is self-discipline and time management. In my experience, educational communities on social media have helped me find study resources and connect with classmates for group projects. However, I also think schools should teach students how to use social media productively rather than trying to ban it entirely.
+해설: 양쪽 의견 인정 + 자신의 입장 + 구체적 경험`;
       case 'Writing':
         return `Q1: Write an Email\n난이도: 보통\n받는이: professor@university.edu\n제목: Question about missed class\n\n상황:\nYou are a student who missed last week's class.\n\n지시문:\nWrite an email to your professor.\n\n요구사항:\n- Explain why you missed class\n- Ask about the homework\n- Request a meeting\n\n===\n\nQ2: Academic Discussion\n난이도: 어려움\n\n교수이름: Dr. Johnson\n교수메시지:\nToday we're discussing social media and education...\n\n학생1이름: Sarah\n학생1메시지:\nI think social media has more positive effects...\n\n학생2이름: Mike\n학생2메시지:\nIn my opinion, the negatives outweigh...\n\n문제:\nWrite your response.`;
       default: return '';
