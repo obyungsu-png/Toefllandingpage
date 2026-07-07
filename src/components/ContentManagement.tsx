@@ -3700,6 +3700,61 @@ function AudioSplitterPanel({
     return splitMinutes.split(/[,\s]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n > 0).sort((a, b) => a - b);
   };
 
+  // Auto-detect silence gaps using RMS analysis
+  const detectSilenceGaps = (buf: AudioBuffer): number[] => {
+    const data = buf.getChannelData(0);
+    const sr = buf.sampleRate;
+    const totalDur = buf.duration;
+    const windowSec = 0.3; // 300ms windows
+    const windowSize = Math.round(sr * windowSec);
+    const minSilenceSec = 1.0; // minimum silence between questions
+    const silenceThresholdRatio = 0.03; // 3% of peak amplitude = silence
+
+    // Calculate max peak for threshold
+    let maxPeak = 0;
+    for (let i = 0; i < data.length; i++) { const v = Math.abs(data[i]); if (v > maxPeak) maxPeak = v; }
+    const silenceThreshold = maxPeak * silenceThresholdRatio;
+
+    // Calculate RMS for each window
+    const rms: number[] = [];
+    for (let start = 0; start < data.length; start += windowSize) {
+      let sum = 0;
+      const end = Math.min(start + windowSize, data.length);
+      for (let j = start; j < end; j++) sum += data[j] * data[j];
+      rms.push(Math.sqrt(sum / (end - start)));
+    }
+
+    // Find silence regions (consecutive windows below threshold)
+    const silences: { start: number; end: number; gap: number }[] = [];
+    let inSilence = false; let silenceStart = 0;
+    for (let i = 0; i < rms.length; i++) {
+      if (rms[i] < silenceThreshold) {
+        if (!inSilence) { inSilence = true; silenceStart = i; }
+      } else {
+        if (inSilence) {
+          const secStart = (silenceStart * windowSize) / sr;
+          const secEnd = (i * windowSize) / sr;
+          if (secEnd - secStart >= minSilenceSec) {
+            silences.push({ start: secStart, end: secEnd, gap: secEnd - secStart });
+          }
+          inSilence = false;
+        }
+      }
+    }
+    if (inSilence) {
+      const secStart = (silenceStart * windowSize) / sr;
+      const secEnd = totalDur;
+      if (secEnd - secStart >= minSilenceSec) {
+        silences.push({ start: secStart, end: secEnd, gap: secEnd - secStart });
+      }
+    }
+
+    // Sort by gap size (largest first), take midpoint as split point
+    silences.sort((a, b) => b.gap - a.gap);
+    const expected = sortedQs.length - 1;
+    return silences.slice(0, expected).map(s => (s.start + s.end) / 2).sort((a, b) => a - b);
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -3710,6 +3765,11 @@ function AudioSplitterPanel({
       const arr = await f.arrayBuffer();
       const buf = await ctx.decodeAudioData(arr);
       setBuffer(buf);
+      // Auto-detect silence gaps
+      const auto = detectSilenceGaps(buf);
+      if (auto.length > 0) {
+        setSplitMinutes(auto.map(n => n.toFixed(1)).join(', '));
+      }
       drawWaveform(buf);
     } catch {
       setError('오디오 파일 디코딩에 실패했습니다.');
@@ -3758,8 +3818,9 @@ function AudioSplitterPanel({
 
   const handleSplitUpload = async () => {
     if (!buffer || !file) return;
-    const durations = parseSplitTimes();
-    if (durations.length === 0) { setError('분할 시점을 입력해주세요 (초 단위, 쉼표 구분)'); return; }
+    let durations = parseSplitTimes();
+    if (durations.length === 0 && buffer) { durations = detectSilenceGaps(buffer); }
+    if (durations.length === 0) { setError('분할 시점을 찾을 수 없습니다. 자동 감지 버튼을 눌러보거나 직접 입력해주세요.'); return; }
     const sr = buffer.sampleRate;
     const fullDur = buffer.duration;
     const segs = [0, ...durations.map(d => Math.min(d, fullDur)), fullDur];
@@ -3803,7 +3864,7 @@ function AudioSplitterPanel({
         <Button onClick={onClose} variant="outline" className="text-gray-600">닫기</Button>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        긴 음성 파일 하나를 업로드하고 문제 사이의 나누는 지점(초)을 입력하면 자동으로 잘라서 각 문제에 할당합니다.
+        긴 음성 파일 하나를 업로드하면 <strong>무음 구간을 자동 감지</strong>하여 문제별로 나눕니다. 수동 조정도 가능합니다.
       </p>
 
       {!file && (
@@ -3816,13 +3877,26 @@ function AudioSplitterPanel({
           <canvas ref={canvasRef} className="w-full rounded border mb-3" />
 
           <div className="mb-3">
-            <label className="block text-xs font-semibold text-gray-600 mb-1">분할 시점 (초 단위, 쉼표 구분)</label>
-            <input value={splitMinutes} onChange={(e) => setSplitMinutes(e.target.value)}
-              placeholder="예: 45, 90, 135, 180" onBlur={handlePreview}
+            <div className="flex items-center gap-2 mb-1">
+              <label className="text-xs font-semibold text-gray-600">분할 시점 (초)</label>
+              <button type="button" onClick={() => {
+                if (buffer) {
+                  const auto = detectSilenceGaps(buffer);
+                  setSplitMinutes(auto.map(n => n.toFixed(1)).join(', '));
+                  drawWaveform(buffer);
+                  if (auto.length === 0) setError('무음 구간을 찾을 수 없습니다. 수동으로 입력해주세요.');
+                  else setError(null);
+                }
+              }} className="text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-700 hover:bg-purple-200 font-semibold">
+                🔍 자동 감지
+              </button>
+            </div>
+            <input value={splitMinutes} onChange={(e) => { setSplitMinutes(e.target.value); setError(null); }}
+              placeholder="자동 감지됨 — 수동 입력: 45, 90, 135" onBlur={handlePreview}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
             <p className="text-[10px] text-gray-400 mt-1">
               총 {buffer?.duration.toFixed(0) ?? 0}초 · 현재 {sortedQs.length}개 문제
-              {parseSplitTimes().length > 0 && ` → ${Math.min(parseSplitTimes().length + 1, sortedQs.length)}개 분할 예정`}
+              {parseSplitTimes().length > 0 ? ` → ${Math.min(parseSplitTimes().length + 1, sortedQs.length)}개 분할 예정` : ' · 파일 선택 시 자동 감지됨'}
             </p>
           </div>
           {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
