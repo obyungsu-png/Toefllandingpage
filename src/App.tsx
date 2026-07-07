@@ -501,7 +501,30 @@ function AppContent() {
     showModule2Question20,
     showEndModule2
   ]);
-  
+
+  // Intercept the browser Back button while inside a test (question mode) so it
+  // navigates to the PREVIOUS QUESTION instead of leaving the app.
+  // Outside question mode (Home, History, Training, Admin, etc.) this does nothing —
+  // normal browser back behavior is left untouched there.
+  useEffect(() => {
+    if (!isInQuestionMode) return;
+
+    // Push one extra history entry to "absorb" the first back press.
+    window.history.pushState({ toeflGuard: true }, '', window.location.href);
+
+    const handlePopState = () => {
+      if (!isInQuestionMode) return; // safety re-check at event time
+      // Immediately re-push so the browser doesn't actually navigate away.
+      window.history.pushState({ toeflGuard: true }, '', window.location.href);
+      // Ask whichever section wrapper is currently mounted to go to its previous
+      // question/screen, reusing its existing internal "Previous" logic.
+      window.dispatchEvent(new CustomEvent('toefl:hardware-back'));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isInQuestionMode]);
+
   // Share Configuration State
   const [shareConfig, setShareConfig] = useState<ShareConfig>({
     enabled: false,

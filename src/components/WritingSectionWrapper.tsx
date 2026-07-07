@@ -115,6 +115,13 @@ export function WritingSectionWrapper({
     }
   };
 
+  // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
+  useEffect(() => {
+    const handler = () => goBack();
+    window.addEventListener('toefl:hardware-back', handler);
+    return () => window.removeEventListener('toefl:hardware-back', handler);
+  }, [screen]);
+
   const handleRestore = () => {
     restoreProgress();
     if (savedProgress && savedProgress.currentScreen) {

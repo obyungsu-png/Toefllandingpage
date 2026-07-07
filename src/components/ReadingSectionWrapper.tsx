@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResizableReadingLayout } from './ResizableReadingLayout';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
@@ -70,6 +70,13 @@ export function ReadingSectionWrapper({
       setCurrentScreen(screens[currentIndex - 1]);
     }
   };
+
+  // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
+  useEffect(() => {
+    const handler = () => goBack();
+    window.addEventListener('toefl:hardware-back', handler);
+    return () => window.removeEventListener('toefl:hardware-back', handler);
+  }, [currentScreen]);
 
   const goNext = () => {
     const screens: ReadingScreen[] = [
