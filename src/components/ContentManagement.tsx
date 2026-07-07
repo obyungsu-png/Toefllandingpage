@@ -3586,228 +3586,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
       case 'Reading':
         return `Q1-10: Complete Words\n난이도: 보통\n\n지문:\nWhen people think of [1], they often imagine [2]. However, modern research\nhas shown that [3] plays a more important role than [4].\n\n빈칸:\n1. answer: invention, maxLength: 10\n2. answer: technology, maxLength: 10\n3. answer: education, maxLength: 10\n4. answer: environment, maxLength: 11\n5. answer: development, maxLength: 11\n6. answer: culture, maxLength: 7\n7. answer: society, maxLength: 7\n8. answer: money, maxLength: 5\n9. answer: motivation, maxLength: 10\n10. answer: success, maxLength: 7\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
       case 'Listening':
-        return `Q1: Academic Lecture
-난이도: 보통
-제목: The History of Photography
-안내문: Listen to part of a lecture in an art history class.
-
-스크립트:
-Professor: Good morning, everyone. Today we're going to explore the history of photography, from its earliest beginnings in the 19th century to the digital revolution of the 21st century. The camera obscura was the first device that led to photography. Artists used it to project images onto surfaces. Then came the daguerreotype in 1839, which was the first commercially successful photographic process.
-
-But perhaps the most significant turning point came with the invention of flexible roll film by George Eastman in 1888. This made photography accessible to ordinary people for the first time. Before this, photography was limited to professionals with heavy equipment and dangerous chemicals.
-
-Now, let's consider the impact of digital photography. When digital cameras first appeared in the 1990s, many traditional photographers dismissed them. But within just two decades, digital photography has almost entirely replaced film for everyday use.
-
-문제:
-What is the main topic?
-
-보기:
-A. Modern cameras
-B. History of photography
-C. Famous photographers
-D. Art appreciation
-
-정답: B
-해설: The lecture traces the development of photography from camera obscura to digital.
-
-===
-
-Q2: Academic Lecture
-난이도: 보통
-(이전 스크립트와 제목 자동 상속)
-
-문제:
-What did George Eastman invent in 1888?
-
-보기:
-A. The daguerreotype
-B. The camera obscura
-C. Flexible roll film
-D. The digital camera
-
-정답: C
-해설: Eastman invented flexible roll film, making photography accessible.
-
-===
-
-Q3: Academic Lecture
-난이도: 보통
-
-문제:
-When did digital cameras first appear?
-
-보기:
-A. 1880s
-B. 1930s
-C. 1970s
-D. 1990s
-
-정답: D
-
-===
-
-Q9: Short Conversation
-난이도: 보통
-제목: Library Checkout
-안내문: Listen to a conversation between a student and a librarian.
-
-스크립트:
-Student: Hi, I'm looking for a book for my history class. The professor said it's on reserve.
-Librarian: Sure. What's the title?
-Student: It's "The American Revolution: A New Perspective" by Dr. Johnson.
-Librarian: Let me check. Yes, we have it on reserve. You can borrow it for two hours. I'll need your student ID.
-Student: Here you go. Is it available right now?
-Librarian: Yes, it is. Let me get it for you.
-
-문제:
-What does the student need to provide?
-
-보기:
-A. A recommendation letter
-B. A student ID
-C. The professor's name
-D. A library card
-
-정답: B
-
-===
-
-Q10: Short Conversation
-난이도: 보통
-(이전 스크립트와 제목 자동 상속)
-
-문제:
-How long can the student borrow the book?
-
-보기:
-A. One hour
-B. Two hours
-C. Overnight
-D. One week
-
-정답: B
-
-===
-
-Q11: Announcement
-난이도: 보통
-제목: Campus Shuttle Service Change
-안내문: Listen to an announcement on campus.
-
-스크립트:
-Attention all students. Starting next Monday, the campus shuttle service will operate on a revised schedule. The morning shuttle will now depart from the main gate every 15 minutes instead of every 20 minutes between 7 AM and 10 AM. The evening service will be extended until 11 PM on weekdays. Also, please note that the weekend shuttle to downtown will now require advance reservation through the campus app. Thank you for your attention.
-
-문제:
-What change is being announced?
-
-보기:
-A. A new bus route
-B. A shuttle schedule change
-C. A parking fee increase
-D. A campus closure
-
-정답: B
-
-===
-
-Q12: Announcement
-난이도: 보통
-(이전 스크립트와 제목 자동 상속)
-
-문제:
-How can students reserve the weekend shuttle?
-
-보기:
-A. By phone
-B. At the main gate
-C. Through the campus app
-D. By email
-
-정답: C
-
-===
-
-Q13: Academic Talk
-난이도: 보통
-제목: Climate Change and Marine Life
-안내문: Listen to part of a discussion on a science podcast.
-
-스크립트:
-Host: Today we're joined by Dr. Park from the Ocean Research Institute. Dr. Park, how is climate change affecting marine ecosystems?
-Dr. Park: Well, the most visible impact is coral bleaching. When ocean temperatures rise by just one or two degrees, corals expel the algae living in their tissues, causing them to turn white. If the stress continues, the corals die.
-Host: And this affects other marine life too, doesn't it?
-Dr. Park: Absolutely. Coral reefs support about 25% of all marine species. When corals die, the entire food chain is disrupted. We're also seeing fish populations migrating toward cooler waters, which affects local fishing communities.
-
-문제:
-What happens when ocean temperatures rise by 1-2 degrees?
-
-보기:
-A. Fish populations increase
-B. Corals expel their algae
-C. New species appear
-D. Water becomes clearer
-
-정답: B
-
-===
-
-Q14: Academic Talk
-난이도: 보통
-(이전 스크립트와 제목 자동 상속)
-
-문제:
-What percentage of marine species do coral reefs support?
-
-보기:
-A. 10%
-B. 25%
-C. 50%
-D. 75%
-
-정답: B
-
-===
-
-Q15: Academic Lecture
-난이도: 보통
-제목: The Psychology of Memory
-안내문: Listen to part of a lecture in a psychology class.
-
-스크립트:
-Professor: Let's talk about memory consolidation. When you first learn something new, the information is stored in your short-term memory, which has a very limited capacity. Through a process called consolidation, memories are gradually transferred to long-term storage.
-
-Sleep plays a crucial role in this process. Research has shown that students who sleep after studying retain significantly more information than those who stay awake. During deep sleep, the brain replays the day's experiences, strengthening neural connections.
-
-There's also something called the testing effect. Simply re-reading your notes is far less effective than actively testing yourself on the material. When you retrieve information from memory, you strengthen the pathway, making it easier to recall later.
-
-문제:
-What is the main topic of this lecture?
-
-보기:
-A. Sleep disorders
-B. Memory consolidation
-C. Study techniques
-D. Brain anatomy
-
-정답: B
-
-===
-
-Q16: Academic Lecture
-난이도: 보통
-(이전 스크립트와 제목 자동 상속)
-
-문제:
-What is the testing effect?
-
-보기:
-A. Reading notes repeatedly
-B. Taking practice tests to strengthen memory
-C. Getting more sleep before exams
-D. Memorizing vocabulary lists
-
-정답: B
-해설: Actively retrieving information strengthens memory pathways.`;
+        return `Q1: Academic Lecture\n난이도: 보통\n제목: The History of Photography\n안내문: Listen to part of a lecture in an art history class.\n\n스크립트:\nProfessor: Welcome to today's lecture on the history of photography...\n\n문제:\nWhat is the main topic?\n\n보기:\nA. Modern cameras\nB. History of photography\nC. Famous photographers\nD. Art appreciation\n\n정답: B\n해설: ...\n\n===\n\nQ2: Short Conversation\n...`;
       case 'Speaking':
         return `Q1: Independent Task\n난이도: 보통\n시간: 45\n\n스크립트:\nSome people prefer studying alone...\n\n문제:\nDo you agree or disagree?\n\n정답: 모범 답안 텍스트\n해설: ...\n\n===\n\nQ2: Integrated Task - Reading/Listening\n...`;
       case 'Writing':
@@ -3821,7 +3600,6 @@ D. Memorizing vocabulary lists
     const blocks = text.split(/\n?={3,}\n?/);
     const questions: TPOQuestion[] = [];
     let lastPassage = ''; // inherit passageText from previous Q for academic reading
-    let lastScript = ''; // inherit scriptText from previous Q for listening grouped Qs
 
     // Daily Life format helpers
     const normalizeDailyFormat = (raw?: string): string | undefined => {
@@ -3986,9 +3764,6 @@ D. Memorizing vocabulary lists
       const difficulty = (single(['난이도:', '난이도']) || '보통') as '쉬움' | '보통' | '어려움';
       const passageText = after(['지문:']) || undefined;
       const scriptText = after(['스크립트:']) || undefined;
-      const analysisNote = after(['분석:', 'analysis:', '분석노트:']) || undefined;
-      const vocabularyNote = after(['단어:', 'vocabulary:', '어휘:', '단어노트:']) || undefined;
-      const translationNote = after(['번역:', 'translation:', '해석:', '번역노트:']) || undefined;
       const questionText = after(['문제:']) || '';
       const explanation = after(['해설:']) || undefined;
       const durationStr = single(['시간:']);
@@ -4029,13 +3804,6 @@ D. Memorizing vocabulary lists
         effectivePassage = lastPassage || undefined;
       }
       if (effectivePassage) lastPassage = effectivePassage;
-
-      // Script inheritance for Listening (grouped Qs share one script)
-      let effectiveScript = scriptText;
-      if (!effectiveScript && lastScript) {
-        effectiveScript = lastScript || undefined;
-      }
-      if (effectiveScript) lastScript = effectiveScript;
 
       // Email fields
       const emailTo = single(['받는이:']);
@@ -4117,10 +3885,7 @@ D. Memorizing vocabulary lists
           correctAnswer: answer || '',
           explanation,
           passageText: finalPassageText || undefined,
-          scriptText: effectiveScript || undefined,
-          analysisNote,
-          vocabularyNote,
-          translationNote,
+          scriptText,
           duration,
           difficulty,
           blanks: blanks || undefined,
