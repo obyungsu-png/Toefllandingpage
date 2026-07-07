@@ -218,7 +218,7 @@ function AppContent() {
 
   // Show login popup on initial load if not logged in and on a protected tab
   useEffect(() => {
-    const protectedTabs: TabType[] = ['TPO', 'Real Test', 'Question Types', 'Training', 'History'];
+    const protectedTabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
     // Allow vocabulary training without login
     const isVocabularyPath = location.pathname.includes('/vocabulary');
     if (!isLoggedIn && protectedTabs.includes(activeTab) && !isVocabularyPath) {
@@ -1992,7 +1992,7 @@ function AppContent() {
         {/* Header */}
         <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
           <div className="flex items-center shrink-0">
-            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(false); setShowFillBlanksTest(false); setShowReadingSection(false); setShowToeflTest(false); if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Test'); } }}>
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(false); setShowFillBlanksTest(false); setShowReadingSection(false); setShowToeflTest(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }}>
               *toefl ibt
             </div>
           </div>
@@ -2095,9 +2095,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -2151,9 +2151,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -2293,9 +2293,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -2348,9 +2348,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -2488,9 +2488,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -2543,9 +2543,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -2684,9 +2684,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -2783,9 +2783,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule1Question16(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -2899,9 +2899,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -2966,9 +2966,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule1Question17(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3085,9 +3085,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3152,9 +3152,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule1Question18(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3272,9 +3272,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3339,9 +3339,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule1Question19(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3460,9 +3460,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3527,9 +3527,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule1Question20(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3649,9 +3649,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3675,9 +3675,9 @@ function AppContent() {
               onClick={() => {
                 setShowEndModule1(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3729,9 +3729,9 @@ function AppContent() {
           onHome={() => {
             setShowEndModule1(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3755,9 +3755,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -3816,9 +3816,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -3981,9 +3981,9 @@ function AppContent() {
                 onClick={() => {
                   setShowModule2FillBlanks(false);
                   if (testBankType === 'tpo') {
-                    setActiveTab('TPO');
+                    handleTabChange('TPO');
                   } else {
-                    setActiveTab('Real Test');
+                    handleTabChange('Test');
                   }
                 }}
               >
@@ -4157,9 +4157,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2FillBlanks(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -4217,7 +4217,7 @@ function AppContent() {
         {/* Header */}
         <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
           <div className="flex items-center shrink-0">
-            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowModule2Question11(false); if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Real Test'); } }}>
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowModule2Question11(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }}>
               *toefl ibt
             </div>
           </div>
@@ -4332,9 +4332,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question11(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -4393,9 +4393,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question12(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -4546,9 +4546,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question12(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -4607,9 +4607,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question13(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -4776,9 +4776,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question13(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -4837,9 +4837,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question14(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -4995,9 +4995,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question14(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5056,9 +5056,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question15(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -5212,9 +5212,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question15(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5257,9 +5257,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question16(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -5381,9 +5381,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question16(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5417,9 +5417,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question17(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -5539,9 +5539,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question17(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5575,9 +5575,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question18(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -5697,9 +5697,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question18(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5733,9 +5733,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question19(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -5855,9 +5855,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question19(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -5891,9 +5891,9 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question20(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -6016,9 +6016,9 @@ function AppContent() {
           onHome={() => {
             setShowModule2Question20(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -6044,9 +6044,9 @@ function AppContent() {
               onClick={() => {
                 setShowEndModule2(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -6143,9 +6143,9 @@ function AppContent() {
           onHome={() => {
             setShowEndModule2(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -6170,9 +6170,9 @@ function AppContent() {
               onClick={() => {
                 setShowReadingIntro(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -6247,9 +6247,9 @@ function AppContent() {
           onHome={() => {
             setShowReadingIntro(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -6423,7 +6423,7 @@ function AppContent() {
                 setShowFillBlanksTest(false);
                 setShowReadingSection(false);
                 setShowToeflTest(false);
-                if (testBankType === 'tpo') { setActiveTab('TPO'); } else { setActiveTab('Real Test'); }
+                if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); }
               }}
             >
               *toefl ibt
@@ -6536,9 +6536,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -6802,9 +6802,9 @@ function AppContent() {
                   setShowReadingSection(false);
                   setShowToeflTest(false);
                   if (testBankType === 'tpo') {
-                    setActiveTab('TPO');
+                    handleTabChange('TPO');
                   } else {
-                    setActiveTab('Real Test');
+                    handleTabChange('Test');
                   }
                 }}
               >
@@ -7000,9 +7000,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -7028,9 +7028,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -7106,9 +7106,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -7135,9 +7135,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -7199,9 +7199,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -7230,9 +7230,9 @@ function AppContent() {
                 setShowReadingSection(false);
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -7294,9 +7294,9 @@ function AppContent() {
             setShowReadingSection(false);
             setShowToeflTest(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Real Test');
+              handleTabChange('Test');
             }
           }}
           onNext={() => {
@@ -7322,9 +7322,9 @@ function AppContent() {
                 setShowToeflTest(false);
                 setShowReadingSection(false);
                 if (testBankType === 'tpo') {
-                  setActiveTab('TPO');
+                  handleTabChange('TPO');
                 } else {
-                  setActiveTab('Real Test');
+                  handleTabChange('Test');
                 }
               }}
             >
@@ -7722,9 +7722,9 @@ function AppContent() {
             clearReviewContext();
             setIsReviewMode(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onComplete={() => {
@@ -7750,9 +7750,9 @@ function AppContent() {
             clearReviewContext();
             setIsReviewMode(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onComplete={() => {
@@ -7802,9 +7802,9 @@ function AppContent() {
             clearReviewContext();
             setIsReviewMode(false);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
           onComplete={() => {
@@ -7813,9 +7813,9 @@ function AppContent() {
             setIsReviewMode(false);
             saveSectionResultToHistory('Writing', 12);
             if (testBankType === 'tpo') {
-              setActiveTab('TPO');
+              handleTabChange('TPO');
             } else {
-              setActiveTab('Test');
+              handleTabChange('Test');
             }
           }}
         />
@@ -7926,20 +7926,7 @@ function AppContent() {
                     activeTab === tab ? 'text-[#005f61]' : 'text-[#1a1a1a] hover:text-[#005f61]'
                   }`}
                   onClick={() => {
-                    // Check if login is required for this tab
-                    const requiresLogin = ['TPO', 'Test', 'Real Test', 'Question Types', 'Training', 'History'].includes(tab);
-                    // Allow vocabulary training without login
-                    const isVocabularyPath = location.pathname.includes('/vocabulary');
-                    
-                    // Always switch tab and close auth forms
-                    setActiveTab(tab);
-                    setShowLoginForm(false);
-                    setShowRegistrationForm(false);
-                    
-                    // Show login popup if login is required and user is not logged in
-                    if (requiresLogin && !isLoggedIn && !isVocabularyPath) {
-                      setShowLoginPopup(true);
-                    }
+                    handleTabChange(tab);
                   }}
                 >
                   <div className={`flex flex-col font-['Inter',_sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[10px] md:text-[16px] text-center font-bold tracking-wide ${
@@ -7963,14 +7950,7 @@ function AppContent() {
             {/* History Button - Visible on mobile */}
             <button 
               onClick={() => {
-                setActiveTab('History');
-                setShowLoginForm(false);
-                setShowRegistrationForm(false);
-                
-                // Show login popup if user is not logged in
-                if (!isLoggedIn) {
-                  setShowLoginPopup(true);
-                }
+                handleTabChange('History');
               }}
               className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
                 activeTab === 'History'
