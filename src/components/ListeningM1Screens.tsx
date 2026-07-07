@@ -929,6 +929,13 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
     return () => window.removeEventListener('toefl:hardware-back', handler);
   }, [currentScreen]);
 
+  // Hardware/browser Forward button (dispatched from App.tsx) reuses this same goNext
+  useEffect(() => {
+    const handler = () => goNext();
+    window.addEventListener('toefl:hardware-forward', handler);
+    return () => window.removeEventListener('toefl:hardware-forward', handler);
+  }, [currentScreen]);
+
   const handleRestore = () => {
     restoreProgress();
     setIsRestored(true);

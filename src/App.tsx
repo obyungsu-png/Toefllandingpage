@@ -502,23 +502,37 @@ function AppContent() {
     showEndModule2
   ]);
 
-  // Intercept the browser Back button while inside a test (question mode) so it
-  // navigates to the PREVIOUS QUESTION instead of leaving the app.
+  // Intercept the browser Back/Forward buttons while inside a test (question mode)
+  // so they navigate to the PREVIOUS/NEXT QUESTION instead of leaving the app.
   // Outside question mode (Home, History, Training, Admin, etc.) this does nothing —
-  // normal browser back behavior is left untouched there.
+  // normal browser back/forward behavior is left untouched there.
   useEffect(() => {
     if (!isInQuestionMode) return;
 
-    // Push one extra history entry to "absorb" the first back press.
-    window.history.pushState({ toeflGuard: true }, '', window.location.href);
+    // Keep a small guard window [seq 0, seq 1] so both Back and Forward always
+    // have somewhere real to go, instead of leaving the app.
+    let seq = 1;
+    window.history.replaceState({ toeflGuard: true, seq: 0 }, '', window.location.href);
+    window.history.pushState({ toeflGuard: true, seq: 1 }, '', window.location.href);
 
-    const handlePopState = () => {
+    const handlePopState = (e: PopStateEvent) => {
       if (!isInQuestionMode) return; // safety re-check at event time
-      // Immediately re-push so the browser doesn't actually navigate away.
-      window.history.pushState({ toeflGuard: true }, '', window.location.href);
-      // Ask whichever section wrapper is currently mounted to go to its previous
-      // question/screen, reusing its existing internal "Previous" logic.
-      window.dispatchEvent(new CustomEvent('toefl:hardware-back'));
+      const newSeq = (e.state && typeof e.state.seq === 'number') ? e.state.seq : seq;
+
+      if (newSeq < seq) {
+        // Back button — go to previous question/screen
+        window.dispatchEvent(new CustomEvent('toefl:hardware-back'));
+      } else if (newSeq > seq) {
+        // Forward button — go to next question/screen
+        window.dispatchEvent(new CustomEvent('toefl:hardware-forward'));
+      }
+      seq = newSeq;
+
+      // Replenish the guard window so the user can never actually exit the
+      // app via repeated Back/Forward presses.
+      seq = 1;
+      window.history.replaceState({ toeflGuard: true, seq: 0 }, '', window.location.href);
+      window.history.pushState({ toeflGuard: true, seq: 1 }, '', window.location.href);
     };
 
     window.addEventListener('popstate', handlePopState);
