@@ -162,6 +162,17 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     ensureBuckets();
   }, []);
 
+  // Load uploaded gallery images from Supabase
+  useEffect(() => {
+    const loadImages = async () => {
+      const { data, error } = await supabaseClient.from('listening_images').select('*');
+      if (!error && data) {
+        setUploadedImages(data);
+      }
+    };
+    loadImages();
+  }, []);
+
   useEffect(() => {
     if (editingQuestion && editFormRef.current) {
       setTimeout(() => {
@@ -185,6 +196,15 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     name: string;
     onConfirm: () => void;
   } | null>(null);
+
+  // 업로드된 갤러리 이미지 목록
+  interface UploadedImage {
+    id: string;
+    url: string;
+    category: string;
+    label: string;
+  }
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
   // Sync year/month/official/dateMemo when test selection changes
   useEffect(() => {
@@ -295,6 +315,26 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
   const getExistingTest = () => {
     return tests?.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+  };
+
+  // 갤러리 이미지 업로드: Storage + listening_images 테이블에 저장
+  const handleUploadGalleryImage = async (category: string, file: File) => {
+    try {
+      const url = await uploadToStorage(file, 'listening-images');
+      const label = file.name.replace(/\.[^/.]+$/, '');
+      const { data, error } = await supabaseClient
+        .from('listening_images')
+        .insert([{ url, category, label }])
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) {
+        setUploadedImages(prev => [...prev, data as UploadedImage]);
+      }
+    } catch (err) {
+      console.error('Failed to upload gallery image:', err);
+      alert('업로드 실패: ' + (err as Error).message);
+    }
   };
 
   const handleBuilderSave = (question: TPOQuestion) => {
@@ -1649,62 +1689,83 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
 
             {/* Sample image gallery by category */}
             <div className="space-y-3">
-              {[
-                {
-                  category: '🎙 Listen and Response (1인)',
-                  images: [
-                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
-                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
-                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
-                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
-                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
-                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
-                  ]
-                },
-                {
-                  category: '💬 Short Conversation (2인)',
-                  images: [
-                    { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
-                    { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
-                  ]
-                },
-                {
-                  category: '📢 Announcement',
-                  images: [
-                    { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
-                    { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
-                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
-                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
-                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
-                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
-                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
-                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
-                  ]
-                },
-              ].map(({ category, images }) => (
-                <div key={category}>
-                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">{category}</p>
-                  <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                    {images.map((img) => (
-                      <button key={img.url} type="button"
-                        onClick={() => setFormData({ ...formData, imageUrl: img.url })}
-                        className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${
-                          formData.imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'
-                        }`}
-                        title={img.label}
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.label}
-                          className="object-contain bg-white rounded"
-                          style={{ width: '72px', height: '100px', objectPosition: 'center top' }}
-                        />
-                        <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const baseGallery = [
+                  {
+                    category: '🎙 Listen and Response (1인)',
+                    images: [
+                      { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                      { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                      { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                      { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                      { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                      { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                    ]
+                  },
+                  {
+                    category: '💬 Short Conversation (2인)',
+                    images: [
+                      { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
+                      { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
+                    ]
+                  },
+                  {
+                    category: '📢 Announcement',
+                    images: [
+                      { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
+                      { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
+                      { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                      { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                      { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                      { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                      { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                      { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                    ]
+                  },
+                ];
+                return baseGallery.map(({ category, images }) => {
+                  const mergedImages = [
+                    ...images,
+                    ...uploadedImages
+                      .filter(img => img.category === category)
+                      .map(img => ({ url: img.url, label: img.label }))
+                  ];
+                  return (
+                    <div key={category}>
+                      <p className="text-[10px] font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+                        {category}
+                        <label className="cursor-pointer px-2 py-1 bg-[#2d7a7c] text-white text-[9px] rounded hover:bg-[#1e6b73]">
+                          + 추가
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadGalleryImage(category, file);
+                          }} />
+                        </label>
+                      </p>
+                      <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        {mergedImages.map((img, idx) => (
+                          <button key={`${img.url}-${idx}`} type="button"
+                            onClick={() => setFormData({ ...formData, imageUrl: img.url })}
+                            className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${
+                              formData.imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'
+                            }`}
+                            title={img.label}
+                          >
+                            <img
+                              src={img.url}
+                              alt={img.label}
+                              className="object-contain bg-white rounded"
+                              style={{ width: '72px', height: '100px', objectPosition: 'center top' }}
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
+                            <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
