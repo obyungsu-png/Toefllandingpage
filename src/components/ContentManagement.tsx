@@ -3584,7 +3584,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
   const getTemplate = (): string => {
     switch (section) {
       case 'Reading':
-        return `Q1-10: Complete Words\n난이도: 보통\n\n지문:\nWhen people think of [1], they often imagine [2]. However, modern research\nhas shown that [3] plays a more important role than [4].\n\n빈칸:\n1. answer: invention, maxLength: 10\n2. answer: technology, maxLength: 10\n3. answer: education, maxLength: 10\n4. answer: environment, maxLength: 11\n5. answer: development, maxLength: 11\n6. answer: culture, maxLength: 7\n7. answer: society, maxLength: 7\n8. answer: money, maxLength: 5\n9. answer: motivation, maxLength: 10\n10. answer: success, maxLength: 7\n\n===\n\nQ11: Read in Daily Life\n난이도: 보통\n\n지문:\nTo: All students\nFrom: Library Office\nSubject: Extended Hours\nThe library will be open until midnight during finals week.\n\n문제:\nWhat is the purpose of this email?\n\n보기:\nA. To announce new hours\nB. To ask for volunteers\nC. To complain about noise\nD. To introduce new staff\n\n정답: A\n해설: The email announces extended library hours.\n\n===\n\nQ12: Read in Daily Life\n난이도: 보통\n\n지문:\nNOTICE: The cafeteria will be closed on Friday for renovations...\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: C\n\n===\n\nQ16: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
+        return `Q1-10: Complete Words\n난이도: 보통\n\n지문:\nWhen people think of [1], they often imagine [2]. However, modern research\nhas shown that [3] plays a more important role than [4].\n\n빈칸:\n1. answer: invention, maxLength: 10\n2. answer: technology, maxLength: 10\n3. answer: education, maxLength: 10\n4. answer: environment, maxLength: 11\n5. answer: development, maxLength: 11\n6. answer: culture, maxLength: 7\n7. answer: society, maxLength: 7\n8. answer: money, maxLength: 5\n9. answer: motivation, maxLength: 10\n10. answer: success, maxLength: 7\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
       case 'Listening':
         return `Q1: Academic Lecture\n난이도: 보통\n제목: The History of Photography\n안내문: Listen to part of a lecture in an art history class.\n\n스크립트:\nProfessor: Welcome to today's lecture on the history of photography...\n\n문제:\nWhat is the main topic?\n\n보기:\nA. Modern cameras\nB. History of photography\nC. Famous photographers\nD. Art appreciation\n\n정답: B\n해설: ...\n\n===\n\nQ2: Short Conversation\n...`;
       case 'Speaking':
@@ -3601,6 +3601,136 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
     const questions: TPOQuestion[] = [];
     let lastPassage = ''; // inherit passageText from previous Q for academic reading
 
+    // Daily Life format helpers
+    const normalizeDailyFormat = (raw?: string): string | undefined => {
+      if (!raw) return undefined;
+      const map: Record<string, string> = {
+        notice: 'notice', 공지: 'notice', 공지문: 'notice', 공지사항: 'notice',
+        email: 'email', 이메일: 'email', 메일: 'email',
+        social_media: 'social_media', 'social media': 'social_media', 소셜미디어: 'social_media', 소셜: 'social_media', sns: 'social_media',
+        advertisement: 'advertisement', advert: 'advertisement', 광고: 'advertisement', 광고문: 'advertisement',
+        article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
+        form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
+      };
+      return map[raw.trim().toLowerCase()] || undefined;
+    };
+
+    const DAILY_FORMAT_TITLES: Record<string, string> = {
+      notice: 'Read a notice.',
+      email: 'Read an email.',
+      social_media: 'Read a social media post.',
+      advertisement: 'Read an advertisement.',
+      article: 'Read an article.',
+      form: 'Read a form.',
+    };
+
+    const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
+      notice: {
+        title: ['title', '제목', '공지제목', 'noticetitle', 'notice_title'],
+        subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
+        body: ['body', '본문', '내용', 'text', '공지내용'],
+      },
+      email: {
+        to: ['to', '받는사람', '받는이', 'recipient', '받는사람주소'],
+        from: ['from', '보낸사람', '보낸이', 'sender', '보낸사람주소'],
+        date: ['date', '날짜', '일자', '작성일'],
+        subject: ['subject', '제목', '주제', '메일제목', 'email_subject'],
+        body: ['body', '본문', '내용', 'emailbody', 'email_body'],
+      },
+      social_media: {
+        platform: ['platform', '플랫폼', 'sns', '커뮤니티'],
+        username: ['username', '사용자', '사용자명', '아이디', 'id'],
+        timestamp: ['timestamp', '시간', '작성시간', '날짜', 'date'],
+        content: ['content', '내용', '글내용', 'postcontent', 'post_content'],
+        likes: ['likes', '좋아요', 'like'],
+        comments: ['comments', '댓글', 'comment'],
+        shares: ['shares', '공유', 'share'],
+      },
+      advertisement: {
+        headline: ['headline', '헤드라인', '제목', '광고제목'],
+        business: ['business', '회사', '상호', '업체명', 'businessname', 'business_name'],
+        offer: ['offer', '제안', '할인', '프로모션', 'mainoffer', 'main_offer'],
+        details: ['details', '상세', '세부사항', '내용', '광고내용'],
+        location: ['location', '위치', '주소', '장소'],
+        contact: ['contact', '연락처', '연락', 'contactinfo', 'contact_info'],
+      },
+      article: {
+        source: ['source', '출처', '신문', '뉴스출처', 'newssource'],
+        headline: ['headline', '헤드라인', '제목', '기사제목'],
+        date: ['date', '날짜', '일자', '작성일'],
+        author: ['author', '저자', '기자', '작성자', 'byline'],
+        body: ['body', '본문', '내용', '기사내용', 'articlebody', 'article_body'],
+      },
+      form: {
+        title: ['title', '제목', '양식제목', 'formtitle', 'form_title'],
+        company: ['company', '회사', '업체명', 'companyname', 'company_name'],
+        tableHeaders: ['tableheaders', '헤더', '표헤더', '컬럼', 'columns', 'table_headers'],
+        tableRows: ['tablerows', '행', '표행', 'rows', 'table_rows'],
+        footer: ['footer', '요약', '하단', 'footerinfo', 'footer_info'],
+      },
+    };
+
+    const parseFieldBlock = (block: string): Record<string, string> => {
+      const fields: Record<string, string> = {};
+      if (!block.trim()) return fields;
+      const lines = block.split('\n');
+      let currentKey: string | null = null;
+      let currentValue: string[] = [];
+      const flush = () => {
+        if (currentKey) {
+          fields[currentKey] = currentValue.join('\n').trim();
+        }
+        currentKey = null;
+        currentValue = [];
+      };
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const match = line.match(/^([a-zA-Z0-9_\uac00-\ud7a3]+)\s*:\s*(.*)$/);
+        if (match) {
+          flush();
+          currentKey = match[1].trim();
+          currentValue.push(match[2].trim());
+        } else if (currentKey) {
+          currentValue.push(line);
+        }
+      }
+      flush();
+      return fields;
+    };
+
+    const mapFieldKeys = (format: string, fields: Record<string, string>): Record<string, string> => {
+      const aliases = FIELD_KEY_ALIASES[format] || {};
+      const normalized: Record<string, string> = {};
+      const used = new Set<string>();
+      for (const [key, value] of Object.entries(fields)) {
+        const k = key.toLowerCase().replace(/[\s_]/g, '');
+        let mapped = false;
+        for (const [target, aliasList] of Object.entries(aliases)) {
+          if (used.has(target)) continue;
+          const normalizedAliases = aliasList.map(a => a.toLowerCase().replace(/[\s_]/g, ''));
+          if (normalizedAliases.includes(k)) {
+            normalized[target] = value;
+            used.add(target);
+            mapped = true;
+            break;
+          }
+        }
+        if (!mapped) normalized[key] = value;
+      }
+      return normalized;
+    };
+
+    const extractFieldsBlock = (text: string): string | undefined => {
+      const startLabels = ['필드:', 'fields:', '내용:'];
+      const stopLabels = ['문제:', '보기:', '정답:', '해설:', '==='];
+      for (const label of startLabels) {
+        const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${stopLabels.join('|')})|$)`, 'im');
+        const m = text.match(re);
+        if (m && m[1].trim()) return m[1].trim();
+      }
+      return undefined;
+    };
+
     for (const block of blocks) {
       if (!block.trim()) continue;
       const t = block.trim();
@@ -3614,7 +3744,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
         for (const label of labels) {
-          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|===|$))`, 'im');
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|===|$))`, 'im');
           const m = t.match(re);
           if (m && m[1].trim()) return m[1].trim();
         }
@@ -3697,8 +3827,34 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
       const sentenceEnding = (single(['문장끝:']) || undefined) as '.' | '?' | undefined;
 
       // Listening/Speaking extra
-      const passageTitle = single(['제목:']) || undefined;
       const interstitialTitle = single(['안내문:']) || undefined;
+
+      // Daily Life format handling
+      const formatRaw = single(['유형:', 'format:', '형식:', 'Type:', 'type:']);
+      const dailyFormat = normalizeDailyFormat(formatRaw);
+
+      const passageTitle = single(dailyFormat
+        ? ['화면제목:', 'passageTitle:', '지문제목:', 'screenTitle:']
+        : ['화면제목:', 'passageTitle:', '지문제목:', 'screenTitle:', '제목:']) || undefined;
+
+      const fieldsBlock = extractFieldsBlock(t);
+      const fields = dailyFormat && fieldsBlock ? mapFieldKeys(dailyFormat, parseFieldBlock(fieldsBlock)) : undefined;
+      const colorTheme = single(['색상:', 'color:', '테마:']) || 'teal';
+
+      let finalPassageText: string | undefined = effectivePassage;
+      let finalPassageTitle: string | undefined = passageTitle;
+
+      if (dailyFormat && fields && Object.keys(fields).length > 0) {
+        finalPassageText = JSON.stringify({
+          templateId: `bulk-${dailyFormat}`,
+          structure: dailyFormat,
+          color: colorTheme,
+          fields,
+        });
+      }
+      if (dailyFormat && !finalPassageTitle) {
+        finalPassageTitle = DAILY_FORMAT_TITLES[dailyFormat];
+      }
 
       // Parse range like "1-10" into individual or keep as string
       const rangeMatch = qNum.match(/^(\d+)-(\d+)$/);
@@ -3713,7 +3869,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
             questionNumber: num,
             questionText: `Complete the blank #${num}`,
             questionType: 'Complete Words',
-            passageText: effectivePassage || undefined,
+            passageText: finalPassageText || undefined,
             difficulty,
             blanks: [blanks[i]],
             correctAnswer: blanks[i].answer,
@@ -3728,7 +3884,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
           options: options || [],
           correctAnswer: answer || '',
           explanation,
-          passageText: effectivePassage || undefined,
+          passageText: finalPassageText || undefined,
           scriptText,
           duration,
           difficulty,
@@ -3738,7 +3894,7 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
           student1Name: s1Name, student1Message: s1Msg,
           student2Name: s2Name, student2Message: s2Msg,
           words, sentenceEnding,
-          passageTitle, interstitialTitle,
+          passageTitle: finalPassageTitle, interstitialTitle,
         } as any);
       }
     }
