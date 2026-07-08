@@ -86,28 +86,6 @@
       target: 'esnext',
       outDir: 'build',
       chunkSizeWarningLimit: 2000,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'radix-ui': [
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-select',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-popover',
-              '@radix-ui/react-checkbox',
-              '@radix-ui/react-radio-group',
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-hover-card',
-            ],
-            'recharts': ['recharts'],
-            'supabase': ['@supabase/supabase-js'],
-            'react-panels': ['react-resizable-panels'],
-            'sonner': ['sonner'],
-            'carousel': ['embla-carousel-react'],
-          }
-        }
-      }
     },
     server: {
       port: 3000,
