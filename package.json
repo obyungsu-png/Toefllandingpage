@@ -94,7 +94,12 @@
       "package.json"
     ],
     "win": {
-      "target": "dir"
+      "target": ["nsis", "portable"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
     },
     "publish": {
       "provider": "github",
