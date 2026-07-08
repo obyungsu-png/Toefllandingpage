@@ -80,6 +80,7 @@
     "build": "vite build",
     "electron:dev": "cross-env ELECTRON_DEV=true concurrently \"vite\" \"wait-on http://localhost:3000 && electron electron/main.cjs\"",
     "electron:build": "vite build && electron-builder --win",
+    "electron:release": "vite build && electron-builder --win --publish always",
     "electron:preview": "cross-env ELECTRON_DEV=true electron electron/main.cjs"
   },
   "build": {
