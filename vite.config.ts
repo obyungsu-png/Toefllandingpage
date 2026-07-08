@@ -5,6 +5,7 @@
   import path from 'path';
 
   export default defineConfig({
+    base: './',  // Electron file:// 로딩을 위한 상대 경로
     plugins: [react(), tailwindcss()],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],

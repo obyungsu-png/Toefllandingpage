@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Mic, Square, Volume2, TrendingUp, Download, AlertCircle, TestTube } from 'lucide-react';
 import { Button } from './ui/button';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface IntonationMatcherProps {
   nativeText: string;
@@ -149,14 +150,14 @@ export function IntonationMatcher({
   };
 
   // Play native audio
-  const playNative = async () => {
+  const playNative = () => {
     setIsPlayingNative(true);
     setNativePitchData([]);
     
     if (nativeAudioUrl) {
       try {
         await extractPitchFromAudio(nativeAudioUrl);
-        const audio = new Audio(nativeAudioUrl);
+        const audio = createCachedAudioSync(nativeAudioUrl);
         audio.play();
         audio.onended = () => setIsPlayingNative(false);
       } catch (error) {

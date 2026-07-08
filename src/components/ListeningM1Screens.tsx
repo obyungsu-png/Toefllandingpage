@@ -4,6 +4,8 @@ import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 import { RadioOption } from './RadioOption';
 import { MobileFooter } from './MobileFooter';
+import { speakHighQuality, stopAllSpeech } from '../utils/cloudTts';
+import { createCachedAudio } from '../utils/mediaCache';
 
 // ============================================================================
 // Listening Module 1 - All Screens Wrapper
@@ -52,7 +54,7 @@ const questionData: Record<string, { questionNum: number; questionText?: string;
       "I don't think I'll have enough time to do that.",
       "Actually, I think I can get there a little earlier.",
     ],
-    imageAsset: 'figma:asset/2af79ab9f0e1f8f68f6f9b22e0e0bd4b5e0f8e3a.png',
+    imageAsset: 'listening-images/man-burgundy-turtleneck.png',
   },
   q2: {
     questionNum: 2,
@@ -225,42 +227,42 @@ const questionData: Record<string, { questionNum: number; questionText?: string;
 const interstitialData: Record<string, { title: string; imageAsset: string }> = {
   conversation: {
     title: 'Listen to a conversation.',
-    imageAsset: 'figma:asset/8ab5a0faa349e01b474fec2471b80ae5d15ee9c2.png',
+    imageAsset: 'listening-images/two-people-conversation-1.png',
   },
   conversation2: {
     title: 'Listen to a conversation.',
-    imageAsset: 'figma:asset/8a3602403236fbaf317e334c954d119fb2258219.png',
+    imageAsset: 'listening-images/two-people-conversation-2.png',
   },
   announcement: {
     title: 'Listen to an announcement in a classroom.',
-    imageAsset: 'figma:asset/a1c69f0392872fa2e403399482f99b4b6e513854.png',
+    imageAsset: 'listening-images/man-pink-shirt.png',
   },
   podcast: {
     title: 'Listen to a talk on a podcast about psychology.',
-    imageAsset: 'figma:asset/66701e530788c1c664d05a246d0567f5889c51d3.png',
+    imageAsset: 'listening-images/woman-purple-scarf.png',
   },
 };
 
 // Question image assets (some questions show a person image on the left)
 const questionImageAssets: Record<string, string> = {
-  q1: 'figma:asset/2af79ab9f0e1f8f68f6f9b22e0e0bd4b5e0f8e3a.png',
-  q2: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q3: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q4: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q5: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q6: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q7: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q8: 'figma:asset/761cc24661c0a5be83b157554a227b1138189dbd.png',
-  q9: 'figma:asset/8ab5a0faa349e01b474fec2471b80ae5d15ee9c2.png',
-  q10: 'figma:asset/8ab5a0faa349e01b474fec2471b80ae5d15ee9c2.png',
-  q11: 'figma:asset/8a3602403236fbaf317e334c954d119fb2258219.png',
-  q12: 'figma:asset/8a3602403236fbaf317e334c954d119fb2258219.png',
-  q13: 'figma:asset/a1c69f0392872fa2e403399482f99b4b6e513854.png',
-  q14: 'figma:asset/a1c69f0392872fa2e403399482f99b4b6e513854.png',
-  q15: 'figma:asset/4e77653c981388d7af50fd23fa950dabf10c0022.png',
-  q16: 'figma:asset/4e77653c981388d7af50fd23fa950dabf10c0022.png',
-  q17: 'figma:asset/1ea056cdd00efe83fc60681cea24b852bd1755a6.png',
-  q18: 'figma:asset/1ea056cdd00efe83fc60681cea24b852bd1755a6.png',
+  q1: 'listening-images/man-burgundy-turtleneck.png',
+  q2: 'listening-images/woman-navy-cardigan.png',
+  q3: 'listening-images/woman-navy-cardigan.png',
+  q4: 'listening-images/woman-navy-cardigan.png',
+  q5: 'listening-images/woman-navy-cardigan.png',
+  q6: 'listening-images/woman-navy-cardigan.png',
+  q7: 'listening-images/woman-navy-cardigan.png',
+  q8: 'listening-images/woman-navy-cardigan.png',
+  q9: 'listening-images/two-people-conversation-1.png',
+  q10: 'listening-images/two-people-conversation-1.png',
+  q11: 'listening-images/two-people-conversation-2.png',
+  q12: 'listening-images/two-people-conversation-2.png',
+  q13: 'listening-images/man-pink-shirt.png',
+  q14: 'listening-images/man-pink-shirt.png',
+  q15: 'listening-images/man-pink-shirt-2.png',
+  q16: 'listening-images/man-pink-shirt-2.png',
+  q17: 'listening-images/woman-green-polo.png',
+  q18: 'listening-images/woman-green-polo.png',
 };
 
 // Shared header component
@@ -403,8 +405,8 @@ function QuestionScreen({
     if (hideAudio) return;
     if (displayAudio && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
-      const timer = setTimeout(() => {
-        const audio = new Audio(displayAudio);
+      const timer = setTimeout(async () => {
+        const audio = await createCachedAudio(displayAudio);
         audioRef.current = audio;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
@@ -413,10 +415,10 @@ function QuestionScreen({
     }
   }, [displayAudio, data.questionNum, hideAudio]);
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (!displayAudio || isPlaying) return;
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-    const audio = new Audio(displayAudio);
+    const audio = await createCachedAudio(displayAudio);
     audioRef.current = audio;
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
     audio.onended = () => setIsPlaying(false);
@@ -605,8 +607,8 @@ function InterstitialScreen({
   React.useEffect(() => {
     if (!cmsAudioUrl || playedRef.current) return;
     playedRef.current = true;
-    const timer = setTimeout(() => {
-      const audio = new Audio(cmsAudioUrl);
+    const timer = setTimeout(async () => {
+      const audio = await createCachedAudio(cmsAudioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
@@ -616,10 +618,10 @@ function InterstitialScreen({
 
   const canGoNext = !cmsAudioUrl || audioEnded;
 
-  const handleReplay = () => {
+  const handleReplay = async () => {
     if (!cmsAudioUrl || isPlaying) return;
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
-    const audio = new Audio(cmsAudioUrl);
+    const audio = await createCachedAudio(cmsAudioUrl);
     audioRef.current = audio;
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
     audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
@@ -667,43 +669,26 @@ function InterstitialScreen({
   );
 }
 
-// Text-based intro/info screens
+// Text-based intro/info screens — uses high-quality cloud TTS with speechSynthesis fallback
+// stopAllSpeech is called synchronously on cleanup so speech stops immediately on "Next"
 function useSpeechEffect(text: string) {
   useEffect(() => {
-    let speakTimer: ReturnType<typeof setTimeout> | undefined;
+    if (!text || !text.trim()) return;
 
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      const setVoice = () => {
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = [
-          'Google UK English Female',
-          'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-          'Microsoft Libby Online (Natural) - English (United Kingdom)',
-          'Microsoft Susan - English (United Kingdom)',
-          'Kate', 'Serena', 'Stephanie',
-        ];
-        let chosen = voices.find((v) => preferred.some((p) => v.name.includes(p)));
-        if (!chosen) {
-          chosen = voices.find((v) => v.lang.includes('en-GB') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('woman')));
-        }
-        if (!chosen) {
-          chosen = voices.find((v) => v.lang === 'en-GB' || v.lang === 'en-UK');
-        }
-        utterance.voice = chosen || voices[0];
-        utterance.lang = 'en-GB';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      };
-      if (window.speechSynthesis.getVoices().length > 0) setVoice();
-      else window.speechSynthesis.onvoiceschanged = setVoice;
-    }
+    let cancelled = false;
+
+    // Stop any previous speech before starting new one
+    stopAllSpeech();
+
+    // Start new speech (async — stopAllSpeech handles synchronous cancel)
+    speakHighQuality(text);
+
     return () => {
-      clearTimeout(speakTimer);
-      window.speechSynthesis.onvoiceschanged = null;
-      if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+      cancelled = true;
+      // Synchronous stop — works even if speakHighQuality hasn't resolved yet
+      stopAllSpeech();
     };
-  }, []);
+  }, [text]);
 }
 
 function IntroScreen({

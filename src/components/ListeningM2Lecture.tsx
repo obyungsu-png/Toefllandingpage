@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { createCachedAudio } from '../utils/mediaCache';
 
 interface ListeningM2LectureProps {
   onBack: () => void;
@@ -29,8 +30,8 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
   useEffect(() => {
     if (!audioUrl || playedRef.current) return;
     playedRef.current = true;
-    const timer = setTimeout(() => {
-      const audio = new Audio(audioUrl);
+    const timer = setTimeout(async () => {
+      const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
@@ -41,7 +42,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
   // 오디오 없으면 바로 Next 가능, 있으면 끝나야 Next 가능
   const canGoNext = !audioUrl || audioEnded;
 
-  const handleReplay = () => {
+  const handleReplay = async () => {
     if (!audioUrl) return;
     if (isPlaying) {
       audioRef.current?.pause();
@@ -52,7 +53,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
       audioRef.current.currentTime = 0;
       audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
-      const audio = new Audio(audioUrl);
+      const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };

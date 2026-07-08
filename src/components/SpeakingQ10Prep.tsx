@@ -3,6 +3,7 @@ import { Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface SpeakingQ10PrepProps {
   onNext: () => void;
@@ -29,7 +30,7 @@ export function SpeakingQ10Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, v
     const soundSrc = audioUrl || videoUrl;
 
     if (soundSrc) {
-      const audio = new Audio(soundSrc);
+      const audio = createCachedAudioSync(soundSrc);
       audioRef.current = audio;
       let ended = false;
 

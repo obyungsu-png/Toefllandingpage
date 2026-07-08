@@ -4,6 +4,7 @@ import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface SpeakingQ1Props {
   onNext?: () => void;
@@ -22,7 +23,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
   useEffect(() => {
     // ── Real audio from CMS ──────────────────────────────────────────────────
     if (introAudioUrl) {
-      const audio = new Audio(introAudioUrl);
+      const audio = createCachedAudioSync(introAudioUrl);
       audioRef.current = audio;
 
       audio.onplay  = () => setIsAudioPlaying(true);

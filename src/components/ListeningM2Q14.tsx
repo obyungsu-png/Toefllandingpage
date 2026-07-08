@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
 import { RadioOption } from './RadioOption';
+import { createCachedAudio } from '../utils/mediaCache';
 
 interface ListeningM2Q14Props {
   onBack: () => void;
@@ -28,8 +29,8 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
   useEffect(() => {
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
-      const timer = setTimeout(() => {
-        const audio = new Audio(audioUrl);
+      const timer = setTimeout(async () => {
+        const audio = await createCachedAudio(audioUrl);
         audioRef.current = audio;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
@@ -38,7 +39,7 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
     }
   }, [audioUrl]);
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (!audioUrl) return;
     if (isPlaying) {
       audioRef.current?.pause();
@@ -49,7 +50,7 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
       audioRef.current.currentTime = 0;
       audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
-      const audio = new Audio(audioUrl);
+      const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => setIsPlaying(false);

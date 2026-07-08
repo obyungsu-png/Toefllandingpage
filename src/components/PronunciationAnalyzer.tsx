@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { supabase } from '../utils/supabase/client';
 
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface PronunciationAnalyzerProps {
   nativeText: string;
@@ -264,13 +265,13 @@ export function PronunciationAnalyzer({
             console.log('✅ Audio uploaded successfully:', result.fileName);
             
             // Use signed URL for playback
-            userAudioRef.current = new Audio(result.fileUrl);
+            userAudioRef.current = createCachedAudioSync(result.fileUrl);
           };
         } catch (error) {
           console.error('❌ Failed to upload audio to Supabase:', error);
           // Fallback: use local blob URL
           const audioUrl = URL.createObjectURL(audioBlob);
-          userAudioRef.current = new Audio(audioUrl);
+          userAudioRef.current = createCachedAudioSync(audioUrl);
         }
         
         // Calculate match score
@@ -391,7 +392,7 @@ export function PronunciationAnalyzer({
         nativeAudioRef.current.currentTime = 0;
       }
       
-      nativeAudioRef.current = new Audio(nativeAudioUrl);
+      nativeAudioRef.current = createCachedAudioSync(nativeAudioUrl);
       
       nativeAudioRef.current.onended = () => {
         setIsPlayingNative(false);

@@ -8,6 +8,7 @@ import { useAudioRecorder } from './useAudioRecorder';
 import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface SpeakingQ1RecordProps {
   onNext: () => void;
@@ -43,7 +44,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     };
 
     if (audioUrl) {
-      const audio = new Audio(audioUrl);
+      const audio = createCachedAudioSync(audioUrl);
       promptAudioRef.current = audio;
       audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
       audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };

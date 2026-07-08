@@ -1486,7 +1486,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               Passage Text
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-blue-600 font-normal">
-                  (빈칸넣기: 빈칸 위치에 [정답:최대길이] 형식으로 입력하세요. 예: mi[ght:3])
+                  (빈칸넣기: 빈칸 위치에 [정답] 형식으로 입력하세요. 예: mi[ght])
                 </span>
               )}
             </label>
@@ -1497,8 +1497,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 </p>
                 <p className="text-xs text-orange-700">
                   • 1-10번 문제는 하나의 지문에 10개 빈칸을 모두 포함하여 입력합니다<br/>
-                  • 지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요<br/>
-                  • 예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  • 지문에서 빈칸으로 만들 부분을 [정답] 형식으로 표시하세요<br/>
+                  • 예: "We mi[ght] think th[at] early humans performed dances..."<br/>
                   • 반드시 10개의 빈칸을 입력해야 합니다
                 </p>
               </div>
@@ -1510,14 +1510,14 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 
                 // Auto-parse blanks for Complete Words questions
                 if (formData.questionType === 'Complete Words') {
-                  const blankRegex = /\[([^:\]]+):(\d+)\]/g;
+                  const blankRegex = /\[([a-zA-Z][a-zA-Z\s]*?)(?::(\d+))?\]/g;
                   const blanks: Array<{ answer: string; maxLength: number }> = [];
                   let match;
                   
                   while ((match = blankRegex.exec(e.target.value)) !== null) {
                     blanks.push({
-                      answer: match[1],
-                      maxLength: parseInt(match[2])
+                      answer: match[1].trim(),
+                      maxLength: match[2] ? parseInt(match[2]) : match[1].trim().length
                     });
                   }
                   
@@ -1527,7 +1527,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
               rows={8}
               placeholder={formData.questionType === 'Complete Words' 
-                ? "예시: We mi[ght:3] think th[at:2] early humans performed dances..."
+                ? "예시: We mi[ght] think th[at] early humans performed dances..."
                 : "Enter the reading passage here..."}
             />
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
@@ -2761,7 +2761,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               Passage Text
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-blue-600 font-normal">
-                  (빈칸넣기: 빈칸 위치에 [정답:최대길이] 형식으로 입력하세요. 예: mi[ght:3])
+                  (빈칸넣기: 빈칸 위치에 [정답] 형식으로 입력하세요. 예: mi[ght])
                 </span>
               )}
             </label>
@@ -2772,8 +2772,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 </p>
                 <p className="text-xs text-orange-700">
                   • 1-10번 문제는 하나의 지문에 10개 빈칸을 모두 포함하여 입력합니다<br/>
-                  • 지문에서 빈칸으로 만들 부분을 [정답:최대길이] 형식으로 표시하세요<br/>
-                  • 예: "We mi[ght:3] think th[at:2] early humans performed dances..."<br/>
+                  • 지문에서 빈칸으로 만들 부분을 [정답] 형식으로 표시하세요<br/>
+                  • 예: "We mi[ght] think th[at] early humans performed dances..."<br/>
                   • 반드시 10개의 빈칸을 입력해야 합니다
                 </p>
               </div>
@@ -2785,14 +2785,14 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 
                 // Auto-parse blanks for Complete Words questions
                 if (formData.questionType === 'Complete Words') {
-                  const blankRegex = /\[([^:\]]+):(\d+)\]/g;
+                  const blankRegex = /\[([a-zA-Z][a-zA-Z\s]*?)(?::(\d+))?\]/g;
                   const blanks: Array<{ answer: string; maxLength: number }> = [];
                   let match;
                   
                   while ((match = blankRegex.exec(e.target.value)) !== null) {
                     blanks.push({
-                      answer: match[1],
-                      maxLength: parseInt(match[2])
+                      answer: match[1].trim(),
+                      maxLength: match[2] ? parseInt(match[2]) : match[1].trim().length
                     });
                   }
                   
@@ -2802,7 +2802,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
               rows={8}
               placeholder={formData.questionType === 'Complete Words' 
-                ? "예시: We mi[ght:3] think th[at:2] early humans performed dances..."
+                ? "예시: We mi[ght] think th[at] early humans performed dances..."
                 : "Enter the reading passage here..."}
             />
             {formData.questionType === 'Complete Words' && formData.blanks.length > 0 && (
@@ -3588,11 +3588,11 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
 난이도: 보통
 
 지문:
-When peo[ple:6] think of inven[tion:10], they often imagine tech[nology:10]. However, modern research has shown that edu[cation:10] plays a more important role than envi[ronment:11].
+When peo[ple] think of inven[tion], they often imagine tech[nology]. However, modern research has shown that edu[cation] plays a more important role than envi[ronment].
 
-deve[lopment:11] shapes our cul[ture:7] and soc[iety:7]. Without mo[ney:5] or moti[vation:10], suc[cess:7] is hard to achieve.
+deve[lopment] shapes our cul[ture] and soc[iety]. Without mo[ney] or moti[vation], suc[cess] is hard to achieve.
 
-(빈칸은 지문에서 자동 추출됩니다 — peo[ple:6] 형식 또는 peo[ple] 형식 사용)\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
+(빈칸은 지문에서 자동 추출됩니다 — peo[ple] 형식으로만 입력하세요)\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
       case 'Listening':
         return `Q1: Academic Lecture
 난이도: 보통

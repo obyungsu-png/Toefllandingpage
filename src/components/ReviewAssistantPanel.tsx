@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Pause, Play, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -280,7 +281,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       // Resume from wherever it was paused — do NOT reset currentTime
       audioRef.current.play().then(() => setIsPlayingAudio(true)).catch(() => {});
     } else {
-      const audio = new Audio(audioUrl);
+      const audio = createCachedAudioSync(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlayingAudio(true)).catch(() => {});
       audio.onended = () => setIsPlayingAudio(false);
@@ -296,7 +297,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
-      const audio = new Audio(audioUrl);
+      const audio = createCachedAudioSync(audioUrl);
       audioRef.current = audio;
       audio.play().catch(() => {});
       return;

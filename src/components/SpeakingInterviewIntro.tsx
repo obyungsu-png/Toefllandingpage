@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface SpeakingInterviewIntroProps {
   onNext: () => void;
@@ -28,7 +29,7 @@ export function SpeakingInterviewIntro({
   useEffect(() => {
     // ── Real audio from CMS ──────────────────────────────────────────────────
     if (introAudioUrl) {
-      const audio = new Audio(introAudioUrl);
+      const audio = createCachedAudioSync(introAudioUrl);
       audioRef.current = audio;
 
       audio.onplay  = () => setIsAudioPlaying(true);

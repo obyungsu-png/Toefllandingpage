@@ -1,5 +1,5 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { BrowserRouter, useLocation, useNavigate } from 'react-router';
+import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { HashRouter, useLocation, useNavigate } from 'react-router';
 import imgLogoPng from "figma:asset/8789442c63cae6ce8bee2e41980635b315e3d0a1.png";
 import imgImage from "figma:asset/b015191727695c9e8bd91edeb4f1203bfd9cbbf0.png";
 import newBannerImage from 'figma:asset/db57c3312386f02546e87bd69c52bd7c8ccf17e0.png';
@@ -48,6 +48,7 @@ import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
+import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
@@ -410,6 +411,12 @@ function AppContent() {
   // Loading state for Supabase data
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [dataLoadedSuccessfully, setDataLoadedSuccessfully] = useState(false);
+  // 온라인/오프라인 상태 추적
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const reloadDataRef = useRef<(() => void) | null>(null);
+  // Electron 자동 업데이트 알림
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [updateDownloaded, setUpdateDownloaded] = useState<string | null>(null);
   const [deferredLoadStatus, setDeferredLoadStatus] = useState<Record<DeferredDataKey, 'idle' | 'loading' | 'loaded'>>({
     history: 'idle',
     questionTypes: 'idle',
@@ -706,13 +713,14 @@ function AppContent() {
 
   const getAppCacheKey = (key: string) => `app_cache_${APP_CACHE_VERSION}_${key}`;
 
-  const loadCachedData = <T,>(key: string): T | null => {
+  const loadCachedData = <T,>(key: string, allowExpired = false): T | null => {
     try {
       const raw = localStorage.getItem(getAppCacheKey(key));
       if (!raw) return null;
 
       const parsed = JSON.parse(raw);
-      if (Date.now() - parsed.timestamp > APP_CACHE_TTL_MS) {
+      // 온라인: TTL 만료 시 캐시 삭제. 오프라인(allowExpired): 만료되어도 데이터 반환
+      if (!allowExpired && Date.now() - parsed.timestamp > APP_CACHE_TTL_MS) {
         localStorage.removeItem(getAppCacheKey(key));
         return null;
       }
@@ -894,6 +902,41 @@ function AppContent() {
           setDataLoadedSuccessfully(true);
         } else {
           console.error('❌ All data fetches failed - save effects will be suppressed to prevent data loss');
+          // 오프라인 폴백: 만료된 캐시라도 로드해서 앱 사용 가능하게 함
+          console.log('📴 오프라인 모드 — 만료된 캐시 데이터 로드');
+          const expiredTpo = loadCachedData<TPOTest[]>('tpo-tests', true);
+          const expiredTest = loadCachedData<TPOTest[]>('test-tests', true);
+          const expiredTraining = loadCachedData<TPOTest[]>('training-tests', true);
+          const expiredAds = loadCachedData<Advertisement[]>('advertisements', true);
+          if (Array.isArray(expiredTpo)) { setTpoTests(expiredTpo); console.log('📦 오프라인 캐시 TPO:', expiredTpo.length); }
+          if (Array.isArray(expiredTest)) { setTestTests(expiredTest); console.log('📦 오프라인 캐시 Test:', expiredTest.length); }
+          if (Array.isArray(expiredTraining)) { setTrainingTests(expiredTraining); }
+          if (Array.isArray(expiredAds)) { setAdvertisements(expiredAds); }
+        }
+
+        // ───────────────────────────────────────────────────────────
+        //  미디어 파일 캐싱 (Electron 오프라인 지원)
+        //  모든 테스트 데이터에서 이미지/오디오 URL을 추출하여
+        //  IndexedDB에 다운로드 및 캐싱합니다.
+        //  첫 실행 후 오프라인에서도 미디어가 작동합니다.
+        // ───────────────────────────────────────────────────────────
+        const allTestData = [
+          ...(batch1a[0].status === 'fulfilled' && Array.isArray(batch1a[0].value) ? batch1a[0].value : []),
+          ...(batch1a[1].status === 'fulfilled' && Array.isArray(batch1a[1].value) ? batch1a[1].value : []),
+          ...(batch1b[1].status === 'fulfilled' && Array.isArray(batch1b[1].value) ? batch1b[1].value : []),
+        ];
+        if (allTestData.length > 0) {
+          console.log(`[mediaCache] Starting media preload for ${allTestData.length} tests...`);
+          preloadAllMedia(allTestData, (cached, total) => {
+            if (cached % 5 === 0 || cached === total) {
+              console.log(`[mediaCache] Progress: ${cached}/${total}`);
+            }
+          }).then(async () => {
+            const stats = await getCacheStats();
+            console.log(`[mediaCache] ✅ Cache ready: ${stats.count} files, ${(stats.sizeBytes / 1024 / 1024).toFixed(1)} MB`);
+          }).catch(err => {
+            console.warn('[mediaCache] Preload error:', err);
+          });
         }
         
       } catch (error) {
@@ -904,6 +947,40 @@ function AppContent() {
     };
     
     loadDataFromSupabase();
+    reloadDataRef.current = loadDataFromSupabase;
+  }, []);
+
+  // 온라인/오프라인 이벤트 리스너 — 온라인 복귀 시 자동으로 데이터 재갱신
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('🌐 온라인 복귀 — 데이터 자동 재갱신');
+      setIsOnline(true);
+      reloadDataRef.current?.();
+    };
+    const handleOffline = () => {
+      console.log('📴 오프라인 전환 — 캐시 데이터 사용');
+      setIsOnline(false);
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Electron 자동 업데이트 이벤트 리스너
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (!electronAPI?.isElectron) return;
+    electronAPI.onUpdateAvailable?.((version: string) => {
+      setUpdateVersion(version);
+      console.log('📦 업데이트 발견:', version);
+    });
+    electronAPI.onUpdateDownloaded?.((version: string) => {
+      setUpdateDownloaded(version);
+      console.log('✅ 업데이트 다운로드 완료:', version);
+    });
   }, []);
 
   useEffect(() => {
@@ -7637,6 +7714,24 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <Toaster position="top-right" richColors />
+      {/* 오프라인 모드 표시 */}
+      {!isOnline && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white text-center text-sm py-1.5 font-medium shadow-md">
+          오프라인 모드 — 캐시된 데이터를 사용 중입니다
+        </div>
+      )}
+      {/* Electron 업데이트 다운로드 완료 알림 */}
+      {updateDownloaded && (
+        <div className="fixed bottom-4 right-4 z-[9999] bg-green-600 text-white rounded-lg shadow-xl p-4 max-w-sm">
+          <p className="font-semibold text-sm mb-2">✅ 새 버전 {updateDownloaded} 다운로드 완료</p>
+          <button
+            onClick={() => (window as any).electronAPI?.installUpdate?.()}
+            className="text-xs bg-white text-green-700 px-3 py-1.5 rounded font-medium hover:bg-green-50"
+          >
+            지금 재시작하여 업데이트
+          </button>
+        </div>
+      )}
       {/* Reading Section Intro */}
       {showReadingIntro && <ReadingIntroScreen />}
 
@@ -8725,12 +8820,12 @@ function AppContent() {
   );
 }
 
-// Wrap AppContent with BrowserRouter
+// Wrap AppContent with HashRouter (Electron file:// protocol compatible)
 // Force rebuild - cache fix
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AppContent />
-    </BrowserRouter>
+    </HashRouter>
   );
 }

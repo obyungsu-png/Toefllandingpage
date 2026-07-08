@@ -3,6 +3,7 @@ import { Pause, Play } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
 import { RadioOption } from './RadioOption';
+import { createCachedAudio } from '../utils/mediaCache';
 
 interface ListeningM2Q8Props {
   onBack: () => void;
@@ -29,8 +30,8 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl,
   useEffect(() => {
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
-      const timer = setTimeout(() => {
-        const audio = new Audio(audioUrl);
+      const timer = setTimeout(async () => {
+        const audio = await createCachedAudio(audioUrl);
         audioRef.current = audio;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
@@ -39,7 +40,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl,
     }
   }, [audioUrl]);
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (!audioUrl) return;
     if (isPlaying) {
       audioRef.current?.pause();
@@ -50,7 +51,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl,
       audioRef.current.currentTime = 0;
       audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
-      const audio = new Audio(audioUrl);
+      const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => setIsPlaying(false);
@@ -134,7 +135,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl,
           {/* Mobile: Image -> Question -> Options */}
           <div className="md:hidden flex flex-col items-center">
             <ImageWithFallback 
-              src={imageUrl || "figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png"} 
+              src={imageUrl || "listening-images/woman-purple-scarf.png"} 
               alt="Woman in yellow blazer"
               className="w-40 h-auto object-contain mb-6"
             />
@@ -192,7 +193,7 @@ export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl,
             <div className="relative" style={{minHeight: '420px'}}>
               <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
                 <ImageWithFallback 
-                  src={imageUrl || "figma:asset/8f3abde1d39d1dd9b86cfc86cc08354d61a04b50.png"} 
+                  src={imageUrl || "listening-images/woman-purple-scarf.png"} 
                   alt="Woman in yellow blazer"
                   className="w-full object-contain object-top" style={{maxHeight:'480px'}}
                 />

@@ -4,6 +4,7 @@ import { VolumeControl } from './VolumeControl';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface SpeakingQ5PrepProps {
   onNext: () => void;
@@ -28,7 +29,7 @@ export function SpeakingQ5Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     let advanceTimer: ReturnType<typeof setTimeout>;
 
     if (audioUrl) {
-      const audio = new Audio(audioUrl);
+      const audio = createCachedAudioSync(audioUrl);
       audioRef.current = audio;
       let ended = false;
 

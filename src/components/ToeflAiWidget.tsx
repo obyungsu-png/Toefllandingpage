@@ -7,13 +7,18 @@ import { Input } from './ui/input';
 // ───────────────────────────────────────────────────────────────────────────
 //  API 설정 — GLM + Claude 듀블 모델 지원
 //  - GLM: 직접 호출 (CORS 허용)
-//  - Claude: Vercel 서버리스 프록시 경유 (CORS 차단 → 프록시 필요)
+//  - Claude: Electron에서는 직접 호출(세션 인터셉터가 CORS+인증 처리),
+//           웹에서는 Vercel 서버리스 프록시 경유
 // ───────────────────────────────────────────────────────────────────────────
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
 const GLM_MODEL = 'glm-4-flash';
 
-const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
+// Electron 여부 확인 → Claude 엔드포인트 분기
+const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
+const CLAUDE_PROXY_ENDPOINT = isElectron
+  ? 'https://apiclaude.cc/v1/chat/completions'   // Electron: 세션 인터셉터가 인증+CORS 처리
+  : '/api/claude/chat/completions';                // 웹: Vercel 프록시
 const CLAUDE_MODEL = 'claude-sonnet-5';
 
 type AiModel = 'glm' | 'claude';

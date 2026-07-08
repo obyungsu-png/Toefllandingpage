@@ -4,6 +4,11 @@ node_modules/
 # build output
 build/
 dist/
+dist-electron/
+dist-electron2/
+
+# electron temp files
+electron-test.txt
 
 # local env files
 .env

@@ -3,6 +3,7 @@ import { ArrowLeft, Volume2, X, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { LMSContent } from './LMSSection';
 import { PronunciationAnalyzer } from './PronunciationAnalyzer';
+import { createCachedAudioSync } from '../utils/mediaCache';
 
 interface ListenAndResponseProps {
   level: number;
@@ -161,7 +162,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
         audioRef.current.pause();
       }
       
-      const audio = new Audio(currentQ.audioUrl);
+      const audio = createCachedAudioSync(currentQ.audioUrl);
       audio.playbackRate = playbackSpeed;
       audioRef.current = audio;
       
