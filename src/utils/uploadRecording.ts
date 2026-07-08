@@ -25,6 +25,9 @@ export async function uploadRecording(
   const testNumber = sessionStorage.getItem('current_test_number') || '0';
   const sessionId  = getSessionId();
 
+  // 미리 blob URL 생성 — 업로드 실패해도 같은 세션 내 리뷰에서 재생 가능
+  const blobUrl = URL.createObjectURL(blob);
+
   try {
     const ext  = blob.type.includes('mp4') ? 'mp4' : 'webm';
     const ts   = Date.now();
@@ -43,12 +46,17 @@ export async function uploadRecording(
       } else {
         console.error(`[uploadRecording] ❌ Storage 실패: ${storageErr.message}`);
       }
-      return null;
+      // 폴백: blob URL이라도 sessionStorage에 저장 (같은 탭 세션 내 리뷰에서 재생 가능)
+      cacheToSession(questionNumber, blobUrl);
+      return blobUrl;
     }
 
     const { data } = supabase.storage.from('recordings').getPublicUrl(path);
     const url = data?.publicUrl ?? null;
-    if (!url) return null;
+    if (!url) {
+      cacheToSession(questionNumber, blobUrl);
+      return blobUrl;
+    }
 
     // 2. Save URL + metadata to DB (30-day retention)
     const { error: dbErr } = await supabase
@@ -70,19 +78,25 @@ export async function uploadRecording(
     }
 
     // 3. Also cache in sessionStorage for immediate review
-    try {
-      const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
-      stored[String(questionNumber)] = url;
-      sessionStorage.setItem('speakingRecordings', JSON.stringify(stored));
-    } catch {}
+    cacheToSession(questionNumber, url);
 
     console.log(`[uploadRecording] ✅ Q${questionNumber} 완료: ${url}`);
     return url;
 
   } catch (e) {
     console.error('[uploadRecording] ❌ 예외:', e);
-    return null;
+    cacheToSession(questionNumber, blobUrl);
+    return blobUrl;
   }
+}
+
+/** Helper: save recording URL to sessionStorage */
+function cacheToSession(questionNumber: number | string, url: string) {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+    stored[String(questionNumber)] = url;
+    sessionStorage.setItem('speakingRecordings', JSON.stringify(stored));
+  } catch {}
 }
 
 /** Load recordings for a test from DB (falls back to sessionStorage) */

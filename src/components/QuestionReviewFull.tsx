@@ -1614,7 +1614,7 @@ export function QuestionReviewFull({
                       </span>
                     </div>
                     {recUrl ? (
-                      <audio controls src={recUrl} className="w-full h-11" />
+                      <audio key={qNum} controls src={recUrl} className="w-full h-11" />
                     ) : (
                       <p className="text-sm text-gray-400 italic">
                         녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)

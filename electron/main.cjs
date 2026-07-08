@@ -268,6 +268,21 @@ function setupCacheIpc() {
 //  앱 시작
 // ─────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // ── 마이크 권한 허용 (스피킹 녹음용 getUserMedia) ──
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    if (permission === 'media') {
+      return true;
+    }
+    return false;
+  });
+
   setupClaudeApiInterceptor();
   setupGoogleTtsInterceptor();
   setupCacheIpc();

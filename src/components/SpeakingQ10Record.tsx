@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import speakingImage from 'figma:asset/03ae9301a488eccc1cb34fe11a468bf1d7314a0c.png';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useAudioRecorder } from './useAudioRecorder';
 import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
@@ -143,18 +145,11 @@ export function SpeakingQ10Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
         </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt="Interviewer"
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-              />
-            ) : (
-              <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-              </svg>
-            )}
+            <ImageWithFallback
+              src={imageUrl || speakingImage}
+              alt="Interviewer"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
         {!isReviewMode ? (
