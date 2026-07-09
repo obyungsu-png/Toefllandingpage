@@ -154,7 +154,7 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-colors shadow-md"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-all shadow-md active:scale-[0.98] active:shadow-sm"
           >
             <GoogleIcon className="w-5 h-5" />
             Google로 계속하기
