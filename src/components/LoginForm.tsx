@@ -75,7 +75,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
           data = JSON.parse(responseText);
         } catch (parseError) {
           console.error('Failed to parse response:', responseText);
-          alert('Server returned invalid response. Please try again or contact support.');
+          alert('서버 응답이 올바르지 않습니다. 다시 시도해 주세요.');
           return;
         }
 
@@ -116,7 +116,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
         onClose();
       } catch (error) {
         console.error('Login error:', error);
-        alert('Failed to connect to server. Please try again.');
+        alert('서버 연결에 실패했습니다. 다시 시도해 주세요.');
       }
     };
 
@@ -208,7 +208,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             type="submit"
             className="w-full py-3 bg-[#1e6b73] text-white rounded-lg font-bold text-base cursor-pointer transition-colors hover:bg-[#164f56] shadow-sm"
           >
-            Login
+            로그인
           </button>
         </form>
       )}

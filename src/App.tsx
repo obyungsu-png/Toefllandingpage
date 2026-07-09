@@ -15,7 +15,6 @@ import { QuestionTypesSection } from './components/QuestionTypesSection';
 import type { LMSContent } from './components/LMSSection';
 import type { TPOQuestion, TPOTest } from './components/ContentManagement';
 import { AdManagement, Advertisement } from './components/AdManagement';
-import { Button } from './components/ui/button';
 import { TPOPage } from './components/TPOPage';
 import { TestPage } from './components/TestPage';
 import { ResizableReadingLayout } from './components/ResizableReadingLayout';
