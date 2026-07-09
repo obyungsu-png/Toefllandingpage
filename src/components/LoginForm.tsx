@@ -169,30 +169,30 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
       </h2>
 
       <form onSubmit={handleSubmit}>
-        {/* ── Social Login Buttons ── */}
-        <div className="space-y-2.5 mb-5">
+        {/* ── Social Login (Primary) ── */}
+        <div className="space-y-2.5 mb-4">
           <button
             type="button"
             onClick={handleWeChatLogin}
-            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-lg bg-[#07C160] hover:bg-[#06ad56] text-white font-semibold transition-colors shadow-sm"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-[#07C160] hover:bg-[#06ad56] text-white font-semibold transition-colors shadow-md"
           >
             <WeChatIcon className="w-5 h-5" />
-            微信登录
+            微信으로 계속하기
           </button>
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-colors shadow-sm"
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-colors shadow-md"
           >
             <GoogleIcon className="w-5 h-5" />
-            Google 로그인
+            Google로 계속하기
           </button>
         </div>
 
         {/* Divider */}
-        <div className="relative mb-5">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
-          <div className="relative flex justify-center"><span className="px-3 bg-white text-xs text-gray-400">또는</span></div>
+          <div className="relative flex justify-center"><span className="px-3 bg-white text-xs text-gray-400">또는 이메일로 계속하기</span></div>
         </div>
 
       {/* Login Method Toggle */}
