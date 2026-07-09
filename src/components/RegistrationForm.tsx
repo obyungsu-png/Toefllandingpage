@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, User, Lock, Shield, Mail } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
-import { supabase } from '../utils/supabase';
+import { supabase } from '../utils/supabase/client';
 
 // ── WeChat SVG icon ──
 function WeChatIcon({ className }: { className?: string }) {
