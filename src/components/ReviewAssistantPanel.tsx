@@ -267,6 +267,15 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setDictationChecked(false);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
+  // ── audioUrl 변경 시 기존 오디오 정리 — 문제 바뀌면 이전 오디오가 재생되지 않도록 ──
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlayingAudio(false);
+  }, [audioUrl, contentKey]);
+
   // Play/Pause Audio — Listening/Speaking 섹션의 오디오 재생/일시정지 (토글)
   const handlePlayAudio = () => {
     if (!audioUrl) return;

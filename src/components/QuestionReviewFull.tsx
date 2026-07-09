@@ -5,75 +5,11 @@ import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
+import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
-/** 스피킹 문제 오디오 플레이어 — src가 바뀌면 자동으로 새 오디오 로드 */
-function SpeakingAudioPlayer({ audioUrl, qNum }: { audioUrl: string; qNum: number }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  // src가 바뀌면 무조건 새 오디오 로드
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el || !audioUrl) return;
-    el.pause();
-    el.currentTime = 0;
-    el.src = audioUrl;
-    el.load();
-    setIsPlaying(false);
-    setProgress(0);
-  }, [audioUrl, qNum]);
-
-  const togglePlay = () => {
-    const el = audioRef.current;
-    if (!el || !el.src) return;
-    if (isPlaying) {
-      el.pause();
-      setIsPlaying(false);
-    } else {
-      el.play().then(() => setIsPlaying(true)).catch(() => {});
-    }
-  };
-
-  return (
-    <div className="max-w-xl mx-auto">
-      <audio
-        ref={audioRef}
-        onEnded={() => { setIsPlaying(false); setProgress(0); }}
-        onTimeUpdate={(e) => {
-          const el = e.currentTarget;
-          if (el.duration) setProgress((el.currentTime / el.duration) * 100);
-        }}
-        className="hidden"
-      />
-      <button
-        onClick={togglePlay}
-        className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-      >
-        {isPlaying ? (
-          <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-        ) : (
-          <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-        )}
-        <span className="font-bold text-[#0d3b4a]">
-          {isPlaying ? 'Pause Audio' : 'Play Audio'}
-        </span>
-        {progress > 0 && (
-          <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
-            <div
-              className="h-full bg-[#0d3b4a] rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        )}
-      </button>
-    </div>
-  );
-}
-
-/** Audio element that reloads src explicitly when it changes */
+/** Audio element that reloads src explicitly when it changes — for My Recording playback */
 function AudioPlayer({ src, qNum }: { src: string; qNum: number }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
@@ -320,7 +256,6 @@ export function QuestionReviewFull({
   const listeningAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Speaking-specific state
-  const [speakingModelPlaying, setSpeakingModelPlaying] = useState(false);
   // Real recordings — load from DB (30-day retention) with sessionStorage fallback
   const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
   const [speakingUserPlaying, setSpeakingUserPlaying] = useState(false);
@@ -331,7 +266,6 @@ export function QuestionReviewFull({
   const [showModelText, setShowModelText] = useState(true);
   const [showFullText, setShowFullText] = useState(false);
   const modelInterval = useRef<number | null>(null);
-  const speakingAudioRef = useRef<HTMLAudioElement | null>(null);
   const userInterval = useRef<number | null>(null);
   const materialInterval = useRef<number | null>(null);
 
@@ -598,18 +532,7 @@ export function QuestionReviewFull({
     setIsPlaying(false);
     setAudioProgress(0);
     if (listeningAudioRef.current) listeningAudioRef.current.pause();
-    if (speakingAudioRef.current) speakingAudioRef.current.pause();
   }, [currentQuestionIndex]);
-
-  // 스피킹 문제 오디오 src 명시적 갱신 — key만으로는 브라우저가 새 src를 로드하지 않음
-  useEffect(() => {
-    if (speakingAudioRef.current && currentSpeakingQ?.audioUrl) {
-      speakingAudioRef.current.pause();
-      speakingAudioRef.current.src = currentSpeakingQ.audioUrl;
-      speakingAudioRef.current.load();
-      console.log(`[SpeakingAudio] Q${currentQuestionIndex + 1} src 로드: ${currentSpeakingQ.audioUrl?.substring(0, 50)}...`);
-    }
-  }, [currentSpeakingQ?.audioUrl, currentQuestionIndex]);
 
   const sectionTabs: SectionTab[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
 
@@ -1124,50 +1047,16 @@ export function QuestionReviewFull({
                       </div>
                     )}
 
-                    {/* Audio Player */}
+                    {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload */}
                     {currentQuestion?.audioUrl ? (
                       <div className="mb-3">
-                        <audio
-                          ref={listeningAudioRef}
-                          src={currentQuestion.audioUrl}
-                          onEnded={() => { setIsPlaying(false); setAudioProgress(0); }}
-                          onTimeUpdate={(e) => {
-                            const el = e.currentTarget;
-                            if (el.duration) setAudioProgress((el.currentTime / el.duration) * 100);
-                          }}
-                          className="hidden"
+                        <UniversalAudioPlayer
+                          key={`listen-audio-${currentQuestionIndex}`}
+                          audioUrl={currentQuestion.audioUrl}
+                          qNum={currentQuestionIndex + 1}
+                          label="Play Audio"
+                          color="#0d3b4a"
                         />
-                        <button
-                          onClick={() => {
-                            const el = listeningAudioRef.current;
-                            if (!el) return;
-                            if (isPlaying) {
-                              el.pause();
-                              setIsPlaying(false);
-                            } else {
-                              el.play().catch(() => {});
-                              setIsPlaying(true);
-                            }
-                          }}
-                          className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                        >
-                          {isPlaying ? (
-                            <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-                          ) : (
-                            <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-                          )}
-                          <span className="font-bold text-[#0d3b4a]">
-                            {isPlaying ? 'Pause Audio' : 'Play Audio'}
-                          </span>
-                          {audioProgress > 0 && (
-                            <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
-                              <div
-                                className="h-full bg-[#0d3b4a] rounded-full transition-all"
-                                style={{ width: `${audioProgress}%` }}
-                              />
-                            </div>
-                          )}
-                        </button>
                       </div>
                     ) : (
                       <div className="mb-3 text-xs text-gray-400 italic px-1">
@@ -1621,12 +1510,14 @@ export function QuestionReviewFull({
                   </div>
                 </div>
 
-                {/* Question audio player */}
+                {/* Question audio player — UniversalAudioPlayer */}
                 {currentSpeakingQ.audioUrl ? (
-                  <SpeakingAudioPlayer
+                  <UniversalAudioPlayer
                     key={`spk-audio-${currentQuestionIndex}-${activeModule}`}
                     audioUrl={currentSpeakingQ.audioUrl}
                     qNum={currentQuestionIndex + 1}
+                    label="Play Audio"
+                    color="#0d3b4a"
                   />
                 ) : (
                   <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
