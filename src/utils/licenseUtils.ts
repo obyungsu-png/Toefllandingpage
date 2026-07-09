@@ -7,8 +7,11 @@ export interface UserProfile {
   expire_date: string;
   user_type: '내학생' | '외부구매자';
   pc_machine_id?: string | null;
+  tablet_machine_id?: string | null;
   mobile_machine_id?: string | null;
 }
+
+export type DeviceType = 'PC' | 'TABLET' | 'MOBILE' | 'WEB';
 
 export interface LicenseKey {
   key_code: string;
@@ -51,6 +54,49 @@ async function getMachineId(): Promise<string | null> {
 /** 오늘 날짜 문자열 (YYYY-MM-DD) */
 function todayStr(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+/** 현재 접속 기기 타입 판별 (PC / TABLET / MOBILE / WEB) */
+export function getDeviceType(): DeviceType {
+  // 1. Electron EXE 환경 → PC
+  if (isElectronEnv()) return 'PC';
+
+  // 2. 모바일/태블릿 환경
+  const ua = navigator.userAgent.toLowerCase();
+  const isMobileOrTablet = /android|iphone|ipad|ipod/.test(ua);
+
+  if (isMobileOrTablet) {
+    // 화면 가로 768px 이상 → 태블릿, 미만 → 핸드폰
+    return window.innerWidth >= 768 ? 'TABLET' : 'MOBILE';
+  }
+
+  // 3. 일반 웹 브라우저
+  return 'WEB';
+}
+
+/** 모바일/태블릿/웹용 기기 ID (localStorage 기반 UUID, 최초 1회 생성) */
+function getWebDeviceId(): string {
+  const KEY = 'amx_device_id';
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    // localStorage 접근 불가 (시크릿모드 등) → 1회성 UUID
+    return crypto.randomUUID();
+  }
+}
+
+/** 현재 기기의 고유 ID (모든 플랫폼 통합) */
+async function getDeviceUniqueId(): Promise<string | null> {
+  const deviceType = getDeviceType();
+  if (deviceType === 'PC') {
+    return await getMachineId();
+  }
+  return getWebDeviceId();
 }
 
 /** 만료일 계산 (오늘 + N개월) */
@@ -106,23 +152,44 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
     // 3. 만료일 계산
     const expireDate = calcExpireDate(keyData.duration_months);
 
-    // 4. 프로필 upsert
+    // 4. 외부 구매자 → 현재 기기 고유 ID 자동 등록 (선생님 개입 0%, 100% 자동)
+    let deviceType: DeviceType = 'WEB';
+    let deviceId: string | null = null;
+    if (keyData.user_type === '외부구매자') {
+      deviceType = getDeviceType();
+      if (deviceType === 'WEB') {
+        return {
+          success: false,
+          message: '외부 구매자용 코드는 EXE 프로그램 또는 모바일 앱에서만 활성화할 수 있습니다.\nPC 프로그램을 다운로드하여 실행해 주세요.',
+        };
+      }
+      deviceId = await getDeviceUniqueId();
+      if (!deviceId) {
+        return { success: false, message: '기기 정보를 확인할 수 없습니다. 프로그램을 다시 실행해 주세요.' };
+      }
+    }
+
+    // 5. 프로필 upsert (기기 타입에 따라 맞는 컬럼에 ID 자동 저장)
+    const upsertPayload: Record<string, any> = {
+      user_id: authData.user.id,
+      expire_date: expireDate,
+      user_type: keyData.user_type,
+    };
+    if (deviceId) {
+      if (deviceType === 'PC')      upsertPayload.pc_machine_id = deviceId;
+      if (deviceType === 'TABLET')  upsertPayload.tablet_machine_id = deviceId;
+      if (deviceType === 'MOBILE')  upsertPayload.mobile_machine_id = deviceId;
+    }
+
     const { error: profileError } = await supabase
       .from('users_profile')
-      .upsert(
-        {
-          user_id: authData.user.id,
-          expire_date: expireDate,
-          user_type: keyData.user_type,
-        },
-        { onConflict: 'user_id' },
-      );
+      .upsert(upsertPayload, { onConflict: 'user_id' });
 
     if (profileError) {
       return { success: false, message: '프로필 등록 중 오류가 발생했습니다.' };
     }
 
-    // 5. 코드 사용 처리
+    // 6. 코드 사용 처리
     await supabase
       .from('license_keys')
       .update({
@@ -181,51 +248,41 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
     }
 
     // 4. 환경별 접근 제한
-    if (isElectronEnv()) {
-      // EXE 프로그램: 외부 구매자 → 1대 기기 제한
-      if (profile.user_type === '외부구매자') {
-        const currentMachineId = await getMachineId();
-        if (!currentMachineId) {
-          return { allowed: false, reason: '기기 정보를 확인할 수 없습니다.', profile };
-        }
+    const currentDevice = getDeviceType();
 
-        // 최초 실행: 기기 등록
-        if (!profile.pc_machine_id) {
-          const { error } = await supabase
-            .from('users_profile')
-            .update({ pc_machine_id: currentMachineId })
-            .eq('user_id', authData.user.id);
+    if (profile.user_type === '외부구매자') {
+      // 일반 웹 브라우저 → 외부 구매자 차단
+      if (currentDevice === 'WEB') {
+        return {
+          allowed: false,
+          reason: '외부 구매자는 웹 이용이 제한됩니다.\nEXE 프로그램 또는 모바일 앱에서 실행해 주세요.',
+          profile,
+        };
+      }
 
-          if (error) {
-            return { allowed: false, reason: '기기 등록에 실패했습니다.', profile };
-          }
-          profile.pc_machine_id = currentMachineId;
-        }
+      // 등록된 기기 ID와 현재 기기 ID를 대조
+      const registeredId =
+        currentDevice === 'PC' ? profile.pc_machine_id :
+        currentDevice === 'TABLET' ? profile.tablet_machine_id :
+        profile.mobile_machine_id;
 
-        // 등록된 기기와 다른 기기 → 차단
-        if (profile.pc_machine_id !== currentMachineId) {
+      if (registeredId) {
+        const currentId = await getDeviceUniqueId();
+        if (!currentId || registeredId !== currentId) {
+          const deviceName = currentDevice === 'PC' ? '컴퓨터' : currentDevice === 'TABLET' ? '태블릿' : '핸드폰';
           return {
             allowed: false,
-            reason: '등록된 본인의 컴퓨터(1대)에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.',
+            reason: `등록된 본인의 ${deviceName}(1대)에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
             profile,
           };
         }
-      }
-    } else {
-      // 웹사이트: 외부 구매자 차단
-      if (profile.user_type === '외부구매자') {
-        return {
-          allowed: false,
-          reason: '외부 구매자는 웹 이용이 제한됩니다.\n다운로드 받으신 EXE 프로그램에서 실행해 주세요.',
-          profile,
-        };
       }
     }
 
     return { allowed: true, profile };
   } catch (err) {
     console.error('[license] checkUserAccess 오류:', err);
-    return { allowed: checkPaidOnly ? false : true };
+    return { allowed: false, reason: '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.' };
   }
 }
 
@@ -237,8 +294,8 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
 export function isFreeContent(testType: string, testNumber: number): boolean {
   const type = String(testType).toLowerCase();
   const num = Number(testNumber);
-  // TPO 1 또는 Test 1은 무료
-  if ((type === 'tpo' || type === 'test') && num === 1) return true;
+  // TPO 1-3, Test 1-3은 무료
+  if ((type === 'tpo' || type === 'test') && num <= 3) return true;
   // 그 외 유료
   return false;
 }

@@ -22,6 +22,7 @@ interface TPOPageProps {
   setShowWritingIntro: (show: boolean) => void;
   setShowSpeakingIntro: (show: boolean) => void;
   setShowToeflTest: (show: boolean) => void;
+  onStartTest?: (testNumber: number, section: string) => void;
   onReviewTest?: (testNumber: number, section: string) => void;
   TPOCard: any;
   TestCard: any;
@@ -45,6 +46,7 @@ export function TPOPage({
   setShowWritingIntro,
   setShowSpeakingIntro,
   setShowToeflTest,
+  onStartTest,
   onReviewTest,
   TPOCard,
   TestCard,
@@ -304,6 +306,8 @@ export function TPOPage({
                 const tpoData = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
 
                 const handleStartTest = (section: string) => {
+                  if (onStartTest) { onStartTest(number, section); return; }
+                  // fallback (onStartTest 없을 때)
                   setCurrentTest({ tpoNumber: number, section });
                   setTestBankType('tpo');
                   if (section === 'Listening') setShowListeningIntro(true);

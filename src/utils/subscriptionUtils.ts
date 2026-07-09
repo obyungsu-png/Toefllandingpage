@@ -23,6 +23,8 @@ export function hasActiveSubscription(): boolean {
 }
 
 // Check if specific content should be locked
+// Deprecated: localStorage-based subscription system replaced by Supabase license system
+// Always return false to allow access; actual permission check is done in launchSection
 export function isContentLocked(index: number, lockedFrom: number = 3): boolean {
-  return !hasActiveSubscription() && index >= lockedFrom;
+  return false;
 }

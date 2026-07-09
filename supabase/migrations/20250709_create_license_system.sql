@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS public.users_profile (
     user_id         UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     expire_date     DATE NOT NULL,
     user_type       TEXT NOT NULL DEFAULT '외부구매자' CHECK (user_type IN ('내학생', '외부구매자')),
-    pc_machine_id   TEXT,
-    mobile_machine_id TEXT,
+    pc_machine_id      TEXT,
+    tablet_machine_id  TEXT,
+    mobile_machine_id  TEXT,
     created_at      TIMESTAMPTZ DEFAULT now(),
     updated_at      TIMESTAMPTZ DEFAULT now()
 );

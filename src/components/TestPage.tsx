@@ -38,6 +38,7 @@ interface TestPageProps {
   setShowWritingIntro: (show: boolean) => void;
   setShowSpeakingIntro: (show: boolean) => void;
   setShowToeflTest: (show: boolean) => void;
+  onStartTest?: (testNumber: number, section: string) => void;
   onReviewTest?: (testNumber: number, section: string) => void;
   TestCard: any;
   advertisements?: Advertisement[];
@@ -58,6 +59,7 @@ export function TestPage({
   setShowWritingIntro,
   setShowSpeakingIntro,
   setShowToeflTest,
+  onStartTest,
   onReviewTest,
   TestCard,
   advertisements
@@ -254,6 +256,8 @@ export function TestPage({
                 const testData = testTests.find(t => t.testNumber === number);
                 
                 const handleStartTest = (section: string) => {
+                  if (onStartTest) { onStartTest(number, section); return; }
+                  // fallback
                   setCurrentTest({ tpoNumber: number, section });
                   setTestBankType('test');
                   

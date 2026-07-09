@@ -537,6 +537,16 @@ export function QuestionReviewFull({
     if (speakingAudioRef.current) speakingAudioRef.current.pause();
   }, [currentQuestionIndex]);
 
+  // 스피킹 문제 오디오 src 명시적 갱신 — key만으로는 브라우저가 새 src를 로드하지 않음
+  useEffect(() => {
+    if (speakingAudioRef.current && currentSpeakingQ?.audioUrl) {
+      speakingAudioRef.current.pause();
+      speakingAudioRef.current.src = currentSpeakingQ.audioUrl;
+      speakingAudioRef.current.load();
+      console.log(`[SpeakingAudio] Q${currentQuestionIndex + 1} src 로드: ${currentSpeakingQ.audioUrl?.substring(0, 50)}...`);
+    }
+  }, [currentSpeakingQ?.audioUrl, currentQuestionIndex]);
+
   const sectionTabs: SectionTab[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
 
   const writingSectionQuestions = currentSection?.questions || [];

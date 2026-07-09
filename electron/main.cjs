@@ -265,17 +265,37 @@ function setupCacheIpc() {
 }
 
 function setupMachineIdIpc() {
+  const { execSync } = require('child_process');
   ipcMain.handle('get-machine-id', () => {
     try {
       const dataDir = app.getPath('userData');
       const idFile = path.join(dataDir, 'machine_id.txt');
+
+      // 기존 캐시 파일 있으면 재사용 (WMIC 호출 최소화)
       if (fs.existsSync(idFile)) {
-        return fs.readFileSync(idFile, 'utf8').trim();
+        const cached = fs.readFileSync(idFile, 'utf8').trim();
+        if (cached && cached !== 'UNKNOWN_PC') return cached;
       }
-      // 첫 실행: UUID 생성 후 저장
+
+      // 1차: 실제 하드웨어 UUID (BIOS/메인보드) — WMIC 명령
+      try {
+        const stdout = execSync('wmic csproduct get uuid', { timeout: 5000, windowsHide: true }).toString();
+        const lines = stdout.split('\n').map(l => l.trim()).filter(Boolean);
+        const hwUuid = lines[1]; // 첫 줄은 "UUID" 헤더, 둘째 줄이 실제 값
+        if (hwUuid && hwUuid !== '00000000-0000-0000-0000-000000000000') {
+          fs.writeFileSync(idFile, hwUuid, 'utf8');
+          console.log('[machine-id] WMIC 하드웨어 UUID 사용:', hwUuid);
+          return hwUuid;
+        }
+      } catch (wmicErr) {
+        console.warn('[machine-id] WMIC 실패, 파일 기반 UUID로 폴백:', wmicErr.message);
+      }
+
+      // 2차 폴백: 파일 기반 UUID (WMIC 실패 시)
       const { randomUUID } = require('crypto');
       const id = randomUUID();
       fs.writeFileSync(idFile, id, 'utf8');
+      console.log('[machine-id] 파일 기반 UUID 사용:', id);
       return id;
     } catch (e) {
       console.error('Failed to get machine ID:', e);

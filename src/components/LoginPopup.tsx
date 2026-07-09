@@ -96,7 +96,7 @@ export function LoginPopup({ isOpen, onClose, onLoginClick, onRegisterClick }: L
           </div>
 
           {/* Main Circle */}
-          <div className="w-[340px] h-[340px] md:w-[450px] md:h-[450px] rounded-full bg-gradient-to-br from-[#0d7377] via-[#14919b] to-[#0d7377] shadow-2xl relative overflow-hidden">
+          <div className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-full bg-gradient-to-br from-[#0d7377] via-[#14919b] to-[#0d7377] shadow-2xl relative overflow-hidden">
             {/* Decorative circles inside */}
             <div className="absolute -top-10 -right-10 w-32 h-32 md:w-40 md:h-40 rounded-full bg-white/10" />
             <div className="absolute -bottom-8 -left-8 w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5" />

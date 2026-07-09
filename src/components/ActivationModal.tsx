@@ -6,9 +6,10 @@ interface ActivationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  reason?: string;
 }
 
-export function ActivationModal({ isOpen, onClose, onSuccess }: ActivationModalProps) {
+export function ActivationModal({ isOpen, onClose, onSuccess, reason }: ActivationModalProps) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -62,6 +63,13 @@ export function ActivationModal({ isOpen, onClose, onSuccess }: ActivationModalP
         </div>
 
         <div className="px-6 py-5 space-y-4">
+          {/* 접근 차단 이유 */}
+          {reason && (
+            <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm border border-amber-200 whitespace-pre-line">
+              ⚠️ {reason}
+            </div>
+          )}
+
           {/* 입력 필드 */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1.5">

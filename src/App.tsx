@@ -40,6 +40,7 @@ import { RegistrationForm } from './components/RegistrationForm';
 import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
+import { LicenseKeyGenerator } from './components/LicenseKeyGenerator';
 import type { TestResult } from './types/testResult';
 import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
 import { ToeflAiWidget } from './components/ToeflAiWidget';
@@ -51,6 +52,7 @@ import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess } from './utils/licenseUtils';
+import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
@@ -153,12 +155,10 @@ function AppContent() {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [registrationFormKey, setRegistrationFormKey] = useState(0);
 
-  // Show login popup automatically on first visit if not logged in
+  // 탭 진입은 자유롭게 — 문제 시작(Start) 시점에 launchSection에서 개별 체크
+
   useEffect(() => {
-    if (!isLoggedIn) {
-      setShowLoginPopup(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 첫 방문 자동 로그인 팝업 제거: launchSection에서 필요할 때만 표시
   }, []);
   
   // Footer visibility state
@@ -176,6 +176,20 @@ function AppContent() {
   const [currentTest, setCurrentTest] = useState<{ tpoNumber: number; section: string } | null>(null);
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [pendingPaidTest, setPendingPaidTest] = useState<{ testNumber: number; section: string; bankType: 'tpo' | 'test'; mode: 'start' | 'review' } | null>(null);
+  const [needsSecureMode, setNeedsSecureMode] = useState(false);
+  const [activationReason, setActivationReason] = useState('');
+
+  // 보안 모드: 테스트 진행 중이고 외부 구매자이면 우클릭/F12/Ctrl+C 차단
+  useEffect(() => {
+    if (!showToelfTest || !isLoggedIn) { setNeedsSecureMode(false); return; }
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      supabase.from('users_profile').select('user_type').single().then(({ data: profile }) => {
+        setNeedsSecureMode(profile?.user_type === '외부구매자');
+      }).catch(() => setNeedsSecureMode(false));
+    });
+  }, [showToelfTest, isLoggedIn]);
+  useSecureMode(needsSecureMode);
   
   // Sync state with URL on mount and location change
   useEffect(() => {
@@ -222,15 +236,10 @@ function AppContent() {
     }
   }, [location]);
 
-  // Show login popup on initial load if not logged in and on a protected tab
+  // launchSection에서 개별 체크하므로 탭 진입은 모두 자유
   useEffect(() => {
-    const protectedTabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
-    // Allow vocabulary training without login
-    const isVocabularyPath = location.pathname.includes('/vocabulary');
-    if (!isLoggedIn && protectedTabs.includes(activeTab) && !isVocabularyPath) {
-      setShowLoginPopup(true);
-    }
-  }, []); // Only run on mount
+    // no-op
+  }, []);
 
   const [showReadingSection, setShowReadingSection] = useState(false);
   const [showFillBlanksTest, setShowFillBlanksTest] = useState(false);
@@ -692,14 +701,7 @@ function AppContent() {
       'TOEFL Prep': '/admin'
     };
     navigate(tabRoutes[tab]);
-    
-    // Login check for protected tabs - show popup after tab change
-    const protectedTabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
-    // Allow vocabulary training without login
-    const isVocabularyPath = location.pathname.includes('/vocabulary');
-    if (!isLoggedIn && protectedTabs.includes(tab) && !isVocabularyPath) {
-      setShowLoginPopup(true);
-    }
+    // 탭 진입은 자유 — launchSection에서 문제 시작 시점에 개별 체크
   };
   
   // Handle password verification
@@ -1831,18 +1833,19 @@ function AppContent() {
     bankType: 'tpo' | 'test',
     mode: 'start' | 'review' = 'start'
   ) => {
-    // 유료 콘텐츠 접근 체크 (TPO 1, Test 1은 무료)
+    // 유료 콘텐츠 접근 체크 (TPO 1-3, Test 1-3은 무료)
     if (!isFreeContent(bankType, testNumber)) {
-      checkUserAccess(true).then((result) => {
-        if (!result.allowed) {
-          // 로그인 안 됨 or 활성화 필요 → 모달 표시
-          setPendingPaidTest({ testNumber, section, bankType, mode });
-          setShowActivationModal(true);
-          return;
-        }
-        // 접근 허용 → 정상 진입
-        proceedLaunch(testNumber, section, bankType, mode);
-      });
+      setPendingPaidTest({ testNumber, section, bankType, mode });
+
+      // 1단계: 로그인 여부 — localStorage 기반 즉시 판단 (Supabase 호출 없음)
+      if (!isLoggedIn) {
+        setShowLoginPopup(true);
+        return;
+      }
+
+      // 2단계: 로그인 됨 → 활성화 코드 모달 표시
+      setActivationReason('등록된 활성화 코드가 필요합니다. 코드를 입력해주세요.');
+      setShowActivationModal(true);
       return;
     }
     proceedLaunch(testNumber, section, bankType, mode);
@@ -8225,6 +8228,7 @@ function AppContent() {
       {/* Activation Modal — 유료 콘텐츠 접근 시 라이선스 확인 */}
       <ActivationModal
         isOpen={showActivationModal}
+        reason={activationReason}
         onClose={() => {
           setShowActivationModal(false);
           setPendingPaidTest(null);
@@ -8574,6 +8578,7 @@ function AppContent() {
           setShowWritingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveWritingScreen('intro'); } }}
           setShowSpeakingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveSpeakingScreen('intro'); } }}
           setShowToeflTest={setShowToeflTest}
+          onStartTest={(number: number, section: string) => launchSection(number, section, 'tpo', 'start')}
           onReviewTest={(number, section) => launchSection(number, section, 'tpo', 'review')}
           TPOCard={TPOCard}
           TestCard={TestCard}
@@ -8597,6 +8602,7 @@ function AppContent() {
           setShowWritingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveWritingScreen('intro'); } }}
           setShowSpeakingIntro={(v: any) => { if (v) { clearReviewContext(); setIsReviewMode(false); setActiveSpeakingScreen('intro'); } }}
           setShowToeflTest={setShowToeflTest}
+          onStartTest={(number: number, section: string) => launchSection(number, section, 'test', 'start')}
           onReviewTest={(number, section) => launchSection(number, section, 'test', 'review')}
           TestCard={TestCard}
           advertisements={advertisements}
@@ -8751,6 +8757,9 @@ function AppContent() {
             shareConfig={shareConfig}
             onShareConfigChange={setShareConfig}
           />
+          <div className="max-w-3xl mx-auto mt-6 px-4">
+            <LicenseKeyGenerator />
+          </div>
         </Suspense>
       )}
 
