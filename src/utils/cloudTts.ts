@@ -1,11 +1,10 @@
 /**
  * High-quality Cloud TTS utility.
  *
- * Uses Google Translate TTS (free, high-quality MP3) as the primary engine.
- * Falls back to Web Speech API (speechSynthesis) if the cloud request fails.
- *
- * In Electron, the main process session interceptor bypasses CORS for
- * translate.google.com requests.
+ * Uses Web Speech API (speechSynthesis) as the primary engine — works
+ * natively in browsers with no CORS issues and high-quality voices.
+ * Google Translate TTS is kept as a fallback for Electron environments
+ * where CORS is bypassed via session interceptor.
  */
 
 const GOOGLE_TTS_BASE = 'https://translate.google.com/translate_tts';
@@ -119,8 +118,11 @@ function speakWithSpeechSynthesis(text: string): void {
 }
 
 /**
- * High-quality TTS: tries Google Translate TTS first, falls back to
- * speechSynthesis on failure.
+ * High-quality TTS: uses speechSynthesis (Web Speech API) as primary engine
+ * for instant, high-quality playback with no CORS issues.
+ *
+ * Falls back to Google Translate TTS only in Electron environments where
+ * CORS is bypassed via session interceptor.
  *
  * Stops any previously playing speech before starting.
  *
@@ -136,9 +138,15 @@ export async function speakHighQuality(text: string): Promise<() => void> {
   globalCancelled = false;
   const mySessionCancelled = () => globalCancelled;
 
+  // ── Primary: Use Web Speech API (speechSynthesis) — no CORS, works everywhere ──
+  if ('speechSynthesis' in window && !mySessionCancelled()) {
+    speakWithSpeechSynthesis(text);
+    return stopAllSpeech;
+  }
+
+  // ── Fallback: Google TTS (only works in Electron with CORS bypass) ──
   const chunks = splitTextIntoChunks(text);
 
-  // Try Google TTS
   for (const chunk of chunks) {
     if (mySessionCancelled()) return stopAllSpeech;
     const blob = await fetchGoogleTtsChunk(chunk);
@@ -166,7 +174,7 @@ export async function speakHighQuality(text: string): Promise<() => void> {
         });
       });
     } else {
-      // Cloud TTS failed — fall back to speechSynthesis for the entire text
+      // Cloud TTS also failed — try speechSynthesis as last resort
       if (!mySessionCancelled()) speakWithSpeechSynthesis(text);
       return stopAllSpeech;
     }

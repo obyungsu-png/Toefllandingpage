@@ -61,7 +61,13 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         days,
         timestamp: Date.now()
       };
-      localStorage.setItem(getCacheKey(type), JSON.stringify(data));
+      const jsonStr = JSON.stringify(data);
+      // Skip cache if data is too large (> 4MB to avoid quota errors)
+      if (jsonStr.length > 4 * 1024 * 1024) {
+        console.warn(`[SATVocaPage] Cache skipped for ${type}: data too large (${(jsonStr.length / 1024 / 1024).toFixed(1)}MB)`);
+        return;
+      }
+      localStorage.setItem(getCacheKey(type), jsonStr);
       console.log(`[SATVocaPage] 💾 Saved to cache: ${type}`);
     } catch (err) {
       console.warn('[SATVocaPage] Cache save failed:', err);

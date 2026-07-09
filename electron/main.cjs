@@ -121,7 +121,6 @@ function createWindow() {
     } else {
       console.error('build/index.html not found in any location!');
     }
-    mainWindow.webContents.openDevTools();
   }
 }
 

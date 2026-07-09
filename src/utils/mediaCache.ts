@@ -140,17 +140,17 @@ export async function getCachedBlobUrl(url: string): Promise<string | null> {
     return blobUrlMap.get(url)!;
   }
 
-  try {
-    const db = await openDB();
-    const blob = await new Promise<Blob | null>((resolve) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get(url);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => resolve(null);
-    });
-    db.close();
+    try {
+      const db = await openDB();
+      const blob = await new Promise<Blob | null>((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(url);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+      // db.close() 제거 - 연결 재사용을 위해 유지 (dbInstance 싱글톤 패턴)
 
-    if (blob) {
+      if (blob) {
       const blobUrl = URL.createObjectURL(blob);
       blobUrlMap.set(url, blobUrl);
       return blobUrl;
@@ -312,7 +312,7 @@ export async function getCacheStats(): Promise<{ count: number; sizeBytes: numbe
       };
       req.onerror = () => resolve({ count: 0, sizeBytes: 0 });
     });
-    db.close();
+    // db.close() 제거 - 연결 재사용을 위해 유지
     return result;
   } catch {
     return { count: 0, sizeBytes: 0 };
@@ -332,7 +332,7 @@ export async function clearMediaCache(): Promise<void> {
       tx.oncomplete = () => resolve();
       tx.onerror = () => resolve();
     });
-    db.close();
+    // db.close() 제거 - 연결 재사용을 위해 유지
 
     // blob URL 정리
     for (const blobUrl of blobUrlMap.values()) {

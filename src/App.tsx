@@ -29,6 +29,19 @@ import { ListeningM2Wrapper, M2Screen } from './components/ListeningM2Wrapper';
 import { WritingSectionWrapper, WritingScreen } from './components/WritingSectionWrapper';
 import { SpeakingSectionWrapper, SpeakingScreen } from './components/SpeakingSectionWrapper';
 import { MobileQuestionNav } from './components/MobileQuestionNav';
+import EndModule1Screen from './components/EndModule1Screen';
+import EndModule2Screen from './components/EndModule2Screen';
+import EndListeningScreen from './components/EndListeningScreen';
+import EndWritingScreen from './components/EndWritingScreen';
+import EndSpeakingScreen from './components/EndSpeakingScreen';
+import { SectionScores as SpeakingSectionScores } from './components/EndSpeakingScreen';
+import FinalResultScreen from './components/FinalResultScreen';
+import ReadingIntroScreen from './components/ReadingIntroScreen';
+import Module1IntroScreen from './components/Module1IntroScreen';
+import Module1DetailsScreen from './components/Module1DetailsScreen';
+import FillBlanksTestScreen from './components/FillBlanksTestScreen';
+import { ReadingSectionScreen } from './components/ReadingSectionScreen';
+import { ToeflTestScreen } from './components/ToeflTestScreen';
 import { useTestProgress } from './hooks/useTestProgress';
 import { TestProgressRestoreModal } from './components/TestProgressRestoreModal';
 
@@ -463,6 +476,18 @@ function AppContent() {
   const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
   const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
   
+  // Section Score States (for end-of-section result screens)
+  const [showEndListening, setShowEndListening] = useState(false);
+  const [showEndWriting, setShowEndWriting] = useState(false);
+  const [showEndSpeaking, setShowEndSpeaking] = useState(false);
+  const [showFinalResult, setShowFinalResult] = useState(false);
+  const [sectionScores, setSectionScores] = useState<SectionScores>({
+    reading: null,
+    listening: null,
+    writing: null,
+    speaking: null,
+  });
+
   // LMS Content State
   const [lmsContents, setLmsContents] = useState<LMSContent[]>([]);
   const [tpoTests, setTpoTests] = useState<TPOTest[]>([]);
@@ -1794,6 +1819,9 @@ function AppContent() {
       wrongAnswers,
       timeSpent: 0,
     });
+
+    // Return score data for UI display
+    return { correct: correctCount, total: totalQuestions };
   };
 
   // Training Result Handler - saves to both local state and Supabase
@@ -3832,86 +3860,6 @@ function AppContent() {
           onNext={() => {
             setShowModule1Question20(false);
             setShowEndModule1(true);
-          }}
-        />
-      </div>
-    );
-  };
-
-  // End of Module 1 Screen
-  const EndModule1Screen = () => {
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowEndModule1(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Next Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowEndModule1(false);
-                saveSectionResultToHistory('Reading', 20, 1);
-                setShowModule2(true);
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8">End of Reading Section</h1>
-            <p className="text-base font-['Inter',_sans-serif] text-gray-700">
-              Thank you for completing the reading section.
-            </p>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onBack={() => {
-            setShowEndModule1(false);
-            setShowModule1Question20(true);
-          }}
-          onHome={() => {
-            setShowEndModule1(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowEndModule1(false);
-            setShowModule2(true);
           }}
         />
       </div>
@@ -6207,236 +6155,6 @@ function AppContent() {
     );
   };
 
-  // End of Module 2 Screen - Reading Complete, transition to Listening
-  const EndModule2Screen = () => {
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowEndModule2(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* View Results Button */}
-            <button 
-              className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
-              onClick={() => {
-                setShowEndModule2(false);
-                setActiveTab('History');
-              }}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
-                <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zM5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z"/>
-              </svg>
-              <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">View Results</span>
-            </button>
-            {/* Continue to Listening Button */}
-            <button 
-              className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setShowEndModule2(false);
-                setActiveListeningM1Screen('intro');
-              }}
-            >
-              <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Continue to Listening</span>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-                <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-center justify-center">
-          <div className="max-w-lg mx-auto text-center px-6">
-            <div className="w-20 h-20 mx-auto mb-6 bg-[#e6f5f5] rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-[#1e6b73]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 12l2 2 4-4"/>
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-            </div>
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-4">Reading Section Complete!</h1>
-            <p className="text-lg font-['Inter',_sans-serif] text-gray-600 mb-8">
-              You have completed all 20 reading questions. Your results have been saved and can be reviewed in the History tab.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
-                className="flex items-center justify-center gap-2 bg-[#1e6b73] text-white rounded-lg px-6 py-3 hover:bg-[#165b62] transition-colors font-['Inter',_sans-serif] font-semibold"
-                onClick={() => {
-                  setShowEndModule2(false);
-                  setActiveListeningM1Screen('intro');
-                }}
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 12h.01M8 12a4 4 0 014-4"/>
-                </svg>
-                Continue to Listening Section
-              </button>
-              <button 
-                className="flex items-center justify-center gap-2 bg-white border-2 border-[#1e6b73] text-[#1e6b73] rounded-lg px-6 py-3 hover:bg-gray-50 transition-colors font-['Inter',_sans-serif] font-semibold"
-                onClick={() => {
-                  setShowEndModule2(false);
-                  setActiveTab('History');
-                }}
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                </svg>
-                View Results in History
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onBack={() => {
-            setShowEndModule2(false);
-            setShowModule2Question20(true);
-          }}
-          onHome={() => {
-            setShowEndModule2(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowEndModule2(false);
-            setActiveListeningM1Screen('intro');
-          }}
-          nextLabel="Listening"
-        />
-      </div>
-    );
-  };
-
-  // Reading Section Introduction Screen
-  const ReadingIntroScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowReadingIntro(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          
-          {/* Begin Button */}
-          <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
-            onClick={() => {
-              setShowReadingIntro(false);
-              setShowModule1Intro(true);
-            }}
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Tab */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-4 sm:px-8 py-2 sm:py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block text-sm sm:text-base">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-start sm:items-center justify-center">
-          <div className="max-w-4xl px-4 sm:px-8 py-6 sm:py-12">
-            <h2 className="hidden sm:block text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
-            <div className="hidden sm:block w-24 h-1 bg-gray-300 mb-8"></div>
-            
-            <div className="space-y-4 sm:space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base">
-              <p>
-                In the reading section, you will answer 35–48 questions to demonstrate how well you understand academic and non-academic texts in English. There are three types of tasks.
-              </p>
-
-              <div className="my-4 sm:my-8">
-                <table className="w-full border border-black text-sm sm:text-base">
-                  <thead>
-                    <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Complete the Words</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onHome={() => {
-            setShowReadingIntro(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowReadingIntro(false);
-            setShowModule1Intro(true);
-          }}
-          hideBack={true}
-        />
-      </div>
-    );
-  };
-
   // [EXTRACTED] Listening M1 screens → /components/ListeningM1Screens.tsx
   // [Dead block 2 fully removed - Listening M1 inline screens deleted, now in /components/ListeningM1Screens.tsx]
 
@@ -6725,1002 +6443,10 @@ function AppContent() {
     );
   };
 
-  // Fill Blanks Test Screen Component
-  const FillBlanksTestScreen = () => {
-    const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
-    const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
 
-    // FillBlanks 답을 window.__fillBlanksAnswers에 저장 (리뷰용)
-    React.useEffect(() => {
-      if (typeof window !== 'undefined') {
-        (window as any).__fillBlanksAnswers = inputValues;
-      }
-    }, [inputValues]);
-    const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
-    
-    const CHAR_UNIT_WIDTH = 20; // CSS background-size의 가로 폭과 일치
-    const isMobileFB = typeof window !== 'undefined' && window.innerWidth < 640;
-    
-    // Get dynamic question data from CMS
-    // CMS PRIORITY: flexible type matching (case-insensitive, multiple keywords)
-    const sectionData = getCurrentSectionData('Reading');
-    // CMS PRIORITY: flexible type matching — Module 1 only (exclude Module 2 tagged questions)
-    const fillBlanksQuestion = sectionData?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const isModule2 = t.includes('module 2');
-      const isFillBlanks = (
-        t.includes('complete words') ||
-        t.includes('fill in the blank') ||
-        t.includes('cloze test') ||
-        t.includes('빈칸') ||
-        t.includes('fillblanks') ||
-        t.includes('fill-in')
-      );
-      return isFillBlanks && !isModule2;
-    }) || sectionData?.questions.find(q => {
-      // Fallback: any fill-blanks question (backward compat)
-      const t = (q.questionType || '').toLowerCase();
-      return (
-        t.includes('complete words') ||
-        t.includes('fill in the blank') ||
-        t.includes('cloze test') ||
-        t.includes('빈칸') ||
-        t.includes('fillblanks') ||
-        t.includes('fill-in')
-      );
-    });
-    
-    // Debug logging
-    React.useEffect(() => {
-      console.log('🔍 FillBlanksTest Debug:', {
-        currentTest,
-        testBankType,
-        testData: getCurrentTestData(),
-        sectionData,
-        fillBlanksQuestion,
-        hasPassageText: !!fillBlanksQuestion?.passageText,
-        hasBlanks: !!fillBlanksQuestion?.blanks
-      });
-    }, []);
-    
-    // CMS PRIORITY: Parse CMS passageText format "word[answer:maxLength]" e.g. "sh[ow:2]"
-    // This converts CMS format into the blanks array + normalized passage used by the renderer.
-    const parseCmsPassage = (raw: string): { inputs: {id:number;maxLength:number;answer:string}[]; normalizedPassage: string } => {
-      const parsedInputs: {id:number;maxLength:number;answer:string}[] = [];
-      let idx = 0;
-      // Match pattern: [answer:maxLength]  e.g. [ow:2] or [tion:4]
-      const normalized = raw.replace(/\[([^\]]+):(\d+)\]/g, (_match, answer, maxLen) => {
-        parsedInputs.push({ id: idx, maxLength: parseInt(maxLen), answer });
-        return `[${idx++}]`;
-      });
-      return { inputs: parsedInputs, normalizedPassage: normalized };
-    };
 
-    // Determine inputs and passage: CMS passageText (word[answer:N] format) > CMS blanks array > hardcoded
-    let inputs: {id:number;maxLength:number;answer:string}[];
-    let normalizedPassage: string = '';
 
-    const rawCmsPassage = fillBlanksQuestion?.passageText || '';
-    const hasCmsFormat = rawCmsPassage.includes(':[') || /\[[^\]]+:\d+\]/.test(rawCmsPassage);
-    const hasNormalizedFormat = /\[\d+\]/.test(rawCmsPassage) && !hasCmsFormat;
 
-    if (hasCmsFormat) {
-      // CMS format: "sh[ow:2] the loca[tion:4]..."
-      const parsed = parseCmsPassage(rawCmsPassage);
-      inputs = parsed.inputs;
-      normalizedPassage = parsed.normalizedPassage;
-    } else if (hasNormalizedFormat) {
-      // Already normalized [0],[1]... — use passage as-is, build dummy inputs
-      const blanks: {id:number;maxLength:number;answer:string}[] = [];
-      let idx = 0;
-      rawCmsPassage.replace(/\[(\d+)\]/g, () => { blanks.push({ id: idx, maxLength: 5, answer: '' }); idx++; return ''; });
-      inputs = blanks.length > 0 ? blanks : Array.from({length:10}, (_, i) => ({ id: i, maxLength: 5, answer: '' }));
-      normalizedPassage = rawCmsPassage;
-    } else if (fillBlanksQuestion?.blanks && fillBlanksQuestion.blanks.length > 0) {
-      // Legacy blanks array format
-      inputs = fillBlanksQuestion.blanks.map((blank, i) => ({ id: i, maxLength: blank.maxLength, answer: blank.answer }));
-      normalizedPassage = rawCmsPassage; // already has [N] markers or empty
-    } else {
-      // Hardcoded fallback
-      inputs = [
-        { id: 0, maxLength: 3, answer: 'ght' }, // might
-        { id: 1, maxLength: 2, answer: 'at' }, // that
-        { id: 2, maxLength: 3, answer: 'ple' }, // people
-        { id: 3, maxLength: 2, answer: 'ly' }, // only
-        { id: 4, maxLength: 3, answer: 'sic' }, // basic
-        { id: 5, maxLength: 4, answer: 'ever' }, // However
-        { id: 6, maxLength: 1, answer: 's' }, // is
-        { id: 7, maxLength: 2, answer: 'om' }, // from
-        { id: 8, maxLength: 3, answer: 'ord' }, // record
-        { id: 9, maxLength: 4, answer: 'nces' }, // dances
-      ];
-    }
-
-    const questionText = fillBlanksQuestion?.questionText || 'Fill in the missing letters in the paragraph.';
-    // passageText here is the normalized passage (with [N] markers), used by renderPassageWithInputs
-    const passageText = normalizedPassage;
-
-    // Helper function to render passage with input fields
-    const renderPassageWithInputs = () => {
-      if (!passageText) {
-        // Return hardcoded default passage
-        return null; // Will use existing JSX below
-      }
-      
-      // Parse passage text with [0], [1], etc. markers
-      const parts: any[] = [];
-      let key = 0;
-      
-      // Find all [N] markers and split text
-      const regex = /\[(\d+)\]/g;
-      let lastIndex = 0;
-      let match;
-      
-      while ((match = regex.exec(passageText)) !== null) {
-        const inputId = parseInt(match[1]);
-        const beforeText = passageText.substring(lastIndex, match.index);
-        
-        if (beforeText) {
-          parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
-        }
-        
-        parts.push(
-          <input
-            key={`input-${inputId}`}
-            type="text"
-            data-input-id={inputId}
-            className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
-            maxLength={inputs[inputId]?.maxLength || 5}
-            value={inputValues[inputId] || ''}
-            onChange={(e) => handleInputChange(inputId, e.target.value)}
-            onFocus={() => handleFocus(inputId)}
-            onBlur={() => handleBlur(inputId)}
-            onKeyPress={(e) => handleKeyPress(e, inputId)}
-            style={{ width: getInputWidth(inputId) }}
-          />
-        );
-        
-        lastIndex = match.index + match[0].length;
-      }
-      
-      // Add remaining text
-      if (lastIndex < passageText.length) {
-        parts.push(<span key={`text-${key++}`}>{passageText.substring(lastIndex)}</span>);
-      }
-      
-      return parts;
-    };
-
-    const handleInputChange = (id: number, value: string) => {
-      setInputValues(prev => ({ ...prev, [id]: value }));
-      
-      // Mark as filled when all characters are entered
-      if (value.length >= inputs[id].maxLength) {
-        setFilledInputs(prev => ({ ...prev, [id]: true }));
-      } else {
-        setFilledInputs(prev => ({ ...prev, [id]: false }));
-      }
-      
-      // Auto-focus next input when current input reaches maxLength
-      if (value.length === inputs[id].maxLength) {
-        const nextId = id + 1;
-        if (nextId < inputs.length) {
-          setTimeout(() => {
-            const nextInput = document.querySelector(`input[data-input-id="${nextId}"]`) as HTMLInputElement;
-            if (nextInput) {
-              nextInput.focus();
-            }
-          }, 0);
-        }
-      }
-    };
-
-    const handleFocus = (id: number) => {
-      // Keep filled state if input is already fully filled
-      const value = inputValues[id] || '';
-      if (value.length < inputs[id].maxLength) {
-        setFilledInputs(prev => ({ ...prev, [id]: false }));
-      }
-    };
-
-    const handleBlur = (id: number) => {
-      if (inputValues[id] && inputValues[id].length > 0) {
-        setFilledInputs(prev => ({ ...prev, [id]: true }));
-      }
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent, id: number) => {
-      if (e.key === 'Enter') {
-        (e.target as HTMLInputElement).blur();
-      }
-    };
-
-    // Helper function to calculate text width with proper font settings
-    const getTextWidth = (text: string): number => {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      if (!context) return text.length * 14;
-      
-      // Match the actual paragraph font (normal weight, not bold)
-      context.font = "1.25rem 'Inter', sans-serif";
-      const metrics = context.measureText(text);
-      
-      // Minimal extra space for natural text flow
-      return Math.ceil(metrics.width) + 4;
-    };
-
-    // Calculate input width: keep full size while typing, shrink only when fully filled
-    const getInputWidth = (id: number): string => {
-      const value = inputValues[id] || '';
-      const maxLen = inputs[id].maxLength;
-      if (value.length >= maxLen) {
-        // Fully filled: shrink to fit actual text width
-        return `${getTextWidth(value)}px`;
-      }
-      // Empty or partially filled: maintain full dashed width
-      // On mobile, subtract one dash unit to compensate for rendering difference
-      const mobileOffset = isMobileFB ? CHAR_UNIT_WIDTH : 0;
-      return `${maxLen * CHAR_UNIT_WIDTH - mobileOffset}px`;
-    };
-
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Content layout */}
-        <div className="flex-1 flex flex-col overflow-auto">
-          {/* Header */}
-          <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
-            <div className="flex items-center min-w-0 shrink">
-              <div 
-                className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate"
-                onClick={() => {
-                  setShowFillBlanksTest(false);
-                  setShowReadingSection(false);
-                  setShowToeflTest(false);
-                  if (testBankType === 'tpo') {
-                    handleTabChange('TPO');
-                  } else {
-                    handleTabChange('Test');
-                  }
-                }}
-              >
-                *toefl ibt
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {/* Volume Button */}
-              <button 
-                ref={fbVolumeButtonRef as React.RefObject<HTMLButtonElement>}
-                className={`flex items-center gap-1.5 sm:gap-3 border rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 transition-colors ${
-                  isFBVolumeOpen 
-                    ? 'bg-white border-white text-[#1e6b73]' 
-                    : 'bg-[#0A6068] border-white text-white hover:bg-[#084d52]'
-                }`}
-                onClick={toggleFBVolume}
-              >
-                <span className="font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Volume</span>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill={isFBVolumeOpen ? '#1e6b73' : 'white'}>
-                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                </svg>
-              </button>
-              
-              {/* Next Button */}
-              <button 
-                className="flex items-center gap-1.5 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
-                onClick={() => {
-                  setShowFillBlanksTest(false);
-                  setShowReadNoticeTest(true);
-                }}
-              >
-                <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068">
-                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation tabs - same width as header & content */}
-          <div className="bg-white border-b border-gray-300 shrink-0">
-            <div className="px-3 sm:px-8 py-2 sm:py-3">
-              <div className="flex gap-4 sm:gap-8">
-                <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">
-                  Reading
-                </div>
-                <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                  Question 1-10
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="flex-1 bg-white overflow-auto">
-            <div className="p-4 sm:p-5 md:p-12 pt-8 sm:pt-16 md:pt-24 flex flex-col items-center">
-          <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black font-bold font-['Inter',_sans-serif] text-center px-2">
-            Fill in the missing letters in the paragraph.
-          </h1>
-
-          <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-            {/* CMS PRIORITY: render CMS passage dynamically using passageText + inputs */}
-            {renderPassageWithInputs() || (
-              <>
-            We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi<input
-              type="text"
-              data-input-id="0"
-              className={`gap-input ${filledInputs[0] ? 'filled' : ''}`}
-              maxLength={inputs[0].maxLength}
-              value={inputValues[0] || ''}
-              onChange={(e) => handleInputChange(0, e.target.value)}
-              onFocus={() => handleFocus(0)}
-              onBlur={() => handleBlur(0)}
-              onKeyPress={(e) => handleKeyPress(e, 0)}
-              style={{ width: getInputWidth(0) }}
-            /> think th<input
-              type="text"
-              data-input-id="1"
-              className={`gap-input ${filledInputs[1] ? 'filled' : ''}`}
-              maxLength={inputs[1].maxLength}
-              value={inputValues[1] || ''}
-              onChange={(e) => handleInputChange(1, e.target.value)}
-              onFocus={() => handleFocus(1)}
-              onBlur={() => handleBlur(1)}
-              onKeyPress={(e) => handleKeyPress(e, 1)}
-              style={{ width: getInputWidth(1) }}
-            /> prehistoric peo<input
-              type="text"
-              data-input-id="2"
-              className={`gap-input ${filledInputs[2] ? 'filled' : ''}`}
-              maxLength={inputs[2].maxLength}
-              value={inputValues[2] || ''}
-              onChange={(e) => handleInputChange(2, e.target.value)}
-              onFocus={() => handleFocus(2)}
-              onBlur={() => handleBlur(2)}
-              onKeyPress={(e) => handleKeyPress(e, 2)}
-              style={{ width: getInputWidth(2) }}
-            /> concentrated on<input
-              type="text"
-              data-input-id="3"
-              className={`gap-input ${filledInputs[3] ? 'filled' : ''}`}
-              maxLength={inputs[3].maxLength}
-              value={inputValues[3] || ''}
-              onChange={(e) => handleInputChange(3, e.target.value)}
-              onFocus={() => handleFocus(3)}
-              onBlur={() => handleBlur(3)}
-              onKeyPress={(e) => handleKeyPress(e, 3)}
-              style={{ width: getInputWidth(3) }}
-            /> on ba<input
-              type="text"
-              data-input-id="4"
-              className={`gap-input ${filledInputs[4] ? 'filled' : ''}`}
-              maxLength={inputs[4].maxLength}
-              value={inputValues[4] || ''}
-              onChange={(e) => handleInputChange(4, e.target.value)}
-              onFocus={() => handleFocus(4)}
-              onBlur={() => handleBlur(4)}
-              onKeyPress={(e) => handleKeyPress(e, 4)}
-              style={{ width: getInputWidth(4) }}
-            /> survival. How<input
-              type="text"
-              data-input-id="5"
-              className={`gap-input ${filledInputs[5] ? 'filled' : ''}`}
-              maxLength={inputs[5].maxLength}
-              value={inputValues[5] || ''}
-              onChange={(e) => handleInputChange(5, e.target.value)}
-              onFocus={() => handleFocus(5)}
-              onBlur={() => handleBlur(5)}
-              onKeyPress={(e) => handleKeyPress(e, 5)}
-              style={{ width: getInputWidth(5) }}
-            />, it i<input
-              type="text"
-              data-input-id="6"
-              className={`gap-input ${filledInputs[6] ? 'filled' : ''}`}
-              maxLength={inputs[6].maxLength}
-              value={inputValues[6] || ''}
-              onChange={(e) => handleInputChange(6, e.target.value)}
-              onFocus={() => handleFocus(6)}
-              onBlur={() => handleBlur(6)}
-              onKeyPress={(e) => handleKeyPress(e, 6)}
-              style={{ width: getInputWidth(6) }}
-            /> clear fr<input
-              type="text"
-              data-input-id="7"
-              className={`gap-input ${filledInputs[7] ? 'filled' : ''}`}
-              maxLength={inputs[7].maxLength}
-              value={inputValues[7] || ''}
-              onChange={(e) => handleInputChange(7, e.target.value)}
-              onFocus={() => handleFocus(7)}
-              onBlur={() => handleBlur(7)}
-              onKeyPress={(e) => handleKeyPress(e, 7)}
-              style={{ width: getInputWidth(7) }}
-            /> the rec<input
-              type="text"
-              data-input-id="8"
-              className={`gap-input ${filledInputs[8] ? 'filled' : ''}`}
-              maxLength={inputs[8].maxLength}
-              value={inputValues[8] || ''}
-              onChange={(e) => handleInputChange(8, e.target.value)}
-              onFocus={() => handleFocus(8)}
-              onBlur={() => handleBlur(8)}
-              onKeyPress={(e) => handleKeyPress(e, 8)}
-              style={{ width: getInputWidth(8) }}
-            /> that dan<input
-              type="text"
-              data-input-id="9"
-              className={`gap-input ${filledInputs[9] ? 'filled' : ''}`}
-              maxLength={inputs[9].maxLength}
-              value={inputValues[9] || ''}
-              onChange={(e) => handleInputChange(9, e.target.value)}
-              onFocus={() => handleFocus(9)}
-              onBlur={() => handleBlur(9)}
-              onKeyPress={(e) => handleKeyPress(e, 9)}
-              style={{ width: getInputWidth(9) }}
-            /> was important to them.
-              </>
-            )}
-          </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Volume Control Dropdown */}
-        <VolumeControl isOpen={isFBVolumeOpen} onClose={closeFBVolume} buttonRef={fbVolumeButtonRef} />
-        
-        <MobileQuestionNav 
-          onBack={() => {
-            setShowFillBlanksTest(false);
-            setShowModule1Details(true);
-          }}
-          onHome={() => {
-            setShowFillBlanksTest(false);
-            setShowReadingSection(false);
-            setShowToeflTest(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowFillBlanksTest(false);
-            setShowReadNoticeTest(true);
-          }}
-        />
-      </div>
-    );
-  };
-
-  // TOEFL Reading Section Screen Component
-  const ReadingSectionScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Reading Progress Restore Modal — Reading 소개 화면 진입 시에만 표시 */}
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          {/* Begin Button */}
-          <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
-            onClick={() => {
-              setShowReadingSection(false);
-              setShowModule1Intro(true);
-            }}
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-4 sm:px-8 py-2 sm:py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 overflow-auto bg-white flex items-start sm:items-center justify-center">
-          <div className="max-w-4xl px-4 sm:px-8 py-6 sm:py-12">
-            <h2 className="hidden sm:block text-3xl font-['Inter',_sans-serif] text-gray-800 mb-8">Reading Section</h2>
-            <div className="hidden sm:block w-24 h-1 bg-gray-300 mb-8"></div>
-            
-            <div className="space-y-4 sm:space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base">
-              <p>
-                In the reading section, you will answer 35–48 questions to demonstrate how well you 
-                understand academic and non-academic texts in English. There are three types of tasks.
-              </p>
-
-              <div className="my-4 sm:my-8">
-                <table className="w-full border border-black text-sm sm:text-base">
-                  <thead>
-                    <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Type of Task</th>
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Complete the Words</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Fill in the missing letters in a paragraph.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read in Daily Life</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about everyday reading material.</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Read an Academic Passage</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Answer questions about academic passages.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onHome={() => {
-            setShowReadingSection(false);
-            setShowToeflTest(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowReadingSection(false);
-            setShowModule1Intro(true);
-          }}
-          hideBack={true}
-        />
-      </div>
-    );
-  };
-
-  // Module 1 Intro Screen Component
-  const Module1IntroScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowModule1Intro(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          {/* Begin Button */}
-          <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
-            onClick={() => {
-              setShowModule1Intro(false);
-              setShowFillBlanksTest(true);
-            }}
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Begin</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-4 sm:px-8 py-2 sm:py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main content - Centered */}
-        <div className="flex-1 flex items-start sm:items-center justify-center bg-white p-6 sm:p-12 pt-8 sm:pt-12">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-2xl sm:text-4xl font-['Inter',_sans-serif] font-bold text-black mb-4 sm:mb-8">Module 1</h1>
-            
-            <div className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed space-y-4 sm:space-y-6">
-              <p className="text-base sm:text-lg">
-                The clock will show you how much time you have to complete Module 1.
-              </p>
-              
-              <p className="text-base sm:text-lg">
-                You can use <strong>Next</strong> and <strong>Back</strong> to move to the next question or return to previous questions within the same module.
-              </p>
-
-              <p className="text-base sm:text-lg">
-                You WILL NOT be able to return to Module 1 once you have begun Module 2.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onBack={() => {
-            setShowModule1Intro(false);
-            setShowReadingIntro(true);
-          }}
-          onHome={() => {
-            setShowModule1Intro(false);
-            setShowReadingSection(false);
-            setShowToeflTest(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowModule1Intro(false);
-            setShowFillBlanksTest(true);
-          }}
-        />
-      </div>
-    );
-  };
-
-  // Module 1 Details Screen Component
-  const Module1DetailsScreen = () => {
-    const [hideTime, setHideTime] = useState(false);
-    
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowModule1Details(false);
-                setShowModule1Intro(false);
-                setShowReadingSection(false);
-                setShowToeflTest(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300 flex items-center justify-between px-8 py-3">
-          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-            Reading
-          </div>
-          <div className="flex items-center gap-4">
-            {!hideTime && (
-              <div className="text-gray-700 font-['Inter',_sans-serif]">
-                00:11:30
-              </div>
-            )}
-            <button 
-              className="flex items-center gap-2 text-[#1e6b73] hover:underline"
-              onClick={() => setHideTime(!hideTime)}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-              </svg>
-              <span className="font-['Inter',_sans-serif]">{hideTime ? 'Show' : 'Hide'} Time</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-4xl">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 pb-4 border-b-2 border-gray-300">
-              Module 1
-            </h1>
-            
-            <div className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed space-y-6 mt-6">
-              <p>
-                The clock will show you how much time you have to complete Module 1.
-              </p>
-              
-              <p>
-                You can use <span className="font-semibold">Next</span> and <span className="font-semibold">Back</span> to move to the next question or return to previous questions within the same module.
-              </p>
-              
-              <p>
-                You WILL NOT be able to return to Module 1 once you have begun Module 2.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <MobileQuestionNav 
-          onHome={() => {
-            setShowModule1Details(false);
-            setShowModule1Intro(false);
-            setShowReadingSection(false);
-            setShowToeflTest(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onNext={() => {
-            setShowModule1Details(false);
-            setShowFillBlanksTest(true);
-          }}
-          hideBack
-        />
-      </div>
-    );
-  };
-
-  // TOEFL Test Screen Component
-  const ToeflTestScreen = () => {
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-[#2d7a7c] h-16 flex items-center justify-between px-8 shadow-lg">
-          <div className="flex items-center">
-            <div 
-              className="text-white text-2xl font-bold tracking-wider cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => {
-                setShowToeflTest(false);
-                setShowReadingSection(false);
-                if (testBankType === 'tpo') {
-                  handleTabChange('TPO');
-                } else {
-                  handleTabChange('Test');
-                }
-              }}
-            >
-              *toefl ibt
-            </div>
-          </div>
-          {/* Continue Button */}
-          <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
-            onClick={() => {
-              if (currentTest?.section === 'Reading') {
-                setShowToeflTest(false);
-                setShowFillBlanksTest(true);
-              }
-            }}
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Continue</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-8 py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-              Reading
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-12 overflow-auto bg-white border border-black">
-          <div className="max-w-4xl">
-            <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 pb-4 border-b-2 border-gray-300">Reading Section</h1>
-            
-            <div className="text-gray-700 font-['Inter',_sans-serif] leading-relaxed mb-8 mt-6">
-              <p>
-                In the reading section, you will answer 35–48 questions to demonstrate how well you 
-                understand academic and non-academic texts in English. There are three types of tasks.
-              </p>
-            </div>
-
-            {/* Task table */}
-            <div className="border border-black overflow-hidden inline-block">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#2d7a7c] text-white">
-                    <th className="px-6 py-3 text-left font-['Inter',_sans-serif] border-r-2 border-black">Type of Task</th>
-                    <th className="px-6 py-3 text-left font-['Inter',_sans-serif]">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  <tr className="border-b-2 border-black">
-                    <td className="px-6 py-3 font-['Inter',_sans-serif] border-r-2 border-black">Complete the Words</td>
-                    <td className="px-6 py-3 font-['Inter',_sans-serif]">
-                      Fill in the missing letters in a paragraph.
-                    </td>
-                  </tr>
-                  <tr className="border-b-2 border-black">
-                    <td className="px-6 py-3 font-['Inter',_sans-serif] border-r-2 border-black">Read in Daily Life</td>
-                    <td className="px-6 py-3 font-['Inter',_sans-serif]">
-                      Answer questions about everyday reading material.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-3 font-['Inter',_sans-serif] border-r-2 border-black">Read an Academic Passage</td>
-                    <td className="px-6 py-3 font-['Inter',_sans-serif]">
-                      Answer questions about academic passages.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const TPOCard = ({
-    number,
-    onStartTest,
-    onReviewTest,
-    isLocked = false,
-    onUnlockClick,
-  }: {
-    number: number;
-    onStartTest?: (section: string) => void;
-    onReviewTest?: (section: string) => void;
-    isLocked?: boolean;
-    onUnlockClick?: () => void;
-  }) => {
-    const [hoveredSection, setHoveredSection] = useState<string | null>(null);
-
-    const handleStartTest = (section: string) => {
-      if (isLocked && onUnlockClick) {
-        onUnlockClick();
-        return;
-      }
-
-      localStorage.removeItem(`tpo_progress_tpo_${number}_${section}`);
-      if (onStartTest) {
-        onStartTest(section);
-        return;
-      }
-
-      launchSection(number, section, 'tpo', 'start');
-    };
-
-    const handleContinueTest = (section: string) => {
-      if (isLocked && onUnlockClick) {
-        onUnlockClick();
-        return;
-      }
-
-      const saved = localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
-      if (!saved) {
-        alert('저장된 진행 상황이 없습니다. Start를 눌러 새로 시작하세요.');
-        return;
-      }
-
-      launchSection(number, section, 'tpo', 'start');
-    };
-
-    const handleReviewTest = (section: string) => {
-      if (isLocked && onUnlockClick) {
-        onUnlockClick();
-        return;
-      }
-
-      localStorage.removeItem(`tpo_progress_tpo_${number}_${section}`);
-      if (onReviewTest) {
-        onReviewTest(section);
-        return;
-      }
-
-      launchSection(number, section, 'tpo', 'review');
-    };
-
-    const hasSavedProgress = (section: string) => !!localStorage.getItem(`tpo_progress_tpo_${number}_${section}`);
-
-    const hoverBgClass = 'bg-gradient-to-r from-[#e3f2fd] to-[#bbdefb] shadow-md';
-    const defaultBgClass = 'bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100';
-    const buttonHoverClass = 'bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white shadow-md transform scale-105';
-    const continueHoverClass = 'bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white shadow-md transform scale-105';
-
-    const renderSectionRow = (sectionName: string, sectionType: string, isLast = false) => (
-      <div
-        className={`h-20 relative ${isLast ? 'rounded-b-[12px]' : 'rounded-[8px]'} shrink-0 w-full cursor-pointer transition-all duration-300 ${
-          hoveredSection === sectionName.toLowerCase() ? hoverBgClass : defaultBgClass
-        }`}
-        onMouseEnter={() => setHoveredSection(sectionName.toLowerCase())}
-        onMouseLeave={() => setHoveredSection(null)}
-      >
-        <div className="relative size-full">
-          <div className="box-border flex h-20 items-center justify-between px-4 relative w-full">
-            <div className="flex flex-col font-['Inter',_sans-serif] font-bold justify-center text-[#1a2832] text-[16px] tracking-wide">
-              <p>{sectionName}</p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {hasSavedProgress(sectionType) && (
-                <div
-                  className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
-                    hoveredSection === sectionName.toLowerCase() ? continueHoverClass : 'bg-[#E6F7F5] text-[#0D9488] hover:bg-[#CCEFEC]'
-                  }`}
-                  onClick={() => handleContinueTest(sectionType)}
-                >
-                  <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Continue</p>
-                </div>
-              )}
-              <div
-                className={`flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm ${
-                  hoveredSection === sectionName.toLowerCase() ? buttonHoverClass : 'bg-[rgba(0,0,0,0.05)] text-[#374151] hover:bg-[rgba(0,0,0,0.1)]'
-                }`}
-                onClick={() => handleStartTest(sectionType)}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Start</p>
-              </div>
-              <div
-                className="flex items-center justify-center h-[28px] rounded-[14px] px-3 transition-all duration-300 cursor-pointer shadow-sm bg-[#f4efe6] text-[#8b5e1a] hover:bg-[#eadfcd]"
-                onClick={() => handleReviewTest(sectionType)}
-              >
-                <p className="font-['Inter',_sans-serif] font-bold text-[11px] text-center">Review</p>
-              </div>
-            </div>
-            {!isLast && <div className="absolute bg-[#e5e7eb] bottom-0 h-[0.5px] left-3 right-3" />}
-          </div>
-        </div>
-      </div>
-    );
-
-    const tpoMeta = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
-
-    return (
-      <div className="bg-white rounded-[12px] shadow-lg border border-gray-200 w-full max-w-[268px] transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
-        <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-4 py-3 min-h-[52px]">
-          <p className="font-['Inter',_sans-serif] font-bold text-[24px] text-white tracking-wide">TPO {number}</p>
-          {tpoMeta && (tpoMeta.year || tpoMeta.month) && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              {tpoMeta.year && (
-                <span className="text-xs px-2.5 py-1 bg-white/25 text-white rounded-full font-bold tracking-wide border border-white/40">
-                  {tpoMeta.year}
-                </span>
-              )}
-              {tpoMeta.month && (
-                <span className="text-xs px-2.5 py-1 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
-                  {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][tpoMeta.month - 1]}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        {renderSectionRow('Reading', 'Reading')}
-        {renderSectionRow('Listening', 'Listening')}
-        {renderSectionRow('Writing', 'Writing')}
-        {renderSectionRow('Speaking', 'Speaking', true)}
-      </div>
-    );
-  };
 
   const RealTestCard = ({ number }: { number: number }) => {
     const [hoveredSection, setHoveredSection] = useState<string | null>(null);
@@ -7828,7 +6554,14 @@ function AppContent() {
         </div>
       )}
       {/* Reading Section Intro */}
-      {showReadingIntro && <ReadingIntroScreen />}
+      {showReadingIntro && (
+        <ReadingIntroScreen
+          setShowReadingIntro={setShowReadingIntro}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setShowModule1Intro={setShowModule1Intro}
+        />
+      )}
 
       {/* Reading Progress Restore Modal — 최상위에서 렌더링 (리스닝과 동일한 방식) */}
       {showReadingRestoreModal && readingSavedProgress && (
@@ -7847,16 +6580,65 @@ function AppContent() {
           }}
         />
       )}
-      {showReadingSection && <ReadingSectionScreen />}
+      {showReadingSection && (
+        <ReadingSectionScreen
+          testBankType={testBankType}
+          onBackToHome={() => {
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
+          }}
+          onBegin={() => {
+            setShowReadingSection(false);
+            setShowModule1Intro(true);
+          }}
+        />
+      )}
       
       {/* Module 1 Intro Screen */}
-      {showModule1Intro && <Module1IntroScreen />}
+      {showModule1Intro && (
+        <Module1IntroScreen
+          setShowModule1Intro={setShowModule1Intro}
+          setShowReadingSection={setShowReadingSection}
+          setShowToeflTest={setShowToeflTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setShowFillBlanksTest={setShowFillBlanksTest}
+          setShowReadingIntro={setShowReadingIntro}
+        />
+      )}
       
       {/* Module 1 Details Screen */}
-      {showModule1Details && <Module1DetailsScreen />}
+      {showModule1Details && (
+        <Module1DetailsScreen
+          setShowModule1Details={setShowModule1Details}
+          setShowModule1Intro={setShowModule1Intro}
+          setShowReadingSection={setShowReadingSection}
+          setShowToeflTest={setShowToeflTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setShowFillBlanksTest={setShowFillBlanksTest}
+        />
+      )}
       
       {/* Fill Blanks Test Screen (Question 10) */}
-      {showFillBlanksTest && <FillBlanksTestScreen />}
+      {showFillBlanksTest && (
+        <FillBlanksTestScreen
+          setShowFillBlanksTest={setShowFillBlanksTest}
+          setShowReadingSection={setShowReadingSection}
+          setShowToeflTest={setShowToeflTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setShowReadNoticeTest={setShowReadNoticeTest}
+          setShowModule1Details={setShowModule1Details}
+          currentTest={currentTest}
+          getCurrentSectionData={getCurrentSectionData}
+        />
+      )}
       
       {/* Read Notice Test Screen (Question 11) */}
       {showReadNoticeTest && <ReadNoticeTestScreen />}
@@ -7881,7 +6663,16 @@ function AppContent() {
       {showModule1Question20 && <Module1Question20Screen />}
       
       {/* End of Module 1 Screen */}
-      {showEndModule1 && <EndModule1Screen />}
+      {showEndModule1 && (
+        <EndModule1Screen
+          setShowEndModule1={setShowEndModule1}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          saveSectionResultToHistory={saveSectionResultToHistory}
+          setShowModule2={setShowModule2}
+          setShowModule1Question20={setShowModule1Question20}
+        />
+      )}
       
       {/* Module 2 Screen */}
       {showModule2 && <Module2Screen />}
@@ -7900,7 +6691,28 @@ function AppContent() {
       {showModule2Question20 && <Module2Question20Screen />}
       
       {/* End of Module 2 / Reading Complete Screen */}
-      {showEndModule2 && <EndModule2Screen />}
+      {showEndModule2 && (
+        <EndModule2Screen
+          setShowEndModule2={setShowEndModule2}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setActiveTab={setActiveTab}
+          setActiveListeningM1Screen={setActiveListeningM1Screen}
+          setShowModule2Question20={setShowModule2Question20}
+        />
+      )}
+      
+      {/* End of Listening Screen */}
+      {showEndListening && (
+        <EndListeningScreen
+          setShowEndListening={setShowEndListening}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setActiveTab={setActiveTab}
+          setActiveWritingScreen={setActiveWritingScreen}
+          listeningScore={sectionScores.listening}
+        />
+      )}
       
       {/* Listening Section - M1 Wrapper */}
       {activeListeningM1Screen && (
@@ -7949,7 +6761,9 @@ function AppContent() {
             setActiveListeningM2Screen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            saveSectionResultToHistory('Listening', 34);
+            const result = saveSectionResultToHistory('Listening', 34);
+            setSectionScores(prev => ({ ...prev, listening: result }));
+            setShowEndListening(true);
           }}
           onVolumeClick={() => setShowVolumeModal(true)}
           onBackToM1={() => {
@@ -8001,12 +6815,9 @@ function AppContent() {
             setActiveWritingScreen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            saveSectionResultToHistory('Writing', 12);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
+            const result = saveSectionResultToHistory('Writing', 12);
+            setSectionScores(prev => ({ ...prev, writing: { score: Math.round((result.correct / result.total) * 30) } }));
+            setShowEndWriting(true);
           }}
         />
       )}
@@ -8028,8 +6839,48 @@ function AppContent() {
             setActiveSpeakingScreen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            saveSectionResultToHistory('Speaking', 11);
+            const result = saveSectionResultToHistory('Speaking', 11);
+            setSectionScores(prev => ({ ...prev, speaking: { score: Math.round((result.correct / result.total) * 30) } }));
+            setShowEndSpeaking(true);
           }}
+        />
+      )}
+
+      {/* End of Writing Screen */}
+      {showEndWriting && (
+        <EndWritingScreen
+          setShowEndWriting={setShowEndWriting}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setActiveTab={setActiveTab}
+          setActiveSpeakingScreen={setActiveSpeakingScreen}
+          writingScore={sectionScores.writing}
+        />
+      )}
+
+      {/* End of Speaking Screen */}
+      {showEndSpeaking && (
+        <EndSpeakingScreen
+          setShowEndSpeaking={setShowEndSpeaking}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setActiveTab={setActiveTab}
+          speakingScore={sectionScores.speaking}
+          onAllSectionsComplete={(scores) => {
+            setSectionScores(prev => ({ ...prev, ...scores }));
+            setShowFinalResult(true);
+          }}
+        />
+      )}
+
+      {/* Final Result Screen (TOEFL 0-120) */}
+      {showFinalResult && (
+        <FinalResultScreen
+          setShowFinalResult={setShowFinalResult}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          setActiveTab={setActiveTab}
+          sectionScores={sectionScores}
         />
       )}
 
@@ -8078,7 +6929,25 @@ function AppContent() {
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
       
       {/* TOEFL Test Screen Overlay */}
-      {showToelfTest && !showReadingSection && !showFillBlanksTest && !showReadNoticeTest && !showReadNoticeTest2 && <ToeflTestScreen />}
+      {showToelfTest && !showReadingSection && !showFillBlanksTest && !showReadNoticeTest && !showReadNoticeTest2 && (
+        <ToeflTestScreen
+          testBankType={testBankType}
+          currentTest={currentTest}
+          onBackToHome={() => {
+            setShowToeflTest(false);
+            setShowReadingSection(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
+          }}
+          onContinue={() => {
+            setShowToeflTest(false);
+            setShowFillBlanksTest(true);
+          }}
+        />
+      )}
       {/* Header */}
       <div className="bg-white box-border content-stretch flex flex-col h-[56px] md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full">
         <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-2 md:px-8">
