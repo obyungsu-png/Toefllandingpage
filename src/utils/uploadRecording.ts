@@ -106,7 +106,14 @@ export async function loadRecordings(
 ): Promise<Record<string, string>> {
   const sessionId = getSessionId();
 
-  // Try DB first
+  // sessionStorage에서 현재 세션의 녹음을 먼저 가져옴 (가장 최신/완전)
+  let sessionRecs: Record<string, string> = {};
+  try {
+    sessionRecs = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+  } catch {}
+
+  // DB에서도 가져옴 (이전 세션의 30일 보존 녹음)
+  let dbRecs: Record<string, string> = {};
   try {
     const { data, error } = await supabase
       .from('speaking_recordings')
@@ -118,17 +125,12 @@ export async function loadRecordings(
       .order('question_number');
 
     if (!error && data && data.length > 0) {
-      const result: Record<string, string> = {};
-      data.forEach(r => { result[String(r.question_number)] = r.recording_url; });
+      data.forEach(r => { dbRecs[String(r.question_number)] = r.recording_url; });
       console.log(`[loadRecordings] ✅ DB에서 ${data.length}개 로드`);
-      return result;
     }
   } catch {}
 
-  // Fallback to sessionStorage
-  try {
-    return JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
-  } catch {
-    return {};
-  }
+  // 병합: sessionStorage 우선, 없으면 DB 사용
+  const merged: Record<string, string> = { ...dbRecs, ...sessionRecs };
+  return merged;
 }
