@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Lock, Shield, Mail } from 'lucide-react';
+import { X, User, Lock, KeyRound } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 interface RegistrationFormProps {
@@ -9,73 +9,16 @@ interface RegistrationFormProps {
 }
 
 export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: RegistrationFormProps) {
-  const [countdown, setCountdown] = useState(0);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-  const [email, setEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [securityCode, setSecurityCode] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [sentCode, setSentCode] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setIsButtonDisabled(false);
-    }
-  }, [countdown]);
-
-  const handleSendCode = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      alert('유효한 이메일 주소를 입력해주세요.');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${SERVER_BASE_URL}/auth/send-email-code`, {
-        method: 'POST',
-        headers: { ...getServerHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.code) {
-          setSentCode(data.code);
-        }
-        setCountdown(60);
-        setIsButtonDisabled(true);
-        alert(`인증 코드가 ${email} 로 전송되었어요.\n메일함을 확인해주세요. (스팸함도 함께 확인)`);
-      } else {
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        setSentCode(code);
-        setCountdown(60);
-        setIsButtonDisabled(true);
-        alert(`[개발 모드] 인증 코드: ${code}`);
-      }
-    } catch (err) {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setSentCode(code);
-      setCountdown(60);
-      setIsButtonDisabled(true);
-      alert(`[개발 모드] 인증 코드: ${code}`);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (verificationCode !== sentCode) {
-      alert('인증 코드가 올바르지 않아요. 다시 확인해주세요.');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      alert('유효한 이메일 주소를 입력해주세요.');
+    if (securityCode.length !== 4) {
+      alert('4자리 보안코드를 입력해주세요.');
       return;
     }
 
@@ -93,7 +36,7 @@ export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: Re
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            email,
+            securityCode,
             username,
             password
           })
@@ -111,16 +54,16 @@ export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: Re
         }
 
         if (!response.ok) {
-          const msg = data.error === 'Email already registered'
-            ? '이미 등록된 이메일이에요. 로그인해주세요.'
-            : data.error === 'Username already taken'
+          const msg = data.error === 'Username already taken'
             ? '이미 사용 중인 사용자명이에요.'
+            : data.error === 'Invalid invite code'
+            ? '유효하지 않은 보안코드입니다.'
             : data.error || '회원가입에 실패했어요.';
           alert(msg);
           return;
         }
 
-        alert(`회원가입이 완료되었어요!\n\n이메일: ${email}\n사용자명: ${username}\n\n이제 로그인할 수 있어요.`);
+        alert(`회원가입이 완료되었어요!\n\n사용자명: ${username}\n\n이제 로그인할 수 있어요.`);
 
         if (onRegisterSuccess) {
           onRegisterSuccess();
@@ -149,41 +92,6 @@ export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: Re
       </h2>
 
       <form onSubmit={handleSubmit}>
-        {/* Email Address */}
-        <div className="relative mb-3">
-          <input
-            type="email"
-            placeholder="이메일 주소"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
-          />
-          <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        {/* Verification Code */}
-        <div className="relative mb-3">
-          <input
-            type="text"
-            placeholder="6자리 인증코드"
-            required
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            maxLength={6}
-            className="w-full pl-10 pr-[92px] py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
-          />
-          <Shield size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <button
-            type="button"
-            onClick={handleSendCode}
-            disabled={isButtonDisabled}
-            className="absolute right-1.5 top-1.5 bottom-1.5 bg-[#1e6b73] text-white font-semibold px-3 rounded-md cursor-pointer transition-colors text-xs hover:bg-[#164f56] disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {countdown > 0 ? `${countdown}s` : '코드 받기'}
-          </button>
-        </div>
-
         {/* Username */}
         <div className="relative mb-3">
           <input
@@ -199,7 +107,7 @@ export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: Re
         </div>
 
         {/* Password */}
-        <div className="relative mb-4">
+        <div className="relative mb-3">
           <input
             type="password"
             placeholder="비밀번호 (최소 6자)"
@@ -210,6 +118,20 @@ export function RegistrationForm({ onClose, onRegisterSuccess, onShowLogin }: Re
             className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
           />
           <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        </div>
+
+        {/* Security Code / Captcha */}
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="보안코드 (4자리)"
+            required
+            value={securityCode}
+            onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            maxLength={4}
+            className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white text-center tracking-[0.8em] font-mono font-bold text-lg"
+          />
+          <KeyRound size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
 
         {/* Terms Checkbox */}
