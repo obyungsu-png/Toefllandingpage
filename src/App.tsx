@@ -8094,13 +8094,28 @@ function AppContent() {
                 Login
               </button>
             ) : (
-              <div className="px-1.5 md:px-6 py-1 md:py-3 flex items-center gap-1">
+              <div className="px-1.5 md:px-6 py-1 md:py-3 flex items-center gap-2">
                 <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
                   Hello!
                 </span>
                 <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
                   {loggedInUserName}
                 </span>
+                <button 
+                  onClick={() => {
+                    setIsLoggedIn(false);
+                    setLoggedInUserName('');
+                    setShowLoginForm(false);
+                    try {
+                      localStorage.removeItem('amx_isLoggedIn');
+                      localStorage.removeItem('amx_userName');
+                    } catch {}
+                    setShowLoginPopup(true);
+                  }}
+                  className="ml-1 px-2 py-1 text-[10px] md:text-xs rounded border border-red-400 text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Logout
+                </button>
               </div>
             )}
           </div>

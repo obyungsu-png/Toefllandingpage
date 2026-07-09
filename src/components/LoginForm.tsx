@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, User, Lock, Mail, QrCode } from 'lucide-react';
+import { X, Key, Mail, QrCode } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { supabase } from '../utils/supabase/client';
 
@@ -200,7 +200,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
 
-          {/* Password */}
+          {/* 인증번호 */}
           <div className="relative mb-3">
             <input
               type="text"
@@ -210,7 +210,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               onChange={(e) => setVerifyCode(e.target.value)}
               className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
             />
-            <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Key size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
 
           <button
