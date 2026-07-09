@@ -1172,6 +1172,26 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     student2Message: '',
   });
 
+  // 업로드된 갤러리 이미지 (listening_images 테이블에서 로드)
+  interface UploadedImage {
+    id: string;
+    url: string;
+    category: string;
+    label: string;
+  }
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        const { data, error } = await supabaseClient.from('listening_images').select('*');
+        if (!error && data) {
+          setUploadedImages(data as UploadedImage[]);
+        }
+      } catch {}
+    };
+    loadImages();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

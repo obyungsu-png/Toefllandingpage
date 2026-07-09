@@ -35,14 +35,23 @@ const MEDIA_URL_FIELDS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────
-//  IndexedDB 헬퍼
+//  IndexedDB 헬퍼 — 연결 재사용 (매번 열지 않음)
 // ─────────────────────────────────────────────────────────────────
 
+let dbInstance: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbInstance) return Promise.resolve(dbInstance);
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      dbInstance = request.result;
+      resolve(dbInstance);
+    };
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -50,6 +59,7 @@ function openDB(): Promise<IDBDatabase> {
       }
     };
   });
+  return dbPromise;
 }
 
 // ─────────────────────────────────────────────────────────────────
