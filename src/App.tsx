@@ -8134,21 +8134,24 @@ function AppContent() {
                 className={`px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
                   showLoginForm 
                     ? 'bg-[#005f61] text-white hover:bg-[#004d56]' 
-                    : 'bg-transparent text-[#005f61] border-2 border-[#005f61] hover:bg-[#005f61]/10'
+                    : 'bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20'
                 }`}
               >
                 Login
               </button>
             ) : (
-              <div className="px-1.5 md:px-6 py-1 md:py-3 flex items-center gap-2">
-                <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
-                  Hello!
-                </span>
-                <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
-                  {loggedInUserName}
-                </span>
+              <div className="flex items-center gap-1.5 md:gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
+                    Hello!
+                  </span>
+                  <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
+                    {loggedInUserName}
+                  </span>
+                </div>
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
+                    await supabase.auth.signOut();
                     setIsLoggedIn(false);
                     setLoggedInUserName('');
                     setShowLoginForm(false);
@@ -8158,7 +8161,7 @@ function AppContent() {
                     } catch {}
                     setShowLoginPopup(true);
                   }}
-                  className="ml-1 px-2 py-1 text-[10px] md:text-xs rounded border border-red-400 text-red-500 hover:bg-red-50 transition-colors"
+                  className="px-2 md:px-4 py-1.5 md:py-2.5 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-sm transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20"
                 >
                   Logout
                 </button>
