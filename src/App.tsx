@@ -49,6 +49,9 @@ import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/Rea
 import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
+import { ActivationModal } from './components/ActivationModal';
+import { isFreeContent, checkUserAccess } from './utils/licenseUtils';
+import { supabase } from './utils/supabase/client';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
@@ -171,6 +174,8 @@ function AppContent() {
   const [testBankType, setTestBankType] = useState<TestBankType>('tpo');
   const [showToelfTest, setShowToeflTest] = useState(false);
   const [currentTest, setCurrentTest] = useState<{ tpoNumber: number; section: string } | null>(null);
+  const [showActivationModal, setShowActivationModal] = useState(false);
+  const [pendingPaidTest, setPendingPaidTest] = useState<{ testNumber: number; section: string; bankType: 'tpo' | 'test'; mode: 'start' | 'review' } | null>(null);
   
   // Sync state with URL on mount and location change
   useEffect(() => {
@@ -1821,6 +1826,30 @@ function AppContent() {
   };
 
   const launchSection = (
+    testNumber: number,
+    section: string,
+    bankType: 'tpo' | 'test',
+    mode: 'start' | 'review' = 'start'
+  ) => {
+    // 유료 콘텐츠 접근 체크 (TPO 1, Test 1은 무료)
+    if (!isFreeContent(bankType, testNumber)) {
+      checkUserAccess(true).then((result) => {
+        if (!result.allowed) {
+          // 로그인 안 됨 or 활성화 필요 → 모달 표시
+          setPendingPaidTest({ testNumber, section, bankType, mode });
+          setShowActivationModal(true);
+          return;
+        }
+        // 접근 허용 → 정상 진입
+        proceedLaunch(testNumber, section, bankType, mode);
+      });
+      return;
+    }
+    proceedLaunch(testNumber, section, bankType, mode);
+  };
+
+  /** 실제 테스트 진입 로직 (접근 권한 통과 후) */
+  const proceedLaunch = (
     testNumber: number,
     section: string,
     bankType: 'tpo' | 'test',
@@ -7628,10 +7657,7 @@ function AppContent() {
     const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
     const handleStartTest = (section: string) => {
-      localStorage.removeItem(`tpo_progress_real_${number}_${section}`);
-      setCurrentTest({ tpoNumber: number, section });
-      setTestBankType('test');
-      setShowToeflTest(true);
+      launchSection(number, section, 'test', 'start');
     };
 
     const handleContinueTest = (section: string) => {
@@ -8193,6 +8219,22 @@ function AppContent() {
           setShowRegistrationForm(true);
           setShowLoginForm(false);
           setRegistrationFormKey(prev => prev + 1);
+        }}
+      />
+
+      {/* Activation Modal — 유료 콘텐츠 접근 시 라이선스 확인 */}
+      <ActivationModal
+        isOpen={showActivationModal}
+        onClose={() => {
+          setShowActivationModal(false);
+          setPendingPaidTest(null);
+        }}
+        onSuccess={() => {
+          // 활성화 성공 시 pending 테스트 진입
+          if (pendingPaidTest) {
+            proceedLaunch(pendingPaidTest.testNumber, pendingPaidTest.section, pendingPaidTest.bankType, pendingPaidTest.mode);
+            setPendingPaidTest(null);
+          }
         }}
       />
 

@@ -264,6 +264,26 @@ function setupCacheIpc() {
   });
 }
 
+function setupMachineIdIpc() {
+  ipcMain.handle('get-machine-id', () => {
+    try {
+      const dataDir = app.getPath('userData');
+      const idFile = path.join(dataDir, 'machine_id.txt');
+      if (fs.existsSync(idFile)) {
+        return fs.readFileSync(idFile, 'utf8').trim();
+      }
+      // 첫 실행: UUID 생성 후 저장
+      const { randomUUID } = require('crypto');
+      const id = randomUUID();
+      fs.writeFileSync(idFile, id, 'utf8');
+      return id;
+    } catch (e) {
+      console.error('Failed to get machine ID:', e);
+      return null;
+    }
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
 //  앱 시작
 // ─────────────────────────────────────────────────────────────────
@@ -286,6 +306,7 @@ app.whenReady().then(() => {
   setupClaudeApiInterceptor();
   setupGoogleTtsInterceptor();
   setupCacheIpc();
+  setupMachineIdIpc();
   createWindow();
   setupAutoUpdater();
 

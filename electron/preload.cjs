@@ -9,6 +9,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cacheWrite: (key, value) => ipcRenderer.invoke('cache:write', key, value),
   cacheReadAll: () => ipcRenderer.invoke('cache:read-all'),
 
+  // ── 컴퓨터 고유 ID (라이선스 기기 바인딩) ──
+  getMachineId: () => ipcRenderer.invoke('get-machine-id'),
+
   // ── 자동 업데이트 ──
   checkUpdate: () => ipcRenderer.invoke('check-update'),
   installUpdate: () => ipcRenderer.send('install-update'),

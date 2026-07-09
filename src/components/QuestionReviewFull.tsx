@@ -8,6 +8,20 @@ import { ToeflAiWidget } from './ToeflAiWidget';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
+/** Audio element that reloads src explicitly when it changes */
+function AudioPlayer({ src, qNum }: { src: string; qNum: number }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (audioRef.current && src) {
+      audioRef.current.pause();
+      audioRef.current.src = src;
+      audioRef.current.load();
+      console.log(`[AudioPlayer] Q${qNum} src set: ${src.substring(0, 60)}...`);
+    }
+  }, [src, qNum]);
+  return <audio ref={audioRef} key={`audio-${qNum}`} controls className="w-full h-11" />;
+}
+
 interface QuestionReviewFullProps {
   result: TestResult;
   tpoTests?: any[];
@@ -1537,9 +1551,11 @@ export function QuestionReviewFull({
                 {currentSpeakingQ.audioUrl ? (
                   <div className="max-w-xl mx-auto">
                     <audio
+                      key={`speaking-audio-${currentQuestionIndex}-${activeModule}`}
                       ref={speakingAudioRef}
                       src={currentSpeakingQ.audioUrl}
                       onEnded={() => { setSpeakingModelPlaying(false); setModelProgress(0); }}
+                      onLoadedData={() => { setSpeakingModelPlaying(false); }}
                       onTimeUpdate={(e) => {
                         const el = e.currentTarget;
                         if (el.duration) setModelProgress((el.currentTime / el.duration) * 100);
@@ -1614,7 +1630,7 @@ export function QuestionReviewFull({
                       </span>
                     </div>
                     {recUrl ? (
-                      <audio key={qNum} controls src={recUrl} className="w-full h-11" />
+                      <AudioPlayer src={recUrl} qNum={qNum} />
                     ) : (
                       <p className="text-sm text-gray-400 italic">
                         녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
