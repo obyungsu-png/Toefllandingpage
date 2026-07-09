@@ -147,7 +147,6 @@ export function SpeakingQ9Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
             <ImageWithFallback
               src={imageUrl}
-              fallbackSrc={speakingImage}
               alt="Interviewer"
               className="w-full h-full object-cover"
             />

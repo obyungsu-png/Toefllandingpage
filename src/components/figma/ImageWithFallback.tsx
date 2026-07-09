@@ -46,10 +46,13 @@ export function ImageWithFallback({ fallbackSrc, ...props }: ImageWithFallbackPr
     setDidError(true)
   }
 
-  // src가 비어있으면 바로 폴백 사용
-  if (!props.src && fallbackSrc) {
-    const { alt, style, className, ...rest } = props
-    return <img src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
+  // src가 비어있으면 fallbackSrc가 있으면 그것을 사용, 없으면 에러 placeholder
+  if (!props.src) {
+    if (fallbackSrc) {
+      const { alt, style, className, ...rest } = props
+      return <img src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
+    }
+    return null
   }
 
   const { src, alt, style, className, ...rest } = props
