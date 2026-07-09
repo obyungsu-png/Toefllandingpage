@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, User, Lock, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { X, User, Lock, Mail, QrCode } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { supabase } from '../utils/supabase/client';
 
@@ -27,19 +27,22 @@ function GoogleIcon({ className }: { className?: string }) {
 interface LoginFormProps {
   onClose: () => void;
   onLoginSuccess?: (username: string) => void;
-  onShowRegister?: () => void;
 }
 
-export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginFormProps) {
-  const [captcha, setCaptcha] = useState('');
+export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
+  const [showWechatQR, setShowWechatQR] = useState(false);
 
   // Form fields
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [captchaInput, setCaptchaInput] = useState('');
+  const [email, setEmail] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
 
   // ── Social Login Handlers ──
   const handleWeChatLogin = async () => {
+    // Show QR code for now (API connection later)
+    setShowWechatQR(true);
+    
+    // TODO: Connect WeChat QR code API later
+    // For now, just redirect to OAuth
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'wechat',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -48,6 +51,7 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
   };
 
   const handleGoogleLogin = async () => {
+    setShowWechatQR(false);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -55,28 +59,8 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
     if (error) alert('Google 登录失败: ' + error.message);
   };
 
-  const generateCaptcha = () => {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    let newCaptcha = '';
-    for (let i = 0; i < 4; i++) {
-      newCaptcha += chars[Math.floor(Math.random() * chars.length)];
-    }
-    setCaptcha(newCaptcha);
-  };
-
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (captchaInput.toLowerCase() !== captcha.toLowerCase()) {
-      alert('보안 코드가 올바르지 않아요. 다시 확인해주세요.');
-      generateCaptcha();
-      setCaptchaInput('');
-      return;
-    }
 
     const doLogin = async () => {
       try {
@@ -87,9 +71,9 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            username,
-            password,
-            loginMethod: 'username'
+            email,
+            verifyCode,
+            loginMethod: 'email'
           })
         });
 
@@ -101,26 +85,47 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
         } catch (parseError) {
           console.error('Failed to parse response:', responseText);
           alert('Server returned invalid response. Please try again or contact support.');
-          generateCaptcha();
-          setCaptchaInput('');
           return;
         }
 
         if (!response.ok) {
-          alert(data.error || 'Login failed');
-          generateCaptcha();
-          setCaptchaInput('');
+          // If user not found, try auto-register
+          if (data.error === 'User not found') {
+            const registerResponse = await fetch(`${SERVER_BASE_URL}/users/register`, {
+              method: 'POST',
+              headers: {
+                ...getServerHeaders(),
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ email, verifyCode })
+            });
+
+            const regData = await registerResponse.json();
+            
+            if (!registerResponse.ok) {
+              alert(regData.error || '회원가입/로그인에 실패했어요.');
+              return;
+            }
+            
+            // Auto-login after registration
+            if (onLoginSuccess) {
+              onLoginSuccess(email.split('@')[0]);
+            }
+            onClose();
+            return;
+          }
+          
+          alert(data.error || '로그인에 실패했어요.');
           return;
         }
 
         if (onLoginSuccess) {
-          onLoginSuccess(data.user.username);
+          onLoginSuccess(data.user?.email || email.split('@')[0]);
         }
+        onClose();
       } catch (error) {
         console.error('Login error:', error);
         alert('Failed to connect to server. Please try again.');
-        generateCaptcha();
-        setCaptchaInput('');
       }
     };
 
@@ -140,94 +145,82 @@ export function LoginForm({ onClose, onLoginSuccess, onShowRegister }: LoginForm
         로그인
       </h2>
 
-      <form onSubmit={handleSubmit}>
-        {/* ── Social Login (Primary) ── */}
-        <div className="space-y-2.5 mb-4">
-          <button
-            type="button"
-            onClick={handleWeChatLogin}
-            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-[#07C160] hover:bg-[#06ad56] text-white font-semibold transition-colors shadow-md"
-          >
-            <WeChatIcon className="w-5 h-5" />
-            微信으로 계속하기
-          </button>
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-all shadow-md active:scale-[0.98] active:shadow-sm"
-          >
-            <GoogleIcon className="w-5 h-5" />
-            Google로 계속하기
-          </button>
-        </div>
+      {/* ── Social Login Buttons ── */}
+      <div className="space-y-2.5 mb-4">
+        <button
+          type="button"
+          onClick={handleWeChatLogin}
+          className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-[#07C160] hover:bg-[#06ad56] text-white font-semibold transition-colors shadow-md active:scale-[0.98]"
+        >
+          <WeChatIcon className="w-5 h-5" />
+          微信으로 계속하기
+        </button>
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-2.5 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold transition-all shadow-md active:scale-[0.98] active:shadow-sm"
+        >
+          <GoogleIcon className="w-5 h-5" />
+          Google로 계속하기
+        </button>
+      </div>
 
-        {/* Divider */}
+      {/* WeChat QR Code (shown when clicked) */}
+      {showWechatQR && (
+        <div className="flex flex-col items-center py-4 mb-4 animate-in fade-in duration-200">
+          <div className="bg-white p-4 rounded-xl border-2 border-dashed border-gray-300">
+            <QrCode size={160} strokeWidth={1} className="text-gray-700 mx-auto" />
+            <p className="text-xs text-center text-gray-500 mt-2">QR CODE</p>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">웨이신으로 스캔하여 가입</p>
+        </div>
+      )}
+
+      {/* Divider */}
+      {!showWechatQR && (
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
-          <div className="relative flex justify-center"><span className="px-3 bg-white text-xs text-gray-400">또는 사용자명으로</span></div>
+          <div className="relative flex justify-center"><span className="px-3 bg-white text-xs text-gray-400">또는 이메일로</span></div>
         </div>
+      )}
 
-        {/* Username */}
-        <div className="relative mb-3">
-          <input
-            type="text"
-            placeholder="사용자명"
-            required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
-          />
-          <User size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        {/* Password */}
-        <div className="relative mb-3">
-          <input
-            type="password"
-            placeholder="비밀번호"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
-          />
-          <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        {/* Captcha */}
-        <div className="relative mb-4 flex rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
-          <Shield size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-          <input
-            type="text"
-            placeholder="보안 코드"
-            required
-            value={captchaInput}
-            onChange={(e) => setCaptchaInput(e.target.value)}
-            className="flex-1 pl-10 pr-3 py-2.5 bg-transparent text-gray-800 transition-all focus:outline-none"
-          />
-          <div
-            onClick={generateCaptcha}
-            className="w-[90px] flex items-center justify-center font-mono font-bold text-base tracking-[3px] text-gray-600 bg-gray-100 cursor-pointer border-l border-gray-200 select-none hover:bg-gray-200 transition-colors"
-            title="Click to refresh"
-          >
-            {captcha}
+      {/* Email Login Form */}
+      {!showWechatQR && (
+        <form onSubmit={handleSubmit}>
+          {/* Email */}
+          <div className="relative mb-3">
+            <input
+              type="email"
+              placeholder="이메일 주소"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
+            />
+            <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
-        </div>
 
-        <button
-          type="submit"
-          className="w-full py-3 bg-[#1e6b73] text-white rounded-lg font-bold text-base cursor-pointer transition-colors hover:bg-[#164f56] shadow-sm"
-        >
-          Login
-        </button>
+          {/* Password */}
+          <div className="relative mb-3">
+            <input
+              type="text"
+              placeholder="인증번호"
+              required
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value)}
+              className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
+            />
+            <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
 
-        <div className="flex justify-between text-xs sm:text-sm px-1 mt-5">
-          <button type="button"
-            onClick={() => { if (onShowRegister) onShowRegister(); }}
-            className="text-[#1e6b73] bg-transparent border-none cursor-pointer font-bold transition-colors hover:underline">
-            회원가입
+          <button
+            type="submit"
+            className="w-full py-3 bg-[#1e6b73] text-white rounded-lg font-bold text-base cursor-pointer transition-colors hover:bg-[#164f56] shadow-sm"
+          >
+            Login
           </button>
-        </div>
-      </form>
+        </form>
+      )}
     </div>
   );
 }

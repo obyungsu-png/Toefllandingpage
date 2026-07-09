@@ -36,7 +36,6 @@ import { TPOCard } from './components/TPOCard';
 import { TestCard } from './components/TestCard';
 import { LandingPage } from './components/LandingPage';
 import { LoginForm } from './components/LoginForm';
-import { RegistrationForm } from './components/RegistrationForm';
 import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
@@ -151,10 +150,6 @@ function AppContent() {
   });
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   
-  // Registration state
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const [registrationFormKey, setRegistrationFormKey] = useState(0);
-
   // 탭 진입은 자유롭게 — 문제 시작(Start) 시점에 launchSection에서 개별 체크
 
   useEffect(() => {
@@ -690,7 +685,6 @@ function AppContent() {
     // Always switch tab and close auth forms (consistent with desktop nav behavior)
     setActiveTab(tab);
     setShowLoginForm(false);
-    setShowRegistrationForm(false);
     
     const tabRoutes: Record<TabType, string> = {
       'TPO': '/tpo-tests',
@@ -8024,7 +8018,6 @@ function AppContent() {
                 // Always go to LMS page
                 setShowLandingPage(false);
                 setShowLoginForm(false);
-                setShowRegistrationForm(false);
                 handleTabChange('TOEFL Prep');
               }}
             >
@@ -8090,7 +8083,6 @@ function AppContent() {
               <button 
                 onClick={() => {
                   setShowLoginForm(true);
-                  setShowRegistrationForm(false);
                   setLoginFormKey(prev => prev + 1);
                 }}
                 className={`px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
@@ -8110,43 +8102,6 @@ function AppContent() {
                   {loggedInUserName}
                 </span>
               </div>
-            )}
-            
-            {/* Join/Registration Button (when not logged in) or Logout Button (when logged in) */}
-            {!isLoggedIn ? (
-              <button 
-                onClick={() => {
-                  setShowRegistrationForm(true);
-                  setShowLoginForm(false);
-                  setRegistrationFormKey(prev => prev + 1);
-                }}
-                className={`px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm ${
-                  showRegistrationForm 
-                    ? 'bg-[#005f61] text-white hover:bg-[#004d56]' 
-                    : 'bg-[#005f61] text-white hover:bg-[#004d56]'
-                }`}
-              >
-                <span className="md:hidden">Join</span>
-                <span className="hidden md:inline">Registration</span>
-              </button>
-            ) : (
-              <button 
-                onClick={() => {
-                  // Logout: Reset login state
-                  setIsLoggedIn(false);
-                  setLoggedInUserName('');
-                  setShowLoginForm(false);
-                  setShowRegistrationForm(false);
-                  try {
-                    localStorage.removeItem('amx_isLoggedIn');
-                    localStorage.removeItem('amx_userName');
-                  } catch {}
-                  setShowLoginPopup(true);
-                }}
-                className="px-2 md:px-6 py-1.5 md:py-3 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-base transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61] text-white hover:bg-[#004d56]"
-              >
-                Logout
-              </button>
             )}
           </div>
         </div>
@@ -8172,36 +8127,6 @@ function AppContent() {
                   localStorage.setItem('amx_userName', username);
                 } catch {}
               }}
-              onShowRegister={() => {
-                setShowLoginForm(false);
-                setShowRegistrationForm(true);
-                setRegistrationFormKey(prev => prev + 1);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Registration Form Modal */}
-      {showRegistrationForm && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto"
-          style={{ backgroundColor: 'rgba(10, 15, 20, 0.72)' }}
-        >
-          <div className="my-8">
-            <RegistrationForm 
-              key={registrationFormKey} 
-              onClose={() => setShowRegistrationForm(false)}
-              onRegisterSuccess={() => {
-                setShowRegistrationForm(false);
-                setShowLoginForm(true);
-                setLoginFormKey(prev => prev + 1);
-              }}
-              onShowLogin={() => {
-                setShowRegistrationForm(false);
-                setShowLoginForm(true);
-                setLoginFormKey(prev => prev + 1);
-              }}
             />
           </div>
         </div>
@@ -8214,14 +8139,7 @@ function AppContent() {
         onLoginClick={() => {
           setShowLoginPopup(false);
           setShowLoginForm(true);
-          setShowRegistrationForm(false);
           setLoginFormKey(prev => prev + 1);
-        }}
-        onRegisterClick={() => {
-          setShowLoginPopup(false);
-          setShowRegistrationForm(true);
-          setShowLoginForm(false);
-          setRegistrationFormKey(prev => prev + 1);
         }}
       />
 
@@ -8243,7 +8161,7 @@ function AppContent() {
       />
 
       {/* Banner */}
-      {!showLoginForm && !showRegistrationForm && !isInTrainingMode && (
+      {!showLoginForm && !isInTrainingMode && (
         <div className="h-[130px] md:h-[140px] bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full shadow-lg">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
@@ -8264,7 +8182,7 @@ function AppContent() {
       )}
 
       {/* Main Content */}
-      {!showLoginForm && !showRegistrationForm && activeTab === 'Question Types' && (
+      {!showLoginForm && activeTab === 'Question Types' && (
         <QuestionTypesSection 
           activeSkill={activeSkill}
           setActiveSkill={setActiveSkill}
@@ -8278,7 +8196,7 @@ function AppContent() {
         />
       )}
 
-      {!showLoginForm && !showRegistrationForm && activeTab === 'Question Types-old' && (
+      {!showLoginForm && activeTab === 'Question Types-old' && (
         <div className="bg-gradient-to-b from-white to-gray-50 relative shrink-0 w-full shadow-sm">
           {/* Skills Navigation */}
           <div className="border-b border-gray-200 bg-white">
@@ -8562,7 +8480,7 @@ function AppContent() {
         </div>
       )}
 
-      {!showLoginForm && !showRegistrationForm && activeTab === 'TPO' && (
+      {!showLoginForm && activeTab === 'TPO' && (
         <TPOPage
           isMobile={isMobile}
           isLoading={isLoadingData && tpoTests.length === 0}
@@ -8586,7 +8504,7 @@ function AppContent() {
         />
       )}
 
-      {!showLoginForm && !showRegistrationForm && activeTab === 'Test' && (
+      {!showLoginForm && activeTab === 'Test' && (
         <TestPage
           isMobile={isMobile}
           isLoading={isLoadingData && testTests.length === 0}
