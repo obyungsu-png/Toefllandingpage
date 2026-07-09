@@ -39,7 +39,7 @@ import { LoginForm } from './components/LoginForm';
 import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
-import { LicenseKeyGenerator } from './components/LicenseKeyGenerator';
+
 import type { TestResult } from './types/testResult';
 import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
 import { ToeflAiWidget } from './components/ToeflAiWidget';
@@ -261,6 +261,7 @@ function AppContent() {
       if (event === 'SIGNED_IN' && session?.user) {
         const email = session.user.email || '';
         const name = session.user.user_metadata?.full_name || email.split('@')[0];
+        const provider = session.user.app_metadata?.provider || 'email';
         setIsLoggedIn(true);
         setLoggedInUserName(name);
         setShowLoginForm(false);
@@ -269,6 +270,31 @@ function AppContent() {
           localStorage.setItem('amx_isLoggedIn', 'true');
           localStorage.setItem('amx_userName', name);
         } catch {}
+
+        // OAuth 로그인 시 users_profile에 email/signup_method 저장 (기존 프로필 있으면 무시)
+        supabase.from('users_profile')
+          .select('user_id')
+          .eq('user_id', session.user.id)
+          .single()
+          .then(({ data: existing }) => {
+            if (!existing) {
+              supabase.from('users_profile').insert({
+                user_id: session.user.id,
+                email: email,
+                signup_method: provider,
+              }).then(({ error }) => {
+                if (error) console.warn('profile insert error:', error);
+              });
+            } else {
+              // 기존 프로필에 email/signup_method 없으면 업데이트
+              supabase.from('users_profile')
+                .update({ email: email, signup_method: provider })
+                .eq('user_id', session.user.id)
+                .then(({ error }) => {
+                  if (error) console.warn('profile update error:', error);
+                });
+            }
+          });
       }
       if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
@@ -8739,9 +8765,6 @@ function AppContent() {
             shareConfig={shareConfig}
             onShareConfigChange={setShareConfig}
           />
-          <div className="max-w-3xl mx-auto mt-6 px-4">
-            <LicenseKeyGenerator />
-          </div>
         </Suspense>
       )}
 

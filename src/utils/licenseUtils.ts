@@ -172,6 +172,8 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
     // 5. 프로필 upsert (기기 타입에 따라 맞는 컬럼에 ID 자동 저장)
     const upsertPayload: Record<string, any> = {
       user_id: authData.user.id,
+      email: authData.user.email || '',
+      signup_method: authData.user.app_metadata?.provider || 'email',
       expire_date: expireDate,
       user_type: keyData.user_type,
     };
