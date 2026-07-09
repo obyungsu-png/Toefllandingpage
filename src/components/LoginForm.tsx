@@ -36,27 +36,18 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
 
-  // ── Social Login Handlers ──
-  const handleWeChatLogin = async () => {
-    // Show QR code for now (API connection later)
+  // ── WeChat Login: Show QR code (API connection later) ──
+  const handleWeChatLogin = () => {
     setShowWechatQR(true);
-    
-    // TODO: Connect WeChat QR code API later
-    // For now, just redirect to OAuth
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'wechat',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) alert('微信登录失败: ' + error.message);
   };
 
   const handleGoogleLogin = async () => {
     setShowWechatQR(false);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/#/auth/callback` },
     });
-    if (error) alert('Google 登录失败: ' + error.message);
+    if (error) alert('Google 로그인 실패: ' + error.message);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

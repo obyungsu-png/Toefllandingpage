@@ -216,6 +216,25 @@ function AppContent() {
       setActiveTab('Test');
       setShowWelcomePage(false);
     }
+
+    // ── OAuth Callback: process auth tokens from URL ──
+    if (path === '/auth/callback') {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          const email = data.session.user.email || '';
+          const name = data.session.user.user_metadata?.full_name || email.split('@')[0];
+          setIsLoggedIn(true);
+          setLoggedInUserName(name);
+          setShowLoginForm(false);
+          setShowLoginPopup(false);
+          try {
+            localStorage.setItem('amx_isLoggedIn', 'true');
+            localStorage.setItem('amx_userName', name);
+          } catch {}
+        }
+        navigate('/');
+      });
+    }
     
     // Handle specialized training sub-routes
     if (path.includes('/listening')) {
@@ -234,6 +253,33 @@ function AppContent() {
   // launchSection에서 개별 체크하므로 탭 진입은 모두 자유
   useEffect(() => {
     // no-op
+  }, []);
+
+  // ── Supabase Auth State Listener (OAuth login detection) ──
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const email = session.user.email || '';
+        const name = session.user.user_metadata?.full_name || email.split('@')[0];
+        setIsLoggedIn(true);
+        setLoggedInUserName(name);
+        setShowLoginForm(false);
+        setShowLoginPopup(false);
+        try {
+          localStorage.setItem('amx_isLoggedIn', 'true');
+          localStorage.setItem('amx_userName', name);
+        } catch {}
+      }
+      if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false);
+        setLoggedInUserName('');
+        try {
+          localStorage.removeItem('amx_isLoggedIn');
+          localStorage.removeItem('amx_userName');
+        } catch {}
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const [showReadingSection, setShowReadingSection] = useState(false);
