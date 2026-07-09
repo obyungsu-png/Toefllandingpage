@@ -103,15 +103,14 @@ export async function cacheMediaUrl(url: string): Promise<void> {
 
       const blob = await response.blob();
 
-      // IndexedDB에 저장
+      // IndexedDB에 저장 (배치 처리 중에는 close하지 않음)
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         tx.objectStore(STORE_NAME).put(blob, url);
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
-
-      db.close();
+      // db.close() 제거 - 배치 처리 중 연결 유지 위해
     } catch (err) {
       console.warn(`[mediaCache] Error caching ${url}:`, err);
     } finally {

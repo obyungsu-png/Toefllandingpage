@@ -138,30 +138,8 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const editFormRef = useRef<HTMLDivElement>(null);
 
   // 편집 폼이 열리면 자동으로 스크롤
-  // Auto-create Supabase Storage buckets on mount
-  useEffect(() => {
-    const ensureBuckets = async () => {
-      try {
-        for (const bucket of [
-          { id: 'listening-audio', mime: ['audio/mpeg','audio/mp3','audio/wav','audio/ogg','audio/x-m4a'] },
-          { id: 'listening-images', mime: ['image/png','image/jpeg','image/jpg','image/webp','image/gif'] },
-          { id: 'listening-video', mime: ['video/mp4','video/webm','video/ogg','video/quicktime'] },
-        ]) {
-          const { error } = await supabaseClient.storage.createBucket(bucket.id, {
-            public: true,
-            fileSizeLimit: bucket.id === 'listening-images' ? 10485760 : 52428800,
-            allowedMimeTypes: bucket.mime,
-          });
-          if (error && !error.message.includes('already exists')) {
-            console.warn(`Bucket ${bucket.id}:`, error.message);
-          }
-        }
-      } catch (e) {
-        // Ignore - bucket likely already exists
-      }
-    };
-    ensureBuckets();
-  }, []);
+  // Note: Storage buckets (listening-audio, listening-images, listening-video)는
+  // Supabase 대시보드에서 이미 PUBLIC으로 생성됨 - auto-create 로직 제거
 
   // Load uploaded gallery images from Supabase
   useEffect(() => {
