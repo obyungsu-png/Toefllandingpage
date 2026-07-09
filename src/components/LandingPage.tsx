@@ -121,12 +121,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
         <div className="flex-1 grid grid-cols-2 gap-4 w-full max-w-lg">
           {/* Image 1 */}
           <div
-            className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
           >
             <img
-              src="https://images.unsplash.com/photo-1631061184412-b18f5fb1dc70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
-              alt="TOEFL Study Illustration"
+              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
+              alt="Studying English with laptop"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
             />
@@ -134,12 +134,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
           {/* Image 2 (Tall) */}
           <div
-            className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-2 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
           >
             <img
-              src="https://images.unsplash.com/photo-1649920442906-3c8ef428fb6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
-              alt="English Learning Illustration"
+              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
+              alt="Listening to English audio"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
             />
@@ -147,12 +147,12 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
           {/* Image 3 */}
           <div
-            className="rounded-lg overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
           >
             <img
-              src="https://images.unsplash.com/photo-1585984968562-1443b72fb0dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
-              alt="Study Group Illustration"
+              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
+              alt="Study group"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
             />

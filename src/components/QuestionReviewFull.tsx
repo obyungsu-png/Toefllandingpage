@@ -8,6 +8,71 @@ import { ToeflAiWidget } from './ToeflAiWidget';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
+/** 스피킹 문제 오디오 플레이어 — src가 바뀌면 자동으로 새 오디오 로드 */
+function SpeakingAudioPlayer({ audioUrl, qNum }: { audioUrl: string; qNum: number }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // src가 바뀌면 무조건 새 오디오 로드
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !audioUrl) return;
+    el.pause();
+    el.currentTime = 0;
+    el.src = audioUrl;
+    el.load();
+    setIsPlaying(false);
+    setProgress(0);
+  }, [audioUrl, qNum]);
+
+  const togglePlay = () => {
+    const el = audioRef.current;
+    if (!el || !el.src) return;
+    if (isPlaying) {
+      el.pause();
+      setIsPlaying(false);
+    } else {
+      el.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto">
+      <audio
+        ref={audioRef}
+        onEnded={() => { setIsPlaying(false); setProgress(0); }}
+        onTimeUpdate={(e) => {
+          const el = e.currentTarget;
+          if (el.duration) setProgress((el.currentTime / el.duration) * 100);
+        }}
+        className="hidden"
+      />
+      <button
+        onClick={togglePlay}
+        className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+      >
+        {isPlaying ? (
+          <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+        ) : (
+          <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
+        )}
+        <span className="font-bold text-[#0d3b4a]">
+          {isPlaying ? 'Pause Audio' : 'Play Audio'}
+        </span>
+        {progress > 0 && (
+          <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
+            <div
+              className="h-full bg-[#0d3b4a] rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+      </button>
+    </div>
+  );
+}
+
 /** Audio element that reloads src explicitly when it changes */
 function AudioPlayer({ src, qNum }: { src: string; qNum: number }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -16,7 +81,6 @@ function AudioPlayer({ src, qNum }: { src: string; qNum: number }) {
       audioRef.current.pause();
       audioRef.current.src = src;
       audioRef.current.load();
-      console.log(`[AudioPlayer] Q${qNum} src set: ${src.substring(0, 60)}...`);
     }
   }, [src, qNum]);
   return <audio ref={audioRef} key={`audio-${qNum}`} controls className="w-full h-11" />;
@@ -1559,51 +1623,11 @@ export function QuestionReviewFull({
 
                 {/* Question audio player */}
                 {currentSpeakingQ.audioUrl ? (
-                  <div className="max-w-xl mx-auto">
-                    <audio
-                      key={`speaking-audio-${currentQuestionIndex}-${activeModule}`}
-                      ref={speakingAudioRef}
-                      src={currentSpeakingQ.audioUrl}
-                      onEnded={() => { setSpeakingModelPlaying(false); setModelProgress(0); }}
-                      onLoadedData={() => { setSpeakingModelPlaying(false); }}
-                      onTimeUpdate={(e) => {
-                        const el = e.currentTarget;
-                        if (el.duration) setModelProgress((el.currentTime / el.duration) * 100);
-                      }}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => {
-                        const el = speakingAudioRef.current;
-                        if (!el) return;
-                        if (speakingModelPlaying) {
-                          el.pause();
-                          setSpeakingModelPlaying(false);
-                        } else {
-                          el.play().catch(() => {});
-                          setSpeakingModelPlaying(true);
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                    >
-                      {speakingModelPlaying ? (
-                        <Pause className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-                      ) : (
-                        <Play className="w-4 h-4 text-[#0d3b4a] fill-[#0d3b4a] flex-shrink-0" />
-                      )}
-                      <span className="font-bold text-[#0d3b4a]">
-                        {speakingModelPlaying ? 'Pause Audio' : 'Play Audio'}
-                      </span>
-                      {modelProgress > 0 && (
-                        <div className="flex-1 h-1 bg-gray-300 rounded-full overflow-hidden ml-2">
-                          <div
-                            className="h-full bg-[#0d3b4a] rounded-full transition-all"
-                            style={{ width: `${modelProgress}%` }}
-                          />
-                        </div>
-                      )}
-                    </button>
-                  </div>
+                  <SpeakingAudioPlayer
+                    key={`spk-audio-${currentQuestionIndex}-${activeModule}`}
+                    audioUrl={currentSpeakingQ.audioUrl}
+                    qNum={currentQuestionIndex + 1}
+                  />
                 ) : (
                   <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
                 )}
