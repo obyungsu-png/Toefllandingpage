@@ -24,10 +24,14 @@ import { VolumeControl, useVolumeControl } from './components/VolumeControl';
 import { SATWord, generateSATWordsForDay } from './components/vocaWordSets';
 import { VocabularyDay } from './components/VocabularyManagement';
 import { Student, VocabularyScore } from './components/StudentManagement';
-import { ListeningM1Wrapper, M1Screen } from './components/ListeningM1Screens';
-import { ListeningM2Wrapper, M2Screen } from './components/ListeningM2Wrapper';
-import { WritingSectionWrapper, WritingScreen } from './components/WritingSectionWrapper';
-import { SpeakingSectionWrapper, SpeakingScreen } from './components/SpeakingSectionWrapper';
+import type { M1Screen } from './components/ListeningM1Screens';
+import type { M2Screen } from './components/ListeningM2Wrapper';
+import type { WritingScreen } from './components/WritingSectionWrapper';
+import type { SpeakingScreen } from './components/SpeakingSectionWrapper';
+const ListeningM1Wrapper = lazy(() => import('./components/ListeningM1Screens').then(m => ({ default: m.ListeningM1Wrapper })));
+const ListeningM2Wrapper = lazy(() => import('./components/ListeningM2Wrapper').then(m => ({ default: m.ListeningM2Wrapper })));
+const WritingSectionWrapper = lazy(() => import('./components/WritingSectionWrapper').then(m => ({ default: m.WritingSectionWrapper })));
+const SpeakingSectionWrapper = lazy(() => import('./components/SpeakingSectionWrapper').then(m => ({ default: m.SpeakingSectionWrapper })));
 import { MobileQuestionNav } from './components/MobileQuestionNav';
 import EndModule1Screen from './components/EndModule1Screen';
 import EndModule2Screen from './components/EndModule2Screen';
@@ -40,8 +44,8 @@ import ReadingIntroScreen from './components/ReadingIntroScreen';
 import Module1IntroScreen from './components/Module1IntroScreen';
 import Module1DetailsScreen from './components/Module1DetailsScreen';
 import FillBlanksTestScreen from './components/FillBlanksTestScreen';
-import { ReadingSectionScreen } from './components/ReadingSectionScreen';
-import { ToeflTestScreen } from './components/ToeflTestScreen';
+const ReadingSectionScreen = lazy(() => import('./components/ReadingSectionScreen').then(m => ({ default: m.ReadingSectionScreen })));
+const ToeflTestScreen = lazy(() => import('./components/ToeflTestScreen').then(m => ({ default: m.ToeflTestScreen })));
 import { useTestProgress } from './hooks/useTestProgress';
 import { TestProgressRestoreModal } from './components/TestProgressRestoreModal';
 
@@ -6652,6 +6656,7 @@ function AppContent() {
         />
       )}
       {showReadingSection && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ReadingSectionScreen
           testBankType={testBankType}
           onBackToHome={() => {
@@ -6668,6 +6673,7 @@ function AppContent() {
             setShowModule1Intro(true);
           }}
         />
+        </Suspense>
       )}
       
       {/* Module 1 Intro Screen */}
@@ -6787,6 +6793,7 @@ function AppContent() {
       
       {/* Listening Section - M1 Wrapper */}
       {activeListeningM1Screen && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ListeningM1Wrapper
           initialScreen={activeListeningM1Screen}
           onScreenChange={setCurrentListeningReviewScreen}
@@ -6812,9 +6819,11 @@ function AppContent() {
             ) || null;
           }}
         />
+        </Suspense>
       )}
       {/* Listening Section - M2 Wrapper */}
       {activeListeningM2Screen && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ListeningM2Wrapper
           initialScreen={activeListeningM2Screen}
           onScreenChange={setCurrentListeningReviewScreen}
@@ -6854,10 +6863,12 @@ function AppContent() {
             ) || null;
           }}
         />
+        </Suspense>
       )}
 
       {/* Writing Section Wrapper */}
       {activeWritingScreen && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
           onScreenChange={setCurrentWritingReviewScreen}
@@ -6891,10 +6902,12 @@ function AppContent() {
             setShowEndWriting(true);
           }}
         />
+        </Suspense>
       )}
 
       {/* Speaking Section Wrapper */}
       {activeSpeakingScreen && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <SpeakingSectionWrapper
           initialScreen={activeSpeakingScreen}
           onScreenChange={setCurrentSpeakingReviewScreen}
@@ -6915,6 +6928,7 @@ function AppContent() {
             setShowEndSpeaking(true);
           }}
         />
+        </Suspense>
       )}
 
       {/* End of Writing Screen */}
@@ -7003,6 +7017,7 @@ function AppContent() {
       
       {/* TOEFL Test Screen Overlay */}
       {showToelfTest && !showReadingSection && !showFillBlanksTest && !showReadNoticeTest && !showReadNoticeTest2 && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ToeflTestScreen
           testBankType={testBankType}
           currentTest={currentTest}
@@ -7020,6 +7035,7 @@ function AppContent() {
             setShowFillBlanksTest(true);
           }}
         />
+        </Suspense>
       )}
       {/* Header */}
       <div className="bg-white box-border content-stretch flex flex-col h-[56px] md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full">
