@@ -73,8 +73,6 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
     const questionCount = getSectionQuestionCount(sectionType);
     const hasContent = questionCount > 0;
     const hasProgress = hasSavedProgress(sectionType);
-    const sectionExists = testData?.sections.some(s => s.sectionType === sectionType);
-    const isIncomplete = sectionExists && !hasContent;
 
     return (
       <div 
@@ -94,11 +92,6 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
                 <div className="flex items-center gap-0.5 sm:gap-1 text-green-600">
                   <CheckCircle2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
                   <span className="text-[8px] sm:text-[10px] md:text-xs font-medium">{questionCount}Q</span>
-                </div>
-              )}
-              {isIncomplete && (
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Incomplete</span>
                 </div>
               )}
             </div>

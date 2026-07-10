@@ -6,8 +6,6 @@ interface SpeakingResponseTimerProps {
   onRecordClick?: () => void;
   /** Label shown as a tiny caption under the mic when onRecordClick is provided */
   recordLabel?: string;
-  /** 2026 New TOEFL: Interview mode (45s) or Repeat mode (different timing) */
-  mode?: 'interview' | 'repeat' | 'standard';
 }
 
 export function SpeakingResponseTimer({
@@ -16,31 +14,12 @@ export function SpeakingResponseTimer({
   isRecording,
   onRecordClick,
   recordLabel,
-  mode = 'standard',
 }: SpeakingResponseTimerProps) {
   const radius = 19;
   const circumference = 2 * Math.PI * radius;
   const elapsed = Math.max(0, totalDuration - timeRemaining);
   const progress = totalDuration > 0 ? Math.min(elapsed / totalDuration, 1) : 0;
   const strokeDashoffset = circumference * (1 - progress);
-
-  // Time management colors (PrepEx style)
-  const getTimeColor = () => {
-    if (!isRecording) return '#148b8f';
-    const ratio = timeRemaining / totalDuration;
-    if (ratio <= 0.15) return '#ef4444'; // Red: last 15%
-    if (ratio <= 0.30) return '#f59e0b'; // Yellow: last 30%
-    return '#10b981'; // Green: plenty of time
-  };
-
-  // Get time management tip based on remaining time (TST Prep style)
-  const getTimeTip = (): string | null => {
-    if (!isRecording) return null;
-    if (totalDuration === 45 && timeRemaining <= 10) return 'Wrap up with conclusion!';
-    if (totalDuration === 45 && timeRemaining <= 20) return 'Share your story/example now';
-    if (totalDuration <= 10 && timeRemaining <= 3) return 'Finish your sentence...';
-    return null;
-  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -49,26 +28,15 @@ export function SpeakingResponseTimer({
   };
 
   const showAsButton = !!onRecordClick && !isRecording;
-  const timeColor = getTimeColor();
-  const timeTip = getTimeTip();
-
-  // Mode-specific labels for 2026 New TOEFL
-  const getModeLabel = () => {
-    switch (mode) {
-      case 'interview': return 'INTERVIEW TIME (45s)';
-      case 'repeat': return 'REPEAT TIME';
-      default: return 'RESPONSE TIME';
-    }
-  };
 
   return (
     <div className="w-fit overflow-hidden rounded-xl border border-[#8fd2cf] bg-white shadow-[0_2px_6px_rgba(20,139,143,0.1)] sm:rounded-2xl">
-      {/* Header with mode label */}
+      {/* Header */}
       <div 
         className="px-5 py-1.5 text-center text-[10px] font-bold tracking-[0.06em] text-white sm:px-8 sm:py-2 sm:text-[11px]"
-        style={{ backgroundColor: isRecording ? timeColor : '#148b8f' }}
+        style={{ backgroundColor: '#1e6b73' }}
       >
-        {getModeLabel()}
+        RESPONSE TIME
       </div>
 
       <div className="flex items-center justify-center gap-2 px-4 py-2 sm:gap-3 sm:px-6 sm:py-3">
@@ -80,7 +48,7 @@ export function SpeakingResponseTimer({
               cy="24"
               r={radius}
               fill="none"
-              stroke={isRecording ? timeColor : '#148b8f'}
+              stroke="#1e6b73"
               strokeWidth="4"
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -104,7 +72,7 @@ export function SpeakingResponseTimer({
               className={`relative flex h-7 w-7 items-center justify-center rounded-full shadow-[0_1px_4px_rgba(20,139,143,0.18)] ${isRecording ? 'bg-[#e08a8a]' : 'bg-white'}`}
               style={isRecording ? { animation: 'recBlink 1.6s ease-in-out infinite' } : undefined}
             >
-              <svg className={`relative h-4 w-4 ${isRecording ? 'text-white' : 'text-[#148b8f]'}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg className={`relative h-4 w-4 ${isRecording ? 'text-white' : 'text-[#1e6b73]'}`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                 <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
               </svg>
@@ -112,16 +80,13 @@ export function SpeakingResponseTimer({
           )}
         </div>
 
-        {/* Timer display with dynamic color */}
-        <span 
-          className="text-[18px] font-bold leading-none tracking-[0.01em] sm:text-[22px]"
-          style={{ color: isRecording ? timeColor : '#10213a' }}
-        >
+        {/* Timer display */}
+        <span className="text-[18px] font-bold leading-none tracking-[0.01em] text-[#10213a] sm:text-[22px]">
           {formatTime(timeRemaining)}
         </span>
         {isRecording && (
-          <span className="flex items-center gap-1.5 font-semibold text-sm" style={{ color: timeColor, animation: 'recBlink 1.6s ease-in-out infinite' }}>
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: timeColor }} />
+          <span className="flex items-center gap-1.5 font-semibold text-sm text-[#c0392b]" style={{ animation: 'recBlink 1.6s ease-in-out infinite' }}>
+            <span className="h-2 w-2 rounded-full bg-[#c0392b]" />
             REC
           </span>
         )}
@@ -130,21 +95,14 @@ export function SpeakingResponseTimer({
             {recordLabel || 'Record'}
           </span>
         )}
-
-        {/* Time Management Tip (PrepEx/TST Prep style) */}
-        {timeTip && (
-          <span className="hidden sm:block text-[10px] font-medium px-2 py-0.5 rounded bg-yellow-50 text-yellow-700 animate-pulse">
-            {timeTip}
-          </span>
-        )}
       </div>
 
-      {/* Progress bar for visual feedback */}
+      {/* Progress bar */}
       {isRecording && (
         <div className="h-1 bg-gray-100 mx-2 mb-1 rounded-full overflow-hidden">
           <div 
-            className="h-full rounded-full transition-all duration-200 ease-linear"
-            style={{ width: `${progress * 100}%`, backgroundColor: timeColor }}
+            className="h-full bg-[#1e6b73] rounded-full transition-all duration-200 ease-linear"
+            style={{ width: `${progress * 100}%` }}
           />
         </div>
       )}
