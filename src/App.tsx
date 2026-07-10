@@ -190,12 +190,12 @@ function AppContent() {
   // 보안 모드: 테스트 진행 중이고 외부 구매자이면 우클릭/F12/Ctrl+C 차단
   useEffect(() => {
     if (!showToelfTest || !isLoggedIn) { setNeedsSecureMode(false); return; }
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) return;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (error || !data?.user) { setNeedsSecureMode(false); return; }
       supabase.from('users_profile').select('user_type').single().then(({ data: profile }) => {
         setNeedsSecureMode(profile?.user_type === '외부구매자');
       }).catch(() => setNeedsSecureMode(false));
-    });
+    }).catch(() => setNeedsSecureMode(false));
   }, [showToelfTest, isLoggedIn]);
   useSecureMode(needsSecureMode);
   
@@ -274,7 +274,6 @@ function AppContent() {
       if (event === 'SIGNED_IN' && session?.user) {
         const email = session.user.email || '';
         const name = session.user.user_metadata?.full_name || email.split('@')[0];
-        const provider = session.user.app_metadata?.provider || 'email';
         setIsLoggedIn(true);
         setLoggedInUserName(name);
         setShowLoginForm(false);
@@ -283,31 +282,6 @@ function AppContent() {
           localStorage.setItem('amx_isLoggedIn', 'true');
           localStorage.setItem('amx_userName', name);
         } catch {}
-
-        // OAuth 로그인 시 users_profile에 email/signup_method 저장 (기존 프로필 있으면 무시)
-        supabase.from('users_profile')
-          .select('user_id')
-          .eq('user_id', session.user.id)
-          .single()
-          .then(({ data: existing }) => {
-            if (!existing) {
-              supabase.from('users_profile').insert({
-                user_id: session.user.id,
-                email: email,
-                signup_method: provider,
-              }).then(({ error }) => {
-                if (error) console.warn('profile insert error:', error);
-              });
-            } else {
-              // 기존 프로필에 email/signup_method 없으면 업데이트
-              supabase.from('users_profile')
-                .update({ email: email, signup_method: provider })
-                .eq('user_id', session.user.id)
-                .then(({ error }) => {
-                  if (error) console.warn('profile update error:', error);
-                });
-            }
-          });
       }
       if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
