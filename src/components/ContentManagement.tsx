@@ -1381,6 +1381,22 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               ))}
             </select>
           </div>
+
+          {/* Difficulty — Training 연동용 (필수) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              난이도 (Training 연동)
+            </label>
+            <select
+              value={formData.difficulty}
+              onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as '쉬움' | '보통' | '어려움' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent bg-white"
+            >
+              <option value="쉬움">쉬움</option>
+              <option value="보통">보통</option>
+              <option value="어려움">어려움</option>
+            </select>
+          </div>
         </div>
 
         {/* Module Selector — Reading 전용 */}
@@ -2700,6 +2716,22 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               {questionTypes.map(type => (
                 <option key={type} value={type}>{type}</option>
               ))}
+            </select>
+          </div>
+
+          {/* Difficulty — Training 연동용 (필수) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              난이도 (Training 연동)
+            </label>
+            <select
+              value={formData.difficulty}
+              onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as '쉬움' | '보통' | '어려움' })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent bg-white"
+            >
+              <option value="쉬움">쉬움</option>
+              <option value="보통">보통</option>
+              <option value="어려움">어려움</option>
             </select>
           </div>
         </div>
