@@ -78,24 +78,24 @@ export function TPOCardMobileCompact({
 
   return (
     <div className={`rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-all ${isLocked ? 'opacity-70' : ''}`}>
-      {/* Single-line header row */}
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c]">
-        <p className="font-bold text-white text-[15px] whitespace-nowrap shrink-0">
+      {/* Single-line header row — clean white/gray */}
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-white border-b border-gray-100">
+        <p className="font-bold text-gray-800 text-[15px] whitespace-nowrap shrink-0">
           {customTitle || `TPO ${number}`}
         </p>
         {testData?.year && (
-          <span className="text-[10px] px-2 py-0.5 bg-white/20 text-white rounded-full font-bold shrink-0">
+          <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-bold shrink-0 border border-gray-200">
             {testData.year}
           </span>
         )}
         {testData?.month && (
-          <span className="text-[10px] px-2 py-0.5 bg-[#e67e22] text-white rounded-full font-bold shrink-0">
+          <span className="text-[10px] px-2 py-0.5 bg-[#f0fafa] text-[#1e6b73] rounded-full font-bold shrink-0 border border-[#d1e8e8]">
             {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}
           </span>
         )}
 
         {isLocked && (
-          <button onClick={onUnlockClick} className="ml-auto flex items-center gap-1 bg-white/90 text-[#1e6b73] text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0">
+          <button onClick={onUnlockClick} className="ml-auto flex items-center gap-1 bg-gray-100 text-gray-500 text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 border border-gray-200">
             <Lock className="w-3 h-3" />
             Unlock
           </button>
@@ -115,10 +115,10 @@ export function TPOCardMobileCompact({
                   title={label}
                   className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all ${
                     !hasContent
-                      ? 'bg-white/10 text-white/30 cursor-not-allowed'
+                      ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                       : isActive
-                      ? 'bg-white text-[#1e6b73] shadow-md scale-110'
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                      ? 'bg-[#1e6b73] text-white shadow-md scale-110'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />

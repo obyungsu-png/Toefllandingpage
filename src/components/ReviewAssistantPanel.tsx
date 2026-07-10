@@ -75,7 +75,7 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
     title: 'Key Words',
     description: 'Essential vocabulary from the current question, ready to use.',
   },
-
+  Practice: {
     icon: ClipboardList,
     title: 'Question Practice',
     description: 'Practice real exam questions of the same type.',
