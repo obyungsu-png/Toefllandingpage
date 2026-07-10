@@ -6993,7 +6993,7 @@ function AppContent() {
           title={reviewTrainingRequest.title}
           questionType={reviewTrainingRequest.questionType || activeReviewPanel.questionType}
           difficulty={reviewTrainingRequest.difficulty || activeReviewPanel.difficulty}
-          trainingTests={trainingTests}
+          trainingTests={[...tpoTests, ...testTests]}
           onClose={() => setReviewTrainingRequest(null)}
         />
       )}
@@ -7569,7 +7569,7 @@ function AppContent() {
             }}
             setActiveTab={handleTabChange}
             lmsContents={lmsContents}
-            tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
+            tpoTests={[...tpoTests, ...testTests]}
             advertisements={advertisements}
             onSaveResult={handleAddTrainingResult}
             savedConfig={trainingConfig}
