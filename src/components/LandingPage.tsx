@@ -1,237 +1,190 @@
-import { ChevronDown, GraduationCap, Users, Briefcase, Handshake, X } from 'lucide-react';
 import { useState } from 'react';
+import { BookOpen, Headphones, PencilLine, Mic, Play, ArrowRight } from 'lucide-react';
 
 interface LandingPageProps {
   onStartTest: () => void;
 }
 
+type SubjectTab = '전체' | 'Reading' | 'Listening' | 'Writing' | 'Speaking';
+
+const SUBJECT_META: Record<string, { icon: typeof BookOpen; color: string; bg: string; border: string }> = {
+  Reading:   { icon: BookOpen,    color: '#1e6b73', bg: '#f0fafa', border: '#d1e8e8' },
+  Listening: { icon: Headphones,  color: '#2563eb', bg: '#eff4ff', border: '#c7d8ff' },
+  Writing:   { icon: PencilLine,   color: '#7c3aed', bg: '#f4efff', border: '#d9c9ff' },
+  Speaking:  { icon: Mic,          color: '#e67e22', bg: '#fff6e7', border: '#f5d7aa' },
+};
+
+const MOCK_CARDS = [
+  {
+    id: 1,
+    subject: 'Reading' as const,
+    title: 'TPO 1 · Reading',
+    desc: 'Academic Passage: Geological Formations',
+    score: '27 / 30',
+    date: '2026.03.10',
+    progress: 90,
+  },
+  {
+    id: 2,
+    subject: 'Listening' as const,
+    title: 'TPO 1 · Listening',
+    desc: 'Conversation: Office Hours & Lecture',
+    score: '22 / 28',
+    date: '2026.03.10',
+    progress: 78,
+  },
+  {
+    id: 3,
+    subject: 'Writing' as const,
+    title: 'TPO 2 · Writing',
+    desc: 'Email + Academic Discussion',
+    score: '24 / 30',
+    date: '2026.03.08',
+    progress: 80,
+  },
+  {
+    id: 4,
+    subject: 'Speaking' as const,
+    title: 'TPO 3 · Speaking',
+    desc: 'Independent & Integrated Tasks',
+    score: '18 / 30',
+    date: '2026.03.05',
+    progress: 60,
+  },
+];
+
 export function LandingPage({ onStartTest }: LandingPageProps) {
-  const [showBanner, setShowBanner] = useState(true);
+  const [activeTab, setActiveTab] = useState<SubjectTab>('전체');
+
+  const filtered = activeTab === '전체'
+    ? MOCK_CARDS
+    : MOCK_CARDS.filter((c) => c.subject === activeTab);
+
+  const tabs: SubjectTab[] = ['전체', 'Reading', 'Listening', 'Writing', 'Speaking'];
 
   return (
-    <div className="min-h-screen bg-[#EEF0FF] overflow-x-hidden">
-      <style>{`
-        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeSlideRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
-        @keyframes wave { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-10deg); } }
-        @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-      `}</style>
-      {/* Top Banner */}
-      {showBanner && (
-        <div
-          className="bg-[#EAFF5E] text-center py-3 px-5 relative z-50"
-          style={{ animation: 'slideDown 0.5s ease-out' }}
-        >
-          <p className="font-semibold text-sm">
-            Platform updates coming January 2026{' '}
-            <span
-              className="inline-block origin-[70%_70%]"
-              style={{ animation: 'wave 1.5s infinite' }}
-            >
-              👋
-            </span>{' '}
-            <a href="#" className="underline">
-              learn more
-            </a>
-          </p>
+    <div className="min-h-screen bg-[#f8f9fb] overflow-x-hidden">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1e6b73] to-[#2d8a8c] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">T</span>
+            </div>
+            <span className="font-bold text-lg text-gray-800 tracking-tight">TOEFL TPO</span>
+          </div>
           <button
-            onClick={() => setShowBanner(false)}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-xl hover:opacity-70 transition-opacity"
+            onClick={onStartTest}
+            className="flex items-center gap-1.5 bg-[#1e6b73] text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-[#174f52] transition-colors shadow-sm"
           >
-            <X size={20} />
+            <Play className="w-3.5 h-3.5" />
+            Start
           </button>
         </div>
-      )}
+      </header>
 
-      {/* Navigation */}
-      <nav className="flex justify-between items-center py-5 px-[5%] bg-transparent">
-        <div className="font-black text-2xl tracking-wider">TOEFL TPO</div>
-        <ul className="hidden md:flex gap-8 text-[13px] font-semibold uppercase">
-          <li className="cursor-pointer relative group">
-            <span className="flex items-center gap-1">
-              For Learners <ChevronDown size={12} />
-            </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
-          </li>
-          <li className="cursor-pointer relative group">
-            <span className="flex items-center gap-1">
-              Partnerships <ChevronDown size={12} />
-            </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
-          </li>
-          <li className="cursor-pointer relative group">
-            <span className="flex items-center gap-1">
-              Support <ChevronDown size={12} />
-            </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
-          </li>
-          <li className="cursor-pointer relative group">
-            Blog
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
-          </li>
-        </ul>
-      </nav>
+      {/* Greeting */}
+      <section className="max-w-2xl mx-auto px-4 pt-6 pb-2">
+        <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">
+          Ready to master<br />your TOEFL?
+        </h1>
+        <p className="text-sm text-gray-500 mt-1.5">
+          Pick a section and start practicing with real TPO questions.
+        </p>
+      </section>
 
-      {/* Hero Section */}
-      <section className="flex flex-col lg:flex-row py-10 lg:py-20 px-[5%] items-center min-h-[80vh] gap-10">
-        {/* Left: Text Content */}
-        <div className="flex-1 text-center lg:text-left">
-          <h1
-            className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-black"
-            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.2s both' }}
-          >
-            Master English and unlock global opportunities
-          </h1>
-          
-          <p
-            className="text-base md:text-lg leading-relaxed text-[#555] mb-10 max-w-2xl mx-auto lg:mx-0"
-            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.4s both' }}
-          >
-            <span className="md:hidden">
-              Your gateway to international success. Recognized in 160+ countries worldwide.
-            </span>
-            <span className="hidden md:inline">
-              The TOEFL test is more than an exam — it&apos;s your gateway to international success. 
-              From top university admissions to global career advancement and cross-cultural connections, 
-              your TOEFL score validates your English proficiency on the world stage.
-              <br />
-              <br />
-              Recognized in 160+ countries worldwide. Comprehensive practice platform for real exam preparation.
-            </span>
-          </p>
-          
-          <div
-            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-            style={{ animation: 'fadeSlideUp 0.8s ease-out 0.6s both' }}
-          >
-            <button 
-              onClick={onStartTest}
-              className="bg-[#2E336B] text-white px-8 py-4 rounded font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#1e224a] hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
-            >
-              Start Practice Test
-            </button>
-            <button className="bg-transparent text-[#2E336B] border border-[#2E336B] px-8 py-4 rounded font-bold text-sm uppercase tracking-wide hover:bg-[rgba(46,51,107,0.05)] hover:-translate-y-1 transition-all duration-300">
-              Buy Study Materials
-            </button>
-          </div>
-        </div>
-
-        {/* Right: Image Grid */}
-        <div className="flex-1 grid grid-cols-2 gap-4 w-full max-w-lg">
-          {/* Image 1 */}
-          <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
-            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
-          >
-            <img
-              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
-              alt="Studying English with laptop"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              style={{ animation: 'floatY 6s ease-in-out infinite' }}
-            />
-          </div>
-
-          {/* Image 2 (Tall) */}
-          <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group"
-            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
-          >
-            <img
-              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
-              alt="Listening to English audio"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
-            />
-          </div>
-
-          {/* Image 3 */}
-          <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
-            style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
-          >
-            <img
-              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
-              alt="Study group"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
-            />
-          </div>
+      {/* Subject Tabs */}
+      <section className="max-w-2xl mx-auto px-4 py-4">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all border ${
+                  isActive
+                    ? 'bg-[#1e6b73] text-white border-[#1e6b73] shadow-sm'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-16 px-[5%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 border-t border-gray-200">
-        {/* Feature 1 */}
-        <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-          style={{ animation: 'fadeSlideUp 0.8s ease-out 1s both' }}
-        >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <GraduationCap size={40} />
-          </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Test Takers{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
-            <span className="md:hidden">TPO 1-75 practice tests</span>
-            <span className="hidden md:inline">Practice with complete TPO 1-75 tests and build real exam confidence.</span>
-          </p>
-        </div>
+      {/* Cards */}
+      <section className="max-w-2xl mx-auto px-4 pb-8 space-y-4">
+        {filtered.map((card) => {
+          const meta = SUBJECT_META[card.subject];
+          const Icon = meta.icon;
+          return (
+            <div
+              key={card.id}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 transition-all hover:shadow-md"
+            >
+              {/* Top row: badge + date */}
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                  style={{ backgroundColor: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}
+                >
+                  <Icon className="w-3 h-3" />
+                  {card.subject.toUpperCase()}
+                </span>
+                <span className="text-[11px] text-gray-400">{card.date}</span>
+              </div>
 
-        {/* Feature 2 */}
-        <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.2s both' }}
-        >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Users size={40} />
-          </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Institutions{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
-            <span className="md:hidden">TOEFL education solutions</span>
-            <span className="hidden md:inline">Effective TOEFL education solutions to help students achieve their goals.</span>
-          </p>
-        </div>
+              {/* Title + desc */}
+              <h3 className="text-base font-bold text-gray-900 mb-1">{card.title}</h3>
+              <p className="text-sm text-gray-500 mb-4">{card.desc}</p>
 
-        {/* Feature 3 */}
-        <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.4s both' }}
-        >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Briefcase size={40} />
-          </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Teachers{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
-            <span className="md:hidden">Teaching resources & tools</span>
-            <span className="hidden md:inline">Comprehensive teaching resources and analytical tools for effective instruction.</span>
-          </p>
-        </div>
+              {/* Score bar */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${card.progress}%`, backgroundColor: meta.color }}
+                  />
+                </div>
+                <span className="text-sm font-bold" style={{ color: meta.color }}>
+                  {card.score}
+                </span>
+              </div>
 
-        {/* Feature 4 */}
-        <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
-          style={{ animation: 'fadeSlideUp 0.8s ease-out 1.6s both' }}
-        >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Handshake size={40} />
-          </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Advisors{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
-            <span className="md:hidden">Study abroad support tools</span>
-            <span className="hidden md:inline">All-in-one TOEFL learning support tools for study abroad preparation.</span>
-          </p>
+              {/* Buttons */}
+              <div className="flex gap-2.5">
+                <button
+                  onClick={onStartTest}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
+                  style={{ backgroundColor: meta.color }}
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  Start
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 transition-all active:scale-95">
+                  Review
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Bottom CTA */}
+      <section className="max-w-2xl mx-auto px-4 pb-12">
+        <div className="bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] rounded-2xl p-6 text-center text-white shadow-lg">
+          <p className="text-lg font-bold mb-1">New to TOEFL?</p>
+          <p className="text-sm opacity-90 mb-4">Take a full-length diagnostic test to see where you stand.</p>
+          <button
+            onClick={onStartTest}
+            className="inline-flex items-center gap-2 bg-white text-[#1e6b73] px-6 py-3 rounded-full font-bold text-sm hover:bg-gray-100 transition-colors active:scale-95"
+          >
+            Full Test
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </section>
     </div>
