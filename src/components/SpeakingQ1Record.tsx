@@ -29,12 +29,15 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
+  const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep/녹음 중복 방지)
 
   // Play the prompt audio first, THEN wait delay, THEN beep
   useEffect(() => {
     let startTimer: ReturnType<typeof setTimeout>;
 
     const startDelayAndBeep = () => {
+      if (startedRef.current) return; // 이미 예약됨 — 중복 호출 무시
+      startedRef.current = true;
       const delay = responseDelay ? responseDelay * 1000 : 2000;
       startTimer = setTimeout(async () => {
         await playBeep();

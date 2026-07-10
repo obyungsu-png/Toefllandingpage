@@ -28,11 +28,15 @@ export function SpeakingQ11Record({ onNext, onHome, onVolumeClick, isVolumeOpen,
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
+  const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep 중복 방지)
 
   useEffect(() => {
     if (isReviewMode) return; // Review mode: wait for manual Record button click
+    if (startedRef.current) return; // 이미 시작됨 — 중복 beep 방지
     const delay = responseDelay ? responseDelay * 1000 : 2000;
     const startTimer = setTimeout(async () => {
+      if (startedRef.current) return;
+      startedRef.current = true;
       await playBeep();
       setIsRecording(true);
       recorder.startRecording();
