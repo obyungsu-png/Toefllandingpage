@@ -63,23 +63,23 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({
     {
       name: 'Reading', band: readingBand, raw: readingRaw,
       rawTotal: sectionScores.reading ? sectionScores.reading.total : '-',
-      icon: <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></>,
+      icon: (<><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></>),
       color: '#1e6b73', bgClass: 'bg-[#f0fafa]', barColor: 'bg-[#1e6b73]', barBg: 'bg-[#d1e8e8]',
     },
     {
       name: 'Listening', band: listeningBand, raw: listeningRaw,
       rawTotal: sectionScores.listening ? sectionScores.listening.total : '-',
-      icon: <path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>,
+      icon: (<><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></>),
       color: '#2563eb', bgClass: 'bg-blue-50', barColor: 'bg-blue-500', barBg: 'bg-blue-100',
     },
     {
       name: 'Writing', band: writingBand, raw: writingRaw, rawTotal: 30,
-      icon: <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>,
+      icon: (<><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></>),
       color: '#7c3aed', bgClass: 'bg-violet-50', barColor: 'bg-violet-500', barBg: 'bg-violet-100',
     },
     {
       name: 'Speaking', band: speakingBand, raw: speakingRaw, rawTotal: 30,
-      icon: <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>,
+      icon: (<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>),
       color: '#e67e22', bgClass: 'bg-amber-50', barColor: 'bg-amber-500', barBg: 'bg-amber-100',
     }
   ];
