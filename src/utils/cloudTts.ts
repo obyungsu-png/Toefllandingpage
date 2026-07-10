@@ -119,10 +119,13 @@ function speakWithSpeechSynthesis(text: string): void {
 
 /**
  * High-quality TTS: uses speechSynthesis (Web Speech API) as primary engine
- * for instant, high-quality playback with no CORS issues.
+ * in regular browsers (Chrome/Edge) for instant, high-quality voices.
  *
- * Falls back to Google Translate TTS only in Electron environments where
- * CORS is bypassed via session interceptor.
+ * In Electron, the bundled Chromium only has access to basic OS-level
+ * SAPI voices (robotic sounding) — it does NOT have access to the
+ * premium cloud voices that a real installed Chrome/Edge browser uses.
+ * So in Electron we go straight to Google Translate TTS (network-based,
+ * much higher quality, British female voice) instead.
  *
  * Stops any previously playing speech before starting.
  *
@@ -138,13 +141,15 @@ export async function speakHighQuality(text: string): Promise<() => void> {
   globalCancelled = false;
   const mySessionCancelled = () => globalCancelled;
 
-  // ── Primary: Use Web Speech API (speechSynthesis) — no CORS, works everywhere ──
-  if ('speechSynthesis' in window && !mySessionCancelled()) {
+  const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI?.isElectron;
+
+  // ── Regular browser (Chrome/Edge/Safari): Web Speech API has good native voices ──
+  if (!isElectron && 'speechSynthesis' in window && !mySessionCancelled()) {
     speakWithSpeechSynthesis(text);
     return stopAllSpeech;
   }
 
-  // ── Fallback: Google TTS (only works in Electron with CORS bypass) ──
+  // ── Electron (or as a fallback everywhere else): Google TTS — higher quality, British female ──
   const chunks = splitTextIntoChunks(text);
 
   for (const chunk of chunks) {
