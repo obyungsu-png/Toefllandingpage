@@ -23,6 +23,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
   const [timeRemaining, setTimeRemaining] = useState(420); // 7 minutes in seconds
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showAiTutor, setShowAiTutor] = useState(false);
 
 
   useEffect(() => {

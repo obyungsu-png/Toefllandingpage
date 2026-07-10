@@ -7045,6 +7045,26 @@ function AppContent() {
           onOpenChange={setIsAiTutorOpen}
           contextLabel={`${activeReviewPanel.section}${activeReviewPanel.questionType ? ' · ' + activeReviewPanel.questionType : ''}`}
           questionData={activeReviewPanel.questionData}
+          suggestedQuestions={(() => {
+            const qType = (activeReviewPanel.questionType || '').toLowerCase();
+            if (qType.includes('email') || qType.includes('write an email')) {
+              return [
+                '📌 문제 핵심 요구사항 & 추천 구조',
+                '👥 상황별 맞춤 어휘 & 이메일 표현',
+                '✍️ 이메일 도입부(첫 문장) 추천',
+                '💡 본문 전개용 브레인스토밍 아이디어',
+              ];
+            }
+            if (qType.includes('discussion') || qType.includes('academic')) {
+              return [
+                '📌 토론 주제 및 학생 의견 핵심 요약',
+                '👥 타인 의견 인용 및 연계 표현 추천',
+                '✍️ 토론형 라이팅 도입부(첫 문장) 예시',
+                '💡 독창적 의견 전개를 위한 브레인스토밍',
+              ];
+            }
+            return undefined; // 기본값 사용
+          })()}
         />
       )}
 
