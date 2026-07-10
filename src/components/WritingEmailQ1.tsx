@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MobileFooter } from './MobileFooter';
+import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface WritingEmailQ1Props {
   onBack: () => void;
@@ -24,6 +25,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showPassage, setShowPassage] = useState(true);
+  const [showAiTutor, setShowAiTutor] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -190,6 +192,27 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
             <p className="text-sm md:text-base text-gray-800">
               Write as much as you can and in complete sentences.
             </p>
+
+            {/* AI Tutor */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowAiTutor(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#f0fafa] to-[#e8f4f8] rounded-xl border border-[#d1e8e8] hover:shadow-md transition-all active:scale-[0.98]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e6b73] to-[#2d7a7c] flex items-center justify-center shadow-sm shrink-0">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="4" />
+                    <circle cx="9" cy="10" r="1.5" fill="currentColor" />
+                    <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+                    <path d="M8 15s1.5 1 4 1 4-1 4-1" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-[#1e6b73]">AI Tutor</p>
+                  <p className="text-xs text-gray-400">Get help with this email writing</p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -297,6 +320,21 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
         onNext={handleNextClick}
         onHome={onHome}
         onVolumeClick={onVolumeClick}
+      />
+      {/* AI Tutor Widget */}
+      <ToeflAiWidget
+        position="right"
+        showFab={false}
+        open={showAiTutor}
+        onOpenChange={setShowAiTutor}
+        contextLabel="Writing · Write an Email"
+        questionData={writingQuestion}
+        suggestedQuestions={[
+          '📌 이 문제의 핵심 요구사항과 추천 구조 알려줘',
+          '👥 이 상황(수신자)에 맞는 이메일 톤앤매너와 필수 표현 알려줘',
+          '✍️ 이메일을 시작하는 자연스러운 첫 문장 추천해줘',
+          '💡 본문을 풍성하게 채울 브레인스토밍 아이디어 줘',
+        ]}
       />
     </div>
   );

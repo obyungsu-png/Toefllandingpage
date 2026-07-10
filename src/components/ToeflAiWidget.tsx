@@ -200,7 +200,7 @@ function renderRichContent(content: string): ReactNode {
   return <>{blocks}</>;
 }
 
-const suggestedQuestions = [
+const defaultSuggestedQuestions = [
   '이 문제를 분석해줘',
   '틀린 이유와 다음에 주의할 점은?',
   '이 지문의 핵심 어휘를 알려줘',
@@ -228,9 +228,11 @@ interface ToeflAiWidgetProps {
   onOpenChange?: (open: boolean) => void;
   /** 독립 FAB 버튼 표시 여부. 다른 패널에 통합할 때 false로 설정 */
   showFab?: boolean;
+  /** AI 추천 질문 목록. 미지정 시 기본값 사용 */
+  suggestedQuestions?: string[];
 }
 
-export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true }: ToeflAiWidgetProps) {
+export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions }: ToeflAiWidgetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open !== undefined ? open : internalOpen;
   const setIsOpen = (value: boolean) => {
@@ -243,6 +245,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [streamingText, setStreamingText] = useState('');
   const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const activeQuestions = propQuestions ?? defaultSuggestedQuestions;
 
   // 컨텍스트(또는 문제 데이터)가 바뀌면 대화 초기화
   useEffect(() => {
@@ -577,7 +580,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                   문제 풀이, 오답 분석, 어휘·문법, 답안 피드백까지 무엇이든 편하게 물어보세요
                 </p>
                 <div className="bg-gray-50 rounded-2xl px-4">
-                  {suggestedQuestions.map((q, idx) => (
+                  {activeQuestions.map((q, idx) => (
                     <button key={idx} className="toefl-ai-panel-suggestion" onClick={() => handleSuggestedQuestion(q)}>
                       <span>{q}</span>
                       <span className="text-gray-300">›</span>
