@@ -1,4 +1,4 @@
-import { ChevronDown, GraduationCap, Users, Briefcase, Handshake, X } from 'lucide-react';
+import { ChevronDown, GraduationCap, Users, Briefcase, Handshake, X, Play, ArrowRight, Star } from 'lucide-react';
 import { useState } from 'react';
 
 interface LandingPageProps {
@@ -9,21 +9,28 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
   const [showBanner, setShowBanner] = useState(true);
 
   return (
-    <div className="min-h-screen bg-[#EEF0FF] overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#f8f9fb] via-white to-[#f0fafa] overflow-x-hidden">
       <style>{`
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeSlideRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
         @keyframes wave { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-10deg); } }
         @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 30px rgba(30,107,115,0.2); }
+          50% { box-shadow: 0 0 50px rgba(30,107,115,0.35); }
+        }
+        .feature-card { transition: all 0.3s ease; }
+        .feature-card:hover { transform: translateY(-4px); }
       `}</style>
+
       {/* Top Banner */}
       {showBanner && (
         <div
-          className="bg-[#EAFF5E] text-center py-3 px-5 relative z-50"
+          className="bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-center py-2.5 px-5 relative z-50"
           style={{ animation: 'slideDown 0.5s ease-out' }}
         >
-          <p className="font-semibold text-sm">
+          <p className="font-semibold text-sm text-white">
             Platform updates coming January 2026{' '}
             <span
               className="inline-block origin-[70%_70%]"
@@ -31,88 +38,113 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             >
               👋
             </span>{' '}
-            <a href="#" className="underline">
+            <a href="#" className="underline text-white/80 hover:text-white transition-colors">
               learn more
             </a>
           </p>
           <button
             onClick={() => setShowBanner(false)}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-xl hover:opacity-70 transition-opacity"
+            className="absolute right-5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="flex justify-between items-center py-5 px-[5%] bg-transparent">
-        <div className="font-black text-2xl tracking-wider">TOEFL TPO</div>
-        <ul className="hidden md:flex gap-8 text-[13px] font-semibold uppercase">
-          <li className="cursor-pointer relative group">
+      {/* Glass morphism Navigation */}
+      <nav className="sticky top-0 z-40 backdrop-blur-xl bg-white/70 border-b border-white/30 flex justify-between items-center py-4 px-[5%]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1e6b73] to-[#2d8a8c] flex items-center justify-center shadow-md shadow-[#1e6b73]/20">
+            <span className="text-white font-black text-sm">T</span>
+          </div>
+          <span className="font-black text-xl tracking-tight text-gray-900">TOEFL TPO</span>
+        </div>
+        <ul className="hidden md:flex gap-7 text-[13px] font-semibold uppercase text-gray-600">
+          <li className="cursor-pointer relative group hover:text-[#1e6b73] transition-colors">
             <span className="flex items-center gap-1">
               For Learners <ChevronDown size={12} />
             </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
+            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#1e6b73] transition-all duration-300 group-hover:w-full"></span>
           </li>
-          <li className="cursor-pointer relative group">
+          <li className="cursor-pointer relative group hover:text-[#1e6b73] transition-colors">
             <span className="flex items-center gap-1">
               Partnerships <ChevronDown size={12} />
             </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
+            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#1e6b73] transition-all duration-300 group-hover:w-full"></span>
           </li>
-          <li className="cursor-pointer relative group">
+          <li className="cursor-pointer relative group hover:text-[#1e6b73] transition-colors">
             <span className="flex items-center gap-1">
               Support <ChevronDown size={12} />
             </span>
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
+            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#1e6b73] transition-all duration-300 group-hover:w-full"></span>
           </li>
-          <li className="cursor-pointer relative group">
+          <li className="cursor-pointer relative group hover:text-[#1e6b73] transition-colors">
             Blog
-            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#2E336B] transition-all duration-300 group-hover:w-full"></span>
+            <span className="absolute bottom-[-5px] left-0 w-0 h-[2px] bg-[#1e6b73] transition-all duration-300 group-hover:w-full"></span>
           </li>
         </ul>
+        <button
+          onClick={onStartTest}
+          className="md:hidden flex items-center gap-1.5 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md active:scale-95 transition-all"
+        >
+          <Play className="w-3.5 h-3.5 fill-white" />
+          Start
+        </button>
       </nav>
 
       {/* Hero Section */}
-      <section className="flex flex-col lg:flex-row py-10 lg:py-20 px-[5%] items-center min-h-[80vh] gap-10">
+      <section className="flex flex-col lg:flex-row py-8 lg:py-16 px-[5%] items-center min-h-[70vh] gap-8 lg:gap-12">
         {/* Left: Text Content */}
         <div className="flex-1 text-center lg:text-left">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-1.5 bg-white border border-gray-100 shadow-sm rounded-full px-3 py-1.5 mb-5" style={{ animation: 'fadeSlideUp 0.6s ease-out both' }}>
+            <div className="flex -space-x-1.5">
+              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#1e6b73] to-[#2d8a8c] border-2 border-white" />
+              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#2563eb] to-[#3b82f6] border-2 border-white" />
+              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e67e22] to-[#f97316] border-2 border-white" />
+            </div>
+            <span className="text-xs font-bold text-gray-500">2,400+ learners this week</span>
+          </div>
+
           <h1
-            className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-black"
+            className="text-4xl lg:text-6xl font-extrabold leading-tight mb-5 text-gray-900 tracking-tight"
             style={{ animation: 'fadeSlideUp 0.8s ease-out 0.2s both' }}
           >
-            Master English and unlock global opportunities
+            Master English and<br className="hidden lg:block" />
+            <span className="bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] bg-clip-text text-transparent"> unlock global opportunities</span>
           </h1>
-          
+
           <p
-            className="text-base md:text-lg leading-relaxed text-[#555] mb-10 max-w-2xl mx-auto lg:mx-0"
+            className="text-base md:text-lg leading-relaxed text-gray-500 mb-8 max-w-2xl mx-auto lg:mx-0"
             style={{ animation: 'fadeSlideUp 0.8s ease-out 0.4s both' }}
           >
             <span className="md:hidden">
               Your gateway to international success. Recognized in 160+ countries worldwide.
             </span>
             <span className="hidden md:inline">
-              The TOEFL test is more than an exam — it&apos;s your gateway to international success. 
-              From top university admissions to global career advancement and cross-cultural connections, 
+              The TOEFL test is more than an exam — it's your gateway to international success.
+              From top university admissions to global career advancement and cross-cultural connections,
               your TOEFL score validates your English proficiency on the world stage.
-              <br />
-              <br />
-              Recognized in 160+ countries worldwide. Comprehensive practice platform for real exam preparation.
             </span>
           </p>
-          
+
           <div
-            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+            className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
             style={{ animation: 'fadeSlideUp 0.8s ease-out 0.6s both' }}
           >
-            <button 
+            <button
               onClick={onStartTest}
-              className="bg-[#2E336B] text-white px-8 py-4 rounded font-bold text-sm uppercase tracking-wide shadow-lg hover:bg-[#1e224a] hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+              className="group relative flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-7 py-3.5 rounded-2xl font-bold text-sm tracking-wide shadow-lg shadow-[#1e6b73]/20 hover:shadow-xl hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 overflow-hidden"
             >
-              Start Practice Test
+              <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-2xl" />
+              <span className="relative flex items-center gap-2">
+                <Play className="w-4 h-4 fill-white" />
+                Start Practice Test
+              </span>
             </button>
-            <button className="bg-transparent text-[#2E336B] border border-[#2E336B] px-8 py-4 rounded font-bold text-sm uppercase tracking-wide hover:bg-[rgba(46,51,107,0.05)] hover:-translate-y-1 transition-all duration-300">
-              Buy Study Materials
+            <button className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-7 py-3.5 rounded-2xl font-bold text-sm tracking-wide hover:bg-gray-50 hover:border-gray-300 hover:-translate-y-0.5 transition-all duration-300">
+              Study Materials
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -125,6 +157,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
           >
             <img
+              loading="lazy"
               src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
               alt="Studying English with laptop"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -138,6 +171,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
           >
             <img
+              loading="lazy"
               src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
               alt="Listening to English audio"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -151,6 +185,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
           >
             <img
+              loading="lazy"
               src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
               alt="Study group"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -160,21 +195,20 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-white py-16 px-[5%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 border-t border-gray-200">
+      {/* Features Section — card style with glow */}
+      <section className="bg-white py-14 px-[5%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 border-t border-gray-100">
         {/* Feature 1 */}
         <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          className="feature-card bg-gradient-to-b from-white to-[#f0fafa] rounded-2xl p-6 border border-gray-100 cursor-pointer"
           style={{ animation: 'fadeSlideUp 0.8s ease-out 1s both' }}
         >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <GraduationCap size={40} />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#1e6b73] to-[#2d8a8c] flex items-center justify-center shadow-md shadow-[#1e6b73]/20 mb-4">
+            <GraduationCap className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Test Takers{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <h3 className="font-extrabold text-gray-900 mb-2 flex items-center gap-2 text-sm uppercase tracking-wide">
+            For Test Takers
           </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
+          <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
             <span className="md:hidden">TPO 1-75 practice tests</span>
             <span className="hidden md:inline">Practice with complete TPO 1-75 tests and build real exam confidence.</span>
           </p>
@@ -182,17 +216,16 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
         {/* Feature 2 */}
         <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          className="feature-card bg-gradient-to-b from-white to-[#eff4ff] rounded-2xl p-6 border border-gray-100 cursor-pointer"
           style={{ animation: 'fadeSlideUp 0.8s ease-out 1.2s both' }}
         >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Users size={40} />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#3b82f6] flex items-center justify-center shadow-md shadow-[#2563eb]/20 mb-4">
+            <Users className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Institutions{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <h3 className="font-extrabold text-gray-900 mb-2 flex items-center gap-2 text-sm uppercase tracking-wide">
+            For Institutions
           </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
+          <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
             <span className="md:hidden">TOEFL education solutions</span>
             <span className="hidden md:inline">Effective TOEFL education solutions to help students achieve their goals.</span>
           </p>
@@ -200,17 +233,16 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
         {/* Feature 3 */}
         <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          className="feature-card bg-gradient-to-b from-white to-[#fff6e7] rounded-2xl p-6 border border-gray-100 cursor-pointer"
           style={{ animation: 'fadeSlideUp 0.8s ease-out 1.4s both' }}
         >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Briefcase size={40} />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#e67e22] to-[#f97316] flex items-center justify-center shadow-md shadow-[#e67e22]/20 mb-4">
+            <Briefcase className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Teachers{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <h3 className="font-extrabold text-gray-900 mb-2 flex items-center gap-2 text-sm uppercase tracking-wide">
+            For Teachers
           </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
+          <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
             <span className="md:hidden">Teaching resources & tools</span>
             <span className="hidden md:inline">Comprehensive teaching resources and analytical tools for effective instruction.</span>
           </p>
@@ -218,20 +250,48 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
 
         {/* Feature 4 */}
         <div
-          className="hover:-translate-y-2 transition-transform duration-300 cursor-pointer group"
+          className="feature-card bg-gradient-to-b from-white to-[#f5f3ff] rounded-2xl p-6 border border-gray-100 cursor-pointer"
           style={{ animation: 'fadeSlideUp 0.8s ease-out 1.6s both' }}
         >
-          <div className="text-4xl text-[#2E336B] mb-4">
-            <Handshake size={40} />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#8b5cf6] flex items-center justify-center shadow-md shadow-[#7c3aed]/20 mb-4">
+            <Handshake className="w-6 h-6 text-white" />
           </div>
-          <h3 className="font-extrabold text-[#2E336B] mb-3 flex items-center gap-2 uppercase text-sm">
-            For Advisors{' '}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <h3 className="font-extrabold text-gray-900 mb-2 flex items-center gap-2 text-sm uppercase tracking-wide">
+            For Advisors
           </h3>
-          <p className="text-xs md:text-sm text-[#555] leading-relaxed">
+          <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
             <span className="md:hidden">Study abroad support tools</span>
             <span className="hidden md:inline">All-in-one TOEFL learning support tools for study abroad preparation.</span>
           </p>
+        </div>
+      </section>
+
+      {/* Bottom CTA — glow effect */}
+      <section className="px-[5%] py-14">
+        <div
+          className="max-w-2xl mx-auto relative bg-gradient-to-br from-[#1e6b73] via-[#2d7a7c] to-[#3d8a8c] rounded-3xl p-8 text-center text-white shadow-xl overflow-hidden"
+          style={{ animation: 'glowPulse 3s ease-in-out infinite' }}
+        >
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+          <div className="relative">
+            <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold mb-3 border border-white/20">
+              <Star className="w-3 h-3 fill-white" /> RECOMMENDED
+            </div>
+            <p className="text-xl lg:text-2xl font-extrabold mb-2">Ready for the real thing?</p>
+            <p className="text-sm opacity-85 mb-5 max-w-xs mx-auto leading-relaxed">
+              Full-length diagnostic test with all 4 sections. Get your band score estimate in one sitting.
+            </p>
+            <button
+              onClick={onStartTest}
+              className="inline-flex items-center gap-2 bg-white text-[#1e6b73] px-7 py-3.5 rounded-2xl font-extrabold text-sm hover:bg-gray-100 transition-all active:scale-95 shadow-lg shadow-black/10"
+            >
+              Start Full Test
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </section>
     </div>
