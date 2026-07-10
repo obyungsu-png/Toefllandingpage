@@ -42,9 +42,9 @@ const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   reading: [],
   listening: ['Dictation'],
   'writing-basic': [],
-  'writing-guided': ['Expressions', 'Template'],
+  'writing-guided': [],
   'speaking-repeat': ['Dictation'],
-  'speaking-interview': ['Expressions', 'Template'],
+  'speaking-interview': [],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -75,17 +75,7 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
     title: 'Key Words',
     description: 'Essential vocabulary from the current question, ready to use.',
   },
-  Expressions: {
-    icon: MessageSquareText,
-    title: 'Useful Expressions',
-    description: 'Sentence patterns you can apply directly in answers or essays.',
-  },
-  Template: {
-    icon: BookOpen,
-    title: 'Answer Template',
-    description: 'Practical formats to structure your answer within time limits.',
-  },
-  Practice: {
+
     icon: ClipboardList,
     title: 'Question Practice',
     description: 'Practice real exam questions of the same type.',
@@ -195,39 +185,7 @@ function getAnalysisLines(variant: ReviewVariant) {
   ];
 }
 
-function getExpressionLines(section: ReviewSection) {
-  if (section === 'Writing') {
-    return [
-      'One reason I would emphasize is that ...',
-      'The lecture directly challenges the reading by pointing out that ...',
-      'This example clearly illustrates why the proposal is effective.',
-    ];
-  }
 
-  return [
-    'From my point of view, the main issue is that ...',
-    'What the speaker really means is that ...',
-    'Overall, the best response is to focus on ...',
-  ];
-}
-
-function getTemplateLines(section: ReviewSection) {
-  if (section === 'Writing') {
-    return [
-      'Introduction: State the main claim or summarize the relationship between the sources.',
-      'Body 1: Explain the first key point with one direct detail.',
-      'Body 2: Add the second supporting point and show contrast or consequence.',
-      'Conclusion: Restate the main takeaway in one concise sentence.',
-    ];
-  }
-
-  return [
-    'Answer: My answer is ...',
-    'Reason: The main reason is ...',
-    'Detail: For example, ...',
-    'Closing: So that is why ...',
-  ];
-}
 
 function getTrainingTitle(section: ReviewSection, variant: ReviewVariant) {
   if (section === 'Reading') return 'Reading 유형문제 Training';
@@ -498,12 +456,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         );
       }
       return renderBullets('Analysis', getAnalysisLines(variant), <FileText className="h-4 w-4" />);
-    }
-    if (activeTab === 'Expressions') {
-      return renderBullets('유용한 표현', getExpressionLines(section), <MessageSquareText className="h-4 w-4" />);
-    }
-    if (activeTab === 'Template') {
-      return renderBullets('템플릿', getTemplateLines(section), <BookOpen className="h-4 w-4" />);
     }
     if (activeTab === 'Practice') return null;
     return null;
