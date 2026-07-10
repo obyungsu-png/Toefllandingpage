@@ -93,8 +93,8 @@ function createWindow() {
     },
   });
 
-  if (process.env.ELECTRON_DEV) {
-    // 개발 모드: Vite dev server
+  if (process.env.ELECTRON_DEV === 'true') {
+    // 개발 모드에서만 DevTools 열기 (Ctrl+Shift+I로도 가능)
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {

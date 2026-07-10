@@ -877,7 +877,7 @@ function AppContent() {
 
   // Warm up edge function and wait until it responds
   const warmUpServer = async (baseUrl: string, headers: Record<string, string>) => {
-    for (let attempt = 1; attempt <= 1; attempt++) { // Single attempt only — avoid extra invocations
+    for (let attempt = 1; attempt <= 1; attempt++) {
       try {
         const controller = new AbortController();
         const timeoutMs = 10000;
@@ -885,21 +885,15 @@ function AppContent() {
         const res = await fetch(`${baseUrl}/health`, { headers, signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
-          console.log(`✅ Edge Function warm-up succeeded on attempt ${attempt}`);
-          await new Promise(r => setTimeout(r, attempt > 1 ? 1000 : 300));
+          console.log('Edge Function ready');
+          await new Promise(r => setTimeout(r, 300));
           return true;
         }
-        console.warn(`⚠️ Warm-up attempt ${attempt}/4: server responded with status ${res.status}`);
-      } catch (err: any) {
-        const isAbort = err?.name === 'AbortError' || (err instanceof DOMException && err.code === 20);
-        const reason = isAbort ? 'Request timed out' : (err?.message || String(err));
-        console.log(`🔄 Warm-up attempt ${attempt}/4: ${reason}`);
-      }
-      if (attempt < 4) {
-        await new Promise(r => setTimeout(r, 2000 * attempt));
+      } catch {
+        // Warm-up 실패는 조용히 무시 — 실제 API 호출 시 재시도됨
       }
     }
-    console.warn('⚠️ Edge Function warm-up exhausted after 4 attempts, proceeding anyway');
+    console.log('Edge Function warm-up skipped, proceeding');
     return false;
   };
 
