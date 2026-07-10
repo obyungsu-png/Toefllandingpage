@@ -29,18 +29,39 @@ import type { M1Screen } from './components/ListeningM1Screens';
 import type { M2Screen } from './components/ListeningM2Wrapper';
 import type { WritingScreen } from './components/WritingSectionWrapper';
 import type { SpeakingScreen } from './components/SpeakingSectionWrapper';
-const ListeningM1Wrapper = lazy(() => import('./components/ListeningM1Screens').then(m => ({ default: m.ListeningM1Wrapper })));
-const ListeningM2Wrapper = lazy(() => import('./components/ListeningM2Wrapper').then(m => ({ default: m.ListeningM2Wrapper })));
-const WritingSectionWrapper = lazy(() => import('./components/WritingSectionWrapper').then(m => ({ default: m.WritingSectionWrapper })));
-const SpeakingSectionWrapper = lazy(() => import('./components/SpeakingSectionWrapper').then(m => ({ default: m.SpeakingSectionWrapper })));
+// 시험 흐름 lazy 청크 — import 함수를 변수로 보관해 preload에 재사용
+// (어느 진입 경로로 들어와도 청크가 미리 로드돼 있어 Suspense 조기 발동(React #426)을 방지)
+const importListeningM1 = () => import('./components/ListeningM1Screens');
+const importListeningM2 = () => import('./components/ListeningM2Wrapper');
+const importWritingWrapper = () => import('./components/WritingSectionWrapper');
+const importSpeakingWrapper = () => import('./components/SpeakingSectionWrapper');
+const importEndListening = () => import('./components/EndListeningScreen');
+const importEndWriting = () => import('./components/EndWritingScreen');
+const importEndSpeaking = () => import('./components/EndSpeakingScreen');
+const importFinalResult = () => import('./components/FinalResultScreen');
+const importReadingSection = () => import('./components/ReadingSectionScreen');
+const importToeflTest = () => import('./components/ToeflTestScreen');
+
+/** 시험 흐름에서 마운트되는 lazy 청크를 모두 미리 로드 (Suspense 조기 발동 방지) */
+function preloadTestFlowChunks() {
+  importListeningM1(); importListeningM2();
+  importWritingWrapper(); importSpeakingWrapper();
+  importEndListening(); importEndWriting(); importEndSpeaking();
+  importFinalResult(); importReadingSection(); importToeflTest();
+}
+
+const ListeningM1Wrapper = lazy(() => importListeningM1().then(m => ({ default: m.ListeningM1Wrapper })));
+const ListeningM2Wrapper = lazy(() => importListeningM2().then(m => ({ default: m.ListeningM2Wrapper })));
+const WritingSectionWrapper = lazy(() => importWritingWrapper().then(m => ({ default: m.WritingSectionWrapper })));
+const SpeakingSectionWrapper = lazy(() => importSpeakingWrapper().then(m => ({ default: m.SpeakingSectionWrapper })));
 import { MobileQuestionNav } from './components/MobileQuestionNav';
 import EndModule1Screen from './components/EndModule1Screen';
 import EndModule2Screen from './components/EndModule2Screen';
-const EndListeningScreen = lazy(() => import('./components/EndListeningScreen'));
-const EndWritingScreen = lazy(() => import('./components/EndWritingScreen'));
-const EndSpeakingScreen = lazy(() => import('./components/EndSpeakingScreen'));
+const EndListeningScreen = lazy(() => importEndListening());
+const EndWritingScreen = lazy(() => importEndWriting());
+const EndSpeakingScreen = lazy(() => importEndSpeaking());
 import type { SectionScores } from './components/EndSpeakingScreen';
-const FinalResultScreen = lazy(() => import('./components/FinalResultScreen'));
+const FinalResultScreen = lazy(() => importFinalResult());
 import ReadingIntroScreen from './components/ReadingIntroScreen';
 import Module1IntroScreen from './components/Module1IntroScreen';
 import Module1DetailsScreen from './components/Module1DetailsScreen';
@@ -101,6 +122,9 @@ function AppContent() {
   // Set document title and favicon on mount
   useEffect(() => {
     document.title = 'AllMyExam - TOEFL';
+
+    // 시험 흐름 lazy 청크 미리 로드 — 어느 진입 경로로 들어와도 Suspense 조기 발동(React #426) 방지
+    preloadTestFlowChunks();
 
     // Generate favicon: teal rounded square + white lightning bolt
     const canvas = document.createElement('canvas');
