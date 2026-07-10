@@ -182,6 +182,16 @@ function AppContent() {
   const [testBankType, setTestBankType] = useState<TestBankType>('tpo');
   const [showToelfTest, setShowToeflTest] = useState(false);
   const [currentTest, setCurrentTest] = useState<{ tpoNumber: number; section: string } | null>(null);
+  
+  // TPO/Test 중간 이탈 시 incomplete 저장
+  const prevShowToeflTestRef = useRef(false);
+  useEffect(() => {
+    if (prevShowToeflTestRef.current && !showToelfTest) {
+      saveIncompleteIfNeeded();
+    }
+    prevShowToeflTestRef.current = showToelfTest;
+  }, [showToelfTest]);
+  
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [pendingPaidTest, setPendingPaidTest] = useState<{ testNumber: number; section: string; bankType: 'tpo' | 'test'; mode: 'start' | 'review' } | null>(null);
   const [needsSecureMode, setNeedsSecureMode] = useState(false);
@@ -508,6 +518,7 @@ function AppContent() {
   const skipTestResultsSaveRef = React.useRef(false);
   const skipQuestionTypesConfigSaveRef = React.useRef(false);
   const skipTrainingConfigSaveRef = React.useRef(false);
+  const testStartTimeRef = useRef<number>(Date.now()); // 테스트 시작 시간 추적
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
@@ -1636,6 +1647,30 @@ function AppContent() {
     setTestResults(prev => [newResult, ...prev]); // Add to beginning for latest first
   };
 
+  // AI 채점 결과를 가장 최근 TestResult에 추가 저장
+  const handleSaveAiScore = (aiScore: number, feedback: string, bandScore: number) => {
+    setTestResults(prev => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      updated[0] = {
+        ...updated[0],
+        wrongAnswers: [
+          ...(updated[0].wrongAnswers || []),
+          {
+            questionId: 'ai-feedback',
+            questionText: `AI 채점 점수 (Raw: ${aiScore}/30, Band: ${bandScore})`,
+            userAnswer: `Band ${bandScore}`,
+            correctAnswer: `${aiScore}/30`,
+            explanation: feedback,
+          }
+        ],
+        // 점수를 AI 기준으로 보정 (Raw 15~27 → 정답률 보정)
+        score: Math.max(updated[0].score || 0, Math.round((aiScore / 30) * 100)),
+      };
+      return updated;
+    });
+  };
+
   const saveSectionResultToHistory = (
     category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
     totalQuestions: number,
@@ -1675,6 +1710,7 @@ function AppContent() {
       : allCmsQuestions.filter((q: any) => !isModule2Q(q));
 
     let correctCount = 0;
+    let scoredCount = 0; // 정답이 등록된 문제 수 (CMS에 correctAnswer가 있는 문제만)
     const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
 
     for (let i = 0; i < Math.min(totalQuestions, allAnswers.length); i++) {
@@ -1686,15 +1722,27 @@ function AppContent() {
       const isReadingFillBlanksSlot = category === 'Reading' && i < 10;
       if (isReadingFillBlanksSlot) continue;
 
-      if (userAns && correctAns && userAns === correctAns) {
-        correctCount++;
-      } else {
-        // Wrong OR unanswered — both count against the score
+      // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
+      if (!correctAns || correctAns === '') {
         wrongAnswers.push({
           questionId: String(i + 1),
           questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
           userAnswer: userAns || '(미답변)',
-          correctAnswer: correctAns || '',
+          correctAnswer: '(정답 미등록)',
+          explanation: cmsQ?.explanation,
+        });
+        continue; // 오답/정답 카운트 증가 안 함
+      }
+
+      scoredCount++;
+      if (userAns && userAns === correctAns) {
+        correctCount++;
+      } else {
+        wrongAnswers.push({
+          questionId: String(i + 1),
+          questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
+          userAnswer: userAns || '(미답변)',
+          correctAnswer: correctAns,
           explanation: cmsQ?.explanation,
         });
       }
@@ -1722,6 +1770,17 @@ function AppContent() {
       cmsBlanks.forEach((blank, i) => {
         const userAns = fillBlanksAnswers[i] || '';
         const correctAns = blank.answer;
+        // CMS 정답 없으면 채점 불가
+        if (!correctAns || correctAns === '') {
+          wrongAnswers.push({
+            questionId: `blank-${i + 1}`,
+            questionText: `Fill in the blank — Blank ${i + 1}`,
+            userAnswer: userAns || '(빈칸)',
+            correctAnswer: '(정답 미등록)',
+          });
+          return; // 정답/오답 카운트 증가 안 함
+        }
+        scoredCount++;
         if (userAns && userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
           correctCount++;
         } else {
@@ -1739,8 +1798,6 @@ function AppContent() {
       }
     }
 
-    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-
     // Writing: collect Build a Sentence answers from window.__writingBsAnswers
     if (category === 'Writing') {
       const bsAnswers = (typeof window !== 'undefined' && (window as any).__writingBsAnswers) || {};
@@ -1752,15 +1809,26 @@ function AppContent() {
         const qNum = i + 1;
         const userAns = bsAnswers[qNum] || '';
         const correctAns = q.correctAnswer as string || '';
-        if (userAns && correctAns) {
-          if (userAns.toLowerCase().trim() !== correctAns.toLowerCase().trim()) {
-            wrongAnswers.push({
-              questionId: `writing-bs-${qNum}`,
-              questionText: q.questionText || `Build a Sentence Q${qNum}`,
-              userAnswer: userAns,
-              correctAnswer: correctAns,
-            });
-          }
+        // CMS 정답 없으면 채점 불가
+        if (!correctAns || correctAns === '') {
+          wrongAnswers.push({
+            questionId: `writing-bs-${qNum}`,
+            questionText: q.questionText || `Build a Sentence Q${qNum}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: '(정답 미등록)',
+          });
+          return;
+        }
+        scoredCount++;
+        if (userAns && userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
+          correctCount++;
+        } else {
+          wrongAnswers.push({
+            questionId: `writing-bs-${qNum}`,
+            questionText: q.questionText || `Build a Sentence Q${qNum}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: correctAns,
+          });
         }
       });
       if (typeof window !== 'undefined') {
@@ -1772,6 +1840,10 @@ function AppContent() {
     if (typeof window !== 'undefined') {
       (window as any).__moduleAnswers = {};
     }
+
+    // 점수: 정답이 등록된 문제(scoredCount)만 기준으로 계산
+    // CMS에 정답이 하나도 없으면 0%로 표시 (채점 불가 상태)
+    const score = scoredCount > 0 ? Math.round((correctCount / scoredCount) * 100) : 0;
 
     handleAddTestResult({
       type: getCurrentResultType(),
@@ -1785,7 +1857,7 @@ function AppContent() {
       totalQuestions,
       correctAnswers: correctCount,
       wrongAnswers,
-      timeSpent: 0,
+      timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000), // 실제 소요시간(초)
     });
 
     // Return score data for UI display
@@ -1835,10 +1907,12 @@ function AppContent() {
     handleAddTestResult(result);
   };
 
+  // 오답 복습: History에서 선택한 결과를 review 모드로 열기
+  const [pendingReviewResult, setPendingReviewResult] = useState<TestResult | null>(null);
+
   const handleRetryWrongAnswers = (result: TestResult) => {
-    // TODO: Implement retry logic - will redirect to appropriate test with only wrong questions
-    console.log('Retry wrong answers for:', result);
-    alert(`오답 재시도 기능은 곧 구현될 예정입니다.\n틀린 문제: ${result.wrongAnswers.length}개`);
+    // 오답 결과를 저장 → HistorySection에서 감지하여 QuestionReviewFull 자동 오픈
+    setPendingReviewResult(result);
   };
 
   const handleViewResultDetail = (result: TestResult) => {
@@ -1880,6 +1954,34 @@ function AppContent() {
       case '17-20': return [17, 18, 19, 20];
       default: return [1, 2, 3, 4];
     }
+  };
+
+  // TPO/Test 중간 이탈 시 incomplete 저장 (30% 이상 진행 시)
+  const saveIncompleteIfNeeded = () => {
+    try {
+      const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
+      const fillBlanksAnswers = (typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {};
+      const answeredCount = Object.keys(sharedAnswers).length + Object.keys(fillBlanksAnswers).length;
+      const totalQuestions = 20; // TPO/Test 기본 20문제 기준
+      
+      if (answeredCount >= totalQuestions * 0.3) {
+        const section = currentTest?.section || 'Reading';
+        handleAddTestResult({
+          type: currentTest?.tpoNumber ? 'TPO' : 'Test',
+          category: section as 'Reading' | 'Listening' | 'Writing' | 'Speaking',
+          testName: `${getCurrentTestLabel()} - ${section}`,
+          testNumber: currentTest?.tpoNumber,
+          bankType: testBankType,
+          status: 'incomplete',
+          date: new Date().toISOString(),
+          score: 0,
+          totalQuestions,
+          correctAnswers: 0,
+          wrongAnswers: [],
+          timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000),
+        });
+      }
+    } catch {}
   };
 
   const clearReviewContext = () => {
@@ -1924,6 +2026,7 @@ function AppContent() {
     setIsReviewMode(mode === 'review');
     setCurrentTest({ tpoNumber: testNumber, section });
     setTestBankType(bankType);
+    testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
 
     if (section === 'Listening') {
       setActiveListeningM2Screen(null);
@@ -6823,6 +6926,7 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setActiveSpeakingScreen={setActiveSpeakingScreen}
           writingScore={sectionScores.writing}
+          onAiScore={handleSaveAiScore}
         />
       )}
 
@@ -6834,6 +6938,7 @@ function AppContent() {
           handleTabChange={handleTabChange}
           setActiveTab={setActiveTab}
           speakingScore={sectionScores.speaking}
+          onAiScore={handleSaveAiScore}
           onAllSectionsComplete={(scores) => {
             setSectionScores(prev => ({ ...prev, ...scores }));
             setShowFinalResult(true);
@@ -7459,8 +7564,8 @@ function AppContent() {
           <TrainingSection
             uploadedFiles={[]}
             onStartTest={(testInfo) => {
-              console.log('Starting training test:', testInfo);
-              // You can add logic here to start the training test
+              testStartTimeRef.current = Date.now(); // 트레이닝 시작 시간 기록
+              console.log('Training started:', testInfo?.title);
             }}
             setActiveTab={handleTabChange}
             lmsContents={lmsContents}
@@ -7481,9 +7586,10 @@ function AppContent() {
             results={testResults}
             tpoTests={[...tpoTests, ...testTests, ...trainingTests]}
             onRetryWrongAnswers={(result) => {
-              console.log('Retrying wrong answers:', result);
-              // Logic to retry wrong answers
+              handleRetryWrongAnswers(result);
             }}
+            pendingReviewResult={pendingReviewResult}
+            onClearPendingReview={() => setPendingReviewResult(null)}
             onRestartTest={(result, startFresh) => {
               console.log(`Restart test: ${result.testName}, startFresh: ${startFresh}`);
 

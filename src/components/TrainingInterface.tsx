@@ -6,12 +6,28 @@ type TrainingSubject = 'Reading' | 'Listening' | 'Writing' | 'Speaking' | 'Vocab
 type TrainingDifficulty = '쉬움' | '보통' | '어려움';
 type TrainingMode = 'multiple-choice' | 'fill-blanks' | 'build-sentence' | 'open-response';
 
+export interface TrainingProgress {
+  subject: TrainingSubject;
+  questionType: string;
+  difficulty: TrainingDifficulty;
+  questions: TPOQuestion[];
+  currentIndex: number;
+  correctCount: number;
+  answers: Record<number, string>;
+  startTime: number;
+  sessionTitle: string;
+}
+
 interface TrainingInterfaceProps {
   subject: TrainingSubject;
   questionType: string;
   difficulty: TrainingDifficulty;
   questions: TPOQuestion[];
-  onClose: () => void;
+  onClose: (saved?: TrainingProgress) => void;
+  onComplete?: (result: { correctCount: number; totalQuestions: number }) => void;
+  resumeIndex?: number;
+  resumeCorrectCount?: number;
+  resumeAnswers?: Record<number, string>;
 }
 
 const SUBJECT_THEME: Record<TrainingSubject, { bg: string; card: string; accent: string; soft: string; border: string }> = {
@@ -77,15 +93,16 @@ function getDifficultyLabel(difficulty: TrainingDifficulty) {
   return 'Normal';
 }
 
-export function TrainingInterface({ subject, questionType, difficulty, questions, onClose }: TrainingInterfaceProps) {
+export function TrainingInterface({ subject, questionType, difficulty, questions, onClose, onComplete, resumeIndex = 0, resumeCorrectCount = 0, resumeAnswers = {} }: TrainingInterfaceProps) {
   const theme = SUBJECT_THEME[subject];
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(resumeIndex);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [blankInputs, setBlankInputs] = useState<string[]>([]);
   const [sentenceAnswer, setSentenceAnswer] = useState('');
   const [writtenAnswer, setWrittenAnswer] = useState('');
   const [checked, setChecked] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(resumeCorrectCount);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>(resumeAnswers);
 
   const currentQuestion = questions[currentIndex];
   const mode = useMemo(() => (currentQuestion ? getTrainingMode(currentQuestion) : 'open-response'), [currentQuestion]);
@@ -112,7 +129,7 @@ export function TrainingInterface({ subject, questionType, difficulty, questions
             <p className="mt-3 text-sm leading-6 text-slate-500">현재 선택한 과목, 유형, 난이도 조합에 맞는 문제가 아직 등록되지 않았습니다.</p>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleExit}
               className="mt-6 inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white"
               style={{ backgroundColor: theme.card }}
             >
@@ -150,6 +167,15 @@ export function TrainingInterface({ subject, questionType, difficulty, questions
   const handleCheck = () => {
     if (!canCheck || checked) return;
 
+    let currentAnswer = '';
+    if (mode === 'multiple-choice') currentAnswer = String(selectedOptionIndex);
+    else if (mode === 'fill-blanks') currentAnswer = blankInputs.join('|');
+    else if (mode === 'build-sentence') currentAnswer = sentenceAnswer;
+    else currentAnswer = writtenAnswer;
+    
+    // 답변 기록
+    setUserAnswers(prev => ({ ...prev, [currentIndex]: currentAnswer }));
+
     if (mode !== 'open-response' && objectiveResult) {
       setCorrectCount((prev) => prev + 1);
     }
@@ -159,11 +185,30 @@ export function TrainingInterface({ subject, questionType, difficulty, questions
 
   const handleNext = () => {
     if (isLast) {
-      onClose();
+      // 결과 저장 후 닫기 (완료)
+      onComplete?.({ correctCount: checked ? correctCount : correctCount, totalQuestions: questions.length });
+      onClose(); // 완료된 건 progress 저장 안 함
       return;
     }
 
     setCurrentIndex((prev) => prev + 1);
+  };
+
+  // 중간에 나갈 때 progress 저장
+  const handleExit = () => {
+    const answeredCount = Object.keys(userAnswers).length + (checked ? 1 : 0);
+    const progress: TrainingProgress = {
+      subject,
+      questionType,
+      difficulty,
+      questions,
+      currentIndex,
+      correctCount: checked ? correctCount : correctCount,
+      answers: { ...userAnswers },
+      startTime: Date.now(),
+      sessionTitle: `${subject} ${questionType} 훈련`,
+    };
+    onClose(progress);
   };
 
   return (
@@ -177,7 +222,7 @@ export function TrainingInterface({ subject, questionType, difficulty, questions
         <div className="relative w-full max-w-[88rem] rounded-[36px] border border-white/70 bg-white/88 p-4 shadow-[0_28px_90px_rgba(15,23,42,0.20)] backdrop-blur-2xl sm:p-6 lg:p-8">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleExit}
             className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.10)] backdrop-blur sm:right-6 sm:top-6"
           >
             <X className="h-3.5 w-3.5" />

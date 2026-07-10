@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { BarChart3, Clock, CheckCircle, XCircle, RotateCcw, ChevronRight, Calendar, Share2, Settings, TrendingUp, ChevronDown, BookOpen, Star, ChevronLeft, CheckCircle2, Flame, Eye, MessageCircle, PanelRightOpen, PanelRightClose, User, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ShareSettings, ShareConfig } from './ShareSettings';
@@ -33,6 +33,9 @@ interface HistorySectionProps {
   advertisements?: any[];
   isLoggedIn?: boolean;
   onRequestLogin?: () => void;
+  // 오답 복습 자동 열기 (App.tsx → HistorySection)
+  pendingReviewResult?: TestResult | null;
+  onClearPendingReview?: () => void;
 }
 
 type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report';
@@ -54,6 +57,8 @@ export function HistorySection({
   shareConfig,
   onShareConfigChange,
   studentName = 'Student',
+  pendingReviewResult,
+  onClearPendingReview,
   advertisements = [],
   isLoggedIn = true,
   onRequestLogin
@@ -87,6 +92,18 @@ export function HistorySection({
   // Delete confirm modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<TestResult | null>(null);
+
+  // 오답 복습 자동 열기: pendingReviewResult가 들어오면 → QuestionReviewFull 실행
+  useEffect(() => {
+    if (pendingReviewResult) {
+      setSelectedResult(pendingReviewResult);
+      setScoreModalSection((pendingReviewResult.category as any) || 'Reading');
+      setScoreModalModule(1);
+      setShowScoreModal(false);
+      setShowQuestionReview(true);
+      onClearPendingReview?.();
+    }
+  }, [pendingReviewResult]);
 
   // Calendar state
   const now = new Date();

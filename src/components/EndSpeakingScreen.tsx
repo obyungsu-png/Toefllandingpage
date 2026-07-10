@@ -30,6 +30,7 @@ interface EndSpeakingScreenProps {
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   speakingScore?: ScoreData | null;
   onAllSectionsComplete?: (scores: SectionScores) => void;
+  onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;
 }
 
 export interface SectionScores {
@@ -45,7 +46,8 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
   handleTabChange,
   setActiveTab,
   speakingScore,
-  onAllSectionsComplete
+  onAllSectionsComplete,
+  onAiScore
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
@@ -63,18 +65,21 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // 2026 New TOEFL Speaking Rubric (Band Score 기준)
-    setAiResult({
-      score: Math.floor(Math.random() * 12) + 15, // 15-27 raw → Band 2.5-5.0
-      feedback: `🎤 2026 신토플 Speaking AI Feedback (Band Score 기반)\n\n` +
+    const aiRawScore = Math.floor(Math.random() * 12) + 15; // 15-27 raw
+    const aiBand = convertToBand(aiRawScore);
+    const aiFeedback = `🎤 2026 신토플 Speaking AI Feedback (Band Score 기반)\n\n` +
         `[Fluency & Clarity] ${Math.random() > 0.5 ? '✓' : '△'} Smooth delivery with natural pacing\n` +
         `[Pronunciation] ${Math.random() > 0.5 ? '✓' : '△'} Clear articulation of key sounds\n` +
         `[Content] ${Math.random() > 0.5 ? '✓' : '△'} Direct response with specific examples\n\n` +
         `💡 고득점 팁 (PrepEx/ELSA/TST Prep 참고):\n` +
         `• Interview (45초): 깊고 구체적인 1개 스토리 > 얇은 2개 이유 (WHO/WHEN/WHERE 필수)\n` +
         `• Listen & Repeat: Shadowing 연습으로 귀와 입 동기화, 명료성(Clarity)이 핵심\n` +
-        `• 타이머 훈련: 40초에 핵심 답변 완성, 남은 5초는 마무리에 사용`
-    });
+        `• 타이머 훈련: 40초에 핵심 답변 완성, 남은 5초는 마무리에 사용`;
+
+    setAiResult({ score: aiRawScore, feedback: aiFeedback });
     setIsAiGrading(false);
+    // AI 점수를 History에 저장하도록 부모에 알림
+    onAiScore?.(aiRawScore, aiFeedback, aiBand);
   };
 
   return (

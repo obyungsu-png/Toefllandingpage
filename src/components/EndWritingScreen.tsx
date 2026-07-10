@@ -30,6 +30,7 @@ interface EndWritingScreenProps {
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   setActiveSpeakingScreen: React.Dispatch<React.SetStateAction<any>>;
   writingScore?: ScoreData | null;
+  onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;
 }
 
 const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
@@ -38,7 +39,8 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   handleTabChange,
   setActiveTab,
   setActiveSpeakingScreen,
-  writingScore
+  writingScore,
+  onAiScore
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
@@ -56,18 +58,21 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     // 2026 New TOEFL Writing Rubric (Band Score 기준)
-    setAiResult({
-      score: Math.floor(Math.random() * 12) + 15, // 15-27 raw → Band 2.5-5.0
-      feedback: `📝 2026 신토플 Writing AI Feedback (Band Score 기반)\n\n` +
+    const aiRawScore = Math.floor(Math.random() * 12) + 15; // 15-27 raw
+    const aiBand = convertToBand(aiRawScore);
+    const aiFeedback = `📝 2026 신토플 Writing AI Feedback (Band Score 기반)\n\n` +
         `[Organization & Structure] ${Math.random() > 0.5 ? '✓' : '△'} Clear paragraph structure with logical flow\n` +
         `[Content & Development] ${Math.random() > 0.5 ? '✓' : '△'} Addresses all required points from the prompt\n` +
         `[Language Use] ${Math.random() > 0.5 ? '✓' : '△'} Varied vocabulary and sentence structure\n\n` +
         `💡 고득점 팁 (TST Prep/Arno 참고):\n` +
         `• Email Writing: 3개 필수 요소(목적/Point1/Point2)를 빠짐없이 다룰 것\n` +
         `• Discussion: 상대방 의견을 paraphrase한 후 자신의 근거+예시로 전개할 것\n` +
-        `• Sentence Building: SVO 어순과 수 일치(subject-verb agreement) 확인할 thing`
-    });
+        `• Sentence Building: SVO 어순과 수 일치(subject-verb agreement) 확인할 것`;
+
+    setAiResult({ score: aiRawScore, feedback: aiFeedback });
     setIsAiGrading(false);
+    // AI 점수를 History에 저장하도록 부모에 알림
+    onAiScore?.(aiRawScore, aiFeedback, aiBand);
   };
 
   return (

@@ -62,6 +62,8 @@ interface ActiveTrainingSession {
   questionType: string;
   difficulty: '쉬움' | '보통' | '어려움';
   questions: TPOQuestion[];
+  startTime: number;
+  sessionTitle: string;
 }
 
 export function TrainingSection({ 
@@ -85,6 +87,8 @@ export function TrainingSection({
   const [selectedQuestionCount, setSelectedQuestionCount] = useState('10문제');
   const [showTrainingInterface, setShowTrainingInterface] = useState(false);
   const [activeTrainingSession, setActiveTrainingSession] = useState<ActiveTrainingSession | null>(null);
+  const [resumeProgress, setResumeProgress] = useState<any>(null); // 이어풀기용 저장된 progress
+  const [showResumeModal, setShowResumeModal] = useState(false);
   
   // Year/Month filters for Training
   type YearFilter = 'all' | '2024' | '2025' | '2026';
@@ -286,11 +290,14 @@ export function TrainingSection({
       return;
     }
 
+    const sessionTitle = `${selectedSubject} ${selectedQuestionType.name} 전문훈련`;
     setActiveTrainingSession({
       subject: selectedSubject as ActiveTrainingSession['subject'],
       questionType: selectedQuestionType.name,
       difficulty: selectedDifficulty,
       questions: sampledQuestions,
+      startTime: Date.now(),
+      sessionTitle,
     });
     setShowTrainingInterface(true);
 
@@ -315,12 +322,46 @@ export function TrainingSection({
 
     onStartTest(testInfo);
 
-    if (onSaveResult) {
-      onSaveResult({
-        ...testInfo,
-        completedAt: new Date().toISOString()
-      });
-    }
+    // NOTE: 시작 시에는 저장하지 않음. 완료 시에만 onComplete에서 저장.
+    // 이렇게 하면 중간에 종료한 훈련은 History에 쌓이지 않음.
+  };
+
+  // 이어풀기: 이전 progress가 localStorage에 있으면 모달 표시
+  useEffect(() => {
+    if (showTrainingInterface && activeTrainingSession) return;
+    try {
+      const saved = localStorage.getItem('training_progress');
+      if (saved) {
+        const progress = JSON.parse(saved);
+        // 24시간 지난 progress는 무시
+        if (Date.now() - progress.startTime < 86400000) {
+          setResumeProgress(progress);
+          setShowResumeModal(true);
+        } else {
+          localStorage.removeItem('training_progress');
+        }
+      }
+    } catch {}
+  }, [showTrainingInterface]);
+
+  const handleResumeTraining = () => {
+    if (!resumeProgress) return;
+    setShowResumeModal(false);
+    setActiveTrainingSession({
+      subject: resumeProgress.subject,
+      questionType: resumeProgress.questionType,
+      difficulty: resumeProgress.difficulty,
+      questions: resumeProgress.questions,
+      startTime: Date.now(),
+      sessionTitle: resumeProgress.sessionTitle || '',
+    });
+    setShowTrainingInterface(true);
+  };
+
+  const handleStartFresh = () => {
+    localStorage.removeItem('training_progress');
+    setResumeProgress(null);
+    setShowResumeModal(false);
   };
 
   // Show training interface if active
@@ -331,13 +372,88 @@ export function TrainingSection({
         questionType={activeTrainingSession.questionType}
         difficulty={activeTrainingSession.difficulty}
         questions={activeTrainingSession.questions}
-        onClose={() => {
+        resumeIndex={resumeProgress?.currentIndex || 0}
+        resumeCorrectCount={resumeProgress?.correctCount || 0}
+        resumeAnswers={resumeProgress?.answers || {}}
+        onComplete={(result) => {
+          // 완료 시 localStorage 삭제 + completed 저장
+          localStorage.removeItem('training_progress');
+          setResumeProgress(null);
+          onSaveResult?.({
+            title: activeTrainingSession.sessionTitle || `${activeTrainingSession.subject} 훈련`,
+            type: 'Training',
+            category: activeTrainingSession.subject,
+            testName: activeTrainingSession.subject,
+            date: new Date().toISOString(),
+            score: result.totalQuestions > 0 ? Math.round((result.correctCount / result.totalQuestions) * 100) : 0,
+            totalQuestions: result.totalQuestions,
+            correctAnswers: result.correctCount,
+            wrongAnswers: [],
+            timeSpent: Math.round((Date.now() - (activeTrainingSession.startTime || Date.now())) / 1000),
+            status: 'completed' as const,
+            bankType: 'training' as const,
+          });
+        }}
+        onClose={(savedProgress) => {
+          if (savedProgress) {
+            // 30% 이상 진행했으면 incomplete 저장 + localStorage 저장
+            const answeredCount = Object.keys(savedProgress.answers).length;
+            if (answeredCount >= savedProgress.questions.length * 0.3) {
+              savedProgress.startTime = savedProgress.startTime || Date.now();
+              localStorage.setItem('training_progress', JSON.stringify(savedProgress));
+              onSaveResult?.({
+                title: savedProgress.sessionTitle || `${savedProgress.subject} 훈련`,
+                type: 'Training',
+                category: savedProgress.subject,
+                testName: savedProgress.subject,
+                date: new Date().toISOString(),
+                score: savedProgress.questions.length > 0 ? Math.round((savedProgress.correctCount / savedProgress.questions.length) * 100) : 0,
+                totalQuestions: savedProgress.questions.length,
+                correctAnswers: savedProgress.correctCount,
+                wrongAnswers: [],
+                timeSpent: Math.round((Date.now() - savedProgress.startTime) / 1000),
+                status: 'incomplete',
+                bankType: 'training' as const,
+              });
+            }
+          }
           setShowTrainingInterface(false);
           setActiveTrainingSession(null);
         }}
       />
     );
   }
+
+  {/* 이어풀기 모달 */}
+  {showResumeModal && resumeProgress && (
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
+        <div className="text-4xl mb-3">⏸️</div>
+        <h2 className="text-lg font-bold text-gray-800 mb-2">이전 훈련이 있습니다</h2>
+        <p className="text-sm text-gray-500 mb-1">
+          {resumeProgress.subject} · {resumeProgress.questionType}
+        </p>
+        <p className="text-xs text-gray-400 mb-5">
+          {resumeProgress.questions.length}문제 중 {Object.keys(resumeProgress.answers).length}문제 풀었습니다
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleResumeTraining}
+            className="w-full py-3 rounded-xl font-semibold text-white transition-colors"
+            style={{ backgroundColor: '#005f61' }}
+          >
+            이어풀기
+          </button>
+          <button
+            onClick={handleStartFresh}
+            className="w-full py-2.5 rounded-xl font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
+          >
+            처음부터 다시 풀기
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 pb-24 md:pb-0">
