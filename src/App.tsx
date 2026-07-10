@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import React, { lazy, Suspense, startTransition, useState, useEffect, useRef } from 'react';
 import { HashRouter, useLocation, useNavigate } from 'react-router';
 import imgLogoPng from "figma:asset/8789442c63cae6ce8bee2e41980635b315e3d0a1.png";
 import imgImage from "figma:asset/b015191727695c9e8bd91edeb4f1203bfd9cbbf0.png";
@@ -2042,28 +2042,31 @@ function AppContent() {
     setTestBankType(bankType);
     testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
 
-    if (section === 'Listening') {
-      setActiveListeningM2Screen(null);
-      setActiveListeningM1Screen('intro');
-      return;
-    }
+    // lazy 컴포넌트 마운트를 transition으로 감싸 Suspense 조기 발동(React #426) 방지
+    startTransition(() => {
+      if (section === 'Listening') {
+        setActiveListeningM2Screen(null);
+        setActiveListeningM1Screen('intro');
+        return;
+      }
 
-    if (section === 'Reading') {
-      setShowReadingIntro(true);
-      return;
-    }
+      if (section === 'Reading') {
+        setShowReadingIntro(true);
+        return;
+      }
 
-    if (section === 'Writing') {
-      setActiveWritingScreen('intro');
-      return;
-    }
+      if (section === 'Writing') {
+        setActiveWritingScreen('intro');
+        return;
+      }
 
-    if (section === 'Speaking') {
-      setActiveSpeakingScreen('intro');
-      return;
-    }
+      if (section === 'Speaking') {
+        setActiveSpeakingScreen('intro');
+        return;
+      }
 
-    setShowToeflTest(true);
+      setShowToeflTest(true);
+    });
   };
 
   const normalizeReviewQuestionType = (value?: string) => (value || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();

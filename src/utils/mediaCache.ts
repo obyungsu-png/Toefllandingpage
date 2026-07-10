@@ -266,9 +266,9 @@ export async function createCachedAudio(url?: string): Promise<HTMLAudioElement>
 /**
  * 동기식 캐시된 Audio 객체 생성 (useEffect 등 async 불가능한 컨텍스트용)
  *
- * 즉시 Audio 객체를 반환하고, src를 원래 URL로 설정한 후,
- * 백그라운드에서 캐시된 버전으로 교체합니다.
- * preloadAllMedia()가 이미 실행된 경우 캐시가 있어 즉시 교체됩니다.
+ * 즉시 Audio 객체를 반환하고, src를 원래 URL로 설정합니다.
+ * 캐시된 버전이 있으면 "재생이 아직 시작되지 않은 경우에만" 교체합니다.
+ * (재생 도중 src를 바꾸면 onended가 조기 발동해 삐소리/흐름이 꼬이므로 금지)
  */
 export function createCachedAudioSync(url?: string): HTMLAudioElement {
   const audio = new Audio();
@@ -277,16 +277,12 @@ export function createCachedAudioSync(url?: string): HTMLAudioElement {
     audio.src = url;
 
     // 백그라운드에서 캐시된 버전으로 교체 시도
+    // (단, 아직 재생이 시작되지 않았을 때만 — 재생 중 교체는 흐름을 깨뜨림)
     if (SUPABASE_URL_PATTERN.test(url)) {
       getCachedBlobUrl(url).then(cachedUrl => {
-        if (cachedUrl && audio.src !== cachedUrl) {
-          const currentTime = audio.currentTime;
-          const wasPaused = audio.paused;
+        const notStartedYet = audio.paused && audio.currentTime === 0;
+        if (cachedUrl && audio.src !== cachedUrl && notStartedYet) {
           audio.src = cachedUrl;
-          audio.currentTime = currentTime;
-          if (!wasPaused) {
-            audio.play().catch(() => {});
-          }
         }
       }).catch(() => {});
     }
