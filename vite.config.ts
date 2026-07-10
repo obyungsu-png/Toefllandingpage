@@ -122,7 +122,6 @@
             'vendor-ui': [
               'lucide-react',
               'recharts',
-              'sonner',
               'embla-carousel-react',
               'cmdk',
               'react-resizable-panels',
