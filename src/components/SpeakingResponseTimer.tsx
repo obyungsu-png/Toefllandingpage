@@ -97,15 +97,7 @@ export function SpeakingResponseTimer({
         )}
       </div>
 
-      {/* Progress bar */}
-      {isRecording && (
-        <div className="h-1 bg-gray-100 mx-2 mb-1 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-[#1e6b73] rounded-full transition-all duration-200 ease-linear"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-      )}
+
 
       <style>{`
         @keyframes recBlink {
