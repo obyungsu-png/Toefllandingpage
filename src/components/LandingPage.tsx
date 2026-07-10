@@ -31,16 +31,16 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           style={{ animation: 'slideDown 0.5s ease-out' }}
         >
           <p className="font-semibold text-sm text-white">
-            Platform updates coming January 2026{' '}
+            New TOEFL practice experience is now live{' '}
             <span
               className="inline-block origin-[70%_70%]"
               style={{ animation: 'wave 1.5s infinite' }}
             >
               👋
             </span>{' '}
-            <a href="#" className="underline text-white/80 hover:text-white transition-colors">
-              learn more
-            </a>
+            <button onClick={onStartTest} className="underline text-white/80 hover:text-white transition-colors">
+              start now
+            </button>
           </p>
           <button
             onClick={() => setShowBanner(false)}
@@ -142,8 +142,11 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
                 Start Practice Test
               </span>
             </button>
-            <button className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-7 py-3.5 rounded-2xl font-bold text-sm tracking-wide hover:bg-gray-50 hover:border-gray-300 hover:-translate-y-0.5 transition-all duration-300">
-              Study Materials
+            <button
+              onClick={onStartTest}
+              className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-7 py-3.5 rounded-2xl font-bold text-sm tracking-wide hover:bg-gray-50 hover:border-gray-300 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              Browse Practice Sets
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
