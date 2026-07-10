@@ -10,14 +10,15 @@ import searchIcon from 'figma:asset/ab6582843d6eb491acced5759e69c588ae59039e.png
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Toaster } from './components/ui/sonner';
-import { QuestionUploader } from './components/QuestionUploader';
-import { QuestionTypesSection } from './components/QuestionTypesSection';
 import type { LMSContent } from './components/LMSSection';
 import type { TPOQuestion, TPOTest } from './components/ContentManagement';
-import { AdManagement, Advertisement } from './components/AdManagement';
+import type { Advertisement } from './components/AdManagement';
 import { Button } from './components/ui/button';
-import { TPOPage } from './components/TPOPage';
-import { TestPage } from './components/TestPage';
+const QuestionUploader = lazy(() => import('./components/QuestionUploader').then(m => ({ default: m.QuestionUploader })));
+const QuestionTypesSection = lazy(() => import('./components/QuestionTypesSection').then(m => ({ default: m.QuestionTypesSection })));
+const AdManagement = lazy(() => import('./components/AdManagement').then(m => ({ default: m.AdManagement })));
+const TPOPage = lazy(() => import('./components/TPOPage').then(m => ({ default: m.TPOPage })));
+const TestPage = lazy(() => import('./components/TestPage').then(m => ({ default: m.TestPage })));
 import { ResizableReadingLayout } from './components/ResizableReadingLayout';
 import { ImageWithFallback } from './components/figma/ImageWithFallback';
 import { VolumeControl, useVolumeControl } from './components/VolumeControl';
@@ -35,11 +36,11 @@ const SpeakingSectionWrapper = lazy(() => import('./components/SpeakingSectionWr
 import { MobileQuestionNav } from './components/MobileQuestionNav';
 import EndModule1Screen from './components/EndModule1Screen';
 import EndModule2Screen from './components/EndModule2Screen';
-import EndListeningScreen from './components/EndListeningScreen';
-import EndWritingScreen from './components/EndWritingScreen';
-import EndSpeakingScreen from './components/EndSpeakingScreen';
-import { SectionScores as SpeakingSectionScores } from './components/EndSpeakingScreen';
-import FinalResultScreen from './components/FinalResultScreen';
+const EndListeningScreen = lazy(() => import('./components/EndListeningScreen'));
+const EndWritingScreen = lazy(() => import('./components/EndWritingScreen'));
+const EndSpeakingScreen = lazy(() => import('./components/EndSpeakingScreen'));
+import type { SectionScores } from './components/EndSpeakingScreen';
+const FinalResultScreen = lazy(() => import('./components/FinalResultScreen'));
 import ReadingIntroScreen from './components/ReadingIntroScreen';
 import Module1IntroScreen from './components/Module1IntroScreen';
 import Module1DetailsScreen from './components/Module1DetailsScreen';
@@ -58,9 +59,10 @@ import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 
 import type { TestResult } from './types/testResult';
-import { ReviewAssistantPanel, ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
+import type { ReviewDifficulty, ReviewPatternTrainingRequest, ReviewSection, ReviewVariant } from './components/ReviewAssistantPanel';
+const ReviewAssistantPanel = lazy(() => import('./components/ReviewAssistantPanel').then(m => ({ default: m.ReviewAssistantPanel })));
 import { ToeflAiWidget } from './components/ToeflAiWidget';
-import { ReviewTrainingOverlay } from './components/ReviewTrainingOverlay';
+const ReviewTrainingOverlay = lazy(() => import('./components/ReviewTrainingOverlay').then(m => ({ default: m.ReviewTrainingOverlay })));
 import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
@@ -6781,6 +6783,7 @@ function AppContent() {
       
       {/* End of Listening Screen */}
       {showEndListening && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <EndListeningScreen
           setShowEndListening={setShowEndListening}
           testBankType={testBankType}
@@ -6789,6 +6792,7 @@ function AppContent() {
           setActiveWritingScreen={setActiveWritingScreen}
           listeningScore={sectionScores.listening}
         />
+        </Suspense>
       )}
       
       {/* Listening Section - M1 Wrapper */}
@@ -6933,6 +6937,7 @@ function AppContent() {
 
       {/* End of Writing Screen */}
       {showEndWriting && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <EndWritingScreen
           setShowEndWriting={setShowEndWriting}
           testBankType={testBankType}
@@ -6942,10 +6947,12 @@ function AppContent() {
           writingScore={sectionScores.writing}
           onAiScore={handleSaveAiScore}
         />
+        </Suspense>
       )}
 
       {/* End of Speaking Screen */}
       {showEndSpeaking && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <EndSpeakingScreen
           setShowEndSpeaking={setShowEndSpeaking}
           testBankType={testBankType}
@@ -6958,10 +6965,12 @@ function AppContent() {
             setShowFinalResult(true);
           }}
         />
+        </Suspense>
       )}
 
       {/* Final Result Screen (TOEFL 0-120) */}
       {showFinalResult && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <FinalResultScreen
           setShowFinalResult={setShowFinalResult}
           testBankType={testBankType}
@@ -6969,9 +6978,11 @@ function AppContent() {
           setActiveTab={setActiveTab}
           sectionScores={sectionScores}
         />
+        </Suspense>
       )}
 
       {activeReviewPanel && !reviewTrainingRequest && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ReviewAssistantPanel
           section={activeReviewPanel.section}
           variant={activeReviewPanel.variant}
@@ -6986,6 +6997,7 @@ function AppContent() {
           audioUrl={activeReviewPanel.audioUrl}
           scriptText={activeReviewPanel.scriptText}
         />
+        </Suspense>
       )}
 
       {/* AI 튜터 위젯 — ReviewAssistantPanel의 오른쪽 통합 아이콘 바에서 열림 */}
@@ -7002,6 +7014,7 @@ function AppContent() {
       )}
 
       {activeReviewPanel && reviewTrainingRequest && (
+        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
         <ReviewTrainingOverlay
           section={activeReviewPanel.section}
           title={reviewTrainingRequest.title}
@@ -7010,6 +7023,7 @@ function AppContent() {
           trainingTests={[...tpoTests, ...testTests]}
           onClose={() => setReviewTrainingRequest(null)}
         />
+        </Suspense>
       )}
       
       {/* Volume Control */}
@@ -7529,6 +7543,7 @@ function AppContent() {
       )}
 
       {!showLoginForm && activeTab === 'TPO' && (
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Loading TPO...</div>}>
         <TPOPage
           isMobile={isMobile}
           isLoading={isLoadingData && tpoTests.length === 0}
@@ -7550,9 +7565,11 @@ function AppContent() {
           TestCard={TestCard}
           advertisements={advertisements}
         />
+        </Suspense>
       )}
 
       {!showLoginForm && activeTab === 'Test' && (
+        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Loading Test...</div>}>
         <TestPage
           isMobile={isMobile}
           isLoading={isLoadingData && testTests.length === 0}
@@ -7573,6 +7590,7 @@ function AppContent() {
           TestCard={TestCard}
           advertisements={advertisements}
         />
+        </Suspense>
       )}
 
       {activeTab === 'Training' && (

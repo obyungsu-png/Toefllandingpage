@@ -97,7 +97,7 @@ export function TPOCard({ number, onStartTest, onReviewTest, onContinueTest, isL
               )}
               {isIncomplete && (
                 <div className="flex items-center gap-0.5 sm:gap-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">불완전</span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Incomplete</span>
                 </div>
               )}
             </div>
