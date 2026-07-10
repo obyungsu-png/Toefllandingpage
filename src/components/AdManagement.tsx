@@ -286,6 +286,7 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
                   />
                   {formData.imageUrl && (
                     <img 
+                      loading="lazy"
                       src={formData.imageUrl} 
                       alt="Preview" 
                       className="mt-2 w-full h-40 object-cover rounded-lg border"

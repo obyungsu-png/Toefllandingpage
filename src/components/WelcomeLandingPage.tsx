@@ -103,6 +103,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img 
+                loading="lazy"
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
                 alt="Graduation ceremony"
                 className="w-full h-full object-cover"
@@ -117,6 +118,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img 
+                loading="lazy"
                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop" 
                 alt="Students studying together"
                 className="w-full h-full object-cover"
@@ -129,6 +131,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
               <img 
+                loading="lazy"
                 src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
                 alt="Graduation ceremony"
                 className="w-full h-full object-cover"
@@ -141,6 +144,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
               <img 
+                loading="lazy"
                 src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop" 
                 alt="Online learning"
                 className="w-full h-full object-cover"

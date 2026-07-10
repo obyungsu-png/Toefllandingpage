@@ -926,19 +926,27 @@ function AppContent() {
         const cachedTrainingTests = loadCachedData<TPOTest[]>('training-tests');
         const cachedAdvertisements = loadCachedData<Advertisement[]>('advertisements');
 
+        let hasCachedData = false;
         if (Array.isArray(cachedTpoTests)) {
           setTpoTests(cachedTpoTests);
           console.log('⚡ Loaded cached TPO tests:', cachedTpoTests.length);
+          hasCachedData = true;
         }
         if (Array.isArray(cachedTestTests)) {
           setTestTests(cachedTestTests);
           console.log('⚡ Loaded cached Test tests:', cachedTestTests.length);
+          hasCachedData = true;
         }
         if (Array.isArray(cachedTrainingTests)) {
           setTrainingTests(cachedTrainingTests);
         }
         if (Array.isArray(cachedAdvertisements)) {
           setAdvertisements(cachedAdvertisements);
+        }
+
+        // ✅ Stale-while-revalidate: 캐시 데이터가 있으면 즉시 UI 표시, 네트워크는 백그라운드
+        if (hasCachedData) {
+          setIsLoadingData(false);
         }
         
         // Best-effort warm-up only. Do not block critical list loading on it.

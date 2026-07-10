@@ -180,7 +180,7 @@ export function TPOPage({
             <div className="bg-white rounded-lg shadow-md border border-gray-200 p-3 md:p-4 flex flex-col md:flex-row items-center gap-3 md:gap-4">
               {displayAd.imageUrl && (
                 <div className="hidden md:block shrink-0 w-24 h-24 rounded-lg overflow-hidden">
-                  <img src={displayAd.imageUrl} alt={displayAd.title} className="w-full h-full object-cover" />
+                  <img loading="lazy" src={displayAd.imageUrl} alt={displayAd.title} className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="flex-1 flex flex-col md:flex-row items-center justify-between gap-3 w-full">

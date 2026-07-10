@@ -9,7 +9,7 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
   fallbackSrc?: string;
 }
 
-export function ImageWithFallback({ fallbackSrc, ...props }: ImageWithFallbackProps) {
+export function ImageWithFallback({ fallbackSrc, loading = 'lazy', ...props }: ImageWithFallbackProps) {
   const [didError, setDidError] = useState(false)
   const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(props.src)
 
@@ -50,7 +50,7 @@ export function ImageWithFallback({ fallbackSrc, ...props }: ImageWithFallbackPr
   if (!props.src) {
     if (fallbackSrc) {
       const { alt, style, className, ...rest } = props
-      return <img src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
+      return <img loading={loading} src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
     }
     return null
   }
@@ -60,7 +60,7 @@ export function ImageWithFallback({ fallbackSrc, ...props }: ImageWithFallbackPr
   // 에러 발생 시: fallbackSrc가 있으면 그것을 사용, 없으면 기본 에러 placeholder
   if (didError) {
     if (fallbackSrc) {
-      return <img src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
+      return <img loading={loading} src={fallbackSrc} alt={alt} className={className} style={style} {...rest} />
     }
     return (
       <div
@@ -68,11 +68,11 @@ export function ImageWithFallback({ fallbackSrc, ...props }: ImageWithFallbackPr
         style={style}
       >
         <div className="flex items-center justify-center w-full h-full">
-          <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
+          <img loading={loading} src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
         </div>
       </div>
     )
   }
 
-  return <img src={resolvedSrc} alt={alt} className={className} style={style} {...rest} onError={handleError} />
+  return <img loading={loading} src={resolvedSrc} alt={alt} className={className} style={style} {...rest} onError={handleError} />
 }
