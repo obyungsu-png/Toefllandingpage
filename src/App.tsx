@@ -93,6 +93,15 @@ import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess } from './utils/licenseUtils';
 import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
+import {
+  findCompleteWordsQuestionForNumber,
+  getQuestionRangeLabel,
+  getReadingQuestionTotal,
+  isCompleteWordsType,
+  isModule2Question,
+  normalizeCompleteWordsPassage,
+  parseQuestionRange,
+} from './utils/readingQuestionUtils';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
@@ -461,7 +470,7 @@ function AppContent() {
   useEffect(() => {
     const screen = getCurrentReadingScreen();
     if (screen) {
-      saveReadingProgress({ currentScreen: screen, totalQuestions: 20 });
+      saveReadingProgress({ currentScreen: screen, totalQuestions: getReadingQuestionTotal(getCurrentSectionData('Reading')) });
     }
   }, [showFillBlanksTest, showReadNoticeTest, showReadNoticeTest2, showSocialMediaTest, showSocialMediaTest2, showSocialMediaTest3, showModule1Question16, showModule1Question17, showModule1Question18, showModule1Question19, showModule1Question20, showModule2, showModule2FillBlanks, showModule2Question11, showModule2Question12, showModule2Question13, showModule2Question14, showModule2Question15, showModule2Question16, showModule2Question17, showModule2Question18, showModule2Question19, showModule2Question20]);
 
@@ -1726,16 +1735,13 @@ function AppContent() {
     const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
     // Reading Module 1의 Q1-10은 FillBlanks(빈칸 채우기)이므로 selectedAnswer1~10은 사용하지 않음.
     // fillBlanksAnswers에서 별도 채점. Q11-20은 sharedAnswers 사용.
+    const readingTotalQuestions = category === 'Reading'
+      ? getReadingQuestionTotal(getCurrentSectionData('Reading'))
+      : totalQuestions;
+    const effectiveTotalQuestions = category === 'Reading' ? readingTotalQuestions : totalQuestions;
     const allAnswers: (string | null)[] = category === 'Reading'
-      ? [
-          // Q1-10: null (FillBlanks, handled separately via fillBlanksAnswers below)
-          null, null, null, null, null, null, null, null, null, null,
-          sharedAnswers[11] || null, sharedAnswers[12] || null, sharedAnswers[13] || null,
-          sharedAnswers[14] || null, sharedAnswers[15] || null, sharedAnswers[16] || null,
-          sharedAnswers[17] || null, sharedAnswers[18] || null, sharedAnswers[19] || null,
-          sharedAnswers[20] || null,
-        ]
-      : Array.from({ length: 20 }, (_, i) => sharedAnswers[i + 1] || null);
+      ? Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null)
+      : Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null);
 
     // Pick the correct CMS bank based on testBankType
     const tpoNum = currentTest?.tpoNumber;
@@ -1750,22 +1756,35 @@ function AppContent() {
     const allCmsQuestions = cmsSection?.questions || [];
     // Module 구분: questionType에 'module 2' 포함 여부로 필터
     const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
-    const cmsQuestions = module === 2
+    const cmsQuestions = category === 'Reading'
+      ? allCmsQuestions
+      : module === 2
       ? allCmsQuestions.filter(isModule2Q)
       : allCmsQuestions.filter((q: any) => !isModule2Q(q));
+
+    const completeWordsQuestions = category === 'Reading'
+      ? cmsQuestions.filter((q: any) => isCompleteWordsType(q?.questionType))
+      : [];
+    const isCompleteWordsSlot = (questionNumber: number) => completeWordsQuestions.some((q: any) => {
+      const range = parseQuestionRange(q?.questionNumber);
+      return range ? questionNumber >= range.start && questionNumber <= range.end : false;
+    });
+    const findCmsQuestionForNumber = (questionNumber: number) => cmsQuestions.find((q: any) => {
+      const range = parseQuestionRange(q?.questionNumber);
+      return range ? questionNumber >= range.start && questionNumber <= range.end : false;
+    });
 
     let correctCount = 0;
     let scoredCount = 0; // 정답이 등록된 문제 수 (CMS에 correctAnswer가 있는 문제만)
     const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
 
-    for (let i = 0; i < Math.min(totalQuestions, allAnswers.length); i++) {
+    for (let i = 0; i < Math.min(effectiveTotalQuestions, allAnswers.length); i++) {
+      const questionNumber = i + 1;
       const userAns = allAnswers[i];
-      const cmsQ = cmsQuestions[i];
+      const cmsQ = findCmsQuestionForNumber(questionNumber) || cmsQuestions[i];
       const correctAns = cmsQ?.correctAnswer;
 
-      // Skip Q1-10 for Reading (handled by FillBlanks below)
-      const isReadingFillBlanksSlot = category === 'Reading' && i < 10;
-      if (isReadingFillBlanksSlot) continue;
+      if (category === 'Reading' && isCompleteWordsSlot(questionNumber)) continue;
 
       // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
       if (!correctAns || correctAns === '') {
@@ -1793,54 +1812,45 @@ function AppContent() {
       }
     }
 
-    // FillBlanks 답 수집 (window.__fillBlanksAnswers)
-    const fillBlanksAnswers = (typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {};
-    // FillBlanks 정답은 CMS에서 가져옴
-    const fillBlanksQuestion = cmsQuestions.find((q: any) => {
-      const t = (q?.questionType || '').toLowerCase();
-      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
-    });
-    if (fillBlanksQuestion) {
-      // Parse CMS blanks
-      let cmsBlanks: {answer: string; maxLength: number}[] = [];
-      const rawP = fillBlanksQuestion.passageText || '';
-      if (/\[[^\]]+:\d+\]/.test(rawP)) {
-        rawP.replace(/\[([^\]]+):(\d+)\]/g, (_: string, ans: string) => {
-          cmsBlanks.push({ answer: ans.trim(), maxLength: 0 });
-          return '';
-        });
-      } else if (Array.isArray(fillBlanksQuestion.blanks)) {
-        cmsBlanks = fillBlanksQuestion.blanks;
-      }
-      cmsBlanks.forEach((blank, i) => {
-        const userAns = fillBlanksAnswers[i] || '';
+    const completeWordsAnswers = (typeof window !== 'undefined' && (window as any).__completeWordsAnswers) || {};
+    completeWordsQuestions.forEach((completeWordsQuestion: any) => {
+      const parsedCompleteWords = normalizeCompleteWordsPassage(completeWordsQuestion.passageText || '', completeWordsQuestion.blanks);
+      const questionKey = String(completeWordsQuestion.id || completeWordsQuestion.questionNumber || 'complete-words');
+      const range = parseQuestionRange(completeWordsQuestion.questionNumber);
+      const fallbackAnswers = range && range.start <= 10
+        ? ((typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {})
+        : {};
+      const userAnswers = completeWordsAnswers[questionKey] || fallbackAnswers;
+
+      parsedCompleteWords.blanks.forEach((blank, i) => {
+        const userAns = userAnswers[blank.id] || userAnswers[i] || '';
         const correctAns = blank.answer;
-        // CMS 정답 없으면 채점 불가
+        const questionNumber = range ? range.start + i : i + 1;
         if (!correctAns || correctAns === '') {
           wrongAnswers.push({
-            questionId: `blank-${i + 1}`,
-            questionText: `Fill in the blank — Blank ${i + 1}`,
+            questionId: `blank-${questionNumber}`,
+            questionText: `${getQuestionRangeLabel(completeWordsQuestion)} — Blank ${i + 1}`,
             userAnswer: userAns || '(빈칸)',
             correctAnswer: '(정답 미등록)',
           });
-          return; // 정답/오답 카운트 증가 안 함
+          return;
         }
         scoredCount++;
         if (userAns && userAns.toLowerCase().trim() === correctAns.toLowerCase().trim()) {
           correctCount++;
         } else {
           wrongAnswers.push({
-            questionId: `blank-${i + 1}`,
-            questionText: `Fill in the blank — Blank ${i + 1}`,
+            questionId: `blank-${questionNumber}`,
+            questionText: `${getQuestionRangeLabel(completeWordsQuestion)} — Blank ${i + 1}`,
             userAnswer: userAns || '(빈칸)',
             correctAnswer: correctAns,
           });
         }
       });
-      // Clear after saving
-      if (typeof window !== 'undefined') {
-        (window as any).__fillBlanksAnswers = {};
-      }
+    });
+    if (typeof window !== 'undefined') {
+      (window as any).__fillBlanksAnswers = {};
+      (window as any).__completeWordsAnswers = {};
     }
 
     // Writing: collect Build a Sentence answers from window.__writingBsAnswers
@@ -1899,7 +1909,7 @@ function AppContent() {
       status: 'completed',
       date: new Date().toISOString(),
       score,
-      totalQuestions,
+      totalQuestions: effectiveTotalQuestions,
       correctAnswers: correctCount,
       wrongAnswers,
       timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000), // 실제 소요시간(초)
@@ -1985,9 +1995,11 @@ function AppContent() {
   const getCurrentSectionData = (sectionType: 'Reading' | 'Listening' | 'Speaking' | 'Writing') => {
     const testData = getCurrentTestData();
     if (!testData) return null;
-    
+
     return testData.sections.find(s => s.sectionType === sectionType) || null;
   };
+
+  const getCurrentReadingQuestionTotal = () => getReadingQuestionTotal(getCurrentSectionData('Reading'));
 
   // Get test numbers based on selected range
   const getTestNumbers = () => {
@@ -2036,7 +2048,7 @@ function AppContent() {
     setCurrentSpeakingReviewScreen(null);
   };
 
-  const launchSection = (
+  const launchSection = async (
     testNumber: number,
     section: string,
     bankType: 'tpo' | 'test',
@@ -2044,16 +2056,25 @@ function AppContent() {
   ) => {
     // 유료 콘텐츠 접근 체크 (TPO 1-3, Test 1-3은 무료)
     if (!isFreeContent(bankType, testNumber)) {
-      setPendingPaidTest({ testNumber, section, bankType, mode });
-
-      // 1단계: 로그인 여부 — localStorage 기반 즉시 판단 (Supabase 호출 없음)
+      // 1단계: 로그인 여부 — localStorage 기반 즉시 판단 (Supabase 호출 최소화)
       if (!isLoggedIn) {
+        setPendingPaidTest({ testNumber, section, bankType, mode });
         setShowLoginPopup(true);
         return;
       }
 
-      // 2단계: 로그인 됨 → 활성화 코드 모달 표시
-      setActivationReason('등록된 활성화 코드가 필요합니다. 코드를 입력해주세요.');
+      // 2단계: 이미 활성화된 사용자라면 코드 모달 없이 바로 진입
+      const access = await checkUserAccess(true);
+      if (access.allowed) {
+        setShowActivationModal(false);
+        setPendingPaidTest(null);
+        proceedLaunch(testNumber, section, bankType, mode);
+        return;
+      }
+
+      // 3단계: 활성화가 없거나 만료/기기 제한이면 그때만 모달 표시
+      setPendingPaidTest({ testNumber, section, bankType, mode });
+      setActivationReason(access.reason || '등록된 활성화 코드가 필요합니다. 코드를 입력해주세요.');
       setShowActivationModal(true);
       return;
     }
@@ -4081,66 +4102,25 @@ function AppContent() {
     const CHAR_UNIT_WIDTH = 20;
     const isMobileM2FB = typeof window !== 'undefined' && window.innerWidth < 640;
 
-    // CMS PRIORITY: parse Module 2 fill-blanks from CMS passageText "word[answer:maxLength]" format
+    // CMS PRIORITY: parse Module 2 fill-blanks through the shared Complete Words normalizer.
+    // Only use a Module 2 grouped block here when it is explicitly numbered 1-10;
+    // Q11-20 Complete Words is rendered by the Q11 route below.
     const m2SectionData = getCurrentSectionData('Reading');
-    // First: look for question explicitly tagged as Module 2
-    const m2FillBlanksQuestion = m2SectionData?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return (
-        t.includes('module 2') && (
-          t.includes('complete words') ||
-          t.includes('fill in the blank') ||
-          t.includes('cloze test') ||
-          t.includes('빈칸') ||
-          t.includes('fillblanks') ||
-          t.includes('fill-in')
-        )
-      );
-    }) || m2SectionData?.questions.find(q => {
-      // Fallback: any complete words question (Module 1 style, for backward compat)
-      const t = (q.questionType || '').toLowerCase();
-      return (
-        t.includes('complete words') ||
-        t.includes('fill in the blank') ||
-        t.includes('cloze test') ||
-        t.includes('빈칸') ||
-        t.includes('fillblanks') ||
-        t.includes('fill-in')
-      );
-    });
-
-    const parseM2CmsPassage = (raw: string): { m2ParsedInputs: {id:number;maxLength:number;answer:string}[]; m2NormalizedPassage: string } => {
-      const m2ParsedInputs: {id:number;maxLength:number;answer:string}[] = [];
-      let idx = 0;
-      const m2NormalizedPassage = raw.replace(/\[([^\]]+):(\d+)\]/g, (_match: string, answer: string, maxLen: string) => {
-        m2ParsedInputs.push({ id: idx, maxLength: parseInt(maxLen), answer });
-        return `[${idx++}]`;
-      });
-      return { m2ParsedInputs, m2NormalizedPassage };
-    };
+    const m2FillBlanksQuestion = findCompleteWordsQuestionForNumber(m2SectionData, 1, 2);
 
     let m2Inputs: {id:number;maxLength:number;answer?:string}[];
     let m2NormalizedPassage = '';
 
     const rawM2Passage = m2FillBlanksQuestion?.passageText || '';
-    // Support both [answer:maxLen] format AND already-normalized [N] format
-    const hasM2CmsFormat = /\[[^\]]+:\d+\]/.test(rawM2Passage);
-    const hasNormalizedFormat = /\[\d+\]/.test(rawM2Passage);
+    const parsedM2CompleteWords = normalizeCompleteWordsPassage(rawM2Passage, m2FillBlanksQuestion?.blanks);
 
-    if (hasM2CmsFormat) {
-      const { m2ParsedInputs, m2NormalizedPassage: np } = parseM2CmsPassage(rawM2Passage);
-      m2Inputs = m2ParsedInputs;
-      m2NormalizedPassage = np;
-    } else if (hasNormalizedFormat) {
-      // Already normalized [0],[1]... format — extract inputs from blank count
-      const blanks: {id:number;maxLength:number;answer?:string}[] = [];
-      let idx = 0;
-      rawM2Passage.replace(/\[(\d+)\]/g, () => { blanks.push({ id: idx, maxLength: 5 }); idx++; return ''; });
-      m2Inputs = blanks.length > 0 ? blanks : Array.from({length:10}, (_, i) => ({ id: i, maxLength: 5 }));
-      m2NormalizedPassage = rawM2Passage;
-    } else if (m2FillBlanksQuestion?.blanks && m2FillBlanksQuestion.blanks.length > 0) {
-      m2Inputs = m2FillBlanksQuestion.blanks.map((b, i) => ({ id: i, maxLength: b.maxLength, answer: b.answer }));
-      m2NormalizedPassage = rawM2Passage;
+    if (parsedM2CompleteWords.blanks.length > 0 && parsedM2CompleteWords.normalizedPassage) {
+      m2Inputs = parsedM2CompleteWords.blanks.map(blank => ({
+        id: blank.id,
+        maxLength: blank.maxLength,
+        answer: blank.answer,
+      }));
+      m2NormalizedPassage = parsedM2CompleteWords.normalizedPassage;
     } else {
       m2Inputs = [
         { id: 0, maxLength: 1 },  // is
@@ -4155,6 +4135,19 @@ function AppContent() {
         { id: 9, maxLength: 2 },  // such
       ];
     }
+
+    React.useEffect(() => {
+      if (typeof window !== 'undefined') {
+        (window as any).__fillBlanksAnswers = m2InputValues;
+        if (m2FillBlanksQuestion) {
+          const questionKey = String(m2FillBlanksQuestion.id || m2FillBlanksQuestion.questionNumber || 'module2-complete-words');
+          (window as any).__completeWordsAnswers = {
+            ...((window as any).__completeWordsAnswers || {}),
+            [questionKey]: m2InputValues,
+          };
+        }
+      }
+    }, [m2InputValues, m2FillBlanksQuestion]);
 
     const handleM2InputChange = (id: number, value: string) => {
       setM2InputValues(prev => ({ ...prev, [id]: value }));
@@ -6375,6 +6368,167 @@ function AppContent() {
     }
   };
 
+  const CompleteWordsRangeScreen = ({
+    question,
+    inputPrefix,
+    fallbackStart,
+    onBack,
+    onNext,
+    onHome,
+  }: {
+    question: any;
+    inputPrefix: string;
+    fallbackStart: number;
+    onBack: () => void;
+    onNext: () => void;
+    onHome: () => void;
+  }) => {
+    const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
+    const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
+    const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
+
+    const charUnitWidth = 20;
+    const isMobileCompleteWords = typeof window !== 'undefined' && window.innerWidth < 640;
+    const parsed = normalizeCompleteWordsPassage(question?.passageText || '', question?.blanks);
+    const inputs = parsed.blanks.length > 0
+      ? parsed.blanks.map(blank => ({ id: blank.id, maxLength: blank.maxLength, answer: blank.answer }))
+      : Array.from({ length: Math.max(1, (parseQuestionRange(question?.questionNumber)?.end || fallbackStart) - fallbackStart + 1) }, (_, i) => ({ id: i, maxLength: 5, answer: '' }));
+    const passageText = parsed.normalizedPassage || question?.passageText || '';
+    const questionLabel = question ? getQuestionRangeLabel(question, fallbackStart) : `Question ${fallbackStart}-${fallbackStart + inputs.length - 1}`;
+    const questionKey = String(question?.id || question?.questionNumber || `complete-words-${fallbackStart}`);
+
+    React.useEffect(() => {
+      if (typeof window !== 'undefined') {
+        (window as any).__completeWordsAnswers = {
+          ...((window as any).__completeWordsAnswers || {}),
+          [questionKey]: inputValues,
+        };
+      }
+    }, [inputValues, questionKey]);
+
+    const getTextWidth = (text: string): number => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return text.length * 14;
+      context.font = "1.25rem 'Inter', sans-serif";
+      return Math.ceil(context.measureText(text).width) + 4;
+    };
+
+    const getInputWidth = (id: number): string => {
+      const value = inputValues[id] || '';
+      const maxLen = inputs[id]?.maxLength || 5;
+      if (value.length >= maxLen) return `${getTextWidth(value)}px`;
+      const mobileOffset = isMobileCompleteWords ? charUnitWidth : 0;
+      return `${maxLen * charUnitWidth - mobileOffset}px`;
+    };
+
+    const handleInputChange = (id: number, value: string) => {
+      setInputValues(prev => ({ ...prev, [id]: value }));
+      const maxLen = inputs[id]?.maxLength || 5;
+      setFilledInputs(prev => ({ ...prev, [id]: value.length >= maxLen }));
+      if (value.length === maxLen) {
+        const nextId = id + 1;
+        if (nextId < inputs.length) {
+          setTimeout(() => {
+            const nextInput = document.querySelector(`input[data-input-id="${inputPrefix}-${nextId}"]`) as HTMLInputElement;
+            if (nextInput) nextInput.focus();
+          }, 0);
+        }
+      }
+    };
+
+    const renderPassageWithInputs = () => {
+      if (!passageText) return null;
+      const parts: React.ReactNode[] = [];
+      const regex = /\[(\d+)\]/g;
+      let lastIndex = 0;
+      let key = 0;
+      let match;
+      while ((match = regex.exec(passageText)) !== null) {
+        const inputId = parseInt(match[1], 10);
+        const beforeText = passageText.substring(lastIndex, match.index);
+        if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
+        parts.push(
+          <input
+            key={`input-${inputId}`}
+            type="text"
+            data-input-id={`${inputPrefix}-${inputId}`}
+            className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
+            maxLength={inputs[inputId]?.maxLength || 5}
+            value={inputValues[inputId] || ''}
+            onChange={(e) => handleInputChange(inputId, e.target.value)}
+            onFocus={() => setFilledInputs(prev => ({ ...prev, [inputId]: false }))}
+            onBlur={() => {
+              if ((inputValues[inputId] || '').length > 0) {
+                setFilledInputs(prev => ({ ...prev, [inputId]: true }));
+              }
+            }}
+            onKeyPress={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            style={{ width: getInputWidth(inputId) }}
+          />
+        );
+        lastIndex = match.index + match[0].length;
+      }
+      if (lastIndex < passageText.length) parts.push(<span key={`text-${key++}`}>{passageText.substring(lastIndex)}</span>);
+      return parts;
+    };
+
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-auto">
+          <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
+            <div className="flex items-center min-w-0 shrink">
+              <div className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate" onClick={onHome}>
+                *toefl ibt
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button
+                ref={buttonRef as React.RefObject<HTMLButtonElement>}
+                className={`flex items-center gap-1.5 sm:gap-3 border rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 transition-colors ${isOpen ? 'bg-white border-white text-[#1e6b73]' : 'bg-[#0A6068] border-white text-white hover:bg-[#084d52]'}`}
+                onClick={toggleVolume}
+              >
+                <span className="font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Volume</span>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill={isOpen ? '#1e6b73' : 'white'}>
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+              </button>
+              <button className="flex items-center gap-1.5 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors" onClick={onNext}>
+                <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="#0A6068">
+                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white border-b border-gray-300 shrink-0">
+            <div className="px-3 sm:px-8 py-2 sm:py-3">
+              <div className="flex gap-4 sm:gap-8">
+                <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
+                <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">{questionLabel}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-white overflow-auto">
+            <div className="p-4 sm:p-5 md:p-12 pt-8 sm:pt-16 md:pt-24 flex flex-col items-center">
+              <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black font-bold font-['Inter',_sans-serif] text-center px-2">
+                {question?.questionText || 'Fill in the missing letters in the paragraph.'}
+              </h1>
+              <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                {renderPassageWithInputs()}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
+        <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
+      </div>
+    );
+  };
+
   // Read Notice Test Screen Component
   const ReadNoticeTestScreen = () => {
     // Get dynamic question data from CMS
@@ -6424,6 +6578,26 @@ function AppContent() {
         (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 11: answer };
       }
     };
+
+    const completeWordsQuestion11 = findCompleteWordsQuestionForNumber(sectionData, 11);
+    if (completeWordsQuestion11) {
+      return (
+        <CompleteWordsRangeScreen
+          question={completeWordsQuestion11}
+          inputPrefix="q11-complete-words"
+          fallbackStart={11}
+          onBack={() => { setShowReadNoticeTest(false); setShowFillBlanksTest(true); }}
+          onNext={() => { setShowReadNoticeTest(false); setShowEndModule1(true); }}
+          onHome={() => {
+            setShowReadNoticeTest(false);
+            setShowFillBlanksTest(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); }
+          }}
+        />
+      );
+    }
 
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">

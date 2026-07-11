@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import {
+  getQuestionRangeLabel,
+  isCompleteWordsType,
+  isModule2Question,
+  normalizeCompleteWordsPassage,
+} from '../utils/readingQuestionUtils';
 
 interface FillBlanksTestScreenProps {
   setShowFillBlanksTest: React.Dispatch<React.SetStateAction<boolean>>;
@@ -28,13 +34,6 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
   const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
 
-  // FillBlanks 답을 window.__fillBlanksAnswers에 저장 (리뷰용)
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).__fillBlanksAnswers = inputValues;
-    }
-  }, [inputValues]);
-  
   const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
   
   const CHAR_UNIT_WIDTH = 20; // CSS background-size의 가로 폭과 일치
@@ -43,30 +42,12 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   // Get dynamic question data from CMS
   const sectionData = getCurrentSectionData('Reading');
   // CMS PRIORITY: flexible type matching — Module 1 only (exclude Module 2 tagged questions)
-  const fillBlanksQuestion = sectionData?.questions.find((q: any) => {
-    const t = (q.questionType || '').toLowerCase();
-    const isModule2 = t.includes('module 2');
-    const isFillBlanks = (
-      t.includes('complete words') ||
-      t.includes('fill in the blank') ||
-      t.includes('cloze test') ||
-      t.includes('빈칸') ||
-      t.includes('fillblanks') ||
-      t.includes('fill-in')
-    );
-    return isFillBlanks && !isModule2;
-  }) || sectionData?.questions.find((q: any) => {
+  const fillBlanksQuestion = sectionData?.questions.find((q: any) => (
+    isCompleteWordsType(q.questionType) && !isModule2Question(q)
+  )) || sectionData?.questions.find((q: any) => (
     // Fallback: any fill-blanks question (backward compat)
-    const t = (q.questionType || '').toLowerCase();
-    return (
-      t.includes('complete words') ||
-      t.includes('fill in the blank') ||
-      t.includes('cloze test') ||
-      t.includes('빈칸') ||
-      t.includes('fillblanks') ||
-      t.includes('fill-in')
-    );
-  });
+    isCompleteWordsType(q.questionType)
+  ));
   
   // Debug logging
   React.useEffect(() => {
@@ -80,39 +61,20 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
     });
   }, []);
   
-  // CMS PRIORITY: Parse CMS passageText format "word[answer:maxLength]" e.g. "sh[ow:2]"
-  const parseCmsPassage = (raw: string): { inputs:{id:number;maxLength:number;answer:string}[]; normalizedPassage: string } => {
-    const parsedInputs:{id:number;maxLength:number;answer:string}[] = [];
-    let idx = 0;
-    // Match pattern: [answer:maxLength]  e.g. [ow:2] or [tion:4]
-    const normalized = raw.replace(/\[([^\]]+):(\d+)\]/g, (_match, answer, maxLen) => {
-      parsedInputs.push({ id: idx, maxLength: parseInt(maxLen), answer });
-      return `[${idx++}]`;
-    });
-    return { inputs: parsedInputs, normalizedPassage: normalized };
-  };
-
-  // Determine inputs and passage: CMS passageText (word[answer:N] format) > CMS blanks array > hardcoded
+  // Determine inputs and passage: supports word[answer], word[answer:N], and word[0] + blanks.
   let inputs:{id:number;maxLength:number;answer:string}[];
   let normalizedPassage: string = '';
 
   const rawCmsPassage = fillBlanksQuestion?.passageText || '';
-  const hasCmsFormat = rawCmsPassage.includes(':[') || /\[[^\]]+:\d+\]/.test(rawCmsPassage);
-  const hasNormalizedFormat = /\[\d+\]/.test(rawCmsPassage) && !hasCmsFormat;
+  const parsedCompleteWords = normalizeCompleteWordsPassage(rawCmsPassage, fillBlanksQuestion?.blanks);
 
-  if (hasCmsFormat) {
-    const parsed = parseCmsPassage(rawCmsPassage);
-    inputs = parsed.inputs;
-    normalizedPassage = parsed.normalizedPassage;
-  } else if (hasNormalizedFormat) {
-    const blanks:{id:number;maxLength:number;answer:string}[] = [];
-    let idx = 0;
-    rawCmsPassage.replace(/\[(\d+)\]/g, () => { blanks.push({ id: idx, maxLength: 5, answer: '' }); idx++; return ''; });
-    inputs = blanks.length > 0 ? blanks : Array.from({length:10}, (_, i) => ({ id: i, maxLength: 5, answer: '' }));
-    normalizedPassage = rawCmsPassage;
-  } else if (fillBlanksQuestion?.blanks && fillBlanksQuestion.blanks.length > 0) {
-    inputs = fillBlanksQuestion.blanks.map((blank: any, i: number) => ({ id: i, maxLength: blank.maxLength, answer: blank.answer }));
-    normalizedPassage = rawCmsPassage;
+  if (parsedCompleteWords.blanks.length > 0 && parsedCompleteWords.normalizedPassage) {
+    inputs = parsedCompleteWords.blanks.map(blank => ({
+      id: blank.id,
+      maxLength: blank.maxLength,
+      answer: blank.answer,
+    }));
+    normalizedPassage = parsedCompleteWords.normalizedPassage;
   } else {
     inputs = [
       { id: 0, maxLength: 3, answer: 'ght' },
@@ -129,6 +91,20 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   }
 
   const passageText = normalizedPassage;
+
+  // FillBlanks 답을 window.__fillBlanksAnswers에 저장 (리뷰용)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__fillBlanksAnswers = inputValues;
+      if (fillBlanksQuestion) {
+        const questionKey = String(fillBlanksQuestion.id || fillBlanksQuestion.questionNumber || 'module1-complete-words');
+        (window as any).__completeWordsAnswers = {
+          ...((window as any).__completeWordsAnswers || {}),
+          [questionKey]: inputValues,
+        };
+      }
+    }
+  }, [inputValues, fillBlanksQuestion]);
 
   const renderPassageWithInputs = () => {
     if (!passageText) return null;
@@ -295,7 +271,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
                 Reading
               </div>
               <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-                Question 1-10
+                {fillBlanksQuestion ? getQuestionRangeLabel(fillBlanksQuestion, 1) : `Question 1-${inputs.length || 10}`}
               </div>
             </div>
           </div>

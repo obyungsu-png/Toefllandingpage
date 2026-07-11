@@ -3625,7 +3625,93 @@ When peo[ple] think of inven[tion], they often imagine tech[nology]. However, mo
 
 deve[lopment] shapes our cul[ture] and soc[iety]. Without mo[ney] or moti[vation], suc[cess] is hard to achieve.
 
-(빈칸은 지문에서 자동 추출됩니다 — peo[ple] 형식으로만 입력하세요)\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
+# 빈칸 형식: 보이는글자[가릴글자]  예) peo[ple] → "peo____" 빈칸에 "ple" 입력
+# 빈칸 칸수를 직접 정하려면 peo[ple:3] 처럼 :숫자 를 붙이세요 (생략하면 글자수 자동)
+
+===
+
+Q11-20: Complete Words
+모듈: Module 2
+난이도: 보통
+
+지문:
+The hu[man] brain is a com[plex] organ that cont[rols] every part of the bo[dy]. It is div[ided] into several reg[ions], each with a spec[ific] role in thou[ght], memory, and emo[tion].
+
+Sci[entists] continue to stu[dy] how these areas work tog[ether] to shape beha[vior].
+
+# Q11-20(Module 2)도 Q1-10과 똑같은 빈칸 형식입니다. "모듈: Module 2" 한 줄만 추가하면 됩니다.
+
+===
+
+# ▼▼▼ 아래는 선택 예시입니다 (Read in Daily Life / Academic). 필요 없으면 지우세요. ▼▼▼
+
+Q21: Read in Daily Life
+유형: email
+난이도: 보통
+
+필드:
+to: edward56L@dmail.com
+from: artforeveryone@dmail.com
+date: September 2
+subject: Your Membership Renewal
+body:
+Dear Edward,
+
+Thank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.
+
+To continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.
+
+Best regards,
+Membership Services Team
+
+문제:
+What is the main purpose of the email?
+
+보기:
+A. To announce a membership renewal
+B. To ask for a donation
+C. To complain about a service
+D. To introduce a new artist
+
+정답: A
+해설: The email asks the recipient to renew a membership.
+
+===
+
+Q22: Read an Academic Passage
+난이도: 보통
+
+지문:
+The theory of plate tectonics revolutionized geology in the 1960s...
+
+문제:
+What is the main idea of the passage?
+
+보기:
+A. Option A
+B. Option B
+C. Option C
+D. Option D
+
+정답: B
+해설: ...
+
+===
+
+Q23: Read an Academic Passage
+난이도: 보통
+
+문제:
+What evidence supports the theory?
+
+보기:
+A. ...
+B. ...
+C. ...
+D. ...
+
+정답: C
+(이전 지문 자동 상속)`;
       case 'Listening':
         return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
 # (아무 줄에 넣어도 됩니다 — 예: 난이도 아래, 문제 위 등)
@@ -4069,6 +4155,21 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     let lastPassage = ''; // inherit passageText from previous Q for academic reading
     let lastScript = ''; // inherit scriptText from previous Q for listening grouped Qs
 
+    const isCompleteWordsBulkType = (raw: string): boolean => {
+      const normalized = raw.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
+      return (
+        normalized.includes('complete words') ||
+        normalized.includes('complet words') ||
+        normalized.includes('complete the words') ||
+        normalized.includes('fill in the blank') ||
+        normalized.includes('fill in the blanks') ||
+        normalized.includes('fill in the missing letters') ||
+        normalized.includes('cloze') ||
+        normalized.includes('빈칸') ||
+        normalized.includes('fillblanks')
+      );
+    };
+
     // Daily Life format helpers
     const normalizeDailyFormat = (raw?: string): string | undefined => {
       if (!raw) return undefined;
@@ -4208,6 +4309,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       if (!headerMatch) continue;
       const qNum = headerMatch[1].trim();
       const qType = headerMatch[2].trim();
+      const isCompleteWordsQuestion = isCompleteWordsBulkType(qType);
 
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
@@ -4241,7 +4343,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         return `${baseType} (Module 2)`;
       };
 
-      const passageText = after(['지문:']) || undefined;
+      const passageText = after(['지문:', '본문:', '내용:', 'text:', 'Text:', 'passage:', 'Passage:']) || undefined;
       const scriptText = after(['스크립트:']) || undefined;
       const analysisNote = after(['분석:', 'analysis:', '분석노트:']) || undefined;
       const vocabularyNote = after(['단어:', 'vocabulary:', '어휘:', '단어노트:']) || undefined;
@@ -4281,8 +4383,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       }
 
       // Inline blank detection: peo[ple:6] or peo[ple] in passageText (no 빈칸: section needed)
-      if (!blanks && passageText) {
-        const inlineRegex = /\[([a-zA-Z][a-zA-Z\s]*?)(?::(\d+))?\]/g;
+      if (!blanks && passageText && isCompleteWordsQuestion) {
+        const inlineRegex = /\[([a-zA-Z][a-zA-Z\s'-]*?)(?::(\d+))?\]/g;
         const inlineBlanks: { answer: string; maxLength: number }[] = [];
         let inlineMatch;
         while ((inlineMatch = inlineRegex.exec(passageText)) !== null) {
@@ -4299,6 +4401,19 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         effectivePassage = lastPassage || undefined;
       }
       if (effectivePassage) lastPassage = effectivePassage;
+
+      // Complete Words: normalize inline brackets (los[ses] / los[ses:3]) into the
+      // [answer:maxLength] format the fill-blanks renderer needs to draw inputs.
+      if (isCompleteWordsQuestion && effectivePassage && /\[[A-Za-z]/.test(effectivePassage)) {
+        effectivePassage = effectivePassage.replace(
+          /\[([A-Za-z][A-Za-z\s]*?)(?::(\d+))?\]/g,
+          (_m, a, n) => {
+            const ans = String(a).trim();
+            const len = n ? parseInt(n) : ans.length;
+            return `[${ans}:${len}]`;
+          }
+        );
+      }
 
       // Script inheritance for Listening (grouped Qs share one script)
       let effectiveScript = scriptText;
@@ -4358,25 +4473,20 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         finalPassageTitle = DAILY_FORMAT_TITLES[dailyFormat];
       }
 
-      // Parse range like "1-10" into individual or keep as string
-      const rangeMatch = qNum.match(/^(\d+)-(\d+)$/);
-      if (rangeMatch && qType === 'Complete Words' && blanks && blanks.length > 0) {
-        // Expand: one question per blank
-        const start = parseInt(rangeMatch[1]), end = parseInt(rangeMatch[2]);
-        for (let i = 0; i < blanks.length; i++) {
-          const num = start + i;
-          if (num > end) break;
-          questions.push({
-            id: `q-${Date.now()}-${num}-${Math.random().toString(36).slice(2,7)}`,
-            questionNumber: num,
-            questionText: `Complete the blank #${num}`,
-            questionType: applyModuleSuffix('Complete Words'),
-            passageText: finalPassageText || undefined,
-            difficulty,
-            blanks: [blanks[i]],
-            correctAnswer: blanks[i].answer,
-          } as TPOQuestion);
-        }
+      // Complete Words is ONE grouped question (Q1-10 / Q11-20) holding the whole
+      // passage + all blanks — matching the FillBlanksEditor/renderer format.
+      // Do NOT explode into one question per blank (renderer expects a single passage).
+      if (isCompleteWordsQuestion && blanks && blanks.length > 0) {
+        questions.push({
+          id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
+          questionNumber: qNum, // keep "1-10" / "11-20" string form
+          questionText: questionText || 'Fill in the missing letters in the paragraph.',
+          questionType: applyModuleSuffix('Complete Words'),
+          passageText: finalPassageText || undefined,
+          difficulty,
+          blanks,
+          correctAnswer: blanks.map(b => b.answer).join(', '),
+        } as any);
       } else {
         questions.push({
           id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
