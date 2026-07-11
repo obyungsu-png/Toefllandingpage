@@ -9,6 +9,14 @@ import {
 } from 'lucide-react';
 import { calcExpireDate } from '../utils/licenseUtils';
 
+// PostgREST가 스키마에 없는 컬럼을 거부할 때(예: actual_price 미추가) 나는 오류인지 판별
+function isMissingColumnError(error: unknown, column: string): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  // PostgREST schema-cache 오류 코드는 PGRST204, 메시지에 컬럼명이 들어감
+  return e.code === 'PGRST204' || (!!e.message && e.message.includes(column) && e.message.includes('schema cache'));
+}
+
 // ─────────────────────── 타입 ───────────────────────
 export interface Student {
   id: string; name: string; email: string; enrolledDate: string;
@@ -211,7 +219,13 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
     const code = `TPO-${genDuration}M-${genUserType === '내학생' ? 'INNER' : 'OUTER'}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     try {
       const price = genActualPrice ? Number(genActualPrice) : null;
-      const { error } = await supabaseClient.from('license_keys').insert({ key_code: code, duration_months: genDuration, user_type: genUserType, is_used: false, actual_price: price });
+      const baseRow = { key_code: code, duration_months: genDuration, user_type: genUserType, is_used: false };
+      // actual_price 컬럼이 아직 DB에 없어도 코드 생성은 성공하도록 방어
+      let { error } = await supabaseClient.from('license_keys').insert({ ...baseRow, actual_price: price });
+      if (error && isMissingColumnError(error, 'actual_price')) {
+        // 스키마에 컬럼이 없으면 금액 없이 재시도
+        ({ error } = await supabaseClient.from('license_keys').insert(baseRow));
+      }
       if (error) { if (error.code === '23505') return handleGenerate(); throw error; }
       setGeneratedCode(code); loadLicenseHistory();
     } catch (e: any) { setGenError(e?.message || '생성 실패'); } finally { setGenLoading(false); }
