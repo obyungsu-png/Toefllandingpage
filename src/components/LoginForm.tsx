@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Key, Mail, QrCode } from 'lucide-react';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { supabase } from '../utils/supabase/client';
@@ -35,6 +35,51 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
   // Form fields
   const [email, setEmail] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
+
+  // 인증번호 발송 상태
+  const [countdown, setCountdown] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+
+  // 재전송 카운트다운 타이머
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  // ── 이메일 인증번호 발송 ──
+  const handleSendCode = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      alert('유효한 이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const res = await fetch(`${SERVER_BASE_URL}/auth/send-email-code`, {
+        method: 'POST',
+        headers: { ...getServerHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        setCodeSent(true);
+        setCountdown(60);
+        alert(`인증 코드가 ${email} 로 전송되었어요.\n메일함을 확인해주세요. (스팸함도 함께 확인)`);
+      } else {
+        alert(data.error || '인증번호 발송에 실패했어요. 잠시 후 다시 시도해주세요.');
+      }
+    } catch (err) {
+      console.error('Send code error:', err);
+      alert('서버 연결에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // ── WeChat Login: Show QR code (API connection later) ──
   const handleWeChatLogin = () => {
@@ -178,17 +223,27 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
       {/* Email Login Form */}
       {!showWechatQR && (
         <form onSubmit={handleSubmit}>
-          {/* Email */}
-          <div className="relative mb-3">
-            <input
-              type="email"
-              placeholder="이메일 주소"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
-            />
-            <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          {/* Email + 인증번호 받기 */}
+          <div className="flex gap-2 mb-3">
+            <div className="relative flex-1">
+              <input
+                type="email"
+                placeholder="이메일 주소"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-[#1e6b73]/30 focus:border-[#1e6b73] focus:bg-white"
+              />
+              <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            <button
+              type="button"
+              onClick={handleSendCode}
+              disabled={isSending || countdown > 0}
+              className="shrink-0 px-3 py-2.5 rounded-lg bg-[#1e6b73] text-white text-sm font-semibold whitespace-nowrap transition-colors hover:bg-[#164f56] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSending ? '발송 중...' : countdown > 0 ? `${countdown}초` : codeSent ? '재전송' : '인증번호 받기'}
+            </button>
           </div>
 
           {/* 인증번호 */}
