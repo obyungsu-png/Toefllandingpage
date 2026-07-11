@@ -1211,21 +1211,59 @@ app.delete('/make-server-e46cd33a/training-tests/:number', async (c) => {
 // User registration endpoint (email-based)
 app.post('/make-server-e46cd33a/users/register', async (c) => {
   try {
-    const { email, username, password } = await c.req.json();
+    const { email, username, password, verifyCode } = await c.req.json();
 
-    // Validate inputs
-    if (!email || !username || !password) {
-      return c.json({ error: 'All fields are required' }, 400);
+    // Validate email (모든 방식에서 필수)
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
     }
-
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return c.json({ error: 'Invalid email format' }, 400);
     }
+    const emailLower = email.toLowerCase();
+
+    // ── Email + 인증번호 등록 (신규 방식) ──
+    if (verifyCode) {
+      const stored = await kv.get(`email_code:${emailLower}`);
+      if (!stored) {
+        return c.json({ error: '인증번호를 먼저 요청해주세요.' }, 400);
+      }
+      if (Date.now() > stored.expiresAt) {
+        return c.json({ error: '인증번호가 만료되었어요. 다시 요청해주세요.' }, 400);
+      }
+      if (String(stored.code) !== String(verifyCode).trim()) {
+        return c.json({ error: '인증번호가 올바르지 않아요.' }, 401);
+      }
+      await kv.delete(`email_code:${emailLower}`);
+
+      let user = await kv.get(`user:email:${emailLower}`);
+      if (!user) {
+        const derivedUsername = emailLower.split('@')[0];
+        user = {
+          id: `user_${Date.now()}`,
+          email: emailLower,
+          username: derivedUsername,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await kv.set(`user:email:${emailLower}`, user);
+        await kv.set(`user:id:${user.id}`, user);
+        console.log('✅ User registered via email code:', emailLower);
+      }
+      return c.json({
+        success: true,
+        user: { id: user.id, email: user.email, username: user.username },
+      });
+    }
+
+    // ── Legacy: 아이디/비밀번호 등록 ──
+    if (!username || !password) {
+      return c.json({ error: 'All fields are required' }, 400);
+    }
 
     // Check if user already exists
-    const existingUser = await kv.get(`user:email:${email.toLowerCase()}`);
+    const existingUser = await kv.get(`user:email:${emailLower}`);
     if (existingUser) {
       return c.json({ error: 'Email already registered' }, 400);
     }
@@ -1238,7 +1276,7 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     // Create user object
     const user = {
       id: `user_${Date.now()}`,
-      email: email.toLowerCase(),
+      email: emailLower,
       username,
       password, // Note: In production, you should hash passwords
       createdAt: new Date().toISOString(),
@@ -1246,18 +1284,18 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     };
 
     // Save user
-    await kv.set(`user:email:${email.toLowerCase()}`, user);
+    await kv.set(`user:email:${emailLower}`, user);
     await kv.set(`user:username:${username}`, user);
     await kv.set(`user:id:${user.id}`, user);
 
     console.log('✅ User registered:', username);
-    return c.json({ 
-      success: true, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        username: user.username 
-      } 
+    return c.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -1376,9 +1414,52 @@ app.post('/make-server-e46cd33a/auth/verify-email-code', async (c) => {
 app.post('/make-server-e46cd33a/users/login', async (c) => {
   try {
     const body = await c.req.json();
-    const { username, email, phoneNumber, password, loginMethod } = body;
+    const { username, email, phoneNumber, password, verifyCode, loginMethod } = body;
 
-    // Validate inputs
+    // ── Email + 인증번호 로그인 (신규 방식) ──
+    // 프론트엔드가 { email, verifyCode, loginMethod: 'email' } 를 보낸다.
+    if (loginMethod === 'email' && email && verifyCode) {
+      const emailLower = String(email).toLowerCase();
+
+      // 인증번호 검증
+      const stored = await kv.get(`email_code:${emailLower}`);
+      if (!stored) {
+        return c.json({ error: '인증번호를 먼저 요청해주세요.' }, 400);
+      }
+      if (Date.now() > stored.expiresAt) {
+        return c.json({ error: '인증번호가 만료되었어요. 다시 요청해주세요.' }, 400);
+      }
+      if (String(stored.code) !== String(verifyCode).trim()) {
+        return c.json({ error: '인증번호가 올바르지 않아요.' }, 401);
+      }
+
+      // 인증 성공 → 코드 삭제 (1회용)
+      await kv.delete(`email_code:${emailLower}`);
+
+      // 기존 유저 조회, 없으면 자동 생성
+      let user = await kv.get(`user:email:${emailLower}`);
+      if (!user) {
+        const derivedUsername = emailLower.split('@')[0];
+        user = {
+          id: `user_${Date.now()}`,
+          email: emailLower,
+          username: derivedUsername,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await kv.set(`user:email:${emailLower}`, user);
+        await kv.set(`user:id:${user.id}`, user);
+        console.log('✅ User auto-registered via email code:', emailLower);
+      }
+
+      console.log('✅ User logged in (email code):', user.username);
+      return c.json({
+        success: true,
+        user: { id: user.id, email: user.email, username: user.username },
+      });
+    }
+
+    // ── Legacy: 아이디/비밀번호 로그인 (기존 계정 호환) ──
     if (!password || (!username && !email && !phoneNumber)) {
       return c.json({ error: 'Invalid credentials' }, 400);
     }
@@ -1404,13 +1485,13 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
     }
 
     console.log('✅ User logged in:', user.username);
-    return c.json({ 
-      success: true, 
-      user: { 
-        id: user.id, 
-        phoneNumber: user.phoneNumber, 
-        username: user.username 
-      } 
+    return c.json({
+      success: true,
+      user: {
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+        username: user.username
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -1418,4 +1499,4 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
   }
 });
 
-Deno.serve(app.fetch);// deployed: 2026-06-01T04:17:47Z
+Deno.serve(app.fetch);// deployed: 2026-07-11T00:00:00Z
