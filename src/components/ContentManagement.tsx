@@ -3608,7 +3608,7 @@ interface BulkUploadFormProps {
 }
 
 function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, onSubmit, onCancel }: BulkUploadFormProps) {
-  const [mode, setMode] = useState<'ai' | 'text'>('ai');
+  const [mode, setMode] = useState<'ai' | 'text' | 'csv'>('ai');
   const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<TPOQuestion[] | null>(null);
@@ -4633,6 +4633,138 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
     URL.revokeObjectURL(url);
   };
 
+  // ─── CSV mode: spreadsheet-friendly bulk upload ───
+  const CSV_COLUMNS = [
+    'questionNumber', 'questionType', 'difficulty', 'module',
+    'passageTitle', 'passageText', 'scriptText',
+    'questionText', 'optionA', 'optionB', 'optionC', 'optionD',
+    'correctAnswer', 'explanation', 'audioFileName', 'imageFileName',
+  ];
+
+  // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
+  const csvEscape = (val: any): string => {
+    const s = String(val ?? '');
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+
+  const handleDownloadCsvTemplate = () => {
+    const supportsModule = section === 'Reading' || section === 'Listening';
+    // Header row + one example row
+    const header = CSV_COLUMNS.join(',');
+    const example = [
+      '1',
+      (questionTypeOptions?.[0] || 'Detail Questions'),
+      '보통',
+      supportsModule ? 'Module 1' : '',
+      'Sample Passage Title',
+      'Full passage text goes here. Line breaks are OK inside this cell.',
+      section === 'Listening' || section === 'Speaking' ? 'Full listening script goes here.' : '',
+      'What is the main idea of the passage?',
+      'A. First option', 'B. Second option', 'C. Third option', 'D. Fourth option',
+      'A. First option',
+      'Explanation of why A is correct.',
+      section === 'Listening' || section === 'Speaking' ? 'q1_audio.mp3' : '',
+      'q1_image.png',
+    ].map(csvEscape).join(',');
+
+    // BOM for UTF-8 so Excel opens Korean correctly
+    const csv = '\uFEFF' + header + '\n' + example + '\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${testType}${testNumber}-${section}-template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Parse a CSV string into rows of cells (handles quoted fields with commas/newlines)
+  const parseCsv = (text: string): string[][] => {
+    // Strip BOM
+    text = text.replace(/^\uFEFF/, '');
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { cell += '"'; i++; }
+          else inQuotes = false;
+        } else cell += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(cell); cell = ''; }
+        else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+        else if (c === '\r') { /* skip */ }
+        else cell += c;
+      }
+    }
+    // last cell/row
+    if (cell.length > 0 || row.length > 0) { row.push(cell); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  };
+
+  const handleCsvFile = (file: File) => {
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = reader.result as string;
+        const rows = parseCsv(text);
+        if (rows.length < 2) throw new Error('데이터 행이 없습니다. 헤더 아래에 문제를 입력했는지 확인하세요.');
+
+        const header = rows[0].map(h => h.trim());
+        const idx = (name: string) => header.findIndex(h => h.toLowerCase() === name.toLowerCase());
+
+        const iNum = idx('questionNumber'), iType = idx('questionType'), iDiff = idx('difficulty'), iMod = idx('module');
+        const iPTitle = idx('passageTitle'), iPText = idx('passageText'), iScript = idx('scriptText');
+        const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
+        const iAns = idx('correctAnswer'), iExp = idx('explanation');
+
+        const supportsModule = section === 'Reading' || section === 'Listening';
+        const questions: TPOQuestion[] = [];
+
+        for (let r = 1; r < rows.length; r++) {
+          const cells = rows[r];
+          const get = (i: number) => (i >= 0 && i < cells.length ? cells[i].trim() : '');
+          const qType = get(iType) || (questionTypeOptions?.[0] || '');
+          if (!qType && !get(iQText)) continue; // skip empty rows
+
+          // Module 2 suffix
+          const modVal = get(iMod);
+          const isMod2 = supportsModule && /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(modVal);
+          const finalType = isMod2 && !qType.includes('(Module 2)') ? `${qType} (Module 2)` : qType;
+
+          const options = [get(iA), get(iB), get(iC), get(iD)].filter(o => o !== '');
+
+          questions.push({
+            id: `q-${Date.now()}-${get(iNum) || r}-${Math.random().toString(36).slice(2, 7)}`,
+            questionNumber: get(iNum) ? (parseInt(get(iNum)) || get(iNum)) : r,
+            questionText: get(iQText),
+            questionType: finalType,
+            options,
+            correctAnswer: get(iAns),
+            explanation: get(iExp) || undefined,
+            passageTitle: get(iPTitle) || undefined,
+            passageText: get(iPText) || undefined,
+            scriptText: get(iScript) || undefined,
+            difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+          } as TPOQuestion);
+        }
+
+        if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
+        setParsed(questions);
+      } catch (err: any) {
+        setError(err?.message || 'CSV 파싱 오류. 형식을 확인해주세요.');
+      }
+    };
+    reader.onerror = () => setError('파일을 읽을 수 없습니다.');
+    reader.readAsText(file, 'utf-8');
+  };
+
   if (parsed) {
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
@@ -4696,6 +4828,15 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
         >
           📝 텍스트 템플릿
         </button>
+        <button
+          type="button"
+          onClick={() => { setMode('csv'); setError(null); }}
+          className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+            mode === 'csv' ? 'bg-white shadow-sm text-[#1e6b73]' : 'text-gray-500'
+          }`}
+        >
+          📊 CSV/엑셀
+        </button>
       </div>
 
       {mode === 'ai' ? (
@@ -4721,6 +4862,39 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
             >
               {aiLoading ? '분석 중...' : '✨ AI로 자동 정리'}
             </Button>
+          </div>
+        </>
+      ) : mode === 'csv' ? (
+        <>
+          <p className="text-sm text-gray-500 mb-4">
+            <button onClick={handleDownloadCsvTemplate} className="text-[#1e6b73] underline font-semibold">
+              ⬇ CSV 템플릿 다운로드
+            </button>
+            {' '}후 엑셀에서 표로 편집하세요. 각 행이 문제 하나입니다.
+            오디오·이미지는 <strong>파일명만</strong> 적으면 됩니다 (파일은 이후 따로 업로드).
+          </p>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-4 text-xs text-amber-800 space-y-1">
+            <p className="font-semibold">📌 엑셀 사용 팁</p>
+            <p>• 편집 후 저장할 때 <strong>"CSV UTF-8 (쉼표로 분리)"</strong> 형식을 선택하세요 (한글 안 깨짐).</p>
+            <p>• 지문(passageText)처럼 긴 글은 셀 안에 줄바꿈이 있어도 괜찮습니다.</p>
+            <p>• correctAnswer는 보기(optionA~D)와 <strong>똑같이</strong> 입력하세요.</p>
+            {(section === 'Reading' || section === 'Listening') && (
+              <p>• module 열에 <strong>Module 2</strong>라고 적으면 Module 2 문제로 저장됩니다 (비우면 Module 1).</p>
+            )}
+          </div>
+          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#2d7a7c] hover:bg-gray-50 transition-colors mb-3">
+            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+            <span className="text-sm text-gray-500">채운 CSV 파일을 클릭해서 선택하거나 여기로 드래그</span>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
+            />
+          </label>
+          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
           </div>
         </>
       ) : (
