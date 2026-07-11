@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList } from 'lucide-react';
+import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList, Film, MessagesSquare } from 'lucide-react';
 // motion removed - using CSS animations
 import type { TPOQuestion } from './ContentManagement';
 
@@ -9,7 +9,7 @@ export interface DailyLifeTemplate {
   id: string;
   name: string;
   icon: string; // icon key
-  category: 'notice' | 'email' | 'social_media' | 'advertisement' | 'article' | 'form' | 'custom';
+  category: 'notice' | 'email' | 'social_media' | 'advertisement' | 'article' | 'form' | 'review' | 'text_message' | 'custom';
   // HTML structure template with {{placeholders}}
   structure: string;
   // Default field values
@@ -148,6 +148,34 @@ const BUILT_IN_TEMPLATES: DailyLifeTemplate[] = [
       footer: 'Footer / Summary',
     }
   },
+  {
+    id: 'review-1',
+    name: 'Review (리뷰)',
+    icon: 'film',
+    category: 'review',
+    structure: 'review',
+    fields: {
+      title: 'The Review of Whispering Woods',
+      body: 'This week\'s University Cineclub offering, Whispering Woods by award-winning filmmaker Amara Patel, features Tomas Ruiz as Dr. Daniel Salazar, a botanist who endures an unexpected reunion while doing fieldwork in a remote forest.\n\nPraised by critics, this film offers a compelling exploration of fantasy that challenges viewers\' perceptions.',
+    },
+    fieldLabels: {
+      title: 'Review Title',
+      body: 'Review Body',
+    }
+  },
+  {
+    id: 'text-message-1',
+    name: 'Text Message (문자 대화)',
+    icon: 'messages',
+    category: 'text_message',
+    structure: 'text_message',
+    fields: {
+      messages: 'Emma (12:45 P.M.): Where should we grab lunch? Class ran late and I\'m starving.\nLiam (12:47 P.M.): Let\'s go to the cafe near the science building. The last time I was there, they had great wraps.\nEmma (12:49 P.M.): Sounds good! Do they have vegetarian options?\nLiam (12:51 P.M.): If their menu hasn\'t changed, you\'ll be fine.\nEmma (12:53 P.M.): Perfect. I\'ll just finish my lab report and then head out. It won\'t take long.\nLiam (12:55 P.M.): Great! I\'ll bring my reusable cup for coffee.\nEmma (12:57 P.M.): Awesome. I\'ll text Mia to see if she wants to join.\nLiam (12:59 P.M.): Cool, I\'ll pack my bag and leave soon.',
+    },
+    fieldLabels: {
+      messages: 'Messages (한 줄에 하나씩: "이름 (시간): 내용")',
+    }
+  },
 ];
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -157,8 +185,41 @@ const iconMap: Record<string, React.ReactNode> = {
   megaphone: <Megaphone className="w-5 h-5" />,
   newspaper: <Newspaper className="w-5 h-5" />,
   shopping: <ShoppingCart className="w-5 h-5" />,
+  film: <Film className="w-5 h-5" />,
+  messages: <MessagesSquare className="w-5 h-5" />,
   custom: <FileText className="w-5 h-5" />,
 };
+
+// Parse "Name (time): content" lines into structured chat messages.
+// The first speaker is placed on the left; everyone else on the right.
+export interface ParsedChatMessage {
+  sender: string;
+  time: string;
+  text: string;
+  side: 'left' | 'right';
+}
+export function parseTextMessages(raw: string): ParsedChatMessage[] {
+  if (!raw) return [];
+  let firstSender: string | null = null;
+  const out: ParsedChatMessage[] = [];
+  raw.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    // Matches "Emma (12:45 P.M.): text"  or  "Emma: text"
+    const m = trimmed.match(/^(.+?)\s*(?:\(([^)]*)\))?\s*:\s*([\s\S]*)$/);
+    if (!m) {
+      // continuation line — append to previous message
+      if (out.length > 0) out[out.length - 1].text += '\n' + trimmed;
+      return;
+    }
+    const sender = m[1].trim();
+    const time = (m[2] || '').trim();
+    const text = (m[3] || '').trim();
+    if (firstSender === null) firstSender = sender;
+    out.push({ sender, time, text, side: sender === firstSender ? 'left' : 'right' });
+  });
+  return out;
+}
 
 interface ReadDailyLifeTemplatesProps {
   onSave?: (question: TPOQuestion) => void;
@@ -355,6 +416,41 @@ export function ReadDailyLifeTemplates({
           </div>
         );
 
+      case 'review':
+        return (
+          <div className="border-2 p-6" style={{ borderColor: c }}>
+            <div className="flex items-center justify-center mb-4">
+              <Film className="w-10 h-10" style={{ color: c }} />
+            </div>
+            {f.title && <h2 className="text-xl font-[\'Georgia\',_serif] font-bold mb-4" style={{ color: c }}>{f.title}</h2>}
+            {f.body && <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm">{f.body}</p>}
+          </div>
+        );
+
+      case 'text_message':
+        return (
+          <div className="border-2 rounded-[28px] p-4 max-w-md mx-auto" style={{ borderColor: c }}>
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-24 h-2 rounded-full bg-gray-300" />
+            </div>
+            <div className="space-y-3">
+              {parseTextMessages(f.messages || '').map((msg, i) => (
+                <div key={i} className={`flex ${msg.side === 'right' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-2 ${msg.side === 'right' ? 'bg-gray-100' : ''}`}
+                    style={msg.side === 'left' ? { backgroundColor: c + '18' } : {}}
+                  >
+                    <p className="font-[\'Inter\',_sans-serif] font-bold text-xs mb-1" style={{ color: msg.side === 'left' ? c : '#374151' }}>
+                      {msg.sender}{msg.time ? ` (${msg.time})` : ''}:
+                    </p>
+                    <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="border-2 border-gray-300 rounded-lg p-5 space-y-3">
@@ -505,6 +601,8 @@ export function ReadDailyLifeTemplates({
                         <option value="advertisement">Advertisement</option>
                         <option value="article">Article</option>
                         <option value="form">Form/Table</option>
+                        <option value="review">Review</option>
+                        <option value="text_message">Text Message</option>
                         <option value="custom">Custom</option>
                       </select>
                     </div>
@@ -975,6 +1073,41 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
               </table>
             )}
             {f.footer && <div className="text-xs font-['Inter',_sans-serif] whitespace-pre-wrap text-gray-700 border-t border-gray-300 pt-3">{f.footer}</div>}
+          </div>
+        </div>
+      );
+
+    case 'review':
+      return (
+        <div className="border-2 p-4 md:p-6" style={{ borderColor: c }}>
+          <div className="flex items-center justify-center mb-3 md:mb-4">
+            <Film className="w-9 h-9 md:w-10 md:h-10" style={{ color: c }} />
+          </div>
+          {f.title && <h2 className="text-lg md:text-xl font-['Georgia',_serif] font-bold mb-3 md:mb-4" style={{ color: c }}>{f.title}</h2>}
+          {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.body}</p>}
+        </div>
+      );
+
+    case 'text_message':
+      return (
+        <div className="border-2 rounded-[24px] md:rounded-[28px] p-3 md:p-4 max-w-md mx-auto" style={{ borderColor: c }}>
+          <div className="flex items-center justify-center mb-3 md:mb-4">
+            <div className="w-20 md:w-24 h-1.5 md:h-2 rounded-full bg-gray-300" />
+          </div>
+          <div className="space-y-2 md:space-y-3 max-h-[420px] overflow-y-auto">
+            {parseTextMessages(f.messages || '').map((msg, i) => (
+              <div key={i} className={`flex ${msg.side === 'right' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[82%] rounded-2xl px-3 md:px-4 py-1.5 md:py-2 ${msg.side === 'right' ? 'bg-gray-100' : ''}`}
+                  style={msg.side === 'left' ? { backgroundColor: c + '18' } : {}}
+                >
+                  <p className="font-['Inter',_sans-serif] font-bold text-[11px] md:text-xs mb-0.5 md:mb-1" style={{ color: msg.side === 'left' ? c : '#374151' }}>
+                    {msg.sender}{msg.time ? ` (${msg.time})` : ''}:
+                  </p>
+                  <p className="font-['Inter',_sans-serif] text-sm whitespace-pre-wrap">{msg.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       );

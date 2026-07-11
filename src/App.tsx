@@ -6359,6 +6359,8 @@ function AppContent() {
         advertisement: 'Read an advertisement.',
         article: 'Read a news article.',
         form: 'Read a form.',
+        review: 'Read a review.',
+        text_message: 'Read a text-message chain.',
       };
       return structureMap[parsed.structure] || 'Read a notice.';
     } catch {
