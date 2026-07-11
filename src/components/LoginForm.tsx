@@ -224,8 +224,8 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
       {!showWechatQR && (
         <form onSubmit={handleSubmit}>
           {/* Email + 인증번호 받기 */}
-          <div className="flex gap-2 mb-3">
-            <div className="relative flex-1">
+          <div className="mb-3">
+            <div className="relative">
               <input
                 type="email"
                 placeholder="이메일 주소"
@@ -240,9 +240,9 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               type="button"
               onClick={handleSendCode}
               disabled={isSending || countdown > 0}
-              className="shrink-0 px-3 py-2.5 rounded-lg bg-[#1e6b73] text-white text-sm font-semibold whitespace-nowrap transition-colors hover:bg-[#164f56] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-2 w-full px-3 py-2.5 rounded-lg bg-[#1e6b73] text-white text-sm font-semibold whitespace-nowrap transition-colors hover:bg-[#164f56] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSending ? '발송 중...' : countdown > 0 ? `${countdown}초` : codeSent ? '재전송' : '인증번호 받기'}
+              {isSending ? '발송 중...' : countdown > 0 ? `${countdown}초 후 재전송` : codeSent ? '인증번호 재전송' : '인증번호 받기'}
             </button>
           </div>
 

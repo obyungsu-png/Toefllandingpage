@@ -1235,7 +1235,7 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
       if (String(stored.code) !== String(verifyCode).trim()) {
         return c.json({ error: '인증번호가 올바르지 않아요.' }, 401);
       }
-      await kv.delete(`email_code:${emailLower}`);
+      await kv.del(`email_code:${emailLower}`);
 
       let user = await kv.get(`user:email:${emailLower}`);
       if (!user) {
@@ -1402,7 +1402,7 @@ app.post('/make-server-e46cd33a/auth/verify-email-code', async (c) => {
       return c.json({ error: 'Invalid code' }, 400);
     }
     // Clear the code after successful verification
-    await kv.delete(`email_code:${email.toLowerCase()}`);
+    await kv.del(`email_code:${email.toLowerCase()}`);
     return c.json({ success: true, verified: true });
   } catch (error) {
     console.error('Verify email code error:', error);
@@ -1434,7 +1434,7 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
       }
 
       // 인증 성공 → 코드 삭제 (1회용)
-      await kv.delete(`email_code:${emailLower}`);
+      await kv.del(`email_code:${emailLower}`);
 
       // 기존 유저 조회, 없으면 자동 생성
       let user = await kv.get(`user:email:${emailLower}`);
