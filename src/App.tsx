@@ -205,7 +205,14 @@ function AppContent() {
   // Training interface state (to hide banner)
   const [isInTrainingMode, setIsInTrainingMode] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<TabType>('TPO');
+  const [activeTab, setActiveTabRaw] = useState<TabType>('TPO');
+  // 탭 전환 시 lazy 청크(LMSSection/HistorySection/TPOPage 등) 동기 마운트로 인한
+  // Suspense 조기 발동(React #426)을 막기 위해 setActiveTab을 transition으로 감싼다.
+  const setActiveTab = React.useCallback((tab: React.SetStateAction<TabType>) => {
+    startTransition(() => {
+      setActiveTabRaw(tab);
+    });
+  }, []);
   const [activeSkill, setActiveSkill] = useState<SkillType>('Reading');
   const [activeTPORange, setActiveTPORange] = useState<TPORange>('TPO 1-5');
   const [activeTestSetRange, setActiveTestSetRange] = useState<TestSetRange>('1-5');
