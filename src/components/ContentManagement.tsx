@@ -4216,6 +4216,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         advertisement: 'advertisement', advert: 'advertisement', 광고: 'advertisement', 광고문: 'advertisement',
         article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
         form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
+        review: 'review', 리뷰: 'review', 영화리뷰: 'review', 후기: 'review',
+        text_message: 'text_message', 'text message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
       };
       return map[raw.trim().toLowerCase()] || undefined;
     };
@@ -4227,6 +4229,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       advertisement: 'Read an advertisement.',
       article: 'Read an article.',
       form: 'Read a form.',
+      review: 'Read a review.',
+      text_message: 'Read a text message conversation.',
     };
 
     const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
@@ -4272,6 +4276,13 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         tableHeaders: ['tableheaders', '헤더', '표헤더', '컬럼', 'columns', 'table_headers'],
         tableRows: ['tablerows', '행', '표행', 'rows', 'table_rows'],
         footer: ['footer', '요약', '하단', 'footerinfo', 'footer_info'],
+      },
+      review: {
+        title: ['title', '제목', '리뷰제목', 'reviewtitle', 'review_title'],
+        body: ['body', '본문', '내용', 'reviewbody', 'review_body', '리뷰내용'],
+      },
+      text_message: {
+        messages: ['messages', '메시지', '대화', '문자', 'chat', 'conversation', '대화내용'],
       },
     };
 
@@ -4383,7 +4394,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       const scriptText = after(['스크립트:']) || undefined;
 
       // Audio/image filenames — stored as pending markers, matched later via 미디어 일괄 매칭
-      const audioFileName = single(['오디오:', '음성:', 'audio:', 'Audio:', '오디오파일:']) || undefined;
+      // Reading has NO audio — only image.
+      const audioFileName = section === 'Reading' ? undefined : (single(['오디오:', '음성:', 'audio:', 'Audio:', '오디오파일:']) || undefined);
       const imageFileName = single(['이미지:', '사진:', 'image:', 'Image:', '이미지파일:']) || undefined;
       const analysisNote = after(['분석:', 'analysis:', '분석노트:']) || undefined;
       const vocabularyNote = after(['단어:', 'vocabulary:', '어휘:', '단어노트:']) || undefined;
