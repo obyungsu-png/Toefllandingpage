@@ -242,7 +242,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
               disabled={isSending || countdown > 0}
               className="shrink-0 px-3 py-2.5 rounded-lg bg-[#1e6b73] text-white text-sm font-semibold whitespace-nowrap transition-colors hover:bg-[#164f56] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSending ? '전송중' : countdown > 0 ? `${countdown}s` : codeSent ? '재전송' : '받기'}
+              {isSending ? '전송중' : countdown > 0 ? `${countdown}s` : codeSent ? '재전송' : '전송'}
             </button>
           </div>
 
