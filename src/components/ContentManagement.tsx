@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
-import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List } from 'lucide-react';
+import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 
 // 기본 아바타 목록 (public/avatars/ 에서 서빙)
@@ -133,6 +133,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showBulkUploadForm, setShowBulkUploadForm] = useState(false);
   const [showAudioSplitter, setShowAudioSplitter] = useState(false);
+  const [showMediaMatcher, setShowMediaMatcher] = useState(false);
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
   const editFormRef = useRef<HTMLDivElement>(null);
@@ -704,6 +705,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             Audio Split Upload
           </Button>
         )}
+        <Button
+          onClick={() => setShowMediaMatcher(!showMediaMatcher)}
+          className={`shadow-lg ${showMediaMatcher ? 'bg-indigo-700 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'}`}
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          미디어 일괄 매칭
+        </Button>
         {selectedSection === 'Reading' && (
           <>
             <Button
@@ -961,6 +969,20 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             section={s}
             onUpdateTest={onUpdateTest}
             onClose={() => setShowAudioSplitter(false)}
+          />
+        );
+      })()}
+
+      {showMediaMatcher && getExistingTest() && (() => {
+        const t = getExistingTest()!;
+        const s = t.sections.find(sec => sec.sectionType === selectedSection);
+        if (!s) return null;
+        return (
+          <MediaMatcherPanel
+            test={t}
+            section={s}
+            onUpdateTest={onUpdateTest}
+            onClose={() => setShowMediaMatcher(false)}
           />
         );
       })()}
@@ -4921,6 +4943,186 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ─── Media Matcher Panel — batch match audio/image files to questions by filename ───
+function MediaMatcherPanel({
+  test,
+  section,
+  onUpdateTest,
+  onClose,
+}: {
+  test: TPOTest;
+  section: TPOSection;
+  onUpdateTest: (t: TPOTest) => void;
+  onClose: () => void;
+}) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sortedQs = [...section.questions].sort((a, b) => {
+    const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+    const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+    return na - nb;
+  });
+
+  const isAudio = (name: string) => /\.(mp3|wav|m4a|ogg|aac)$/i.test(name);
+  const isImage = (name: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
+
+  // Extract question number from filename: "q1_audio.mp3", "1.mp3", "audio1.png", "q12.jpg" ...
+  const extractQNum = (filename: string): number | null => {
+    const base = filename.replace(/\.[^.]+$/, ''); // strip extension
+    // Prefer explicit q-prefix: q1, q12, Q3
+    const qMatch = base.match(/q\s*_?\s*(\d+)/i);
+    if (qMatch) return parseInt(qMatch[1]);
+    // Fallback: first number in the name
+    const numMatch = base.match(/(\d+)/);
+    if (numMatch) return parseInt(numMatch[1]);
+    return null;
+  };
+
+  // Determine if filename hints image vs audio slot
+  type Match = { file: File; qNum: number; kind: 'audio' | 'image'; matched: boolean };
+  const computeMatches = (): Match[] => {
+    return files.map(file => {
+      const qNum = extractQNum(file.name);
+      const kind: 'audio' | 'image' = isImage(file.name) ? 'image' : 'audio';
+      const matched = qNum !== null && sortedQs.some(q => {
+        const n = typeof q.questionNumber === 'number' ? q.questionNumber : parseInt(String(q.questionNumber));
+        return n === qNum;
+      });
+      return { file, qNum: qNum ?? -1, kind, matched };
+    });
+  };
+
+  const matches = computeMatches();
+  const matchedCount = matches.filter(m => m.matched).length;
+  const unmatched = matches.filter(m => !m.matched);
+
+  const handleFilesSelected = (fileList: FileList | null) => {
+    if (!fileList) return;
+    const arr = Array.from(fileList).filter(f => isAudio(f.name) || isImage(f.name));
+    setFiles(prev => [...prev, ...arr]);
+    setError(null);
+    setDone(false);
+  };
+
+  const handleUpload = async () => {
+    const toUpload = matches.filter(m => m.matched);
+    if (toUpload.length === 0) { setError('매칭된 파일이 없습니다. 파일명을 확인하세요 (예: q1_audio.mp3).'); return; }
+
+    setUploading(true);
+    setError(null);
+    setUploadedCount(0);
+
+    // Work on a deep-ish copy of the test
+    const updatedTest: TPOTest = {
+      ...test,
+      sections: test.sections.map(s => s.sectionType === section.sectionType
+        ? { ...s, questions: s.questions.map(q => ({ ...q })) }
+        : s),
+    };
+    const targetSection = updatedTest.sections.find(s => s.sectionType === section.sectionType)!;
+
+    let count = 0;
+    try {
+      for (const m of toUpload) {
+        const q = targetSection.questions.find(qq => {
+          const n = typeof qq.questionNumber === 'number' ? qq.questionNumber : parseInt(String(qq.questionNumber));
+          return n === m.qNum;
+        });
+        if (!q) continue;
+
+        if (m.kind === 'audio') {
+          const url = await uploadToStorage(m.file, 'listening-audio');
+          q.audioUrl = url;
+        } else {
+          const url = await uploadToStorage(m.file, 'listening-images');
+          q.imageUrl = url;
+        }
+        count++;
+        setUploadedCount(count);
+      }
+
+      onUpdateTest(updatedTest);
+      setDone(true);
+    } catch (err: any) {
+      setError(err?.message || '업로드 중 오류가 발생했습니다. Supabase 버킷(listening-audio, listening-images)이 있는지 확인하세요.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg border border-indigo-200 p-6 animate-[fadeSlideUp_0.3s_ease-out] mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-medium text-gray-800">
+          미디어 일괄 매칭 — {test.testType} {test.testNumber} {section.sectionType}
+        </h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+      </div>
+
+      <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 mb-4 text-xs text-indigo-800 space-y-1">
+        <p className="font-semibold">📌 파일명 규칙</p>
+        <p>• 오디오: <code>q1_audio.mp3</code>, <code>1.mp3</code>, <code>q1.wav</code> 등 — 파일명에 문제 번호가 들어가면 자동 인식</p>
+        <p>• 이미지: <code>q1_image.png</code>, <code>1.jpg</code>, <code>q1.png</code> 등</p>
+        <p>• 파일명의 숫자로 문제를 찾아 audioUrl / imageUrl에 자동 연결합니다.</p>
+      </div>
+
+      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-gray-50 transition-colors mb-4">
+        <Upload className="w-7 h-7 text-gray-400 mb-2" />
+        <span className="text-sm text-gray-500">오디오·이미지 파일들을 선택하거나 여기로 드래그 (여러 개 가능)</span>
+        <input
+          type="file"
+          multiple
+          accept="audio/*,image/*"
+          className="hidden"
+          onChange={(e) => handleFilesSelected(e.target.files)}
+        />
+      </label>
+
+      {files.length > 0 && (
+        <>
+          <div className="flex items-center gap-3 mb-2 text-sm">
+            <span className="font-semibold text-gray-700">{files.length}개 파일</span>
+            <span className="text-green-600">✅ 매칭 {matchedCount}</span>
+            {unmatched.length > 0 && <span className="text-amber-600">⚠️ 미매칭 {unmatched.length}</span>}
+            <button onClick={() => { setFiles([]); setDone(false); }} className="ml-auto text-xs text-gray-400 underline">전체 지우기</button>
+          </div>
+          <div className="max-h-64 overflow-y-auto border rounded-lg divide-y mb-4">
+            {matches.map((m, i) => (
+              <div key={i} className={`flex items-center gap-2 px-3 py-2 text-sm ${m.matched ? '' : 'bg-amber-50'}`}>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0">
+                  {m.kind === 'audio' ? '🎵' : '🖼️'}
+                </span>
+                <span className="flex-1 truncate text-gray-700">{m.file.name}</span>
+                {m.matched
+                  ? <span className="text-green-600 text-xs shrink-0">→ Q{m.qNum} {m.kind === 'audio' ? 'audio' : 'image'}</span>
+                  : <span className="text-amber-600 text-xs shrink-0">매칭 실패 (번호 확인)</span>}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+      {done && <p className="text-sm text-green-600 mb-2 font-semibold">✅ {uploadedCount}개 파일 업로드 및 연결 완료!</p>}
+
+      <div className="flex gap-3 justify-end pt-4 border-t">
+        <Button onClick={onClose} className="bg-gray-300 text-gray-700 hover:bg-gray-400">닫기</Button>
+        <Button
+          onClick={handleUpload}
+          disabled={uploading || matchedCount === 0}
+          className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-50"
+        >
+          {uploading ? `업로드 중... (${uploadedCount}/${matchedCount})` : `${matchedCount}개 파일 업로드 & 연결`}
+        </Button>
+      </div>
     </div>
   );
 }
