@@ -3614,7 +3614,10 @@ function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: B
   const getTemplate = (): string => {
     switch (section) {
       case 'Reading':
-        return `Q1-10: Complete Words
+        return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
+# (아무 줄에 넣어도 됩니다 — 예: 난이도 아래, 문제 위 등)
+
+Q1-10: Complete Words
 난이도: 보통
 
 지문:
@@ -3624,7 +3627,10 @@ deve[lopment] shapes our cul[ture] and soc[iety]. Without mo[ney] or moti[vation
 
 (빈칸은 지문에서 자동 추출됩니다 — peo[ple] 형식으로만 입력하세요)\n\n===\n\nQ11: Read in Daily Life\n유형: email\n난이도: 보통\n\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody:\nDear Edward,\n\nThank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st.\n\nTo continue enjoying unlimited access to our galleries, workshops, and special exhibitions, please renew your membership before the expiration date.\n\nBest regards,\nMembership Services Team\n\n문제:\nWhat is the main purpose of the email?\n\n보기:\nA. To announce a membership renewal\nB. To ask for a donation\nC. To complain about a service\nD. To introduce a new artist\n\n정답: A\n해설: The email asks the recipient to renew a membership.\n\n===\n\nQ12: Read in Daily Life\n유형: notice\n난이도: 보통\n\n필드:\ntitle: Extended Library Hours\nsubtitle: Finals Week Schedule\nbody:\nThe library will be open until midnight during finals week. Group study rooms can be reserved online.\n\n문제:\nWhat is being announced?\n\n보기:\nA. A schedule change\nB. A new menu\nC. A closure\nD. A job opening\n\n정답: A\n\n===\n\nQ13: Read in Daily Life\n유형: social_media\n난이도: 보통\n\n필드:\nplatform: Community Forum\nusername: @GreenLiving_Sara\ntimestamp: 2 hours ago\ncontent: Just discovered that our local farmers market is now open every Wednesday AND Saturday! The fresh organic produce is amazing and the prices are better than the supermarket.\nlikes: 47\ncomments: 12\nshares: 8\n\n문제:\nWhat is the post mainly about?\n\n보기:\nA. A new supermarket\nB. A farmers market schedule\nC. A recipe\nD. A travel plan\n\n정답: B\n\n===\n\nQ14: Read in Daily Life\n유형: advertisement\n난이도: 보통\n\n필드:\nheadline: GRAND OPENING SALE\nbusiness: TechWorld Electronics\noffer: Up to 50% OFF on all laptops and tablets this weekend only!\ndetails: Free screen protector with every purchase. Extended warranty available. Free delivery on orders over $100.\nlocation: 123 Main Street, Downtown Plaza\ncontact: www.techworldelectronics.com | (555) 123-4567\n\n문제:\nWhat is being advertised?\n\n보기:\nA. A restaurant\nB. A technology store\nC. A clothing sale\nD. A bookstore\n\n정답: B\n\n===\n\nQ15: Read in Daily Life\n유형: article\n난이도: 보통\n\n필드:\nsource: The Daily Tribune\nheadline: City Council Approves New Library Branch\ndate: March 5, 2026\nauthor: By Jennifer Chen, Staff Reporter\nbody: The City Council voted unanimously last night to approve the construction of a new public library branch in the Riverside neighborhood. The $4.2 million project is expected to break ground this summer and open its doors to the public by late 2027.\n\n문제:\nWhat is the article mainly about?\n\n보기:\nA. A city council election\nB. A new library branch\nC. A neighborhood park\nD. A school renovation\n\n정답: B\n\n===\n\nQ16: Read in Daily Life\n유형: form\n난이도: 보통\n\n필드:\ntitle: Office Supply Order Form\ncompany: QuickShip Office Supplies\ntableHeaders: Item,Quantity,Unit Price,Total\ntableRows: Copy Paper (500 sheets),10,$4.50,$45.00\nfooter: Subtotal: $45.00. Delivery estimated: 3-5 business days.\n\n문제:\nWhat is the total cost of the order?\n\n보기:\nA. $4.50\nB. $45.00\nC. $450.00\nD. $5.00\n\n정답: B\n\n===\n\nQ17: Read an Academic Passage\n난이도: 보통\n\n지문:\nThe theory of plate tectonics revolutionized geology in the 1960s...\n\n문제:\nWhat is the main idea of the passage?\n\n보기:\nA. Option A\nB. Option B\nC. Option C\nD. Option D\n\n정답: B\n해설: ...\n\n===\n\nQ18: Read an Academic Passage\n난이도: 보통\n\n문제:\nWhat evidence supports the theory?\n\n보기:\nA. ...\nB. ...\nC. ...\nD. ...\n\n정답: C\n(이전 지문 자동 상속)`;
       case 'Listening':
-        return `Q1: Academic Lecture
+        return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
+# (아무 줄에 넣어도 됩니다 — 예: 난이도 아래, 문제 위 등)
+
+Q1: Academic Lecture
 난이도: 보통
 제목: The History of Photography
 안내문: Listen to part of a lecture in an art history class.
@@ -4206,7 +4212,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
         for (const label of labels) {
-          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|===|$))`, 'im');
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|모듈:|module:|난이도:|===|$))`, 'im');
           const m = t.match(re);
           if (m && m[1].trim()) return m[1].trim();
         }
@@ -4224,6 +4230,17 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       };
 
       const difficulty = (single(['난이도:', '난이도']) || '보통') as '쉬움' | '보통' | '어려움';
+
+      // Module 1/2 for Reading/Listening — appended as ' (Module 2)' suffix to questionType
+      const rawModule = single(['모듈:', '모듈', 'module:', 'Module:']);
+      const isModule2 = /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(rawModule || '') &&
+                        (section === 'Reading' || section === 'Listening');
+      const applyModuleSuffix = (baseType: string): string => {
+        if (!isModule2) return baseType;
+        if ((baseType || '').includes('(Module 2)')) return baseType; // already tagged
+        return `${baseType} (Module 2)`;
+      };
+
       const passageText = after(['지문:']) || undefined;
       const scriptText = after(['스크립트:']) || undefined;
       const analysisNote = after(['분석:', 'analysis:', '분석노트:']) || undefined;
@@ -4353,7 +4370,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             id: `q-${Date.now()}-${num}-${Math.random().toString(36).slice(2,7)}`,
             questionNumber: num,
             questionText: `Complete the blank #${num}`,
-            questionType: 'Complete Words',
+            questionType: applyModuleSuffix('Complete Words'),
             passageText: finalPassageText || undefined,
             difficulty,
             blanks: [blanks[i]],
@@ -4365,7 +4382,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
           id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
           questionNumber: isNaN(parseInt(qNum)) ? qNum : parseInt(qNum),
           questionText,
-          questionType: qType,
+          questionType: applyModuleSuffix(qType),
           options: options || [],
           correctAnswer: answer || '',
           explanation,
