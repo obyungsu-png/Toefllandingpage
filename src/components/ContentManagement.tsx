@@ -4347,6 +4347,31 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       return undefined;
     };
 
+    // Single source of truth for every reserved field label that should terminate
+    // a preceding block-capture in after(). Keeping ALL labels here (not a partial
+    // hardcoded subset) prevents the boundaries from drifting out of sync with the
+    // labels we actually extract — e.g. 분석:/번역:/단어노트: no longer swallow each
+    // other. Regex uses the 'i' flag, so case variants (Text:/text:) need only one
+    // entry; 교수/학생 are intentional prefixes matching 교수이름/학생1메시지/etc.
+    const FIELD_BOUNDARY_LABELS = [
+      '지문:', '본문:', '내용:', 'text:', 'passage:',
+      '스크립트:',
+      '분석:', 'analysis:', '분석노트:',
+      '단어:', 'vocabulary:', '어휘:', '단어노트:',
+      '번역:', 'translation:', '해석:', '번역노트:',
+      '문제:', '해설:', '보기:', '정답:', '빈칸:', '시간:',
+      '오디오:', '음성:', 'audio:', '오디오파일:',
+      '이미지:', '사진:', 'image:', '이미지파일:',
+      '난이도:', '모듈:', 'module:',
+      '받는이:', '제목:', '상황:', '지시문:', '요구사항:',
+      '교수', '학생', '문장끝:', '안내문:',
+      '유형:', 'format:', '형식:', 'Type:',
+      '화면제목:', 'passageTitle:', '지문제목:', 'screenTitle:',
+      '색상:', 'color:', '테마:',
+      '필드:', 'fields:',
+    ];
+    const BOUNDARY_ALT = FIELD_BOUNDARY_LABELS.join('|');
+
     for (const block of blocks) {
       if (!block.trim()) continue;
       const t = block.trim();
@@ -4361,7 +4386,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
         for (const label of labels) {
-          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|모듈:|module:|난이도:|오디오:|음성:|audio:|이미지:|사진:|image:|===|$))`, 'im');
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|${BOUNDARY_ALT}|===|$))`, 'im');
           const m = t.match(re);
           if (m && m[1].trim()) return m[1].trim();
         }
@@ -4647,7 +4672,21 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
       let content = data?.choices?.[0]?.message?.content || data?.content?.[0]?.text || '';
       content = content.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
 
-      const result = JSON.parse(content);
+      // Defensive: model sometimes wraps the array in explanation text or a second
+      // code fence. Slice from the first '[' to the last ']' so stray prose doesn't
+      // break JSON.parse.
+      const firstBracket = content.indexOf('[');
+      const lastBracket = content.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket > firstBracket) {
+        content = content.slice(firstBracket, lastBracket + 1);
+      }
+
+      let result: any;
+      try {
+        result = JSON.parse(content);
+      } catch {
+        throw new Error('AI 응답을 JSON으로 읽지 못했습니다. 원본 텍스트를 줄여서 다시 시도해보세요.');
+      }
       if (!Array.isArray(result)) throw new Error('AI 응답이 배열 형식이 아닙니다.');
       if (result.length === 0) throw new Error('AI가 문제를 인식하지 못했습니다. 원본을 확인해주세요.');
 
@@ -4816,6 +4855,26 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
     reader.readAsText(file, 'utf-8');
   };
 
+  // Flag a question whose correctAnswer doesn't exactly match any option.
+  // Only meaningful for multiple-choice questions (has options, no blanks).
+  const answerMismatch = (q: TPOQuestion): boolean => {
+    if (!q.options || q.options.length === 0) return false; // not multiple-choice
+    if (q.blanks && q.blanks.length > 0) return false;       // fill-in-blanks
+    if (!q.correctAnswer) return false;
+    const answers = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+    const opts = q.options.map(norm);
+    return answers.some(a => {
+      const na = norm(String(a));
+      if (!na) return false;
+      // Accept exact option match, or a bare letter (A/B/C/D) that indexes an option.
+      if (opts.includes(na)) return false;
+      const letter = na.replace(/[.).]/g, '').trim();
+      if (/^[a-d]$/.test(letter) && q.options!.length > (letter.charCodeAt(0) - 97)) return false;
+      return true;
+    });
+  };
+
   if (parsed) {
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
@@ -4834,6 +4893,9 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
                 <p className="text-xs text-gray-400 mt-0.5">보기: {q.options.join(' | ')}</p>
               )}
               {q.correctAnswer && <p className="text-xs text-green-600 mt-0.5">정답: {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer}</p>}
+              {answerMismatch(q) && (
+                <p className="text-xs text-red-500 mt-0.5">⚠️ 정답이 보기 중 어느 것과도 정확히 일치하지 않습니다 — 저장 전 확인하세요.</p>
+              )}
               {q.blanks && q.blanks.length > 0 && <p className="text-xs text-purple-600 mt-0.5">빈칸 {q.blanks.length}개</p>}
             </div>
           ))}
