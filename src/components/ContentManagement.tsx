@@ -1399,8 +1399,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         </div>
 
-        {/* Module Selector — Reading 전용 */}
-        {section === 'Reading' && (
+        {/* Module Selector — Reading, Listening */}
+        {(section === 'Reading' || section === 'Listening') && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
@@ -2736,8 +2736,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         </div>
 
-        {/* Module Selector — Reading 전용 */}
-        {section === 'Reading' && (
+        {/* Module Selector — Reading, Listening */}
+        {(section === 'Reading' || section === 'Listening') && (
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
