@@ -98,6 +98,18 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 서버가 준 token_hash 로 진짜 Supabase Auth 세션을 만든다.
+    // (활성화 코드/권한 시스템이 supabase.auth.getUser() 를 요구하기 때문)
+    const establishSession = async (tokenHash: string | null | undefined, emailAddr: string) => {
+      if (!tokenHash) return;
+      // token_hash 방식에서는 email 을 함께 보내면 안 된다 ("Only the token_hash and type should be provided")
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: 'email',
+      });
+      if (error) console.error('세션 생성 실패:', error.message);
+    };
+
     const doLogin = async () => {
       try {
         const response = await fetch(`${SERVER_BASE_URL}/users/login`, {
@@ -137,24 +149,26 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
             });
 
             const regData = await registerResponse.json();
-            
+
             if (!registerResponse.ok) {
               alert(regData.error || '회원가입/로그인에 실패했어요.');
               return;
             }
-            
+
             // Auto-login after registration
+            await establishSession(regData.tokenHash, regData.email || email);
             if (onLoginSuccess) {
               onLoginSuccess(email.split('@')[0]);
             }
             onClose();
             return;
           }
-          
+
           alert(data.error || '로그인에 실패했어요.');
           return;
         }
 
+        await establishSession(data.tokenHash, data.email || email);
         if (onLoginSuccess) {
           onLoginSuccess(data.user?.email || email.split('@')[0]);
         }

@@ -1208,6 +1208,38 @@ app.delete('/make-server-e46cd33a/training-tests/:number', async (c) => {
   }
 });
 
+// ── Supabase Auth 세션 발급 헬퍼 ──
+// 이메일 인증번호 검증에 성공한 뒤 호출한다.
+// 1) Auth 유저가 없으면 생성(이메일 확인 완료 상태) 2) 매직링크 토큰 해시를 발급해 반환.
+// 프론트엔드는 이 token_hash 를 supabase.auth.verifyOtp 로 교환해 진짜 세션을 만든다.
+async function issueAuthSession(email: string): Promise<{ tokenHash: string } | { error: string }> {
+  const emailLower = String(email).toLowerCase();
+  try {
+    // 유저 생성 시도 (이미 있으면 무시)
+    const { error: createErr } = await supabase.auth.admin.createUser({
+      email: emailLower,
+      email_confirm: true,
+    });
+    if (createErr && !/already|registered|exists/i.test(createErr.message)) {
+      console.error('createUser error:', createErr.message);
+    }
+
+    // 매직링크 생성 → token_hash 확보
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: emailLower,
+    });
+    if (error || !data?.properties?.hashed_token) {
+      console.error('generateLink error:', error?.message);
+      return { error: '세션 발급에 실패했어요.' };
+    }
+    return { tokenHash: data.properties.hashed_token };
+  } catch (err) {
+    console.error('issueAuthSession error:', err);
+    return { error: '세션 발급 중 오류가 발생했어요.' };
+  }
+}
+
 // User registration endpoint (email-based)
 app.post('/make-server-e46cd33a/users/register', async (c) => {
   try {
@@ -1251,9 +1283,14 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
         await kv.set(`user:id:${user.id}`, user);
         console.log('✅ User registered via email code:', emailLower);
       }
+
+      // 진짜 Supabase Auth 세션 발급 (활성화/권한 시스템 연동)
+      const session = await issueAuthSession(emailLower);
       return c.json({
         success: true,
         user: { id: user.id, email: user.email, username: user.username },
+        tokenHash: 'tokenHash' in session ? session.tokenHash : null,
+        email: emailLower,
       });
     }
 
@@ -1453,9 +1490,14 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
       }
 
       console.log('✅ User logged in (email code):', user.username);
+
+      // 진짜 Supabase Auth 세션 발급 (활성화/권한 시스템 연동)
+      const session = await issueAuthSession(emailLower);
       return c.json({
         success: true,
         user: { id: user.id, email: user.email, username: user.username },
+        tokenHash: 'tokenHash' in session ? session.tokenHash : null,
+        email: emailLower,
       });
     }
 
