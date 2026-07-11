@@ -899,6 +899,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             testType={activeTestType}
             testNumber={selectedTestNumber}
             section={selectedSection}
+            questionTypeOptions={questionTypes[selectedSection]}
             onSubmit={(questions) => {
               // Handle adding multiple questions to test
               let test = getExistingTest();
@@ -3601,14 +3602,17 @@ interface BulkUploadFormProps {
   testType: 'TPO' | 'Test';
   testNumber: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
+  questionTypeOptions?: string[];
   onSubmit: (questions: TPOQuestion[]) => void;
   onCancel: () => void;
 }
 
-function BulkUploadForm({ testType, testNumber, section, onSubmit, onCancel }: BulkUploadFormProps) {
+function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, onSubmit, onCancel }: BulkUploadFormProps) {
+  const [mode, setMode] = useState<'ai' | 'text'>('ai');
   const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<TPOQuestion[] | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // ─── Template per section ───
   const getTemplate = (): string => {
@@ -4528,6 +4532,97 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     }
   };
 
+  // ─── AI parsing: paste raw TPO source, Claude structures it into questions ───
+  const handleAiParse = async () => {
+    if (!rawText.trim()) { setError('원본 텍스트를 붙여넣어주세요.'); return; }
+    setError(null);
+    setAiLoading(true);
+    setParsed(null);
+
+    const typesHint = (questionTypeOptions && questionTypeOptions.length > 0)
+      ? `이 섹션(${section})에서 사용 가능한 questionType 값: ${questionTypeOptions.join(', ')}`
+      : '';
+
+    const moduleHint = (section === 'Reading' || section === 'Listening')
+      ? `\n- Module 2 문제라고 판단되면 questionType 뒤에 ' (Module 2)'를 붙이세요 (예: 'Detail Questions (Module 2)').`
+      : '';
+
+    const systemPrompt = `당신은 TOEFL 시험 자료를 구조화된 JSON으로 변환하는 도구입니다.
+지금 작업: ${testType} ${testNumber} - ${section} 섹션.
+${typesHint}
+
+사용자가 지문/문제/보기/정답이 섞인 원본 텍스트를 붙여넣으면, 이를 분석해서
+TPOQuestion 객체의 JSON 배열로만 응답하세요.
+
+각 객체 필드 (해당 없으면 생략):
+{
+  "questionNumber": 숫자 (1, 2, 3...),
+  "questionText": "문제 지시문",
+  "questionType": "위 목록 중 하나",
+  "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+  "correctAnswer": "정답 (options 중 정확히 하나와 일치)",
+  "explanation": "해설 (있으면)",
+  "passageText": "지문 전문 (Reading 지문형)",
+  "scriptText": "듣기 스크립트 전문 (Listening/Speaking)",
+  "difficulty": "쉬움" | "보통" | "어려움" (없으면 '보통'),
+  "passageTitle": "지문/강의 제목 (있으면)"
+}
+
+규칙:
+- 오디오/이미지 관련 필드(audioUrl, imageUrl 등)는 절대 넣지 마세요. 나중에 따로 업로드합니다.
+- 여러 문제가 같은 지문/스크립트를 공유하면, 각 문제마다 그 지문/스크립트를 반복해서 넣으세요.
+- correctAnswer는 반드시 options 중 하나와 정확히 일치시키세요.${moduleHint}
+- 응답은 순수 JSON 배열만. 마크다운 코드블록(\`\`\`)이나 설명 문장 없이.`;
+
+    try {
+      const response = await fetch('/api/claude/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-5',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: rawText },
+          ],
+          max_tokens: 8000,
+          temperature: 0.2,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`AI 서버 오류 (${response.status})`);
+
+      const data = await response.json();
+      let content = data?.choices?.[0]?.message?.content || data?.content?.[0]?.text || '';
+      content = content.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+
+      const result = JSON.parse(content);
+      if (!Array.isArray(result)) throw new Error('AI 응답이 배열 형식이 아닙니다.');
+      if (result.length === 0) throw new Error('AI가 문제를 인식하지 못했습니다. 원본을 확인해주세요.');
+
+      // Normalize into TPOQuestion shape
+      const normalized: TPOQuestion[] = result.map((q: any, i: number) => ({
+        id: `q-${Date.now()}-${q.questionNumber ?? i + 1}-${Math.random().toString(36).slice(2, 7)}`,
+        questionNumber: typeof q.questionNumber === 'number' ? q.questionNumber : (parseInt(q.questionNumber) || i + 1),
+        questionText: q.questionText || '',
+        questionType: q.questionType || (questionTypeOptions?.[0] || ''),
+        options: Array.isArray(q.options) ? q.options : [],
+        correctAnswer: q.correctAnswer || '',
+        explanation: q.explanation || undefined,
+        passageText: q.passageText || undefined,
+        scriptText: q.scriptText || undefined,
+        difficulty: (q.difficulty || '보통') as '쉬움' | '보통' | '어려움',
+        passageTitle: q.passageTitle || undefined,
+      } as TPOQuestion));
+
+      setParsed(normalized);
+    } catch (err: any) {
+      setError(err?.message || 'AI 분석 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleDownloadTemplate = () => {
     const blob = new Blob([getTemplate()], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -4580,26 +4675,78 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       <h3 className="text-xl font-medium text-gray-800 mb-4">
         Bulk Upload {section} Questions — {testType} {testNumber}
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
-        메모장에 작성한 텍스트를 붙여넣으세요. 문제는 <code>===</code> 구분선으로 나눕니다.
-        <button onClick={handleDownloadTemplate} className="ml-2 text-[#1e6b73] underline font-semibold">
-          ⬇ 템플릿 다운로드
+
+      {/* Mode tabs */}
+      <div className="flex gap-2 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          type="button"
+          onClick={() => { setMode('ai'); setError(null); }}
+          className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+            mode === 'ai' ? 'bg-white shadow-sm text-[#1e6b73]' : 'text-gray-500'
+          }`}
+        >
+          ✨ AI 파싱
         </button>
-      </p>
-      <textarea
-        value={rawText}
-        onChange={e => setRawText(e.target.value)}
-        placeholder={getTemplate()}
-        rows={16}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm mb-3 focus:ring-2 focus:ring-[#2d7a7c]"
-      />
-      {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
-      <div className="flex gap-3 justify-end pt-4 border-t">
-        <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
-        <Button onClick={handleParse} className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]">
-          <Upload className="w-4 h-4 mr-2" /> 텍스트 파싱
-        </Button>
+        <button
+          type="button"
+          onClick={() => { setMode('text'); setError(null); }}
+          className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+            mode === 'text' ? 'bg-white shadow-sm text-[#1e6b73]' : 'text-gray-500'
+          }`}
+        >
+          📝 텍스트 템플릿
+        </button>
       </div>
+
+      {mode === 'ai' ? (
+        <>
+          <p className="text-sm text-gray-500 mb-4">
+            지문·문제·보기·정답이 섞인 <strong>원본 텍스트를 형식 신경 쓰지 말고 그대로</strong> 붙여넣으세요.
+            AI가 문제 구조를 자동으로 정리합니다. (오디오·이미지는 이후 문제별로 따로 업로드)
+          </p>
+          <textarea
+            value={rawText}
+            onChange={e => setRawText(e.target.value)}
+            placeholder={`예시) TPO2 원본을 그대로 붙여넣으세요.\n\n1. What is the main idea of the passage?\n(A) ...\n(B) ...\n정답: B\n\n2. ...`}
+            rows={16}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm mb-3 focus:ring-2 focus:ring-[#2d7a7c]"
+          />
+          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
+            <Button
+              onClick={handleAiParse}
+              disabled={aiLoading}
+              className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61] disabled:opacity-50"
+            >
+              {aiLoading ? '분석 중...' : '✨ AI로 자동 정리'}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-gray-500 mb-4">
+            메모장에 작성한 텍스트를 붙여넣으세요. 문제는 <code>===</code> 구분선으로 나눕니다.
+            <button onClick={handleDownloadTemplate} className="ml-2 text-[#1e6b73] underline font-semibold">
+              ⬇ 템플릿 다운로드
+            </button>
+          </p>
+          <textarea
+            value={rawText}
+            onChange={e => setRawText(e.target.value)}
+            placeholder={getTemplate()}
+            rows={16}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm mb-3 focus:ring-2 focus:ring-[#2d7a7c]"
+          />
+          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
+            <Button onClick={handleParse} className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]">
+              <Upload className="w-4 h-4 mr-2" /> 텍스트 파싱
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
