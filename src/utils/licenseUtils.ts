@@ -99,6 +99,23 @@ async function getDeviceUniqueId(): Promise<string | null> {
   return getWebDeviceId();
 }
 
+function getDeviceIdColumn(deviceType: DeviceType): 'pc_machine_id' | 'tablet_machine_id' | 'mobile_machine_id' {
+  if (deviceType === 'TABLET') return 'tablet_machine_id';
+  if (deviceType === 'MOBILE') return 'mobile_machine_id';
+  return 'pc_machine_id';
+}
+
+function getDeviceName(deviceType: DeviceType): string {
+  if (deviceType === 'TABLET') return '태블릿';
+  if (deviceType === 'MOBILE') return '핸드폰';
+  return '컴퓨터';
+}
+
+function getRegisteredDeviceIds(profile: UserProfile): string[] {
+  return [profile.pc_machine_id, profile.tablet_machine_id, profile.mobile_machine_id]
+    .filter((id): id is string => !!id);
+}
+
 /** 만료일 계산 (오늘 + N개월) */
 export function calcExpireDate(months: number): string {
   const d = new Date();
@@ -109,11 +126,21 @@ export function calcExpireDate(months: number): string {
 // ───────────────────── 프로필 조회 ─────────────────────
 
 /** 현재 로그인 사용자의 프로필 조회 */
-export async function getUserProfile(): Promise<UserProfile | null> {
+export async function getUserProfile(userId?: string): Promise<UserProfile | null> {
+  let currentUserId = userId;
+
+  if (!currentUserId) {
+    const { data: authData } = await supabase.auth.getUser();
+    currentUserId = authData.user?.id;
+  }
+
+  if (!currentUserId) return null;
+
   const { data, error } = await supabase
     .from('users_profile')
     .select('*')
-    .single();
+    .eq('user_id', currentUserId)
+    .maybeSingle();
 
   if (error || !data) return null;
   return data as UserProfile;
@@ -152,21 +179,11 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
     // 3. 만료일 계산
     const expireDate = calcExpireDate(keyData.duration_months);
 
-    // 4. 외부 구매자 → 현재 기기 고유 ID 자동 등록 (선생님 개입 0%, 100% 자동)
-    let deviceType: DeviceType = 'WEB';
-    let deviceId: string | null = null;
-    if (keyData.user_type === '외부구매자') {
-      deviceType = getDeviceType();
-      if (deviceType === 'WEB') {
-        return {
-          success: false,
-          message: '외부 구매자용 코드는 EXE 프로그램 또는 모바일 앱에서만 활성화할 수 있습니다.\nPC 프로그램을 다운로드하여 실행해 주세요.',
-        };
-      }
-      deviceId = await getDeviceUniqueId();
-      if (!deviceId) {
-        return { success: false, message: '기기 정보를 확인할 수 없습니다. 프로그램을 다시 실행해 주세요.' };
-      }
+    // 4. 모든 권한은 최초 활성화한 기기 1대에 묶음
+    const deviceType = getDeviceType();
+    const deviceId = await getDeviceUniqueId();
+    if (!deviceId) {
+      return { success: false, message: '기기 정보를 확인할 수 없습니다. 프로그램을 다시 실행해 주세요.' };
     }
 
     // 5. 프로필 upsert (기기 타입에 따라 맞는 컬럼에 ID 자동 저장)
@@ -177,11 +194,8 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
       expire_date: expireDate,
       user_type: keyData.user_type,
     };
-    if (deviceId) {
-      if (deviceType === 'PC')      upsertPayload.pc_machine_id = deviceId;
-      if (deviceType === 'TABLET')  upsertPayload.tablet_machine_id = deviceId;
-      if (deviceType === 'MOBILE')  upsertPayload.mobile_machine_id = deviceId;
-    }
+    const deviceColumn = getDeviceIdColumn(deviceType);
+    upsertPayload[deviceColumn] = deviceId;
 
     const { error: profileError } = await supabase
       .from('users_profile')
@@ -231,8 +245,8 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
       };
     }
 
-    // 2. 프로필 조회
-    const profile = await getUserProfile();
+    // 2. 현재 로그인한 아이디의 프로필만 조회
+    const profile = await getUserProfile(authData.user.id);
     if (!profile) {
       return {
         allowed: checkPaidOnly ? false : true,
@@ -249,36 +263,50 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
       };
     }
 
-    // 4. 환경별 접근 제한
+    // 4. 모든 사용자는 최초 등록된 기기 1대에서만 이용 가능
     const currentDevice = getDeviceType();
+    const currentDeviceId = await getDeviceUniqueId();
+    if (!currentDeviceId) {
+      return {
+        allowed: false,
+        reason: '기기 정보를 확인할 수 없습니다. 프로그램을 다시 실행해 주세요.',
+        profile,
+      };
+    }
 
-    if (profile.user_type === '외부구매자') {
-      // 일반 웹 브라우저 → 외부 구매자 차단
-      if (currentDevice === 'WEB') {
+    const registeredIds = getRegisteredDeviceIds(profile);
+    const currentDeviceColumn = getDeviceIdColumn(currentDevice);
+
+    // 기존 활성화 사용자 중 기기 ID가 비어 있던 경우: 현재 기기를 최초 등록 기기로 자동 고정
+    if (registeredIds.length === 0) {
+      const { error: bindError } = await supabase
+        .from('users_profile')
+        .update({ [currentDeviceColumn]: currentDeviceId })
+        .eq('user_id', authData.user.id);
+
+      if (bindError) {
         return {
           allowed: false,
-          reason: '외부 구매자는 웹 이용이 제한됩니다.\nEXE 프로그램 또는 모바일 앱에서 실행해 주세요.',
+          reason: '기기 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
           profile,
         };
       }
 
-      // 등록된 기기 ID와 현재 기기 ID를 대조
-      const registeredId =
-        currentDevice === 'PC' ? profile.pc_machine_id :
-        currentDevice === 'TABLET' ? profile.tablet_machine_id :
-        profile.mobile_machine_id;
+      return {
+        allowed: true,
+        profile: {
+          ...profile,
+          [currentDeviceColumn]: currentDeviceId,
+        } as UserProfile,
+      };
+    }
 
-      if (registeredId) {
-        const currentId = await getDeviceUniqueId();
-        if (!currentId || registeredId !== currentId) {
-          const deviceName = currentDevice === 'PC' ? '컴퓨터' : currentDevice === 'TABLET' ? '태블릿' : '핸드폰';
-          return {
-            allowed: false,
-            reason: `등록된 본인의 ${deviceName}(1대)에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
-            profile,
-          };
-        }
-      }
+    if (!registeredIds.includes(currentDeviceId)) {
+      return {
+        allowed: false,
+        reason: `등록된 ${getDeviceName(currentDevice)} 1대에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
+        profile,
+      };
     }
 
     return { allowed: true, profile };
