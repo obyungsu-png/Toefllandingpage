@@ -3641,7 +3641,9 @@ function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, on
     switch (section) {
       case 'Reading':
         return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
-# (아무 줄에 넣어도 됩니다 — 예: 난이도 아래, 문제 위 등)
+# 이미지가 필요하면 "이미지: 파일명.png" 처럼 파일명만 적으세요.
+# (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
+# 문제 수는 유동적입니다 — Complete Words는 Q1-10, Q1-2 등 범위로 지정 가능.
 
 Q1-10: Complete Words
 난이도: 보통
@@ -3740,12 +3742,16 @@ D. ...
 (이전 지문 자동 상속)`;
       case 'Listening':
         return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
-# (아무 줄에 넣어도 됩니다 — 예: 난이도 아래, 문제 위 등)
+# 오디오/이미지는 "오디오: 파일명.mp3" / "이미지: 파일명.png" 처럼 파일명만 적으세요.
+# (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
 
 Q1: Academic Lecture
 난이도: 보통
+모듈: Module 1
 제목: The History of Photography
 안내문: Listen to part of a lecture in an art history class.
+오디오: q1_audio.mp3
+이미지: q1_image.png
 
 스크립트:
 Professor: Good morning, everyone. Today we're going to explore the history of photography, from its earliest beginnings in the 19th century to the digital revolution of the 21st century. The camera obscura was the first device that led to photography. Artists used it to project images onto surfaces. Then came the daguerreotype in 1839, which was the first commercially successful photographic process.
@@ -3965,11 +3971,15 @@ D. Memorizing vocabulary lists
 정답: B
 해설: Actively retrieving information strengthens memory pathways.`;
       case 'Speaking':
-        return `Q1: Listen and Repeat
+        return `# 오디오/이미지는 "오디오: 파일명.mp3" / "이미지: 파일명.png" 처럼 파일명만 적으세요.
+# (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
+
+Q1: Listen and Repeat
 난이도: 보통
 시간: 8
 제목: Campus Announcement
 안내문: Listen and then repeat.
+오디오: q1_audio.mp3
 
 스크립트:
 The library will be closed on Saturday for maintenance. Please return all books by Friday evening.
@@ -4340,7 +4350,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
         for (const label of labels) {
-          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|모듈:|module:|난이도:|===|$))`, 'im');
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|보기:|정답:|해설:|빈칸:|단어:|요구사항:|상황:|지시문:|교수|학생|문장끝:|받는이:|제목:|시간:|안내문:|유형:|format:|형식:|Type:|type:|필드:|fields:|내용:|색상:|color:|테마:|화면제목:|passageTitle:|지문제목:|screenTitle:|모듈:|module:|난이도:|오디오:|음성:|audio:|이미지:|사진:|image:|===|$))`, 'im');
           const m = t.match(re);
           if (m && m[1].trim()) return m[1].trim();
         }
@@ -4371,6 +4381,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
       const passageText = after(['지문:', '본문:', '내용:', 'text:', 'Text:', 'passage:', 'Passage:']) || undefined;
       const scriptText = after(['스크립트:']) || undefined;
+
+      // Audio/image filenames — stored as pending markers, matched later via 미디어 일괄 매칭
+      const audioFileName = single(['오디오:', '음성:', 'audio:', 'Audio:', '오디오파일:']) || undefined;
+      const imageFileName = single(['이미지:', '사진:', 'image:', 'Image:', '이미지파일:']) || undefined;
       const analysisNote = after(['분석:', 'analysis:', '분석노트:']) || undefined;
       const vocabularyNote = after(['단어:', 'vocabulary:', '어휘:', '단어노트:']) || undefined;
       const translationNote = after(['번역:', 'translation:', '해석:', '번역노트:']) || undefined;
@@ -4536,6 +4550,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
           student2Name: s2Name, student2Message: s2Msg,
           words, sentenceEnding,
           passageTitle: finalPassageTitle, interstitialTitle,
+          // Pending media filenames (matched later via 미디어 일괄 매칭)
+          pendingAudioFileName: audioFileName,
+          pendingImageFileName: imageFileName,
         } as any);
       }
     }
@@ -4990,8 +5007,20 @@ function MediaMatcherPanel({
   type Match = { file: File; qNum: number; kind: 'audio' | 'image'; matched: boolean };
   const computeMatches = (): Match[] => {
     return files.map(file => {
-      const qNum = extractQNum(file.name);
       const kind: 'audio' | 'image' = isImage(file.name) ? 'image' : 'audio';
+
+      // 1) Try exact match against pending filenames declared in bulk-upload text
+      const pendingMatch = sortedQs.find(q => {
+        const pending = kind === 'audio' ? (q as any).pendingAudioFileName : (q as any).pendingImageFileName;
+        return pending && pending.trim().toLowerCase() === file.name.trim().toLowerCase();
+      });
+      if (pendingMatch) {
+        const n = typeof pendingMatch.questionNumber === 'number' ? pendingMatch.questionNumber : parseInt(String(pendingMatch.questionNumber));
+        return { file, qNum: n, kind, matched: true };
+      }
+
+      // 2) Fallback: extract question number from filename (q1_audio.mp3, 1.mp3, ...)
+      const qNum = extractQNum(file.name);
       const matched = qNum !== null && sortedQs.some(q => {
         const n = typeof q.questionNumber === 'number' ? q.questionNumber : parseInt(String(q.questionNumber));
         return n === qNum;
