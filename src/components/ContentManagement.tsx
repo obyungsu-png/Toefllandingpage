@@ -4344,7 +4344,12 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       // Helper: extract value after label
       const after = (labels: string[]): string | undefined => {
         for (const label of labels) {
-          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|${BOUNDARY_ALT}|===|$))`, 'im');
+          // NOTE: '$' must sit OUTSIDE the "\n(?:...)" group — otherwise it
+          // requires a literal trailing newline to match, which fails when
+          // this field is the very last thing in the block/text (very common
+          // for 지문:/스크립트: since they're often the last field before
+          // '===' or end of the whole paste).
+          const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${labels.join('|')}|${BOUNDARY_ALT}|===)|$)`, 'im');
           const m = t.match(re);
           if (m && m[1].trim()) return m[1].trim();
         }
