@@ -6914,7 +6914,14 @@ function AppContent() {
           setShowToeflTest={setShowToeflTest}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
-          setShowFillBlanksTest={setShowFillBlanksTest}
+          setShowFillBlanksTest={((value: boolean) => {
+            if (value) {
+              setModule1LegacyKey(undefined);
+              setShowModule1ReadingEngine(true);
+            } else {
+              setShowFillBlanksTest(false);
+            }
+          }) as any}
           setShowReadingIntro={setShowReadingIntro}
         />
       )}
@@ -6928,7 +6935,14 @@ function AppContent() {
           setShowToeflTest={setShowToeflTest}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
-          setShowFillBlanksTest={setShowFillBlanksTest}
+          setShowFillBlanksTest={((value: boolean) => {
+            if (value) {
+              setModule1LegacyKey(undefined);
+              setShowModule1ReadingEngine(true);
+            } else {
+              setShowFillBlanksTest(false);
+            }
+          }) as any}
         />
       )}
       
