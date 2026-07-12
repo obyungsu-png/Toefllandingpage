@@ -4763,10 +4763,15 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     reader.onload = () => {
       try {
         const text = reader.result as string;
+        console.log('📋 CSV 원본 (처음 500자):', text.substring(0, 500));
+        console.log('📋 CSV 전체 길이:', text.length, '줄바꿈 수:', (text.match(/\n/g) || []).length);
         const rows = parseCsv(text);
+        console.log('📋 parseCsv 결과: 행 수 =', rows.length);
+        console.log('📋 첫 3행:', rows.slice(0, 3));
         if (rows.length < 2) throw new Error('데이터 행이 없습니다. 헤더 아래에 문제를 입력했는지 확인하세요.');
 
         const header = rows[0].map(h => h.trim());
+        console.log('📋 헤더:', header);
         const idx = (name: string) => header.findIndex(h => h.toLowerCase() === name.toLowerCase());
 
         const iNum = idx('questionNumber'), iType = idx('questionType'), iDiff = idx('difficulty'), iMod = idx('module');
@@ -4847,6 +4852,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         if (errors.length > 0) {
           setError(`${errors.length}개 행에서 오류 발생:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... 외 ${errors.length - 5}개` : ''}`);
         }
+
+        console.log('📋 파싱된 문제 수:', questions.length, '/ 입력 행 수:', rows.length - 1);
+        console.log('📋 파싱된 문제 (첫 3개):', questions.slice(0, 3));
+        console.log('📋 오류:', errors);
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
         setParsed(questions);
