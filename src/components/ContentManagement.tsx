@@ -4355,11 +4355,13 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       if (!block.trim()) continue;
       const t = block.trim();
 
-      // Question number and type from first line: "Q1-10: Type" or "Q11: Type"
-      const headerMatch = t.match(/^Q(\d+(?:-\d+)?)\s*:\s*(.+)$/m);
+      // Question number and type from first line: "Q1-Q10: Type" or "Q1-10: Type" or "Q1: Type"
+      // Supports "Q1-Q10", "Q1-10", "Q11-Q20", "Q11-20" etc.
+      const headerMatch = t.match(/^Q(\d+)(?:-Q?(\d+))?\s*:\s*(.+)$/m);
       if (!headerMatch) continue;
-      const qNum = headerMatch[1].trim();
-      const qType = headerMatch[2].trim();
+      // qNum: "1-10" if range, "1" if single
+      const qNum = headerMatch[2] ? `${headerMatch[1]}-${headerMatch[2]}` : headerMatch[1];
+      const qType = headerMatch[3].trim();
       const isCompleteWordsQuestion = isCompleteWordsBulkType(qType);
 
       // Helper: extract value after label
