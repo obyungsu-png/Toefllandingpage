@@ -1123,7 +1123,7 @@ interface QuestionUploadFormProps {
 
 function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSubmit, onCancel }: QuestionUploadFormProps) {
   const [formData, setFormData] = useState({
-    questionNumber: 1,
+    questionNumber: 1 as number | string,
     questionText: '',
     questionType: questionTypes[0],
     module: 'Module 1' as 'Module 1' | 'Module 2',
@@ -1370,16 +1370,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               Question Number
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-orange-600 font-normal">
-                  (빈칸넣기 1-10번은 하나의 문제로 입력)
+                  (빈칸넣기: 여러 문제를 묶어 "1-10", "11-20" 형식으로 입력)
                 </span>
               )}
             </label>
             {formData.questionType === 'Complete Words' ? (
               <input
                 type="text"
-                value="1-10"
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                placeholder="예: 1-10, 11-20"
+                value={formData.questionNumber}
+                onChange={(e) => setFormData({ ...formData, questionNumber: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               />
             ) : (
               <input
@@ -2686,16 +2687,17 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               Question Number
               {formData.questionType === 'Complete Words' && (
                 <span className="ml-2 text-xs text-orange-600 font-normal">
-                  (빈칸넣기 1-10번은 하나의 문제로 입력)
+                  (빈칸넣기: 여러 문제를 묶어 "1-10", "11-20" 형식으로 입력)
                 </span>
               )}
             </label>
             {formData.questionType === 'Complete Words' ? (
               <input
                 type="text"
-                value="1-10"
-                disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                placeholder="예: 1-10, 11-20"
+                value={formData.questionNumber}
+                onChange={(e) => setFormData({ ...formData, questionNumber: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               />
             ) : (
               <input
