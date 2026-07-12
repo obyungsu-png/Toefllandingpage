@@ -27,6 +27,44 @@ async function uploadToStorage(file: File, bucket: string): Promise<string> {
   const { data } = supabaseClient.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
+
+// Compress image before uploading to Supabase — resize to max 1200px, JPEG 80% quality
+async function compressImage(file: File, maxSize = 1200, quality = 0.8): Promise<File> {
+  // Skip non-raster images (SVG, GIF) — upload as-is
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') return file;
+
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  let { width, height } = img;
+  if (width > maxSize || height > maxSize) {
+    const ratio = Math.min(maxSize / width, maxSize / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const blob: Blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, 'image/jpeg', quality)
+  );
+
+  const compressedName = file.name.replace(/\.(png|jpe?g|webp|bmp)$/i, '.jpg');
+  return new File([blob], compressedName, { type: 'image/jpeg' });
+}
 // motion removed - using CSS animations
 import { FillBlanksEditor } from './FillBlanksEditor';
 import { AcademicReadingBuilder } from './AcademicReadingBuilder';
@@ -319,7 +357,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   // 갤러리 이미지 업로드: Storage + listening_images 테이블에 저장
   const handleUploadGalleryImage = async (category: string, file: File) => {
     try {
-      const url = await uploadToStorage(file, 'listening-images');
+      const url = await uploadToStorage(await compressImage(file), 'listening-images');
       const label = file.name.replace(/\.[^/.]+$/, '');
       const { data, error } = await supabaseClient
         .from('listening_images')
@@ -1275,7 +1313,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.imageUrl = formData.imageUrl.trim();
     } else if (formData.imageFile) {
       try {
-        question.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images');
+        question.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images');
       } catch {
         question.imageUrl = URL.createObjectURL(formData.imageFile);
       }
@@ -1286,7 +1324,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       (question as any).introImageUrl = (formData as any).introImageUrl.trim();
     } else if ((formData as any).introImageFile) {
       try {
-        (question as any).introImageUrl = await uploadToStorage((formData as any).introImageFile, 'listening-images');
+        (question as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images');
       } catch {
         (question as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile);
       }
@@ -2695,11 +2733,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
     }
     if (formData.imageFile) {
-      try { updatedQuestion.imageUrl = await uploadToStorage(formData.imageFile, 'listening-images'); }
+      try { updatedQuestion.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images'); }
       catch { updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile); }
     }
     if ((formData as any).introImageFile) {
-      try { (updatedQuestion as any).introImageUrl = await uploadToStorage((formData as any).introImageFile, 'listening-images'); }
+      try { (updatedQuestion as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images'); }
       catch { (updatedQuestion as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile); }
     } else if ((formData as any).introImageUrl?.trim()) {
       (updatedQuestion as any).introImageUrl = (formData as any).introImageUrl.trim();
@@ -5278,7 +5316,7 @@ function MediaMatcherPanel({
           const url = await uploadToStorage(m.file, 'listening-audio');
           q.audioUrl = url;
         } else {
-          const url = await uploadToStorage(m.file, 'listening-images');
+          const url = await uploadToStorage(await compressImage(m.file), 'listening-images');
           q.imageUrl = url;
         }
         count++;
