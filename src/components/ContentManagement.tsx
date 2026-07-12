@@ -139,12 +139,21 @@ export interface TPOSection {
   totalTime?: number;
 }
 
-// ─── UPSERT helpers — questionNumber 기준으로 기존 문제를 찾아 교체, 없으면 추가 ───
+// ─── UPSERT helpers — questionNumber + Module 기준으로 기존 문제를 찾아 교체, 없으면 추가 ───
 // 같은 번호의 문제가 이미 존재하면 덮어쓰고, 없으면 배열 끝에 추가합니다.
 // (빈칸넣기 "1-10" 범위 형식도 문자열 비교로 동일하게 처리)
+// 주의: Module 1과 Module 2는 같은 questionNumber를 가질 수 있으므로
+// questionType의 '(Module 2)' 접미사로 구분합니다.
+function isModule2QuestionType(q: { questionType?: string }): boolean {
+  return (q.questionType || '').toLowerCase().includes('module 2');
+}
+
 export function upsertQuestion(questions: TPOQuestion[], newQuestion: TPOQuestion): TPOQuestion[] {
   const newKey = String(newQuestion.questionNumber);
-  const idx = questions.findIndex(q => String(q.questionNumber) === newKey);
+  const newIsMod2 = isModule2QuestionType(newQuestion);
+  const idx = questions.findIndex(q =>
+    String(q.questionNumber) === newKey && isModule2QuestionType(q) === newIsMod2
+  );
   if (idx === -1) return [...questions, newQuestion];
   return questions.map((q, i) => (i === idx ? { ...q, ...newQuestion } : q));
 }
