@@ -2158,10 +2158,17 @@ function AppContent() {
     setTestBankType(bankType);
     testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
 
+    // 섹션 전환 시 이전 섹션 화면 모두 초기화 (가림 방지)
+    setShowReadingIntro(false);
+    setShowToeflTest(false);
+    setActiveListeningM1Screen(null);
+    setActiveListeningM2Screen(null);
+    setActiveWritingScreen(null);
+    setActiveSpeakingScreen(null);
+
     // lazy 컴포넌트 마운트를 transition으로 감싸 Suspense 조기 발동(React #426) 방지
     startTransition(() => {
       if (section === 'Listening') {
-        setActiveListeningM2Screen(null);
         setActiveListeningM1Screen('intro');
         return;
       }
