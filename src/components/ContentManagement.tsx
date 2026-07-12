@@ -4511,7 +4511,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
       // Module 1/2 for Reading/Listening — appended as ' (Module 2)' suffix to questionType
       const rawModule = single(['모듈:', '모듈', 'module:', 'Module:']);
-      const isModule2 = /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(rawModule || '') &&
+      // 정확한 매칭: 'Module 2', '모듈 2'만 Module 2로 분류.
+      const isModule2 = /^(?:module\s*2|모듈\s*2)$/i.test((rawModule || '').trim()) &&
                         (section === 'Reading' || section === 'Listening');
       const applyModuleSuffix = (baseType: string): string => {
         if (!isModule2) return baseType;
@@ -5081,7 +5082,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
             // Module suffix — 개별 입력(FillBlanksEditor)과 일치하도록 Module 1/2 모두 명시
             const modVal = get(iMod);
-            const isMod2 = supportsModule && /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(modVal);
+            // 정확한 매칭: 'Module 2', '모듈 2'만 Module 2로 분류.
+            const isMod2 = supportsModule && /^(?:module\s*2|모듈\s*2)$/i.test(modVal.trim());
             const isCW = isCompleteWordsType(qType);
             let finalType = qType;
             if (isCW) {
