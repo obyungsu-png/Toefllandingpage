@@ -67,6 +67,7 @@ import Module1IntroScreen from './components/Module1IntroScreen';
 import Module1DetailsScreen from './components/Module1DetailsScreen';
 import FillBlanksTestScreen from './components/FillBlanksTestScreen';
 import { ReadingTestEngine } from './components/ReadingTestEngine';
+import { ListeningTestEngine } from './components/ListeningTestEngine';
 const ReadingSectionScreen = lazy(() => import('./components/ReadingSectionScreen').then(m => ({ default: m.ReadingSectionScreen })));
 const ToeflTestScreen = lazy(() => import('./components/ToeflTestScreen').then(m => ({ default: m.ToeflTestScreen })));
 import { useTestProgress } from './hooks/useTestProgress';
@@ -7101,44 +7102,22 @@ function AppContent() {
         </Suspense>
       )}
       
-      {/* Listening Section - M1 Wrapper */}
+      {/* Listening Section - M1 Engine (CMS-driven, flexible) */}
       {activeListeningM1Screen && (
-        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
-        <ListeningM1Wrapper
-          initialScreen={activeListeningM1Screen}
-          onScreenChange={setCurrentListeningReviewScreen}
-          onHome={() => {
-            setActiveListeningM1Screen(null);
-            clearReviewContext();
-            setIsReviewMode(false);
-            if (testBankType === 'tpo') {
-              handleTabChange('TPO');
-            } else {
-              handleTabChange('Test');
-            }
-          }}
-          onComplete={() => {
+        <ListeningTestEngine
+          sectionData={getCurrentSectionData('Listening')}
+          module={1}
+          initialLegacyKey={activeListeningM1Screen !== 'intro' && activeListeningM1Screen !== 'm1-intro' ? activeListeningM1Screen : undefined}
+          onSegmentChange={setCurrentListeningReviewScreen}
+          currentTest={currentTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          onModuleEnd={() => {
             setActiveListeningM1Screen(null);
             setActiveListeningM2Screen('q1');
           }}
-          getCmsListeningQuestion={(qNumber: number) => {
-            const sectionData = getCurrentSectionData('Listening');
-            return sectionData?.questions.find(q =>
-              (q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)) &&
-              !(q.questionType || '').toLowerCase().includes('module 2')
-            ) || null;
-          }}
-        />
-        </Suspense>
-      )}
-      {/* Listening Section - M2 Wrapper */}
-      {activeListeningM2Screen && (
-        <Suspense fallback={<div className="fixed inset-0 bg-white flex items-center justify-center text-gray-400">Loading...</div>}>
-        <ListeningM2Wrapper
-          initialScreen={activeListeningM2Screen}
-          onScreenChange={setCurrentListeningReviewScreen}
-          onHome={() => {
-            setActiveListeningM2Screen(null);
+          onExitBack={() => {
+            setActiveListeningM1Screen(null);
             clearReviewContext();
             setIsReviewMode(false);
             if (testBankType === 'tpo') {
@@ -7147,7 +7126,29 @@ function AppContent() {
               handleTabChange('Test');
             }
           }}
-          onComplete={() => {
+          onHome={() => {
+            setActiveListeningM1Screen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
+          }}
+        />
+      )}
+      {/* Listening Section - M2 Engine (CMS-driven, flexible) */}
+      {activeListeningM2Screen && (
+        <ListeningTestEngine
+          sectionData={getCurrentSectionData('Listening')}
+          module={2}
+          initialLegacyKey={activeListeningM2Screen !== 'intro' ? activeListeningM2Screen : undefined}
+          onSegmentChange={setCurrentListeningReviewScreen}
+          currentTest={currentTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          onModuleEnd={() => {
             setActiveListeningM2Screen(null);
             clearReviewContext();
             setIsReviewMode(false);
@@ -7155,25 +7156,21 @@ function AppContent() {
             setSectionScores(prev => ({ ...prev, listening: result }));
             setShowEndListening(true);
           }}
-          onVolumeClick={() => setShowVolumeModal(true)}
-          onBackToM1={() => {
+          onExitBack={() => {
             setActiveListeningM2Screen(null);
-            setActiveListeningM1Screen('module2-intro');
+            setShowModule2(true);
           }}
-          getCmsListeningQuestion={(qNumber: number) => {
-            const sectionData = getCurrentSectionData('Listening');
-            // Module 2 문제만 찾기 (questionType에 'Module 2' 포함)
-            const q = sectionData?.questions.find(q =>
-              (q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)) &&
-              (q.questionType || '').toLowerCase().includes('module 2')
-            );
-            // Module 2 필터로 못 찾으면 전체에서 찾기 (fallback)
-            return q || sectionData?.questions.find(q =>
-              q.questionNumber === qNumber || q.questionNumber === String(qNumber) || String(q.questionNumber) === String(qNumber)
-            ) || null;
+          onHome={() => {
+            setActiveListeningM2Screen(null);
+            clearReviewContext();
+            setIsReviewMode(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
           }}
         />
-        </Suspense>
       )}
 
       {/* Writing Section Wrapper */}
