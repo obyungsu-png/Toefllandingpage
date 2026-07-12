@@ -639,13 +639,23 @@ function ListeningQuestionScreen({
             </h2>
 
             {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 옵션 오른쪽) */}
-            <div className="relative" style={{minHeight: '420px'}}>
-              {imageUrl && (
-                <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
-                  <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: '480px'}} />
-                </div>
-              )}
-              <div style={{position: 'absolute', left: imageUrl ? '51%' : '10%', top: '8px', width: imageUrl ? '42%' : '80%'}}>
+            {/* Conversation 그룹(Short/Campus Conversation)은 TPO 2처럼 더 큰 이미지 사용 */}
+            {(() => {
+              const isConversation = ['Short Conversation', 'Campus Conversation'].includes(question?.questionType || '');
+              const imgWidth = isConversation ? '460px' : '280px';
+              const imgLeft = isConversation ? '12%' : '18%';
+              const imgMaxHeight = isConversation ? '560px' : '480px';
+              const optLeft = imageUrl ? (isConversation ? '56%' : '51%') : '10%';
+              const optWidth = imageUrl ? (isConversation ? '38%' : '42%') : '80%';
+              return (
+                <>
+                  <div className="relative" style={{minHeight: '420px'}}>
+                    {imageUrl && (
+                      <div style={{position: 'absolute', left: imgLeft, top: 0, width: imgWidth}}>
+                        <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: imgMaxHeight}} />
+                      </div>
+                    )}
+                    <div style={{position: 'absolute', left: optLeft, top: '8px', width: optWidth}}>
                 <div className="space-y-7">
                   {options.map((option, index) => (
                     <RadioOption
@@ -663,8 +673,11 @@ function ListeningQuestionScreen({
                     <p className="text-sm text-gray-400 italic">옵션이 없습니다. CMS에서 옵션을 추가해주세요.</p>
                   )}
                 </div>
-              </div>
-            </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Must Answer Modal — TPO 2 스타일 */}
