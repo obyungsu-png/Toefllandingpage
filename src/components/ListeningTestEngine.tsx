@@ -100,7 +100,8 @@ export function ListeningTestEngine({
   moduleQuestions.forEach((q) => {
     const qt = q?.questionType || '';
     // 첫 그룹이 아니고 questionType이 변경되면 group-intro 삽입
-    if (prevQuestionType !== null && qt !== prevQuestionType) {
+    // 단, Listen and Response는 인트로 불필요 (module-intro가 대체)
+    if (prevQuestionType !== null && qt !== prevQuestionType && qt !== 'Listen and Response') {
       const intro = getGroupIntroData(qt);
       segments.push({
         kind: 'group-intro',
