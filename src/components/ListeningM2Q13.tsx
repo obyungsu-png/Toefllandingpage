@@ -11,9 +11,11 @@ interface ListeningM2Q13Props {
   onVolumeClick: () => void;
   imageUrl?: string;
   audioUrl?: string;
+  options?: string[];
+  questionText?: string;
 }
 
-export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl }: ListeningM2Q13Props) {
+export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl, options, questionText }: ListeningM2Q13Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   // Audio: auto-play 1s after mount, replay via button
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -58,12 +60,7 @@ export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl
   };
 
 
-  const answerOptions = [
-    "Changes in consumption in societies over time",
-    "A measure of environmental impact",
-    "Environmentally damaging activities",
-    "The role of governments in sustainability"
-  ];
+  const answerOptions = options && options.length > 0 ? options : [];
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -153,23 +150,29 @@ export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl
               </button>
             )}
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
-              What does the professor mainly discuss?
+              {questionText || "What does the professor mainly discuss?"}
             </h2>
-            
+
             <div className="w-full max-w-2xl px-8">
               <div className="space-y-5">
-                {answerOptions.map((option, index) => (
-                  <RadioOption
-                    key={index}
-                    id={`m2-q13-option-${index}`}
-                    name="m2-q13"
-                    value={option}
-                    checked={selectedAnswer === option}
-                    onChange={() => setSelectedAnswer(option)}
-                    label={option}
-                    labelClassName="text-lg"
-                  />
-                ))}
+                {answerOptions.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <p className="text-sm">이 문제는 아직 업로드되지 않았습니다.</p>
+                  </div>
+                ) : (
+                  answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`m2-q13-option-${index}`}
+                      name="m2-q13"
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => setSelectedAnswer(option)}
+                      label={option}
+                      labelClassName="text-lg"
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -200,19 +203,25 @@ export function ListeningM2Q13({ onBack, onNext, onHome, onVolumeClick, imageUrl
                 </div>
               </div>
               <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">What does the professor mainly discuss?</h2>
+                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">{questionText || "What does the professor mainly discuss?"}</h2>
                 <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <RadioOption
-                      key={index}
-                      id={`m2-q13-option-${index}`}
-                      name="m2-q13"
-                      value={option}
-                      checked={selectedAnswer === option}
-                      onChange={() => setSelectedAnswer(option)}
-                      label={option}
-                    />
-                  ))}
+                  {answerOptions.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <p className="text-sm">이 문제는 아직 업로드되지 않았습니다.</p>
+                    </div>
+                  ) : (
+                    answerOptions.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`m2-q13-option-${index}`}
+                        name="m2-q13"
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => setSelectedAnswer(option)}
+                        label={option}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </div>

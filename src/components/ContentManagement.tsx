@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
-import { getQuestionRangeLabel, getTotalQuestionCount } from '../utils/readingQuestionUtils';
+import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType } from '../utils/readingQuestionUtils';
 
 // 기본 아바타 목록 (public/avatars/ 에서 서빙)
 const DEFAULT_AVATARS = [
@@ -3621,7 +3621,7 @@ function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, on
         return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
 # 이미지가 필요하면 "이미지: 파일명.png" 처럼 파일명만 적으세요.
 # (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
-# 문제 수는 유동적입니다 — Complete Words는 Q1-Q10, Q1-Q2 등 범위로 지정 가능.
+# 문제 수는 유동적입니다 — Complete Words는 Q1-Q10, Q11-Q20 등 범위로 지정 가능.
 # 두 번째 세트는 Q11-Q20처럼 이어지는 번호를 사용하세요.
 
 Q1-Q10: Complete Words
@@ -3646,7 +3646,7 @@ The hu[man] brain is a com[plex] organ that cont[rols] every part of the bo[dy].
 
 Sci[entists] continue to stu[dy] how these areas work tog[ether] to shape beha[vior].
 
-# Q11-Q20(Module 2)도 Q1-Q10과 똑같은 빈칸 형식입니다. "모듈: Module 2" 한 줄만 추가하면 됩니다.
+# Q11-Q20 (Module 2)도 Q1-Q10과 똑같은 빈칸 형식입니다. "모듈: Module 2" 한 줄만 추가하면 됩니다.
 
 ===
 
@@ -4582,6 +4582,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         } as any);
       }
     }
+    // questionNumber 기준 오름차순 정렬 — Q1-Q10이 맨 앞에 오도록
+    questions.sort((a, b) => {
+      const rangeA = parseQuestionRange(a.questionNumber);
+      const rangeB = parseQuestionRange(b.questionNumber);
+      const startA = rangeA?.start ?? 9999;
+      const startB = rangeB?.start ?? 9999;
+      return startA - startB;
+    });
     return questions;
   };
 
@@ -4624,9 +4632,11 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
   const handleDownloadCsvTemplate = () => {
     const supportsModule = section === 'Reading' || section === 'Listening';
-    // Header row + one example row
+    // Header row + section-specific example rows
     const header = CSV_COLUMNS.join(',');
-    const example = [
+
+    // 기본 예시 (모든 섹션 공통)
+    const baseExample = [
       '1',
       (questionTypeOptions?.[0] || 'Detail Questions'),
       '보통',
@@ -4642,10 +4652,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'q1_image.png',
     ].map(csvEscape).join(',');
 
-    // Reading: add a Complete Words example so editors see how fill-in-blanks
-    // is written — one grouped row (questionNumber "1-10"), blanks marked inline
-    // as visible[hidden] in passageText. No options/answer needed.
-    const completeWordsExample = section === 'Reading' ? [
+    // Reading: Complete Words 예시 (Q1-Q10 범위, 빈칸 형식)
+    const readingCWExample = section === 'Reading' ? [
       '1-10',
       'Complete Words',
       '보통',
@@ -4655,14 +4663,62 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       'Fill in the missing letters in the blank.',
       '', '', '', '',
+      '', '', '', '',
+    ].map(csvEscape).join(',') : null;
+
+    // Listening: 스크립트 포함 예시
+    const listeningExample = section === 'Listening' ? [
+      '2',
+      'Academic Lecture',
+      '보통',
+      'Module 1',
+      'The History of Photography',
+      '',
+      'Professor: Today we will explore the history of photography. The camera obscura was the first device that led to photography. Then came the daguerreotype in 1839.',
+      'What is the main topic of the lecture?',
+      'A. Modern cameras', 'B. History of photography', 'C. Famous photographers', 'D. Art appreciation',
+      'B',
+      'The lecture traces the development of photography.',
+      'q2_audio.mp3',
+      'q2_image.png',
+    ].map(csvEscape).join(',') : null;
+
+    // Speaking: 스크립트 + 정답 예시
+    const speakingExample = section === 'Speaking' ? [
+      '1',
+      'Listen and Repeat',
+      '보통',
+      '',
+      'Campus Announcement',
+      '',
+      'The library will be closed on Saturday for maintenance. Please return all books by Friday evening.',
+      'Listen and repeat the announcement.',
+      '', '', '', '',
+      'The library will be closed on Saturday for maintenance. Please return all books by Friday evening.',
+      '정확한 발음과 억양으로 반복',
+      'q1_audio.mp3',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Writing: 이메일 작성 예시
+    const writingExample = section === 'Writing' ? [
+      '1',
+      'Write an Email',
+      '보통',
+      '',
+      'Question about missed class',
       '',
       '',
+      'Write an email to your professor. Explain why you missed class and request a meeting.',
+      '', '', '', '',
+      'Dear Professor Smith, I am writing to apologize for missing last week\'s class...',
+      '정중한 톤, 3가지 요구사항 모두 포함',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
     // BOM for UTF-8 so Excel opens Korean correctly
-    const rows = [header, example, completeWordsExample].filter(Boolean);
+    const rows = [header, baseExample, readingCWExample, listeningExample, speakingExample, writingExample].filter(Boolean);
     const csv = '\uFEFF' + rows.join('\n') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -4720,33 +4776,76 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
         const supportsModule = section === 'Reading' || section === 'Listening';
         const questions: TPOQuestion[] = [];
+        const errors: string[] = [];
 
         for (let r = 1; r < rows.length; r++) {
           const cells = rows[r];
-          const get = (i: number) => (i >= 0 && i < cells.length ? cells[i].trim() : '');
-          const qType = get(iType) || (questionTypeOptions?.[0] || '');
-          if (!qType && !get(iQText)) continue; // skip empty rows
+          try {
+            const get = (i: number) => (i >= 0 && i < cells.length ? cells[i].trim() : '');
+            const qType = get(iType) || (questionTypeOptions?.[0] || '');
+            if (!qType && !get(iQText)) continue; // skip empty rows
 
-          // Module 2 suffix
-          const modVal = get(iMod);
-          const isMod2 = supportsModule && /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(modVal);
-          const finalType = isMod2 && !qType.includes('(Module 2)') ? `${qType} (Module 2)` : qType;
+            // Module suffix — 개별 입력(FillBlanksEditor)과 일치하도록 Module 1/2 모두 명시
+            const modVal = get(iMod);
+            const isMod2 = supportsModule && /(?:2|Module\s*2|모듈\s*2|two|second)/i.test(modVal);
+            const isCW = isCompleteWordsType(qType);
+            let finalType = qType;
+            if (isCW) {
+              finalType = qType.includes('(Module') ? qType : `${qType} (${isMod2 ? 'Module 2' : 'Module 1'})`;
+            } else if (isMod2 && !qType.includes('(Module 2)')) {
+              finalType = `${qType} (Module 2)`;
+            }
 
-          const options = [get(iA), get(iB), get(iC), get(iD)].filter(o => o !== '');
+            const options = [get(iA), get(iB), get(iC), get(iD)].filter(o => o !== '');
 
-          questions.push({
-            id: `q-${Date.now()}-${get(iNum) || r}-${Math.random().toString(36).slice(2, 7)}`,
-            questionNumber: get(iNum) ? (parseInt(get(iNum)) || get(iNum)) : r,
-            questionText: get(iQText),
-            questionType: finalType,
-            options,
-            correctAnswer: get(iAns),
-            explanation: get(iExp) || undefined,
-            passageTitle: get(iPTitle) || undefined,
-            passageText: get(iPText) || undefined,
-            scriptText: get(iScript) || undefined,
-            difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
-          } as TPOQuestion);
+            const rawNum = get(iNum);
+            const questionNumber = rawNum || r;
+            const passageText = get(iPText) || undefined;
+            let blanks: Array<{ answer: string; maxLength: number }> | undefined;
+            let finalPassageText = passageText;
+            if (isCW && passageText) {
+              const inlineRegex = /\[([a-zA-Z][a-zA-Z\s'-]*?)(?::(\d+))?\]/g;
+              const parsedBlanks: Array<{ answer: string; maxLength: number }> = [];
+              let m;
+              while ((m = inlineRegex.exec(passageText)) !== null) {
+                const ans = m[1].trim();
+                const maxLen = m[2] ? parseInt(m[2]) : ans.length;
+                parsedBlanks.push({ answer: ans, maxLength: maxLen });
+              }
+              if (parsedBlanks.length > 0) {
+                blanks = parsedBlanks;
+                finalPassageText = passageText.replace(
+                  /\[([A-Za-z][A-Za-z\s'-]*?)(?::(\d+))?\]/g,
+                  (_match, a, n) => {
+                    const ans = String(a).trim();
+                    const len = n ? parseInt(n) : ans.length;
+                    return `[${ans}:${len}]`;
+                  }
+                );
+              }
+            }
+
+            questions.push({
+              id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
+              questionNumber,
+              questionText: get(iQText),
+              questionType: finalType,
+              options,
+              correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
+              explanation: get(iExp) || undefined,
+              passageTitle: get(iPTitle) || undefined,
+              passageText: finalPassageText,
+              scriptText: get(iScript) || undefined,
+              difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+              ...(blanks ? { blanks } : {}),
+            } as TPOQuestion);
+          } catch (rowErr: any) {
+            errors.push(`행 ${r + 1}: ${rowErr?.message || '파싱 오류'}`);
+          }
+        }
+
+        if (errors.length > 0) {
+          setError(`${errors.length}개 행에서 오류 발생:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... 외 ${errors.length - 5}개` : ''}`);
         }
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
@@ -4779,6 +4878,13 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     });
   };
 
+  // Complete Words 미리보기 — passageText의 빈칸을 ___로 변환해서 보여줌
+  const previewCompleteWordsPassage = (passageText: string): string => {
+    if (!passageText) return '';
+    // peo[ple:3] 또는 peo[ple] 형태를 peo___ 로 변환
+    return passageText.replace(/\[[^\]]+\]/g, '___');
+  };
+
   if (parsed) {
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
@@ -4786,23 +4892,41 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
           {getTotalQuestionCount(parsed)}개 문제 파싱 완료 — {testType} {testNumber} {section}
         </h3>
         <div className="max-h-[32rem] overflow-y-auto space-y-2 mb-4">
-          {parsed.map((q, i) => (
+          {parsed.map((q, i) => {
+            const isCW = isCompleteWordsType(q.questionType);
+            const previewPassage = isCW && q.passageText ? previewCompleteWordsPassage(q.passageText) : '';
+            return (
             <div key={i} className="bg-gray-50 border rounded-lg p-3 text-sm">
               <span className="font-bold text-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
               <span className="mx-2 text-gray-400">|</span>
               <span>{q.questionType}</span>
               {q.difficulty && <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{q.difficulty}</span>}
-              <p className="text-gray-500 mt-1 truncate">{q.questionText || q.passageText?.slice(0, 80)}</p>
-              {q.options && q.options.length > 0 && (
-                <p className="text-xs text-gray-400 mt-0.5">보기: {q.options.join(' | ')}</p>
+              {isCW ? (
+                <>
+                  {previewPassage && (
+                    <p className="text-gray-600 mt-1 text-xs leading-relaxed bg-white border border-gray-200 rounded p-2 max-h-24 overflow-y-auto">
+                      {previewPassage.slice(0, 200)}{previewPassage.length > 200 ? '...' : ''}
+                    </p>
+                  )}
+                  {q.blanks && q.blanks.length > 0 && (
+                    <p className="text-xs text-purple-600 mt-1">빈칸 {q.blanks.length}개 — 정답: {q.blanks.map((b: any) => b.answer).join(', ')}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-500 mt-1 truncate">{q.questionText || q.passageText?.slice(0, 80)}</p>
+                  {q.options && q.options.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">보기: {q.options.join(' | ')}</p>
+                  )}
+                  {q.correctAnswer && <p className="text-xs text-green-600 mt-0.5">정답: {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer}</p>}
+                  {answerMismatch(q) && (
+                    <p className="text-xs text-red-500 mt-0.5">⚠️ 정답이 보기 중 어느 것과도 정확히 일치하지 않습니다 — 저장 전 확인하세요.</p>
+                  )}
+                </>
               )}
-              {q.correctAnswer && <p className="text-xs text-green-600 mt-0.5">정답: {Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer}</p>}
-              {answerMismatch(q) && (
-                <p className="text-xs text-red-500 mt-0.5">⚠️ 정답이 보기 중 어느 것과도 정확히 일치하지 않습니다 — 저장 전 확인하세요.</p>
-              )}
-              {q.blanks && q.blanks.length > 0 && <p className="text-xs text-purple-600 mt-0.5">빈칸 {q.blanks.length}개</p>}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div className="flex gap-3 justify-between pt-4 border-t">
           <Button onClick={() => { setParsed(null); setRawText(''); }} variant="outline" className="text-gray-600">

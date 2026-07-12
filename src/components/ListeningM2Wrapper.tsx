@@ -153,8 +153,11 @@ export function ListeningM2Wrapper({
     }
   };
 
-  const getQImageUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.imageUrl || undefined;
-  const getQAudioUrl = (qNumber: number) => getCmsListeningQuestion?.(qNumber)?.audioUrl || undefined;
+  const getQCmsData = (qNumber: number) => getCmsListeningQuestion?.(qNumber) || null;
+  const getQImageUrl = (qNumber: number) => getQCmsData(qNumber)?.imageUrl || undefined;
+  const getQAudioUrl = (qNumber: number) => getQCmsData(qNumber)?.audioUrl || undefined;
+  const getQOptions = (qNumber: number) => getQCmsData(qNumber)?.options || undefined;
+  const getQQuestionText = (qNumber: number) => getQCmsData(qNumber)?.questionText || undefined;
 
   const commonProps = { onBack: goBack, onNext: goNext, onHome, onVolumeClick };
 
@@ -170,8 +173,14 @@ export function ListeningM2Wrapper({
   const lectureImageUrl = getQImageUrl(13);
   const lectureAudioUrl = getQAudioUrl(13);
 
-  // Per-question props with CMS imageUrl and audioUrl
-  const qProps = (n: number) => ({ ...commonProps, imageUrl: getQImageUrl(n), audioUrl: getQAudioUrl(n) });
+  // Per-question props with CMS data (imageUrl, audioUrl, options, questionText)
+  const qProps = (n: number) => ({
+    ...commonProps,
+    imageUrl: getQImageUrl(n),
+    audioUrl: getQAudioUrl(n),
+    options: getQOptions(n),
+    questionText: getQQuestionText(n),
+  });
 
   return (
     <>

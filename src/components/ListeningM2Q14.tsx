@@ -11,9 +11,11 @@ interface ListeningM2Q14Props {
   onVolumeClick: () => void;
   imageUrl?: string;
   audioUrl?: string;
+  options?: string[];
+  questionText?: string;
 }
 
-export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl }: ListeningM2Q14Props) {
+export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl, options, questionText }: ListeningM2Q14Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   // Audio: auto-play 1s after mount, replay via button
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -58,12 +60,7 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
   };
 
 
-  const answerOptions = [
-    "To contradict a theory related to the ecological footprint",
-    "To show that resource depletion can be similar regardless of lifestyle",
-    "To illustrate the usefulness of comparing ecological footprints",
-    "To point out that production efficiency reduces the ecological footprint"
-  ];
+  const answerOptions = options && options.length > 0 ? options : [];
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
@@ -153,23 +150,29 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
               </button>
             )}
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
-              According to the professor, how is this concept calculated?
+              {questionText || "According to the professor, how is this concept calculated?"}
             </h2>
-            
+
             <div className="w-full max-w-2xl px-8">
               <div className="space-y-5">
-                {answerOptions.map((option, index) => (
-                  <RadioOption
-                    key={index}
-                    id={`m2-q14-option-${index}`}
-                    name="m2-q14"
-                    value={option}
-                    checked={selectedAnswer === option}
-                    onChange={() => setSelectedAnswer(option)}
-                    label={option}
-                    labelClassName="text-lg"
-                  />
-                ))}
+                {answerOptions.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <p className="text-sm">이 문제는 아직 업로드되지 않았습니다.</p>
+                  </div>
+                ) : (
+                  answerOptions.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`m2-q14-option-${index}`}
+                      name="m2-q14"
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => setSelectedAnswer(option)}
+                      label={option}
+                      labelClassName="text-lg"
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -200,19 +203,25 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
                 </div>
               </div>
               <div className="flex-1 max-w-xl mt-8">
-                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">According to the professor, how is this concept calculated?</h2>
+                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">{questionText || "According to the professor, how is this concept calculated?"}</h2>
                 <div className="space-y-6">
-                  {answerOptions.map((option, index) => (
-                    <RadioOption
-                      key={index}
-                      id={`m2-q14-option-${index}`}
-                      name="m2-q14"
-                      value={option}
-                      checked={selectedAnswer === option}
-                      onChange={() => setSelectedAnswer(option)}
-                      label={option}
-                    />
-                  ))}
+                  {answerOptions.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <p className="text-sm">이 문제는 아직 업로드되지 않았습니다.</p>
+                    </div>
+                  ) : (
+                    answerOptions.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`m2-q14-option-${index}`}
+                        name="m2-q14"
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => setSelectedAnswer(option)}
+                        label={option}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </div>
