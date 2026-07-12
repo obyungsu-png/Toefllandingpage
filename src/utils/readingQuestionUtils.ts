@@ -150,6 +150,14 @@ export function findCompleteWordsQuestionForNumber(sectionData: any, target: num
 
 export function getQuestionRangeLabel(question: any, fallbackStart = 1): string {
   const range = parseQuestionRange(question?.questionNumber);
+  // Complete Words 문제는 questionNumber가 단일 숫자("1")여도 blanks 개수로 범위 표시
+  // → Q1-Q10, Q11-Q20 형태로 통일
+  if (range && range.start === range.end && isCompleteWordsType(question?.questionType)) {
+    const blankCount = getCompleteWordsBlankCount(question);
+    if (blankCount > 1) {
+      return `Q${range.start}-Q${range.start + blankCount - 1}`;
+    }
+  }
   if (range) {
     return range.start === range.end ? `Q${range.start}` : `Q${range.start}-Q${range.end}`;
   }
