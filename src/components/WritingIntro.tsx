@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { MobileFooter } from './MobileFooter';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface WritingIntroProps {
   onBack?: () => void;
@@ -8,6 +10,16 @@ interface WritingIntroProps {
 }
 
 export function WritingIntro({ onBack, onNext, onHome, onVolumeClick }: WritingIntroProps) {
+  const hasSpokenRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasSpokenRef.current) {
+      hasSpokenRef.current = true;
+      const text = "In the writing section, you will answer 12 questions to demonstrate how well you can write in English. There are three types of tasks: Build a Sentence, where you create a grammatical sentence. Write an Email, where you write an email using information provided. Write for an Academic Discussion, where you participate in an online discussion.";
+      return speakWithBritishFemaleVoice({ text, rate: 0.9 });
+    }
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Top Header */}
