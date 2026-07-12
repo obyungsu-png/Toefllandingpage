@@ -18,6 +18,19 @@ interface FillBlanksTestScreenProps {
   setShowModule1Details: React.Dispatch<React.SetStateAction<boolean>>;
   currentTest: any;
   getCurrentSectionData: (section: string) => any;
+  /** Optional: render this specific question instead of auto-finding the first
+   *  Complete Words question. Used by ReadingTestEngine to support multiple
+   *  Complete Words groups (e.g. Q1-10 and Q11-20) in the same module. */
+  questionOverride?: any;
+  /** Optional: which module's Complete Words to search for when no override
+   *  is given. Defaults to 1 (existing behavior — excludes Module 2). */
+  module?: 1 | 2;
+  /** Optional: override what "Next" does. Used by ReadingTestEngine to move
+   *  to the next segment instead of the hardcoded ReadNoticeTest jump. */
+  onNext?: () => void;
+  /** Optional: override what "Back" does (e.g. go to a previous Complete
+   *  Words group instead of the module intro). */
+  onBack?: () => void;
 }
 
 const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
@@ -30,6 +43,10 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   setShowModule1Details,
   currentTest,
   getCurrentSectionData,
+  questionOverride,
+  module = 1,
+  onNext,
+  onBack,
 }) => {
   const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
   const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
@@ -41,9 +58,11 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   
   // Get dynamic question data from CMS
   const sectionData = getCurrentSectionData('Reading');
-  // CMS PRIORITY: flexible type matching — Module 1 only (exclude Module 2 tagged questions)
-  const fillBlanksQuestion = sectionData?.questions.find((q: any) => (
-    isCompleteWordsType(q.questionType) && !isModule2Question(q)
+  // CMS PRIORITY: use override if given (ReadingTestEngine passes a specific
+  // question when there are multiple Complete Words groups); otherwise find
+  // by type, filtered by module.
+  const fillBlanksQuestion = questionOverride || sectionData?.questions.find((q: any) => (
+    isCompleteWordsType(q.questionType) && (module === 2 ? isModule2Question(q) : !isModule2Question(q))
   )) || sectionData?.questions.find((q: any) => (
     // Fallback: any fill-blanks question (backward compat)
     isCompleteWordsType(q.questionType)
@@ -252,7 +271,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
               className="flex items-center gap-1.5 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"
               onClick={() => {
                 setShowFillBlanksTest(false);
-                setShowReadNoticeTest(true);
+                if (onNext) onNext(); else setShowReadNoticeTest(true);
               }}
             >
               <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
@@ -420,7 +439,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
       <MobileQuestionNav 
         onBack={() => {
           setShowFillBlanksTest(false);
-          setShowModule1Details(true);
+          if (onBack) onBack(); else setShowModule1Details(true);
         }}
         onHome={() => {
           setShowFillBlanksTest(false);
@@ -434,7 +453,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
         }}
         onNext={() => {
           setShowFillBlanksTest(false);
-          setShowReadNoticeTest(true);
+          if (onNext) onNext(); else setShowReadNoticeTest(true);
         }}
       />
     </div>

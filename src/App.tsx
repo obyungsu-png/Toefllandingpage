@@ -66,6 +66,7 @@ import ReadingIntroScreen from './components/ReadingIntroScreen';
 import Module1IntroScreen from './components/Module1IntroScreen';
 import Module1DetailsScreen from './components/Module1DetailsScreen';
 import FillBlanksTestScreen from './components/FillBlanksTestScreen';
+import { ReadingTestEngine } from './components/ReadingTestEngine';
 const ReadingSectionScreen = lazy(() => import('./components/ReadingSectionScreen').then(m => ({ default: m.ReadingSectionScreen })));
 const ToeflTestScreen = lazy(() => import('./components/ToeflTestScreen').then(m => ({ default: m.ToeflTestScreen })));
 import { useTestProgress } from './hooks/useTestProgress';
@@ -368,6 +369,13 @@ function AppContent() {
   const [showModule1Details, setShowModule1Details] = useState(false);
   const [showModule2, setShowModule2] = useState(false);
   const [showModule2FillBlanks, setShowModule2FillBlanks] = useState(false);
+  // New flexible, data-driven Reading engine (replaces the fixed-slot chain above).
+  // The old flags/screens above are kept only as dead fallback code; all real
+  // navigation now goes through these two flags.
+  const [showModule1ReadingEngine, setShowModule1ReadingEngine] = useState(false);
+  const [showModule2ReadingEngine, setShowModule2ReadingEngine] = useState(false);
+  const [module1LegacyKey, setModule1LegacyKey] = useState<string | undefined>(undefined);
+  const [module2LegacyKey, setModule2LegacyKey] = useState<string | undefined>(undefined);
   const [showModule2Question11, setShowModule2Question11] = useState(false);
   const [showModule2Question12, setShowModule2Question12] = useState(false);
   const [showModule2Question13, setShowModule2Question13] = useState(false);
@@ -397,6 +405,8 @@ function AppContent() {
 
   // Map current reading screen to string key for progress saving
   const getCurrentReadingScreen = (): string | null => {
+    if (showModule1ReadingEngine) return module1LegacyKey || 'fillBlanks';
+    if (showModule2ReadingEngine) return module2LegacyKey || 'm2FillBlanks';
     if (showFillBlanksTest) return 'fillBlanks';
     if (showReadNoticeTest) return 'readNotice1';
     if (showReadNoticeTest2) return 'readNotice2';
@@ -437,6 +447,22 @@ function AppContent() {
       setShowModule2Question20(false);
     };
     resetAll();
+    setShowModule1ReadingEngine(false);
+    setShowModule2ReadingEngine(false);
+    const module1Keys = new Set(['fillBlanks', 'readNotice1', 'readNotice2', 'socialMedia1', 'socialMedia2', 'socialMedia3', 'q16', 'q17', 'q18', 'q19', 'q20']);
+    const module2Keys = new Set(['module2', 'm2FillBlanks', 'm2q11', 'm2q12', 'm2q13', 'm2q14', 'm2q15', 'm2q16', 'm2q17', 'm2q18', 'm2q19', 'm2q20']);
+    if (module1Keys.has(screen)) {
+      setModule1LegacyKey(screen);
+      setShowModule1ReadingEngine(true);
+      setShowReadingSection(true);
+      return;
+    }
+    if (module2Keys.has(screen)) {
+      setModule2LegacyKey(screen === 'module2' ? 'm2FillBlanks' : screen);
+      setShowModule2ReadingEngine(true);
+      setShowReadingSection(true);
+      return;
+    }
     const map: Record<string, () => void> = {
       fillBlanks: () => setShowFillBlanksTest(true),
       readNotice1: () => setShowReadNoticeTest(true),
@@ -472,7 +498,7 @@ function AppContent() {
     if (screen) {
       saveReadingProgress({ currentScreen: screen, totalQuestions: getReadingQuestionTotal(getCurrentSectionData('Reading')) });
     }
-  }, [showFillBlanksTest, showReadNoticeTest, showReadNoticeTest2, showSocialMediaTest, showSocialMediaTest2, showSocialMediaTest3, showModule1Question16, showModule1Question17, showModule1Question18, showModule1Question19, showModule1Question20, showModule2, showModule2FillBlanks, showModule2Question11, showModule2Question12, showModule2Question13, showModule2Question14, showModule2Question15, showModule2Question16, showModule2Question17, showModule2Question18, showModule2Question19, showModule2Question20]);
+  }, [showModule1ReadingEngine, showModule2ReadingEngine, module1LegacyKey, module2LegacyKey, showFillBlanksTest, showReadNoticeTest, showReadNoticeTest2, showSocialMediaTest, showSocialMediaTest2, showSocialMediaTest3, showModule1Question16, showModule1Question17, showModule1Question18, showModule1Question19, showModule1Question20, showModule2, showModule2FillBlanks, showModule2Question11, showModule2Question12, showModule2Question13, showModule2Question14, showModule2Question15, showModule2Question16, showModule2Question17, showModule2Question18, showModule2Question19, showModule2Question20]);
 
   // Listening section states
   const [showReadingIntro, setShowReadingIntro] = useState(false);
@@ -583,6 +609,8 @@ function AppContent() {
       showReadingIntro ||
       showModule1Intro ||
       showModule1Details ||
+      showModule1ReadingEngine ||
+      showModule2ReadingEngine ||
       showFillBlanksTest ||
       showReadNoticeTest ||
       showReadNoticeTest2 ||
@@ -619,6 +647,8 @@ function AppContent() {
     showReadingIntro,
     showModule1Intro, 
     showModule1Details, 
+    showModule1ReadingEngine,
+    showModule2ReadingEngine,
     showFillBlanksTest, 
     showReadNoticeTest, 
     showReadNoticeTest2, 
@@ -2205,7 +2235,7 @@ function AppContent() {
   let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; questionData?: any } | null = null;
 
   if (isReviewMode) {
-    const isReadingQuestionVisible = showReadingSection || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
+    const isReadingQuestionVisible = showReadingSection || showModule1ReadingEngine || showModule2ReadingEngine || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
 
     if (isReadingQuestionVisible) {
       let readingQuestionType = 'Read an Academic Passage';
@@ -4039,7 +4069,8 @@ function AppContent() {
               className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
               onClick={() => {
                 setShowModule2(false);
-                setShowModule2FillBlanks(true);
+                setModule2LegacyKey(undefined);
+                setShowModule2ReadingEngine(true);
               }}
             >
               <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
@@ -4084,7 +4115,8 @@ function AppContent() {
           }}
           onNext={() => {
             setShowModule2(false);
-            setShowModule2FillBlanks(true);
+            setModule2LegacyKey(undefined);
+            setShowModule2ReadingEngine(true);
           }}
         />
       </div>
@@ -6900,6 +6932,70 @@ function AppContent() {
         />
       )}
       
+      {/* Module 1 — new flexible, data-driven Reading engine */}
+      {showModule1ReadingEngine && (
+        <ReadingTestEngine
+          sectionData={getCurrentSectionData('Reading')}
+          module={1}
+          initialLegacyKey={module1LegacyKey}
+          onSegmentChange={setModule1LegacyKey}
+          currentTest={currentTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          onModuleEnd={() => {
+            setShowModule1ReadingEngine(false);
+            setShowEndModule1(true);
+          }}
+          onExitBack={() => {
+            setShowModule1ReadingEngine(false);
+            setShowModule1Details(true);
+          }}
+          onHome={() => {
+            setShowModule1ReadingEngine(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
+          }}
+        />
+      )}
+
+      {/* Module 2 — new flexible, data-driven Reading engine */}
+      {showModule2ReadingEngine && (
+        <ReadingTestEngine
+          sectionData={getCurrentSectionData('Reading')}
+          module={2}
+          initialLegacyKey={module2LegacyKey}
+          onSegmentChange={setModule2LegacyKey}
+          currentTest={currentTest}
+          testBankType={testBankType}
+          handleTabChange={handleTabChange}
+          onModuleEnd={() => {
+            setShowModule2ReadingEngine(false);
+            saveSectionResultToHistory('Reading', 20, 2);
+            clearReadingProgress();
+            setShowEndModule2(true);
+          }}
+          onExitBack={() => {
+            setShowModule2ReadingEngine(false);
+            setShowModule2(true);
+          }}
+          onHome={() => {
+            setShowModule2ReadingEngine(false);
+            setShowReadingSection(false);
+            setShowToeflTest(false);
+            if (testBankType === 'tpo') {
+              handleTabChange('TPO');
+            } else {
+              handleTabChange('Test');
+            }
+          }}
+        />
+      )}
+
       {/* Fill Blanks Test Screen (Question 10) */}
       {showFillBlanksTest && (
         <FillBlanksTestScreen
@@ -7262,7 +7358,8 @@ function AppContent() {
           }}
           onContinue={() => {
             setShowToeflTest(false);
-            setShowFillBlanksTest(true);
+            setModule1LegacyKey(undefined);
+            setShowModule1ReadingEngine(true);
           }}
         />
         </Suspense>
