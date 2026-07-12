@@ -1301,25 +1301,25 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     };
 
     // Handle audio: upload to Supabase Storage if file selected
-    if (formData.audioUrl.trim()) {
-      question.audioUrl = formData.audioUrl.trim();
-    } else if (formData.audioFile) {
+    if (formData.audioFile) {
       try {
         question.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio');
       } catch {
         question.audioUrl = URL.createObjectURL(formData.audioFile);
       }
+    } else if (formData.audioUrl.trim() && !formData.audioUrl.startsWith('blob:')) {
+      question.audioUrl = formData.audioUrl.trim();
     }
 
     // Handle image: upload to Supabase Storage if file selected
-    if (formData.imageUrl.trim()) {
-      question.imageUrl = formData.imageUrl.trim();
-    } else if (formData.imageFile) {
+    if (formData.imageFile) {
       try {
         question.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images');
       } catch {
         question.imageUrl = URL.createObjectURL(formData.imageFile);
       }
+    } else if (formData.imageUrl.trim() && !formData.imageUrl.startsWith('blob:')) {
+      question.imageUrl = formData.imageUrl.trim();
     }
 
     // Handle introImageUrl (Speaking intro screen)
@@ -2725,19 +2725,17 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     };
 
     // Handle file uploads to Supabase or use URL from gallery
-    if ((formData as any).audioUrl?.trim()) {
-      updatedQuestion.audioUrl = (formData as any).audioUrl.trim();
-    }
     if (formData.audioFile) {
       try { updatedQuestion.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio'); }
       catch { updatedQuestion.audioUrl = URL.createObjectURL(formData.audioFile); }
-    }
-    if ((formData as any).imageUrl?.trim()) {
-      updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
+    } else if ((formData as any).audioUrl?.trim() && !(formData as any).audioUrl.startsWith('blob:')) {
+      updatedQuestion.audioUrl = (formData as any).audioUrl.trim();
     }
     if (formData.imageFile) {
       try { updatedQuestion.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images'); }
       catch { updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile); }
+    } else if ((formData as any).imageUrl?.trim() && !(formData as any).imageUrl.startsWith('blob:')) {
+      updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
     }
     if ((formData as any).introImageFile) {
       try { (updatedQuestion as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images'); }
