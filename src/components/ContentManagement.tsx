@@ -3626,6 +3626,7 @@ function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, on
 # (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
 # 문제 수는 유동적입니다 — Complete Words는 Q1-Q10, Q11-Q20 등 범위로 지정 가능.
 # 두 번째 세트는 Q11-Q20처럼 이어지는 번호를 사용하세요.
+# 화면제목: Read an Email / Read an Academic Passage 등 페이지 상단에 표시될 제목을 입력하세요.
 
 Q1-Q10: Complete Words
 난이도: 보통
@@ -3657,6 +3658,7 @@ Sci[entists] continue to stu[dy] how these areas work tog[ether] to shape beha[v
 
 Q21: Read in Daily Life
 유형: email
+화면제목: Read an Email
 난이도: 보통
 
 필드:
@@ -3689,6 +3691,7 @@ D. To introduce a new artist
 ===
 
 Q22: Read an Academic Passage
+화면제목: Read an Academic Passage
 난이도: 보통
 
 지문:
@@ -3709,6 +3712,7 @@ D. Option D
 ===
 
 Q23: Read an Academic Passage
+화면제목: Read an Academic Passage
 난이도: 보통
 
 문제:
@@ -4671,6 +4675,40 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '', '', '', '',
     ].map(csvEscape).join(',') : null;
 
+    // Reading: Daily Life 예시 (passageTitle = Read an Email)
+    const readingDailyExample = section === 'Reading' ? [
+      '11',
+      'Read in Daily Life',
+      '보통',
+      'Module 1',
+      'Read an Email',
+      'Dear Edward, Thank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st. To continue enjoying unlimited access, please renew before the expiration date. Best regards, Membership Services Team',
+      '',
+      'What is the main purpose of the email?',
+      'A. To announce a membership renewal', 'B. To ask for a donation', 'C. To complain about a service', 'D. To introduce a new artist',
+      'A',
+      'The email asks the recipient to renew a membership.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Reading: Academic Passage 예시 (passageTitle = Read an Academic Passage)
+    const readingAcademicExample = section === 'Reading' ? [
+      '16',
+      'Read an Academic Passage',
+      '보통',
+      'Module 1',
+      'Read an Academic Passage',
+      'The theory of plate tectonics revolutionized geology in the 1960s. Before this theory, scientists could not explain many geological phenomena...',
+      '',
+      'What is the main idea of the passage?',
+      'A. Option A', 'B. Option B', 'C. Option C', 'D. Option D',
+      'B',
+      'Explanation of why B is correct.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // Listening: 스크립트 포함 예시
     const listeningExample = section === 'Listening' ? [
       '2',
@@ -4723,7 +4761,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     ].map(csvEscape).join(',') : null;
 
     // BOM for UTF-8 so Excel opens Korean correctly
-    const rows = [header, baseExample, readingCWExample, listeningExample, speakingExample, writingExample].filter(Boolean);
+    const rows = [header, baseExample, readingCWExample, readingDailyExample, readingAcademicExample, listeningExample, speakingExample, writingExample].filter(Boolean);
     const csv = '\uFEFF' + rows.join('\n') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
