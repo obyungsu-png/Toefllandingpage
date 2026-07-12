@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // 실시간 청크 파이핑 — 전체 대기 없이 즉시 전송
-      for await (const chunk of reader as AsyncIterable<Buffer>) {
+      for await (const chunk of reader as unknown as AsyncIterable<Buffer>) {
         res.write(chunk);
       }
       res.end();
