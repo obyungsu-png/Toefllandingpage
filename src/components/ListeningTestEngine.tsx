@@ -400,14 +400,38 @@ function ListeningQuestionScreen({
   const imageUrl: string = question?.imageUrl || '';
   const questionText: string = question?.questionText || 'Choose the best response.';
 
+  // 옵션에 A./B./C./D. 접두사 자동 추가 (이미 접두사가 있으면 중복 방지)
+  const formatOptionLabel = (option: string, index: number): string => {
+    if (/^[A-D]\.\s/.test(option)) return option;
+    return `${String.fromCharCode(65 + index)}. ${option}`;
+  };
+
   // 오디오 자동 재생
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = useRef(false);
 
+  // 오디오 정리 헬퍼 — 잔여 노이즈/삐소리 방지
+  const cleanupAudio = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    try {
+      audio.onended = null;
+      audio.onpause = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.currentTime = 0;
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     audioPlayedRef.current = false;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    cleanupAudio(audioRef.current);
+    audioRef.current = null;
   }, [qNum]);
+
+  // 컴포넌트 언마운트 시 오디오 정리
+  useEffect(() => {
+    return () => { cleanupAudio(audioRef.current); audioRef.current = null; };
+  }, []);
 
   useEffect(() => {
     if (audioUrl && !audioPlayedRef.current) {
@@ -415,14 +439,25 @@ function ListeningQuestionScreen({
       const timer = setTimeout(async () => {
         try {
           const audio = await createCachedAudio(audioUrl);
+          cleanupAudio(audioRef.current);
           audioRef.current = audio;
           audio.play().then(() => setIsPlaying(true)).catch(() => {});
-          audio.onended = () => setIsPlaying(false);
+          audio.onended = () => {
+            setIsPlaying(false);
+            // 재생 종료 후 즉시 정리 — 잔여 노이즈 방지
+            setTimeout(() => {
+              if (audioRef.current === audio) {
+                cleanupAudio(audio);
+                audioRef.current = null;
+              }
+            }, 100);
+          };
         } catch { /* ignore */ }
       }, 1000);
       return () => {
         clearTimeout(timer);
-        if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+        cleanupAudio(audioRef.current);
+        audioRef.current = null;
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -430,12 +465,20 @@ function ListeningQuestionScreen({
 
   const handlePlayAudio = async () => {
     if (!audioUrl || isPlaying) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    cleanupAudio(audioRef.current);
     try {
       const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      audio.onended = () => setIsPlaying(false);
+      audio.onended = () => {
+        setIsPlaying(false);
+        setTimeout(() => {
+          if (audioRef.current === audio) {
+            cleanupAudio(audio);
+            audioRef.current = null;
+          }
+        }, 100);
+      };
     } catch { /* ignore */ }
   };
 
@@ -561,7 +604,7 @@ function ListeningQuestionScreen({
                     value={option}
                     checked={selectedAnswer === option}
                     onChange={() => recordListeningAnswer(option)}
-                    label={option}
+                    label={formatOptionLabel(option, index)}
                     labelClassName="text-lg"
                   />
                 ))}
@@ -612,7 +655,7 @@ function ListeningQuestionScreen({
                       value={option}
                       checked={selectedAnswer === option}
                       onChange={() => recordListeningAnswer(option)}
-                      label={option}
+                      label={formatOptionLabel(option, index)}
                       labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                     />
                   ))}
