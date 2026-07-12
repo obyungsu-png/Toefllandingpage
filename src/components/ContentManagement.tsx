@@ -1718,16 +1718,59 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
-        {/* Video Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Video File (Optional)</label>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-          />
-        </div>
+        {/* Video Upload — Reading 제외 */}
+        {section !== 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Video File (Optional)</label>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Image Upload for Reading questions */}
+        {section === 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image File (Optional)
+              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 옆에 표시되는 이미지)</span>
+            </label>
+            {formData.imageUrl && (
+              <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <img src={formData.imageUrl} alt="selected" className="w-16 h-16 object-cover rounded" />
+                <div className="flex-1 text-xs text-green-700 truncate">{formData.imageUrl.split('/').pop()}</div>
+                <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">
+                  제거
+                </button>
+              </div>
+            )}
+            <input
+              type="text"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] mb-2"
+              placeholder="이미지 URL을 직접 입력하거나 아래에서 업로드..."
+            />
+            <div className="flex items-center gap-2 mb-3">
+              <label className="cursor-pointer px-3 py-2 bg-[#2d7a7c] text-white text-xs font-semibold rounded-lg hover:bg-[#1e6b73] transition-colors">
+                📁 파일 업로드
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData({ ...formData, imageFile: file, imageUrl: URL.createObjectURL(file) });
+                    }
+                  }}
+                />
+              </label>
+              <span className="text-xs text-gray-400">이미지 파일을 업로드하세요</span>
+            </div>
+          </div>
+        )}
 
         {/* Image Gallery for Listening questions */}
         {section === 'Listening' && (
@@ -2985,16 +3028,52 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         )}
 
-        {/* Video Upload */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Video File (Optional)</label>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-          />
-        </div>
+        {/* Video Upload — Reading 제외 */}
+        {section !== 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Video File (Optional)</label>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => setFormData({ ...formData, videoFile: e.target.files?.[0] || null })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+            />
+          </div>
+        )}
+
+        {/* Image Upload for Reading questions (Edit form) */}
+        {section === 'Reading' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image File (Optional)
+              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 옆에 표시되는 이미지)</span>
+            </label>
+            {(formData as any).imageUrl && (
+              <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <img src={(formData as any).imageUrl} alt="selected" className="w-16 h-16 object-cover rounded" />
+                <div className="flex-1 text-xs text-green-700 truncate">{((formData as any).imageUrl || '').split('/').pop()}</div>
+                <button type="button" onClick={() => setFormData({ ...formData, imageUrl: '' } as any)}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+              </div>
+            )}
+            <input
+              type="text"
+              value={(formData as any).imageUrl || ''}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value } as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] mb-2"
+              placeholder="이미지 URL을 직접 입력하거나 아래에서 업로드..."
+            />
+            <div className="flex items-center gap-2 mb-3">
+              <label className="cursor-pointer px-3 py-2 bg-[#2d7a7c] text-white text-xs font-semibold rounded-lg hover:bg-[#1e6b73] transition-colors">
+                📁 파일 업로드
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const file = e.target.files?.[0]; if (file) { setFormData({ ...formData, imageFile: file, imageUrl: URL.createObjectURL(file) } as any); } }}
+                />
+              </label>
+              <span className="text-xs text-gray-400">이미지 파일을 업로드하세요</span>
+            </div>
+          </div>
+        )}
 
         {/* Image Gallery for Listening questions (Edit form) */}
         {section === 'Listening' && (
