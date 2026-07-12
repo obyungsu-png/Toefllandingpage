@@ -1199,7 +1199,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     const question: TPOQuestion = {
       id: `q-${Date.now()}`,
       questionNumber: formData.questionNumber,
-      questionText: formData.questionText,
+      questionText: (formData.questionType === 'Complete Words' && !formData.questionText.trim())
+        ? 'Fill in the missing letters in the blank.'
+        : formData.questionText,
       questionType: formData.module === 'Module 2' ? `${formData.questionType} (Module 2)` : formData.questionType,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
@@ -2397,50 +2399,27 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
-        {/* AI Review Fields: Translation, Analysis, Key Words */}
-        <div className="border-t border-gray-200 pt-4 space-y-3">
-          <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
-            ✨ AI Review Panel Fields
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {section === 'Listening' ? 'Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 스크립트 — Review의 Script 탭에 표시)' : '(Korean translation of the passage/question)'}</span>
-            </label>
-            <textarea
-              value={section === 'Listening' ? ((formData as any).scriptText || '') : ((formData as any).translationNote || '')}
-              onChange={(e) => setFormData(section === 'Listening'
-                ? { ...formData, scriptText: e.target.value } as any
-                : { ...formData, translationNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
-              rows={3}
-              placeholder={section === 'Listening' ? '리스닝 오디오의 스크립트(대본)를 입력하세요...' : '지문/문제의 한국어 번역을 입력하세요...'}
-            />
+        {/* Listening Script — used by the Review Script tab. Other AI review
+            fields (Translation/Analysis/Key Words) were removed as unused. */}
+        {section === 'Listening' && (
+          <div className="border-t border-gray-200 pt-4 space-y-3">
+            <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
+              ✨ Script
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 — Review의 Script 탭에 표시)</span>
+              </label>
+              <textarea
+                value={(formData as any).scriptText || ''}
+                onChange={(e) => setFormData({ ...formData, scriptText: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                rows={3}
+                placeholder="리스닝 오디오의 스크립트(대본)를 입력하세요..."
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
-            </label>
-            <textarea
-              value={(formData as any).analysisNote || ''}
-              onChange={(e) => setFormData({ ...formData, analysisNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
-              rows={3}
-              placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>
-            </label>
-            <textarea
-              value={(formData as any).vocabularyNote || ''}
-              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm font-mono"
-              rows={4}
-              placeholder={"cohesion = 결속, 통합\nintegration = 통합\nself-awareness = 자기 인식"}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Color Theme (Read in Daily Life only) */}
         {section === 'Reading' && (
@@ -2591,7 +2570,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     const updatedQuestion: TPOQuestion = {
       id: question.id,
       questionNumber: formData.questionNumber,
-      questionText: formData.questionText,
+      questionText: (formData.questionType === 'Complete Words' && !formData.questionText.trim())
+        ? 'Fill in the missing letters in the blank.'
+        : formData.questionText,
       questionType: (formData as any).module === 'Module 2' ? `${formData.questionType} (Module 2)` : formData.questionType,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
@@ -3496,50 +3477,27 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           />
         </div>
 
-        {/* AI Review Fields: Translation, Analysis, Key Words */}
-        <div className="border-t border-gray-200 pt-4 space-y-3">
-          <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
-            ✨ AI Review Panel Fields
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {section === 'Listening' ? 'Script' : 'Translation'} <span className="text-xs text-gray-400 font-normal">{section === 'Listening' ? '(리스닝 스크립트 — Review의 Script 탭에 표시)' : '(Korean translation of the passage/question)'}</span>
-            </label>
-            <textarea
-              value={section === 'Listening' ? ((formData as any).scriptText || '') : ((formData as any).translationNote || '')}
-              onChange={(e) => setFormData(section === 'Listening'
-                ? { ...formData, scriptText: e.target.value } as any
-                : { ...formData, translationNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
-              rows={3}
-              placeholder={section === 'Listening' ? '리스닝 오디오의 스크립트(대본)를 입력하세요...' : '지문/문제의 한국어 번역을 입력하세요...'}
-            />
+        {/* Listening Script — used by the Review Script tab. Other AI review
+            fields (Translation/Analysis/Key Words) were removed as unused. */}
+        {section === 'Listening' && (
+          <div className="border-t border-gray-200 pt-4 space-y-3">
+            <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
+              ✨ Script
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 — Review의 Script 탭에 표시)</span>
+              </label>
+              <textarea
+                value={(formData as any).scriptText || ''}
+                onChange={(e) => setFormData({ ...formData, scriptText: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                rows={3}
+                placeholder="리스닝 오디오의 스크립트(대본)를 입력하세요..."
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Analysis <span className="text-xs text-gray-400 font-normal">(question strategy & answer explanation)</span>
-            </label>
-            <textarea
-              value={(formData as any).analysisNote || ''}
-              onChange={(e) => setFormData({ ...formData, analysisNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
-              rows={3}
-              placeholder="문제 풀이 전략, 정답 근거를 입력하세요..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Key Words <span className="text-xs text-gray-400 font-normal">(한 줄에 하나씩: word = meaning)</span>
-            </label>
-            <textarea
-              value={(formData as any).vocabularyNote || ''}
-              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value } as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm font-mono"
-              rows={4}
-              placeholder={"cohesion = 결속, 통합\nintegration = 통합\nself-awareness = 자기 인식"}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Color Theme (Read in Daily Life only) */}
         {section === 'Reading' && (
@@ -4557,7 +4515,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         questions.push({
           id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
           questionNumber: qNum, // keep "1-10" / "11-20" string form
-          questionText: questionText || 'Fill in the missing letters in the paragraph.',
+          questionText: questionText || 'Fill in the missing letters in the blank.',
           questionType: applyModuleSuffix('Complete Words'),
           passageText: finalPassageText || undefined,
           difficulty,
@@ -4758,8 +4716,28 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
       'q1_image.png',
     ].map(csvEscape).join(',');
 
+    // Reading: add a Complete Words example so editors see how fill-in-blanks
+    // is written — one grouped row (questionNumber "1-10"), blanks marked inline
+    // as visible[hidden] in passageText. No options/answer needed.
+    const completeWordsExample = section === 'Reading' ? [
+      '1-10',
+      'Complete Words',
+      '보통',
+      'Module 1',
+      '',
+      'When peo[ple] think of inven[tion], they imagine tech[nology]. But edu[cation] shapes our cul[ture] and soc[iety] more than envi[ronment]. Without mo[ney] or moti[vation], suc[cess] and deve[lopment] are hard.',
+      '',
+      'Fill in the missing letters in the blank.',
+      '', '', '', '',
+      '',
+      '',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // BOM for UTF-8 so Excel opens Korean correctly
-    const csv = '\uFEFF' + header + '\n' + example + '\n';
+    const rows = [header, example, completeWordsExample].filter(Boolean);
+    const csv = '\uFEFF' + rows.join('\n') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

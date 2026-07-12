@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { ArrowLeft, Plus, Eye, Edit, Trash2, FileText, BookOpen, Book, Filter, AlertCircle, Headphones, Mic, PenTool } from 'lucide-react';
 import type { TPOQuestion, TPOSection } from './ContentManagement';
+import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 
 interface TPODetailViewProps {
   testType: string;
@@ -256,7 +257,11 @@ export function TPODetailView({
           return (
             <div key={question.id} className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-lg transition-all hover:shadow-sm group ${isM2 ? 'border-orange-100 hover:bg-orange-50/40' : 'border-gray-100 hover:bg-gray-50'}`}>
               <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${style.color} shrink-0`}>
-                {style.icon}<span>Q{question.questionNumber}</span>
+                {style.icon}<span>{
+                  (question.questionType || '').includes('Complete Words')
+                    ? getQuestionRangeLabel(question).replace(/^Question\s+/, 'Q')
+                    : `Q${question.questionNumber}`
+                }</span>
               </div>
               {question.difficulty && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${question.difficulty==='쉬움'?'border-green-400 text-green-600 bg-green-50':question.difficulty==='어려움'?'border-red-400 text-red-600 bg-red-50':'border-yellow-400 text-yellow-600 bg-yellow-50'}`}>
