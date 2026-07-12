@@ -371,8 +371,10 @@ function GroupIntroScreen({
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      audio.pause();
-      audio.currentTime = 0;
+      if (!audio.ended) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
     } catch { /* ignore */ }
   };
 
@@ -387,12 +389,6 @@ function GroupIntroScreen({
         audio.onended = () => {
           setIsPlaying(false);
           setAudioEnded(true);
-          setTimeout(() => {
-            if (audioRef.current === audio) {
-              cleanupAudio(audio);
-              audioRef.current = null;
-            }
-          }, 100);
         };
       } catch { /* ignore */ }
     }, 500);
@@ -416,12 +412,6 @@ function GroupIntroScreen({
       audio.onended = () => {
         setIsPlaying(false);
         setAudioEnded(true);
-        setTimeout(() => {
-          if (audioRef.current === audio) {
-            cleanupAudio(audio);
-            audioRef.current = null;
-          }
-        }, 100);
       };
     } catch { /* ignore */ }
   };
@@ -643,15 +633,18 @@ function ListeningQuestionScreen({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = useRef(false);
 
-  // 오디오 정리 헬퍼 — 잔여 노이즈/삐소리 방지
+  // 오디오 정리 헬퍼 — 잔여 노이즈/틱 소리 방지
+  // 이미 종료된 오디오는 pause() 호출 금지 (브라우저 노이즈 유발)
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
     try {
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      audio.pause();
-      audio.currentTime = 0;
+      if (!audio.ended) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
     } catch { /* ignore */ }
   };
 
@@ -675,16 +668,7 @@ function ListeningQuestionScreen({
           cleanupAudio(audioRef.current);
           audioRef.current = audio;
           audio.play().then(() => setIsPlaying(true)).catch(() => {});
-          audio.onended = () => {
-            setIsPlaying(false);
-            // 재생 종료 후 즉시 정리 — 잔여 노이즈 방지
-            setTimeout(() => {
-              if (audioRef.current === audio) {
-                cleanupAudio(audio);
-                audioRef.current = null;
-              }
-            }, 100);
-          };
+          audio.onended = () => setIsPlaying(false);
         } catch { /* ignore */ }
       }, 1000);
       return () => {
@@ -703,15 +687,7 @@ function ListeningQuestionScreen({
       const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      audio.onended = () => {
-        setIsPlaying(false);
-        setTimeout(() => {
-          if (audioRef.current === audio) {
-            cleanupAudio(audio);
-            audioRef.current = null;
-          }
-        }, 100);
-      };
+      audio.onended = () => setIsPlaying(false);
     } catch { /* ignore */ }
   };
 
