@@ -521,24 +521,18 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             setShowUploadForm(false);
           }}
           onDeleteQuestion={(questionId) => {
-            setDeleteConfirmation({
-              type: 'question',
-              id: questionId,
-              name: `Question ${questionId}`,
-              onConfirm: () => {
-                const test = tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
-                if (test) {
-                  const updatedSections = test.sections.map(section => {
-                    return {
-                      ...section,
-                      questions: section.questions.filter(q => q.id !== questionId)
-                    };
-                  });
-                  
-                  onUpdateTest({ ...test, sections: updatedSections });
-                }
-              }
-            });
+            // TPODetailView에서 이미 확인 모달을 띄웠으므로 바로 삭제
+            const test = tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+            if (test) {
+              const updatedSections = test.sections.map(section => {
+                return {
+                  ...section,
+                  questions: section.questions.filter(q => q.id !== questionId)
+                };
+              });
+
+              onUpdateTest({ ...test, sections: updatedSections });
+            }
           }}
           onPreviewQuestion={(question) => {
             setPreviewQuestion(question);
@@ -4926,6 +4920,40 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'q1_image.png',
     ].map(csvEscape).join(',') : null;
 
+    // 6) 쉬움 — Listen and Response (Module 2, Q3) — Module 2 짧은 대화
+    const listeningM2EasyExample = section === 'Listening' ? [
+      '3',
+      'Listen and Response',
+      '쉬움',
+      'Module 2',
+      '',
+      '',
+      'Man: Did you finish the chemistry lab report?\nWoman: Not yet. I still need to analyze the data from yesterday\'s experiment.',
+      'Choose the best response.',
+      'A. The experiment was successful.', 'B. I\'ll help you analyze the data.', 'C. The report is due tomorrow.', 'D. Where is the lab?',
+      'B',
+      '여자가 아직 데이터 분석이 남았다고 했으므로, "I\'ll help you analyze the data"가 자연스러운 응답.',
+      'q3_audio.mp3',
+      'q3_image.png',
+    ].map(csvEscape).join(',') : null;
+
+    // 7) 보통 — Campus Conversation (Module 2, Q5) — Module 2 캠퍼스 대화
+    const listeningM2MediumExample = section === 'Listening' ? [
+      '5',
+      'Campus Conversation',
+      '보통',
+      'Module 2',
+      '',
+      '',
+      'Student: Professor Lee, I\'m interested in joining your research team next semester. What are the requirements?\nProfessor: You need to have completed Biology 201 with a B or higher, and submit a brief statement of interest. Prior lab experience is preferred but not required.\nStudent: I took Biology 201 last fall and got an A. I\'ll prepare the statement this week.\nProfessor: Great. The application deadline is March 15th.',
+      'What is one requirement to join the research team?',
+      'A. A letter of recommendation', 'B. Completion of Biology 201 with a B or higher', 'C. Two years of lab experience', 'D. A published research paper',
+      'B',
+      '교수가 "You need to have completed Biology 201 with a B or higher"라고 명시함.',
+      'q5_audio.mp3',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // 구 listeningExample 호환성 유지
     const listeningExample = listeningEasyExample;
 
@@ -4975,6 +5003,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       listeningAnnouncementExample,
       listeningHardExample,
       listeningM2HardExample,
+      listeningM2EasyExample,
+      listeningM2MediumExample,
       speakingExample,
       writingExample,
     ].filter(Boolean);
