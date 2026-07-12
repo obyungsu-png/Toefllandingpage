@@ -26,8 +26,11 @@ export function isCompleteWordsType(questionType?: string): boolean {
 
 export function isModule2Question(question: any): boolean {
   const t = (question?.questionType || '').toLowerCase();
-  const m = String(question?.module || question?.moduleName || '').toLowerCase();
-  return t.includes('module 2') || m.includes('2') || m.includes('module 2');
+  // module/moduleName 필드는 정확히 '2', 'module 2', '모듈 2'인 경우만 Module 2로 분류.
+  // 이전의 m.includes('2')는 '12', '20', '30' 등에도 매칭되어 Module 1 문제가
+  // 잘못 분류되는 버그가 있었음.
+  const m = String(question?.module || question?.moduleName || '').toLowerCase().trim();
+  return t.includes('module 2') || m === '2' || m === 'module 2' || m === '모듈 2';
 }
 
 export function parseQuestionRange(questionNumber: number | string | undefined): { start: number; end: number } | null {

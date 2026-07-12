@@ -73,6 +73,20 @@ export function ReadingTestEngine({
     return module === 2 ? isM2 : !isM2;
   });
 
+  // 디버깅 로그 — 문제 분류 문제 진단용 (production에서는 무시해도 됨)
+  if (typeof console !== 'undefined' && (window as any).__DEBUG_READING) {
+    console.log('[ReadingTestEngine] module:', module);
+    console.log('[ReadingTestEngine] allQuestions:', allQuestions.map(q => ({
+      num: q.questionNumber,
+      type: q.questionType,
+      module: q.module,
+      hasImage: !!q.imageUrl,
+      hasText: !!q.passageText,
+      isM2: isModule2Question(q),
+    })));
+    console.log('[ReadingTestEngine] moduleQuestions:', moduleQuestions.length);
+  }
+
   const completeWordsGroups = moduleQuestions
     .filter(q => isCompleteWordsType(q.questionType))
     .sort(sortByNumber);

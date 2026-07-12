@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
-import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType } from '../utils/readingQuestionUtils';
+import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
 
 // 기본 아바타 목록 (public/avatars/ 에서 서빙)
 const DEFAULT_AVATARS = [
@@ -4761,20 +4761,34 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     // Header row + section-specific example rows
     const header = CSV_COLUMNS.join(',');
 
-    // 기본 예시 (모든 섹션 공통)
-    const baseExample = [
+    // 기본 예시 (섹션별로 다르게 생성 — 리스닝은 스크립트 중심)
+    const baseExample = section === 'Listening' ? [
+      '1',
+      'Listen and Response',
+      '쉬움',
+      'Module 1',
+      '',
+      '',
+      'Man: Excuse me, could you tell me where the library is?\nWoman: Sure, it\'s the building right across the quad, next to the science building.',
+      'Choose the best response.',
+      'A. It\'s across the quad, next to the science building.', 'B. I don\'t know where it is.', 'C. The library is closed today.', 'D. You should ask someone else.',
+      'A',
+      '여자가 도서관 위치를 설명해주며, A가 위치를 정확히 반영함.',
+      'q1_audio.mp3',
+      'q1_image.png',
+    ].map(csvEscape).join(',') : [
       '1',
       (questionTypeOptions?.[0] || 'Detail Questions'),
       '보통',
       supportsModule ? 'Module 1' : '',
       'Sample Passage Title',
       'Full passage text goes here. Line breaks are OK inside this cell.',
-      section === 'Listening' || section === 'Speaking' ? 'Full listening script goes here.' : '',
+      section === 'Speaking' ? 'Full listening script goes here.' : '',
       'What is the main idea of the passage?',
       'A. First option', 'B. Second option', 'C. Third option', 'D. Fourth option',
       'A. First option',
       'Explanation of why A is correct.',
-      section === 'Listening' || section === 'Speaking' ? 'q1_audio.mp3' : '',
+      section === 'Speaking' ? 'q1_audio.mp3' : '',
       'q1_image.png',
     ].map(csvEscape).join(',');
 
@@ -4826,22 +4840,94 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Listening: 스크립트 포함 예시
-    const listeningExample = section === 'Listening' ? [
-      '2',
-      'Academic Lecture',
+    // Listening 예시 — TPO 2 리스닝 구조 반영 (Module 1: Q1-Q18, Module 2: Q1-Q16)
+    // 1) 쉬움 — Listen and Response (Module 1, Q1) — 이미지 + 짧은 대화
+    const listeningEasyExample = section === 'Listening' ? [
+      '1',
+      'Listen and Response',
+      '쉬움',
+      'Module 1',
+      '',
+      '',
+      'Man: Are you going to the study group meeting tonight?\nWoman: Yes, I am. It starts at 7 PM in the library.',
+      'Choose the best response.',
+      'A. I\'ll be there at 7.', 'B. No, I missed it.', 'C. The library is closed.', 'D. What time is it?',
+      'A',
+      '여자가 7시에 도서관에서 모임이 있다고 했으므로, "I\'ll be there at 7"이 자연스러운 응답.',
+      'q1_audio.mp3',
+      'q1_image.png',
+    ].map(csvEscape).join(',') : null;
+
+    // 2) 보통 — Conversation (Module 1, Q9-Q10) — 캠퍼스 대화
+    const listeningMediumExample = section === 'Listening' ? [
+      '9',
+      'Campus Conversation',
       '보통',
       'Module 1',
-      'The History of Photography',
       '',
-      'Professor: Today we will explore the history of photography. The camera obscura was the first device that led to photography. Then came the daguerreotype in 1839.',
-      'What is the main topic of the lecture?',
-      'A. Modern cameras', 'B. History of photography', 'C. Famous photographers', 'D. Art appreciation',
+      '',
+      'Student: Professor Johnson, I\'d like to ask about the research paper deadline.\nProfessor: The paper is due next Friday. I expect at least 10 pages with proper citations.\nStudent: Can I use online sources?\nProfessor: Yes, but make sure they\'re academic sources, not just any website.',
+      'What does the professor require for the research paper?',
+      'A. At least 5 pages with any sources', 'B. At least 10 pages with academic citations', 'C. No online sources allowed', 'D. Only books from the library',
       'B',
-      'The lecture traces the development of photography.',
-      'q2_audio.mp3',
-      'q2_image.png',
+      '교수가 "at least 10 pages with proper citations"라고 명시했고, 온라인 출처도 academic sources만 허용한다고 함.',
+      'q9_audio.mp3',
+      '',
     ].map(csvEscape).join(',') : null;
+
+    // 3) 보통 — Announcement (Module 1, Q13-Q14) — 공지사항
+    const listeningAnnouncementExample = section === 'Listening' ? [
+      '13',
+      'Announcements',
+      '보통',
+      'Module 1',
+      '',
+      '',
+      'Attention students. The campus bookstore will be closed this Saturday for inventory. Regular hours will resume on Monday. If you need to purchase textbooks, please do so before Friday evening. Thank you.',
+      'Why will the bookstore be closed on Saturday?',
+      'A. For renovation', 'B. For inventory', 'C. For a holiday', 'D. For staff training',
+      'B',
+      '공지사항에서 "closed this Saturday for inventory"라고 명시함.',
+      'q13_audio.mp3',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // 4) 어려움 — Academic Lecture (Module 1, Q15-Q18) — 학술 강의
+    const listeningHardExample = section === 'Listening' ? [
+      '15',
+      'Academic Lecture',
+      '어려움',
+      'Module 1',
+      '',
+      '',
+      'Professor: Today we\'ll examine the concept of symbiosis in marine ecosystems. Symbiosis refers to the close, long-term interaction between different biological species. The three main types are mutualism, where both species benefit; commensalism, where one benefits and the other is unaffected; and parasitism, where one benefits at the expense of the other. A classic example of mutualism is the relationship between clownfish and sea anemones — the clownfish gains protection while the anemone receives nutrients from the fish\'s waste.',
+      'According to the professor, what is an example of mutualism?',
+      'A. A tick feeding on a dog', 'B. A barnacle attaching to a whale', 'C. A clownfish and sea anemone relationship', 'D. A lion hunting a zebra',
+      'C',
+      '교수가 "A classic example of mutualism is the relationship between clownfish and sea anemones"라고 명시함.',
+      'q15_audio.mp3',
+      'q15_image.png',
+    ].map(csvEscape).join(',') : null;
+
+    // 5) 어려움 — Academic Lecture (Module 2, Q1) — 심화 학술 강의
+    const listeningM2HardExample = section === 'Listening' ? [
+      '1',
+      'Academic Lecture',
+      '어려움',
+      'Module 2',
+      '',
+      '',
+      'Professor: The phenomenon of ocean acidification is directly linked to increased atmospheric CO2. When CO2 dissolves in seawater, it forms carbonic acid, which lowers the ocean\'s pH. This process threatens calcifying organisms like corals and mollusks, whose calcium carbonate structures dissolve more readily in acidic conditions. Recent studies indicate that the current rate of acidification is unprecedented in the geological record, raising serious concerns about marine biodiversity.',
+      'What is the main concern about ocean acidification mentioned in the lecture?',
+      'A. It increases fish populations', 'B. It dissolves calcium carbonate structures of calcifying organisms', 'C. It raises ocean temperatures directly', 'D. It reduces atmospheric CO2 levels',
+      'B',
+      '교수가 "threatens calcifying organisms like corals and mollusks, whose calcium carbonate structures dissolve more readily"라고 명시함.',
+      'q1_audio.mp3',
+      'q1_image.png',
+    ].map(csvEscape).join(',') : null;
+
+    // 구 listeningExample 호환성 유지
+    const listeningExample = listeningEasyExample;
 
     // Speaking: 스크립트 + 정답 예시
     const speakingExample = section === 'Speaking' ? [
@@ -4878,7 +4964,20 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     ].map(csvEscape).join(',') : null;
 
     // BOM for UTF-8 so Excel opens Korean correctly
-    const rows = [header, baseExample, readingCWExample, readingDailyExample, readingAcademicExample, listeningExample, speakingExample, writingExample].filter(Boolean);
+    const rows = [
+      header,
+      baseExample,
+      readingCWExample,
+      readingDailyExample,
+      readingAcademicExample,
+      listeningEasyExample,
+      listeningMediumExample,
+      listeningAnnouncementExample,
+      listeningHardExample,
+      listeningM2HardExample,
+      speakingExample,
+      writingExample,
+    ].filter(Boolean);
     const csv = '\uFEFF' + rows.join('\n') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -5226,12 +5325,17 @@ function MediaMatcherPanel({
   const [uploadedCount, setUploadedCount] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Module 1 / Module 2 선택 — 파일 매칭 시 해당 모듈 문제만 대상으로 함
+  const [selectedModule, setSelectedModule] = useState<1 | 2>(1);
 
-  const sortedQs = [...section.questions].sort((a, b) => {
-    const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
-    const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
-    return na - nb;
-  });
+  // 선택된 Module의 문제만 매칭 대상으로 사용
+  const sortedQs = [...section.questions]
+    .filter(q => selectedModule === 2 ? isModule2Question(q) : !isModule2Question(q))
+    .sort((a, b) => {
+      const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+      const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+      return na - nb;
+    });
 
   const isAudio = (name: string) => /\.(mp3|wav|m4a|ogg|aac)$/i.test(name);
   const isImage = (name: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
@@ -5306,7 +5410,9 @@ function MediaMatcherPanel({
     let count = 0;
     try {
       for (const m of toUpload) {
+        // Module 필터링 — 선택된 모듈의 문제만 업데이트 대상
         const q = targetSection.questions.find(qq => {
+          if (selectedModule === 2 ? !isModule2Question(qq) : isModule2Question(qq)) return false;
           const n = typeof qq.questionNumber === 'number' ? qq.questionNumber : parseInt(String(qq.questionNumber));
           return n === m.qNum;
         });
@@ -5346,6 +5452,36 @@ function MediaMatcherPanel({
         <p>• 오디오: <code>q1_audio.mp3</code>, <code>1.mp3</code>, <code>q1.wav</code> 등 — 파일명에 문제 번호가 들어가면 자동 인식</p>
         <p>• 이미지: <code>q1_image.png</code>, <code>1.jpg</code>, <code>q1.png</code> 등</p>
         <p>• 파일명의 숫자로 문제를 찾아 audioUrl / imageUrl에 자동 연결합니다.</p>
+      </div>
+
+      {/* Module 1 / Module 2 선택기 */}
+      <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <span className="text-sm font-semibold text-gray-700 mr-2">Module 선택:</span>
+        <button
+          type="button"
+          onClick={() => { setSelectedModule(1); setFiles([]); setDone(false); }}
+          className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+            selectedModule === 1
+              ? 'bg-[#2d7a7c] text-white shadow'
+              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+          }`}
+        >
+          Module 1
+        </button>
+        <button
+          type="button"
+          onClick={() => { setSelectedModule(2); setFiles([]); setDone(false); }}
+          className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+            selectedModule === 2
+              ? 'bg-[#2d7a7c] text-white shadow'
+              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+          }`}
+        >
+          Module 2
+        </button>
+        <span className="ml-auto text-xs text-gray-500">
+          {sortedQs.length}문제 (Module {selectedModule})
+        </span>
       </div>
 
       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-gray-50 transition-colors mb-4">
