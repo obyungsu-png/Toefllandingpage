@@ -27,13 +27,38 @@ const sortByNumber = (a: any, b: any) => {
   return na - nb;
 };
 
+// 문제 유형별 인트로 페이지 제목 — TPO 2 기준
+function getIntroTitle(questionType: string): string {
+  const t = (questionType || '').toLowerCase();
+  if (t.includes('conversation') || t.includes('campus')) {
+    return 'Listen to a conversation.';
+  }
+  if (t.includes('announcement')) {
+    return 'Listen to an announcement in a classroom.';
+  }
+  if (t.includes('lecture') || t.includes('podcast') || t.includes('talk') || t.includes('academic')) {
+    return 'Listen to a talk on a podcast about psychology.';
+  }
+  // 기본: Listen and Response
+  return 'Listen to a sentence or question.';
+}
+
+// 같은 문제 유형 그룹인지 확인 (인트로 페이지 기준)
+function getIntroGroup(questionType: string): string {
+  const t = (questionType || '').toLowerCase();
+  if (t.includes('conversation') || t.includes('campus')) return 'conversation';
+  if (t.includes('announcement')) return 'announcement';
+  if (t.includes('lecture') || t.includes('podcast') || t.includes('talk') || t.includes('academic')) return 'podcast';
+  return 'listen-response';
+}
+
 /**
- * Flexible, data-driven Listening test engine. Mirrors ReadingTestEngine's
- * approach: reads whatever questions exist in CMS for this module and walks
- * through them in questionNumber order — however many there are.
+ * Flexible, data-driven Listening test engine. Mirrors TPO 2's structure:
+ *   Intro → Module Intro → [Group Intro → Questions]× → End Module → Module 2 Intro
  *
- * Replaces the old fixed Q1-Q18 (Module 1) / Q1-Q16 (Module 2) screen flow
- * with a dynamic one driven entirely by CMS data.
+ * - 각 문제 유형 그룹 전에 InterstitialScreen (인트로 페이지) 표시
+ * - QuestionScreen은 TPO 2의 레이아웃 사용 (이미지 크기, 간격 등)
+ * - 실전문제는 정답 선택해야 Next 버튼 활성화
  */
 export function ListeningTestEngine({
   sectionData,
@@ -55,35 +80,36 @@ export function ListeningTestEngine({
     })
     .sort(sortByNumber);
 
-  type Segment = { question: any; legacyKey: string };
-  const segments: Segment[] = moduleQuestions.map((q, i) => ({
-    question: q,
-    legacyKey: module === 2 ? `m2q${i + 1}` : `q${i + 1}`,
-  }));
+  // 세그먼트 배열: 인트로 페이지 + 질문 페이지
+  type Segment =
+    | { kind: 'module-intro'; legacyKey: string }
+    | { kind: 'group-intro'; question: any; legacyKey: string }
+    | { kind: 'question'; question: any; legacyKey: string; isFirstInGroup: boolean };
 
-  // Resolve a legacy key to a segment index for progress restore.
-  const resolveLegacyKey = (key: string | undefined): number => {
-    if (!key) return 0;
-    const prefix = module === 2 ? 'm2q' : 'q';
-    const match = key.match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
-    if (match) {
-      const idx = parseInt(match[1]) - 1;
-      return Math.min(Math.max(0, idx), segments.length - 1);
+  const segments: Segment[] = [];
+
+  // Module 시작 안내 페이지
+  segments.push({ kind: 'module-intro', legacyKey: module === 2 ? 'm2-intro' : 'm1-intro' });
+
+  // 각 문제 유형 그룹 전에 인트로 페이지 추가
+  let prevGroup = '';
+  moduleQuestions.forEach((q, i) => {
+    const currentGroup = getIntroGroup(q.questionType);
+    // 새 그룹이 시작되면 인트로 페이지 추가
+    if (currentGroup !== prevGroup) {
+      segments.push({ kind: 'group-intro', question: q, legacyKey: `intro-${currentGroup}` });
+      prevGroup = currentGroup;
     }
-    return 0;
-  };
+    segments.push({
+      kind: 'question',
+      question: q,
+      legacyKey: module === 2 ? `m2q${i + 1}` : `q${i + 1}`,
+      isFirstInGroup: false,
+    });
+  });
 
-  const [segmentIndex, setSegmentIndex] = useState(() => resolveLegacyKey(initialLegacyKey));
-
-  useEffect(() => {
-    if (onSegmentChange && segments[segmentIndex]) {
-      onSegmentChange(segments[segmentIndex].legacyKey);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segmentIndex]);
-
-  // Empty state — no CMS data for this module yet.
-  if (segments.length === 0) {
+  // 빈 상태 — CMS 데이터 없음
+  if (moduleQuestions.length === 0) {
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-lg font-semibold text-gray-700">
@@ -100,7 +126,35 @@ export function ListeningTestEngine({
     );
   }
 
-  const totalDisplayCount = segments.length;
+  // Legacy key → segment index 매핑 (진행 복원용)
+  const resolveLegacyKey = (key: string | undefined): number => {
+    if (!key) return 0;
+    const prefix = module === 2 ? 'm2q' : 'q';
+    const match = key.match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
+    if (match) {
+      const targetIdx = parseInt(match[1]) - 1;
+      // 질문 세그먼트 중에서 targetIdx와 일치하는 것 찾기
+      let qCount = 0;
+      for (let i = 0; i < segments.length; i++) {
+        if (segments[i].kind === 'question') {
+          if (qCount === targetIdx) return i;
+          qCount++;
+        }
+      }
+    }
+    return 0;
+  };
+
+  const [segmentIndex, setSegmentIndex] = useState(() => resolveLegacyKey(initialLegacyKey));
+
+  useEffect(() => {
+    if (onSegmentChange && segments[segmentIndex]) {
+      onSegmentChange(segments[segmentIndex].legacyKey);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [segmentIndex]);
+
+  const totalQuestions = moduleQuestions.length;
   const goNext = () => {
     if (segmentIndex + 1 < segments.length) setSegmentIndex(segmentIndex + 1);
     else onModuleEnd();
@@ -111,27 +165,51 @@ export function ListeningTestEngine({
   };
 
   const current = segments[segmentIndex];
-  const question = current.question;
-  const rawQNum = question?.questionNumber;
-  const qNumForDisplay = typeof rawQNum === 'number' ? rawQNum : (parseInt(String(rawQNum)) || (segmentIndex + 1));
-  const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
-  const audioUrl: string = question?.audioUrl || (question as any)?.introAudioUrl || '';
-  const imageUrl: string = question?.imageUrl || (question as any)?.introImageUrl || '';
-  const questionText: string = question?.questionText || 'Choose the best response.';
-  const passageTitle: string = question?.passageTitle || '';
 
+  // 현재 질문의 표시 번호 계산 (질문 세그먼트만 카운트)
+  let displayQNum = 0;
+  for (let i = 0; i <= segmentIndex; i++) {
+    if (segments[i].kind === 'question') displayQNum++;
+  }
+
+  // Module Intro 페이지
+  if (current.kind === 'module-intro') {
+    return (
+      <ModuleIntroScreen
+        module={module}
+        onHome={onHome}
+        onBack={onExitBack}
+        onNext={goNext}
+      />
+    );
+  }
+
+  // Group Intro 페이지 (InterstitialScreen)
+  if (current.kind === 'group-intro') {
+    const q = current.question;
+    const audioUrl = q?.audioUrl || (q as any)?.introAudioUrl || '';
+    const imageUrl = q?.imageUrl || (q as any)?.introImageUrl || '';
+    const title = getIntroTitle(q?.questionType);
+    return (
+      <InterstitialScreen
+        title={title}
+        cmsImageUrl={imageUrl}
+        cmsAudioUrl={audioUrl}
+        onHome={onHome}
+        onBack={goBack}
+        onNext={goNext}
+      />
+    );
+  }
+
+  // Question 페이지
+  const question = current.question;
   return (
     <ListeningQuestionScreen
       key={current.legacyKey}
       question={question}
-      qNum={qNumForDisplay}
-      totalQuestions={totalDisplayCount}
-      segmentIndex={segmentIndex}
-      options={options}
-      audioUrl={audioUrl}
-      imageUrl={imageUrl}
-      questionText={questionText}
-      passageTitle={passageTitle}
+      qNum={displayQNum}
+      totalQuestions={totalQuestions}
       onHome={onHome}
       onBack={goBack}
       onNext={goNext}
@@ -140,18 +218,243 @@ export function ListeningTestEngine({
 }
 
 // ============================================================================
-// ListeningQuestionScreen — reuses the proven layout from ListeningM1Screens
+// ModuleIntroScreen — TPO 2 스타일 (TTS 안내 + 안내 텍스트)
+// ============================================================================
+function ModuleIntroScreen({
+  module,
+  onHome,
+  onBack,
+  onNext,
+}: {
+  module: 1 | 2;
+  onHome: () => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const isM2 = module === 2;
+  return (
+    <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
+        <div className="flex items-center">
+          <div
+            className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={onHome}
+          >
+            *toefl ibt
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-3 sm:px-5 py-2 hover:bg-[#084d52] transition-colors"
+            onClick={onBack}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+            </svg>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+          </button>
+          <button
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
+            onClick={onNext}
+          >
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation tabs */}
+      <div className="bg-white border-b border-gray-300">
+        <div className="px-4 sm:px-8 py-3">
+          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
+            Listening
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex items-center justify-center p-4 md:p-12 overflow-auto bg-white pb-20 md:pb-12">
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="text-3xl md:text-4xl font-['Inter',_sans-serif] font-bold text-black mb-6 md:mb-8">
+            Module {module}
+          </h1>
+          <div className="space-y-4 md:space-y-6 text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
+            <p className="text-base md:text-lg">
+              You can use <strong>Next</strong> to move to the next question.
+            </p>
+            <p className="text-base md:text-lg">
+              {isM2
+                ? 'In an actual test, the clock will show you how much time you have to complete each question.'
+                : 'The first task is Listen and Choose a Response. In this task, you will listen to a sentence or question. You will then read four sentences and choose the option that is the best response.'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
+    </div>
+  );
+}
+
+// ============================================================================
+// InterstitialScreen — TPO 2 스타일 (큰 이미지 + 오디오 재생, 오디오 끝나야 Next)
+// ============================================================================
+function InterstitialScreen({
+  title,
+  cmsImageUrl,
+  cmsAudioUrl,
+  onHome,
+  onBack,
+  onNext,
+}: {
+  title: string;
+  cmsImageUrl?: string;
+  cmsAudioUrl?: string;
+  onHome: () => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playedRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioEnded, setAudioEnded] = useState(false);
+
+  useEffect(() => {
+    playedRef.current = false;
+    setIsPlaying(false);
+    setAudioEnded(false);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+  }, [cmsAudioUrl]);
+
+  useEffect(() => {
+    if (!cmsAudioUrl || playedRef.current) return;
+    playedRef.current = true;
+    const timer = setTimeout(async () => {
+      try {
+        const audio = await createCachedAudio(cmsAudioUrl);
+        audioRef.current = audio;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+      } catch { /* ignore */ }
+    }, 1000);
+    return () => { clearTimeout(timer); audioRef.current?.pause(); };
+  }, [cmsAudioUrl]);
+
+  const canGoNext = !cmsAudioUrl || audioEnded;
+
+  const handleReplay = async () => {
+    if (!cmsAudioUrl || isPlaying) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    try {
+      const audio = await createCachedAudio(cmsAudioUrl);
+      audioRef.current = audio;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
+        <div className="flex items-center">
+          <div
+            className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={onHome}
+          >
+            *toefl ibt
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-3 sm:px-5 py-2 hover:bg-[#084d52] transition-colors"
+            onClick={onBack}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+            </svg>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+          </button>
+          <button
+            className={`flex items-center gap-2 border-2 rounded-lg px-3 sm:px-5 py-2 transition-colors ${
+              canGoNext
+                ? 'bg-white border-[#0A6068] hover:bg-gray-100'
+                : 'bg-gray-200 border-gray-300 cursor-not-allowed'
+            }`}
+            onClick={() => canGoNext && onNext()}
+          >
+            <span className={`font-['Inter',_sans-serif] font-semibold text-sm sm:text-base ${canGoNext ? 'text-[#0A6068]' : 'text-gray-400'}`}>Next</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={canGoNext ? '#0A6068' : '#9ca3af'}>
+              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation tabs */}
+      <div className="bg-white border-b border-gray-300">
+        <div className="px-4 sm:px-8 py-3">
+          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
+            Listening
+          </div>
+        </div>
+      </div>
+
+      {/* Main content — TPO 2 InterstitialScreen 레이아웃 */}
+      <div className="flex-1 flex flex-col p-4 md:p-8 overflow-auto bg-white border border-black">
+        <h1 className="text-xl md:text-3xl font-bold font-['Inter',_sans-serif] text-gray-800 mb-6 md:mb-8 text-center mt-4">
+          {title}
+        </h1>
+        <div className="flex-1 flex flex-col justify-center items-center gap-6">
+          {/* 오디오 — 이미지 위에 표시 */}
+          {cmsAudioUrl && (
+            <div className="flex justify-center">
+              <button
+                onClick={handleReplay}
+                disabled={isPlaying}
+                className={`flex items-center gap-3 px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
+                  isPlaying
+                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+                }`}
+              >
+                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',
+                  borderColor:`transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`,display:'inline-block'}} />
+                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+              </button>
+            </div>
+          )}
+
+          {/* 이미지 — TPO 2 스타일 (큰 이미지, 4:3 비율) */}
+          {cmsImageUrl && (
+            <div className="w-full max-w-xl md:max-w-2xl aspect-[4/3] flex items-center justify-center">
+              <ImageWithFallback src={cmsImageUrl} alt={title} className="w-full h-full object-contain" />
+            </div>
+          )}
+          {!cmsImageUrl && (
+            <div className="w-full max-w-xl md:max-w-2xl aspect-[4/3] flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-400">이미지가 없습니다. CMS에서 이미지를 업로드해주세요.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={canGoNext ? onNext : () => {}} />
+    </div>
+  );
+}
+
+// ============================================================================
+// ListeningQuestionScreen — TPO 2 QuestionScreen 레이아웃 (이미지 크기, 간격 등)
 // ============================================================================
 interface ListeningQuestionScreenProps {
   question: any;
   qNum: number;
   totalQuestions: number;
-  segmentIndex: number;
-  options: string[];
-  audioUrl: string;
-  imageUrl: string;
-  questionText: string;
-  passageTitle: string;
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
@@ -161,12 +464,6 @@ function ListeningQuestionScreen({
   question,
   qNum,
   totalQuestions,
-  segmentIndex,
-  options,
-  audioUrl,
-  imageUrl,
-  questionText,
-  passageTitle,
   onHome,
   onBack,
   onNext,
@@ -182,16 +479,18 @@ function ListeningQuestionScreen({
     setShowMustAnswer(false);
   }, [qNum]);
 
-  // Audio playback — auto-play after 1s, only once per question
+  const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
+  const audioUrl: string = question?.audioUrl || '';
+  const imageUrl: string = question?.imageUrl || '';
+  const questionText: string = question?.questionText || 'Choose the best response.';
+
+  // 오디오 자동 재생
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = useRef(false);
 
   useEffect(() => {
     audioPlayedRef.current = false;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
   }, [qNum]);
 
   useEffect(() => {
@@ -207,10 +506,7 @@ function ListeningQuestionScreen({
       }, 1000);
       return () => {
         clearTimeout(timer);
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-        }
+        if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -218,10 +514,7 @@ function ListeningQuestionScreen({
 
   const handlePlayAudio = async () => {
     if (!audioUrl || isPlaying) return;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
     try {
       const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
@@ -240,6 +533,7 @@ function ListeningQuestionScreen({
     }
   };
 
+  // 정답 선택해야 Next 가능
   const handleNext = () => {
     if (!selectedAnswer) {
       setShowMustAnswer(true);
@@ -301,24 +595,17 @@ function ListeningQuestionScreen({
               Listening
             </div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question {segmentIndex + 1} of {totalQuestions}
+              Question {qNum} of {totalQuestions}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Main content — TPO 2 QuestionScreen 레이아웃 */}
       <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="w-full">
-          {/* Mobile: Image -> Audio -> Question -> Options */}
+          {/* Mobile: Image → Audio → Question → Options */}
           <div className="md:hidden flex flex-col items-center">
-            {/* Passage Title (if any) */}
-            {passageTitle && (
-              <h3 className="text-base font-['Inter',_sans-serif] font-semibold text-gray-800 mb-4 text-center px-4">
-                {passageTitle}
-              </h3>
-            )}
-
             {/* Image */}
             {imageUrl && (
               <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
@@ -369,51 +656,38 @@ function ListeningQuestionScreen({
             </div>
           </div>
 
-          {/* Desktop: side-by-side layout */}
+          {/* Desktop: TPO 2 side-by-side layout (이미지 크기, 간격 등 동일) */}
           <div className="hidden md:block">
-            <div className="flex gap-8">
-              {/* Left: Image */}
-              <div className="flex-shrink-0">
-                {imageUrl && (
-                  <div className="w-64 h-64 bg-white rounded-lg overflow-hidden border border-gray-300">
-                    <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
-                  </div>
-                )}
+            {/* Play Audio Button - Desktop */}
+            {audioUrl && (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={handlePlayAudio}
+                  disabled={isPlaying}
+                  className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
+                    isPlaying
+                      ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                      : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+                  }`}
+                >
+                  <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+                  <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+                </button>
               </div>
+            )}
+            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
+              {questionText}
+            </h2>
 
-              {/* Right: Audio + Question + Options */}
-              <div className="flex-1">
-                {passageTitle && (
-                  <h3 className="text-lg font-['Inter',_sans-serif] font-semibold text-gray-800 mb-4">
-                    {passageTitle}
-                  </h3>
-                )}
-
-                {/* Play Audio Button - Desktop */}
-                {audioUrl && (
-                  <div className="mb-6">
-                    <button
-                      onClick={handlePlayAudio}
-                      disabled={isPlaying}
-                      className={`flex items-center gap-3 px-6 py-2 rounded-full font-semibold text-base transition-all shadow-sm ${
-                        isPlaying
-                          ? 'bg-[#0d9488] text-white cursor-not-allowed'
-                          : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
-                      }`}
-                    >
-                      <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
-                      <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Question */}
-                <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6">
-                  {questionText}
-                </h2>
-
-                {/* Options */}
-                <div className="space-y-3">
+            {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 옵션 오른쪽) */}
+            <div className="relative" style={{minHeight: '420px'}}>
+              {imageUrl && (
+                <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
+                  <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: '480px'}} />
+                </div>
+              )}
+              <div style={{position: 'absolute', left: imageUrl ? '51%' : '10%', top: '8px', width: imageUrl ? '42%' : '80%'}}>
+                <div className="space-y-7">
                   {options.map((option, index) => (
                     <RadioOption
                       key={index}
@@ -423,7 +697,7 @@ function ListeningQuestionScreen({
                       checked={selectedAnswer === option}
                       onChange={() => recordListeningAnswer(option)}
                       label={option}
-                      labelClassName="text-base"
+                      labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
                     />
                   ))}
                   {options.length === 0 && (
@@ -434,10 +708,32 @@ function ListeningQuestionScreen({
             </div>
           </div>
 
-          {/* Must answer warning */}
+          {/* Must Answer Modal — TPO 2 스타일 */}
           {showMustAnswer && (
-            <div className="mt-6 p-3 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
-              <p className="text-sm text-yellow-800 font-medium">답을 선택한 후 Next 버튼을 눌러주세요.</p>
+            <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" style={{ animation: 'mustAnswerFadeIn 0.2s ease' }}>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-7 sm:p-8" style={{ animation: 'mustAnswerPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Must Answer</h3>
+                  <p className="text-[15px] text-gray-500 leading-relaxed mb-6">
+                    You must enter an answer before you can leave this question.
+                  </p>
+                  <button
+                    onClick={() => setShowMustAnswer(false)}
+                    className="w-full py-3 bg-[#1e6b73] text-white font-semibold rounded-xl hover:bg-[#164f54] active:scale-[0.98] transition-all text-base shadow-sm"
+                  >
+                    Return to Question
+                  </button>
+                </div>
+              </div>
+              <style>{`
+                @keyframes mustAnswerFadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes mustAnswerPopIn { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+              `}</style>
             </div>
           )}
         </div>
