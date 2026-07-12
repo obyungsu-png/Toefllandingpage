@@ -859,6 +859,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         {editingQuestion && (
           <div ref={editFormRef}>
           <QuestionEditForm
+            key={editingQuestion.id}
             testType={activeTestType}
             testNumber={selectedTestNumber}
             section={selectedSection}
@@ -900,10 +901,12 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   );
                 }
 
-                // 번호 순으로 정렬
-                newQuestions.sort((a, b) =>
-                  Number(a.questionNumber) - Number(b.questionNumber)
-                );
+                // 번호 순으로 정렬 (범위 문자열 "1-10"도 parseInt로 시작 번호 추출)
+                newQuestions.sort((a, b) => {
+                  const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+                  const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+                  return na - nb;
+                });
 
                 return { ...section, questions: newQuestions };
               });
@@ -4558,7 +4561,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       } else {
         questions.push({
           id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
-          questionNumber: isNaN(parseInt(qNum)) ? qNum : parseInt(qNum),
+          questionNumber: qNum.includes('-') ? qNum : (isNaN(parseInt(qNum)) ? qNum : parseInt(qNum)),
           questionText,
           questionType: applyModuleSuffix(qType),
           options: options || [],
@@ -4860,6 +4863,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         console.log('📋 오류:', errors);
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
+        // questionNumber 기준 오름차순 정렬 — Q1-Q10이 맨 앞에 오도록 (TXT 모드와 동일)
+        questions.sort((a, b) => {
+          const rangeA = parseQuestionRange(a.questionNumber);
+          const rangeB = parseQuestionRange(b.questionNumber);
+          const startA = rangeA?.start ?? 9999;
+          const startB = rangeB?.start ?? 9999;
+          return startA - startB;
+        });
         setParsed(questions);
       } catch (err: any) {
         setError(err?.message || 'CSV 파싱 오류. 형식을 확인해주세요.');
