@@ -4175,7 +4175,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
         form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
         review: 'review', 리뷰: 'review', 영화리뷰: 'review', 후기: 'review',
-        text_message: 'text_message', 'text message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
+        text_message: 'text_message', 'text message': 'text_message', 'text-message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
       };
       return map[raw.trim().toLowerCase()] || undefined;
     };
