@@ -28,6 +28,26 @@ const sortByNumber = (a: any, b: any) => {
   return na - nb;
 };
 
+// ============================================================================
+// getGroupIntroData — questionType별 그룹 인트로 데이터
+// ============================================================================
+function getGroupIntroData(questionType: string): { title: string } {
+  switch (questionType) {
+    case 'Short Conversation':
+    case 'Campus Conversation':
+      return { title: 'Listen to a conversation.' };
+    case 'Announcements':
+      return { title: 'Listen to an announcement in a classroom.' };
+    case 'Academic Talk':
+    case 'Academic Lecture':
+      return { title: 'Listen to an academic lecture.' };
+    case 'Listen and Response':
+      return { title: 'Listen and choose a response.' };
+    default:
+      return { title: 'Listen carefully.' };
+  }
+}
+
 /**
  * Flexible, data-driven Listening test engine. Mirrors TPO 2's structure:
  *   Section Intro → Module Intro → Questions → Module 2 Intro → Questions
@@ -57,10 +77,11 @@ export function ListeningTestEngine({
     })
     .sort(sortByNumber);
 
-  // 세그먼트 배열: 섹션 소개 + Module 안내 + 질문 페이지
+  // 세그먼트 배열: 섹션 소개 + Module 안내 + (그룹 인트로 + 질문) 반복
   type Segment =
     | { kind: 'section-intro'; legacyKey: string }
     | { kind: 'module-intro'; legacyKey: string }
+    | { kind: 'group-intro'; title: string; imageUrl: string; audioUrl?: string; questionType: string; legacyKey: string }
     | { kind: 'question'; question: any; legacyKey: string };
 
   const segments: Segment[] = [];
@@ -73,13 +94,30 @@ export function ListeningTestEngine({
   // Module 안내 페이지
   segments.push({ kind: 'module-intro', legacyKey: module === 2 ? 'm2-intro' : 'm1-intro' });
 
-  // 질문만 (group-intro 제거)
-  moduleQuestions.forEach((q, i) => {
+  // 질문 + 그룹 인트로 (questionType이 변경될 때마다 인트로 페이지 삽입)
+  let prevQuestionType: string | null = null;
+  let questionIdx = 0;
+  moduleQuestions.forEach((q) => {
+    const qt = q?.questionType || '';
+    // 첫 그룹이 아니고 questionType이 변경되면 group-intro 삽입
+    if (prevQuestionType !== null && qt !== prevQuestionType) {
+      const intro = getGroupIntroData(qt);
+      segments.push({
+        kind: 'group-intro',
+        title: intro.title,
+        imageUrl: q?.imageUrl || '',
+        audioUrl: q?.audioUrl || '',
+        questionType: qt,
+        legacyKey: `group-intro-${questionIdx}`,
+      });
+    }
+    prevQuestionType = qt;
     segments.push({
       kind: 'question',
       question: q,
-      legacyKey: module === 2 ? `m2q${i + 1}` : `q${i + 1}`,
+      legacyKey: module === 2 ? `m2q${questionIdx + 1}` : `q${questionIdx + 1}`,
     });
+    questionIdx++;
   });
 
   // 빈 상태 — CMS 데이터 없음
@@ -104,6 +142,13 @@ export function ListeningTestEngine({
   const resolveLegacyKey = (key: string | undefined): number => {
     if (!key) return 0;
     if (key === 'intro' || key === 'm1-intro' || key === 'm2-intro') return 0;
+    // group-intro-{n} 형식 — 해당 인트로 위치로 이동
+    if (key.startsWith('group-intro-')) {
+      for (let i = 0; i < segments.length; i++) {
+        if (segments[i].kind === 'group-intro' && segments[i].legacyKey === key) return i;
+      }
+      return 0;
+    }
     const prefix = module === 2 ? 'm2q' : 'q';
     const match = key.match(new RegExp(`^${prefix}(\\d+)$`, 'i'));
     if (match) {
@@ -163,6 +208,20 @@ export function ListeningTestEngine({
     return (
       <ModuleIntroScreen
         module={module}
+        onHome={onHome}
+        onBack={goBack}
+        onNext={goNext}
+      />
+    );
+  }
+
+  // Group Intro 페이지 (conversation, announcement, academic lecture 등)
+  if (current.kind === 'group-intro') {
+    return (
+      <GroupIntroScreen
+        title={current.title}
+        imageUrl={current.imageUrl}
+        audioUrl={current.audioUrl}
         onHome={onHome}
         onBack={goBack}
         onNext={goNext}
@@ -277,6 +336,179 @@ function ListeningSectionIntro({
       </div>
 
       <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
+    </div>
+  );
+}
+
+// ============================================================================
+// GroupIntroScreen — 문제 그룹 전 인트로 (큰 이미지 + 오디오)
+// conversation, announcement, academic lecture 등
+// ============================================================================
+function GroupIntroScreen({
+  title,
+  imageUrl,
+  audioUrl,
+  onHome,
+  onBack,
+  onNext,
+}: {
+  title: string;
+  imageUrl: string;
+  audioUrl?: string;
+  onHome: () => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioEnded, setAudioEnded] = useState(!audioUrl);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
+
+  const cleanupAudio = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    try {
+      audio.onended = null;
+      audio.onpause = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.currentTime = 0;
+    } catch { /* ignore */ }
+  };
+
+  useEffect(() => {
+    if (!audioUrl) return;
+    const timer = setTimeout(async () => {
+      try {
+        const audio = await createCachedAudio(audioUrl);
+        cleanupAudio(audioRef.current);
+        audioRef.current = audio;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        audio.onended = () => {
+          setIsPlaying(false);
+          setAudioEnded(true);
+          setTimeout(() => {
+            if (audioRef.current === audio) {
+              cleanupAudio(audio);
+              audioRef.current = null;
+            }
+          }, 100);
+        };
+      } catch { /* ignore */ }
+    }, 500);
+    return () => {
+      clearTimeout(timer);
+      cleanupAudio(audioRef.current);
+      audioRef.current = null;
+    };
+  }, [audioUrl]);
+
+  const canGoNext = !audioUrl || audioEnded;
+  const handleNext = canGoNext ? onNext : () => {};
+  const handleReplay = async () => {
+    if (!audioUrl || isPlaying) return;
+    cleanupAudio(audioRef.current);
+    try {
+      const audio = await createCachedAudio(audioUrl);
+      audioRef.current = audio;
+      setAudioEnded(false);
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      audio.onended = () => {
+        setIsPlaying(false);
+        setAudioEnded(true);
+        setTimeout(() => {
+          if (audioRef.current === audio) {
+            cleanupAudio(audio);
+            audioRef.current = null;
+          }
+        }, 100);
+      };
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
+        <div className="flex items-center">
+          <div
+            className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={onHome}
+          >
+            *toefl ibt
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-2 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-3 sm:px-5 py-2 hover:bg-[#084d52] transition-colors">
+            <span className="text-white font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Volume</span>
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="white">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </button>
+          <button
+            className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-3 sm:px-5 py-2 hover:bg-[#084d52] transition-colors"
+            onClick={onBack}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
+              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+            </svg>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+          </button>
+          <button
+            className={`flex items-center gap-2 border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 transition-colors ${canGoNext ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
+            onClick={handleNext}
+          >
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation tab */}
+      <div className="bg-white border-b border-gray-300">
+        <div className="px-4 sm:px-8 py-3">
+          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
+            Listening
+          </div>
+        </div>
+      </div>
+
+      {/* Main content — 큰 이미지 + 오디오 */}
+      <div className="flex-1 flex flex-col p-4 md:p-8 overflow-auto bg-white border border-black">
+        <h1 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 md:mb-8 text-center mt-4">
+          {title}
+        </h1>
+        <div className="flex-1 flex flex-col justify-center items-center gap-6">
+          {/* 오디오 재생 버튼 */}
+          {audioUrl && (
+            <div className="flex justify-center">
+              <button
+                onClick={handleReplay}
+                disabled={isPlaying}
+                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
+                  isPlaying
+                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+                }`}
+              >
+                <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+              </button>
+            </div>
+          )}
+
+          {/* 큰 이미지 */}
+          {imageUrl && (
+            <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] flex items-center justify-center">
+              <img src={imageUrl} alt={title} className="w-full h-full object-contain" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={handleNext} />
     </div>
   );
 }
