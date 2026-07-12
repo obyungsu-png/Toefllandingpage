@@ -2001,6 +2001,39 @@ function AppContent() {
 
   const getCurrentReadingQuestionTotal = () => getReadingQuestionTotal(getCurrentSectionData('Reading'));
 
+  // Get the Nth (0-indexed) Academic Passage / Insert Text question for a given module,
+  // sorted by questionNumber. This is position-based rather than fixed-number-based,
+  // so it keeps working no matter what actual question numbers the CMS content uses
+  // (e.g. Q16-20 or Q31-35 — both work the same way).
+  const getAcademicPassageQuestionByIndex = (
+    sectionType: 'Reading',
+    module: 1 | 2,
+    index: number
+  ) => {
+    const sectionData = getCurrentSectionData(sectionType);
+    if (!sectionData) return null;
+
+    const isAcademicType = (t: string) =>
+      t.includes('academic reading') || t.includes('academic') ||
+      t.includes('reading passage') || t.includes('insert text');
+
+    const matches = sectionData.questions
+      .filter(q => {
+        const t = (q.questionType || '').toLowerCase();
+        const isM2 = t.includes('module 2');
+        if (module === 2 && !isM2) return false;
+        if (module === 1 && isM2) return false;
+        return isAcademicType(t);
+      })
+      .sort((a, b) => {
+        const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+        const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+        return na - nb;
+      });
+
+    return matches[index] || null;
+  };
+
   // Get test numbers based on selected range
   const getTestNumbers = () => {
     switch (activeTestSetRange) {
@@ -3048,16 +3081,9 @@ function AppContent() {
     const [selectedAnswer16, setSelectedAnswer16] = useState<string | null>(null);
     const [zoom16, setZoom16] = useState(1);
     
-    // CMS PRIORITY: Q16 - academic reading, by number first, exclude Module 2
+    // CMS PRIORITY: 1st Academic Passage question in Module 1 (position-based, not fixed number)
     const sectionData = getCurrentSectionData('Reading');
-    const academicQuestion = sectionData?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return !t.includes('module 2') && (num === 16 || num === '16' || String(num) === '16');
-    }) || sectionData?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return !t.includes('module 2') && (t.includes('academic reading') || t.includes('academic') || t.includes('reading passage'));
-    });
+    const academicQuestion = getAcademicPassageQuestionByIndex('Reading', 1, 0);
     
     // Parse CMS data if available (supports both JSON and plain text)
     let passageData: any = null;
@@ -3260,16 +3286,9 @@ function AppContent() {
   const Module1Question17Screen = () => {
     const [selectedAnswer17, setSelectedAnswer17] = useState<string | null>(null);
     const [zoom17, setZoom17] = useState(1);
-    // CMS PRIORITY: Q17 - academic reading, exclude Module 2 tagged
+    // CMS PRIORITY: 2nd Academic Passage question in Module 1 (position-based)
     const sectionDataQ17 = getCurrentSectionData('Reading');
-    const cmsAcQ17 = sectionDataQ17?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return !t.includes('module 2') && (num === 17 || num === '17' || String(num) === '17');
-    }) || sectionDataQ17?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
-    });
+    const cmsAcQ17 = getAcademicPassageQuestionByIndex('Reading', 1, 1);
 
     let parsedAC17: any = null;
     if (cmsAcQ17?.passageText) {
@@ -3446,16 +3465,9 @@ function AppContent() {
   const Module1Question18Screen = () => {
     const [selectedAnswer18, setSelectedAnswer18] = useState<string | null>(null);
     const [zoom18, setZoom18] = useState(1);
-    // CMS PRIORITY: Q18 - academic reading, exclude Module 2 tagged
+    // CMS PRIORITY: 3rd Academic Passage question in Module 1 (position-based)
     const sectionDataQ18 = getCurrentSectionData('Reading');
-    const cmsAcQ18 = sectionDataQ18?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return !t.includes('module 2') && (num === 18 || num === '18' || String(num) === '18');
-    }) || sectionDataQ18?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
-    });
+    const cmsAcQ18 = getAcademicPassageQuestionByIndex('Reading', 1, 2);
 
     let parsedAC18: any = null;
     if (cmsAcQ18?.passageText) {
@@ -3633,16 +3645,9 @@ function AppContent() {
   const Module1Question19Screen = () => {
     const [selectedAnswer19, setSelectedAnswer19] = useState<string | null>(null);
     const [zoom19, setZoom19] = useState(1);
-    // CMS PRIORITY: Q19 - academic reading, exclude Module 2 tagged
+    // CMS PRIORITY: 4th Academic Passage question in Module 1 (position-based)
     const sectionDataQ19 = getCurrentSectionData('Reading');
-    const cmsAcQ19 = sectionDataQ19?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return !t.includes('module 2') && (num === 19 || num === '19' || String(num) === '19');
-    }) || sectionDataQ19?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
-    });
+    const cmsAcQ19 = getAcademicPassageQuestionByIndex('Reading', 1, 3);
 
     let parsedAC19: any = null;
     if (cmsAcQ19?.passageText) {
@@ -3821,16 +3826,9 @@ function AppContent() {
   const Module1Question20Screen = () => {
     const [selectedAnswer20, setSelectedAnswer20] = useState<string | null>(null);
     const [zoom20, setZoom20] = useState(1);
-    // CMS PRIORITY: Q20 - academic reading, exclude Module 2 tagged
+    // CMS PRIORITY: 5th Academic Passage question in Module 1 (position-based)
     const sectionDataQ20 = getCurrentSectionData('Reading');
-    const cmsAcQ20 = sectionDataQ20?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return !t.includes('module 2') && (num === 20 || num === '20' || String(num) === '20');
-    }) || sectionDataQ20?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return !t.includes('module 2') && (t.includes('academic') || t.includes('reading passage'));
-    });
+    const cmsAcQ20 = getAcademicPassageQuestionByIndex('Reading', 1, 4);
 
     let parsedAC20: any = null;
     if (cmsAcQ20?.passageText) {
@@ -4418,26 +4416,9 @@ function AppContent() {
       "September 30th"
     ];
 
-    // CMS PRIORITY: load Module 2 question 11 from CMS
+    // CMS PRIORITY: 1st Academic Passage question in Module 2 (position-based)
     const cmsSection11 = getCurrentSectionData('Reading');
-    // 1순위: Module 2 태그 + 번호 일치
-    // 2순위: Module 2 태그된 Daily Life 문제 중 0번째
-    // 3순위: 번호만 일치 (Module 1 fallback)
-    const cmsDailyQ11 = cmsSection11?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return t.includes('module 2') && (num === 11 || num === '11' || String(num) === '11');
-    }) || cmsSection11?.questions.filter(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return t.includes('module 2') && (
-        t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') ||
-        t.includes('실용문')
-      );
-    })[0] || cmsSection11?.questions.find(q => {
-      const num = q.questionNumber;
-      return num === 11 || num === '11' || String(num) === '11';
-    }) || null;
+    const cmsDailyQ11 = getAcademicPassageQuestionByIndex('Reading', 2, 0);
 
     const cmsPassageText11 = cmsDailyQ11?.passageText || null;
     const cmsPassageTitle11 = cmsDailyQ11?.passageTitle || null;
@@ -4593,22 +4574,9 @@ function AppContent() {
       "Proof of reservation"
     ];
 
-    // CMS PRIORITY: load Module 2 question 12 from CMS
+    // CMS PRIORITY: 2nd Academic Passage question in Module 2 (position-based)
     const cmsSection12 = getCurrentSectionData('Reading');
-    const cmsDailyQ12 = cmsSection12?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return t.includes('module 2') && (num === 12 || num === '12' || String(num) === '12');
-    }) || cmsSection12?.questions.filter(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return t.includes('module 2') && (
-        t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
-      );
-    })[0] || cmsSection12?.questions.find(q => {
-      const num = q.questionNumber;
-      return num === 12 || num === '12' || String(num) === '12';
-    }) || null;
+    const cmsDailyQ12 = getAcademicPassageQuestionByIndex('Reading', 2, 1);
 
     const cmsPassageText12 = cmsDailyQ12?.passageText || null;
     const cmsPassageTitle12 = cmsDailyQ12?.passageTitle || null;
@@ -4807,22 +4775,9 @@ function AppContent() {
       "To announce a discount available to fitness-center members"
     ];
 
-    // CMS PRIORITY: load Module 2 question 13 from CMS
+    // CMS PRIORITY: 3rd Academic Passage question in Module 2 (position-based)
     const cmsSection13 = getCurrentSectionData('Reading');
-    const cmsDailyQ13 = cmsSection13?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return t.includes('module 2') && (num === 13 || num === '13' || String(num) === '13');
-    }) || cmsSection13?.questions.filter(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return t.includes('module 2') && (
-        t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
-      );
-    })[1] || cmsSection13?.questions.find(q => {
-      const num = q.questionNumber;
-      return num === 13 || num === '13' || String(num) === '13';
-    }) || null;
+    const cmsDailyQ13 = getAcademicPassageQuestionByIndex('Reading', 2, 2);
 
     const cmsPassageText13 = cmsDailyQ13?.passageText || null;
     const cmsPassageTitle13 = cmsDailyQ13?.passageTitle || null;
@@ -5037,22 +4992,9 @@ function AppContent() {
       "She is new to using fitness centers and exercise equipment."
     ];
 
-    // CMS PRIORITY: load Module 2 question 14 from CMS
+    // CMS PRIORITY: 4th Academic Passage question in Module 2 (position-based)
     const cmsSection14 = getCurrentSectionData('Reading');
-    const cmsDailyQ14 = cmsSection14?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return t.includes('module 2') && (num === 14 || num === '14' || String(num) === '14');
-    }) || cmsSection14?.questions.filter(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return t.includes('module 2') && (
-        t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
-      );
-    })[2] || cmsSection14?.questions.find(q => {
-      const num = q.questionNumber;
-      return num === 14 || num === '14' || String(num) === '14';
-    }) || null;
+    const cmsDailyQ14 = getAcademicPassageQuestionByIndex('Reading', 2, 3);
 
     const cmsPassageText14 = cmsDailyQ14?.passageText || null;
     const cmsPassageTitle14 = cmsDailyQ14?.passageTitle || null;
@@ -5256,22 +5198,9 @@ function AppContent() {
       "To take advantage of early morning discounts"
     ];
 
-    // CMS PRIORITY: load Module 2 question 15 from CMS
+    // CMS PRIORITY: 5th Academic Passage question in Module 2 (position-based)
     const cmsSection15 = getCurrentSectionData('Reading');
-    const cmsDailyQ15 = cmsSection15?.questions.find(q => {
-      const t = (q.questionType || '').toLowerCase();
-      const num = q.questionNumber;
-      return t.includes('module 2') && (num === 15 || num === '15' || String(num) === '15');
-    }) || cmsSection15?.questions.filter(q => {
-      const t = (q.questionType || '').toLowerCase();
-      return t.includes('module 2') && (
-        t.includes('daily life') || t.includes('read in daily life') ||
-        t.includes('notice') || t.includes('email') || t.includes('social media') || t.includes('실용문')
-      );
-    })[3] || cmsSection15?.questions.find(q => {
-      const num = q.questionNumber;
-      return num === 15 || num === '15' || String(num) === '15';
-    }) || null;
+    const cmsDailyQ15 = getAcademicPassageQuestionByIndex('Reading', 2, 4);
 
     const cmsPassageText15 = cmsDailyQ15?.passageText || null;
     const cmsPassageTitle15 = cmsDailyQ15?.passageTitle || null;
@@ -5465,14 +5394,28 @@ function AppContent() {
   const Module2Question16Screen = () => {
     const [selectedAnswer16, setSelectedAnswer16] = useState<string | null>(null);
     const [zoom16, setZoom16] = useState(1);
-    const correctAnswer = "Limiting consumer choices can lead to higher satisfaction.";
 
-    const answerOptions = [
+    // Real CMS content only has 5 Academic Passage questions per module (matches TPO2).
+    // If there's no 6th one, skip straight to End of Module 2 instead of showing
+    // hardcoded fallback content.
+    const cmsQ16 = getAcademicPassageQuestionByIndex('Reading', 2, 5);
+    useEffect(() => {
+      if (!cmsQ16) {
+        setShowModule2Question16(false);
+        setShowEndModule2(true);
+      }
+    }, [cmsQ16]);
+
+    const correctAnswer = cmsQ16?.correctAnswer || "Limiting consumer choices can lead to higher satisfaction.";
+
+    const answerOptions = (cmsQ16?.options && cmsQ16.options.length > 0) ? cmsQ16.options : [
       "Effective marketing strategies focus on increasing product options.",
       "Modern consumer culture is driven by a demand for fewer products.",
       "Individualism enhances consumer contentment.",
       "Limiting consumer choices can lead to higher satisfaction."
     ];
+
+    if (!cmsQ16) return null;
 
     const handleWheel16 = (e: React.WheelEvent) => {
       if (e.ctrlKey) {
@@ -5557,12 +5500,12 @@ function AppContent() {
         {/* Main content */}
         <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
           <div className="max-w-7xl mx-auto pl-0">
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">The Paradox of Choice</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{cmsQ16.passageTitle || 'The Paradox of Choice'}</h2>
             <ResizableReadingLayout
               zoom={zoom16}
               onWheel={handleWheel16}
-              passageTitle="The Paradox of Choice"
-              passageSummary={<><strong>The Paradox of Choice</strong><br/>More options can lead to less satisfaction.</>}
+              passageTitle={cmsQ16.passageTitle || 'The Paradox of Choice'}
+              passageSummary={<><strong>{cmsQ16.passageTitle || 'The Paradox of Choice'}</strong></>}
               questionInfo="1/5"
               onBack={() => { setShowModule2Question16(false); setShowModule2Question15(true); }}
               onPrev={() => { setShowModule2Question16(false); setShowModule2Question15(true); }}
@@ -5570,24 +5513,14 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question16(false); setShowModule2Question17(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
-                    <p>
-                      The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
-                    </p>
-                    
-                    <p>
-                      Research supports this notion. In an experiment, psychologist Sheena Iyengar found that shoppers were more likely to purchase jam when offered 6 varieties instead of 24. The limited selection eased the decision process, reducing the pressure to find the 'perfect' option and making the experience more enjoyable. This phenomenon reveals that fewer choices can sometimes make consumers happier, which is a valuable insight for marketers and retailers aiming to boost satisfaction by curating their offerings.
-                    </p>
-                    
-                    <p>
-                      The paradox also has broader implications. In individualistic cultures, where personal choice is highly valued, the burden of decision-making can be significant. Conversely, collectivist cultures, which often provide fewer choices, report higher levels of contentment. This dynamic suggests that understanding cultural differences in consumer psychology can help businesses optimize their product strategies and enhance overall well-being.
-                    </p>
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    {cmsQ16.passageText || ''}
                   </div>
                 </>
               }
               rightContent={
                 <>
-                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-3">Which of the following best states a main idea of the passage?</h3>
+                  <h3 className="text-xl font-['Inter',_sans-serif] font-bold text-black mb-8 mt-3">{cmsQ16.questionText || 'Which of the following best states a main idea of the passage?'}</h3>
                 
                   <div className="space-y-5">
                     {answerOptions.map((option, index) => (
@@ -5633,14 +5566,26 @@ function AppContent() {
   // Module 2 - Question 17 (The Paradox of Choice - Decision Fatigue Effect)
   const Module2Question17Screen = () => {
     const [selectedAnswer17, setSelectedAnswer17] = useState<string | null>(null);
-    const correctAnswer = "Anxiety about making the wrong choice";
 
-    const answerOptions = [
+    // Real CMS content only has 5 Academic Passage questions per module (matches TPO2).
+    const cmsQ17 = getAcademicPassageQuestionByIndex('Reading', 2, 6);
+    useEffect(() => {
+      if (!cmsQ17) {
+        setShowModule2Question17(false);
+        setShowEndModule2(true);
+      }
+    }, [cmsQ17]);
+
+    const correctAnswer = cmsQ17?.correctAnswer || "Anxiety about making the wrong choice";
+
+    const answerOptions = (cmsQ17?.options && cmsQ17.options.length > 0) ? cmsQ17.options : [
       "Desire to make the same choices as other consumers",
       "Anxiety about making the wrong choice",
       "Preference for consumer cultures",
       "Enhanced freedom to choose"
     ];
+
+    if (!cmsQ17) return null;
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -5791,14 +5736,25 @@ function AppContent() {
   // Module 2 - Question 18 (The Paradox of Choice - Iyengar's Experiment)
   const Module2Question18Screen = () => {
     const [selectedAnswer18, setSelectedAnswer18] = useState<string | null>(null);
-    const correctAnswer = "To provide evidence supporting the paradox of choice";
 
-    const answerOptions = [
+    const cmsQ18 = getAcademicPassageQuestionByIndex('Reading', 2, 7);
+    useEffect(() => {
+      if (!cmsQ18) {
+        setShowModule2Question18(false);
+        setShowEndModule2(true);
+      }
+    }, [cmsQ18]);
+
+    const correctAnswer = cmsQ18?.correctAnswer || "To provide evidence supporting the paradox of choice";
+
+    const answerOptions = (cmsQ18?.options && cmsQ18.options.length > 0) ? cmsQ18.options : [
       "To highlight the effectiveness of marketing strategies",
       "To explain the methodology used in consumer psychology",
       "To provide evidence supporting the paradox of choice",
       "To criticize the abundance of products in modern markets"
     ];
+
+    if (!cmsQ18) return null;
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -5949,14 +5905,25 @@ function AppContent() {
   // Module 2 - Question 19 (Vocabulary - "curating")
   const Module2Question19Screen = () => {
     const [selectedAnswer19, setSelectedAnswer19] = useState<string | null>(null);
-    const correctAnswer = "organizing";
 
-    const answerOptions = [
+    const cmsQ19 = getAcademicPassageQuestionByIndex('Reading', 2, 8);
+    useEffect(() => {
+      if (!cmsQ19) {
+        setShowModule2Question19(false);
+        setShowEndModule2(true);
+      }
+    }, [cmsQ19]);
+
+    const correctAnswer = cmsQ19?.correctAnswer || "organizing";
+
+    const answerOptions = (cmsQ19?.options && cmsQ19.options.length > 0) ? cmsQ19.options : [
       "eliminating",
       "organizing",
       "increasing",
       "changing"
     ];
+
+    if (!cmsQ19) return null;
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -6107,14 +6074,25 @@ function AppContent() {
   // Module 2 - Question 20 (Inference - Collectivist Cultures)
   const Module2Question20Screen = () => {
     const [selectedAnswer20, setSelectedAnswer20] = useState<string | null>(null);
-    const correctAnswer = "They generally have fewer choices available.";
 
-    const answerOptions = [
+    const cmsQ20 = getAcademicPassageQuestionByIndex('Reading', 2, 9);
+    useEffect(() => {
+      if (!cmsQ20) {
+        setShowModule2Question20(false);
+        setShowEndModule2(true);
+      }
+    }, [cmsQ20]);
+
+    const correctAnswer = cmsQ20?.correctAnswer || "They generally have fewer choices available.";
+
+    const answerOptions = (cmsQ20?.options && cmsQ20.options.length > 0) ? cmsQ20.options : [
       "They tend to report lower levels of satisfaction.",
       "They are more affected by the paradox of choice.",
       "They generally have fewer choices available.",
       "They prefer individual decision-making."
     ];
+
+    if (!cmsQ20) return null;
 
     return (
       <div className="fixed inset-0 bg-white z-50 flex flex-col">
