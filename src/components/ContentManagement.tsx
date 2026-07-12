@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
+import { getQuestionRangeLabel, getTotalQuestionCount } from '../utils/readingQuestionUtils';
 
 // 기본 아바타 목록 (public/avatars/ 에서 서빙)
 const DEFAULT_AVATARS = [
@@ -98,6 +99,24 @@ export interface TPOSection {
   questions: TPOQuestion[];
   instructions?: string;
   totalTime?: number;
+}
+
+// ─── UPSERT helpers — questionNumber 기준으로 기존 문제를 찾아 교체, 없으면 추가 ───
+// 같은 번호의 문제가 이미 존재하면 덮어쓰고, 없으면 배열 끝에 추가합니다.
+// (빈칸넣기 "1-10" 범위 형식도 문자열 비교로 동일하게 처리)
+export function upsertQuestion(questions: TPOQuestion[], newQuestion: TPOQuestion): TPOQuestion[] {
+  const newKey = String(newQuestion.questionNumber);
+  const idx = questions.findIndex(q => String(q.questionNumber) === newKey);
+  if (idx === -1) return [...questions, newQuestion];
+  return questions.map((q, i) => (i === idx ? { ...q, ...newQuestion } : q));
+}
+
+export function upsertQuestions(questions: TPOQuestion[], newQuestions: TPOQuestion[]): TPOQuestion[] {
+  let result = [...questions];
+  for (const q of newQuestions) {
+    result = upsertQuestion(result, q);
+  }
+  return result;
 }
 
 export interface TPOTest {
@@ -338,7 +357,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       section = { id: `section-Reading-${Date.now()}`, sectionType: 'Reading', questions: [], instructions: '', totalTime: 0 };
       test.sections.push(section);
     }
-    section.questions.push(question);
+    section.questions = upsertQuestion(section.questions, question);
     test.updatedAt = new Date();
     if (getExistingTest()) {
       onUpdateTest(test);
@@ -357,7 +376,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       Writing: 0
     };
     test.sections.forEach(section => {
-      stats[section.sectionType] = section.questions.length;
+      stats[section.sectionType] = getTotalQuestionCount(section.questions);
     });
     return stats;
   };
@@ -822,8 +841,8 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                 test.sections.push(section);
               }
 
-              // Add question
-              section.questions.push(question);
+              // UPSERT: 같은 번호의 문제가 있으면 교체, 없으면 추가
+              section.questions = upsertQuestion(section.questions, question);
               test.updatedAt = new Date();
 
               if (getExistingTest()) {
@@ -941,8 +960,8 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                 test.sections.push(section);
               }
 
-              // Add all questions
-              section.questions.push(...questions);
+              // UPSERT: 같은 번호의 문제는 교체, 새 번호는 추가 (중복 누적 방지)
+              section.questions = upsertQuestions(section.questions, questions);
               test.updatedAt = new Date();
 
               if (getExistingTest()) {
@@ -1018,7 +1037,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73]">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-bold text-sm">Module 1</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">{m1.length}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">{getTotalQuestionCount(m1)}</span>
                     </div>
                   </div>
                   {/* Questions */}
@@ -1027,13 +1046,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m1.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-gray-50 transition-colors ${editingQuestion?.id === q.id ? 'border-[#2d7a7c] bg-[#f0fafa] ring-1 ring-[#2d7a7c]/30' : 'border-gray-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">Q{q.questionNumber}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:`Q${q.questionNumber}`,onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -1046,7 +1065,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-400">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-bold text-sm">Module 2</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">{m2.length}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">{getTotalQuestionCount(m2)}</span>
                     </div>
                   </div>
                   {/* Questions */}
@@ -1055,13 +1074,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m2.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-orange-50/60 transition-colors ${editingQuestion?.id === q.id ? 'border-orange-400 bg-orange-50 ring-1 ring-orange-300' : 'border-orange-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">Q{q.questionNumber}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">{getQuestionRangeLabel(q)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'').replace(' (Module 2)','')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:`Q${q.questionNumber}`,onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -3590,11 +3609,10 @@ interface BulkUploadFormProps {
 }
 
 function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, onSubmit, onCancel }: BulkUploadFormProps) {
-  const [mode, setMode] = useState<'ai' | 'text' | 'csv'>('ai');
+  const [mode, setMode] = useState<'text' | 'csv'>('text');
   const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<TPOQuestion[] | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
   // ─── Template per section ───
   const getTemplate = (): string => {
@@ -3603,9 +3621,10 @@ function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, on
         return `# Module 2 문제는 각 문제 블록에 "모듈: Module 2" 한 줄을 추가하세요.
 # 이미지가 필요하면 "이미지: 파일명.png" 처럼 파일명만 적으세요.
 # (실제 파일은 나중에 [미디어 일괄 매칭]에서 한 번에 올립니다)
-# 문제 수는 유동적입니다 — Complete Words는 Q1-10, Q1-2 등 범위로 지정 가능.
+# 문제 수는 유동적입니다 — Complete Words는 Q1-Q10, Q1-Q2 등 범위로 지정 가능.
+# 두 번째 세트는 Q11-Q20처럼 이어지는 번호를 사용하세요.
 
-Q1-10: Complete Words
+Q1-Q10: Complete Words
 난이도: 보통
 
 지문:
@@ -3618,7 +3637,7 @@ deve[lopment] shapes our cul[ture] and soc[iety]. Without mo[ney] or moti[vation
 
 ===
 
-Q11-20: Complete Words
+Q11-Q20: Complete Words
 모듈: Module 2
 난이도: 보통
 
@@ -3627,7 +3646,7 @@ The hu[man] brain is a com[plex] organ that cont[rols] every part of the bo[dy].
 
 Sci[entists] continue to stu[dy] how these areas work tog[ether] to shape beha[vior].
 
-# Q11-20(Module 2)도 Q1-10과 똑같은 빈칸 형식입니다. "모듈: Module 2" 한 줄만 추가하면 됩니다.
+# Q11-Q20(Module 2)도 Q1-Q10과 똑같은 빈칸 형식입니다. "모듈: Module 2" 한 줄만 추가하면 됩니다.
 
 ===
 
@@ -4379,6 +4398,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         if ((baseType || '').includes('(Module 2)')) return baseType; // already tagged
         return `${baseType} (Module 2)`;
       };
+      // Complete Words 전용: 개별 입력(FillBlanksEditor)과 일치하도록 Module 1/2 모두 명시
+      const completeWordsTypeWithModule = (): string => {
+        return `Complete Words (${isModule2 ? 'Module 2' : 'Module 1'})`;
+      };
 
       const passageText = after(['지문:', '본문:', '내용:', 'text:', 'Text:', 'passage:', 'Passage:']) || undefined;
       const scriptText = after(['스크립트:']) || undefined;
@@ -4518,12 +4541,13 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       // Complete Words is ONE grouped question (Q1-10 / Q11-20) holding the whole
       // passage + all blanks — matching the FillBlanksEditor/renderer format.
       // Do NOT explode into one question per blank (renderer expects a single passage).
+      // questionType은 개별 입력(FillBlanksEditor)과 동일하게 "Complete Words (Module 1/2)" 형태로 저장.
       if (isCompleteWordsQuestion && blanks && blanks.length > 0) {
         questions.push({
           id: `q-${Date.now()}-${qNum}-${Math.random().toString(36).slice(2,7)}`,
           questionNumber: qNum, // keep "1-10" / "11-20" string form
           questionText: questionText || 'Fill in the missing letters in the blank.',
-          questionType: applyModuleSuffix('Complete Words'),
+          questionType: completeWordsTypeWithModule(),
           passageText: finalPassageText || undefined,
           difficulty,
           blanks,
@@ -4570,111 +4594,6 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       setParsed(qs);
     } catch (err: any) {
       setError(err?.message || '파싱 오류');
-    }
-  };
-
-  // ─── AI parsing: paste raw TPO source, Claude structures it into questions ───
-  const handleAiParse = async () => {
-    if (!rawText.trim()) { setError('원본 텍스트를 붙여넣어주세요.'); return; }
-    setError(null);
-    setAiLoading(true);
-    setParsed(null);
-
-    const typesHint = (questionTypeOptions && questionTypeOptions.length > 0)
-      ? `이 섹션(${section})에서 사용 가능한 questionType 값: ${questionTypeOptions.join(', ')}`
-      : '';
-
-    const moduleHint = (section === 'Reading' || section === 'Listening')
-      ? `\n- Module 2 문제라고 판단되면 questionType 뒤에 ' (Module 2)'를 붙이세요 (예: 'Detail Questions (Module 2)').`
-      : '';
-
-    const systemPrompt = `당신은 TOEFL 시험 자료를 구조화된 JSON으로 변환하는 도구입니다.
-지금 작업: ${testType} ${testNumber} - ${section} 섹션.
-${typesHint}
-
-사용자가 지문/문제/보기/정답이 섞인 원본 텍스트를 붙여넣으면, 이를 분석해서
-TPOQuestion 객체의 JSON 배열로만 응답하세요.
-
-각 객체 필드 (해당 없으면 생략):
-{
-  "questionNumber": 숫자 (1, 2, 3...),
-  "questionText": "문제 지시문",
-  "questionType": "위 목록 중 하나",
-  "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
-  "correctAnswer": "정답 (options 중 정확히 하나와 일치)",
-  "explanation": "해설 (있으면)",
-  "passageText": "지문 전문 (Reading 지문형)",
-  "scriptText": "듣기 스크립트 전문 (Listening/Speaking)",
-  "difficulty": "쉬움" | "보통" | "어려움" (없으면 '보통'),
-  "passageTitle": "지문/강의 제목 (있으면)"
-}
-
-규칙:
-- 오디오/이미지 관련 필드(audioUrl, imageUrl 등)는 절대 넣지 마세요. 나중에 따로 업로드합니다.
-- 여러 문제가 같은 지문/스크립트를 공유하면, 각 문제마다 그 지문/스크립트를 반복해서 넣으세요.
-- correctAnswer는 반드시 options 중 하나와 정확히 일치시키세요.${moduleHint}
-- 응답은 순수 JSON 배열만. 마크다운 코드블록(\`\`\`)이나 설명 문장 없이.`;
-
-    try {
-      const response = await fetch('/api/claude/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-5',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: rawText },
-          ],
-          max_tokens: 8000,
-          temperature: 0.2,
-          stream: false,
-        }),
-      });
-
-      if (!response.ok) throw new Error(`AI 서버 오류 (${response.status})`);
-
-      const data = await response.json();
-      let content = data?.choices?.[0]?.message?.content || data?.content?.[0]?.text || '';
-      content = content.trim().replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
-
-      // Defensive: model sometimes wraps the array in explanation text or a second
-      // code fence. Slice from the first '[' to the last ']' so stray prose doesn't
-      // break JSON.parse.
-      const firstBracket = content.indexOf('[');
-      const lastBracket = content.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket > firstBracket) {
-        content = content.slice(firstBracket, lastBracket + 1);
-      }
-
-      let result: any;
-      try {
-        result = JSON.parse(content);
-      } catch {
-        throw new Error('AI 응답을 JSON으로 읽지 못했습니다. 원본 텍스트를 줄여서 다시 시도해보세요.');
-      }
-      if (!Array.isArray(result)) throw new Error('AI 응답이 배열 형식이 아닙니다.');
-      if (result.length === 0) throw new Error('AI가 문제를 인식하지 못했습니다. 원본을 확인해주세요.');
-
-      // Normalize into TPOQuestion shape
-      const normalized: TPOQuestion[] = result.map((q: any, i: number) => ({
-        id: `q-${Date.now()}-${q.questionNumber ?? i + 1}-${Math.random().toString(36).slice(2, 7)}`,
-        questionNumber: typeof q.questionNumber === 'number' ? q.questionNumber : (parseInt(q.questionNumber) || i + 1),
-        questionText: q.questionText || '',
-        questionType: q.questionType || (questionTypeOptions?.[0] || ''),
-        options: Array.isArray(q.options) ? q.options : [],
-        correctAnswer: q.correctAnswer || '',
-        explanation: q.explanation || undefined,
-        passageText: q.passageText || undefined,
-        scriptText: q.scriptText || undefined,
-        difficulty: (q.difficulty || '보통') as '쉬움' | '보통' | '어려움',
-        passageTitle: q.passageTitle || undefined,
-      } as TPOQuestion));
-
-      setParsed(normalized);
-    } catch (err: any) {
-      setError(err?.message || 'AI 분석 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -4864,12 +4783,12 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
         <h3 className="text-xl font-medium text-gray-800 mb-4">
-          {parsed.length}개 문제 파싱 완료 — {testType} {testNumber} {section}
+          {getTotalQuestionCount(parsed)}개 문제 파싱 완료 — {testType} {testNumber} {section}
         </h3>
         <div className="max-h-[32rem] overflow-y-auto space-y-2 mb-4">
           {parsed.map((q, i) => (
             <div key={i} className="bg-gray-50 border rounded-lg p-3 text-sm">
-              <span className="font-bold text-[#2d7a7c]">Q{q.questionNumber}</span>
+              <span className="font-bold text-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
               <span className="mx-2 text-gray-400">|</span>
               <span>{q.questionType}</span>
               {q.difficulty && <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{q.difficulty}</span>}
@@ -4892,7 +4811,7 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
           <div className="flex gap-2">
             <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
             <Button onClick={() => onSubmit(parsed)} className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-              <Upload className="w-4 h-4 mr-2" /> {parsed.length}개 문제 저장
+              <Upload className="w-4 h-4 mr-2" /> {getTotalQuestionCount(parsed)}개 문제 저장
             </Button>
           </div>
         </div>
@@ -4908,15 +4827,6 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
 
       {/* Mode tabs */}
       <div className="flex gap-2 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
-        <button
-          type="button"
-          onClick={() => { setMode('ai'); setError(null); }}
-          className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
-            mode === 'ai' ? 'bg-white shadow-sm text-[#1e6b73]' : 'text-gray-500'
-          }`}
-        >
-          ✨ AI 파싱
-        </button>
         <button
           type="button"
           onClick={() => { setMode('text'); setError(null); }}
@@ -4937,32 +4847,7 @@ TPOQuestion 객체의 JSON 배열로만 응답하세요.
         </button>
       </div>
 
-      {mode === 'ai' ? (
-        <>
-          <p className="text-sm text-gray-500 mb-4">
-            지문·문제·보기·정답이 섞인 <strong>원본 텍스트를 형식 신경 쓰지 말고 그대로</strong> 붙여넣으세요.
-            AI가 문제 구조를 자동으로 정리합니다. (오디오·이미지는 이후 문제별로 따로 업로드)
-          </p>
-          <textarea
-            value={rawText}
-            onChange={e => setRawText(e.target.value)}
-            placeholder={`예시) TPO2 원본을 그대로 붙여넣으세요.\n\n1. What is the main idea of the passage?\n(A) ...\n(B) ...\n정답: B\n\n2. ...`}
-            rows={16}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm mb-3 focus:ring-2 focus:ring-[#2d7a7c]"
-          />
-          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
-          <div className="flex gap-3 justify-end pt-4 border-t">
-            <Button onClick={onCancel} className="bg-gray-300 text-gray-700 hover:bg-gray-400">Cancel</Button>
-            <Button
-              onClick={handleAiParse}
-              disabled={aiLoading}
-              className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61] disabled:opacity-50"
-            >
-              {aiLoading ? '분석 중...' : '✨ AI로 자동 정리'}
-            </Button>
-          </div>
-        </>
-      ) : mode === 'csv' ? (
+      {mode === 'csv' ? (
         <>
           <p className="text-sm text-gray-500 mb-4">
             <button onClick={handleDownloadCsvTemplate} className="text-[#1e6b73] underline font-semibold">
@@ -5441,7 +5326,7 @@ function AudioSplitterPanel({
               placeholder="자동 감지됨 — 수동 입력: 45, 90, 135" onBlur={handlePreview}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
             <p className="text-[10px] text-gray-400 mt-1">
-              총 {buffer?.duration.toFixed(0) ?? 0}초 · 현재 {sortedQs.length}개 문제
+              총 {buffer?.duration.toFixed(0) ?? 0}초 · 현재 {getTotalQuestionCount(sortedQs)}개 문제
               {parseSplitTimes().length > 0 ? ` → ${Math.min(parseSplitTimes().length + 1, sortedQs.length)}개 분할 예정` : ' · 파일 선택 시 자동 감지됨'}
             </p>
           </div>
@@ -5463,7 +5348,7 @@ function AudioSplitterPanel({
                 const segs = pts.length > 0 ? [0, ...pts, buffer?.duration ?? 0] : [];
                 return (
                   <div key={q.id} className="flex items-center gap-2 text-xs text-gray-600 py-1 px-2 rounded bg-gray-50">
-                    <span className="font-bold text-purple-700 shrink-0">Q{q.questionNumber}</span>
+                    <span className="font-bold text-purple-700 shrink-0">{getQuestionRangeLabel(q)}</span>
                     <span className="truncate">{q.questionType}</span>
                     {segs[i] != null && segs[i + 1] != null
                       ? <span className="text-gray-400 ml-auto shrink-0">{segs[i].toFixed(1)}s → {segs[i + 1].toFixed(1)}s</span>

@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ4(props: WritingBuildSentenceQ4Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={4}
-      defaultQuestionText="What are your plans for the summer?"
-      defaultWords={['to', 'planning', "I'm", 'Europe', 'travel']}
       slotCount={5}
     />
   );

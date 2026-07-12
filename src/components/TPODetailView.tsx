@@ -259,7 +259,7 @@ export function TPODetailView({
               <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${style.color} shrink-0`}>
                 {style.icon}<span>{
                   (question.questionType || '').includes('Complete Words')
-                    ? getQuestionRangeLabel(question).replace(/^Question\s+/, 'Q')
+                    ? getQuestionRangeLabel(question)
                     : `Q${question.questionNumber}`
                 }</span>
               </div>

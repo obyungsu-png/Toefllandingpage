@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ7(props: WritingBuildSentenceQ7Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={7}
-      defaultQuestionText="Do you like your new job?"
-      defaultWords={['really', 'I', 'yes', 'it', 'enjoy']}
       slotCount={4}
     />
   );

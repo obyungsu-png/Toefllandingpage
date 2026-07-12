@@ -6,6 +6,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
+import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
@@ -48,14 +49,6 @@ interface ReviewQuestion {
   audioUrl?: string;
 }
 
-// Writing conversation data
-interface WritingConversation {
-  speaker: 'A' | 'B';
-  avatar: string;
-  text: string;
-  blanks?: { word: string; isCorrect: boolean; userWord?: string }[];
-}
-
 interface WritingBuildSentenceReviewQuestion {
   id: string;
   number: number;
@@ -92,143 +85,6 @@ interface SpeakingQuestion {
   audioUrl?: string;
   transcript?: string;
 }
-
-const sampleWritingConversations: WritingConversation[][] = [
-  [
-    { speaker: 'A', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face', text: 'Your presentation yesterday was impressive.' },
-    { speaker: 'B', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face', text: 'Thanks.', blanks: [
-      { word: 'Do', isCorrect: true },
-      { word: 'you want', isCorrect: true },
-      { word: 'to send', isCorrect: false, userWord: 'to give' },
-      { word: 'you', isCorrect: true },
-      { word: 'a copy', isCorrect: true },
-      { word: 'of it', isCorrect: false, userWord: 'for it' },
-      { word: 'me', isCorrect: true },
-    ] },
-  ],
-  [
-    { speaker: 'A', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', text: 'I heard the library will be closed next week.' },
-    { speaker: 'B', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face', text: 'Yes,', blanks: [
-      { word: 'they are', isCorrect: true },
-      { word: 'renovating', isCorrect: true },
-      { word: 'the', isCorrect: true },
-      { word: 'reading', isCorrect: false, userWord: 'study' },
-      { word: 'room', isCorrect: true },
-      { word: 'on the', isCorrect: true },
-      { word: 'second floor', isCorrect: true },
-    ] },
-  ],
-  [
-    { speaker: 'A', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face', text: 'Did you finish the research paper?' },
-    { speaker: 'B', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face', text: 'Almost.', blanks: [
-      { word: 'I still', isCorrect: true },
-      { word: 'need to', isCorrect: true },
-      { word: 'review', isCorrect: false, userWord: 'check' },
-      { word: 'the', isCorrect: true },
-      { word: 'references', isCorrect: true },
-      { word: 'and add', isCorrect: true },
-      { word: 'a conclusion', isCorrect: false, userWord: 'an ending' },
-    ] },
-  ],
-];
-
-const defaultWritingBuildSentenceQuestions: WritingBuildSentenceReviewQuestion[] = [
-  { id: 'bs-q1', number: 1, prompt: 'What was the highlight of your trip?', words: ['were', 'the', 'was', 'old city', 'showed us around', 'who', 'tour guides'], slotCount: 6 },
-  { id: 'bs-q2', number: 2, prompt: 'Are you considering a change?', words: ['a different department', 'if', 'moving to', 'know', 'do', 'you'], slotCount: 5 },
-  { id: 'bs-q3', number: 3, prompt: 'How do you usually spend your weekends?', words: ['usually', 'I', 'friends', 'time with', 'spend', 'my'], slotCount: 5 },
-  { id: 'bs-q4', number: 4, prompt: 'What are your plans for the summer?', words: ['to', 'planning', "I'm", 'Europe', 'travel'], slotCount: 5 },
-  { id: 'bs-q5', number: 5, prompt: 'Did you enjoy the conference?', words: ['was', 'it', 'very', 'yes', 'informative'], slotCount: 4 },
-  { id: 'bs-q6', number: 6, prompt: 'Have you finished your project?', words: ['almost', 'I', 'am', 'done', 'yes'], slotCount: 4 },
-  { id: 'bs-q7', number: 7, prompt: 'Do you like your new job?', words: ['really', 'I', 'yes', 'it', 'enjoy'], slotCount: 4 },
-  { id: 'bs-q8', number: 8, prompt: 'Are you ready for the presentation?', words: ['nervous', 'a bit', 'I', 'but', 'am', 'prepared'], slotCount: 5 },
-  { id: 'bs-q9', number: 9, prompt: 'How was the training session?', words: ['helpful', 'very', 'it', 'was', 'and', 'practical'], slotCount: 5 },
-  { id: 'bs-q10', number: 10, prompt: 'What did you think of the movie?', words: ['thought', 'I', 'was', 'it', 'excellent'], slotCount: 4 },
-];
-
-const defaultReadingCompleteWordsConfigs: FillBlankReviewConfig[] = [
-  {
-    id: 'reading-module-1-complete-words',
-    blanks: [
-      { answer: 'ght', maxLength: 3 },
-      { answer: 'at', maxLength: 2 },
-      { answer: 'ple', maxLength: 3 },
-      { answer: 'ly', maxLength: 2 },
-      { answer: 'sic', maxLength: 3 },
-      { answer: 'ever', maxLength: 4 },
-      { answer: 's', maxLength: 1 },
-      { answer: 'om', maxLength: 2 },
-      { answer: 'ord', maxLength: 3 },
-      { answer: 'nces', maxLength: 4 },
-    ],
-    fallbackSegments: [
-      'We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi',
-      ' think th',
-      ' prehistoric peo',
-      ' concentrated on',
-      ' on ba',
-      ' survival. How',
-      ', it i',
-      ' clear fr',
-      ' the rec',
-      ' that dan',
-      ' was important to them.',
-    ],
-  },
-  {
-    id: 'reading-module-2-complete-words',
-    blanks: [
-      { answer: 's', maxLength: 1 },
-      { answer: 'to', maxLength: 2 },
-      { answer: 'ions', maxLength: 4 },
-      { answer: 'th', maxLength: 2 },
-      { answer: 'les', maxLength: 3 },
-      { answer: 'ts', maxLength: 2 },
-      { answer: 'rt', maxLength: 2 },
-      { answer: 'lved', maxLength: 4 },
-      { answer: 'itive', maxLength: 5 },
-      { answer: 'ch', maxLength: 2 },
-    ],
-    fallbackSegments: [
-      'The human brain is a complex organ responsible for controlling all bodily functions and enabling thought, emotion, and memory. It i',
-      ' divided in',
-      ' several reg',
-      ', each wi',
-      ' specific ro',
-      '. The cerebrum, i',
-      ' largest pa',
-      ', is invo',
-      ' in higher cogn',
-      ' functions su',
-      ' as reasoning, planning, and language. The cerebellum coordinates movement and balance, while the brainstem controls vital bodily functions like breathing and heart rate. Together, they enable the brain to perform its various tasks.',
-    ],
-  },
-];
-
-const defaultSpeakingQuestions: SpeakingQuestion[] = Array.from({ length: 11 }, (_, index) => {
-  const isInterview = index >= 7;
-  const number = index + 1;
-  return {
-    id: `spk-${number}`,
-    number,
-    taskGroup: isInterview ? 'Take an Interview' : 'Listen and Speak',
-    prompt: isInterview
-      ? `Interview task ${number - 7}: respond naturally to the interviewer and support your answer with clear details.`
-      : `Listen and Speak task ${number}: listen carefully, then repeat or respond using the provided campus or lecture material.`,
-    modelLabel: 'Model Answer',
-    currentVoice: index % 2 === 0 ? 'Donald Trump' : 'Morgan Freeman',
-    voiceAvatar: index % 2 === 0
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face'
-      : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
-    modelAudioDuration: isInterview ? 18 : 12,
-    userAudioDuration: isInterview ? 15 : 8,
-    showTextDefault: !isInterview,
-    materialImage: !isInterview ? 'https://images.unsplash.com/photo-1633431303895-8236f0a04b46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400' : undefined,
-    materialAudioDuration: !isInterview ? 4 : undefined,
-    transcript: isInterview
-      ? 'Please describe a meaningful experience and explain why it was important to you.'
-      : 'Students are discussing a campus change. Summarize the main point and explain the speaker\'s opinion.',
-  };
-});
 
 function includesQuestionType(value: string | undefined, candidates: string[]) {
   const normalized = String(value || '').toLowerCase();
@@ -306,26 +162,13 @@ export function QuestionReviewFull({
   const readingCompleteWordsQuestion = activeSection === 'Reading'
     ? readingCompleteWordsQuestions[activeModule - 1] || readingCompleteWordsQuestions[0]
     : null;
-  const readingCompleteWordsConfig: FillBlankReviewConfig | null = activeSection === 'Reading'
-    ? readingCompleteWordsQuestion
-      ? {
-          id: readingCompleteWordsQuestion.id || `reading-complete-words-${activeModule}`,
-          passageText: readingCompleteWordsQuestion.passageText,
-          blanks: Array.isArray(readingCompleteWordsQuestion.blanks) ? readingCompleteWordsQuestion.blanks : defaultReadingCompleteWordsConfigs[activeModule - 1]?.blanks || [],
-        }
-      : defaultReadingCompleteWordsConfigs[activeModule - 1] || defaultReadingCompleteWordsConfigs[0]
+  const readingCompleteWordsConfig: FillBlankReviewConfig | null = activeSection === 'Reading' && readingCompleteWordsQuestion
+    ? {
+        id: readingCompleteWordsQuestion.id || `reading-complete-words-${activeModule}`,
+        passageText: readingCompleteWordsQuestion.passageText,
+        blanks: Array.isArray(readingCompleteWordsQuestion.blanks) ? readingCompleteWordsQuestion.blanks : [],
+      }
     : null;
-
-  // Sample listening questions for correct answers (placeholder text)
-  const listeningCorrectSamples = [
-    { text: 'Woman: Is the gym open right now?', options: ['I think so.', 'He is tired.', 'Yesterday evening.', 'Last time.'], answer: 'I think so.', audioText: 'Is the gym open right now?' },
-    { text: 'What is the main topic of the conversation?', options: ['Campus parking regulations', 'Registering for a new course', 'Applying for financial aid', 'Library operating hours'], answer: 'Registering for a new course', audioText: 'The students discuss the process of registering for a new course.' },
-    { text: 'Why does the professor mention photosynthesis?', options: ['To introduce a new concept', 'To review previous material', 'To contrast it with chemosynthesis', 'To explain cellular respiration'], answer: 'To contrast it with chemosynthesis', audioText: 'The professor compares photosynthesis and chemosynthesis.' },
-    { text: 'What does the woman suggest the man do?', options: ['Visit the writing center', 'Talk to the professor', 'Drop the course', 'Study with a group'], answer: 'Visit the writing center', audioText: 'Why don\'t you go to the writing center? They can help you with your essay.' },
-    { text: 'What can be inferred about the new campus policy?', options: ['It will take effect next semester', 'Students are against it', 'It was proposed by faculty', 'It reduces parking fees'], answer: 'It will take effect next semester', audioText: 'The new policy is scheduled to begin in the fall semester.' },
-    { text: 'According to the lecture, what caused the extinction?', options: ['Climate change', 'A volcanic eruption', 'An asteroid impact', 'Loss of habitat'], answer: 'An asteroid impact', audioText: 'The evidence strongly suggests an asteroid impact was the primary cause.' },
-    { text: 'What does the man imply when he says "I\'ll believe it when I see it"?', options: ['He is skeptical', 'He is excited', 'He agrees completely', 'He is confused'], answer: 'He is skeptical', audioText: 'I\'ll believe it when I see it.' },
-  ];
 
   // Build questions from result data (for Reading/Listening)
   const questions: ReviewQuestion[] = (() => {
@@ -360,8 +203,7 @@ export function QuestionReviewFull({
       const qNum = i + 1;
       const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
       const isWrong = !!wrong;
-      const sample = activeSection === 'Listening' && listeningCorrectSamples[i % listeningCorrectSamples.length];
-      
+
       if (realQ) {
         // Use real CMS question data
         qs.push({
@@ -381,17 +223,17 @@ export function QuestionReviewFull({
           imageUrl: realQ.imageUrl,
         });
       } else {
-        // Fallback to sample data
+        // No CMS data — minimal placeholder. Wrong answers still show their detail below.
         qs.push({
           id: `correct-${i}`,
           number: i + 1,
-          text: sample ? sample.text : `Question ${i + 1}`,
-          options: sample ? sample.options : ['Option A', 'Option B', 'Option C', 'Option D'],
-          userAnswer: sample ? sample.answer : 'A',
-          correctAnswer: sample ? sample.answer : 'A',
-          isCorrect: true,
+          text: wrong?.questionText || `Question ${i + 1}`,
+          options: wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D'],
+          userAnswer: wrong?.userAnswer || 'A',
+          correctAnswer: wrong?.correctAnswer || 'A',
+          isCorrect: !isWrong,
           hasAudio: activeSection === 'Listening',
-          audioText: sample ? sample.audioText : (activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined),
+          audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
           passageText: passageText,
         });
       }
@@ -428,8 +270,6 @@ export function QuestionReviewFull({
     return qs.slice(0, totalQ);
   })();
 
-  const writingConversations = sampleWritingConversations;
-
   const speakingQuestionsFromCms: SpeakingQuestion[] = activeSection === 'Speaking'
     ? (currentSection?.questions || []).slice(0, 11).map((question: any, index: number) => {
         const isInterview = index >= 7;
@@ -452,9 +292,7 @@ export function QuestionReviewFull({
       })
     : [];
 
-  const allSpeakingQuestions = activeSection === 'Speaking'
-    ? (speakingQuestionsFromCms.length > 0 ? speakingQuestionsFromCms : defaultSpeakingQuestions)
-    : [];
+  const allSpeakingQuestions = activeSection === 'Speaking' ? speakingQuestionsFromCms : [];
   const speakingQs = activeSection === 'Speaking'
     ? (activeModule === 1 ? allSpeakingQuestions.slice(0, 7) : allSpeakingQuestions.slice(7, 11))
     : [];
@@ -553,9 +391,9 @@ export function QuestionReviewFull({
       return {
         id: `bs-q${index + 1}`,
         number: index + 1,
-        prompt: question?.questionText || question?.text || defaultWritingBuildSentenceQuestions[index]?.prompt || `Build a Sentence ${index + 1}`,
-        words: cmsWords.length > 0 ? cmsWords : (defaultWritingBuildSentenceQuestions[index]?.words || []),
-        slotCount: Number(question?.slotCount) || (defaultWritingBuildSentenceQuestions[index]?.slotCount || 5),
+        prompt: question?.questionText || question?.text || `Build a Sentence ${index + 1}`,
+        words: cmsWords,
+        slotCount: Number(question?.slotCount) || 5,
         correctAnswer: question?.correctAnswer as string || undefined,
         sentenceEnding: (question?.sentenceEnding as '.' | '?') || '.',
         avatar1ImageUrl: question?.avatar1ImageUrl || undefined,
@@ -563,16 +401,8 @@ export function QuestionReviewFull({
       } as WritingBuildSentenceReviewQuestion;
     });
 
-  const writingBuildSentenceQuestions = defaultWritingBuildSentenceQuestions.map((fallback, index) => {
-    const cmsQuestion = writingBuildSentenceFromCms[index];
-    return cmsQuestion
-      ? {
-          ...fallback,
-          ...cmsQuestion,
-          words: cmsQuestion.words.length > 0 ? cmsQuestion.words : fallback.words,
-        }
-      : fallback;
-  });
+  // Use CMS data directly — no hardcoded fallback
+  const writingBuildSentenceQuestions = writingBuildSentenceFromCms;
 
   const writingModuleQuestionCount = activeSection === 'Writing'
     ? activeModule === 1
@@ -594,7 +424,6 @@ export function QuestionReviewFull({
   }));
 
   const currentSpeakingQ = speakingQs[currentQuestionIndex] || speakingQs[0];
-  const currentWritingConv = writingConversations[currentQuestionIndex % writingConversations.length];
   const currentWritingBuildSentence = writingBuildSentenceQuestions[currentQuestionIndex] || writingBuildSentenceQuestions[0];
 
   // CMS Writing questions (Email / Academic Discussion) for dynamic review
@@ -876,7 +705,7 @@ export function QuestionReviewFull({
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <p className="text-sm text-gray-500">Questions 1-10</p>
+                      <p className="text-sm text-gray-500">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
                       <h3 className="text-2xl font-bold text-gray-900 mt-1">Complete Words</h3>
                     </div>
                     <button

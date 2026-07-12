@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ9(props: WritingBuildSentenceQ9Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={9}
-      defaultQuestionText="How was the training session?"
-      defaultWords={['helpful', 'very', 'it', 'was', 'and', 'practical']}
       slotCount={5}
     />
   );

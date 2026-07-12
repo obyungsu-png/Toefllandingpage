@@ -16,8 +16,6 @@ export interface WritingBuildSentenceProps {
 
 interface WritingBuildSentenceBaseProps extends WritingBuildSentenceProps {
   questionNumber: number;
-  defaultQuestionText: string;
-  defaultWords: string[];
   slotCount: number;
 }
 
@@ -32,11 +30,9 @@ export function WritingBuildSentenceBase({
   words,
   sentenceEnding = '.',
   questionNumber,
-  defaultQuestionText,
-  defaultWords,
   slotCount,
 }: WritingBuildSentenceBaseProps) {
-  const sourceWords = words && words.length > 0 ? words : defaultWords;
+  const sourceWords = words || [];
   
   // Parse words: [word] = prefilled (shown in sentence, not draggable), others = draggable blanks
   const parsedWords = sourceWords.map(w => ({
@@ -265,7 +261,7 @@ export function WritingBuildSentenceBase({
                 )}
               </div>
               <div className="text-base md:text-xl font-['Inter',_sans-serif] text-gray-800">
-                {questionText || defaultQuestionText}
+                {questionText || ''}
               </div>
             </div>
 

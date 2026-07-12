@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ8(props: WritingBuildSentenceQ8Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={8}
-      defaultQuestionText="Are you ready for the presentation?"
-      defaultWords={['nervous', 'a bit', 'I', 'but', 'am', 'prepared']}
       slotCount={5}
     />
   );

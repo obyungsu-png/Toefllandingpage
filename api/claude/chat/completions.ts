@@ -59,15 +59,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return;
       }
 
-      const reader = response.body;
+      const reader = response.body?.getReader();
       if (!reader) {
         res.end();
         return;
       }
 
       // 실시간 청크 파이핑 — 전체 대기 없이 즉시 전송
-      for await (const chunk of reader as unknown as AsyncIterable<Buffer>) {
-        res.write(chunk);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) res.write(value);
       }
       res.end();
       return;

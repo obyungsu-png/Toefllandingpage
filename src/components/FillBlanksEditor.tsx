@@ -43,8 +43,9 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
   const [module, setModule] = useState<'Module 1' | 'Module 2'>('Module 1');
 
   // Parse marked text to extract blanks
+  // Supports both peo[ple:3] (explicit length) and peo[ple] (auto length) forms.
   const parseMarkedText = useCallback((text: string) => {
-    const regex = /(\S*?)\[([^\]]+):(\d+)\](\S*)/g;
+    const regex = /(\S*?)\[([^\]:]+)(?::(\d+))?\](\S*)/g;
     const newBlanks: BlankDef[] = [];
     let match;
     let id = 0;
@@ -52,7 +53,7 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
     while ((match = regex.exec(text)) !== null) {
       const prefix = match[1]; // text before the blank in same word
       const answer = match[2];
-      const maxLength = parseInt(match[3]);
+      const maxLength = match[3] ? parseInt(match[3]) : answer.length;
       
       newBlanks.push({
         id: id++,
@@ -218,11 +219,12 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
   };
 
   // Get display text (replacing markers with visual blanks)
+  // Supports both peo[ple:3] and peo[ple] forms.
   const getDisplayParts = () => {
     const text = markedText || rawText;
     const parts: Array<{ type: 'text' | 'blank'; content: string; blankId?: number; prefix?: string; maxLength?: number }> = [];
-    
-    const regex = /(\S*?)\[([^\]]+):(\d+)\](\S*)/g;
+
+    const regex = /(\S*?)\[([^\]:]+)(?::(\d+))?\](\S*)/g;
     let lastIndex = 0;
     let match;
     let blankId = 0;
@@ -235,7 +237,7 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
 
       const prefix = match[1];
       const answer = match[2];
-      const maxLength = parseInt(match[3]);
+      const maxLength = match[3] ? parseInt(match[3]) : answer.length;
 
       parts.push({
         type: 'blank',
@@ -310,8 +312,9 @@ export function FillBlanksEditor({ onSave, initialPassage, initialBlanks, testTy
   };
 
   // Get plain text from marked text (for display)
+  // Supports both peo[ple:3] and peo[ple] forms.
   const getPlainFromMarked = (text: string) => {
-    return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => prefix + answer);
+    return text.replace(/(\S*?)\[([^\]:]+)(?::(\d+))?\]/g, (_, prefix, answer) => prefix + answer);
   };
 
   return (

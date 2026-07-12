@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ2(props: WritingBuildSentenceQ2Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={2}
-      defaultQuestionText="Are you considering a change?"
-      defaultWords={['a different department', 'if', 'moving to', 'know', 'do', 'you']}
       slotCount={5}
     />
   );

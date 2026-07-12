@@ -148,8 +148,35 @@ export function findCompleteWordsQuestionForNumber(sectionData: any, target: num
 export function getQuestionRangeLabel(question: any, fallbackStart = 1): string {
   const range = parseQuestionRange(question?.questionNumber);
   if (range) {
-    return range.start === range.end ? `Question ${range.start}` : `Question ${range.start}-${range.end}`;
+    return range.start === range.end ? `Q${range.start}` : `Q${range.start}-Q${range.end}`;
   }
   const count = getCompleteWordsBlankCount(question);
-  return count > 1 ? `Question ${fallbackStart}-${fallbackStart + count - 1}` : `Question ${fallbackStart}`;
+  return count > 1 ? `Q${fallbackStart}-Q${fallbackStart + count - 1}` : `Q${fallbackStart}`;
+}
+
+/**
+ * 단일 문제의 "문제 수"를 반환.
+ * Complete Words (Q1-Q10)는 10문제로 계산. 일반 문제는 1문제.
+ */
+export function getQuestionCount(question: any): number {
+  // questionNumber가 "1-10" 형태면 범위로 계산
+  const range = parseQuestionRange(question?.questionNumber);
+  if (range && range.end > range.start) {
+    return range.end - range.start + 1;
+  }
+  // Complete Words의 경우 blanks 개수로 계산
+  if (isCompleteWordsType(question?.questionType) && Array.isArray(question?.blanks)) {
+    const blankCount = question.blanks.length;
+    if (blankCount > 1) return blankCount;
+  }
+  return 1;
+}
+
+/**
+ * 문제 배열의 총 문제 수를 반환.
+ * Complete Words (Q1-Q10)는 10문제로 계산.
+ */
+export function getTotalQuestionCount(questions: any[]): number {
+  if (!Array.isArray(questions)) return 0;
+  return questions.reduce((sum, q) => sum + getQuestionCount(q), 0);
 }

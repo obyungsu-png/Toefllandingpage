@@ -12,72 +12,8 @@ interface ListenAndResponseProps {
   lmsContents?: LMSContent[];
 }
 
-// TOEFL style listening questions for DAY 1 (fallback if no LMS content)
-const sampleQuestions = [
-  {
-    id: 1,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "The library is located on the second floor.",
-    audioUrl: ""
-  },
-  {
-    id: 2,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "Students must register for classes by Friday.",
-    audioUrl: ""
-  },
-  {
-    id: 3,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "The professor postponed the exam until next week.",
-    audioUrl: ""
-  },
-  {
-    id: 4,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "She's conducting research on climate change.",
-    audioUrl: ""
-  },
-  {
-    id: 5,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "The assignment is due on Monday morning.",
-    audioUrl: ""
-  },
-  {
-    id: 6,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "He graduated from university last semester.",
-    audioUrl: ""
-  },
-  {
-    id: 7,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "The lecture covers ancient history topics.",
-    audioUrl: ""
-  },
-  {
-    id: 8,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "They're organizing a campus tour tomorrow.",
-    audioUrl: ""
-  },
-  {
-    id: 9,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "The bookstore opens at eight in the morning.",
-    audioUrl: ""
-  },
-  {
-    id: 10,
-    audio: "오디오를 듣고 받아쓰세요.",
-    correctAnswer: "She's majoring in computer science.",
-    audioUrl: ""
-  }
-];
-
 export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: ListenAndResponseProps) {
-  // Convert LMS contents to question format
+  // Convert LMS contents to question format — no hardcoded fallback
   const lmsQuestions = lmsContents.map((content, index) => ({
     id: index + 1,
     audio: content.title || "오디오를 듣고 받아쓰세요.",
@@ -85,8 +21,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
     audioUrl: content.fileUrl || "" // This is the base64 audio from LMS
   }));
 
-  // Use LMS content if available, otherwise use sample questions
-  const questions = lmsQuestions.length > 0 ? lmsQuestions : sampleQuestions;
+  const questions = lmsQuestions;
 
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [userAnswer, setUserAnswer] = useState('');

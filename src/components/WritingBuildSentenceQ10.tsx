@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ10(props: WritingBuildSentenceQ10Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={10}
-      defaultQuestionText="What did you think of the movie?"
-      defaultWords={['thought', 'I', 'was', 'it', 'excellent']}
       slotCount={4}
     />
   );

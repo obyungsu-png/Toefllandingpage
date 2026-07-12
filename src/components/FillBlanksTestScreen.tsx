@@ -95,18 +95,8 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
     }));
     normalizedPassage = parsedCompleteWords.normalizedPassage;
   } else {
-    inputs = [
-      { id: 0, maxLength: 3, answer: 'ght' },
-      { id: 1, maxLength: 2, answer: 'at' },
-      { id: 2, maxLength: 3, answer: 'ple' },
-      { id: 3, maxLength: 2, answer: 'ly' },
-      { id: 4, maxLength: 3, answer: 'sic' },
-      { id: 5, maxLength: 4, answer: 'ever' },
-      { id: 6, maxLength: 1, answer: 's' },
-      { id: 7, maxLength: 2, answer: 'om' },
-      { id: 8, maxLength: 3, answer: 'ord' },
-      { id: 9, maxLength: 4, answer: 'nces' },
-    ];
+    // CMS 데이터가 없으면 빈 상태 — 하드코딩 fallback 제거됨
+    inputs = [];
   }
 
   const passageText = normalizedPassage;
@@ -305,128 +295,10 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
 
             <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
               {renderPassageWithInputs() || (
-                <>
-                  We know from drawings that have been preserved in caves for over 10,000 years that early humans performed dances as a group activity. We mi<input
-                    type="text"
-                    data-input-id="0"
-                    className={`gap-input ${filledInputs[0] ? 'filled' : ''}`}
-                    maxLength={inputs[0].maxLength}
-                    value={inputValues[0] || ''}
-                    onChange={(e) => handleInputChange(0, e.target.value)}
-                    onFocus={() => handleFocus(0)}
-                    onBlur={() => handleBlur(0)}
-                    onKeyPress={(e) => handleKeyPress(e, 0)}
-                    style={{ width: getInputWidth(0) }}
-                  />{' '}think th
-                  <input
-                    type="text"
-                    data-input-id="1"
-                    className={`gap-input ${filledInputs[1] ? 'filled' : ''}`}
-                    maxLength={inputs[1].maxLength}
-                    value={inputValues[1] || ''}
-                    onChange={(e) => handleInputChange(1, e.target.value)}
-                    onFocus={() => handleFocus(1)}
-                    onBlur={() => handleBlur(1)}
-                    onKeyPress={(e) => handleKeyPress(e, 1)}
-                    style={{ width: getInputWidth(1) }}
-                  />{' '}prehistoric peo
-                  <input
-                    type="text"
-                    data-input-id="2"
-                    className={`gap-input ${filledInputs[2] ? 'filled' : ''}`}
-                    maxLength={inputs[2].maxLength}
-                    value={inputValues[2] || ''}
-                    onChange={(e) => handleInputChange(2, e.target.value)}
-                    onFocus={() => handleFocus(2)}
-                    onBlur={() => handleBlur(2)}
-                    onKeyPress={(e) => handleKeyPress(e, 2)}
-                    style={{ width: getInputWidth(2) }}
-                  />{' '}concentrated on
-                  <input
-                    type="text"
-                    data-input-id="3"
-                    className={`gap-input ${filledInputs[3] ? 'filled' : ''}`}
-                    maxLength={inputs[3].maxLength}
-                    value={inputValues[3] || ''}
-                    onChange={(e) => handleInputChange(3, e.target.value)}
-                    onFocus={() => handleFocus(3)}
-                    onBlur={() => handleBlur(3)}
-                    onKeyPress={(e) => handleKeyPress(e, 3)}
-                    style={{ width: getInputWidth(3) }}
-                  />{' '}on ly
-                  <input
-                    type="text"
-                    data-input-id="4"
-                    className={`gap-input ${filledInputs[4] ? 'filled' : ''}`}
-                    maxLength={inputs[4].maxLength}
-                    value={inputValues[4] || ''}
-                    onChange={(e) => handleInputChange(4, e.target.value)}
-                    onFocus={() => handleFocus(4)}
-                    onBlur={() => handleBlur(4)}
-                    onKeyPress={(e) => handleKeyPress(e, 4)}
-                    style={{ width: getInputWidth(4) }}
-                  />{' '}survival. How
-                  <input
-                    type="text"
-                    data-input-id="5"
-                    className={`gap-input ${filledInputs[5] ? 'filled' : ''}`}
-                    maxLength={inputs[5].maxLength}
-                    value={inputValues[5] || ''}
-                    onChange={(e) => handleInputChange(5, e.target.value)}
-                    onFocus={() => handleFocus(5)}
-                    onBlur={() => handleBlur(5)}
-                    onKeyPress={(e) => handleKeyPress(e, 5)}
-                    style={{ width: getInputWidth(5) }}
-                  />
-                  <input
-                    type="text"
-                    data-input-id="6"
-                    className={`gap-input ${filledInputs[6] ? 'filled' : ''}`}
-                    maxLength={inputs[6].maxLength}
-                    value={inputValues[6] || ''}
-                    onChange={(e) => handleInputChange(6, e.target.value)}
-                    onFocus={() => handleFocus(6)}
-                    onBlur={() => handleBlur(6)}
-                    onKeyPress={(e) => handleKeyPress(e, 6)}
-                    style={{ width: getInputWidth(6) }}
-                  />
-                  <input
-                    type="text"
-                    data-input-id="7"
-                    className={`gap-input ${filledInputs[7] ? 'filled' : ''}`}
-                    maxLength={inputs[7].maxLength}
-                    value={inputValues[7] || ''}
-                    onChange={(e) => handleInputChange(7, e.target.value)}
-                    onFocus={() => handleFocus(7)}
-                    onBlur={() => handleBlur(7)}
-                    onKeyPress={(e) => handleKeyPress(e, 7)}
-                    style={{ width: getInputWidth(7) }}
-                  />{' '}the rec
-                  <input
-                    type="text"
-                    data-input-id="8"
-                    className={`gap-input ${filledInputs[8] ? 'filled' : ''}`}
-                    maxLength={inputs[8].maxLength}
-                    value={inputValues[8] || ''}
-                    onChange={(e) => handleInputChange(8, e.target.value)}
-                    onFocus={() => handleFocus(8)}
-                    onBlur={() => handleBlur(8)}
-                    onKeyPress={(e) => handleKeyPress(e, 8)}
-                    style={{ width: getInputWidth(8) }}
-                  />{' '}that dan
-                  <input
-                    type="text"
-                    data-input-id="9"
-                    className={`gap-input ${filledInputs[9] ? 'filled' : ''}`}
-                    maxLength={inputs[9].maxLength}
-                    value={inputValues[9] || ''}
-                    onChange={(e) => handleInputChange(9, e.target.value)}
-                    onFocus={() => handleFocus(9)}
-                    onBlur={() => handleBlur(9)}
-                    onKeyPress={(e) => handleKeyPress(e, 9)}
-                    style={{ width: getInputWidth(9) }}
-                  /> was important to them.
-                </>
+                <div className="text-center text-gray-500 py-20">
+                  <p className="text-lg font-semibold mb-2">이 문제는 아직 업로드되지 않았습니다.</p>
+                  <p className="text-sm">CMS에서 Complete Words 문제를 업로드한 뒤 다시 시도해주세요.</p>
+                </div>
               )}
             </div>
           </div>

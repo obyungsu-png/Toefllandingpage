@@ -7,8 +7,6 @@ export function WritingBuildSentenceQ3(props: WritingBuildSentenceQ3Props) {
     <WritingBuildSentenceBase
       {...props}
       questionNumber={3}
-      defaultQuestionText="How do you usually spend your weekends?"
-      defaultWords={['usually', 'I', 'friends', 'time with', 'spend', 'my']}
       slotCount={5}
     />
   );
