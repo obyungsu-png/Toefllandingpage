@@ -368,6 +368,8 @@ function GroupIntroScreen({
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
     try {
+      audio.muted = true;       // 소리 차단 (cleanup 중 노이즈 방지)
+      audio.volume = 0;         // 볼륨 0 (추가 안전장치)
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
@@ -634,10 +636,12 @@ function ListeningQuestionScreen({
   const audioPlayedRef = useRef(false);
 
   // 오디오 정리 헬퍼 — 잔여 노이즈/틱 소리 방지
-  // 이미 종료된 오디오는 pause() 호출 금지 (브라우저 노이즈 유발)
+  // mute를 먼저 설정하여 cleanup 중 소리 차단, 이미 종료된 오디오는 pause() 금지
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
     try {
+      audio.muted = true;       // 소리 차단 (cleanup 중 노이즈 방지)
+      audio.volume = 0;         // 볼륨 0 (추가 안전장치)
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
@@ -650,16 +654,6 @@ function ListeningQuestionScreen({
 
   useEffect(() => {
     audioPlayedRef.current = false;
-    cleanupAudio(audioRef.current);
-    audioRef.current = null;
-  }, [qNum]);
-
-  // 컴포넌트 언마운트 시 오디오 정리
-  useEffect(() => {
-    return () => { cleanupAudio(audioRef.current); audioRef.current = null; };
-  }, []);
-
-  useEffect(() => {
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
       const timer = setTimeout(async () => {
