@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
+import { formatTestLabel } from '../utils/testLabel';
 
 type TestSetRange = '1-5';
 type YearFilter = 'all' | '2024' | '2025' | '2026';
@@ -285,8 +286,9 @@ export function TestPage({
                 
                 return (
                   <div key={number} className="w-full max-w-full">
-                    <TestCard 
+                    <TestCard
                       number={number}
+                      customTitle={formatTestLabel(testData as any, testTests as any, `Test ${number}`)}
                       isLocked={isContentLocked(index, 3)}
                       onUnlockClick={() => setActiveTab('Pricing')}
                       testData={testData}

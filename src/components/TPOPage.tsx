@@ -4,6 +4,7 @@ import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 import { TPOTest } from './ContentManagement';
 import { TPOCardMobileCompact } from './TPOCardMobileCompact';
+import { formatTestLabel } from '../utils/testLabel';
 
 type TestSetRange = '1-5';
 
@@ -323,6 +324,7 @@ export function TPOPage({
             <div className={isMobile ? 'flex flex-col gap-2 !w-full' : 'grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6 !w-full'}>
               {filteredNumbers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((number, index) => {
                 const tpoData = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === number);
+                const cardTitle = formatTestLabel(tpoData, tpoTests, `TPO ${number}`);
 
                 const handleStartTest = (section: string) => {
                   if (onStartTest) { onStartTest(number, section); return; }
@@ -349,7 +351,7 @@ export function TPOPage({
                         isLocked={isContentLocked(index, 3)}
                         onUnlockClick={() => setActiveTab('Pricing')}
                         testData={tpoData}
-                        customTitle={`TPO ${number}`}
+                        customTitle={cardTitle}
                         onStartTest={handleStartTest}
                         onReviewTest={handleReviewTest}
                       />
@@ -359,6 +361,7 @@ export function TPOPage({
                         isLocked={isContentLocked(index, 3)}
                         onUnlockClick={() => setActiveTab('Pricing')}
                         testData={tpoData}
+                        customTitle={cardTitle}
                         onStartTest={handleStartTest}
                         onReviewTest={handleReviewTest}
                       />

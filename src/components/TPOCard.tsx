@@ -10,10 +10,11 @@ interface TPOCardProps {
   isLocked?: boolean;
   onUnlockClick?: () => void;
   testData?: TPOTest;
+  customTitle?: string;
   bankType?: string;
 }
 
-export function TPOCard({ number, onStartTest, onReviewTest, onContinueTest, isLocked = false, onUnlockClick, testData, bankType = 'tpo' }: TPOCardProps) {
+export function TPOCard({ number, onStartTest, onReviewTest, onContinueTest, isLocked = false, onUnlockClick, testData, customTitle, bankType = 'tpo' }: TPOCardProps) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -155,7 +156,7 @@ export function TPOCard({ number, onStartTest, onReviewTest, onContinueTest, isL
       )}
 
       <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-4 py-3 min-h-[52px]">
-        <p className="font-['Inter',_sans-serif] text-white text-xl sm:text-2xl font-bold tracking-wide">TPO {number}</p>
+        <p className="font-['Inter',_sans-serif] text-white text-xl sm:text-2xl font-bold tracking-wide">{customTitle || `TPO ${number}`}</p>
         {testData && (testData.year || testData.month) && (
           <div className="flex items-center gap-1.5 shrink-0">
             {testData.year && (

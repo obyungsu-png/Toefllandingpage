@@ -340,6 +340,8 @@ function AppContent() {
           localStorage.setItem('amx_isLoggedIn', 'true');
           localStorage.setItem('amx_userName', name);
         } catch {}
+        invalidateAccessCache(); // 로그인 주체가 바뀌었을 수 있으니 캐시 버리고
+        prewarmAccess();         // 새 세션 기준으로 미리 검사
       }
       if (event === 'SIGNED_OUT') {
         setIsLoggedIn(false);
@@ -348,10 +350,17 @@ function AppContent() {
           localStorage.removeItem('amx_isLoggedIn');
           localStorage.removeItem('amx_userName');
         } catch {}
+        invalidateAccessCache();
       }
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // 로그인 상태(기존 세션 재방문 포함)면 접근 검사를 미리 예열해 첫 클릭 지연 제거
+  useEffect(() => {
+    if (isLoggedIn) prewarmAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn]);
 
   const [showReadingSection, setShowReadingSection] = useState(false);
   const [showFillBlanksTest, setShowFillBlanksTest] = useState(false);
@@ -2112,6 +2121,47 @@ function AppContent() {
     setCurrentSpeakingReviewScreen(null);
   };
 
+  // ───────── 유료 접근 검사 프리워밍 (검사는 그대로, 실행 시점만 앞당김) ─────────
+  // 유저가 카드 고르는 사이 백그라운드로 checkUserAccess를 미리 돌려 결과를 캐시한다.
+  // 클릭 시점에 신선한 결과가 있으면 대기 없이 즉시 사용, 없거나 오래됐으면 그때 await(폴백).
+  const accessCacheRef = useRef<{ result: Awaited<ReturnType<typeof checkUserAccess>>; at: number } | null>(null);
+  const accessInflightRef = useRef<Promise<Awaited<ReturnType<typeof checkUserAccess>>> | null>(null);
+  const ACCESS_CACHE_TTL = 60_000; // 60초
+  const ACCESS_CACHE_REFRESH_THRESHOLD = 45_000; // 45초 경과 시 백그라운드 갱신 (stale-while-revalidate)
+
+  /** 접근 검사를 실행하고 결과를 캐시한다. 이미 진행 중이면 그 Promise를 공유한다. */
+  const runAccessCheck = (): Promise<Awaited<ReturnType<typeof checkUserAccess>>> => {
+    if (accessInflightRef.current) return accessInflightRef.current;
+    const p = checkUserAccess(true)
+      .then((result) => {
+        accessCacheRef.current = { result, at: Date.now() };
+        return result;
+      })
+      .finally(() => {
+        accessInflightRef.current = null;
+      });
+    accessInflightRef.current = p;
+    return p;
+  };
+
+  /** 백그라운드 프리워밍 (에러는 조용히 무시 — 클릭 시점 폴백이 처리)
+   *  stale-while-revalidate: 45초까지는 스킵, 45~60초는 백그라운드 갱신, 60초 초과는 새 검사. */
+  const prewarmAccess = () => {
+    if (!isLoggedIn) return;
+    const cached = accessCacheRef.current;
+    if (!cached) { runAccessCheck().catch(() => {}); return; }
+    const age = Date.now() - cached.at;
+    if (age < ACCESS_CACHE_REFRESH_THRESHOLD) return; // 아직 충분히 신선하면 스킵
+    // 만료 임박 — 백그라운드에서 미리 갱신 (현재 캐시는 계속 사용)
+    runAccessCheck().catch(() => {});
+  };
+
+  /** 캐시 무효화 (활성화 성공/로그아웃 등 접근 상태가 바뀔 때 호출) */
+  const invalidateAccessCache = () => {
+    accessCacheRef.current = null;
+    accessInflightRef.current = null;
+  };
+
   const launchSection = async (
     testNumber: number,
     section: string,
@@ -2128,7 +2178,15 @@ function AppContent() {
       }
 
       // 2단계: 이미 활성화된 사용자라면 코드 모달 없이 바로 진입
-      const access = await checkUserAccess(true);
+      // 프리워밍으로 캐시된 신선한 결과가 있으면 대기 없이 즉시 사용.
+      // 없거나 오래됐으면 진행 중 검사에 합류하거나 새로 실행(폴백 — 기존 동작과 동일).
+      const cached = accessCacheRef.current;
+      let access: Awaited<ReturnType<typeof checkUserAccess>>;
+      if (cached && Date.now() - cached.at < ACCESS_CACHE_TTL) {
+        access = cached.result;
+      } else {
+        access = await runAccessCheck();
+      }
       if (access.allowed) {
         setShowActivationModal(false);
         setPendingPaidTest(null);
@@ -7545,6 +7603,9 @@ function AppContent() {
           setPendingPaidTest(null);
         }}
         onSuccess={() => {
+          // 활성화로 접근 상태가 바뀌었으니 캐시를 버리고 새 기준으로 다시 예열
+          invalidateAccessCache();
+          prewarmAccess();
           // 활성화 성공 시 pending 테스트 진입
           if (pendingPaidTest) {
             proceedLaunch(pendingPaidTest.testNumber, pendingPaidTest.section, pendingPaidTest.bankType, pendingPaidTest.mode);
