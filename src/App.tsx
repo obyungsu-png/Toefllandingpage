@@ -92,7 +92,7 @@ import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
-import { isFreeContent, checkUserAccess } from './utils/licenseUtils';
+import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
 import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
 import {
@@ -2124,17 +2124,35 @@ function AppContent() {
   // ───────── 유료 접근 검사 프리워밍 (검사는 그대로, 실행 시점만 앞당김) ─────────
   // 유저가 카드 고르는 사이 백그라운드로 checkUserAccess를 미리 돌려 결과를 캐시한다.
   // 클릭 시점에 신선한 결과가 있으면 대기 없이 즉시 사용, 없거나 오래됐으면 그때 await(폴백).
+  // localStorage 영구 캐시: 페이지 새로고침 후에도 첫 클릭이 즉시 응답하도록 결과를 저장.
+  const ACCESS_CACHE_STORAGE_KEY = 'amx_access_cache_v1';
   const accessCacheRef = useRef<{ result: Awaited<ReturnType<typeof checkUserAccess>>; at: number } | null>(null);
   const accessInflightRef = useRef<Promise<Awaited<ReturnType<typeof checkUserAccess>>> | null>(null);
   const ACCESS_CACHE_TTL = 60_000; // 60초
   const ACCESS_CACHE_REFRESH_THRESHOLD = 45_000; // 45초 경과 시 백그라운드 갱신 (stale-while-revalidate)
+
+  // 마운트 즉시 localStorage에서 캐시 복원 (첫 클릭 대기 시간 제거)
+  if (accessCacheRef.current === null) {
+    try {
+      const stored = localStorage.getItem(ACCESS_CACHE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { result: Awaited<ReturnType<typeof checkUserAccess>>; at: number };
+        if (parsed && parsed.result && typeof parsed.at === 'number' && Date.now() - parsed.at < ACCESS_CACHE_TTL) {
+          accessCacheRef.current = parsed;
+        }
+      }
+    } catch { /* ignore */ }
+  }
 
   /** 접근 검사를 실행하고 결과를 캐시한다. 이미 진행 중이면 그 Promise를 공유한다. */
   const runAccessCheck = (): Promise<Awaited<ReturnType<typeof checkUserAccess>>> => {
     if (accessInflightRef.current) return accessInflightRef.current;
     const p = checkUserAccess(true)
       .then((result) => {
-        accessCacheRef.current = { result, at: Date.now() };
+        const entry = { result, at: Date.now() };
+        accessCacheRef.current = entry;
+        // localStorage에 영구 저장 (새로고침 후에도 즉시 사용)
+        try { localStorage.setItem(ACCESS_CACHE_STORAGE_KEY, JSON.stringify(entry)); } catch { /* ignore */ }
         return result;
       })
       .finally(() => {
@@ -2156,10 +2174,24 @@ function AppContent() {
     runAccessCheck().catch(() => {});
   };
 
+  // 컴포넌트 마운트 즉시 예열 — localStorage 로그인 플래그로 isLoggedIn 대기 없이
+  // 백그라운드 검사를 최대한 일찍 시작. auth 세션 복원 전에 이미 검사가 진행 중.
+  useEffect(() => {
+    try {
+      const wasLoggedIn = localStorage.getItem('amx_isLoggedIn') === 'true';
+      if (wasLoggedIn && !accessCacheRef.current) {
+        runAccessCheck().catch(() => {});
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** 캐시 무효화 (활성화 성공/로그아웃 등 접근 상태가 바뀔 때 호출) */
   const invalidateAccessCache = () => {
     accessCacheRef.current = null;
     accessInflightRef.current = null;
+    try { localStorage.removeItem(ACCESS_CACHE_STORAGE_KEY); } catch { /* ignore */ }
+    invalidateUserProfileCache(); // 프로필 캐시도 함께 무효화
   };
 
   const launchSection = async (

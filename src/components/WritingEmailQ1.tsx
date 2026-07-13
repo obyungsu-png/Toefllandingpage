@@ -168,7 +168,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
           isMobile ? (showPassage ? 'block' : 'hidden') : 'block'
         }`}>
           <div className="max-w-2xl">
-            <p className="text-sm md:text-base text-gray-800 mb-4 md:mb-6 leading-relaxed">
+            <p className="text-sm md:text-base text-gray-800 mb-4 md:mb-6 leading-relaxed whitespace-pre-line">
               {writingQuestion?.emailScenario || ''}
             </p>
 

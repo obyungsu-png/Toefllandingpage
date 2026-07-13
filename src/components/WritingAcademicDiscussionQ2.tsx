@@ -195,13 +195,18 @@ export function WritingAcademicDiscussionQ2({
           </div>
 
           {/* Professor */}
+          {promptInstructions && (
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-3 font-['Inter',_sans-serif]">
+              {promptInstructions}
+            </h2>
+          )}
           <div className="flex flex-col items-center mb-3">
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-[#1e6b73] shadow">
               <ImageWithFallback src={professorImageUrl} alt={professorName} className="w-full h-full object-cover" />
             </div>
             <p className="font-bold text-[15px] md:text-[17px] text-gray-900 mt-2">{professorName}</p>
           </div>
-          <p className="text-[15px] md:text-[17px] text-gray-900 leading-7 font-medium">
+          <p className="text-[15px] md:text-[17px] text-gray-900 leading-7 font-medium whitespace-pre-line">
             {professorMessage || ''}
           </p>
         </div>
@@ -221,7 +226,7 @@ export function WritingAcademicDiscussionQ2({
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
+                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium whitespace-pre-line">
                   {student1Message || ''}
                 </p>
               </div>
@@ -237,7 +242,7 @@ export function WritingAcademicDiscussionQ2({
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
+                <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium whitespace-pre-line">
                   {student2Message || ''}
                 </p>
               </div>

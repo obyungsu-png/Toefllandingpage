@@ -125,16 +125,26 @@ export function calcExpireDate(months: number): string {
 
 // ───────────────────── 프로필 조회 ─────────────────────
 
-/** 현재 로그인 사용자의 프로필 조회 */
+/** 현재 로그인 사용자의 프로필 조회 (5분 캐싱) */
+const _profileCache = new Map<string, { profile: UserProfile; at: number }>();
+const PROFILE_CACHE_TTL = 5 * 60 * 1000; // 5분
+
 export async function getUserProfile(userId?: string): Promise<UserProfile | null> {
   let currentUserId = userId;
 
   if (!currentUserId) {
-    const { data: authData } = await supabase.auth.getUser();
-    currentUserId = authData.user?.id;
+    // getSession()은 로컬 세션만 읽으므로 네트워크 지연 없음
+    const { data: { session } } = await supabase.auth.getSession();
+    currentUserId = session?.user?.id;
   }
 
   if (!currentUserId) return null;
+
+  // 캐시 확인
+  const cached = _profileCache.get(currentUserId);
+  if (cached && Date.now() - cached.at < PROFILE_CACHE_TTL) {
+    return cached.profile;
+  }
 
   const { data, error } = await supabase
     .from('users_profile')
@@ -143,7 +153,15 @@ export async function getUserProfile(userId?: string): Promise<UserProfile | nul
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as UserProfile;
+  const profile = data as UserProfile;
+  _profileCache.set(currentUserId, { profile, at: Date.now() });
+  return profile;
+}
+
+/** 프로필 캐시 무효화 (활성화/로그아웃 시 호출) */
+export function invalidateUserProfileCache(userId?: string) {
+  if (userId) _profileCache.delete(userId);
+  else _profileCache.clear();
 }
 
 // ───────────────────── 활성화 코드 등록 ─────────────────────
@@ -215,6 +233,9 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
       })
       .eq('key_code', inputKeyCode.trim());
 
+    // 프로필 캐시 무효화 (활성화로 프로필이 변경되었으므로)
+    invalidateUserProfileCache(authData.user.id);
+
     const userTypeLabel = keyData.user_type === '내학생' ? '내 학생' : '외부 구매자';
     return {
       success: true,
@@ -236,17 +257,22 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
  */
 export async function checkUserAccess(checkPaidOnly = false): Promise<AccessCheckResult> {
   try {
-    // 1. 로그인 여부
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
+    // 1. 로그인 여부 — getSession()은 로컬 세션만 읽으므로 네트워크 지연 없음
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
       return {
         allowed: checkPaidOnly ? false : true,
         reason: checkPaidOnly ? '로그인이 필요한 서비스입니다.' : undefined,
       };
     }
 
-    // 2. 현재 로그인한 아이디의 프로필만 조회
-    const profile = await getUserProfile(authData.user.id);
+    // 2. 프로필 조회 + 기기 ID를 병렬로 실행 (네트워크 호출 1회 + 로컬)
+    const currentDevice = getDeviceType();
+    const [profile, currentDeviceId] = await Promise.all([
+      getUserProfile(session.user.id),
+      getDeviceUniqueId(),
+    ]);
+
     if (!profile) {
       return {
         allowed: checkPaidOnly ? false : true,
@@ -264,8 +290,6 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
     }
 
     // 4. 모든 사용자는 최초 등록된 기기 1대에서만 이용 가능
-    const currentDevice = getDeviceType();
-    const currentDeviceId = await getDeviceUniqueId();
     if (!currentDeviceId) {
       return {
         allowed: false,
@@ -282,7 +306,7 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
       const { error: bindError } = await supabase
         .from('users_profile')
         .update({ [currentDeviceColumn]: currentDeviceId })
-        .eq('user_id', authData.user.id);
+        .eq('user_id', session.user.id);
 
       if (bindError) {
         return {
