@@ -138,7 +138,7 @@ export function AcademicPassageScreen({
                           (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
                         }
                       }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
