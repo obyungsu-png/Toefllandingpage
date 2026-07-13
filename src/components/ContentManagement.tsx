@@ -1322,25 +1322,27 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.imageUrl = formData.imageUrl.trim();
     }
 
-    // Handle introImageUrl (Speaking intro screen)
-    if ((formData as any).introImageUrl?.trim() && !(formData as any).introImageFile) {
-      (question as any).introImageUrl = (formData as any).introImageUrl.trim();
-    } else if ((formData as any).introImageFile) {
+    // Handle introImageUrl (그룹 인트로 이미지 — 업로드/제거 모두 Supabase에 반영)
+    if ((formData as any).introImageFile) {
       try {
         (question as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images');
       } catch {
         (question as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile);
       }
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
+      (question as any).introImageUrl = ((formData as any).introImageUrl || '').trim();
     }
-    // Handle introAudioUrl (Speaking intro screen audio)
-    if ((formData as any).introAudioUrl?.trim() && !(formData as any).introAudioFile) {
-      (question as any).introAudioUrl = (formData as any).introAudioUrl.trim();
-    } else if ((formData as any).introAudioFile) {
+    // Handle introAudioUrl (그룹 인트로 오디오 — 업로드/제거 모두 Supabase에 반영)
+    if ((formData as any).introAudioFile) {
       try {
         (question as any).introAudioUrl = await uploadToStorage((formData as any).introAudioFile, 'listening-audio');
       } catch {
         (question as any).introAudioUrl = URL.createObjectURL((formData as any).introAudioFile);
       }
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
+      (question as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
     }
 
     if (formData.videoUrl.trim()) {
@@ -1706,12 +1708,17 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) }); }}
               />
             </div>
-            {/* Intro image + audio — Q1 (Listen & Repeat) and Q8 (Take an Interview) */}
-            {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
+            {/* Intro image + audio — Speaking (Listen & Repeat, Take an Interview) + Listening (Short Conversation, Announcements, Academic Lecture, etc.) */}
+            {(() => {
+              const qt = formData.questionType || '';
+              const isListeningType = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture', 'Listen and Response'].some(t => qt.includes(t));
+              const isSpeakingType = qt.includes('Listen and Repeat') || qt.includes('Take an Interview');
+              return isListeningType || isSpeakingType;
+            })() && (
               <div className="border border-rose-200 rounded-lg p-3 space-y-3 bg-white">
-                <p className="text-xs font-bold text-rose-600">🎬 인트로 화면 전용 (문제 화면과 다른 이미지·음성)</p>
+                <p className="text-xs font-bold text-rose-600">🎬 그룹 인트로 화면 전용 (문제 그룹 시작 시 표시되는 이미지·음성)</p>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 인트로 이미지</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 그룹 인트로 이미지 (선택)</label>
                   {(formData as any).introImageUrl && (
                     <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
                       <img src={(formData as any).introImageUrl} alt="intro" className="w-14 h-14 object-cover rounded" />
@@ -1725,7 +1732,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 인트로 오디오 (TTS 대체)</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
                   {(formData as any).introAudioUrl && (
                     <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
                       <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
@@ -2740,14 +2747,16 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).introImageFile) {
       try { (updatedQuestion as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images'); }
       catch { (updatedQuestion as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile); }
-    } else if ((formData as any).introImageUrl?.trim()) {
-      (updatedQuestion as any).introImageUrl = (formData as any).introImageUrl.trim();
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
+      (updatedQuestion as any).introImageUrl = ((formData as any).introImageUrl || '').trim();
     }
     if ((formData as any).introAudioFile) {
       try { (updatedQuestion as any).introAudioUrl = await uploadToStorage((formData as any).introAudioFile, 'listening-audio'); }
       catch { (updatedQuestion as any).introAudioUrl = URL.createObjectURL((formData as any).introAudioFile); }
-    } else if ((formData as any).introAudioUrl?.trim()) {
-      (updatedQuestion as any).introAudioUrl = (formData as any).introAudioUrl.trim();
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
+      (updatedQuestion as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
     }
     if (formData.videoFile) {
       try {
@@ -3015,12 +3024,17 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) } as any); }}
               />
             </div>
-            {/* 인트로 전용 (Listen and Repeat / Take an Interview) */}
-            {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
+            {/* 그룹 인트로 전용 (Speaking: Listen and Repeat / Take an Interview + Listening: Short Conversation / Announcements / Academic Lecture 등) */}
+            {(() => {
+              const qt = formData.questionType || '';
+              const isListeningType = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture', 'Listen and Response'].some(t => qt.includes(t));
+              const isSpeakingType = qt.includes('Listen and Repeat') || qt.includes('Take an Interview');
+              return isListeningType || isSpeakingType;
+            })() && (
               <div className="border border-rose-200 rounded-lg p-3 space-y-3 bg-white">
-                <p className="text-xs font-bold text-rose-600">🎬 인트로 화면 전용 (문제 화면과 다른 이미지·음성)</p>
+                <p className="text-xs font-bold text-rose-600">🎬 그룹 인트로 화면 전용 (문제 그룹 시작 시 표시되는 이미지·음성)</p>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 인트로 이미지</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🖼️ 그룹 인트로 이미지 (선택)</label>
                   {(formData as any).introImageUrl && (
                     <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
                       <img src={(formData as any).introImageUrl} alt="intro" className="w-14 h-14 object-cover rounded" />
@@ -3034,7 +3048,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 인트로 오디오 (TTS 대체)</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
                   {(formData as any).introAudioUrl && (
                     <div className="mb-2 flex items-center gap-3 p-2 bg-rose-50 border border-rose-200 rounded-lg">
                       <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />

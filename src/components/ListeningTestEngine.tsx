@@ -106,8 +106,8 @@ export function ListeningTestEngine({
       segments.push({
         kind: 'group-intro',
         title: intro.title,
-        imageUrl: q?.imageUrl || '',
-        audioUrl: q?.audioUrl || '',
+        imageUrl: q?.introImageUrl || q?.imageUrl || '',
+        audioUrl: q?.introAudioUrl || q?.audioUrl || '',
         questionType: qt,
         legacyKey: `group-intro-${questionIdx}`,
       });
