@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import speakingImage from 'figma:asset/03ae9301a488eccc1cb34fe11a468bf1d7314a0c.png';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingStopOverlay } from './SpeakingStopOverlay';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';

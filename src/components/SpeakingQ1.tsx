@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
@@ -46,12 +45,11 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
     }
 
     // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
-    const textToRead = questionText ||
-      "You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.";
+    if (!questionText) return;
 
     setIsAudioPlaying(true);
     return speakWithBritishFemaleVoice({
-      text: textToRead,
+      text: questionText,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
@@ -122,13 +120,13 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       <div className="flex-1 overflow-auto bg-white p-4 md:p-12">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center">
-            {questionText || 'You are learning to welcome visitors to the zoo. Listen to your manager and repeat what she says. Repeat only once.'}
+            {questionText}
           </h1>
 
           <div className="flex justify-center my-6 md:my-8">
             <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
               <ImageWithFallback
-                src={imageUrl || zooMapImage}
+                src={imageUrl}
                 alt="Zoo Map"
                 className="w-full h-full object-cover"
               />

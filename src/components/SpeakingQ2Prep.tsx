@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
-import speakingImage from 'figma:asset/a71b28147ebac8a118893f23f167e5cc4828ff8d.png';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -152,12 +151,12 @@ export function SpeakingQ2Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
         <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText || 'Listen and repeat only once.'}</h1>
+          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
         </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
           <ImageWithFallback
-            src={imageUrl || speakingImage}
+            src={imageUrl}
             alt="Speaking scene"
             className="w-full h-full object-cover"
           />

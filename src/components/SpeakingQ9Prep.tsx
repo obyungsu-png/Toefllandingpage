@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
-import speakingImage from 'figma:asset/03ae9301a488eccc1cb34fe11a468bf1d7314a0c.png';
 import { VolumeControl } from './VolumeControl';
 import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { ImageWithFallback } from './figma/ImageWithFallback';
