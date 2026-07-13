@@ -1741,25 +1741,27 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introImageFile: f, introImageUrl: URL.createObjectURL(f) } as any); }}
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
-              {(formData as any).introAudioUrl && (
-                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
-                  <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
-                  <button type="button" onClick={() => setFormData({ ...formData, introAudioUrl: '', introAudioFile: null } as any)}
-                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
-                </div>
-              )}
-              <input type="file" accept="audio/*" className="text-sm w-full"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
-              />
-            </div>
+            {section !== 'Writing' && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
+                {(formData as any).introAudioUrl && (
+                  <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                    <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
+                    <button type="button" onClick={() => setFormData({ ...formData, introAudioUrl: '', introAudioFile: null } as any)}
+                      className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                  </div>
+                )}
+                <input type="file" accept="audio/*" className="text-sm w-full"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
+                />
+              </div>
+            )}
           </div>
         )}
 
 
-        {/* Audio Upload (for Listening/Speaking/Writing) */}
-        {(section === 'Listening' || section === 'Speaking' || section === 'Writing') && (
+        {/* Audio Upload (for Listening/Speaking — Writing은 오디오 미지원) */}
+        {(section === 'Listening' || section === 'Speaking') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Audio File
@@ -1794,8 +1796,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
-        {/* Image Upload for Reading/Writing questions */}
-        {(section === 'Reading' || section === 'Writing') && (
+        {/* Image Upload for Reading/Writing/Speaking questions */}
+        {(section === 'Reading' || section === 'Writing' || section === 'Speaking') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Image File (Optional)
@@ -3072,24 +3074,26 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introImageFile: f, introImageUrl: URL.createObjectURL(f) } as any); }}
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
-              {(formData as any).introAudioUrl && (
-                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
-                  <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
-                  <button type="button" onClick={() => setFormData({ ...formData, introAudioUrl: '', introAudioFile: null } as any)}
-                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
-                </div>
-              )}
-              <input type="file" accept="audio/*" className="text-sm w-full"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
-              />
-            </div>
+            {section !== 'Writing' && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">🔊 그룹 인트로 오디오 (선택)</label>
+                {(formData as any).introAudioUrl && (
+                  <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                    <audio controls src={(formData as any).introAudioUrl} className="h-8 flex-1" />
+                    <button type="button" onClick={() => setFormData({ ...formData, introAudioUrl: '', introAudioFile: null } as any)}
+                      className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                  </div>
+                )}
+                <input type="file" accept="audio/*" className="text-sm w-full"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
+                />
+              </div>
+            )}
           </div>
         )}
 
-        {/* Audio Upload (for Listening/Speaking/Writing) */}
-        {(section === 'Listening' || section === 'Speaking' || section === 'Writing') && (
+        {/* Audio Upload (for Listening/Speaking — Writing은 오디오 미지원) */}
+        {(section === 'Listening' || section === 'Speaking') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Audio File
