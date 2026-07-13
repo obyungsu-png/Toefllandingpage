@@ -139,7 +139,7 @@ function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
   if (question.options?.length) {
     question.options.forEach((opt, i) =>
-      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt}`, indent: true }));
+      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
   }
 
   if (mode === 'annotated') {
@@ -171,7 +171,7 @@ function listeningLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
   if (question.options?.length) {
     question.options.forEach((opt, i) =>
-      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt}`, indent: true }));
+      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
   }
   if (question.audioUrl) lines.push({ text: 'Audio (click to listen)', link: question.audioUrl });
   if (question.videoUrl) lines.push({ text: 'Video (click to watch)', link: question.videoUrl });
@@ -213,7 +213,7 @@ function speakingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   // Answer options (independent task choices etc.)
   if (question.options?.length) {
     question.options.forEach((opt, i) =>
-      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt}`, indent: true }));
+      lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
   }
 
   // Audio / video — short clickable link
@@ -269,7 +269,7 @@ function writingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
     if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
     if (question.options?.length) {
       question.options.forEach((opt, i) =>
-        lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt}`, indent: true }));
+        lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
     }
   }
 
