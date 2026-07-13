@@ -7,6 +7,8 @@ import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
+import { ReadingReviewToolbar } from './ReadingReviewToolbar';
+import { WordPopup } from './WordPopup';
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
@@ -110,6 +112,13 @@ export function QuestionReviewFull({
   const [playbackRate, setPlaybackRate] = useState(1);
   const progressInterval = useRef<number | null>(null);
   const listeningAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Reading review — 하이라이트/밑줄/단어 뜻 팝업 도구 상태
+  const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
+  const [language, setLanguage] = useState<'en' | 'ko'>(() => {
+    return (localStorage.getItem('wordLookupLanguage') as 'en' | 'ko') || 'en';
+  });
+  const [popupData, setPopupData] = useState<{ word: string; context?: string; x: number; y: number } | null>(null);
 
   // Speaking-specific state
   // Real recordings — load from DB (30-day retention) with sessionStorage fallback
@@ -355,6 +364,43 @@ export function QuestionReviewFull({
       else next.add(qId);
       return next;
     });
+  };
+
+  // Reading review — 단어 뜻 언어 전환 핸들러
+  const handleLanguageChange = (lang: 'en' | 'ko') => {
+    setLanguage(lang);
+    localStorage.setItem('wordLookupLanguage', lang);
+  };
+
+  // Reading review — 하이라이트/밑줄 모두 지우기
+  const handleClearAllHighlights = () => {
+    setActiveTool(null);
+    // TODO: Supabase에 저장된 하이라이트 삭제
+  };
+
+  // Reading review — 지문 영역 mouseup 핸들러
+  const handlePassageMouseUp = (e: React.MouseEvent, passageText: string) => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    if (!selectedText) return;
+
+    // 단어 하나인 경우만 팝업 표시 (단어 수 제한)
+    const words = selectedText.split(/\s+/);
+    if (words.length === 1 && activeTool === null) {
+      // 단어 팝업 표시
+      setPopupData({
+        word: selectedText,
+        context: passageText,
+        x: e.clientX,
+        y: e.clientY,
+      });
+      // 선택 해제
+      selection?.removeAllRanges();
+    } else if (activeTool) {
+      // 하이라이트/밑줄 적용 (간단한 버전 — 실제 구현에서는 Range API 사용)
+      // TODO: Supabase에 저장
+      selection?.removeAllRanges();
+    }
   };
 
   // Reset audio states on question change
@@ -806,13 +852,25 @@ export function QuestionReviewFull({
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
-              <div className="w-full md:w-1/2 order-1 md:order-none">
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto" style={{ maxHeight: '70vh' }}>
+              <div className="w-full md:w-1/2 order-1 md:order-none flex flex-col gap-3">
+                {/* Reading review 도구 모음 — 하이라이트/밑줄/단어 뜻 언어 전환 */}
+                <ReadingReviewToolbar
+                  activeTool={activeTool}
+                  onToolChange={setActiveTool}
+                  onClearAll={handleClearAllHighlights}
+                  language={language}
+                  onLanguageChange={handleLanguageChange}
+                />
+                <div
+                  className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto"
+                  style={{ maxHeight: '70vh' }}
+                  onMouseUp={(e) => handlePassageMouseUp(e, currentQuestion?.passageText || '')}
+                >
                   {(() => {
                     // Use passageText from the already-correctly-mapped currentQuestion
                     // (currentQuestion is built with correct CMS offset for Q11-20)
                     const rawPassage = currentQuestion?.passageText || null;
-                    
+
                     // Also try to get passageTitle from the mapped CMS question
                     const readingM1Offset = activeModule === 1 ? 10 : 0;
                     const isFBQ = (q: any) => {
@@ -823,7 +881,7 @@ export function QuestionReviewFull({
                     const mappedCmsQ = filteredCmsQuestions[currentQuestionIndex - readingM1Offset];
                     const passageTitle = mappedCmsQ?.passageTitle || null;
                     const emailMeta = mappedCmsQ?.emailMeta || null; // e.g. {to, from, date, subject}
-                    
+
                     // Parse JSON template if needed
                     let passageContent: string | null = null;
                     if (rawPassage) {
@@ -834,7 +892,7 @@ export function QuestionReviewFull({
                         else passageContent = rawPassage;
                       } catch { passageContent = rawPassage; }
                     }
-                    
+
                     return passageContent ? (
                       <>
                         {passageTitle && (
@@ -1459,6 +1517,18 @@ export function QuestionReviewFull({
             : undefined
         }
       />
+
+      {/* 단어 뜻 팝업 — 리딩 review에서 단어 클릭 시 표시 */}
+      {popupData && (
+        <WordPopup
+          word={popupData.word}
+          context={popupData.context}
+          language={language}
+          x={popupData.x}
+          y={popupData.y}
+          onClose={() => setPopupData(null)}
+        />
+      )}
     </div>
   );
 }
