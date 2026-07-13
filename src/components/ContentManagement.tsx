@@ -103,6 +103,7 @@ export interface TPOQuestion {
   avatar2ImageUrl?: string; // Answer person avatar
   words?: string[]; // Words to arrange
   sentenceEnding?: '.' | '?'; // Period or question mark at end of Build a Sentence
+  context?: string; // Build a Sentence 상황 설명 (질문 위에 표시되는 맥락)
   // For Writing "Academic Discussion" (Q11+, 두번째 라이팅 문제 — 교수님 + 학생 두 명)
   professorImageUrl?: string;
   professorName?: string;
@@ -1223,6 +1224,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     avatar2ImageUrl: '',
     words: '' as string, // space-separated words
     sentenceEnding: '.' as '.' | '?', // Period or question mark at end of sentence
+    context: '' as string, // Build a Sentence 상황 설명
     // Academic Discussion (두번째 라이팅 문제) fields
     professorImageFile: null as File | null,
     professorImageUrl: '',
@@ -1380,6 +1382,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.words = formData.words.split(/[,]+/).map(w => w.trim()).filter(Boolean);
     }
     question.sentenceEnding = formData.sentenceEnding || '.';
+    // Build a Sentence 상황 설명 (context)
+    if (formData.context.trim()) question.context = formData.context.trim();
 
     // Academic Discussion: professor + 2 students avatars + messages
     if (formData.professorImageUrl.trim()) {
@@ -2112,6 +2116,34 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               <span className="text-xs font-normal text-gray-500">— 두 사람의 대화로 구성되는 문장 배열 문제용</span>
             </p>
 
+            {/* 질문 텍스트 (avatar1이 말하는 질문) */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                💬 질문 텍스트 (질문자가 말하는 내용)
+              </label>
+              <textarea
+                rows={2}
+                value={formData.questionText}
+                onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent resize-none"
+                placeholder="예: Did you book your flight yet?"
+              />
+            </div>
+
+            {/* 상황 설명 (context) */}
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                📝 상황 설명 (context — 질문 위에 표시되는 맥락, 선택 사항)
+              </label>
+              <textarea
+                rows={2}
+                value={formData.context}
+                onChange={(e) => setFormData({ ...formData, context: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent resize-none"
+                placeholder="예: Two friends are talking about travel plans."
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
               {/* Avatar 1 — Question Person */}
               <div className="bg-white rounded-lg p-3 border border-gray-200">
@@ -2681,6 +2713,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     blanks: question.blanks || [] as Array<{ answer: string; maxLength: number }>,
     words: Array.isArray((question as any).words) ? (question as any).words.join(', ') : '',
     sentenceEnding: ((question as any).sentenceEnding || '.') as '.' | '?',
+    context: (question as any).context || '',
+    // Build Sentence 아바타 (편집 모드에서도 로드되도록)
+    avatar1ImageUrl: (question as any).avatar1ImageUrl || '',
+    avatar1ImageFile: null as File | null,
+    avatar2ImageUrl: (question as any).avatar2ImageUrl || '',
+    avatar2ImageFile: null as File | null,
     professorName: (question as any).professorName || '',
     professorMessage: (question as any).professorMessage || '',
     professorImageUrl: (question as any).professorImageUrl || '',
@@ -2783,11 +2821,34 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
         return;
       }
     }
-    // Build Sentence words + sentenceEnding
+    // Build Sentence words + sentenceEnding + context
     if ((formData as any).words?.trim()) {
       updatedQuestion.words = (formData as any).words.split(/[,]+/).map((w: string) => w.trim()).filter(Boolean);
     }
     updatedQuestion.sentenceEnding = (formData as any).sentenceEnding || '.';
+    // Build a Sentence 상황 설명 (context)
+    if ((formData as any).context?.trim()) {
+      updatedQuestion.context = (formData as any).context.trim();
+    } else {
+      (updatedQuestion as any).context = undefined;
+    }
+    // Build Sentence avatars (편집 모드에서도 아바타 이미지 저장)
+    if ((formData as any).avatar1ImageUrl?.trim() && !(formData as any).avatar1ImageUrl.startsWith('blob:')) {
+      updatedQuestion.avatar1ImageUrl = (formData as any).avatar1ImageUrl.trim();
+    } else if ((formData as any).avatar1ImageFile) {
+      try { updatedQuestion.avatar1ImageUrl = await uploadToStorage((formData as any).avatar1ImageFile, 'writing-avatars'); }
+      catch { updatedQuestion.avatar1ImageUrl = URL.createObjectURL((formData as any).avatar1ImageFile); }
+    } else {
+      (updatedQuestion as any).avatar1ImageUrl = undefined;
+    }
+    if ((formData as any).avatar2ImageUrl?.trim() && !(formData as any).avatar2ImageUrl.startsWith('blob:')) {
+      updatedQuestion.avatar2ImageUrl = (formData as any).avatar2ImageUrl.trim();
+    } else if ((formData as any).avatar2ImageFile) {
+      try { updatedQuestion.avatar2ImageUrl = await uploadToStorage((formData as any).avatar2ImageFile, 'writing-avatars'); }
+      catch { updatedQuestion.avatar2ImageUrl = URL.createObjectURL((formData as any).avatar2ImageFile); }
+    } else {
+      (updatedQuestion as any).avatar2ImageUrl = undefined;
+    }
 
     onSubmit(updatedQuestion);
   };
@@ -3316,6 +3377,34 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             <p className="text-sm font-bold text-[#2d7a7c]">✏️ Build Sentence (문장 배열) 설정
               <span className="text-xs font-normal text-gray-500 ml-1">— 두 사람의 대화로 구성되는 문장 배열 문제용</span>
             </p>
+
+            {/* 질문 텍스트 (avatar1이 말하는 질문) */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                💬 질문 텍스트 (질문자가 말하는 내용)
+              </label>
+              <textarea
+                rows={2}
+                value={formData.questionText}
+                onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent resize-none"
+                placeholder="예: Did you book your flight yet?"
+              />
+            </div>
+
+            {/* 상황 설명 (context) */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                📝 상황 설명 (context — 질문 위에 표시되는 맥락, 선택 사항)
+              </label>
+              <textarea
+                rows={2}
+                value={(formData as any).context || ''}
+                onChange={(e) => setFormData({ ...formData, context: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent resize-none"
+                placeholder="예: Two friends are talking about travel plans."
+              />
+            </div>
 
             {/* Avatar selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -5047,6 +5136,24 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
+    // Writing: Build a Sentence 예시 (문장 배열 문제)
+    // correctAnswer에 정답 문장을 넣으면 파싱 시 words가 자동으로 분할됨
+    const writingBsExample = section === 'Writing' ? [
+      '1',
+      'Build a Sentence',
+      '쉬움',
+      '',
+      '',
+      '',
+      '',
+      'Did you book your flight yet?',
+      '', '', '', '',
+      'I have already booked my flight.',
+      "'I have already booked my flight.' 순서로 배열하는 문장 배열 문제입니다. correctAnswer에 전체 문장을 입력하면 words가 자동 분할됩니다.",
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // BOM for UTF-8 so Excel opens Korean correctly
     const rows = [
       header,
@@ -5063,6 +5170,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       listeningM2MediumExample,
       speakingExample,
       writingExample,
+      writingBsExample,
     ].filter(Boolean);
     const csv = '\uFEFF' + rows.join('\n') + '\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -5176,6 +5284,22 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               }
             }
 
+            // Build a Sentence: correctAnswer에서 words와 sentenceEnding 자동 파생
+            const isBuildSentence = finalType.toLowerCase().includes('build a sentence') || qType.toLowerCase().includes('build a sentence');
+            let bsWords: string[] | undefined;
+            let bsSentenceEnding: '.' | '?' | undefined;
+            if (isBuildSentence) {
+              const answerSentence = get(iAns).trim();
+              if (answerSentence) {
+                // 끝부호 추출 (마침표/물음표)
+                const lastChar = answerSentence.slice(-1);
+                bsSentenceEnding = lastChar === '?' ? '?' : '.';
+                // 끝부호 제거 후 단어 분할
+                const stripped = answerSentence.replace(/[.?]$/, '').trim();
+                bsWords = stripped.split(/\s+/).filter(Boolean);
+              }
+            }
+
             questions.push({
               id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
               questionNumber,
@@ -5189,6 +5313,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               scriptText: get(iScript) || undefined,
               difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
               ...(blanks ? { blanks } : {}),
+              ...(bsWords ? { words: bsWords } : {}),
+              ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
             } as TPOQuestion);
           } catch (rowErr: any) {
             errors.push(`행 ${r + 1}: ${rowErr?.message || '파싱 오류'}`);

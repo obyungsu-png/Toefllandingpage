@@ -3,8 +3,6 @@ import { MobileFooter } from './MobileFooter';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ToeflAiWidget } from './ToeflAiWidget';
 
-const fixedDiscussionPhoto = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face';
-
 interface WritingAcademicDiscussionQ2Props {
   onBack: () => void;
   onNext: () => void;
@@ -30,7 +28,7 @@ export function WritingAcademicDiscussionQ2({
   onHome,
   onVolumeClick,
   professorImageUrl,
-  professorName = 'Dr. Achebe',
+  professorName,
   professorMessage,
   student1ImageUrl,
   student1Name,
@@ -183,7 +181,7 @@ export function WritingAcademicDiscussionQ2({
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-5">
             <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
               <span className="font-bold">Instructions: </span>
-              {promptTitle || "Your professor is teaching a class on social studies. Write a post responding to the professor's question. In your response you should:"}
+              {promptTitle || ''}
             </p>
             <ul className="mt-2 ml-4 space-y-1">
               <li className="flex items-start gap-2 text-[15px] md:text-[16px] text-gray-800 leading-6 font-medium">
@@ -201,12 +199,12 @@ export function WritingAcademicDiscussionQ2({
           {/* Professor */}
           <div className="flex flex-col items-center mb-3">
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 overflow-hidden border-4 border-[#1e6b73] shadow">
-              <ImageWithFallback src={professorImageUrl || fixedDiscussionPhoto} alt={professorName} className="w-full h-full object-cover" />
+              <ImageWithFallback src={professorImageUrl} alt={professorName} className="w-full h-full object-cover" />
             </div>
             <p className="font-bold text-[15px] md:text-[17px] text-gray-900 mt-2">{professorName}</p>
           </div>
           <p className="text-[15px] md:text-[17px] text-gray-900 leading-7 font-medium">
-            {professorMessage || `Volunteerism refers to the act of offering your time and service without financial compensation to benefit a community, organization, or cause. While many people volunteer mainly to help others, some institutions have mandatory volunteer programs. High schools are one example, where students may be required to complete a certain number of volunteer hours to graduate. What do you think? Should high school students be required to do volunteer work? Why or why not?`}
+            {professorMessage || ''}
           </p>
 
           {/* AI Tutor */}
@@ -239,15 +237,15 @@ export function WritingAcademicDiscussionQ2({
             <div className="flex items-start gap-3 mb-4">
               <div className="flex flex-col items-center flex-shrink-0 w-14">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-gray-300">
-                  <ImageWithFallback src={student1ImageUrl || fixedDiscussionPhoto} alt="Student 1" className="w-full h-full object-cover" />
+                  <ImageWithFallback src={student1ImageUrl} alt="Student 1" className="w-full h-full object-cover" />
                 </div>
                 <p className="text-[11px] text-gray-600 font-semibold mt-1 text-center leading-tight">
-                  {student1Name || 'Student 1'}
+                  {student1Name || ''}
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
                 <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
-                  {student1Message || `Yes, I think high schools should require volunteer hours because it helps students build a sense of civic responsibility. Many teenagers don't naturally think about helping others, and this requirement can introduce them to the idea that their time and effort can make a real difference in the lives of others.`}
+                  {student1Message || ''}
                 </p>
               </div>
             </div>
@@ -255,15 +253,15 @@ export function WritingAcademicDiscussionQ2({
             <div className="flex items-start gap-3">
               <div className="flex flex-col items-center flex-shrink-0 w-14">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-gray-300">
-                  <ImageWithFallback src={student2ImageUrl || fixedDiscussionPhoto} alt="Student 2" className="w-full h-full object-cover" />
+                  <ImageWithFallback src={student2ImageUrl} alt="Student 2" className="w-full h-full object-cover" />
                 </div>
                 <p className="text-[11px] text-gray-600 font-semibold mt-1 text-center leading-tight">
-                  {student2Name || 'Student 2'}
+                  {student2Name || ''}
                 </p>
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-200">
                 <p className="text-[15px] md:text-[16px] text-gray-900 leading-7 font-medium">
-                  {student2Message || `I don't think volunteer hours should be required because many students already have limited free time. Some have part-time jobs or take care of younger siblings after school. Adding a mandatory volunteer requirement could create extra stress and make it harder for those students to balance their existing responsibilities.`}
+                  {student2Message || ''}
                 </p>
               </div>
             </div>

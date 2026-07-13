@@ -12,6 +12,7 @@ export interface WritingBuildSentenceProps {
   questionText?: string;
   words?: string[];
   sentenceEnding?: '.' | '?';
+  context?: string;
 }
 
 interface WritingBuildSentenceBaseProps extends WritingBuildSentenceProps {
@@ -29,6 +30,7 @@ export function WritingBuildSentenceBase({
   questionText,
   words,
   sentenceEnding = '.',
+  context,
   questionNumber,
   slotCount,
 }: WritingBuildSentenceBaseProps) {
@@ -243,104 +245,141 @@ export function WritingBuildSentenceBase({
 
       <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-8 md:mb-16 text-center">
+          <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 text-center">
             Make an appropriate sentence.
           </h2>
 
-          <div className="space-y-8 md:space-y-12 mt-16 md:mt-28 px-2 md:pl-12 md:pr-8">
-            <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
-                {avatar1ImageUrl ? (
-                  <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="text-base md:text-xl font-['Inter',_sans-serif] text-gray-800">
-                {questionText || ''}
-              </div>
+          {/* 상황 설명 (context) — 질문 위에 표시되는 맥락 */}
+          {context && (
+            <div className="mb-6 md:mb-10 mx-auto max-w-3xl bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 md:px-6 md:py-4">
+              <p className="text-sm md:text-base text-gray-700 leading-relaxed font-['Inter',_sans-serif]">
+                {context}
+              </p>
             </div>
+          )}
 
-            <div className="flex items-end gap-4 md:gap-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
-                {avatar2ImageUrl ? (
-                  <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
+          <div className="space-y-6 md:space-y-10 mt-10 md:mt-20 px-2 md:pl-12 md:pr-8">
+            {/* 질문 영역 (avatar1) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 md:mb-3 ml-2">
+                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-[#1e6b73] uppercase tracking-wide">
+                  Question
+                </span>
+                <div className="flex-1 h-px bg-gray-200"></div>
               </div>
-
-              <div className="flex-1 overflow-x-auto">
-                <div className={`flex flex-wrap items-end ${isComplete ? 'gap-0.5 md:gap-1' : 'gap-1.5 md:gap-2'}`}>
-                  {(() => {
-                    let slotIdx = 0;
-                    return parsedWords.map((pw, i) => {
-                      if (pw.prefilled) {
-                        // Fixed text — not draggable
-                        return (
-                          <span key={`pre-${i}`} className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] pb-2 whitespace-nowrap">
-                            {pw.text}
-                          </span>
-                        );
-                      }
-                      const si = slotIdx++;
-                      const word = sentenceSlots[si];
-                      return (
-                        <div
-                          key={`slot-${si}`}
-                          onClick={() => word ? handleSlotClick(si) : undefined}
-                          onDragEnter={(e) => handleDragEnter(e, si)}
-                          onDragOver={(e) => handleDragOver(e, si)}
-                          onDragLeave={() => { if (dragOverSlotIndex === si) setDragOverSlotIndex(null); }}
-                          onDrop={(e) => handleDrop(e, si)}
-                          className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
-                          style={{ minWidth: word ? '0px' : getEmptySlotWidth(), width: word ? 'fit-content' : getEmptySlotWidth(), paddingBottom: '4px' }}
-                        >
-                          <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
-                            <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
-                          </div>
-                          <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
-                        </div>
-                      );
-                    });
-                  })()}
-                  <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">{sentenceEnding}</span>
+              <div className="flex items-center gap-4 md:gap-6">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
+                  {avatar1ImageUrl ? (
+                    <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="text-base md:text-xl font-['Inter',_sans-serif] text-gray-800">
+                  {questionText || ''}
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 md:mt-16 flex flex-wrap gap-2 md:gap-3 justify-center">
-              {draggableWords.map((word, index) => {
-                const usedCount = getUsedCount(word);
-                const isSelected = getOccurrenceIndex(index) <= usedCount;
+            {/* 답변 영역 (avatar2) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 md:mb-3 ml-2">
+                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-[#1e6b73] uppercase tracking-wide">
+                  Response
+                </span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+              <div className="flex items-end gap-4 md:gap-6">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
+                  {avatar2ImageUrl ? (
+                    <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
 
-                return (
-                  <button
-                    key={`${word}-${index}`}
-                    type="button"
-                    draggable={!isSelected}
-                    onDragStart={(e) => handleDragStart(e, word)}
-                    onDragEnd={handleDragEnd}
-                    className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
-                      isSelected
-                        ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
-                        : 'bg-transparent text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
-                    }`}
-                  >
-                    <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
-                      {word}
-                    </span>
-                  </button>
-                );
-              })}
+                <div className="flex-1 overflow-x-auto">
+                  <div className={`flex flex-wrap items-end ${isComplete ? 'gap-0.5 md:gap-1' : 'gap-1.5 md:gap-2'}`}>
+                    {(() => {
+                      let slotIdx = 0;
+                      return parsedWords.map((pw, i) => {
+                        if (pw.prefilled) {
+                          // Fixed text — not draggable
+                          return (
+                            <span key={`pre-${i}`} className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] pb-2 whitespace-nowrap">
+                              {pw.text}
+                            </span>
+                          );
+                        }
+                        const si = slotIdx++;
+                        const word = sentenceSlots[si];
+                        return (
+                          <div
+                            key={`slot-${si}`}
+                            onClick={() => word ? handleSlotClick(si) : undefined}
+                            onDragEnter={(e) => handleDragEnter(e, si)}
+                            onDragOver={(e) => handleDragOver(e, si)}
+                            onDragLeave={() => { if (dragOverSlotIndex === si) setDragOverSlotIndex(null); }}
+                            onDrop={(e) => handleDrop(e, si)}
+                            className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
+                            style={{ minWidth: word ? '0px' : getEmptySlotWidth(), width: word ? 'fit-content' : getEmptySlotWidth(), paddingBottom: '4px' }}
+                          >
+                            <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
+                              <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
+                            </div>
+                            <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
+                          </div>
+                        );
+                      });
+                    })()}
+                    <span className="text-lg md:text-xl font-['Inter',_sans-serif] text-gray-800 pb-2">{sentenceEnding}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Word Bank — 드래그할 단어들 */}
+            <div className="mt-8 md:mt-12">
+              <div className="flex items-center gap-2 mb-3 md:mb-4 justify-center">
+                <div className="flex-1 h-px bg-gray-200 max-w-[80px]"></div>
+                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-gray-500 uppercase tracking-wide">
+                  Word Bank
+                </span>
+                <div className="flex-1 h-px bg-gray-200 max-w-[80px]"></div>
+              </div>
+              <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
+                {draggableWords.map((word, index) => {
+                  const usedCount = getUsedCount(word);
+                  const isSelected = getOccurrenceIndex(index) <= usedCount;
+
+                  return (
+                    <button
+                      key={`${word}-${index}`}
+                      type="button"
+                      draggable={!isSelected}
+                      onDragStart={(e) => handleDragStart(e, word)}
+                      onDragEnd={handleDragEnd}
+                      className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
+                        isSelected
+                          ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
+                          : 'bg-transparent text-[#343434] cursor-grab active:cursor-grabbing hover:bg-[#faf7f0]'
+                      }`}
+                    >
+                      <span className="text-sm md:text-lg font-['Inter',_sans-serif]">
+                        {word}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

@@ -24,6 +24,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showAiTutor, setShowAiTutor] = useState(false);
+  const [showPassage, setShowPassage] = useState(false);
 
 
   useEffect(() => {
@@ -168,19 +169,15 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
         }`}>
           <div className="max-w-2xl">
             <p className="text-sm md:text-base text-gray-800 mb-4 md:mb-6 leading-relaxed">
-              {writingQuestion?.emailScenario || 'A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.'}
+              {writingQuestion?.emailScenario || ''}
             </p>
-            
+
             <p className="text-sm md:text-base text-gray-800 font-bold mb-3 md:mb-4">
-              {writingQuestion?.emailInstruction || 'Write an email to the editor of the magazine. In your email, do the following.'}
+              {writingQuestion?.emailInstruction || ''}
             </p>
-            
+
             <ul className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-              {(writingQuestion?.emailBullets?.filter(b => b.trim()) || [
-                'Tell the editor what you like about the new magazine.',
-                'Describe the problem you experienced.',
-                'Ask about the status of your submissions.',
-              ]).map((bullet, i) => (
+              {(writingQuestion?.emailBullets?.filter(b => b.trim()) || []).map((bullet, i) => (
                 <li key={i} className="flex items-start gap-2 md:gap-3">
                   <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0"></span>
                   <span className="text-sm md:text-base text-gray-800">{bullet}</span>
@@ -203,10 +200,10 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
             
             <div className="mb-4">
               <div className="text-sm md:text-base text-gray-700 mb-2">
-                <span className="font-bold">To:</span> {writingQuestion?.emailTo || 'editor@sunshinepoetymagazine.com'}
+                <span className="font-bold">To:</span> {writingQuestion?.emailTo || ''}
               </div>
               <div className="text-sm md:text-base text-gray-700 mb-4 md:mb-6">
-                <span className="font-bold">Subject:</span> {writingQuestion?.emailSubject || 'Problem using submission form'}
+                <span className="font-bold">Subject:</span> {writingQuestion?.emailSubject || ''}
               </div>
             </div>
 
