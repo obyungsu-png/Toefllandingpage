@@ -54,6 +54,7 @@ export function TPOPage({
 }: TPOPageProps) {
 
   const [yearFilter, setYearFilter] = useState<number | 'all'>('all');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [monthFilter, setMonthFilter] = useState<number | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
@@ -95,8 +96,9 @@ export function TPOPage({
       if (test.testType === 'TPO' && test.testNumber > max) return test.testNumber;
       return max;
     }, 0);
-    return Array.from({ length: maxTestNumber }, (_, i) => i + 1);
-  }, [tpoTests]);
+    const numbers = Array.from({ length: maxTestNumber }, (_, i) => i + 1);
+    return sortOrder === 'desc' ? numbers.slice().reverse() : numbers;
+  }, [tpoTests, sortOrder]);
 
   const filteredNumbers = useMemo(() => {
     if (yearFilter === 'all' && monthFilter === 'all') return allTestNumbers;
@@ -205,6 +207,23 @@ export function TPOPage({
       {/* Filter Section */}
       <div className="border-b border-gray-200">
         <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-5 space-y-3 md:space-y-4">
+
+          {/* Sort order toggle */}
+          <div className="flex items-center gap-3 md:gap-5">
+            <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">정렬</span>
+            <div className="flex gap-2 md:gap-3">
+              <FilterPill
+                active={sortOrder === 'asc'}
+                label="번호 낮은순 ↑"
+                onClick={() => setSortOrder('asc')}
+              />
+              <FilterPill
+                active={sortOrder === 'desc'}
+                label="번호 높은순 ↓"
+                onClick={() => setSortOrder('desc')}
+              />
+            </div>
+          </div>
 
           {/* Row 1: Year */}
           <div className="flex items-center gap-3 md:gap-5">
