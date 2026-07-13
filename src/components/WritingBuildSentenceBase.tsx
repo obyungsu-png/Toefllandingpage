@@ -43,6 +43,20 @@ export function WritingBuildSentenceBase({
   }));
   const draggableWords = parsedWords.filter(w => !w.prefilled).map(w => w.text);
   const effectiveSlotCount = draggableWords.length; // blanks = draggable words only
+
+  // Shuffle the Word Bank display order so it doesn't just show the words
+  // in the already-correct sentence order (which would give the answer away).
+  // Computed once per question (stable while dragging/answering) via a
+  // Fisher-Yates shuffle seeded by the word list itself.
+  const shuffledDraggableWords = React.useMemo(() => {
+    const arr = draggableWords.map((text, originalIndex) => ({ text, originalIndex }));
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draggableWords.join('|')]);
   const [sentenceSlots, setSentenceSlots] = useState<(string | null)[]>(() => Array(effectiveSlotCount).fill(null));
   const [timeRemaining, setTimeRemaining] = useState<number>(420);
   const [showTime, setShowTime] = useState<boolean>(true);
@@ -356,13 +370,13 @@ export function WritingBuildSentenceBase({
                 <div className="flex-1 h-px bg-gray-200 max-w-[80px]"></div>
               </div>
               <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
-                {draggableWords.map((word, index) => {
+                {shuffledDraggableWords.map(({ text: word, originalIndex }) => {
                   const usedCount = getUsedCount(word);
-                  const isSelected = getOccurrenceIndex(index) <= usedCount;
+                  const isSelected = getOccurrenceIndex(originalIndex) <= usedCount;
 
                   return (
                     <button
-                      key={`${word}-${index}`}
+                      key={`${word}-${originalIndex}`}
                       type="button"
                       draggable={!isSelected}
                       onDragStart={(e) => handleDragStart(e, word)}
