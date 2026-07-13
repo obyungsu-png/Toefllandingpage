@@ -5069,15 +5069,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '', '', '', '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life 예시 — Module 1 Q11 (이메일 구조화 서식)
-    // passageText에 "유형: email" 사용 → CMS에서 JSON 템플릿으로 자동 변환
+    // Reading: Daily Life 예시 (passageTitle = Read an Email)
     const readingDailyExample = section === 'Reading' ? [
       '11',
       'Read in Daily Life',
       '보통',
       'Module 1',
       'Read an Email',
-      '유형: email\n필드:\nto: edward56L@dmail.com\nfrom: artforeveryone@dmail.com\ndate: September 2\nsubject: Your Membership Renewal\nbody: Dear Edward, Thank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st. To continue enjoying unlimited access, please renew before the expiration date. Best regards, Membership Services Team',
+      'Dear Edward, Thank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st. To continue enjoying unlimited access, please renew before the expiration date. Best regards, Membership Services Team',
       '',
       'What is the main purpose of the email?',
       'To announce a membership renewal', 'To ask for a donation', 'To complain about a service', 'To introduce a new artist',
@@ -5087,109 +5086,26 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life Q12 — 같은 지문 상속 (passageText 비움 → 이전 Q의 지문 자동 사용)
-    const readingDailyExample2 = section === 'Reading' ? [
-      '12',
-      'Read in Daily Life',
-      '보통',
-      'Module 1',
-      'Read an Email',
-      '',
-      '',
-      'What does the email say will happen if Edward does not renew?',
-      'His membership will expire', 'He will be charged a fee', 'He will lose his email account', 'Nothing will happen',
-      'A',
-      '이메일에 "membership is set to expire on October 1st"라고 명시됨. passageText를 비우면 Q11의 지문이 자동 상속됩니다.',
-      '',
-      '',
-    ].map(csvEscape).join(',') : null;
-
-    // Reading: Academic Passage Q16 — Module 1 (지문 포함)
-    // 여러 문제가 같은 지문을 공유: 첫 문제만 passageText 입력, 이후 문제는 passageText 비움
+    // Reading: Academic Passage 예시 (passageTitle = Read an Academic Passage)
     const readingAcademicExample = section === 'Reading' ? [
       '16',
       'Read an Academic Passage',
       '보통',
       'Module 1',
       'Read an Academic Passage',
-      'The theory of plate tectonics revolutionized geology in the 1960s. Before this theory, scientists could not explain many geological phenomena such as earthquakes, volcanic activity, and mountain formation. The theory proposes that the Earth\'s outer shell is divided into large, rigid plates that move relative to each other.',
+      'The theory of plate tectonics revolutionized geology in the 1960s. Before this theory, scientists could not explain many geological phenomena...',
       '',
       'What is the main idea of the passage?',
-      'Plate tectonics explains geological phenomena', 'Volcanoes are dangerous', 'Mountains are formed by erosion', 'The Earth is flat',
-      'A',
-      '지문의 핵심 주제는 판구조론이 지질 현상을 설명한다는 것입니다.',
+      'Option A', 'Option B', 'Option C', 'Option D',
+      'B',
+      'Explanation of why B is correct.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Academic Passage Q17 — 같은 지문 상속 (passageText 비움)
-    const readingAcademicExample2 = section === 'Reading' ? [
-      '17',
-      'Read an Academic Passage',
-      '보통',
-      'Module 1',
-      'Read an Academic Passage',
-      '',
-      '',
-      'According to the passage, what could scientists NOT explain before plate tectonics?',
-      'Earthquakes and volcanic activity', 'Weather patterns', 'Ocean currents', 'Plant growth',
-      'A',
-      '지문에 "scientists could not explain many geological phenomena such as earthquakes, volcanic activity"라고 명시됨. passageText를 비우면 Q16의 지문이 자동 상속됩니다.',
-      '',
-      '',
-    ].map(csvEscape).join(',') : null;
-
-    // Reading: Complete Words Module 2 (Q1-Q10, Module 2)
-    const readingCWM2Example = section === 'Reading' ? [
-      '1-10',
-      'Complete Words',
-      '보통',
-      'Module 2',
-      '',
-      'The hu[man] brain is a com[plex] organ that cont[rols] every part of the bo[dy]. It is div[ided] into several reg[ions], each with a spec[ific] role in thou[ght], memory, and emo[tion]. Sci[entists] continue to stu[dy] how these areas work tog[ether] to shape beha[vior].',
-      '',
-      'Fill in the missing letters in the blank.',
-      '', '', '', '',
-      '', '', '', '',
-    ].map(csvEscape).join(',') : null;
-
-    // Reading: Daily Life Module 2 (Q11 — 공지/소셜미디어 등 다른 형식 예시)
-    const readingDailyM2Example = section === 'Reading' ? [
-      '11',
-      'Read in Daily Life',
-      '보통',
-      'Module 2',
-      'Read a Notice',
-      '유형: notice\n색상: teal\n필드:\n제목: Library Closure Notice\n부제목: Temporary renovation\n본문: The main library will be closed from November 15 to November 20 for renovation. During this period, all online services will remain available. Please return any borrowed items to the drop box outside the entrance.',
-      '',
-      'Why will the library be closed?',
-      'For renovation', 'For a holiday', 'Due to staff shortage', 'For cleaning',
-      'A',
-      '공지에 "closed from November 15 to November 20 for renovation"라고 명시됨.',
-      '',
-      '',
-    ].map(csvEscape).join(',') : null;
-
-    // Reading: Academic Passage Module 2 (Q16 — 지문 포함)
-    const readingAcademicM2Example = section === 'Reading' ? [
-      '16',
-      'Read an Academic Passage',
-      '보통',
-      'Module 2',
-      'Read an Academic Passage',
-      'Photosynthesis is the process by which plants convert sunlight into chemical energy. This process occurs in the chloroplasts, which contain a green pigment called chlorophyll. During photosynthesis, carbon dioxide and water are transformed into glucose and oxygen.',
-      '',
-      'What is the main topic of the passage?',
-      'Photosynthesis', 'Chlorophyll', 'Carbon dioxide', 'Glucose production',
-      'A',
-      '지문의 핵심 주제는 광합성입니다.',
-      '',
-      '',
-    ].map(csvEscape).join(',') : null;
-
-    // Reading: Daily Life 형식 참고 — Table (마크다운 표 문법)
+    // Reading: Table 예시 (마크다운 표 문법, passageText에 템플릿 JSON 자동 생성)
     const readingTableExample = section === 'Reading' ? [
-      '21',
+      '17',
       'Read in Daily Life',
       '보통',
       'Module 1',
@@ -5199,14 +5115,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'What subject does the student have on Tuesday at 10:00?',
       'Math', 'English', 'Science', 'History',
       'B',
-      '표의 화요일 10:00 행에 English가 표시되어 있음. (형식 참고용 예시)',
+      '표의 화요일 10:00 행에 English가 표시되어 있음.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life 형식 참고 — Info Box
+    // Reading: Info Box 예시 (정보 박스 템플릿)
     const readingInfoBoxExample = section === 'Reading' ? [
-      '22',
+      '18',
       'Read in Daily Life',
       '쉬움',
       'Module 1',
@@ -5216,14 +5132,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'When is the library open on weekends?',
       '8:00 AM to 10:00 PM', '10:00 AM to 6:00 PM', 'Closed on weekends', '9:00 AM to 5:00 PM',
       'B',
-      '정보 박스에 "On weekends, hours are 10:00 AM to 6:00 PM"라고 명시됨. (형식 참고용 예시)',
+      '정보 박스에 "On weekends, hours are 10:00 AM to 6:00 PM"라고 명시됨.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life 형식 참고 — Memo
+    // Reading: Memo 예시 (내부 메모 템플릿)
     const readingMemoExample = section === 'Reading' ? [
-      '23',
+      '19',
       'Read in Daily Life',
       '보통',
       'Module 1',
@@ -5233,31 +5149,31 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'When will the faculty meeting take place?',
       'Thursday at 3:30 PM', 'Friday at 3:30 PM', 'Thursday in the morning', 'Friday in the morning',
       'B',
-      '메모에 "moved to Friday at 3:30 PM"라고 명시됨. (형식 참고용 예시)',
+      '메모에 "moved to Friday at 3:30 PM"라고 명시됨.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life 형식 참고 — Brochure
+    // Reading: Brochure 예시 (안내 책자 템플릿)
     const readingBrochureExample = section === 'Reading' ? [
-      '24',
+      '20',
       'Read in Daily Life',
       '보통',
       'Module 1',
       'Read a Brochure',
-      '유형: brochure\n색상: orange\n필드:\n제목: Riverside Adventure Park\n부제목: Family Fun for All Ages\n특징: • 12 thrilling rides including the new Sky Rollercoaster\n• Water park open May–September\n• Group discounts available\n• Free parking and on-site dining\n설명: Located along the scenic Riverside Trail, our park offers excitement for every member of the family. Season passes include unlimited entry and discounts on food and merchandise.\n위치: 78 Riverside Trail, Mountain View\n연락처: Open weekends and holidays | www.riversideadventure.com | (555) 234-7788',
+      '유형: brochure\n색상: orange\n필드:\n제목: Riverside Adventure Park\n부제목: Family Fun for All Ages\n특징: • 12 thrilling rides including the new Sky Rollercoaster\n• Water park open May–September\n• Group discounts available\n• Free parking and on-site dining\n설명: Located along the scenic Riverside Trail, our park offers excitement for every member of the family. From toddler-friendly carousels to extreme rollercoasters, there is something for everyone. Season passes include unlimited entry and discounts on food and merchandise.\n위치: 78 Riverside Trail, Mountain View\n연락처: Open weekends and holidays | www.riversideadventure.com | (555) 234-7788',
       '',
       'What is included with a season pass?',
       'Only free parking', 'Unlimited entry and food discounts', 'Free rollercoaster photos', 'Priority access to water park',
       'B',
-      '브로셔에 "Season passes include unlimited entry and discounts on food and merchandise"라고 명시됨. (형식 참고용 예시)',
+      '브로셔에 "Season passes include unlimited entry and discounts on food and merchandise"라고 명시됨.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Reading: Daily Life 형식 참고 — FAQ
+    // Reading: FAQ 예시 (자주 묻는 질문 템플릿)
     const readingFaqExample = section === 'Reading' ? [
-      '25',
+      '21',
       'Read in Daily Life',
       '쉬움',
       'Module 1',
@@ -5267,7 +5183,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'How much does a guest pass cost?',
       '$2 per person', '$5 per person', 'Free for members', '$10 per person',
       'B',
-      'FAQ에 "Guest passes are $5 per person per visit"라고 명시됨. (형식 참고용 예시)',
+      'FAQ에 "Guest passes are $5 per person per visit"라고 명시됨.',
       '',
       '',
     ].map(csvEscape).join(',') : null;
@@ -5472,23 +5388,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     const rows = [
       header,
       baseExample,
-      // Reading — Module 1
       readingCWExample,
       readingDailyExample,
-      readingDailyExample2,
       readingAcademicExample,
-      readingAcademicExample2,
-      // Reading — Module 2
-      readingCWM2Example,
-      readingDailyM2Example,
-      readingAcademicM2Example,
-      // Reading — Daily Life 형식 참고 (Table, InfoBox, Memo, Brochure, FAQ)
       readingTableExample,
       readingInfoBoxExample,
       readingMemoExample,
       readingBrochureExample,
       readingFaqExample,
-      // Listening
       listeningEasyExample,
       listeningMediumExample,
       listeningAnnouncementExample,
@@ -5496,9 +5403,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       listeningM2HardExample,
       listeningM2EasyExample,
       listeningM2MediumExample,
-      // Speaking
       speakingExample,
-      // Writing
       writingExample,
       writingDiscussionExample,
       writingBsExample,
