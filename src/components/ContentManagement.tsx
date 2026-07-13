@@ -4426,6 +4426,214 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   };
 
   // ─── Parser ───
+  const normalizeDailyFormat = (raw?: string): string | undefined => {
+    if (!raw) return undefined;
+    const map: Record<string, string> = {
+      notice: 'notice', 공지: 'notice', 공지문: 'notice', 공지사항: 'notice',
+      email: 'email', 이메일: 'email', 메일: 'email',
+      'simple email': 'email_simple', '간단한 이메일': 'email_simple', '단순 이메일': 'email_simple', '간단메일': 'email_simple', 'simple': 'email_simple', email_simple: 'email_simple',
+      social_media: 'social_media', 'social media': 'social_media', 소셜미디어: 'social_media', 소셜: 'social_media', sns: 'social_media',
+      advertisement: 'advertisement', advert: 'advertisement', 광고: 'advertisement', 광고문: 'advertisement',
+      article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
+      form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
+      review: 'review', 리뷰: 'review', 영화리뷰: 'review', 후기: 'review',
+      text_message: 'text_message', 'text message': 'text_message', 'text-message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
+      table: 'table', 표: 'table', 테이블: 'table', '표(table)': 'table',
+      infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
+      memo: 'memo', 메모: 'memo', 내부메모: 'memo', 'memorandum': 'memo',
+      brochure: 'brochure', 브로셔: 'brochure', 팸플릿: 'brochure', 안내책자: 'brochure', 안내문: 'brochure',
+      faq: 'faq', 'faq': 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
+    };
+    return map[raw.trim().toLowerCase()] || undefined;
+  };
+
+  const DAILY_FORMAT_TITLES: Record<string, string> = {
+    notice: 'Read a notice.',
+    email: 'Read an email.',
+    email_simple: 'Read a simple email.',
+    social_media: 'Read a social media post.',
+    advertisement: 'Read an advertisement.',
+    article: 'Read an article.',
+    form: 'Read a form.',
+    review: 'Read a review.',
+    text_message: 'Read a text message conversation.',
+    table: 'Read a table.',
+    infobox: 'Read an information box.',
+    memo: 'Read a memo.',
+    brochure: 'Read a brochure.',
+    faq: 'Read an FAQ.',
+  };
+
+  const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
+    notice: {
+      title: ['title', '제목', '공지제목', 'noticetitle', 'notice_title'],
+      subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
+      body: ['body', '본문', '내용', 'text', '공지내용'],
+    },
+    email: {
+      to: ['to', '받는사람', '받는이', 'recipient', '받는사람주소'],
+      from: ['from', '보낸사람', '보낸이', 'sender', '보낸사람주소'],
+      date: ['date', '날짜', '일자', '작성일'],
+      subject: ['subject', '제목', '주제', '메일제목', 'email_subject'],
+      body: ['body', '본문', '내용', 'emailbody', 'email_body'],
+    },
+    email_simple: {
+      subject: ['subject', '제목', '주제', '메일제목'],
+      body: ['body', '본문', '내용', 'emailbody', 'email_body'],
+    },
+    social_media: {
+      platform: ['platform', '플랫폼', 'sns', '커뮤니티'],
+      username: ['username', '사용자', '사용자명', '아이디', 'id'],
+      timestamp: ['timestamp', '시간', '작성시간', '날짜', 'date'],
+      content: ['content', '내용', '글내용', 'postcontent', 'post_content'],
+      likes: ['likes', '좋아요', 'like'],
+      comments: ['comments', '댓글', 'comment'],
+      shares: ['shares', '공유', 'share'],
+    },
+    advertisement: {
+      headline: ['headline', '헤드라인', '제목', '광고제목'],
+      business: ['business', '회사', '상호', '업체명', 'businessname', 'business_name'],
+      offer: ['offer', '제안', '할인', '프로모션', 'mainoffer', 'main_offer'],
+      details: ['details', '상세', '세부사항', '내용', '광고내용'],
+      location: ['location', '위치', '주소', '장소'],
+      contact: ['contact', '연락처', '연락', 'contactinfo', 'contact_info'],
+    },
+    article: {
+      source: ['source', '출처', '신문', '뉴스출처', 'newssource'],
+      headline: ['headline', '헤드라인', '제목', '기사제목'],
+      date: ['date', '날짜', '일자', '작성일'],
+      author: ['author', '저자', '기자', '작성자', 'byline'],
+      body: ['body', '본문', '내용', '기사내용', 'articlebody', 'article_body'],
+    },
+    form: {
+      title: ['title', '제목', '양식제목', 'formtitle', 'form_title'],
+      company: ['company', '회사', '업체명', 'companyname', 'company_name'],
+      tableHeaders: ['tableheaders', '헤더', '표헤더', '컬럼', 'columns', 'table_headers'],
+      tableRows: ['tablerows', '행', '표행', 'rows', 'table_rows'],
+      footer: ['footer', '요약', '하단', 'footerinfo', 'footer_info'],
+    },
+    review: {
+      title: ['title', '제목', '리뷰제목', 'reviewtitle', 'review_title'],
+      body: ['body', '본문', '내용', 'reviewbody', 'review_body', '리뷰내용'],
+    },
+    text_message: {
+      messages: ['messages', '메시지', '대화', '문자', 'chat', 'conversation', '대화내용'],
+    },
+    table: {
+      title: ['title', '제목', '표제목', 'tabletitle', 'table_title'],
+      rows: ['rows', '행', '표데이터', '표행', 'tabledata', 'table_data', 'data', '데이터'],
+    },
+    infobox: {
+      title: ['title', '제목', '박스제목', 'boxtitle', 'box_title'],
+      content: ['content', '내용', '본문', 'boxcontent', 'box_content', '내용물'],
+    },
+    memo: {
+      to: ['to', '받는사람', '받는이', '수신'],
+      from: ['from', '보낸사람', '보낸이', '발신'],
+      date: ['date', '날짜', '일자', '작성일'],
+      subject: ['subject', '제목', '주제', '메모제목'],
+      body: ['body', '본문', '내용', '메모내용', 'memobody'],
+    },
+    brochure: {
+      title: ['title', '제목', '브로셔제목'],
+      subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
+      highlights: ['highlights', '특징', '주요특징', '강조', 'features'],
+      description: ['description', '설명', '본문', '내용', 'about'],
+      location: ['location', '위치', '주소', '장소'],
+      contact: ['contact', '연락처', '연락', 'contactinfo'],
+    },
+    faq: {
+      title: ['title', '제목', 'faq제목'],
+      items: ['items', '항목', '질문답변', 'qa', 'questions', '질문'],
+    },
+  };
+
+  const parseFieldBlock = (block: string): Record<string, string> => {
+    const fields: Record<string, string> = {};
+    if (!block.trim()) return fields;
+    const lines = block.split('\n');
+    let currentKey: string | null = null;
+    let currentValue: string[] = [];
+    const flush = () => {
+      if (currentKey) {
+        fields[currentKey] = currentValue.join('\n').trim();
+      }
+      currentKey = null;
+      currentValue = [];
+    };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const match = line.match(/^([a-zA-Z0-9_\uac00-\ud7a3]+)\s*:\s*(.*)$/);
+      if (match) {
+        flush();
+        currentKey = match[1].trim();
+        currentValue.push(match[2].trim());
+      } else if (currentKey) {
+        currentValue.push(line);
+      }
+    }
+    flush();
+    return fields;
+  };
+
+  const mapFieldKeys = (format: string, fields: Record<string, string>): Record<string, string> => {
+    const aliases = FIELD_KEY_ALIASES[format] || {};
+    const normalized: Record<string, string> = {};
+    const used = new Set<string>();
+    for (const [key, value] of Object.entries(fields)) {
+      const k = key.toLowerCase().replace(/[\s_]/g, '');
+      let mapped = false;
+      for (const [target, aliasList] of Object.entries(aliases)) {
+        if (used.has(target)) continue;
+        const normalizedAliases = aliasList.map(a => a.toLowerCase().replace(/[\s_]/g, ''));
+        if (normalizedAliases.includes(k)) {
+          normalized[target] = value;
+          used.add(target);
+          mapped = true;
+          break;
+        }
+      }
+      if (!mapped) normalized[key] = value;
+    }
+    return normalized;
+  };
+
+  const extractFieldsBlock = (text: string): string | undefined => {
+    const startLabels = ['필드:', 'fields:', '내용:'];
+    const stopLabels = ['문제:', '보기:', '정답:', '해설:', '==='];
+    for (const label of startLabels) {
+      const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${stopLabels.join('|')})|(?![\\s\\S]))`, 'im');
+      const m = text.match(re);
+      if (m && m[1].trim()) return m[1].trim();
+    }
+    return undefined;
+  };
+
+  // Single source of truth for every reserved field label that should terminate
+  // a preceding block-capture in after(). Keeping ALL labels here (not a partial
+  // hardcoded subset) prevents the boundaries from drifting out of sync with the
+  // labels we actually extract — e.g. 분석:/번역:/단어노트: no longer swallow each
+  // other. Regex uses the 'i' flag, so case variants (Text:/text:) need only one
+  // entry; 교수/학생 are intentional prefixes matching 교수이름/학생1메시지/etc.
+  const FIELD_BOUNDARY_LABELS = [
+    '지문:', '본문:', '내용:', 'text:', 'passage:',
+    '스크립트:',
+    '분석:', 'analysis:', '분석노트:',
+    '단어:', 'vocabulary:', '어휘:', '단어노트:',
+    '번역:', 'translation:', '해석:', '번역노트:',
+    '문제:', '해설:', '보기:', '정답:', '빈칸:', '시간:',
+    '오디오:', '음성:', 'audio:', '오디오파일:',
+    '이미지:', '사진:', 'image:', '이미지파일:',
+    '난이도:', '모듈:', 'module:',
+    '받는이:', '제목:', '상황:', '지시문:', '요구사항:',
+    '교수', '학생', '문장끝:', '안내문:',
+    '유형:', 'format:', '형식:', 'Type:',
+    '화면제목:', 'passageTitle:', '지문제목:', 'screenTitle:',
+    '색상:', 'color:', '테마:',
+    '필드:', 'fields:',
+  ];
+  const BOUNDARY_ALT = FIELD_BOUNDARY_LABELS.join('|');
+
   const parseText = (text: string): TPOQuestion[] => {
     const blocks = text.split(/\n?={3,}\n?/);
     const questions: TPOQuestion[] = [];
@@ -4448,213 +4656,6 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     };
 
     // Daily Life format helpers
-    const normalizeDailyFormat = (raw?: string): string | undefined => {
-      if (!raw) return undefined;
-      const map: Record<string, string> = {
-        notice: 'notice', 공지: 'notice', 공지문: 'notice', 공지사항: 'notice',
-        email: 'email', 이메일: 'email', 메일: 'email',
-        'simple email': 'email_simple', '간단한 이메일': 'email_simple', '단순 이메일': 'email_simple', '간단메일': 'email_simple', 'simple': 'email_simple', email_simple: 'email_simple',
-        social_media: 'social_media', 'social media': 'social_media', 소셜미디어: 'social_media', 소셜: 'social_media', sns: 'social_media',
-        advertisement: 'advertisement', advert: 'advertisement', 광고: 'advertisement', 광고문: 'advertisement',
-        article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
-        form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
-        review: 'review', 리뷰: 'review', 영화리뷰: 'review', 후기: 'review',
-        text_message: 'text_message', 'text message': 'text_message', 'text-message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
-        table: 'table', 표: 'table', 테이블: 'table', '표(table)': 'table',
-        infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
-        memo: 'memo', 메모: 'memo', 내부메모: 'memo', 'memorandum': 'memo',
-        brochure: 'brochure', 브로셔: 'brochure', 팸플릿: 'brochure', 안내책자: 'brochure', 안내문: 'brochure',
-        faq: 'faq', 'faq': 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
-      };
-      return map[raw.trim().toLowerCase()] || undefined;
-    };
-
-    const DAILY_FORMAT_TITLES: Record<string, string> = {
-      notice: 'Read a notice.',
-      email: 'Read an email.',
-      email_simple: 'Read a simple email.',
-      social_media: 'Read a social media post.',
-      advertisement: 'Read an advertisement.',
-      article: 'Read an article.',
-      form: 'Read a form.',
-      review: 'Read a review.',
-      text_message: 'Read a text message conversation.',
-      table: 'Read a table.',
-      infobox: 'Read an information box.',
-      memo: 'Read a memo.',
-      brochure: 'Read a brochure.',
-      faq: 'Read an FAQ.',
-    };
-
-    const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
-      notice: {
-        title: ['title', '제목', '공지제목', 'noticetitle', 'notice_title'],
-        subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
-        body: ['body', '본문', '내용', 'text', '공지내용'],
-      },
-      email: {
-        to: ['to', '받는사람', '받는이', 'recipient', '받는사람주소'],
-        from: ['from', '보낸사람', '보낸이', 'sender', '보낸사람주소'],
-        date: ['date', '날짜', '일자', '작성일'],
-        subject: ['subject', '제목', '주제', '메일제목', 'email_subject'],
-        body: ['body', '본문', '내용', 'emailbody', 'email_body'],
-      },
-      email_simple: {
-        subject: ['subject', '제목', '주제', '메일제목'],
-        body: ['body', '본문', '내용', 'emailbody', 'email_body'],
-      },
-      social_media: {
-        platform: ['platform', '플랫폼', 'sns', '커뮤니티'],
-        username: ['username', '사용자', '사용자명', '아이디', 'id'],
-        timestamp: ['timestamp', '시간', '작성시간', '날짜', 'date'],
-        content: ['content', '내용', '글내용', 'postcontent', 'post_content'],
-        likes: ['likes', '좋아요', 'like'],
-        comments: ['comments', '댓글', 'comment'],
-        shares: ['shares', '공유', 'share'],
-      },
-      advertisement: {
-        headline: ['headline', '헤드라인', '제목', '광고제목'],
-        business: ['business', '회사', '상호', '업체명', 'businessname', 'business_name'],
-        offer: ['offer', '제안', '할인', '프로모션', 'mainoffer', 'main_offer'],
-        details: ['details', '상세', '세부사항', '내용', '광고내용'],
-        location: ['location', '위치', '주소', '장소'],
-        contact: ['contact', '연락처', '연락', 'contactinfo', 'contact_info'],
-      },
-      article: {
-        source: ['source', '출처', '신문', '뉴스출처', 'newssource'],
-        headline: ['headline', '헤드라인', '제목', '기사제목'],
-        date: ['date', '날짜', '일자', '작성일'],
-        author: ['author', '저자', '기자', '작성자', 'byline'],
-        body: ['body', '본문', '내용', '기사내용', 'articlebody', 'article_body'],
-      },
-      form: {
-        title: ['title', '제목', '양식제목', 'formtitle', 'form_title'],
-        company: ['company', '회사', '업체명', 'companyname', 'company_name'],
-        tableHeaders: ['tableheaders', '헤더', '표헤더', '컬럼', 'columns', 'table_headers'],
-        tableRows: ['tablerows', '행', '표행', 'rows', 'table_rows'],
-        footer: ['footer', '요약', '하단', 'footerinfo', 'footer_info'],
-      },
-      review: {
-        title: ['title', '제목', '리뷰제목', 'reviewtitle', 'review_title'],
-        body: ['body', '본문', '내용', 'reviewbody', 'review_body', '리뷰내용'],
-      },
-      text_message: {
-        messages: ['messages', '메시지', '대화', '문자', 'chat', 'conversation', '대화내용'],
-      },
-      table: {
-        title: ['title', '제목', '표제목', 'tabletitle', 'table_title'],
-        rows: ['rows', '행', '표데이터', '표행', 'tabledata', 'table_data', 'data', '데이터'],
-      },
-      infobox: {
-        title: ['title', '제목', '박스제목', 'boxtitle', 'box_title'],
-        content: ['content', '내용', '본문', 'boxcontent', 'box_content', '내용물'],
-      },
-      memo: {
-        to: ['to', '받는사람', '받는이', '수신'],
-        from: ['from', '보낸사람', '보낸이', '발신'],
-        date: ['date', '날짜', '일자', '작성일'],
-        subject: ['subject', '제목', '주제', '메모제목'],
-        body: ['body', '본문', '내용', '메모내용', 'memobody'],
-      },
-      brochure: {
-        title: ['title', '제목', '브로셔제목'],
-        subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
-        highlights: ['highlights', '특징', '주요특징', '강조', 'features'],
-        description: ['description', '설명', '본문', '내용', 'about'],
-        location: ['location', '위치', '주소', '장소'],
-        contact: ['contact', '연락처', '연락', 'contactinfo'],
-      },
-      faq: {
-        title: ['title', '제목', 'faq제목'],
-        items: ['items', '항목', '질문답변', 'qa', 'questions', '질문'],
-      },
-    };
-
-    const parseFieldBlock = (block: string): Record<string, string> => {
-      const fields: Record<string, string> = {};
-      if (!block.trim()) return fields;
-      const lines = block.split('\n');
-      let currentKey: string | null = null;
-      let currentValue: string[] = [];
-      const flush = () => {
-        if (currentKey) {
-          fields[currentKey] = currentValue.join('\n').trim();
-        }
-        currentKey = null;
-        currentValue = [];
-      };
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const match = line.match(/^([a-zA-Z0-9_\uac00-\ud7a3]+)\s*:\s*(.*)$/);
-        if (match) {
-          flush();
-          currentKey = match[1].trim();
-          currentValue.push(match[2].trim());
-        } else if (currentKey) {
-          currentValue.push(line);
-        }
-      }
-      flush();
-      return fields;
-    };
-
-    const mapFieldKeys = (format: string, fields: Record<string, string>): Record<string, string> => {
-      const aliases = FIELD_KEY_ALIASES[format] || {};
-      const normalized: Record<string, string> = {};
-      const used = new Set<string>();
-      for (const [key, value] of Object.entries(fields)) {
-        const k = key.toLowerCase().replace(/[\s_]/g, '');
-        let mapped = false;
-        for (const [target, aliasList] of Object.entries(aliases)) {
-          if (used.has(target)) continue;
-          const normalizedAliases = aliasList.map(a => a.toLowerCase().replace(/[\s_]/g, ''));
-          if (normalizedAliases.includes(k)) {
-            normalized[target] = value;
-            used.add(target);
-            mapped = true;
-            break;
-          }
-        }
-        if (!mapped) normalized[key] = value;
-      }
-      return normalized;
-    };
-
-    const extractFieldsBlock = (text: string): string | undefined => {
-      const startLabels = ['필드:', 'fields:', '내용:'];
-      const stopLabels = ['문제:', '보기:', '정답:', '해설:', '==='];
-      for (const label of startLabels) {
-        const re = new RegExp(`^${label}\\s*\\n?\\s*([\\s\\S]*?)(?=\\n(?:${stopLabels.join('|')})|$)`, 'im');
-        const m = text.match(re);
-        if (m && m[1].trim()) return m[1].trim();
-      }
-      return undefined;
-    };
-
-    // Single source of truth for every reserved field label that should terminate
-    // a preceding block-capture in after(). Keeping ALL labels here (not a partial
-    // hardcoded subset) prevents the boundaries from drifting out of sync with the
-    // labels we actually extract — e.g. 분석:/번역:/단어노트: no longer swallow each
-    // other. Regex uses the 'i' flag, so case variants (Text:/text:) need only one
-    // entry; 교수/학생 are intentional prefixes matching 교수이름/학생1메시지/etc.
-    const FIELD_BOUNDARY_LABELS = [
-      '지문:', '본문:', '내용:', 'text:', 'passage:',
-      '스크립트:',
-      '분석:', 'analysis:', '분석노트:',
-      '단어:', 'vocabulary:', '어휘:', '단어노트:',
-      '번역:', 'translation:', '해석:', '번역노트:',
-      '문제:', '해설:', '보기:', '정답:', '빈칸:', '시간:',
-      '오디오:', '음성:', 'audio:', '오디오파일:',
-      '이미지:', '사진:', 'image:', '이미지파일:',
-      '난이도:', '모듈:', 'module:',
-      '받는이:', '제목:', '상황:', '지시문:', '요구사항:',
-      '교수', '학생', '문장끝:', '안내문:',
-      '유형:', 'format:', '형식:', 'Type:',
-      '화면제목:', 'passageTitle:', '지문제목:', 'screenTitle:',
-      '색상:', 'color:', '테마:',
-      '필드:', 'fields:',
-    ];
-    const BOUNDARY_ALT = FIELD_BOUNDARY_LABELS.join('|');
 
     for (const block of blocks) {
       if (!block.trim()) continue;
@@ -5398,6 +5399,32 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             const passageText = get(iPText) || undefined;
             let blanks: Array<{ answer: string; maxLength: number }> | undefined;
             let finalPassageText = passageText;
+            let finalPassageTitle = get(iPTitle) || undefined;
+
+            // Daily Life 구조화 서식 감지: passageText 셀 안에
+            // "유형: email\n필드:\nto: ...\nfrom: ..." 형태로 내장되어 있으면
+            // 텍스트/AI 모드와 동일한 구조화 JSON으로 변환
+            if (passageText && /^유형:|^format:|^형식:/im.test(passageText)) {
+              const formatMatch = passageText.match(/^(?:유형|format|형식):\s*(.+)$/im);
+              const dailyFormat = formatMatch ? normalizeDailyFormat(formatMatch[1].trim()) : undefined;
+              const colorMatch = passageText.match(/^(?:색상|color|테마):\s*(.+)$/im);
+              const colorTheme = colorMatch ? colorMatch[1].trim() : 'teal';
+              const fieldsBlock = extractFieldsBlock(passageText);
+
+              if (dailyFormat && fieldsBlock) {
+                const fields = mapFieldKeys(dailyFormat, parseFieldBlock(fieldsBlock));
+                if (Object.keys(fields).length > 0) {
+                  finalPassageText = JSON.stringify({
+                    templateId: `csv-${dailyFormat}`,
+                    structure: dailyFormat,
+                    color: colorTheme,
+                    fields,
+                  });
+                  if (!finalPassageTitle) finalPassageTitle = DAILY_FORMAT_TITLES[dailyFormat];
+                }
+              }
+            }
+
             if (isCW && passageText) {
               const inlineRegex = /\[([a-zA-Z][a-zA-Z\s'-]*?)(?::(\d+))?\]/g;
               const parsedBlanks: Array<{ answer: string; maxLength: number }> = [];
@@ -5444,7 +5471,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               options,
               correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
               explanation: get(iExp) || undefined,
-              passageTitle: get(iPTitle) || undefined,
+              passageTitle: finalPassageTitle,
               passageText: finalPassageText,
               scriptText: get(iScript) || undefined,
               difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
