@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList, Film, MessagesSquare, Table, Info } from 'lucide-react';
+import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList, Film, MessagesSquare, Table, Info, StickyNote, BookOpen, HelpCircle } from 'lucide-react';
 // motion removed - using CSS animations
 import type { TPOQuestion } from './ContentManagement';
 
@@ -9,7 +9,7 @@ export interface DailyLifeTemplate {
   id: string;
   name: string;
   icon: string; // icon key
-  category: 'notice' | 'email' | 'social_media' | 'advertisement' | 'article' | 'form' | 'review' | 'text_message' | 'custom';
+  category: 'notice' | 'email' | 'social_media' | 'advertisement' | 'article' | 'form' | 'review' | 'text_message' | 'memo' | 'brochure' | 'faq' | 'custom';
   // HTML structure template with {{placeholders}}
   structure: string;
   // Default field values
@@ -206,6 +206,65 @@ const BUILT_IN_TEMPLATES: DailyLifeTemplate[] = [
       content: '박스 내용',
     }
   },
+  {
+    id: 'memo-1',
+    name: 'Memo (내부 메모)',
+    icon: 'memo',
+    category: 'memo',
+    structure: 'memo',
+    fields: {
+      to: 'All Department Staff',
+      from: 'Human Resources',
+      date: 'March 10, 2026',
+      subject: 'Updated Remote Work Policy',
+      body: 'Effective April 1st, all employees may work remotely up to two days per week. Please coordinate with your direct supervisor to schedule your remote days. Note that in-office meetings remain mandatory on Wednesdays.\n\nIf you have any questions, contact HR at ext. 4500.',
+    },
+    fieldLabels: {
+      to: 'To (받는 사람)',
+      from: 'From (보낸 사람)',
+      date: 'Date (날짜)',
+      subject: 'Subject (제목)',
+      body: 'Body (본문)',
+    }
+  },
+  {
+    id: 'brochure-1',
+    name: 'Brochure (안내 책자)',
+    icon: 'brochure',
+    category: 'brochure',
+    structure: 'brochure',
+    fields: {
+      title: 'Greenfield Botanical Garden',
+      subtitle: 'A Living Museum of Plants from Around the World',
+      highlights: '• Over 5,000 plant species across 12 themed gardens\n• Guided tours every hour from 10 AM to 4 PM\n• Seasonal butterfly exhibit (April–September)\n• Gift shop and cafe on site\n• Free admission for members and children under 5',
+      description: 'Located just 15 minutes from downtown, Greenfield Botanical Garden offers visitors a peaceful retreat into nature. Stroll through our Japanese Zen Garden, explore the exotic tropical greenhouse, or relax by the koi pond. Our educational programs and workshops run year-round for all ages.',
+      location: '450 Garden Road, Riverside District',
+      contact: 'Open daily 9 AM–6 PM | www.greenfieldgarden.org | (555) 987-6543',
+    },
+    fieldLabels: {
+      title: 'Title (제목)',
+      subtitle: 'Subtitle (부제목)',
+      highlights: 'Highlights (특징 목록, • 로 시작)',
+      description: 'Description (설명)',
+      location: 'Location (위치)',
+      contact: 'Contact (연락처)',
+    }
+  },
+  {
+    id: 'faq-1',
+    name: 'FAQ (자주 묻는 질문)',
+    icon: 'faq',
+    category: 'faq',
+    structure: 'faq',
+    fields: {
+      title: 'Frequently Asked Questions — Library Membership',
+      items: 'Q: How do I get a library card?\nA: Visit any branch with a photo ID and proof of address. Cards are issued free of charge and are valid for two years.\n\nQ: Can I borrow books from other branches?\nA: Yes. You can request items online and pick them up at your preferred branch within 3–5 business days.\n\nQ: What happens if I return a book late?\nA: A fine of $0.25 per day applies. After 30 days, the item is considered lost and a replacement fee is charged.',
+    },
+    fieldLabels: {
+      title: 'Title (제목)',
+      items: 'Q&A 항목 ("Q: 질문\\nA: 답변" 형식, 빈 줄로 항목 구분)',
+    }
+  },
 ];
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -219,6 +278,9 @@ const iconMap: Record<string, React.ReactNode> = {
   messages: <MessagesSquare className="w-5 h-5" />,
   table: <Table className="w-5 h-5" />,
   info: <Info className="w-5 h-5" />,
+  memo: <StickyNote className="w-5 h-5" />,
+  brochure: <BookOpen className="w-5 h-5" />,
+  faq: <HelpCircle className="w-5 h-5" />,
   custom: <FileText className="w-5 h-5" />,
 };
 
@@ -272,6 +334,30 @@ export function parseMarkdownTable(raw: string): ParsedTableRow[] {
   });
   if (rows.length > 0) rows[0].isHeader = true;
   return rows;
+}
+
+// Parse FAQ items: "Q: 질문\nA: 답변" 블록을 빈 줄로 구분하여 파싱
+export interface ParsedFaqItem {
+  question: string;
+  answer: string;
+}
+export function parseFaqItems(raw: string): ParsedFaqItem[] {
+  if (!raw) return [];
+  const items: ParsedFaqItem[] = [];
+  const blocks = raw.split(/\n\s*\n/);
+  blocks.forEach(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return;
+    const qMatch = trimmed.match(/^Q[:：]\s*([\s\S]*?)(?=\nA[:：]|\s*$)/i);
+    const aMatch = trimmed.match(/\nA[:：]\s*([\s\S]*)$/i);
+    if (qMatch) {
+      items.push({
+        question: qMatch[1].trim(),
+        answer: aMatch ? aMatch[1].trim() : '',
+      });
+    }
+  });
+  return items;
 }
 
 interface ReadDailyLifeTemplatesProps {
@@ -558,6 +644,83 @@ export function ReadDailyLifeTemplates({
         );
       }
 
+      case 'memo': {
+        return (
+          <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+            <div className="px-4 py-2 font-bold text-white" style={{ backgroundColor: c }}>
+              MEMORANDUM
+            </div>
+            <div className="p-4 space-y-1 border-b" style={{ borderColor: c + '40' }}>
+              {f.to && <p className="text-sm"><span className="font-bold" style={{ color: c }}>To:</span> {f.to}</p>}
+              {f.from && <p className="text-sm"><span className="font-bold" style={{ color: c }}>From:</span> {f.from}</p>}
+              {f.date && <p className="text-sm"><span className="font-bold" style={{ color: c }}>Date:</span> {f.date}</p>}
+              {f.subject && <p className="text-sm"><span className="font-bold" style={{ color: c }}>Subject:</span> {f.subject}</p>}
+            </div>
+            {f.body && <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap p-4 text-sm">{f.body}</p>}
+          </div>
+        );
+      }
+
+      case 'brochure': {
+        return (
+          <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+            {f.title && (
+              <div className="px-4 py-3 text-center" style={{ backgroundColor: c }}>
+                <h2 className="text-xl font-bold text-white">{f.title}</h2>
+                {f.subtitle && <p className="text-sm text-white opacity-90 mt-1">{f.subtitle}</p>}
+              </div>
+            )}
+            <div className="p-4 space-y-3">
+              {f.highlights && (
+                <div>
+                  <p className="text-xs font-bold uppercase mb-1" style={{ color: c }}>Highlights</p>
+                  <p className="font-[\'Inter\',_sans-serif] text-sm whitespace-pre-wrap">{f.highlights}</p>
+                </div>
+              )}
+              {f.description && (
+                <div>
+                  <p className="text-xs font-bold uppercase mb-1" style={{ color: c }}>About</p>
+                  <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm">{f.description}</p>
+                </div>
+              )}
+              {f.location && (
+                <div>
+                  <p className="text-xs font-bold uppercase mb-1" style={{ color: c }}>Location</p>
+                  <p className="font-[\'Inter\',_sans-serif] text-sm">{f.location}</p>
+                </div>
+              )}
+              {f.contact && (
+                <div className="border-t pt-2" style={{ borderColor: c + '40' }}>
+                  <p className="font-[\'Inter\',_sans-serif] text-xs text-gray-600">{f.contact}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case 'faq': {
+        const faqItems = parseFaqItems(f.items || '');
+        return (
+          <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+            {f.title && (
+              <div className="px-4 py-2 font-bold text-white" style={{ backgroundColor: c }}>
+                {f.title}
+              </div>
+            )}
+            <div className="p-4 space-y-3">
+              {faqItems.length === 0 && <p className="text-sm text-gray-400">Q&A 항목이 없습니다.</p>}
+              {faqItems.map((item, i) => (
+                <div key={i} className="border-l-2 pl-3" style={{ borderColor: c }}>
+                  <p className="font-bold text-sm mb-1" style={{ color: c }}>Q. {item.question}</p>
+                  <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm">{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       default:
         return (
           <div className="border-2 border-gray-300 rounded-lg p-5 space-y-3">
@@ -823,7 +986,7 @@ export function ReadDailyLifeTemplates({
                 <h3 className="text-sm font-bold text-gray-700">Content Fields</h3>
                 {Object.entries(selectedTemplate.fieldLabels).map(([key, label]) => {
                   const value = editedFields[key] || '';
-                  const isLongField = key === 'body' || key === 'content' || key === 'details' || key === 'tableRows' || key === 'footer' || key === 'rows' || key === 'messages';
+                  const isLongField = key === 'body' || key === 'content' || key === 'details' || key === 'tableRows' || key === 'footer' || key === 'rows' || key === 'messages' || key === 'items' || key === 'highlights' || key === 'description';
                   
                   return (
                     <div key={key}>
@@ -1269,6 +1432,83 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
             </div>
           )}
           {f.content && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.content}</p>}
+        </div>
+      );
+    }
+
+    case 'memo': {
+      return (
+        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+          <div className="px-3 md:px-4 py-2 font-bold text-white text-sm md:text-base" style={{ backgroundColor: c }}>
+            MEMORANDUM
+          </div>
+          <div className="p-3 md:p-4 space-y-1 border-b" style={{ borderColor: c + '40' }}>
+            {f.to && <p className="text-xs md:text-sm"><span className="font-bold" style={{ color: c }}>To:</span> {f.to}</p>}
+            {f.from && <p className="text-xs md:text-sm"><span className="font-bold" style={{ color: c }}>From:</span> {f.from}</p>}
+            {f.date && <p className="text-xs md:text-sm"><span className="font-bold" style={{ color: c }}>Date:</span> {f.date}</p>}
+            {f.subject && <p className="text-xs md:text-sm"><span className="font-bold" style={{ color: c }}>Subject:</span> {f.subject}</p>}
+          </div>
+          {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap p-3 md:p-4 text-xs md:text-sm">{f.body}</p>}
+        </div>
+      );
+    }
+
+    case 'brochure': {
+      return (
+        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+          {f.title && (
+            <div className="px-3 md:px-4 py-2 md:py-3 text-center" style={{ backgroundColor: c }}>
+              <h2 className="text-base md:text-xl font-bold text-white">{f.title}</h2>
+              {f.subtitle && <p className="text-xs md:text-sm text-white opacity-90 mt-1">{f.subtitle}</p>}
+            </div>
+          )}
+          <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+            {f.highlights && (
+              <div>
+                <p className="text-[11px] md:text-xs font-bold uppercase mb-1" style={{ color: c }}>Highlights</p>
+                <p className="font-['Inter',_sans-serif] text-xs md:text-sm whitespace-pre-wrap">{f.highlights}</p>
+              </div>
+            )}
+            {f.description && (
+              <div>
+                <p className="text-[11px] md:text-xs font-bold uppercase mb-1" style={{ color: c }}>About</p>
+                <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-xs md:text-sm">{f.description}</p>
+              </div>
+            )}
+            {f.location && (
+              <div>
+                <p className="text-[11px] md:text-xs font-bold uppercase mb-1" style={{ color: c }}>Location</p>
+                <p className="font-['Inter',_sans-serif] text-xs md:text-sm">{f.location}</p>
+              </div>
+            )}
+            {f.contact && (
+              <div className="border-t pt-2" style={{ borderColor: c + '40' }}>
+                <p className="font-['Inter',_sans-serif] text-[11px] md:text-xs text-gray-600">{f.contact}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    case 'faq': {
+      const faqItems = parseFaqItems(f.items || '');
+      return (
+        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+          {f.title && (
+            <div className="px-3 md:px-4 py-2 font-bold text-white text-sm md:text-base" style={{ backgroundColor: c }}>
+              {f.title}
+            </div>
+          )}
+          <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+            {faqItems.length === 0 && <p className="text-xs md:text-sm text-gray-400">Q&A 항목이 없습니다.</p>}
+            {faqItems.map((item, i) => (
+              <div key={i} className="border-l-2 pl-2 md:pl-3" style={{ borderColor: c }}>
+                <p className="font-bold text-xs md:text-sm mb-0.5 md:mb-1" style={{ color: c }}>Q. {item.question}</p>
+                <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-xs md:text-sm">{item.answer}</p>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }

@@ -4461,6 +4461,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         text_message: 'text_message', 'text message': 'text_message', 'text-message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
         table: 'table', 표: 'table', 테이블: 'table', '표(table)': 'table',
         infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
+        memo: 'memo', 메모: 'memo', 내부메모: 'memo', 'memorandum': 'memo',
+        brochure: 'brochure', 브로셔: 'brochure', 팸플릿: 'brochure', 안내책자: 'brochure', 안내문: 'brochure',
+        faq: 'faq', 'faq': 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
       };
       return map[raw.trim().toLowerCase()] || undefined;
     };
@@ -4476,6 +4479,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       text_message: 'Read a text message conversation.',
       table: 'Read a table.',
       infobox: 'Read an information box.',
+      memo: 'Read a memo.',
+      brochure: 'Read a brochure.',
+      faq: 'Read an FAQ.',
     };
 
     const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
@@ -4536,6 +4542,25 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       infobox: {
         title: ['title', '제목', '박스제목', 'boxtitle', 'box_title'],
         content: ['content', '내용', '본문', 'boxcontent', 'box_content', '내용물'],
+      },
+      memo: {
+        to: ['to', '받는사람', '받는이', '수신'],
+        from: ['from', '보낸사람', '보낸이', '발신'],
+        date: ['date', '날짜', '일자', '작성일'],
+        subject: ['subject', '제목', '주제', '메모제목'],
+        body: ['body', '본문', '내용', '메모내용', 'memobody'],
+      },
+      brochure: {
+        title: ['title', '제목', '브로셔제목'],
+        subtitle: ['subtitle', '부제목', '소제목', 'tagline'],
+        highlights: ['highlights', '특징', '주요특징', '강조', 'features'],
+        description: ['description', '설명', '본문', '내용', 'about'],
+        location: ['location', '위치', '주소', '장소'],
+        contact: ['contact', '연락처', '연락', 'contactinfo'],
+      },
+      faq: {
+        title: ['title', '제목', 'faq제목'],
+        items: ['items', '항목', '질문답변', 'qa', 'questions', '질문'],
       },
     };
 
@@ -5025,6 +5050,57 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
+    // Reading: Memo 예시 (내부 메모 템플릿)
+    const readingMemoExample = section === 'Reading' ? [
+      '19',
+      'Read in Daily Life',
+      '보통',
+      'Module 1',
+      'Read a Memo',
+      '유형: memo\n색상: gray\n필드:\n받는사람: All Teaching Staff\n보낸사람: Principal Office\n날짜: September 5\n제목: Faculty Meeting Rescheduled\n본문: The faculty meeting originally scheduled for Thursday has been moved to Friday at 3:30 PM in the main conference room. Please bring your department curriculum proposals. Attendance is mandatory.',
+      '',
+      'When will the faculty meeting take place?',
+      'A. Thursday at 3:30 PM', 'B. Friday at 3:30 PM', 'C. Thursday in the morning', 'D. Friday in the morning',
+      'B',
+      '메모에 "moved to Friday at 3:30 PM"라고 명시됨.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Reading: Brochure 예시 (안내 책자 템플릿)
+    const readingBrochureExample = section === 'Reading' ? [
+      '20',
+      'Read in Daily Life',
+      '보통',
+      'Module 1',
+      'Read a Brochure',
+      '유형: brochure\n색상: orange\n필드:\n제목: Riverside Adventure Park\n부제목: Family Fun for All Ages\n특징: • 12 thrilling rides including the new Sky Rollercoaster\n• Water park open May–September\n• Group discounts available\n• Free parking and on-site dining\n설명: Located along the scenic Riverside Trail, our park offers excitement for every member of the family. From toddler-friendly carousels to extreme rollercoasters, there is something for everyone. Season passes include unlimited entry and discounts on food and merchandise.\n위치: 78 Riverside Trail, Mountain View\n연락처: Open weekends and holidays | www.riversideadventure.com | (555) 234-7788',
+      '',
+      'What is included with a season pass?',
+      'A. Only free parking', 'B. Unlimited entry and food discounts', 'C. Free rollercoaster photos', 'D. Priority access to water park',
+      'B',
+      '브로셔에 "Season passes include unlimited entry and discounts on food and merchandise"라고 명시됨.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Reading: FAQ 예시 (자주 묻는 질문 템플릿)
+    const readingFaqExample = section === 'Reading' ? [
+      '21',
+      'Read in Daily Life',
+      '쉬움',
+      'Module 1',
+      'Read an FAQ',
+      '유형: faq\n색상: purple\n필드:\n제목: Community Pool — Frequently Asked Questions\n질문답변: Q: What are the pool hours?\nA: The pool is open daily from 6 AM to 9 PM. Lap swimming is available from 6 AM to 8 AM.\n\nQ: Can guests use the pool?\nA: Yes. Each member may bring up to two guests. Guest passes are $5 per person per visit.\n\nQ: Is the pool heated?\nA: Yes, the pool is maintained at 82°F (28°C) year-round.',
+      '',
+      'How much does a guest pass cost?',
+      'A. $2 per person', 'B. $5 per person', 'C. Free for members', 'D. $10 per person',
+      'B',
+      'FAQ에 "Guest passes are $5 per person per visit"라고 명시됨.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // Listening 예시 — TPO 2 리스닝 구조 반영 (Module 1: Q1-Q18, Module 2: Q1-Q16)
     // 1) 쉬움 — Listen and Response (Module 1, Q1) — 이미지 + 짧은 대화
     const listeningEasyExample = section === 'Listening' ? [
@@ -5209,6 +5285,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       readingAcademicExample,
       readingTableExample,
       readingInfoBoxExample,
+      readingMemoExample,
+      readingBrochureExample,
+      readingFaqExample,
       listeningEasyExample,
       listeningMediumExample,
       listeningAnnouncementExample,
