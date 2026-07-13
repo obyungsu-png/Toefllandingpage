@@ -368,15 +368,17 @@ function GroupIntroScreen({
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
     try {
-      audio.muted = true;       // 소리 차단 (cleanup 중 노이즈 방지)
-      audio.volume = 0;         // 볼륨 0 (추가 안전장치)
+      // 이벤트 핸들러 제거 (노이즈 없음)
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      if (!audio.ended) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
+      // 오디오가 이미 종료된 경우 추가 작업 금지 (muted/volume/pause 변경 시 브라우저 클릭/팝 노이즈 발생)
+      if (audio.ended) return;
+      // 아직 재생 중인 경우에만 mute + pause (순서 중요: mute 먼저 → 노이즈 차단)
+      audio.muted = true;
+      audio.volume = 0;
+      audio.pause();
+      audio.currentTime = 0;
     } catch { /* ignore */ }
   };
 
@@ -636,19 +638,21 @@ function ListeningQuestionScreen({
   const audioPlayedRef = useRef(false);
 
   // 오디오 정리 헬퍼 — 잔여 노이즈/틱 소리 방지
-  // mute를 먼저 설정하여 cleanup 중 소리 차단, 이미 종료된 오디오는 pause() 금지
+  // 오디오가 이미 종료된 경우 muted/volume/pause 변경 금지 (브라우저 클릭/팝 노이즈 원인)
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
     try {
-      audio.muted = true;       // 소리 차단 (cleanup 중 노이즈 방지)
-      audio.volume = 0;         // 볼륨 0 (추가 안전장치)
+      // 이벤트 핸들러 제거 (노이즈 없음)
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      if (!audio.ended) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
+      // 오디오가 이미 종료된 경우 추가 작업 금지 (muted/volume/pause 변경 시 브라우저 클릭/팝 노이즈 발생)
+      if (audio.ended) return;
+      // 아직 재생 중인 경우에만 mute + pause (순서 중요: mute 먼저 → 노이즈 차단)
+      audio.muted = true;
+      audio.volume = 0;
+      audio.pause();
+      audio.currentTime = 0;
     } catch { /* ignore */ }
   };
 
