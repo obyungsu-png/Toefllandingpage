@@ -5328,12 +5328,12 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Writing: 이메일 작성 예시
+    // Writing: 이메일 작성 예시 (Module 2 — Build a Sentence 다음 순서)
     const writingExample = section === 'Writing' ? [
-      '1',
+      '11',
       'Write an Email',
       '보통',
-      '',
+      'Module 2',
       'Question about missed class',
       '',
       '',
@@ -5345,13 +5345,30 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
-    // Writing: Build a Sentence 예시 (문장 배열 문제)
+    // Writing: Academic Discussion 예시 (Module 2 — Email 다음 순서)
+    const writingDiscussionExample = section === 'Writing' ? [
+      '12',
+      'Academic Discussion',
+      '보통',
+      'Module 2',
+      'Art History Class Discussion',
+      '',
+      '',
+      "Write a post responding to the professor's question. Express and support your opinion, and make a contribution to the discussion in your own words. An effective response will contain at least 100 words.",
+      '', '', '', '',
+      '',
+      '자유 응답(에세이 채점) 문제라 정답 없음 — correctAnswer는 비워둠',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Writing: Build a Sentence 예시 (문장 배열 문제, Module 1)
     // correctAnswer에 정답 문장을 넣으면 파싱 시 words가 자동으로 분할됨
     const writingBsExample = section === 'Writing' ? [
       '1',
       'Build a Sentence',
       '쉬움',
-      '',
+      'Module 1',
       '',
       '',
       '',
@@ -5384,6 +5401,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       listeningM2MediumExample,
       speakingExample,
       writingExample,
+      writingDiscussionExample,
       writingBsExample,
     ].filter(Boolean);
     const csv = '\uFEFF' + rows.join('\n') + '\n';
