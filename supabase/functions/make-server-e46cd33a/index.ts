@@ -1049,7 +1049,14 @@ registerAppendableCollectionRoutes('/make-server-e46cd33a/question-types-results
 // Get all TPO tests metadata (list)
 app.get('/make-server-e46cd33a/tpo-tests', async (c) => {
   try {
-    const tests = await kv.getByPrefix('tpo:');
+    const raw = await kv.getByPrefix('tpo:');
+    // Defensive filter: some legacy/rogue key under the 'tpo:' prefix may
+    // have accidentally stored an entire array (or other non-test shape)
+    // instead of a single test object. Returning that as-is bloats the
+    // response (nested arrays inside the array) and slows down every
+    // client that loads TPO tests. Only keep entries that actually look
+    // like a single TPOTest object.
+    const tests = raw.filter((t: any) => t && !Array.isArray(t) && typeof t === 'object' && typeof t.testNumber !== 'undefined');
     return c.json(tests);
   } catch (error) {
     console.error('Error loading TPO tests:', error);
@@ -1087,7 +1094,8 @@ app.post('/make-server-e46cd33a/tpo-tests', async (c) => {
 // Get all Real tests metadata (list)
 app.get('/make-server-e46cd33a/test-tests', async (c) => {
   try {
-    const tests = await kv.getByPrefix('test:');
+    const raw = await kv.getByPrefix('test:');
+    const tests = raw.filter((t: any) => t && !Array.isArray(t) && typeof t === 'object' && typeof t.testNumber !== 'undefined');
     return c.json(tests);
   } catch (error) {
     console.error('Error loading Real tests:', error);
@@ -1125,7 +1133,8 @@ app.post('/make-server-e46cd33a/test-tests', async (c) => {
 // Get all Training tests metadata (list)
 app.get('/make-server-e46cd33a/training-tests', async (c) => {
   try {
-    const tests = await kv.getByPrefix('training:');
+    const raw = await kv.getByPrefix('training:');
+    const tests = raw.filter((t: any) => t && !Array.isArray(t) && typeof t === 'object' && typeof t.testNumber !== 'undefined');
     return c.json(tests);
   } catch (error) {
     console.error('Error loading Training tests:', error);
