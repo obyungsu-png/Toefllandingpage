@@ -25,6 +25,7 @@ export function SpeakingInterviewIntro({
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stopTtsRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // ── Real audio from CMS ──────────────────────────────────────────────────
@@ -51,7 +52,7 @@ export function SpeakingInterviewIntro({
     const textToRead = questionText ||
       `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
 
-    return speakWithBritishFemaleVoice({
+    const stop = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
@@ -59,6 +60,8 @@ export function SpeakingInterviewIntro({
         if (!isReviewMode) setTimeout(() => onNext(), 500);
       },
     });
+    stopTtsRef.current = stop;
+    return stop;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
   const displayText = questionText ||
@@ -69,7 +72,7 @@ export function SpeakingInterviewIntro({
       <MobileSectionHeader
         sectionLabel="Speaking"
         onBack={onHome}
-        onNext={onNext}
+        onNext={() => { audioRef.current?.pause(); stopTtsRef.current?.(); onNext(); }}
         showNext
         showVolume={true}
         onVolumeClick={() => setShowVolumeControl(true)}
@@ -94,7 +97,11 @@ export function SpeakingInterviewIntro({
             </svg>
           </button>
           <button
-            onClick={onNext}
+            onClick={() => {
+              audioRef.current?.pause();
+              stopTtsRef.current?.();
+              onNext();
+            }}
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>

@@ -298,7 +298,7 @@ function ListeningSectionIntro({
           </button>
           <button
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
-            onClick={onNext}
+            onClick={() => { stopAllSpeech(); onNext(); }}
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
@@ -336,7 +336,7 @@ function ListeningSectionIntro({
         </div>
       </div>
 
-      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
+      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={() => { stopAllSpeech(); onNext(); }} />
     </div>
   );
 }
@@ -555,7 +555,7 @@ function ModuleIntroScreen({
           </button>
           <button
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
-            onClick={onNext}
+            onClick={() => { stopAllSpeech(); onNext(); }}
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
@@ -594,7 +594,7 @@ function ModuleIntroScreen({
         </div>
       </div>
 
-      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
+      <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={() => { stopAllSpeech(); onNext(); }} />
     </div>
   );
 }

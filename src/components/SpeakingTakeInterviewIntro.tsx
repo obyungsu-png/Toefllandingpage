@@ -13,11 +13,12 @@ interface SpeakingTakeInterviewIntroProps {
 export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false }: SpeakingTakeInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const stopTtsRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
 
-    return speakWithBritishFemaleVoice({
+    const stop = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
@@ -25,6 +26,8 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
         if (!isReviewMode) setTimeout(() => onNext(), 500);
       },
     });
+    stopTtsRef.current = stop;
+    return stop;
   }, [onNext]);
 
   return (
@@ -32,7 +35,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
       <MobileSectionHeader
         sectionLabel="Speaking"
         onBack={onHome}
-        onNext={onNext}
+        onNext={() => { stopTtsRef.current?.(); onNext(); }}
         showNext
         showVolume={true}
         onVolumeClick={() => setShowVolumeControl(true)}
@@ -62,7 +65,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
 
           {/* Next Button */}
           <button
-            onClick={onNext}
+            onClick={() => { stopTtsRef.current?.(); onNext(); }}
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
