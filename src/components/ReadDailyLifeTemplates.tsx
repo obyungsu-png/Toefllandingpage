@@ -59,6 +59,21 @@ const BUILT_IN_TEMPLATES: DailyLifeTemplate[] = [
     }
   },
   {
+    id: 'email-simple-1',
+    name: 'Simple Email (간단한 이메일)',
+    icon: 'mail',
+    category: 'email',
+    structure: 'email_simple',
+    fields: {
+      subject: 'Library Hours Update',
+      body: 'Dear Students,\n\nStarting next Monday, the library will extend its hours during finals week. We will be open from 7:00 AM to midnight, Monday through Friday.\n\nGood luck with your exams!\n\nLibrary Services',
+    },
+    fieldLabels: {
+      subject: 'Subject',
+      body: 'Body',
+    }
+  },
+  {
     id: 'social-1',
     name: 'Social Media Post (소셜미디어)',
     icon: 'message',
@@ -454,6 +469,20 @@ export function ReadDailyLifeTemplates({
               ) : null)}
             </div>
             <div className="p-4 font-[\'Inter\',_sans-serif] leading-relaxed text-sm whitespace-pre-wrap border-4 m-1" style={{ borderColor: c }}>
+              {f.body}
+            </div>
+          </div>
+        );
+
+      case 'email_simple':
+        return (
+          <div className="rounded-lg overflow-hidden border-2" style={{ borderColor: c }}>
+            {f.subject && (
+              <div className="px-4 py-2 text-white font-['Inter',_sans-serif] font-bold text-sm" style={{ backgroundColor: c }}>
+                {f.subject}
+              </div>
+            )}
+            <div className="p-4 font-['Inter',_sans-serif] leading-relaxed text-sm whitespace-pre-wrap bg-white">
               {f.body}
             </div>
           </div>
@@ -1246,6 +1275,20 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
             ) : null)}
           </div>
           <div className="p-3 sm:p-6 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base whitespace-pre-wrap border-2 sm:border-4 m-1 sm:m-2 max-h-[400px] overflow-y-auto rounded" style={{ borderColor: c }}>
+            {f.body}
+          </div>
+        </div>
+      );
+
+    case 'email_simple':
+      return (
+        <div className="rounded-lg overflow-hidden border-2 bg-white" style={{ borderColor: c }}>
+          {f.subject && (
+            <div className="px-3 sm:px-4 py-2 text-white font-['Inter',_sans-serif] font-bold text-sm sm:text-base" style={{ backgroundColor: c }}>
+              {f.subject}
+            </div>
+          )}
+          <div className="p-3 sm:p-6 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base whitespace-pre-wrap max-h-[400px] overflow-y-auto">
             {f.body}
           </div>
         </div>

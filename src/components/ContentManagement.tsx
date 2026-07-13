@@ -4453,6 +4453,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       const map: Record<string, string> = {
         notice: 'notice', 공지: 'notice', 공지문: 'notice', 공지사항: 'notice',
         email: 'email', 이메일: 'email', 메일: 'email',
+        'simple email': 'email_simple', '간단한 이메일': 'email_simple', '단순 이메일': 'email_simple', '간단메일': 'email_simple', 'simple': 'email_simple', email_simple: 'email_simple',
         social_media: 'social_media', 'social media': 'social_media', 소셜미디어: 'social_media', 소셜: 'social_media', sns: 'social_media',
         advertisement: 'advertisement', advert: 'advertisement', 광고: 'advertisement', 광고문: 'advertisement',
         article: 'article', 'news article': 'article', 뉴스기사: 'article', 기사: 'article', 뉴스: 'article',
@@ -4471,6 +4472,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     const DAILY_FORMAT_TITLES: Record<string, string> = {
       notice: 'Read a notice.',
       email: 'Read an email.',
+      email_simple: 'Read a simple email.',
       social_media: 'Read a social media post.',
       advertisement: 'Read an advertisement.',
       article: 'Read an article.',
@@ -4495,6 +4497,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         from: ['from', '보낸사람', '보낸이', 'sender', '보낸사람주소'],
         date: ['date', '날짜', '일자', '작성일'],
         subject: ['subject', '제목', '주제', '메일제목', 'email_subject'],
+        body: ['body', '본문', '내용', 'emailbody', 'email_body'],
+      },
+      email_simple: {
+        subject: ['subject', '제목', '주제', '메일제목'],
         body: ['body', '본문', '내용', 'emailbody', 'email_body'],
       },
       social_media: {
