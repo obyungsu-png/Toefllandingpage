@@ -214,12 +214,12 @@ export function TPOPage({
             <div className="flex gap-2 md:gap-3">
               <FilterPill
                 active={sortOrder === 'asc'}
-                label="번호 낮은순 ↑"
+                label="오름차순 ↑"
                 onClick={() => setSortOrder('asc')}
               />
               <FilterPill
                 active={sortOrder === 'desc'}
-                label="번호 높은순 ↓"
+                label="내림차순 ↓"
                 onClick={() => setSortOrder('desc')}
               />
             </div>
