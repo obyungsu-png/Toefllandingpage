@@ -9,6 +9,95 @@ import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
+import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
+
+/**
+ * Reading review — Range API로 하이라이트/밑줄을 DOM에 적용
+ */
+function applyHighlightToRange(range: Range, type: 'h' | 'u') {
+  const selectedText = range.toString();
+  if (!selectedText) return;
+
+  const mark = document.createElement(type === 'h' ? 'mark' : 'u');
+  mark.style.backgroundColor = type === 'h' ? '#fff3a3' : 'transparent';
+  mark.style.textDecoration = type === 'u' ? 'underline' : 'none';
+  mark.style.textDecorationColor = type === 'u' ? '#1e6b73' : '';
+  mark.style.textDecorationThickness = type === 'u' ? '2px' : '';
+
+  try {
+    range.surroundContents(mark);
+  } catch {
+    // surroundContents가 실패하는 경우 (여러 노드에 걸친 선택)
+    // extractContents + insertNode 사용
+    const contents = range.extractContents();
+    mark.appendChild(contents);
+    range.insertNode(mark);
+  }
+}
+
+/**
+ * CMS 지문 텍스트 파싱 — JSON 템플릿인 경우 본문 추출
+ */
+function parsePassageContent(rawPassage: string | null | undefined): string {
+  if (!rawPassage) return '';
+  try {
+    const parsed = JSON.parse(rawPassage);
+    if (parsed.fields?.body) return parsed.fields.body;
+    if (parsed.passage) return parsed.passage;
+    return rawPassage;
+  } catch {
+    return rawPassage;
+  }
+}
+
+/**
+ * 저장된 하이라이트를 DOM에 복원
+ * - passageEl 내의 텍스트 노드를 순회하며 누적 offset으로 매칭
+ */
+function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[], passageText: string) {
+  if (!highlights.length) return;
+
+  highlights.forEach(h => {
+    if (h.end_offset > passageText.length) return;
+
+    const walker = document.createTreeWalker(passageEl, NodeFilter.SHOW_TEXT);
+    let node: Text | null;
+    let currentOffset = 0;
+
+    while ((node = walker.nextNode() as Text | null)) {
+      const nodeText = node.nodeValue || '';
+      const relativeStart = h.start_offset - currentOffset;
+      const relativeEnd = h.end_offset - currentOffset;
+
+      if (relativeStart >= 0 && relativeEnd <= nodeText.length && relativeEnd > 0) {
+        try {
+          const range = document.createRange();
+          range.setStart(node, relativeStart);
+          range.setEnd(node, relativeEnd);
+
+          const mark = document.createElement(h.type === 'h' ? 'mark' : 'u');
+          mark.style.backgroundColor = h.type === 'h' ? '#fff3a3' : 'transparent';
+          mark.style.textDecoration = h.type === 'u' ? 'underline' : 'none';
+          mark.style.textDecorationColor = h.type === 'u' ? '#1e6b73' : '';
+          mark.style.textDecorationThickness = h.type === 'u' ? '2px' : '';
+
+          try {
+            range.surroundContents(mark);
+          } catch {
+            const contents = range.extractContents();
+            mark.appendChild(contents);
+            range.insertNode(mark);
+          }
+          break;
+        } catch {
+          // 실패 시 다음 노드에서 시도하지 않고 종료
+          break;
+        }
+      }
+      currentOffset += nodeText.length;
+    }
+  });
+}
 
 type SectionTab = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 
@@ -120,6 +209,10 @@ export function QuestionReviewFull({
   });
   const [popupData, setPopupData] = useState<{ word: string; context?: string; x: number; y: number } | null>(null);
 
+  // Reading review — 하이라이트 저장/로드 (Supabase)
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const passageRef = useRef<HTMLDivElement | null>(null);
+
   // Speaking-specific state
   // Real recordings — load from DB (30-day retention) with sessionStorage fallback
   const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
@@ -146,6 +239,12 @@ export function QuestionReviewFull({
     test.testName === result.testName ||
     `${test.testType} ${test.testNumber}` === result.testName
   ) || tpoTests.find((test: any) => test.testNumber === tpoNumber);
+
+  // 현재 리딩 review 지문 식별자 — testId / passageKey
+  const currentTestId = currentTPOTest?.testNumber != null
+    ? `${currentTPOTest.testType || 'tpo'}-${currentTPOTest.testNumber}`
+    : result.testName;
+  const currentPassageKey = `reading-m${activeModule}`;
 
   if (typeof window !== 'undefined') {
     console.log('[Review] testName:', result.testName, '→ matched test:', currentTPOTest?.testName || currentTPOTest?.testNumber || 'NONE', '| tests available:', tpoTests.length);
@@ -373,33 +472,93 @@ export function QuestionReviewFull({
   };
 
   // Reading review — 하이라이트/밑줄 모두 지우기
-  const handleClearAllHighlights = () => {
+  const handleClearAllHighlights = async () => {
     setActiveTool(null);
-    // TODO: Supabase에 저장된 하이라이트 삭제
+    // DOM에서 <mark>, <u> 제거 (원래 텍스트로 복원)
+    if (passageRef.current) {
+      const marks = passageRef.current.querySelectorAll('mark, u');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        if (parent) {
+          while (m.firstChild) {
+            parent.insertBefore(m.firstChild, m);
+          }
+          parent.removeChild(m);
+          parent.normalize();
+        }
+      });
+    }
+    // Supabase에서 삭제
+    if (currentTestId && currentPassageKey) {
+      await deleteAllHighlights(currentTestId, currentPassageKey);
+    }
+    setHighlights([]);
   };
 
   // Reading review — 지문 영역 mouseup 핸들러
-  const handlePassageMouseUp = (e: React.MouseEvent, passageText: string) => {
+  const handlePassageMouseUp = async (
+    e: React.MouseEvent,
+    passageText: string,
+    testId: string,
+    passageKey: string
+  ) => {
     const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const selectedText = selection.toString().trim();
     if (!selectedText) return;
 
-    // 단어 하나인 경우만 팝업 표시 (단어 수 제한)
+    const range = selection.getRangeAt(0);
     const words = selectedText.split(/\s+/);
-    if (words.length === 1 && activeTool === null) {
-      // 단어 팝업 표시
+
+    if (activeTool) {
+      // 하이라이트/밑줄 적용
+      const type = activeTool === 'highlight' ? 'h' : 'u';
+
+      // 표시된 지문 텍스트에서 offset 계산 (JSON 파싱 후)
+      const passageContent = parsePassageContent(passageText);
+      const startOffset = passageContent.indexOf(selectedText);
+      const endOffset = startOffset + selectedText.length;
+
+      if (startOffset === -1) {
+        selection.removeAllRanges();
+        return;
+      }
+
+      // DOM에 적용
+      applyHighlightToRange(range, type);
+
+      // Supabase에 저장 (수강권 확인은 saveHighlight 내부에서 처리)
+      const id = await saveHighlight({
+        test_id: testId,
+        passage_key: passageKey,
+        start_offset: startOffset,
+        end_offset: endOffset,
+        type,
+      });
+
+      // 로컬 상태에 추가
+      setHighlights(prev => [...prev, {
+        id: id || undefined,
+        test_id: testId,
+        passage_key: passageKey,
+        start_offset: startOffset,
+        end_offset: endOffset,
+        type,
+        expires_at: '',
+      }]);
+
+      selection.removeAllRanges();
+    } else if (words.length === 1) {
+      // 단어 팝업 표시 — context에 표시된 지문 텍스트 전달
+      const passageContent = parsePassageContent(passageText);
       setPopupData({
         word: selectedText,
-        context: passageText,
+        context: passageContent,
         x: e.clientX,
         y: e.clientY,
       });
-      // 선택 해제
-      selection?.removeAllRanges();
-    } else if (activeTool) {
-      // 하이라이트/밑줄 적용 (간단한 버전 — 실제 구현에서는 Range API 사용)
-      // TODO: Supabase에 저장
-      selection?.removeAllRanges();
+      selection.removeAllRanges();
     }
   };
 
@@ -417,6 +576,34 @@ export function QuestionReviewFull({
     setAudioProgress(0);
     if (listeningAudioRef.current) listeningAudioRef.current.pause();
   }, [currentQuestionIndex]);
+
+  // Reading review — 지문이 표시될 때 Supabase에서 하이라이트 로드
+  useEffect(() => {
+    if (activeSection !== 'Reading') return;
+    if (!currentTestId || !currentPassageKey) return;
+
+    let cancelled = false;
+    loadHighlights(currentTestId, currentPassageKey)
+      .then(loaded => {
+        if (!cancelled) setHighlights(loaded);
+      })
+      .catch(() => {
+        if (!cancelled) setHighlights([]);
+      });
+
+    return () => { cancelled = true; };
+  }, [activeSection, currentTestId, currentPassageKey]);
+
+  // Reading review — 하이라이트가 로드/변경되면 DOM에 복원
+  useEffect(() => {
+    if (activeSection !== 'Reading') return;
+    if (!passageRef.current) return;
+
+    const passageContent = parsePassageContent(currentQuestion?.passageText);
+    if (passageContent) {
+      restoreHighlights(passageRef.current, highlights, passageContent);
+    }
+  }, [highlights, activeSection, currentQuestion]);
 
   const sectionTabs: SectionTab[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
 
@@ -862,9 +1049,10 @@ export function QuestionReviewFull({
                   onLanguageChange={handleLanguageChange}
                 />
                 <div
+                  ref={passageRef}
                   className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto"
                   style={{ maxHeight: '70vh' }}
-                  onMouseUp={(e) => handlePassageMouseUp(e, currentQuestion?.passageText || '')}
+                  onMouseUp={(e) => handlePassageMouseUp(e, currentQuestion?.passageText || '', currentTestId, currentPassageKey)}
                 >
                   {(() => {
                     // Use passageText from the already-correctly-mapped currentQuestion
@@ -880,18 +1068,9 @@ export function QuestionReviewFull({
                     const filteredCmsQuestions = (currentSection?.questions || []).filter((q: any) => !isFBQ(q));
                     const mappedCmsQ = filteredCmsQuestions[currentQuestionIndex - readingM1Offset];
                     const passageTitle = mappedCmsQ?.passageTitle || null;
-                    const emailMeta = mappedCmsQ?.emailMeta || null; // e.g. {to, from, date, subject}
 
                     // Parse JSON template if needed
-                    let passageContent: string | null = null;
-                    if (rawPassage) {
-                      try {
-                        const parsed = JSON.parse(rawPassage);
-                        if (parsed.fields?.body) passageContent = parsed.fields.body;
-                        else if (parsed.passage) passageContent = parsed.passage;
-                        else passageContent = rawPassage;
-                      } catch { passageContent = rawPassage; }
-                    }
+                    const passageContent = parsePassageContent(rawPassage) || null;
 
                     return passageContent ? (
                       <>
