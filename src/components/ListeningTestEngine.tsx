@@ -363,6 +363,8 @@ function GroupIntroScreen({
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioEnded, setAudioEnded] = useState(!audioUrl);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // React ref로 오디오 종료 상태 추적 (audio.ended 속성은 브라우저마다 정확하지 않음)
+  const audioEndedRef = useRef(!audioUrl);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
@@ -372,9 +374,10 @@ function GroupIntroScreen({
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      // 오디오가 이미 종료된 경우 추가 작업 금지 (muted/volume/pause 변경 시 브라우저 클릭/팝 노이즈 발생)
-      if (audio.ended) return;
-      // 아직 재생 중인 경우에만 mute + pause (순서 중요: mute 먼저 → 노이즈 차단)
+      // 오디오가 이미 종료된 경우 muted/volume/pause 변경 금지 — 브라우저 클릭/팝 노이즈 원인
+      // audio.ended 대신 audioEndedRef 사용 (더 정확)
+      if (audioEndedRef.current) return;
+      // 아직 재생 중인 경우에만 mute + pause (순서: mute 먼저 → 노이즈 차단 후 pause)
       audio.muted = true;
       audio.volume = 0;
       audio.pause();
@@ -383,16 +386,19 @@ function GroupIntroScreen({
   };
 
   useEffect(() => {
+    audioEndedRef.current = !audioUrl;
     if (!audioUrl) return;
     const timer = setTimeout(async () => {
       try {
         const audio = await createCachedAudio(audioUrl);
         cleanupAudio(audioRef.current);
         audioRef.current = audio;
+        audioEndedRef.current = false;  // 새 오디오 시작
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => {
           setIsPlaying(false);
           setAudioEnded(true);
+          audioEndedRef.current = true;  // 종료 상태 업데이트
         };
       } catch { /* ignore */ }
     }, 500);
@@ -412,10 +418,12 @@ function GroupIntroScreen({
       const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
       setAudioEnded(false);
+      audioEndedRef.current = false;  // 리플레이 시작
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => {
         setIsPlaying(false);
         setAudioEnded(true);
+        audioEndedRef.current = true;  // 종료 상태 업데이트
       };
     } catch { /* ignore */ }
   };
@@ -636,6 +644,8 @@ function ListeningQuestionScreen({
   // 오디오 자동 재생
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioPlayedRef = useRef(false);
+  // React ref로 오디오 종료 상태 추적 (audio.ended 속성은 브라우저마다 정확하지 않음)
+  const audioEndedRef = useRef(false);
 
   // 오디오 정리 헬퍼 — 잔여 노이즈/틱 소리 방지
   // 오디오가 이미 종료된 경우 muted/volume/pause 변경 금지 (브라우저 클릭/팝 노이즈 원인)
@@ -646,9 +656,10 @@ function ListeningQuestionScreen({
       audio.onended = null;
       audio.onpause = null;
       audio.onerror = null;
-      // 오디오가 이미 종료된 경우 추가 작업 금지 (muted/volume/pause 변경 시 브라우저 클릭/팝 노이즈 발생)
-      if (audio.ended) return;
-      // 아직 재생 중인 경우에만 mute + pause (순서 중요: mute 먼저 → 노이즈 차단)
+      // 오디오가 이미 종료된 경우 muted/volume/pause 변경 금지
+      // audio.ended 대신 audioEndedRef 사용 (더 정확)
+      if (audioEndedRef.current) return;
+      // 아직 재생 중인 경우에만 mute + pause (순서: mute 먼저 → 노이즈 차단 후 pause)
       audio.muted = true;
       audio.volume = 0;
       audio.pause();
@@ -658,6 +669,7 @@ function ListeningQuestionScreen({
 
   useEffect(() => {
     audioPlayedRef.current = false;
+    audioEndedRef.current = false;  // 새 오디오 시작 시 리셋
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
       const timer = setTimeout(async () => {
@@ -665,8 +677,12 @@ function ListeningQuestionScreen({
           const audio = await createCachedAudio(audioUrl);
           cleanupAudio(audioRef.current);
           audioRef.current = audio;
+          audioEndedRef.current = false;  // 새 오디오 시작
           audio.play().then(() => setIsPlaying(true)).catch(() => {});
-          audio.onended = () => setIsPlaying(false);
+          audio.onended = () => {
+            setIsPlaying(false);
+            audioEndedRef.current = true;  // 종료 상태 업데이트
+          };
         } catch { /* ignore */ }
       }, 1000);
       return () => {
@@ -684,8 +700,12 @@ function ListeningQuestionScreen({
     try {
       const audio = await createCachedAudio(audioUrl);
       audioRef.current = audio;
+      audioEndedRef.current = false;  // 재생 시작
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      audio.onended = () => setIsPlaying(false);
+      audio.onended = () => {
+        setIsPlaying(false);
+        audioEndedRef.current = true;  // 종료 상태 업데이트
+      };
     } catch { /* ignore */ }
   };
 
