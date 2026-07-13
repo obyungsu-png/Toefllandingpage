@@ -1719,7 +1719,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           const qt = formData.questionType || '';
           const isListeningType = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture', 'Listen and Response'].some(t => qt.includes(t));
           const isSpeakingType = qt.includes('Listen and Repeat') || qt.includes('Take an Interview');
-          return (section === 'Listening' || section === 'Speaking') && (isListeningType || isSpeakingType);
+          const isWritingType = ['Build a Sentence', 'Write an Email', 'Academic Discussion'].some(t => qt.includes(t));
+          return (section === 'Listening' || section === 'Speaking' || section === 'Writing') && (isListeningType || isSpeakingType || isWritingType);
         })() && (
           <div className="border-2 border-dashed border-rose-300 rounded-xl p-4 bg-rose-50/30 space-y-3">
             <p className="text-sm font-bold text-rose-700 flex items-center gap-1.5">
@@ -1757,14 +1758,24 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
         )}
 
 
-        {/* Audio Upload (for Listening/Speaking) */}
-        {(section === 'Listening' || section === 'Speaking') && (
+        {/* Audio Upload (for Listening/Speaking/Writing) */}
+        {(section === 'Listening' || section === 'Speaking' || section === 'Writing') && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Audio File</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Audio File
+              <span className="ml-2 text-xs text-gray-400 font-normal">(문제에 재생되는 오디오 — 추가/제거 가능)</span>
+            </label>
+            {formData.audioUrl && (
+              <div className="mb-2 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <audio controls src={formData.audioUrl} className="h-8 flex-1" />
+                <button type="button" onClick={() => setFormData({ ...formData, audioFile: null, audioUrl: '' })}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+              </div>
+            )}
             <input
               type="file"
               accept="audio/*"
-              onChange={(e) => setFormData({ ...formData, audioFile: e.target.files?.[0] || null })}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, audioFile: f, audioUrl: URL.createObjectURL(f) }); }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
             />
           </div>
@@ -1783,12 +1794,12 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
-        {/* Image Upload for Reading questions */}
-        {section === 'Reading' && (
+        {/* Image Upload for Reading/Writing questions */}
+        {(section === 'Reading' || section === 'Writing') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Image File (Optional)
-              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 옆에 표시되는 이미지)</span>
+              <span className="ml-2 text-xs text-gray-400 font-normal">(문제에 표시되는 이미지 — 추가/제거 가능)</span>
             </label>
             {formData.imageUrl && (
               <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
@@ -3039,7 +3050,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           const qt = formData.questionType || '';
           const isListeningType = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture', 'Listen and Response'].some(t => qt.includes(t));
           const isSpeakingType = qt.includes('Listen and Repeat') || qt.includes('Take an Interview');
-          return (section === 'Listening' || section === 'Speaking') && (isListeningType || isSpeakingType);
+          const isWritingType = ['Build a Sentence', 'Write an Email', 'Academic Discussion'].some(t => qt.includes(t));
+          return (section === 'Listening' || section === 'Speaking' || section === 'Writing') && (isListeningType || isSpeakingType || isWritingType);
         })() && (
           <div className="border-2 border-dashed border-rose-300 rounded-xl p-4 bg-rose-50/30 space-y-3">
             <p className="text-sm font-bold text-rose-700 flex items-center gap-1.5">
@@ -3076,14 +3088,24 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         )}
 
-        {/* Audio Upload (for Listening/Speaking) */}
-        {(section === 'Listening' || section === 'Speaking') && (
+        {/* Audio Upload (for Listening/Speaking/Writing) */}
+        {(section === 'Listening' || section === 'Speaking' || section === 'Writing') && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Audio File</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Audio File
+              <span className="ml-2 text-xs text-gray-400 font-normal">(문제에 재생되는 오디오 — 추가/제거 가능)</span>
+            </label>
+            {formData.audioUrl && (
+              <div className="mb-2 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <audio controls src={formData.audioUrl} className="h-8 flex-1" />
+                <button type="button" onClick={() => setFormData({ ...formData, audioFile: null, audioUrl: '' })}
+                  className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+              </div>
+            )}
             <input
               type="file"
               accept="audio/*"
-              onChange={(e) => setFormData({ ...formData, audioFile: e.target.files?.[0] || null })}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, audioFile: f, audioUrl: URL.createObjectURL(f) }); }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
             />
           </div>
