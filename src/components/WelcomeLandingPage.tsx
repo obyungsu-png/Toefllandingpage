@@ -102,10 +102,10 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               className="rounded-lg overflow-hidden shadow-lg w-full max-w-[400px] h-[250px]"
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
-              <img 
+              <img
                 loading="lazy"
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
-                alt="Graduation ceremony"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20headphones%20and%20laptop%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+                alt="Studying English with headphones"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -117,9 +117,9 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
-              <img 
+              <img
                 loading="lazy"
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop" 
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20happy%20Asian%20high%20school%20students%20studying%20English%20together%20in%20group%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20friendly%20atmosphere&image_size=landscape_4_3"
                 alt="Students studying together"
                 className="w-full h-full object-cover"
               />
@@ -130,10 +130,10 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               className="rounded-lg overflow-hidden shadow-lg row-span-2 h-[380px]"
               style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
-              <img 
+              <img
                 loading="lazy"
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=600&fit=crop" 
-                alt="Graduation ceremony"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20headphones%20and%20laptop%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+                alt="Studying English with headphones"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -143,10 +143,10 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
               style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
-              <img 
+              <img
                 loading="lazy"
-                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop" 
-                alt="Online learning"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20student%20reading%20English%20textbook%20with%20notebook%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20focused%20expression&image_size=landscape_4_3"
+                alt="Reading English textbook"
                 className="w-full h-full object-cover"
               />
             </div>

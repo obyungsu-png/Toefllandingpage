@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20laptop%20and%20textbook%2C%20vibrant%20colors%2C%20energetic%20atmosphere%2C%20anime%20art%20style%2C%20modern%20study%20space&image_size=portrait_4_3"
               alt="Studying English with laptop"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
@@ -175,7 +175,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20happy%20Asian%20high%20school%20girl%20listening%20to%20English%20audio%20with%20headphones%2C%20vibrant%20colors%2C%20energetic%2C%20anime%20art%20style%2C%20books%20around&image_size=portrait_4_3"
               alt="Listening to English audio"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
@@ -189,7 +189,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20two%20cheerful%20Asian%20high%20school%20students%20studying%20English%20together%20in%20group%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20friendly%20atmosphere%2C%20notebooks%20and%20pens&image_size=portrait_4_3"
               alt="Study group"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
