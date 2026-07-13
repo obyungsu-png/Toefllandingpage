@@ -95,7 +95,19 @@ export function TPOPage({
       if (test.testType === 'TPO' && test.testNumber > max) return test.testNumber;
       return max;
     }, 0);
-    return Array.from({ length: maxTestNumber }, (_, i) => i + 1);
+    const numbers = Array.from({ length: maxTestNumber }, (_, i) => i + 1);
+
+    // Sort by date (newest first). Tests without year/month (or gaps with no
+    // saved test yet) fall back to ascending number order among themselves,
+    // placed after any dated tests.
+    return numbers.sort((a, b) => {
+      const testA = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === a);
+      const testB = tpoTests.find(t => t.testType === 'TPO' && t.testNumber === b);
+      const dateA = testA?.year ? testA.year * 100 + (testA.month || 0) : 0;
+      const dateB = testB?.year ? testB.year * 100 + (testB.month || 0) : 0;
+      if (dateA !== dateB) return dateB - dateA; // newest first
+      return a - b; // fallback: ascending number
+    });
   }, [tpoTests]);
 
   const filteredNumbers = useMemo(() => {

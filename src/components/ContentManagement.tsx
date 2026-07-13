@@ -196,6 +196,9 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   
   const [activeTestType, setActiveTestType] = useState<'TPO' | 'Test' | 'Training'>('TPO');
   const [selectedTestNumber, setSelectedTestNumber] = useState<number>(1);
+  const [showRenumberForm, setShowRenumberForm] = useState(false);
+  const [renumberTarget, setRenumberTarget] = useState<number | ''>('');
+  const [renumberError, setRenumberError] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<'Reading' | 'Listening' | 'Speaking' | 'Writing'>('Reading');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showBulkUploadForm, setShowBulkUploadForm] = useState(false);
@@ -362,6 +365,39 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
   const getExistingTest = () => {
     return tests?.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber);
+  };
+
+  // Move an existing test from its current number to a new number.
+  // Safely: copy under the new key, remove the old one, and follow the
+  // view to the new number. Refuses if the target number is already taken.
+  const handleRenumberTest = () => {
+    setRenumberError(null);
+    const currentTest = getExistingTest();
+    if (!currentTest) {
+      setRenumberError('현재 번호에 테스트가 없습니다.');
+      return;
+    }
+    if (renumberTarget === '' || renumberTarget === selectedTestNumber) {
+      setRenumberError('다른 번호를 입력해주세요.');
+      return;
+    }
+    const targetOccupied = tests?.find(t => t.testType === activeTestType && t.testNumber === renumberTarget);
+    if (targetOccupied) {
+      setRenumberError(`${activeTestType} ${renumberTarget}번은 이미 사용 중입니다. 먼저 그 번호를 정리해주세요.`);
+      return;
+    }
+
+    const movedTest: TPOTest = {
+      ...currentTest,
+      id: `${activeTestType}-${renumberTarget}-${Date.now()}`,
+      testNumber: renumberTarget,
+    };
+
+    onUpdateTest(movedTest);   // save under the new number
+    onDeleteTest(currentTest.id); // remove the old number's entry
+    setSelectedTestNumber(renumberTarget); // follow it to the new spot
+    setShowRenumberForm(false);
+    setRenumberTarget('');
   };
 
   // 갤러리 이미지 업로드: Storage + listening_images 테이블에 저장
@@ -604,6 +640,47 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               placeholder={`Enter ${activeTestType} number`}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
             />
+            {getExistingTest() && (
+              <button
+                type="button"
+                onClick={() => { setShowRenumberForm(!showRenumberForm); setRenumberError(null); }}
+                className="mt-2 text-xs text-[#1e6b73] underline font-semibold"
+              >
+                🔀 이 {activeTestType} {selectedTestNumber}번을 다른 번호로 옮기기
+              </button>
+            )}
+            {showRenumberForm && (
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-gray-600 mb-2">
+                  {activeTestType} {selectedTestNumber} → 새 번호로 이동 (기존 문제/설정 전부 그대로 옮겨감)
+                </p>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="새 번호"
+                    value={renumberTarget}
+                    onChange={(e) => setRenumberTarget(e.target.value ? parseInt(e.target.value) : '')}
+                    className="w-24 px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleRenumberTest}
+                    className="bg-amber-500 text-white hover:bg-amber-600 text-xs px-3 py-1.5"
+                  >
+                    이동
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowRenumberForm(false); setRenumberError(null); }}
+                    className="text-xs text-gray-400 underline"
+                  >
+                    취소
+                  </button>
+                </div>
+                {renumberError && <p className="text-xs text-red-500 mt-1">{renumberError}</p>}
+              </div>
+            )}
           </div>
 
           {/* Section */}
