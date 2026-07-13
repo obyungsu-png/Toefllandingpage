@@ -275,12 +275,6 @@ export function WritingBuildSentenceBase({
           <div className="space-y-6 md:space-y-10 mt-10 md:mt-20 px-2 md:pl-12 md:pr-8">
             {/* 질문 영역 (avatar1) */}
             <div>
-              <div className="flex items-center gap-2 mb-2 md:mb-3 ml-2">
-                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-[#1e6b73] uppercase tracking-wide">
-                  Question
-                </span>
-                <div className="flex-1 h-px bg-gray-200"></div>
-              </div>
               <div className="flex items-center gap-4 md:gap-6">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
                   {avatar1ImageUrl ? (
@@ -301,12 +295,6 @@ export function WritingBuildSentenceBase({
 
             {/* 답변 영역 (avatar2) */}
             <div>
-              <div className="flex items-center gap-2 mb-2 md:mb-3 ml-2">
-                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-[#1e6b73] uppercase tracking-wide">
-                  Response
-                </span>
-                <div className="flex-1 h-px bg-gray-200"></div>
-              </div>
               <div className="flex items-end gap-4 md:gap-6">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
                   {avatar2ImageUrl ? (
@@ -360,15 +348,8 @@ export function WritingBuildSentenceBase({
               </div>
             </div>
 
-            {/* Word Bank — 드래그할 단어들 */}
+            {/* Word Bank — 드래그할 단어들 (라벨 없이 단어만 표시) */}
             <div className="mt-8 md:mt-12">
-              <div className="flex items-center gap-2 mb-3 md:mb-4 justify-center">
-                <div className="flex-1 h-px bg-gray-200 max-w-[80px]"></div>
-                <span className="text-xs md:text-sm font-['Inter',_sans-serif] font-semibold text-gray-500 uppercase tracking-wide">
-                  Word Bank
-                </span>
-                <div className="flex-1 h-px bg-gray-200 max-w-[80px]"></div>
-              </div>
               <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
                 {shuffledDraggableWords.map(({ text: word, originalIndex }) => {
                   const usedCount = getUsedCount(word);

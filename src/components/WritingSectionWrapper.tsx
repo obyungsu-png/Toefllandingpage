@@ -115,6 +115,18 @@ export function WritingSectionWrapper({
     }
   };
 
+  // Build a Sentence questions, found by TYPE and sorted by questionNumber —
+  // not by raw position in the CMS array. This keeps bs-q1..bs-q10 correct
+  // even if Email/Discussion questions were saved in between, or in a
+  // different order, in the CMS.
+  const buildSentenceQuestions = writingQuestions
+    .filter((q: any) => (q.questionType || '').toLowerCase().includes('build a sentence'))
+    .sort((a: any, b: any) => {
+      const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+      const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+      return na - nb;
+    });
+
   // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
   useEffect(() => {
     const handler = () => goBack();
@@ -150,7 +162,7 @@ export function WritingSectionWrapper({
       {screen === 'intro' && <WritingIntro onNext={goNext} onHome={onHome} />}
       {screen === 'build-sentence-intro' && <WritingBuildSentenceIntro onBack={goBack} onNext={goNext} onHome={onHome} />}
       {screen === 'bs-q1' && (() => {
-        const cmsQ = writingQuestions[0];
+        const cmsQ = buildSentenceQuestions[0];
         return (
           <WritingBuildSentenceQ1
             onBack={goBack}
@@ -166,7 +178,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q2' && (() => {
-        const cmsQ = writingQuestions[1];
+        const cmsQ = buildSentenceQuestions[1];
         return (
           <WritingBuildSentenceQ2
             onBack={goBack}
@@ -182,7 +194,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q3' && (() => {
-        const cmsQ = writingQuestions[2];
+        const cmsQ = buildSentenceQuestions[2];
         return (
           <WritingBuildSentenceQ3
             onBack={goBack}
@@ -198,7 +210,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q4' && (() => {
-        const cmsQ = writingQuestions[3];
+        const cmsQ = buildSentenceQuestions[3];
         return (
           <WritingBuildSentenceQ4
             onBack={goBack}
@@ -214,7 +226,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q5' && (() => {
-        const cmsQ = writingQuestions[4];
+        const cmsQ = buildSentenceQuestions[4];
         return (
           <WritingBuildSentenceQ5
             onBack={goBack}
@@ -230,7 +242,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q6' && (() => {
-        const cmsQ = writingQuestions[5];
+        const cmsQ = buildSentenceQuestions[5];
         return (
           <WritingBuildSentenceQ6
             onBack={goBack}
@@ -246,7 +258,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q7' && (() => {
-        const cmsQ = writingQuestions[6];
+        const cmsQ = buildSentenceQuestions[6];
         return (
           <WritingBuildSentenceQ7
             onBack={goBack}
@@ -262,7 +274,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q8' && (() => {
-        const cmsQ = writingQuestions[7];
+        const cmsQ = buildSentenceQuestions[7];
         return (
           <WritingBuildSentenceQ8
             onBack={goBack}
@@ -278,7 +290,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q9' && (() => {
-        const cmsQ = writingQuestions[8];
+        const cmsQ = buildSentenceQuestions[8];
         return (
           <WritingBuildSentenceQ9
             onBack={goBack}
@@ -294,7 +306,7 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'bs-q10' && (() => {
-        const cmsQ = writingQuestions[9];
+        const cmsQ = buildSentenceQuestions[9];
         return (
           <WritingBuildSentenceQ10
             onBack={goBack}
@@ -330,7 +342,7 @@ export function WritingSectionWrapper({
         const adQ = writingQuestions.find((q: any) =>
           (q.questionType || '').toLowerCase().includes('academic discussion') ||
           (q.questionType || '').toLowerCase().includes('discussion')
-        ) || writingQuestions[11] || writingQuestions[writingQuestions.length - 1];
+        ) || null;
         return (
           <WritingAcademicDiscussionQ2
             onBack={goBack}
