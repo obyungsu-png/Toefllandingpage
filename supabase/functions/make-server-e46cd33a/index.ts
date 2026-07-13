@@ -1083,6 +1083,13 @@ app.get('/make-server-e46cd33a/tpo-tests/:number', async (c) => {
 app.post('/make-server-e46cd33a/tpo-tests', async (c) => {
   try {
     const test = await c.req.json();
+    // Guard: this endpoint saves exactly ONE test under 'tpo:{testNumber}'.
+    // If an array (or anything without a valid testNumber) ever gets sent
+    // here by mistake, saving it would corrupt every future
+    // kv.getByPrefix('tpo:') read with a giant nested blob. Reject instead.
+    if (Array.isArray(test) || typeof test !== 'object' || test === null || typeof test.testNumber === 'undefined') {
+      return c.json({ error: 'Invalid TPO test payload: expected a single test object with a testNumber' }, 400);
+    }
     await kv.set(`tpo:${test.testNumber}`, test);
     return c.json({ success: true, test });
   } catch (error) {
@@ -1122,6 +1129,9 @@ app.get('/make-server-e46cd33a/test-tests/:number', async (c) => {
 app.post('/make-server-e46cd33a/test-tests', async (c) => {
   try {
     const test = await c.req.json();
+    if (Array.isArray(test) || typeof test !== 'object' || test === null || typeof test.testNumber === 'undefined') {
+      return c.json({ error: 'Invalid Real test payload: expected a single test object with a testNumber' }, 400);
+    }
     await kv.set(`test:${test.testNumber}`, test);
     return c.json({ success: true, test });
   } catch (error) {
@@ -1161,6 +1171,9 @@ app.get('/make-server-e46cd33a/training-tests/:number', async (c) => {
 app.post('/make-server-e46cd33a/training-tests', async (c) => {
   try {
     const test = await c.req.json();
+    if (Array.isArray(test) || typeof test !== 'object' || test === null || typeof test.testNumber === 'undefined') {
+      return c.json({ error: 'Invalid Training test payload: expected a single test object with a testNumber' }, 400);
+    }
     await kv.set(`training:${test.testNumber}`, test);
     return c.json({ success: true, test });
   } catch (error) {
