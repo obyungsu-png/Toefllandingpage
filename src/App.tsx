@@ -2488,7 +2488,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer2 === option}
                       onChange={() => handleAnswerSelect2(option)}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>
@@ -2684,7 +2684,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer3 === option}
                       onChange={() => handleAnswerSelect3(option)}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -2878,7 +2878,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer4 === option}
                       onChange={() => handleAnswerSelect4(option)}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -3073,7 +3073,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer5 === option}
                       onChange={() => handleAnswerSelect5(option)}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -3279,7 +3279,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer16 === option}
                         onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                         size="sm"
                       />
                     ))}
@@ -3457,7 +3457,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer17 === option}
                         onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                         size="sm"
                       />
                     ))}
@@ -3636,7 +3636,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer18 === option}
                         onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                         size="sm"
                       />
                     ))}
@@ -3816,7 +3816,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer19 === option}
                         onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                         size="sm"
                       />
                     ))}
@@ -3997,7 +3997,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer20 === option}
                         onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                         size="sm"
                       />
                     ))}
@@ -4570,7 +4570,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer11 === option}
                       onChange={() => { setSelectedAnswer11(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 11: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -4771,7 +4771,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer12 === option}
                       onChange={() => { setSelectedAnswer12(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 12: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -4988,7 +4988,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer13 === option}
                       onChange={() => { setSelectedAnswer13(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 13: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -5194,7 +5194,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer14 === option}
                       onChange={() => { setSelectedAnswer14(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 14: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -5398,7 +5398,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer15 === option}
                       onChange={() => { setSelectedAnswer15(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 15: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                       size="sm"
                     />
                   ))}
@@ -5571,7 +5571,7 @@ function AppContent() {
                         value={option}
                         checked={selectedAnswer16 === option}
                         onChange={() => { setSelectedAnswer16(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 16: option }; }}
-                        label={option}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
                       />
                     ))}
                   </div>
@@ -5741,7 +5741,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer17 === option}
                       onChange={() => { setSelectedAnswer17(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 17: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>
@@ -5910,7 +5910,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer18 === option}
                       onChange={() => { setSelectedAnswer18(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 18: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>
@@ -6079,7 +6079,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer19 === option}
                       onChange={() => { setSelectedAnswer19(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 19: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>
@@ -6251,7 +6251,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer20 === option}
                       onChange={() => { setSelectedAnswer20(option); if (typeof window !== 'undefined') (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), 20: option }; }}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>
@@ -6722,7 +6722,7 @@ function AppContent() {
                       value={option}
                       checked={selectedAnswer11Local === option}
                       onChange={() => handleAnswerSelect(option)}
-                      label={option}
+                      label={option.replace(/^[A-D]\.\s*/, '')}
                     />
                   ))}
                 </div>

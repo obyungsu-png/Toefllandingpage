@@ -635,10 +635,9 @@ function ListeningQuestionScreen({
   const imageUrl: string = question?.imageUrl || '';
   const questionText: string = question?.questionText || 'Choose the best response.';
 
-  // 옵션에 A./B./C./D. 접두사 자동 추가 (이미 접두사가 있으면 중복 방지)
-  const formatOptionLabel = (option: string, index: number): string => {
-    if (/^[A-D]\.\s/.test(option)) return option;
-    return `${String.fromCharCode(65 + index)}. ${option}`;
+  // 옵션에서 A./B./C./D. 접두사 제거 (실제 시험 형식 - 접두사 없이 옵션 내용만 표시)
+  const formatOptionLabel = (option: string, _index: number): string => {
+    return option.replace(/^[A-D]\.\s*/, '');
   };
 
   // 오디오 자동 재생

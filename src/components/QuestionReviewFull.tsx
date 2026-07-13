@@ -1152,9 +1152,11 @@ export function QuestionReviewFull({
 
                   <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                     {currentQuestion?.options.map((option, idx) => {
+                      // 옵션에서 A./B./C./D. 접두사 제거 (실제 시험 형식)
+                      const cleanOption = option.replace(/^[A-D]\.\s*/, '');
                       const optionLetter = String.fromCharCode(65 + idx);
-                      const isUserAnswer = option === currentQuestion.userAnswer || optionLetter === currentQuestion.userAnswer;
-                      const isCorrectAnswer = option === currentQuestion.correctAnswer || optionLetter === currentQuestion.correctAnswer;
+                      const isUserAnswer = cleanOption === currentQuestion.userAnswer || option === currentQuestion.userAnswer || optionLetter === currentQuestion.userAnswer;
+                      const isCorrectAnswer = cleanOption === currentQuestion.correctAnswer || option === currentQuestion.correctAnswer || optionLetter === currentQuestion.correctAnswer;
 
                       return (
                         <div
@@ -1167,15 +1169,6 @@ export function QuestionReviewFull({
                               : 'bg-white border-gray-200'
                           }`}
                         >
-                          <span className={`text-sm md:text-xl font-bold mt-0.5 ${
-                            isCorrectAnswer
-                              ? 'text-emerald-600'
-                              : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'text-red-600'
-                              : 'text-gray-500'
-                          }`}>
-                            {optionLetter}.
-                          </span>
                           <span className={`text-sm md:text-xl flex-1 ${
                             isCorrectAnswer
                               ? 'text-emerald-700 font-semibold'
@@ -1183,7 +1176,7 @@ export function QuestionReviewFull({
                               ? 'text-red-700 font-medium'
                               : 'text-gray-700 font-medium'
                           }`}>
-                            {option}
+                            {cleanOption}
                           </span>
                           {isCorrectAnswer && (
                             <Check className="w-5 h-5 text-emerald-500 shrink-0" />

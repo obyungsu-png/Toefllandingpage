@@ -353,10 +353,7 @@ export function TrainingInterface({ subject, questionType, difficulty, questions
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <span>{option}</span>
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-slate-500">
-                              {String.fromCharCode(65 + index)}
-                            </span>
+                            <span>{option.replace(/^[A-D]\.\s*/, '')}</span>
                           </div>
                         </button>
                       );
