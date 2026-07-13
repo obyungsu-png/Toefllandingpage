@@ -4459,6 +4459,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         form: 'form', order: 'form', 양식: 'form', 주문서: 'form', 주문: 'form', 'form/table': 'form',
         review: 'review', 리뷰: 'review', 영화리뷰: 'review', 후기: 'review',
         text_message: 'text_message', 'text message': 'text_message', 'text-message': 'text_message', 문자: 'text_message', 문자메시지: 'text_message', 문자대화: 'text_message', 메시지: 'text_message', 채팅: 'text_message',
+        table: 'table', 표: 'table', 테이블: 'table', '표(table)': 'table',
+        infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
       };
       return map[raw.trim().toLowerCase()] || undefined;
     };
@@ -4472,6 +4474,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       form: 'Read a form.',
       review: 'Read a review.',
       text_message: 'Read a text message conversation.',
+      table: 'Read a table.',
+      infobox: 'Read an information box.',
     };
 
     const FIELD_KEY_ALIASES: Record<string, Record<string, string[]>> = {
@@ -4524,6 +4528,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       },
       text_message: {
         messages: ['messages', '메시지', '대화', '문자', 'chat', 'conversation', '대화내용'],
+      },
+      table: {
+        title: ['title', '제목', '표제목', 'tabletitle', 'table_title'],
+        rows: ['rows', '행', '표데이터', '표행', 'tabledata', 'table_data', 'data', '데이터'],
+      },
+      infobox: {
+        title: ['title', '제목', '박스제목', 'boxtitle', 'box_title'],
+        content: ['content', '내용', '본문', 'boxcontent', 'box_content', '내용물'],
       },
     };
 
@@ -4979,6 +4991,40 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
+    // Reading: Table 예시 (마크다운 표 문법, passageText에 템플릿 JSON 자동 생성)
+    const readingTableExample = section === 'Reading' ? [
+      '17',
+      'Read in Daily Life',
+      '보통',
+      'Module 1',
+      'Read a Table',
+      '유형: table\n색상: teal\n필드:\n제목: Class Schedule\n행: | Day | Time | Subject |\n|---|---|---|\n| Mon | 9:00 | Math |\n| Tue | 10:00 | English |\n| Wed | 11:00 | Science |',
+      '',
+      'What subject does the student have on Tuesday at 10:00?',
+      'A. Math', 'B. English', 'C. Science', 'D. History',
+      'B',
+      '표의 화요일 10:00 행에 English가 표시되어 있음.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
+    // Reading: Info Box 예시 (정보 박스 템플릿)
+    const readingInfoBoxExample = section === 'Reading' ? [
+      '18',
+      'Read in Daily Life',
+      '쉬움',
+      'Module 1',
+      'Read an Information Box',
+      '유형: infobox\n색상: blue\n필드:\n제목: Library Hours\n내용: The library is open Monday through Friday from 8:00 AM to 10:00 PM. On weekends, hours are 10:00 AM to 6:00 PM. Holidays may affect these hours.',
+      '',
+      'When is the library open on weekends?',
+      'A. 8:00 AM to 10:00 PM', 'B. 10:00 AM to 6:00 PM', 'C. Closed on weekends', 'D. 9:00 AM to 5:00 PM',
+      'B',
+      '정보 박스에 "On weekends, hours are 10:00 AM to 6:00 PM"라고 명시됨.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // Listening 예시 — TPO 2 리스닝 구조 반영 (Module 1: Q1-Q18, Module 2: Q1-Q16)
     // 1) 쉬움 — Listen and Response (Module 1, Q1) — 이미지 + 짧은 대화
     const listeningEasyExample = section === 'Listening' ? [
@@ -5161,6 +5207,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       readingCWExample,
       readingDailyExample,
       readingAcademicExample,
+      readingTableExample,
+      readingInfoBoxExample,
       listeningEasyExample,
       listeningMediumExample,
       listeningAnnouncementExample,

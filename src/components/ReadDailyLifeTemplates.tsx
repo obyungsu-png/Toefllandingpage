@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList, Film, MessagesSquare } from 'lucide-react';
+import { Plus, Save, Eye, Trash2, FileText, Mail, MessageSquare, Megaphone, Newspaper, ShoppingCart, ClipboardList, Film, MessagesSquare, Table, Info } from 'lucide-react';
 // motion removed - using CSS animations
 import type { TPOQuestion } from './ContentManagement';
 
@@ -176,6 +176,36 @@ const BUILT_IN_TEMPLATES: DailyLifeTemplate[] = [
       messages: 'Messages (한 줄에 하나씩: "이름 (시간): 내용")',
     }
   },
+  {
+    id: 'table-1',
+    name: 'Table (표)',
+    icon: 'table',
+    category: 'form',
+    structure: 'table',
+    fields: {
+      title: 'Class Schedule',
+      rows: '| Day | Time | Subject |\n|---|---|---|\n| Mon | 9:00 | Math |\n| Tue | 10:00 | English |\n| Wed | 11:00 | Science |',
+    },
+    fieldLabels: {
+      title: '표 제목 (선택)',
+      rows: '표 데이터 (마크다운 문법: |헤더1|헤더2|헤더3| 형식, 행은 줄바꿈으로 구분)',
+    }
+  },
+  {
+    id: 'infobox-1',
+    name: 'Info Box (정보 박스)',
+    icon: 'info',
+    category: 'notice',
+    structure: 'infobox',
+    fields: {
+      title: 'Important Information',
+      content: 'This is an important notice for all students. Please read carefully before proceeding to the next section.',
+    },
+    fieldLabels: {
+      title: '박스 제목',
+      content: '박스 내용',
+    }
+  },
 ];
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -187,6 +217,8 @@ const iconMap: Record<string, React.ReactNode> = {
   shopping: <ShoppingCart className="w-5 h-5" />,
   film: <Film className="w-5 h-5" />,
   messages: <MessagesSquare className="w-5 h-5" />,
+  table: <Table className="w-5 h-5" />,
+  info: <Info className="w-5 h-5" />,
   custom: <FileText className="w-5 h-5" />,
 };
 
@@ -219,6 +251,27 @@ export function parseTextMessages(raw: string): ParsedChatMessage[] {
     out.push({ sender, time, text, side: sender === firstSender ? 'left' : 'right' });
   });
   return out;
+}
+
+// Parse markdown-style table rows ('|헤더1|헤더2|헤더3|' 형식) into structured rows.
+// 첫 번째 행을 헤더로, |---| 구분 행은 제거
+export interface ParsedTableRow {
+  cells: string[];
+  isHeader: boolean;
+}
+export function parseMarkdownTable(raw: string): ParsedTableRow[] {
+  if (!raw) return [];
+  const rows: ParsedTableRow[] = [];
+  raw.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || !trimmed.startsWith('|')) return;
+    // |---|---|---| 구분 행 감지/제거
+    if (/^\|[\s\-:|]+\|$/.test(trimmed)) return;
+    const cells = trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+    rows.push({ cells, isHeader: false });
+  });
+  if (rows.length > 0) rows[0].isHeader = true;
+  return rows;
 }
 
 interface ReadDailyLifeTemplatesProps {
@@ -450,6 +503,60 @@ export function ReadDailyLifeTemplates({
             </div>
           </div>
         );
+
+      case 'table': {
+        const tableRows = parseMarkdownTable(f.rows || '');
+        if (!tableRows.length) return null;
+        const headerRow = tableRows.find(r => r.isHeader);
+        const bodyRows = tableRows.filter(r => !r.isHeader);
+        return (
+          <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+            {f.title && (
+              <div className="px-4 py-2 font-bold text-white" style={{ backgroundColor: c }}>
+                {f.title}
+              </div>
+            )}
+            <table className="w-full border-collapse">
+              {headerRow && (
+                <thead>
+                  <tr>
+                    {headerRow.cells.map((cell, i) => (
+                      <th key={i} className="border px-3 py-2 text-left font-bold" style={{ borderColor: c, backgroundColor: c + '18' }}>
+                        {cell}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {bodyRows.map((row, i) => (
+                  <tr key={i}>
+                    {row.cells.map((cell, j) => (
+                      <td key={j} className="border px-3 py-2" style={{ borderColor: c + '60' }}>
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+
+      case 'infobox': {
+        return (
+          <div className="border-l-4 rounded-r-lg p-4 md:p-5" style={{ borderColor: c, backgroundColor: c + '0d' }}>
+            {f.title && (
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="w-5 h-5" style={{ color: c }} />
+                <h3 className="text-lg font-bold" style={{ color: c }}>{f.title}</h3>
+              </div>
+            )}
+            {f.content && <p className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap">{f.content}</p>}
+          </div>
+        );
+      }
 
       default:
         return (
@@ -716,7 +823,7 @@ export function ReadDailyLifeTemplates({
                 <h3 className="text-sm font-bold text-gray-700">Content Fields</h3>
                 {Object.entries(selectedTemplate.fieldLabels).map(([key, label]) => {
                   const value = editedFields[key] || '';
-                  const isLongField = key === 'body' || key === 'content' || key === 'details' || key === 'tableRows' || key === 'footer';
+                  const isLongField = key === 'body' || key === 'content' || key === 'details' || key === 'tableRows' || key === 'footer' || key === 'rows' || key === 'messages';
                   
                   return (
                     <div key={key}>
@@ -1111,6 +1218,60 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
           </div>
         </div>
       );
+
+    case 'table': {
+      const tableRows = parseMarkdownTable(f.rows || '');
+      if (!tableRows.length) return null;
+      const headerRow = tableRows.find(r => r.isHeader);
+      const bodyRows = tableRows.filter(r => !r.isHeader);
+      return (
+        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: c }}>
+          {f.title && (
+            <div className="px-3 md:px-4 py-2 font-bold text-white text-sm md:text-base" style={{ backgroundColor: c }}>
+              {f.title}
+            </div>
+          )}
+          <table className="w-full border-collapse">
+            {headerRow && (
+              <thead>
+                <tr>
+                  {headerRow.cells.map((cell, i) => (
+                    <th key={i} className="border px-2 md:px-3 py-1.5 md:py-2 text-left font-bold text-xs md:text-sm" style={{ borderColor: c, backgroundColor: c + '18' }}>
+                      {cell}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {bodyRows.map((row, i) => (
+                <tr key={i}>
+                  {row.cells.map((cell, j) => (
+                    <td key={j} className="border px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm" style={{ borderColor: c + '60' }}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    case 'infobox': {
+      return (
+        <div className="border-l-4 rounded-r-lg p-4 md:p-5" style={{ borderColor: c, backgroundColor: c + '0d' }}>
+          {f.title && (
+            <div className="flex items-center gap-2 mb-2">
+              <Info className="w-5 h-5" style={{ color: c }} />
+              <h3 className="text-base md:text-lg font-bold" style={{ color: c }}>{f.title}</h3>
+            </div>
+          )}
+          {f.content && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.content}</p>}
+        </div>
+      );
+    }
 
     default:
       // Custom: render all fields as labelled content
