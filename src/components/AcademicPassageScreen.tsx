@@ -3,6 +3,7 @@ import { ResizableReadingLayout } from './ResizableReadingLayout';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import { ReadingReviewPassage } from './ReadingReviewPassage';
 
 interface AcademicPassageScreenProps {
   question: any; // TPOQuestion
@@ -15,6 +16,12 @@ interface AcademicPassageScreenProps {
   onNext: () => void;
   testBankType: string;
   handleTabChange: (tab: string) => void;
+  /** 리뷰 모드 — 하이라이트/밑줄/단어 해석 툴바 활성화 */
+  isReviewMode?: boolean;
+  /** Supabase 하이라이트 저장용 테스트 ID */
+  testId?: string;
+  /** Supabase 하이라이트 저장용 지문 키 */
+  passageKey?: string;
 }
 
 /**
@@ -34,6 +41,9 @@ export function AcademicPassageScreen({
   onNext,
   testBankType,
   handleTabChange,
+  isReviewMode = false,
+  testId,
+  passageKey,
 }: AcademicPassageScreenProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -117,9 +127,18 @@ export function AcademicPassageScreen({
             zoom={zoom}
             onWheel={handleWheel}
             leftContent={
-              <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
-                {passageText}
-              </div>
+              isReviewMode && testId && passageKey ? (
+                <ReadingReviewPassage
+                  passageText={passageText}
+                  testId={testId}
+                  passageKey={passageKey}
+                  maxHeight="65vh"
+                />
+              ) : (
+                <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                  {passageText}
+                </div>
+              )
             }
             rightContent={
               <>

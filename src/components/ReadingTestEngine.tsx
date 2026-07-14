@@ -24,6 +24,8 @@ interface ReadingTestEngineProps {
   /** Called whenever the visible segment changes, with a legacy-compatible key,
    *  so existing progress-saving code keeps working unchanged. */
   onSegmentChange?: (legacyKey: string) => void;
+  /** 리뷰 모드 — 하이라이트/밑줄/단어 해석 툴바 활성화 */
+  isReviewMode?: boolean;
 }
 
 const isDailyLifeType = (t: string) =>
@@ -66,6 +68,7 @@ export function ReadingTestEngine({
   currentTest,
   initialLegacyKey,
   onSegmentChange,
+  isReviewMode = false,
 }: ReadingTestEngineProps) {
   const allQuestions: any[] = sectionData?.questions || [];
   const moduleQuestions = allQuestions.filter(q => {
@@ -225,6 +228,9 @@ export function ReadingTestEngine({
         onHome={onHome}
         onBack={goBack}
         onNext={goNext}
+        isReviewMode={isReviewMode}
+        testId={`${testBankType}-${currentTest?.tpoNumber ?? 'unknown'}-reading`}
+        passageKey={`reading-m${module}-q${current.question.questionNumber}`}
       />
     );
   }
@@ -250,6 +256,9 @@ export function ReadingTestEngine({
       onNext={goNext}
       testBankType={testBankType}
       handleTabChange={handleTabChange}
+      isReviewMode={isReviewMode}
+      testId={`${testBankType}-${currentTest?.tpoNumber ?? 'unknown'}-reading`}
+      passageKey={`reading-m${module}-q${current.question.questionNumber}`}
     />
   );
 }

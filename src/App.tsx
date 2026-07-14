@@ -7054,6 +7054,7 @@ function AppContent() {
           currentTest={currentTest}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
+          isReviewMode={isReviewMode}
           onModuleEnd={() => {
             setShowModule1ReadingEngine(false);
             setShowEndModule1(true);
@@ -7085,6 +7086,7 @@ function AppContent() {
           currentTest={currentTest}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
+          isReviewMode={isReviewMode}
           onModuleEnd={() => {
             setShowModule2ReadingEngine(false);
             saveSectionResultToHistory('Reading', 20, 2);

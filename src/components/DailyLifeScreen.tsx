@@ -4,6 +4,7 @@ import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { renderDailyLifePassage } from './ReadDailyLifeTemplates';
+import { ReadingReviewPassage } from './ReadingReviewPassage';
 
 interface DailyLifeScreenProps {
   question: any; // TPOQuestion
@@ -13,6 +14,12 @@ interface DailyLifeScreenProps {
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  /** 리뷰 모드 — 하이라이트/밑줄/단어 해석 툴바 활성화 */
+  isReviewMode?: boolean;
+  /** Supabase 하이라이트 저장용 테스트 ID */
+  testId?: string;
+  /** Supabase 하이라이트 저장용 지문 키 */
+  passageKey?: string;
 }
 
 /**
@@ -29,6 +36,9 @@ export function DailyLifeScreen({
   onHome,
   onBack,
   onNext,
+  isReviewMode = false,
+  testId,
+  passageKey,
 }: DailyLifeScreenProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -100,18 +110,40 @@ export function DailyLifeScreen({
             zoom={zoom}
             onWheel={handleWheel}
             leftContent={
-              <div className="space-y-3">
-                {imageUrl && (
-                  <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
-                )}
-                {structured ? (
-                  structured
-                ) : (
-                  <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
-                    {passageText}
+              isReviewMode && testId && passageKey ? (
+                <ReadingReviewPassage
+                  passageText={passageText}
+                  testId={testId}
+                  passageKey={passageKey}
+                  maxHeight="65vh"
+                >
+                  <div className="space-y-3">
+                    {imageUrl && (
+                      <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
+                    )}
+                    {structured ? (
+                      structured
+                    ) : (
+                      <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                        {passageText}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </ReadingReviewPassage>
+              ) : (
+                <div className="space-y-3">
+                  {imageUrl && (
+                    <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
+                  )}
+                  {structured ? (
+                    structured
+                  ) : (
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      {passageText}
+                    </div>
+                  )}
+                </div>
+              )
             }
             rightContent={
               <>
