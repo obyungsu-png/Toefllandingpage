@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20cheerful%20Korean%20high%20school%20student%20studying%20TOEFL%20with%20open%20textbook%20and%20laptop%2C%20vibrant%20colors%2C%20sunny%20study%20room%2C%20modern%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80&auto=format&fit=crop"
               alt="High school student studying TOEFL"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
@@ -176,7 +176,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20middle%20school%20student%20solving%20SAT%20practice%20questions%20with%20notebook%20and%20pencil%2C%20vibrant%20colors%2C%20warm%20lighting%2C%20friendly%20atmosphere%2C%20modern%20anime%20art%20style&image_size=portrait_4_3"
+              src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80&auto=format&fit=crop"
               alt="Middle school student solving SAT questions"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
@@ -191,7 +191,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20group%20of%20Asian%20high%20school%20students%20practicing%20English%20conversation%20together%2C%20vibrant%20colors%2C%20energetic%2C%20friendly%20atmosphere%2C%20modern%20anime%20art%20style%2C%20study%20room&image_size=portrait_4_3"
+              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80&auto=format&fit=crop"
               alt="Group of students practicing English conversation"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}

@@ -532,35 +532,32 @@ export function QuestionReviewFull({
       // 표시된 지문 텍스트에서 offset 계산 (JSON 파싱 후)
       const passageContent = parsePassageContent(passageText);
       const startOffset = passageContent.indexOf(selectedText);
-      const endOffset = startOffset + selectedText.length;
 
-      if (startOffset === -1) {
-        selection.removeAllRanges();
-        return;
-      }
-
-      // DOM에 적용 — 선택한 색상 전달
+      // DOM에 적용 — 항상 적용 (Complete Words처럼 offset 매칭이 안 되어도 시각적 하이라이트/밑줄)
       applyHighlightToRange(range, type, activeColor);
 
-      // Supabase에 저장 (수강권 확인은 saveHighlight 내부에서 처리)
-      const id = await saveHighlight({
-        test_id: testId,
-        passage_key: passageKey,
-        start_offset: startOffset,
-        end_offset: endOffset,
-        type,
-      });
+      // Supabase에 저장 — offset을 찾은 경우만 저장 (수강권 확인은 saveHighlight 내부에서 처리)
+      if (startOffset !== -1) {
+        const endOffset = startOffset + selectedText.length;
+        const id = await saveHighlight({
+          test_id: testId,
+          passage_key: passageKey,
+          start_offset: startOffset,
+          end_offset: endOffset,
+          type,
+        });
 
-      // 로컬 상태에 추가
-      setHighlights(prev => [...prev, {
-        id: id || undefined,
-        test_id: testId,
-        passage_key: passageKey,
-        start_offset: startOffset,
-        end_offset: endOffset,
-        type,
-        expires_at: '',
-      }]);
+        // 로컬 상태에 추가
+        setHighlights(prev => [...prev, {
+          id: id || undefined,
+          test_id: testId,
+          passage_key: passageKey,
+          start_offset: startOffset,
+          end_offset: endOffset,
+          type,
+          expires_at: '',
+        }]);
+      }
 
       selection.removeAllRanges();
     } else if (words.length === 1) {
@@ -854,8 +851,8 @@ export function QuestionReviewFull({
 
         {/* Question Navigation + Stats */}
         <div className="relative flex items-center justify-center mt-3 gap-2">
-          {/* Question Pills */}
-          <div className="flex flex-wrap gap-1.5 justify-center">
+          {/* Question Pills + Tools + Dark mode — Q pills 바로 옆에 배치 (absolute Stats와 겹치지 않도록) */}
+          <div className="flex flex-wrap gap-1.5 justify-center items-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
               return (
@@ -919,36 +916,36 @@ export function QuestionReviewFull({
                 </button>
               );
             })}
+
+            {/* Tools 버튼 — Reading 리뷰에서 표시 (Q pills 바로 옆) */}
+            {activeSection === 'Reading' && (
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                  toolsOpen
+                    ? 'bg-[#1e6b73] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Tools
+              </button>
+            )}
+
+            {/* 다크 모드 토글 — Tools 바로 옆 */}
+            {activeSection === 'Reading' && (
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                  darkMode
+                    ? 'bg-gray-700 text-yellow-300'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={darkMode ? '라이트 모드' : '다크 모드'}
+              >
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            )}
           </div>
-
-          {/* 다크 모드 토글 — Reading 리뷰에서만 표시 (Tools 왼쪽) */}
-          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                darkMode
-                  ? 'bg-gray-700 text-yellow-300'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title={darkMode ? '라이트 모드' : '다크 모드'}
-            >
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          )}
-
-          {/* Tools 버튼 — Reading 리뷰에서만 표시 */}
-          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
-            <button
-              onClick={() => setToolsOpen(!toolsOpen)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
-                toolsOpen
-                  ? 'bg-[#1e6b73] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Tools
-            </button>
-          )}
 
           {/* Stats */}
           <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
@@ -977,11 +974,11 @@ export function QuestionReviewFull({
           showReadingCompleteWordsReview ? (
             <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
               <div className="flex-1 min-w-0">
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <p className="text-sm text-gray-500">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-1">Complete Words</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">Complete Words</h3>
                     </div>
                     <button
                       onClick={() => toggleBookmark(readingCompleteWordsConfig?.id || '')}
@@ -996,13 +993,32 @@ export function QuestionReviewFull({
                     </button>
                   </div>
 
-                  <p className="mb-8 text-xl md:text-[1.75rem] text-black font-bold text-center">
+                  <p className="mb-8 text-xl md:text-[1.75rem] text-black dark:text-gray-100 font-bold text-center">
                     Fill in the missing letters in the paragraph.
                   </p>
 
+                  {/* Reading review 도구 모음 — Complete Words에도 표시 */}
+                  {toolsOpen && (
+                    <ReadingReviewToolbar
+                      activeTool={activeTool}
+                      activeColor={activeColor}
+                      onToolChange={handleToolChange}
+                      onClearAll={handleClearAllHighlights}
+                      language={language}
+                      onLanguageChange={handleLanguageChange}
+                    />
+                  )}
+
                   <div
-                    className="text-lg md:text-[1.25rem] leading-[1.8] text-black"
+                    ref={passageRef}
+                    className="text-lg md:text-[1.25rem] leading-[1.8] text-black dark:text-gray-100"
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
+                    onMouseUp={(e) => {
+                      // Complete Words passageText의 [answer:maxLen] → answer 로 정규화하여 offset 매칭
+                      const rawPassage = readingCompleteWordsConfig?.passageText || '';
+                      const normalizedForLookup = rawPassage.replace(/\[([^\]]+):(\d+)\]/g, '$1');
+                      handlePassageMouseUp(e, normalizedForLookup, currentTestId, `${currentPassageKey}-complete-words`);
+                    }}
                   >
                     {renderCompleteWordsPassage()}
                   </div>
@@ -1012,7 +1028,7 @@ export function QuestionReviewFull({
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     ← Previous
                   </button>
@@ -1028,9 +1044,9 @@ export function QuestionReviewFull({
               </div>
 
               <div className="w-full md:w-80 shrink-0">
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 sticky top-4">
-                  <h4 className="text-sm font-bold text-gray-800 mb-3">Review Note</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
+                  <h4 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-3">Review Note</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
                     Reading Module {activeModule}의 1-10번은 TPO 기준 Complete Words 유형입니다. Review에서도 객관식이 아니라 빈칸 본문 형태로 표시되도록 맞췄습니다.
                   </p>
                   <div className="space-y-2">
