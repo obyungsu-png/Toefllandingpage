@@ -324,30 +324,16 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       'Complete Words',
       'Read in Daily Life',
       'Read an Academic Passage',
-      'Vocabulary in Context',
-      'Inference Questions',
-      'Detail Questions',
-      'Purpose Questions',
-      'Summary Questions',
-      'Insert Text Questions'
     ],
     Listening: [
       'Listen and Response',
-      'Short Conversation',
       'Announcements',
-      'Academic Talk',
       'Campus Conversation',
       'Academic Lecture',
-      'Detail Questions',
-      'Purpose Questions',
-      'Attitude Questions'
     ],
     Speaking: [
       'Listen and Repeat',
       'Take an Interview',
-      'Independent Task',
-      'Integrated Task - Reading/Listening',
-      'Academic Discussion'
     ],
     Writing: [
       'Build a Sentence',
