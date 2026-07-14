@@ -4519,7 +4519,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
       memo: 'memo', 메모: 'memo', 내부메모: 'memo', 'memorandum': 'memo',
       brochure: 'brochure', 브로셔: 'brochure', 팸플릿: 'brochure', 안내책자: 'brochure', 안내문: 'brochure',
-      faq: 'faq', 'faq': 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
+      faq: 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
     };
     return map[raw.trim().toLowerCase()] || undefined;
   };
