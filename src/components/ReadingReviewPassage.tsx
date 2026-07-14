@@ -187,24 +187,6 @@ export function ReadingReviewPassage({
     if (color) setActiveColor(color);
   };
 
-  // 단어 검색 핸들러 — AI 튜터 FAB 위쪽 중앙에 팝업 표시
-  const handleWordSearch = (word: string) => {
-    const isMobile = window.innerWidth < 768;
-    const fabSize = 56;
-    const fabBottom = isMobile ? 64 : 24;
-    const fabTop = window.innerHeight - fabBottom - fabSize;
-    // AI 튜터 FAB 바로 위, 화면 우측 정렬
-    const popupWidth = 280;
-    const x = window.innerWidth - popupWidth - 40; // 우측에서 40px 여백
-    const y = Math.max(80, fabTop - 200); // FAB 위쪽 200px 위
-    setPopupData({
-      word,
-      context: passageContent,
-      x,
-      y,
-    });
-  };
-
   // 텍스트 선택 처리
   const handleMouseUp = (e: React.MouseEvent) => {
     const selection = window.getSelection();
@@ -272,7 +254,6 @@ export function ReadingReviewPassage({
           onClearAll={handleClearAll}
           language={language}
           onLanguageChange={setLanguage}
-          onWordSearch={handleWordSearch}
         />
       )}
       <div

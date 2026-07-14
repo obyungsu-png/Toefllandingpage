@@ -94,8 +94,8 @@ export function ResizableReadingLayout({
     const containerRect = containerRef.current.getBoundingClientRect();
     const newWidth = e.clientX - containerRect.left;
     
-    // Limit width between 300px and container width - 400px
-    if (newWidth >= 300 && newWidth <= containerRect.width - 400) {
+    // Limit width between 280px and container width - 380px (양쪽으로 약간 더 넓게)
+    if (newWidth >= 280 && newWidth <= containerRect.width - 380) {
       setLeftWidth(newWidth);
     }
   };
@@ -198,9 +198,9 @@ export function ResizableReadingLayout({
 
   // Desktop side-by-side layout (unchanged)
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={`flex flex-col md:flex-row items-start justify-center h-full ${showDivider ? 'gap-0' : 'gap-4 md:gap-12'}`}
+      className={`flex flex-col md:flex-row items-start justify-center h-full ${showDivider ? 'gap-0' : 'gap-2 md:gap-8'}`}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -208,7 +208,7 @@ export function ResizableReadingLayout({
       {/* Left side - Passage */}
       <div className="w-full md:flex-shrink-0" style={showDivider ? { width: windowWidth < 768 ? '100%' : `${leftWidth}px` } : {}}>
         <div className="h-[50vh] md:h-[540px] overflow-hidden bg-white" onWheel={onWheel}>
-          <div className={`p-2 md:p-4 h-full overflow-y-auto scrollbar-thin`}>
+          <div className={`p-2 md:p-3 h-full overflow-y-auto scrollbar-thin`}>
             <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' }}>
               {leftContent}
             </div>
@@ -218,7 +218,7 @@ export function ResizableReadingLayout({
 
       {/* Draggable divider */}
       {showDivider && (
-        <div 
+        <div
           className="hidden md:flex w-1 h-[540px] cursor-col-resize hover:bg-gray-200 transition-colors items-center justify-center group"
           onMouseDown={handleMouseDown}
           style={{ userSelect: 'none' }}
@@ -228,7 +228,7 @@ export function ResizableReadingLayout({
       )}
 
       {/* Right side - Question */}
-      <div className={`w-full md:flex-1 md:max-w-xl mt-4 md:mt-0 ${showDivider ? 'px-2 md:px-6' : ''}`}>
+      <div className={`w-full md:flex-1 md:max-w-2xl mt-4 md:mt-0 ${showDivider ? 'px-2 md:px-4' : ''}`}>
         <div className="h-[40vh] md:h-[540px] overflow-y-auto scrollbar-thin">
           {rightContent}
         </div>

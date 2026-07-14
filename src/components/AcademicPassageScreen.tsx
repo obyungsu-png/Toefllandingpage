@@ -139,6 +139,7 @@ export function AcademicPassageScreen({
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
+            initialLeftWidth={640}
             leftContent={
               isReviewMode && testId && passageKey ? (
                 <ReadingReviewPassage

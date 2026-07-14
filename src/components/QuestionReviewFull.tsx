@@ -485,19 +485,6 @@ export function QuestionReviewFull({
     if (color) setActiveColor(color);
   };
 
-  // Reading review — 단어 검색 핸들러 — AI 튜터 FAB 위쪽에 팝업 표시
-  const handleWordSearch = (word: string) => {
-    const passageContent = parsePassageContent(currentQuestion?.passageText || '');
-    const isMobile = window.innerWidth < 768;
-    const fabSize = 56;
-    const fabBottom = isMobile ? 64 : 24;
-    const fabTop = window.innerHeight - fabBottom - fabSize;
-    const popupWidth = 280;
-    const x = window.innerWidth - popupWidth - 40;
-    const y = Math.max(80, fabTop - 200);
-    setPopupData({ word, context: passageContent, x, y });
-  };
-
   // Reading review — 하이라이트/밑줄 모두 지우기
   const handleClearAllHighlights = async () => {
     setActiveTool(null);
@@ -866,7 +853,7 @@ export function QuestionReviewFull({
         </div>
 
         {/* Question Navigation + Stats */}
-        <div className="relative flex items-center justify-center mt-3 gap-3">
+        <div className="relative flex items-center justify-center mt-3 gap-2">
           {/* Question Pills */}
           <div className="flex flex-wrap gap-1.5 justify-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
@@ -1104,7 +1091,6 @@ export function QuestionReviewFull({
                     onClearAll={handleClearAllHighlights}
                     language={language}
                     onLanguageChange={handleLanguageChange}
-                    onWordSearch={handleWordSearch}
                   />
                 )}
                 <div

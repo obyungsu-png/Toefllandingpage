@@ -122,7 +122,7 @@ export function DailyLifeScreen({
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
-            initialLeftWidth={720}
+            initialLeftWidth={760}
             leftContent={
               isReviewMode && testId && passageKey ? (
                 <ReadingReviewPassage
