@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 // motion removed - using CSS animations
-import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic } from 'lucide-react';
+import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic, Moon, Sun } from 'lucide-react';
 import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { loadRecordings } from '../utils/uploadRecording';
@@ -211,6 +211,7 @@ export function QuestionReviewFull({
   const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
   const [activeColor, setActiveColor] = useState<string>('#fff3a3');
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [language, setLanguage] = useState<'en' | 'ko'>(() => {
     return (localStorage.getItem('wordLookupLanguage') as 'en' | 'ko') || 'en';
   });
@@ -812,12 +813,12 @@ export function QuestionReviewFull({
   }, [activeModule, activeSection, currentQuestionIndex, writingBuildSentenceQuestions.length]);
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
+    <div className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col overflow-hidden ${darkMode ? 'dark' : ''}`}>
       {/* Top bar */}
-      <div className="border-b border-gray-200 px-4 md:px-6 py-3 shrink-0">
+      <div className="border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 shrink-0">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors mb-3"
+          className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-3"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Back</span>
@@ -825,14 +826,14 @@ export function QuestionReviewFull({
 
         {/* Section Tabs */}
         <div className="flex justify-center mb-2 md:mb-3">
-          <div className="inline-flex bg-gray-100 rounded-full p-0.5 md:p-1">
+          <div className="inline-flex bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 md:p-1">
             {sectionTabs.map(tab => (
               <button
                 key={tab}
                 className={`px-4 md:px-10 py-2 md:py-3 rounded-full text-sm md:text-lg font-bold transition-all cursor-pointer ${
                   activeSection === tab
-                    ? 'text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-[#1e6b73] text-white'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
                 }`}
                 style={{
                   backgroundColor: activeSection === tab ? themeColor : undefined
@@ -877,7 +878,7 @@ export function QuestionReviewFull({
                   className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
-                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   style={{
                     backgroundColor: isCurrent ? themeColor : undefined,
@@ -897,7 +898,7 @@ export function QuestionReviewFull({
                   className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
-                      : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   style={{
                     backgroundColor: isCurrent ? themeColor : undefined,
@@ -947,8 +948,23 @@ export function QuestionReviewFull({
             </button>
           )}
 
+          {/* 다크 모드 토글 — Reading 리뷰에서만 표시 */}
+          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                darkMode
+                  ? 'bg-gray-700 text-yellow-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              title={darkMode ? '라이트 모드' : '다크 모드'}
+            >
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
+
           {/* Stats */}
-          <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 absolute right-0">
+          <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
                 <span className="text-gray-500 text-base">Score</span>
@@ -1093,7 +1109,7 @@ export function QuestionReviewFull({
                 )}
                 <div
                   ref={passageRef}
-                  className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto"
+                  className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 h-full overflow-y-auto"
                   style={{ maxHeight: '70vh' }}
                   onMouseUp={(e) => handlePassageMouseUp(e, currentQuestion?.passageText || '', currentTestId, currentPassageKey)}
                 >
@@ -1118,12 +1134,12 @@ export function QuestionReviewFull({
                     return passageContent ? (
                       <>
                         {passageTitle && (
-                          <h4 className="text-base font-bold text-gray-900 mb-3">{passageTitle}</h4>
+                          <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-[15px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-400 italic">지문을 불러올 수 없습니다.</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 italic">지문을 불러올 수 없습니다.</p>
                     );
                   })()}
                 </div>
@@ -1185,11 +1201,11 @@ export function QuestionReviewFull({
                   key={currentQuestion?.id}
                   className="animate-[fadeIn_0.2s_ease-out]"
                 >
-                  <p className="text-xs md:text-lg font-medium text-gray-500 mb-3 md:mb-4">
+                  <p className="text-xs md:text-lg font-medium text-gray-500 dark:text-gray-400 mb-3 md:mb-4">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-lg md:text-3xl font-semibold text-gray-900 mb-4 md:mb-6 leading-relaxed">
+                  <p className="text-lg md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
@@ -1209,7 +1225,7 @@ export function QuestionReviewFull({
                               ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
                               ? 'bg-red-50 border-red-200'
-                              : 'bg-white border-gray-200'
+                              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
                           <span className={`text-sm md:text-xl flex-1 ${
@@ -1217,7 +1233,7 @@ export function QuestionReviewFull({
                               ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
                               ? 'text-red-700 font-medium'
-                              : 'text-gray-700 font-medium'
+                              : 'text-gray-700 dark:text-gray-300 font-medium'
                           }`}>
                             {cleanOption}
                           </span>

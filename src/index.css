@@ -3,6 +3,9 @@
 @import 'tw-animate-css';
 @import './styles/globals.css';
 
+/* 클래스 기반 다크 모드 — .dark 클래스가 있는 요소 하위에서 dark: variant 활성화 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   html, body, #root { min-height: 100vh; height: 100%; margin: 0; }
 }
