@@ -2625,8 +2625,31 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           />
         </div>
 
-        {/* Listening Script — used by the Review Script tab. Other AI review
-            fields (Translation/Analysis/Key Words) were removed as unused. */}
+        {/* Translation / Vocabulary Notes — Annotated PDF에 포함됨 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Translation / Interpretation</label>
+            <textarea
+              value={formData.translationNote || ''}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="한국어 번역/해석 — Annotated PDF에 포함됨"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vocabulary Notes</label>
+            <textarea
+              value={formData.vocabularyNote || ''}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="중요 어휘/뜻 — Annotated PDF에 포함됨"
+            />
+          </div>
+        </div>
+
+        {/* Listening Script — used by the Review Script tab. */}
         {section === 'Listening' && (
           <div className="border-t border-gray-200 pt-4 space-y-3">
             <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
@@ -3819,8 +3842,31 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           />
         </div>
 
-        {/* Listening Script — used by the Review Script tab. Other AI review
-            fields (Translation/Analysis/Key Words) were removed as unused. */}
+        {/* Translation / Vocabulary Notes — Annotated PDF에 포함됨 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Translation / Interpretation</label>
+            <textarea
+              value={formData.translationNote || ''}
+              onChange={(e) => setFormData({ ...formData, translationNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="한국어 번역/해석 — Annotated PDF에 포함됨"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Vocabulary Notes</label>
+            <textarea
+              value={formData.vocabularyNote || ''}
+              onChange={(e) => setFormData({ ...formData, vocabularyNote: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+              rows={4}
+              placeholder="중요 어휘/뜻 — Annotated PDF에 포함됨"
+            />
+          </div>
+        </div>
+
+        {/* Listening Script — used by the Review Script tab. */}
         {section === 'Listening' && (
           <div className="border-t border-gray-200 pt-4 space-y-3">
             <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide flex items-center gap-1">
