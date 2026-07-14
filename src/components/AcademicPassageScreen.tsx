@@ -133,7 +133,7 @@ export function AcademicPassageScreen({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-2 md:p-4 lg:p-8 overflow-auto bg-white border border-black">
+      <div className="flex-1 p-2 md:p-4 lg:p-6 overflow-auto bg-white border border-black">
         <div className="max-w-7xl mx-auto pl-0">
           <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
           <ResizableReadingLayout

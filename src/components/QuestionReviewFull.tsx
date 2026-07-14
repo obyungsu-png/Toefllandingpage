@@ -921,21 +921,7 @@ export function QuestionReviewFull({
             })}
           </div>
 
-          {/* Tools 버튼 — Reading 리뷰에서만 표시 */}
-          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
-            <button
-              onClick={() => setToolsOpen(!toolsOpen)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
-                toolsOpen
-                  ? 'bg-[#1e6b73] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Tools
-            </button>
-          )}
-
-          {/* 다크 모드 토글 — Reading 리뷰에서만 표시 */}
+          {/* 다크 모드 토글 — Reading 리뷰에서만 표시 (Tools 왼쪽) */}
           {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -947,6 +933,20 @@ export function QuestionReviewFull({
               title={darkMode ? '라이트 모드' : '다크 모드'}
             >
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
+
+          {/* Tools 버튼 — Reading 리뷰에서만 표시 */}
+          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
+            <button
+              onClick={() => setToolsOpen(!toolsOpen)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                toolsOpen
+                  ? 'bg-[#1e6b73] text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Tools
             </button>
           )}
 
