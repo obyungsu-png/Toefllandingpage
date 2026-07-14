@@ -4551,6 +4551,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       infobox: 'infobox', 'info box': 'infobox', 'info-box': 'infobox', 정보박스: 'infobox', '정보 박스': 'infobox', 박스: 'infobox',
       memo: 'memo', 메모: 'memo', 내부메모: 'memo', 'memorandum': 'memo',
       brochure: 'brochure', 브로셔: 'brochure', 팸플릿: 'brochure', 안내책자: 'brochure', 안내문: 'brochure',
+      flyer: 'flyer', 전단지: 'flyer', 전단: 'flyer', 광고지: 'flyer', 홍보물: 'flyer',
       faq: 'faq', 'frequently asked questions': 'faq', 자주묻는질문: 'faq', 질문답변: 'faq',
     };
     return map[raw.trim().toLowerCase()] || undefined;
@@ -4570,6 +4571,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     infobox: 'Read an information box.',
     memo: 'Read a memo.',
     brochure: 'Read a brochure.',
+    flyer: 'Read a flyer.',
     faq: 'Read an FAQ.',
   };
 
@@ -4650,6 +4652,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       description: ['description', '설명', '본문', '내용', 'about'],
       location: ['location', '위치', '주소', '장소'],
       contact: ['contact', '연락처', '연락', 'contactinfo'],
+    },
+    flyer: {
+      title: ['title', '제목', '전단제목', 'flyertitle', 'flyer_title'],
+      body: ['body', '본문', '내용', 'description', '설명', 'flyerbody', 'flyer_body'],
     },
     faq: {
       title: ['title', '제목', 'faq제목'],
@@ -5203,6 +5209,23 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
     ].map(csvEscape).join(',') : null;
 
+    // Reading: Flyer 예시 (전단지 템플릿 — 색배경 헤더 없이 자유 문단 스타일)
+    const readingFlyerExample = section === 'Reading' ? [
+      '20a',
+      'Read in Daily Life',
+      '보통',
+      'Module 1',
+      'Read a flyer',
+      '유형: flyer\n색상: teal\n필드:\n제목: Campus Career Fair — Spring Edition\n본문: Meet recruiters from over 50 companies across tech, finance, healthcare, and nonprofit sectors. Bring multiple copies of your resume and dress professionally.\n\nAll students and recent alumni are welcome. Preregister online to skip the on-site check-in line and receive a digital company directory in advance.\n\nDon\'t miss the panel sessions on interview skills and resume workshops running throughout the day.',
+      '',
+      'What is the main purpose of the career fair?',
+      'To offer free interview training', 'To help students connect with potential employers', 'To recruit volunteers for campus events', 'To promote specific companies',
+      'B',
+      '전단지의 주 목적은 학생들이 여러 회사 채용담당자와 만날 수 있게 하는 것.',
+      '',
+      '',
+    ].map(csvEscape).join(',') : null;
+
     // Reading: FAQ 예시 (자주 묻는 질문 템플릿)
     const readingFaqExample = section === 'Reading' ? [
       '21',
@@ -5427,6 +5450,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       readingInfoBoxExample,
       readingMemoExample,
       readingBrochureExample,
+      readingFlyerExample,
       readingFaqExample,
       listeningEasyExample,
       listeningMediumExample,

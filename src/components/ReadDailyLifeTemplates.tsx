@@ -728,6 +728,25 @@ export function ReadDailyLifeTemplates({
         );
       }
 
+      case 'flyer': {
+        // 원본 TOEFL 시험지의 flyer 스타일: 색배경 헤더 없이 단순한 테두리 박스,
+        // 상단에 굵은 검정 제목, 자유 흐름의 본문 문단들 (heading 없이).
+        return (
+          <div className="border-2 rounded-lg p-5 space-y-4" style={{ borderColor: c + '80' }}>
+            {f.title && (
+              <h2 className="text-lg font-bold text-center pb-2 border-b" style={{ borderColor: c + '40', color: '#333' }}>
+                {f.title}
+              </h2>
+            )}
+            {f.body && (
+              <div className="font-[\'Inter\',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm text-gray-800">
+                {f.body}
+              </div>
+            )}
+          </div>
+        );
+      }
+
       case 'faq': {
         const faqItems = parseFaqItems(f.items || '');
         return (
@@ -1530,6 +1549,25 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
               </div>
             )}
           </div>
+        </div>
+      );
+    }
+
+    case 'flyer': {
+      // 원본 TOEFL 시험지의 flyer 스타일: 색배경 헤더 없이 단순한 테두리 박스,
+      // 상단에 굵은 검정 제목, 자유 흐름의 본문 문단들 (heading 없이).
+      return (
+        <div className="border-2 rounded-lg p-3 md:p-5 space-y-3 md:space-y-4" style={{ borderColor: c + '80' }}>
+          {f.title && (
+            <h2 className="text-base md:text-lg font-bold text-center pb-2 border-b" style={{ borderColor: c + '40', color: '#333' }}>
+              {f.title}
+            </h2>
+          )}
+          {f.body && (
+            <div className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-xs md:text-sm text-gray-800">
+              {f.body}
+            </div>
+          )}
         </div>
       );
     }
