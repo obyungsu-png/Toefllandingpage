@@ -233,12 +233,12 @@ export function ReadingReviewPassage({
 
       selection.removeAllRanges();
     } else if (words.length === 1) {
-      // 단어 팝업 표시 — 클릭 위치 사용, WordPopup이 자체적으로 AI 튜터 영역 회피
+      // 단어 팝업 표시 — 클릭한 단어 바로 아래에 표시
       setPopupData({
         word: selectedText,
         context: passageContent,
         x: e.clientX,
-        y: e.clientY,
+        y: e.clientY + 20,
       });
       selection.removeAllRanges();
     }

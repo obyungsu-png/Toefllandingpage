@@ -50,13 +50,13 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
       const rect = popupRef.current.getBoundingClientRect();
       let newX = x;
       let newY = y;
-      // 오른쪽 경계
+      // 오른쪽 경계 — 팝업이 오른쪽을 넘어가면 왼쪽으로 밀되, 단어 위치 근처 유지
       if (x + rect.width > window.innerWidth - 20) {
-        newX = window.innerWidth - rect.width - 20;
+        newX = Math.max(20, window.innerWidth - rect.width - 20);
       }
-      // 아래쪽 경계 — 위로 표시
+      // 아래쪽 경계 — 위로 표시 (단어 위에 표시)
       if (y + rect.height > window.innerHeight - 20) {
-        newY = y - rect.height - 20;
+        newY = Math.max(20, y - rect.height - 40);
       }
       // AI 튜터 FAB 위젯 영역 (우측 하단)과 겹치지 않도록 위로 밀어올림
       // FAB: right-6 (24px from right), bottom-16 mobile / bottom-6 desktop, 56x56px
@@ -97,8 +97,8 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
   return (
     <div
       ref={popupRef}
-      className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-sm"
-      style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 280 }}
+      className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-md"
+      style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 300 }}
     >
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
