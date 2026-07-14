@@ -410,7 +410,12 @@ function GroupIntroScreen({
   }, [audioUrl]);
 
   const canGoNext = !audioUrl || audioEnded;
-  const handleNext = canGoNext ? onNext : () => {};
+  const handleNext = canGoNext ? () => {
+    // Next 눌러서 다음 세그먼트로 넘어갈 때 이전 인트로 오디오 즉시 정리 — 잔여 재생 방지
+    cleanupAudio(audioRef.current);
+    audioRef.current = null;
+    onNext();
+  } : () => {};
   const handleReplay = async () => {
     if (!audioUrl || isPlaying) return;
     cleanupAudio(audioRef.current);

@@ -12,17 +12,22 @@ import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
 
 /**
- * Reading review — Range API로 하이라이트/밑줄을 DOM에 적용
+ * Reading review — Range API로 하이라이트/밑줄을 DOM에 적용 — 선택한 색상 반영
  */
-function applyHighlightToRange(range: Range, type: 'h' | 'u') {
+function applyHighlightToRange(range: Range, type: 'h' | 'u', color: string) {
   const selectedText = range.toString();
   if (!selectedText) return;
 
   const mark = document.createElement(type === 'h' ? 'mark' : 'u');
-  mark.style.backgroundColor = type === 'h' ? '#fff3a3' : 'transparent';
-  mark.style.textDecoration = type === 'u' ? 'underline' : 'none';
-  mark.style.textDecorationColor = type === 'u' ? '#1e6b73' : '';
-  mark.style.textDecorationThickness = type === 'u' ? '2px' : '';
+  if (type === 'h') {
+    mark.style.backgroundColor = color;
+    mark.style.textDecoration = 'none';
+  } else {
+    mark.style.backgroundColor = 'transparent';
+    mark.style.textDecoration = 'underline';
+    mark.style.textDecorationColor = color;
+    mark.style.textDecorationThickness = '2px';
+  }
 
   try {
     range.surroundContents(mark);
@@ -204,6 +209,8 @@ export function QuestionReviewFull({
 
   // Reading review — 하이라이트/밑줄/단어 뜻 팝업 도구 상태
   const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
+  const [activeColor, setActiveColor] = useState<string>('#fff3a3');
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [language, setLanguage] = useState<'en' | 'ko'>(() => {
     return (localStorage.getItem('wordLookupLanguage') as 'en' | 'ko') || 'en';
   });
@@ -471,6 +478,25 @@ export function QuestionReviewFull({
     localStorage.setItem('wordLookupLanguage', lang);
   };
 
+  // Reading review — 툴 + 색상 변경 핸들러
+  const handleToolChange = (tool: 'highlight' | 'underline' | null, color?: string) => {
+    setActiveTool(tool);
+    if (color) setActiveColor(color);
+  };
+
+  // Reading review — 단어 검색 핸들러 — AI 튜터 FAB 위쪽에 팝업 표시
+  const handleWordSearch = (word: string) => {
+    const passageContent = parsePassageContent(currentQuestion?.passageText || '');
+    const isMobile = window.innerWidth < 768;
+    const fabSize = 56;
+    const fabBottom = isMobile ? 64 : 24;
+    const fabTop = window.innerHeight - fabBottom - fabSize;
+    const popupWidth = 280;
+    const x = window.innerWidth - popupWidth - 40;
+    const y = Math.max(80, fabTop - 200);
+    setPopupData({ word, context: passageContent, x, y });
+  };
+
   // Reading review — 하이라이트/밑줄 모두 지우기
   const handleClearAllHighlights = async () => {
     setActiveTool(null);
@@ -525,8 +551,8 @@ export function QuestionReviewFull({
         return;
       }
 
-      // DOM에 적용
-      applyHighlightToRange(range, type);
+      // DOM에 적용 — 선택한 색상 전달
+      applyHighlightToRange(range, type, activeColor);
 
       // Supabase에 저장 (수강권 확인은 saveHighlight 내부에서 처리)
       const id = await saveHighlight({
@@ -564,7 +590,6 @@ export function QuestionReviewFull({
 
   // Reset audio states on question change
   useEffect(() => {
-    setSpeakingModelPlaying(false);
     setSpeakingUserPlaying(false);
     setSpeakingMaterialPlaying(false);
     setModelProgress(0);
@@ -840,7 +865,7 @@ export function QuestionReviewFull({
         </div>
 
         {/* Question Navigation + Stats */}
-        <div className="relative flex items-center justify-center mt-3">
+        <div className="relative flex items-center justify-center mt-3 gap-3">
           {/* Question Pills */}
           <div className="flex flex-wrap gap-1.5 justify-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
@@ -907,6 +932,20 @@ export function QuestionReviewFull({
               );
             })}
           </div>
+
+          {/* Tools 버튼 — Reading 리뷰에서만 표시 */}
+          {activeSection === 'Reading' && !showReadingCompleteWordsReview && (
+            <button
+              onClick={() => setToolsOpen(!toolsOpen)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                toolsOpen
+                  ? 'bg-[#1e6b73] text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Tools
+            </button>
+          )}
 
           {/* Stats */}
           <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 shrink-0 absolute right-0">
@@ -1040,14 +1079,18 @@ export function QuestionReviewFull({
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
               <div className="w-full md:w-1/2 order-1 md:order-none flex flex-col gap-3">
-                {/* Reading review 도구 모음 — 하이라이트/밑줄/단어 뜻 언어 전환 */}
-                <ReadingReviewToolbar
-                  activeTool={activeTool}
-                  onToolChange={setActiveTool}
-                  onClearAll={handleClearAllHighlights}
-                  language={language}
-                  onLanguageChange={handleLanguageChange}
-                />
+                {/* Reading review 도구 모음 — 하이라이트/밑줄/단어 뜻 언어 전환/단어 검색 */}
+                {toolsOpen && (
+                  <ReadingReviewToolbar
+                    activeTool={activeTool}
+                    activeColor={activeColor}
+                    onToolChange={handleToolChange}
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                    onWordSearch={handleWordSearch}
+                  />
+                )}
                 <div
                   ref={passageRef}
                   className="bg-gray-50 rounded-xl border border-gray-200 p-5 h-full overflow-y-auto"

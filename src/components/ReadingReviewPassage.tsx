@@ -19,17 +19,22 @@ function parsePassageContent(rawPassage: string | null | undefined): string {
 }
 
 /**
- * 하이라이트/밑줄을 DOM Range에 적용
+ * 하이라이트/밑줄을 DOM Range에 적용 — 선택한 색상 반영
  */
-function applyHighlightToRange(range: Range, type: 'h' | 'u') {
+function applyHighlightToRange(range: Range, type: 'h' | 'u', color: string) {
   const selectedText = range.toString();
   if (!selectedText) return;
 
   const mark = document.createElement(type === 'h' ? 'mark' : 'u');
-  mark.style.backgroundColor = type === 'h' ? '#fff3a3' : 'transparent';
-  mark.style.textDecoration = type === 'u' ? 'underline' : 'none';
-  mark.style.textDecorationColor = type === 'u' ? '#1e6b73' : '';
-  mark.style.textDecorationThickness = type === 'u' ? '2px' : '';
+  if (type === 'h') {
+    mark.style.backgroundColor = color;
+    mark.style.textDecoration = 'none';
+  } else {
+    mark.style.backgroundColor = 'transparent';
+    mark.style.textDecoration = 'underline';
+    mark.style.textDecorationColor = color;
+    mark.style.textDecorationThickness = '2px';
+  }
 
   try {
     range.surroundContents(mark);
@@ -41,7 +46,7 @@ function applyHighlightToRange(range: Range, type: 'h' | 'u') {
 }
 
 /**
- * 저장된 하이라이트를 DOM에 복원
+ * 저장된 하이라이트를 DOM에 복원 — 저장된 색상 정보가 없으므로 type별 기본 색상 사용
  */
 function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[], passageText: string) {
   if (!highlights.length) return;
@@ -65,10 +70,15 @@ function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[], pass
           range.setEnd(node, relativeEnd);
 
           const mark = document.createElement(h.type === 'h' ? 'mark' : 'u');
-          mark.style.backgroundColor = h.type === 'h' ? '#fff3a3' : 'transparent';
-          mark.style.textDecoration = h.type === 'u' ? 'underline' : 'none';
-          mark.style.textDecorationColor = h.type === 'u' ? '#1e6b73' : '';
-          mark.style.textDecorationThickness = h.type === 'u' ? '2px' : '';
+          if (h.type === 'h') {
+            mark.style.backgroundColor = '#fff3a3'; // 기본 노랑
+            mark.style.textDecoration = 'none';
+          } else {
+            mark.style.backgroundColor = 'transparent';
+            mark.style.textDecoration = 'underline';
+            mark.style.textDecorationColor = '#1e6b73'; // 기본 파랑
+            mark.style.textDecorationThickness = '2px';
+          }
 
           try {
             range.surroundContents(mark);
@@ -100,11 +110,14 @@ interface ReadingReviewPassageProps {
   maxHeight?: string;
   /** 커스텀 렌더링 (구조화된 지문 — email/notice 등). 미제공 시 passageText를 plain text로 표시 */
   children?: React.ReactNode;
+  /** Tools 패널 표시 여부. 기본 true — 부모에서 Tools 버튼으로 토글 시 false로 전달 */
+  toolsOpen?: boolean;
 }
 
 /**
  * 리딩 리뷰 모드용 지문 컴포넌트
- * - 하이라이트 / 밑줄 / 지우기 / 단어 뜻(EN/KO) 기능 포함
+ * - 하이라이트 / 밑줄 / 지우기 / 단어 뜻(EN/KO) / 단어 검색 기능 포함
+ * - 하이라이트와 밑줄은 각각 3가지 색상 선택 가능
  * - Supabase에 하이라이트 저장/로드 (수강권 필요)
  * - QuestionReviewFull.tsx와 동일한 로직 사용
  */
@@ -115,8 +128,10 @@ export function ReadingReviewPassage({
   className = '',
   maxHeight = '70vh',
   children,
+  toolsOpen = true,
 }: ReadingReviewPassageProps) {
   const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
+  const [activeColor, setActiveColor] = useState<string>('#fff3a3');
   const [language, setLanguage] = useState<'en' | 'ko'>('en');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [popupData, setPopupData] = useState<{ word: string; context: string; x: number; y: number } | null>(null);
@@ -166,6 +181,30 @@ export function ReadingReviewPassage({
     }
   };
 
+  // 툴 + 색상 변경 핸들러
+  const handleToolChange = (tool: 'highlight' | 'underline' | null, color?: string) => {
+    setActiveTool(tool);
+    if (color) setActiveColor(color);
+  };
+
+  // 단어 검색 핸들러 — AI 튜터 FAB 위쪽 중앙에 팝업 표시
+  const handleWordSearch = (word: string) => {
+    const isMobile = window.innerWidth < 768;
+    const fabSize = 56;
+    const fabBottom = isMobile ? 64 : 24;
+    const fabTop = window.innerHeight - fabBottom - fabSize;
+    // AI 튜터 FAB 바로 위, 화면 우측 정렬
+    const popupWidth = 280;
+    const x = window.innerWidth - popupWidth - 40; // 우측에서 40px 여백
+    const y = Math.max(80, fabTop - 200); // FAB 위쪽 200px 위
+    setPopupData({
+      word,
+      context: passageContent,
+      x,
+      y,
+    });
+  };
+
   // 텍스트 선택 처리
   const handleMouseUp = (e: React.MouseEvent) => {
     const selection = window.getSelection();
@@ -189,9 +228,9 @@ export function ReadingReviewPassage({
         return;
       }
 
-      applyHighlightToRange(range, type);
+      applyHighlightToRange(range, type, activeColor);
 
-      // Supabase에 저장
+      // Supabase에 저장 (색상은 저장하지 않고 type만 저장 — 스키마 호환성)
       saveHighlight({
         test_id: testId,
         passage_key: passageKey,
@@ -212,7 +251,7 @@ export function ReadingReviewPassage({
 
       selection.removeAllRanges();
     } else if (words.length === 1) {
-      // 단어 팝업 표시
+      // 단어 팝업 표시 — 클릭 위치 사용, WordPopup이 자체적으로 AI 튜터 영역 회피
       setPopupData({
         word: selectedText,
         context: passageContent,
@@ -225,13 +264,17 @@ export function ReadingReviewPassage({
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      <ReadingReviewToolbar
-        activeTool={activeTool}
-        onToolChange={setActiveTool}
-        onClearAll={handleClearAll}
-        language={language}
-        onLanguageChange={setLanguage}
-      />
+      {toolsOpen && (
+        <ReadingReviewToolbar
+          activeTool={activeTool}
+          activeColor={activeColor}
+          onToolChange={handleToolChange}
+          onClearAll={handleClearAll}
+          language={language}
+          onLanguageChange={setLanguage}
+          onWordSearch={handleWordSearch}
+        />
+      )}
       <div
         ref={passageRef}
         className="bg-gray-50 rounded-xl border border-gray-200 p-5 overflow-y-auto"

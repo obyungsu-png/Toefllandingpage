@@ -42,6 +42,7 @@ export function DailyLifeScreen({
 }: DailyLifeScreenProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -91,11 +92,23 @@ export function DailyLifeScreen({
       {/* Navigation tabs */}
       <div className="bg-white border-b border-gray-300">
         <div className="px-8 py-3">
-          <div className="flex gap-8">
+          <div className="flex gap-8 items-end">
             <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
               Question {questionIndex + 1} of {totalQuestions}
             </div>
+            {isReviewMode && (
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`ml-auto px-4 py-1.5 rounded-lg text-sm font-medium transition-colors mb-1 ${
+                  toolsOpen
+                    ? 'bg-[#1e6b73] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Tools
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -109,6 +122,7 @@ export function DailyLifeScreen({
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
+            initialLeftWidth={720}
             leftContent={
               isReviewMode && testId && passageKey ? (
                 <ReadingReviewPassage
@@ -116,6 +130,7 @@ export function DailyLifeScreen({
                   testId={testId}
                   passageKey={passageKey}
                   maxHeight="65vh"
+                  toolsOpen={toolsOpen}
                 >
                   <div className="space-y-3">
                     {imageUrl && (

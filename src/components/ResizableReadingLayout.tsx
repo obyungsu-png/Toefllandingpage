@@ -26,11 +26,13 @@ interface ResizableReadingLayoutProps {
   onPrev?: () => void;
   /** Question info like "1/2" */
   questionInfo?: string;
+  /** 왼쪽 지문 영역 초기 너비 (px). 기본 600. Daily Life 등에서 넓게 설정. */
+  initialLeftWidth?: number;
 }
 
-export function ResizableReadingLayout({ 
-  leftContent, 
-  rightContent, 
+export function ResizableReadingLayout({
+  leftContent,
+  rightContent,
   zoom = 1,
   onWheel,
   showDivider = true,
@@ -42,8 +44,9 @@ export function ResizableReadingLayout({
   onNext,
   onPrev,
   questionInfo,
+  initialLeftWidth = 600,
 }: ResizableReadingLayoutProps) {
-  const [leftWidth, setLeftWidth] = useState(600);
+  const [leftWidth, setLeftWidth] = useState(initialLeftWidth);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mobileTabState, setMobileTabState] = useState<'passage' | 'questions'>(_mobileTabCache);

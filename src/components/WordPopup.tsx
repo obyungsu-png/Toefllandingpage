@@ -44,7 +44,7 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
     return () => { cancelled = true; };
   }, [word, language, context]);
 
-  // 팝업 위치 조정 (화면 경계)
+  // 팝업 위치 조정 (화면 경계 + AI 튜터 위젯 영역 회피)
   useEffect(() => {
     if (popupRef.current) {
       const rect = popupRef.current.getBoundingClientRect();
@@ -57,6 +57,21 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
       // 아래쪽 경계 — 위로 표시
       if (y + rect.height > window.innerHeight - 20) {
         newY = y - rect.height - 20;
+      }
+      // AI 튜터 FAB 위젯 영역 (우측 하단)과 겹치지 않도록 위로 밀어올림
+      // FAB: right-6 (24px from right), bottom-16 mobile / bottom-6 desktop, 56x56px
+      const isMobile = window.innerWidth < 768;
+      const fabSize = 56;
+      const fabRight = 24;
+      const fabBottom = isMobile ? 64 : 24; // bottom-16 = 64px, bottom-6 = 24px
+      const fabLeft = window.innerWidth - fabRight - fabSize;
+      const fabTop = window.innerHeight - fabBottom - fabSize;
+      const pad = 8;
+      const overlapX = newX + rect.width > fabLeft - pad;
+      const overlapY = newY + rect.height > fabTop - pad;
+      if (overlapX && overlapY) {
+        // 위로 밀어올림 — AI 튜터 FAB 위쪽에 표시
+        newY = Math.max(20, fabTop - rect.height - pad);
       }
       setAdjustedPos({ x: Math.max(20, newX), y: Math.max(20, newY) });
     }
@@ -82,7 +97,7 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
   return (
     <div
       ref={popupRef}
-      className="fixed z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-sm"
+      className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-sm"
       style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 280 }}
     >
       {/* 헤더 */}

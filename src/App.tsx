@@ -77,7 +77,6 @@ import { TPOCard } from './components/TPOCard';
 import { TestCard } from './components/TestCard';
 import { LandingPage } from './components/LandingPage';
 import { LoginForm } from './components/LoginForm';
-import { LoginPopup } from './components/LoginPopup';
 import { RadioOption } from './components/RadioOption';
 import { WelcomeLandingPage } from './components/WelcomeLandingPage';
 
@@ -202,8 +201,7 @@ function AppContent() {
   const [loggedInUserName, setLoggedInUserName] = useState<string>(() => {
     try { return localStorage.getItem('amx_userName') || ''; } catch { return ''; }
   });
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
-  
+
   // 탭 진입은 자유롭게 — 문제 시작(Start) 시점에 launchSection에서 개별 체크
 
   useEffect(() => {
@@ -297,7 +295,6 @@ function AppContent() {
           setIsLoggedIn(true);
           setLoggedInUserName(name);
           setShowLoginForm(false);
-          setShowLoginPopup(false);
           try {
             localStorage.setItem('amx_isLoggedIn', 'true');
             localStorage.setItem('amx_userName', name);
@@ -335,7 +332,6 @@ function AppContent() {
         setIsLoggedIn(true);
         setLoggedInUserName(name);
         setShowLoginForm(false);
-        setShowLoginPopup(false);
         try {
           localStorage.setItem('amx_isLoggedIn', 'true');
           localStorage.setItem('amx_userName', name);
@@ -2205,7 +2201,8 @@ function AppContent() {
       // 1단계: 로그인 여부 — localStorage 기반 즉시 판단 (Supabase 호출 최소화)
       if (!isLoggedIn) {
         setPendingPaidTest({ testNumber, section, bankType, mode });
-        setShowLoginPopup(true);
+        setShowLoginForm(true);
+        setLoginFormKey(prev => prev + 1);
         return;
       }
 
@@ -7580,7 +7577,8 @@ function AppContent() {
                       localStorage.removeItem('amx_isLoggedIn');
                       localStorage.removeItem('amx_userName');
                     } catch {}
-                    setShowLoginPopup(true);
+                    setShowLoginForm(true);
+                    setLoginFormKey(prev => prev + 1);
                   }}
                   className="px-2 md:px-4 py-1.5 md:py-2.5 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-sm transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20"
                 >
@@ -7599,14 +7597,13 @@ function AppContent() {
           style={{ backgroundColor: 'rgba(10, 15, 20, 0.72)' }}
         >
           <div className="my-8">
-            <LoginForm 
-              key={loginFormKey} 
+            <LoginForm
+              key={loginFormKey}
               onClose={() => setShowLoginForm(false)}
               onLoginSuccess={(username) => {
                 setIsLoggedIn(true);
                 setLoggedInUserName(username);
                 setShowLoginForm(false);
-                setShowLoginPopup(false);
                 try {
                   localStorage.setItem('amx_isLoggedIn', 'true');
                   localStorage.setItem('amx_userName', username);
@@ -7616,17 +7613,6 @@ function AppContent() {
           </div>
         </div>
       )}
-
-      {/* Login Popup */}
-      <LoginPopup 
-        isOpen={showLoginPopup && !isLoggedIn}
-        onClose={() => setShowLoginPopup(false)}
-        onLoginClick={() => {
-          setShowLoginPopup(false);
-          setShowLoginForm(true);
-          setLoginFormKey(prev => prev + 1);
-        }}
-      />
 
       {/* Activation Modal — 유료 콘텐츠 접근 시 라이선스 확인 */}
       <ActivationModal
@@ -8129,7 +8115,10 @@ function AppContent() {
             studentName={loggedInUserName || 'Student'}
             advertisements={advertisements}
             isLoggedIn={isLoggedIn}
-            onRequestLogin={() => setShowLoginPopup(true)}
+            onRequestLogin={() => {
+              setShowLoginForm(true);
+              setLoginFormKey(prev => prev + 1);
+            }}
             onDeleteResult={(resultId) => {
               setTestResults(prev => prev.filter(r => r.id !== resultId));
               toast.success('기록이 삭제되었습니다.');

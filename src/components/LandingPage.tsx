@@ -156,43 +156,46 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
         <div className="flex-1 grid grid-cols-2 gap-4 w-full max-w-lg">
           {/* Image 1 */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-teal-100 to-cyan-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20laptop%20and%20textbook%2C%20vibrant%20colors%2C%20energetic%20atmosphere%2C%20anime%20art%20style%2C%20modern%20study%20space&image_size=portrait_4_3"
-              alt="Studying English with laptop"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20cheerful%20Korean%20high%20school%20student%20studying%20TOEFL%20with%20open%20textbook%20and%20laptop%2C%20vibrant%20colors%2C%20sunny%20study%20room%2C%20modern%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+              alt="High school student studying TOEFL"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
+              onError={(e) => { e.currentTarget.style.opacity = '0'; }}
             />
           </div>
 
           {/* Image 2 (Tall) */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group bg-gradient-to-br from-blue-100 to-indigo-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20happy%20Asian%20high%20school%20girl%20listening%20to%20English%20audio%20with%20headphones%2C%20vibrant%20colors%2C%20energetic%2C%20anime%20art%20style%2C%20books%20around&image_size=portrait_4_3"
-              alt="Listening to English audio"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20middle%20school%20student%20solving%20SAT%20practice%20questions%20with%20notebook%20and%20pencil%2C%20vibrant%20colors%2C%20warm%20lighting%2C%20friendly%20atmosphere%2C%20modern%20anime%20art%20style&image_size=portrait_4_3"
+              alt="Middle school student solving SAT questions"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
+              onError={(e) => { e.currentTarget.style.opacity = '0'; }}
             />
           </div>
 
           {/* Image 3 */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-orange-100 to-amber-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
           >
             <img
               loading="lazy"
-              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20two%20cheerful%20Asian%20high%20school%20students%20studying%20English%20together%20in%20group%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20friendly%20atmosphere%2C%20notebooks%20and%20pens&image_size=portrait_4_3"
-              alt="Study group"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bright%20anime%20illustration%20of%20group%20of%20Asian%20high%20school%20students%20practicing%20English%20conversation%20together%2C%20vibrant%20colors%2C%20energetic%2C%20friendly%20atmosphere%2C%20modern%20anime%20art%20style%2C%20study%20room&image_size=portrait_4_3"
+              alt="Group of students practicing English conversation"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
+              onError={(e) => { e.currentTarget.style.opacity = '0'; }}
             />
           </div>
         </div>
