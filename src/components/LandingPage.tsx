@@ -152,152 +152,51 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           </div>
         </div>
 
-        {/* Right: Image Grid — SVG illustrations (no external file dependency) */}
+        {/* Right: Image Grid */}
         <div className="flex-1 grid grid-cols-2 gap-4 w-full max-w-lg">
-          {/* Card 1 — Girl studying with book */}
+          {/* Card 1 */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-teal-100 to-cyan-100 relative"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-teal-100 to-cyan-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.4s both' }}
           >
-            <svg
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
+            <img
+              loading="lazy"
+              src="https://a.storyblok.com/f/268942/1280x853/b872ac25d2/ultimate-guide-to-the-toefl-exam.jpeg/m/808x0/smart/filters:quality(75)"
+              alt="High school student studying TOEFL"
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
-              aria-label="High school student studying TOEFL"
-            >
-              {/* Background sparkles */}
-              <circle cx="30" cy="35" r="2.5" fill="#fff" opacity="0.7" />
-              <circle cx="170" cy="40" r="2" fill="#fff" opacity="0.6" />
-              <circle cx="160" cy="150" r="1.8" fill="#fff" opacity="0.7" />
-              <circle cx="25" cy="160" r="2.2" fill="#fff" opacity="0.6" />
-              {/* Book/desk (behind girl) */}
-              <rect x="45" y="145" width="110" height="10" rx="2" fill="#f59e0b" />
-              <rect x="55" y="130" width="90" height="18" rx="2" fill="#fff" />
-              <line x1="65" y1="137" x2="135" y2="137" stroke="#94a3b8" strokeWidth="1.5" />
-              <line x1="65" y1="142" x2="120" y2="142" stroke="#94a3b8" strokeWidth="1.5" />
-              {/* Girl body */}
-              <ellipse cx="100" cy="115" rx="28" ry="22" fill="#14b8a6" />
-              {/* Girl head */}
-              <circle cx="100" cy="80" r="24" fill="#fde68a" />
-              {/* Hair */}
-              <path d="M 76 78 Q 76 55 100 55 Q 124 55 124 78 Q 124 68 118 65 Q 110 72 100 70 Q 90 68 82 65 Q 76 68 76 78 Z" fill="#78350f" />
-              <path d="M 74 82 Q 70 100 76 108 L 82 96 Q 78 90 78 82 Z" fill="#78350f" />
-              {/* Eyes (closed happy) */}
-              <path d="M 88 82 Q 91 79 94 82" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 106 82 Q 109 79 112 82" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Smile */}
-              <path d="M 94 92 Q 100 96 106 92" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Cheek blush */}
-              <circle cx="86" cy="88" r="3" fill="#fca5a5" opacity="0.7" />
-              <circle cx="114" cy="88" r="3" fill="#fca5a5" opacity="0.7" />
-            </svg>
+            />
           </div>
 
-          {/* Card 2 (Tall) — Boy with laptop */}
+          {/* Card 2 (Tall) */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group bg-gradient-to-br from-blue-100 to-indigo-100 relative"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-2 group bg-gradient-to-br from-blue-100 to-indigo-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.6s both' }}
           >
-            <svg
-              viewBox="0 0 200 400"
-              xmlns="http://www.w3.org/2000/svg"
+            <img
+              loading="lazy"
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUnleKF7AgcaWOZTc2GcVgmL09Wx_S-Qg-SqTzdKievQ&s=10"
+              alt="Student solving SAT questions"
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
-              aria-label="Student solving SAT questions on laptop"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              {/* Sparkles */}
-              <circle cx="30" cy="50" r="2.5" fill="#fff" opacity="0.7" />
-              <circle cx="170" cy="80" r="2" fill="#fff" opacity="0.6" />
-              <circle cx="35" cy="330" r="2.2" fill="#fff" opacity="0.6" />
-              <circle cx="165" cy="360" r="1.8" fill="#fff" opacity="0.7" />
-              {/* Floating "A+" badge */}
-              <circle cx="150" cy="120" r="18" fill="#fbbf24" />
-              <text x="150" y="127" textAnchor="middle" fontSize="18" fontWeight="bold" fill="#fff">A+</text>
-              {/* Boy head */}
-              <circle cx="100" cy="140" r="28" fill="#fde68a" />
-              {/* Hair */}
-              <path d="M 72 135 Q 72 108 100 108 Q 128 108 128 135 Q 128 122 122 118 Q 112 128 100 125 Q 88 128 78 118 Q 72 122 72 135 Z" fill="#1f2937" />
-              {/* Glasses */}
-              <circle cx="90" cy="145" r="7" fill="none" stroke="#1f2937" strokeWidth="2" />
-              <circle cx="110" cy="145" r="7" fill="none" stroke="#1f2937" strokeWidth="2" />
-              <line x1="97" y1="145" x2="103" y2="145" stroke="#1f2937" strokeWidth="2" />
-              {/* Eyes */}
-              <circle cx="90" cy="145" r="2" fill="#1f2937" />
-              <circle cx="110" cy="145" r="2" fill="#1f2937" />
-              {/* Smile */}
-              <path d="M 92 158 Q 100 163 108 158" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Body/shirt */}
-              <path d="M 60 200 Q 60 180 100 180 Q 140 180 140 200 L 148 260 L 52 260 Z" fill="#3b82f6" />
-              {/* Arms toward laptop */}
-              <ellipse cx="70" cy="240" rx="10" ry="18" fill="#3b82f6" transform="rotate(20 70 240)" />
-              <ellipse cx="130" cy="240" rx="10" ry="18" fill="#3b82f6" transform="rotate(-20 130 240)" />
-              {/* Laptop base */}
-              <rect x="40" y="270" width="120" height="8" rx="2" fill="#374151" />
-              {/* Laptop screen */}
-              <rect x="52" y="220" width="96" height="52" rx="3" fill="#1f2937" />
-              <rect x="56" y="224" width="88" height="44" rx="2" fill="#e0f2fe" />
-              {/* Screen text lines */}
-              <rect x="62" y="232" width="40" height="3" rx="1" fill="#3b82f6" />
-              <rect x="62" y="240" width="60" height="3" rx="1" fill="#94a3b8" />
-              <rect x="62" y="248" width="50" height="3" rx="1" fill="#94a3b8" />
-              <rect x="62" y="256" width="55" height="3" rx="1" fill="#94a3b8" />
-              {/* Desk shadow */}
-              <ellipse cx="100" cy="285" rx="80" ry="6" fill="#000" opacity="0.1" />
-            </svg>
+            />
           </div>
 
-          {/* Card 3 — Two students collaborating */}
+          {/* Card 3 */}
           <div
-            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-orange-100 to-amber-100 relative"
+            className="rounded-2xl overflow-hidden shadow-xl col-span-1 row-span-1 h-48 group bg-gradient-to-br from-orange-100 to-amber-100"
             style={{ animation: 'fadeSlideRight 0.8s ease-out 0.8s both' }}
           >
-            <svg
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
+            <img
+              loading="lazy"
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtvaQhUfs0ZNtoMasXZdGPAC6SO1unsKLitfB3e-1igg&s=10"
+              alt="Students practicing English conversation"
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}
-              aria-label="Two students practicing English conversation"
-            >
-              {/* Sparkles */}
-              <circle cx="25" cy="30" r="2" fill="#fff" opacity="0.7" />
-              <circle cx="175" cy="35" r="2.5" fill="#fff" opacity="0.6" />
-              <circle cx="170" cy="165" r="1.8" fill="#fff" opacity="0.7" />
-              {/* Speech bubbles */}
-              <ellipse cx="60" cy="45" rx="18" ry="12" fill="#fff" opacity="0.95" />
-              <text x="60" y="50" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#f97316">Hi!</text>
-              <ellipse cx="140" cy="45" rx="22" ry="12" fill="#fff" opacity="0.95" />
-              <text x="140" y="50" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#0891b2">Hello!</text>
-              {/* Left student body */}
-              <ellipse cx="60" cy="150" rx="24" ry="20" fill="#f97316" />
-              {/* Left student head */}
-              <circle cx="60" cy="115" r="22" fill="#fde68a" />
-              {/* Left hair (ponytail) */}
-              <path d="M 40 115 Q 40 92 60 92 Q 80 92 80 115 Q 80 103 74 100 Q 66 110 60 108 Q 54 106 46 100 Q 40 105 40 115 Z" fill="#7c2d12" />
-              <ellipse cx="82" cy="122" rx="4" ry="8" fill="#7c2d12" />
-              {/* Left eyes */}
-              <path d="M 51 116 Q 54 113 57 116" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 63 116 Q 66 113 69 116" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Left smile */}
-              <path d="M 55 125 Q 60 129 65 125" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Right student body */}
-              <ellipse cx="140" cy="150" rx="24" ry="20" fill="#06b6d4" />
-              {/* Right student head */}
-              <circle cx="140" cy="115" r="22" fill="#fde68a" />
-              {/* Right hair (short) */}
-              <path d="M 120 115 Q 120 92 140 92 Q 160 92 160 115 Q 160 105 154 100 Q 144 110 140 108 Q 136 108 126 100 Q 120 105 120 115 Z" fill="#422006" />
-              {/* Right eyes */}
-              <path d="M 131 116 Q 134 113 137 116" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M 143 116 Q 146 113 149 116" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Right smile */}
-              <path d="M 135 125 Q 140 129 145 125" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-              {/* Cheek blush */}
-              <circle cx="47" cy="122" r="2.5" fill="#fca5a5" opacity="0.7" />
-              <circle cx="73" cy="122" r="2.5" fill="#fca5a5" opacity="0.7" />
-              <circle cx="127" cy="122" r="2.5" fill="#fca5a5" opacity="0.7" />
-              <circle cx="153" cy="122" r="2.5" fill="#fca5a5" opacity="0.7" />
-            </svg>
+            />
           </div>
         </div>
       </section>
