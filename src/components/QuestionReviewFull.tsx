@@ -896,7 +896,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -916,7 +916,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -937,7 +937,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : isCorrect
@@ -1048,7 +1048,7 @@ export function QuestionReviewFull({
 
                   <div
                     ref={passageRef}
-                    className="text-sm md:text-base leading-[1.6] text-black dark:text-gray-100"
+                    className="text-sm md:text-lg leading-[1.7] text-black dark:text-gray-100"
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                     onMouseUp={(e) => {
                       // Complete Words passageText의 [answer:maxLen] → answer 로 정규화하여 offset 매칭
@@ -1175,7 +1175,7 @@ export function QuestionReviewFull({
                         {passageTitle && (
                           <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        <p className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
                     ) : (
                       <p className="text-sm text-gray-400 dark:text-gray-500 italic">지문을 불러올 수 없습니다.</p>
@@ -1244,7 +1244,7 @@ export function QuestionReviewFull({
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4 leading-relaxed">
+                  <p className="text-sm md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
@@ -1259,7 +1259,7 @@ export function QuestionReviewFull({
                       return (
                         <div
                           key={idx}
-                          className={`flex items-start gap-2 p-2 md:p-2.5 rounded-lg border transition-all ${
+                          className={`flex items-start gap-2 p-2 md:p-3 rounded-lg border transition-all ${
                             isCorrectAnswer
                               ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1267,7 +1267,7 @@ export function QuestionReviewFull({
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
-                          <span className={`text-sm md:text-base flex-1 ${
+                          <span className={`text-sm md:text-lg flex-1 ${
                             isCorrectAnswer
                               ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1395,8 +1395,8 @@ export function QuestionReviewFull({
                             const isPrefilled = word.startsWith('[') && word.endsWith(']');
                             const display = word.replace(/^\[|\]$/g, '');
                             return isPrefilled
-                              ? <span key={idx} className="text-base font-medium text-gray-700">{display}</span>
-                              : <span key={idx} className="px-2.5 py-1 border border-gray-300 rounded-lg text-base text-gray-700 bg-gray-50">{display}</span>;
+                              ? <span key={idx} className="text-lg font-medium text-gray-700">{display}</span>
+                              : <span key={idx} className="px-3 py-1.5 border border-gray-300 rounded-lg text-lg text-gray-700 bg-gray-50">{display}</span>;
                           })}
                         </div>
                       </div>
@@ -1429,7 +1429,7 @@ export function QuestionReviewFull({
                         {correctText && (
                           <div className="flex items-start gap-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1.5 shrink-0 w-12">정답</p>
-                            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm font-medium text-emerald-800">
+                            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-base font-medium text-emerald-800">
                               {fullCorrect}
                             </div>
                           </div>
@@ -1454,7 +1454,7 @@ export function QuestionReviewFull({
                                 <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mb-1 ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
                                   {isWrong ? '✕ 오답' : '✓ 정답'}
                                 </span>
-                                <div className={`rounded-lg px-3 py-2 text-sm border ${
+                                <div className={`rounded-lg px-3 py-2 text-base border ${
                                   isWrong
                                     ? 'bg-red-50 border-red-200 text-red-800'
                                     : 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -1491,49 +1491,49 @@ export function QuestionReviewFull({
             {activeModule === 2 && (
               <>
                 {/* Left: Prompt */}
-                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-lg text-gray-800 leading-relaxed mb-4">
+                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-sm md:text-base text-gray-800 leading-relaxed mb-3">
                     {cmsEmailQ?.emailScenario || 'A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.'}
                   </p>
-                  <p className="text-lg text-gray-800 font-bold mb-3">
+                  <p className="text-sm md:text-base text-gray-800 font-bold mb-2">
                     {cmsEmailQ?.emailInstruction || 'Write an email to the editor of the magazine. In your email, do the following.'}
                   </p>
-                  <ul className="space-y-2 mb-4">
+                  <ul className="space-y-1.5 mb-3">
                     {(Array.isArray(cmsEmailQ?.emailBullets) && cmsEmailQ.emailBullets.length
                       ? cmsEmailQ.emailBullets
                       : ['Tell the editor what you like about the new magazine.', 'Describe the problem you experienced.', 'Ask about the status of your submissions.']
                     ).map((bullet: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-black mt-2.5 flex-shrink-0" />
-                        <span className="text-lg text-gray-800">{bullet}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800">{bullet}</span>
                       </li>
                     ))}
                   </ul>
-                  <p className="text-lg text-gray-800">Write as much as you can and in complete sentences.</p>
+                  <p className="text-sm md:text-base text-gray-800">Write as much as you can and in complete sentences.</p>
                 </div>
                 {/* Right: Email response area */}
-                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-gray-50">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Your Response:</h3>
-                  <div className="mb-3 text-lg text-gray-700">
+                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-gray-50">
+                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3">Your Response:</h3>
+                  <div className="mb-2 text-sm md:text-base text-gray-700">
                     <span className="font-bold">To:</span> {cmsEmailQ?.emailTo || 'editor@sunshinepoetymagazine.com'}
                   </div>
-                  <div className="mb-5 text-lg text-gray-700">
+                  <div className="mb-3 text-sm md:text-base text-gray-700">
                     <span className="font-bold">Subject:</span> {cmsEmailQ?.emailSubject || 'Problem using submission form'}
                   </div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
-                  <div className={`bg-white border rounded-lg p-5 min-h-48 text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 border-gray-300' : 'text-gray-400 italic border-gray-200'}`}>
+                  <div className={`bg-white border rounded-lg p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 border-gray-300' : 'text-gray-400 italic border-gray-200'}`}>
                     {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
                   <p className="text-xs text-gray-400 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-3">
                     <button
                       onClick={() => toggleBookmark('writing-email')}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
                     >
                       {bookmarkedQuestions.has('writing-email') ? (
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                       ) : (
-                        <StarOff className="w-4 h-4" />
+                        <StarOff className="w-3.5 h-3.5" />
                       )}
                       <span>{bookmarkedQuestions.has('writing-email') ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
@@ -1546,90 +1546,90 @@ export function QuestionReviewFull({
             {activeModule === 3 && (
               <>
                 {/* Left: Professor prompt */}
-                <div className="md:w-2/5 p-4 md:p-8 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-lg text-gray-800 leading-relaxed mb-4 font-serif">
+                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
+                  <p className="text-sm md:text-base text-gray-800 leading-relaxed mb-3 font-serif">
                     {cmsAcademicQ?.questionText || "Your professor is teaching a class. Write a post responding to the professor's question."}
                   </p>
-                  <div className="mb-4">
-                    <p className="text-base font-semibold text-gray-900 mb-2 font-serif">In your response, you should do the following.</p>
+                  <div className="mb-3">
+                    <p className="text-sm font-semibold text-gray-900 mb-2 font-serif">In your response, you should do the following.</p>
                     <ul className="space-y-1 ml-4">
                       <li className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                        <span className="text-base text-gray-800 font-serif">Express and support your opinion.</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800 font-serif">Express and support your opinion.</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-black mt-2 flex-shrink-0" />
-                        <span className="text-base text-gray-800 font-serif">Make a contribution to the discussion in your own words.</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800 font-serif">Make a contribution to the discussion in your own words.</span>
                       </li>
                     </ul>
                   </div>
-                  <p className="text-base text-gray-800 mb-6 font-serif">An effective response will contain at least 100 words.</p>
-                  <div className="border-t border-gray-300 pt-6">
-                    <div className="flex flex-col items-center mb-4">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#1e6b73] mb-2 bg-gray-100 flex items-center justify-center">
+                  <p className="text-sm md:text-base text-gray-800 mb-4 font-serif">An effective response will contain at least 100 words.</p>
+                  <div className="border-t border-gray-300 pt-4">
+                    <div className="flex flex-col items-center mb-3">
+                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] mb-1.5 bg-gray-100 flex items-center justify-center">
                         {cmsAcademicQ?.professorImageUrl ? (
                           <img src={cmsAcademicQ.professorImageUrl} alt="Professor" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
-                      <p className="font-bold text-lg text-gray-900 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
+                      <p className="font-bold text-sm md:text-base text-gray-900 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
                     </div>
-                    <p className="text-base text-gray-800 leading-relaxed font-serif">
+                    <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
                       {cmsAcademicQ?.professorMessage || cmsAcademicQ?.questionText || '(No professor message in CMS)'}
                     </p>
                   </div>
                 </div>
                 {/* Right: Student responses + user response */}
-                <div className="md:w-3/5 p-4 md:p-8 overflow-auto bg-[#f8f7f3]">
-                  <div className="space-y-4 mb-6">
-                    <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3]">
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 p-3 shadow-sm border border-[#e7e3d7]">
+                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
                         {cmsAcademicQ?.student1ImageUrl ? (
                           <img src={cmsAcademicQ.student1ImageUrl} alt="Student 1" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student1Name && <p className="font-bold text-base text-gray-700 font-serif mb-1">{cmsAcademicQ.student1Name}</p>}
-                        <p className="text-lg text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student1Name && <p className="font-bold text-sm text-gray-700 font-serif mb-0.5">{cmsAcademicQ.student1Name}</p>}
+                        <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
                           {cmsAcademicQ?.student1Message || '(No student 1 message in CMS)'}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 shadow-sm border border-[#e7e3d7]">
-                      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 p-3 shadow-sm border border-[#e7e3d7]">
+                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
                         {cmsAcademicQ?.student2ImageUrl ? (
                           <img src={cmsAcademicQ.student2ImageUrl} alt="Student 2" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student2Name && <p className="font-bold text-base text-gray-700 font-serif mb-1">{cmsAcademicQ.student2Name}</p>}
-                        <p className="text-lg text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student2Name && <p className="font-bold text-sm text-gray-700 font-serif mb-0.5">{cmsAcademicQ.student2Name}</p>}
+                        <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
                           {cmsAcademicQ?.student2Message || '(No student 2 message in CMS)'}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#ddd4c4]">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3 font-serif">Your Response:</h3>
+                  <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-[#ddd4c4]">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-2 font-serif">Your Response:</h3>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
-                    <div className={`border rounded-xl p-5 min-h-40 text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 text-gray-800 border-gray-200' : 'bg-gray-50 text-gray-400 italic border-gray-200'}`}>
+                    <div className={`border rounded-xl p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 text-gray-800 border-gray-200' : 'bg-gray-50 text-gray-400 italic border-gray-200'}`}>
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
                     <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                    <div className="flex justify-end mt-4">
+                    <div className="flex justify-end mt-3">
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
-                        className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
                       >
                         {bookmarkedQuestions.has('writing-discussion') ? (
-                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                         ) : (
-                          <StarOff className="w-4 h-4" />
+                          <StarOff className="w-3.5 h-3.5" />
                         )}
                         <span>{bookmarkedQuestions.has('writing-discussion') ? 'Bookmarked' : 'Bookmark'}</span>
                       </button>
@@ -1643,28 +1643,28 @@ export function QuestionReviewFull({
 
         {/* ===== SPEAKING CONTENT ===== */}
         {activeSection === 'Speaking' && currentSpeakingQ && (
-          <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-3">
             <div key={currentSpeakingQ.id} className="animate-[fadeIn_0.2s_ease-out]">
               {/* Question header */}
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-base text-gray-500">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-500">
                   Question {currentQuestionIndex + 1} of {speakingQuestionCount}
                 </p>
-                <span className="px-4 py-1.5 rounded-full text-sm font-bold text-white" style={{ backgroundColor: themeColor }}>
+                <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColor }}>
                   {currentSpeakingQ.taskGroup}
                 </span>
               </div>
 
               {/* Prompt */}
-              <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-3">Prompt</p>
-                <p className="text-xl text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
+              <div className="mb-3 rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">Prompt</p>
+                <p className="text-base md:text-lg text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
               </div>
 
               {/* Reference image + question audio (실제 시험 화면 구조) */}
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 mb-6">
-                <div className="flex justify-center mb-5">
-                  <div className="w-72 h-72 rounded-xl border-2 border-gray-300 bg-white overflow-hidden flex items-center justify-center">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 mb-3">
+                <div className="flex justify-center mb-3">
+                  <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl border-2 border-gray-300 bg-white overflow-hidden flex items-center justify-center">
                     {currentSpeakingQ.materialImage ? (
                       <ImageWithFallback
                         src={currentSpeakingQ.materialImage}
@@ -1672,7 +1672,7 @@ export function QuestionReviewFull({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <svg className="w-24 h-24 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-16 h-16 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                       </svg>
                     )}
@@ -1689,20 +1689,20 @@ export function QuestionReviewFull({
                     color="#0d3b4a"
                   />
                 ) : (
-                  <p className="text-center text-sm text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
+                  <p className="text-center text-xs text-gray-400 italic">CMS에 등록된 오디오가 없습니다.</p>
                 )}
 
                 {/* Script toggle */}
-                <div className="text-center mt-4">
+                <div className="text-center mt-2">
                   <button
                     onClick={() => setShowModelText(!showModelText)}
-                    className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    {showModelText ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {showModelText ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     <span>{showModelText ? 'Hide Script' : 'View Script'}</span>
                   </button>
                   {showModelText && currentSpeakingQ.transcript && (
-                    <p className="text-base text-gray-700 leading-relaxed mt-3 p-4 bg-white rounded-lg border border-gray-200 animate-[fadeIn_0.2s_ease-out]">
+                    <p className="text-sm text-gray-700 leading-relaxed mt-2 p-3 bg-white rounded-lg border border-gray-200 animate-[fadeIn_0.2s_ease-out]">
                       {currentSpeakingQ.transcript}
                     </p>
                   )}
@@ -1714,19 +1714,19 @@ export function QuestionReviewFull({
                 const qNum = activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8;
                 const recUrl = speakingRecordings[String(qNum)];
                 return (
-                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 mb-6">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-11 h-11 rounded-full bg-blue-200 flex items-center justify-center">
-                        <Mic className="w-5 h-5 text-blue-600" />
+                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-9 h-9 rounded-full bg-blue-200 flex items-center justify-center">
+                        <Mic className="w-4 h-4 text-blue-600" />
                       </div>
-                      <span className="px-4 py-1.5 rounded-full text-sm font-bold bg-blue-500 text-white">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
                         My Recording — Q{qNum}
                       </span>
                     </div>
                     {recUrl ? (
                       <AudioPlayer src={recUrl} qNum={qNum} />
                     ) : (
-                      <p className="text-sm text-gray-400 italic">
+                      <p className="text-xs text-gray-400 italic">
                         녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
                       </p>
                     )}
@@ -1735,21 +1735,21 @@ export function QuestionReviewFull({
               })()}
 
               {/* Bookmark + Nav */}
-              <div className="flex items-center justify-end mb-4">
+              <div className="flex items-center justify-end mb-2">
                 <button
                   onClick={() => toggleBookmark(currentSpeakingQ.id)}
-                  className="flex items-center gap-1 text-base text-gray-500 hover:text-yellow-500 transition-colors"
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
                 >
                   {bookmarkedQuestions.has(currentSpeakingQ.id) ? (
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   ) : (
-                    <StarOff className="w-5 h-5" />
+                    <StarOff className="w-4 h-4" />
                   )}
                   <span>{bookmarkedQuestions.has(currentSpeakingQ.id) ? 'Bookmarked' : 'Bookmark'}</span>
                 </button>
               </div>
 
-              <div className="flex justify-between pb-6">
+              <div className="flex justify-between pb-3">
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
