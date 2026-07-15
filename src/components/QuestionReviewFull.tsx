@@ -561,13 +561,13 @@ export function QuestionReviewFull({
 
       selection.removeAllRanges();
     } else if (words.length === 1) {
-      // 단어 팝업 표시 — context에 표시된 지문 텍스트 전달
+      // 단어 팝업 표시 — 클릭한 단어 바로 아래에 표시
       const passageContent = parsePassageContent(passageText);
       setPopupData({
         word: selectedText,
         context: passageContent,
         x: e.clientX,
-        y: e.clientY,
+        y: e.clientY + 20,
       });
       selection.removeAllRanges();
     }
@@ -1207,7 +1207,7 @@ export function QuestionReviewFull({
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-lg md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-relaxed">
+                  <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
@@ -1222,7 +1222,7 @@ export function QuestionReviewFull({
                       return (
                         <div
                           key={idx}
-                          className={`flex items-start gap-2 md:gap-3 p-3 md:p-5 rounded-lg border transition-all ${
+                          className={`flex items-start gap-2 md:gap-3 p-3 md:p-4 rounded-lg border transition-all ${
                             isCorrectAnswer
                               ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1230,7 +1230,7 @@ export function QuestionReviewFull({
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
-                          <span className={`text-sm md:text-xl flex-1 ${
+                          <span className={`text-sm md:text-lg flex-1 ${
                             isCorrectAnswer
                               ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1270,7 +1270,7 @@ export function QuestionReviewFull({
                         return ans;
                       };
                       return (
-                        <div className="flex flex-col gap-1.5 md:gap-2 text-sm md:text-xl">
+                        <div className="flex flex-col gap-1.5 md:gap-2 text-sm md:text-lg">
                           <span className="text-gray-600">
                             My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
                               {toLetter(currentQuestion?.userAnswer)}

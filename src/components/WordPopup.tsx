@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { getWordDefinitions, WordDefinition } from '../utils/dictionaryApi';
 import { translateWord, WordTranslation } from '../utils/wordTranslate';
 
@@ -94,7 +95,7 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
       ref={popupRef}
       className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-md"
@@ -150,6 +151,7 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
           )}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

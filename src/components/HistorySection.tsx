@@ -121,10 +121,21 @@ export function HistorySection({
   // Effective results (fallback to samples)
   // Don't show sample results to logged-out users
   // Show only this student's own results (matched by ownerName)
+  // 실전문제(Test)는 절반 이상 풀린 경우만 view results에 표시
   const myResults = isLoggedIn
     ? results.filter(r => r.ownerName === studentName)
     : [];
-  const effectiveResults = isLoggedIn ? (myResults.length > 0 ? myResults : SAMPLE_RESULTS) : [];
+  const effectiveResults = isLoggedIn
+    ? (myResults.length > 0
+        ? myResults.filter(r => {
+            if (r.type === 'Test') {
+              const attempted = r.correctAnswers + (r.wrongAnswers?.length || 0);
+              return attempted >= Math.ceil(r.totalQuestions / 2);
+            }
+            return true;
+          })
+        : SAMPLE_RESULTS)
+    : [];
 
   // Ads
   const activeAds = (advertisements as Advertisement[])?.filter(ad =>

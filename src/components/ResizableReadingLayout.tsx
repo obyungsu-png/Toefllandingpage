@@ -142,7 +142,7 @@ export function ResizableReadingLayout({
                   {passageTitle}
                 </h2>
               )}
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' }}>
+              <div style={zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' } : undefined}>
                 {leftContent}
               </div>
             </div>
@@ -209,10 +209,10 @@ export function ResizableReadingLayout({
       <div className="w-full md:flex-shrink-0" style={showDivider ? { width: windowWidth < 768 ? '100%' : `${leftWidth}px` } : {}}>
         <div className="h-[50vh] md:h-[540px] overflow-hidden bg-white" onWheel={onWheel}>
           <div className={`p-2 md:p-3 h-full overflow-y-auto scrollbar-thin`}>
-            <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' }}>
-              {leftContent}
+              <div style={zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' } : undefined}>
+                {leftContent}
+              </div>
             </div>
-          </div>
         </div>
       </div>
 

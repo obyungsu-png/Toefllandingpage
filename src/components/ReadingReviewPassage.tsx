@@ -258,7 +258,7 @@ export function ReadingReviewPassage({
       )}
       <div
         ref={passageRef}
-        className="bg-gray-50 rounded-xl border border-gray-200 p-5 overflow-y-auto"
+        className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 overflow-y-auto"
         style={{ maxHeight }}
         onMouseUp={handleMouseUp}
       >

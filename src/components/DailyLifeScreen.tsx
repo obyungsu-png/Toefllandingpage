@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { ResizableReadingLayout } from './ResizableReadingLayout';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
@@ -43,6 +44,7 @@ export function DailyLifeScreen({
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -60,7 +62,7 @@ export function DailyLifeScreen({
   const imageUrl: string | undefined = question?.imageUrl;
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+    <div className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${darkMode ? 'dark' : ''}`}>
       {/* Header */}
       <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
         <div className="flex items-center">
@@ -90,31 +92,44 @@ export function DailyLifeScreen({
       </div>
 
       {/* Navigation tabs */}
-      <div className="bg-white border-b border-gray-300">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700">
         <div className="px-8 py-3">
           <div className="flex gap-8 items-end">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
-            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+            <div className="text-gray-700 dark:text-gray-200 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Reading</div>
+            <div className="text-gray-500 dark:text-gray-400 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
               Question {questionIndex + 1} of {totalQuestions}
             </div>
             {isReviewMode && (
-              <button
-                onClick={() => setToolsOpen(!toolsOpen)}
-                className={`ml-auto px-4 py-1.5 rounded-lg text-sm font-medium transition-colors mb-1 ${
-                  toolsOpen
-                    ? 'bg-[#1e6b73] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Tools
-              </button>
+              <>
+                <button
+                  onClick={() => setToolsOpen(!toolsOpen)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors mb-1 ${
+                    toolsOpen
+                      ? 'bg-[#1e6b73] text-white shadow-sm'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Tools
+                </button>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`p-1.5 rounded-lg transition-colors mb-1 ${
+                    darkMode
+                      ? 'bg-gray-700 text-yellow-300'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title={darkMode ? '라이트 모드' : '다크 모드'}
+                >
+                  {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              </>
             )}
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-2 md:p-4 lg:p-4 overflow-auto bg-white border border-black">
+      <div className="flex-1 p-2 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
         <div className="max-w-screen-2xl mx-auto pl-0">
           {passageTitle && (
             <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
