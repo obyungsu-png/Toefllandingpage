@@ -876,8 +876,8 @@ export function QuestionReviewFull({
                 onClick={() => { setActiveModule(mod); setCurrentQuestionIndex(0); }}
                 className={`text-xs md:text-base font-medium pb-1 md:pb-1.5 border-b-2 transition-all ${
                   activeModule === mod
-                    ? 'border-gray-900 text-gray-900'
-                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                    ? 'border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100'
+                    : 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
               >
                 {getModuleTabLabel(mod)}
@@ -887,8 +887,8 @@ export function QuestionReviewFull({
         </div>
 
         {/* Question Navigation + Stats */}
-        <div className="relative flex items-center justify-center mt-2 gap-2">
-          {/* Question Pills + Tools + Dark mode — Q pills 바로 옆에 배치 (absolute Stats와 겹치지 않도록) */}
+        <div className="relative flex flex-wrap items-center justify-center mt-2 gap-2">
+          {/* Question Pills only — flex-wrap 허용 */}
           <div className="flex flex-wrap gap-1.5 justify-center items-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
@@ -954,8 +954,12 @@ export function QuestionReviewFull({
               );
             })}
 
-            {/* Tools 버튼 — Reading 리뷰에서 표시 (Q pills 바로 옆) */}
-            {activeSection === 'Reading' && (
+          </div>
+
+          {/* Reading controls: Tools + toolbar + DarkMode — flex-nowrap으로 항상 인라인 유지 */}
+          {activeSection === 'Reading' && (
+            <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto max-w-[65vw]">
+              {/* Tools 버튼 */}
               <button
                 onClick={() => setToolsOpen(!toolsOpen)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
@@ -966,24 +970,22 @@ export function QuestionReviewFull({
               >
                 Tools
               </button>
-            )}
 
-            {/* Reading review 도구 모음 — Tools 버튼과 다크 모드 버튼 사이에 인라인으로 표시 */}
-            {activeSection === 'Reading' && toolsOpen && (
-              <div className="shrink-0">
-                <ReadingReviewToolbar
-                  activeTool={activeTool}
-                  activeColor={activeColor}
-                  onToolChange={handleToolChange}
-                  onClearAll={handleClearAllHighlights}
-                  language={language}
-                  onLanguageChange={handleLanguageChange}
-                />
-              </div>
-            )}
+              {/* 도구 모음 — Tools와 DarkMode 사이에 인라인 */}
+              {toolsOpen && (
+                <div className="shrink-0">
+                  <ReadingReviewToolbar
+                    activeTool={activeTool}
+                    activeColor={activeColor}
+                    onToolChange={handleToolChange}
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                  />
+                </div>
+              )}
 
-            {/* 다크 모드 토글 — Tools 도구 모음 옆 */}
-            {activeSection === 'Reading' && (
+              {/* 다크 모드 토글 */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-1.5 rounded-lg transition-colors shrink-0 ${
@@ -995,15 +997,15 @@ export function QuestionReviewFull({
               >
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
               <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-lg">
                 <span className="text-gray-500 text-sm">Score</span>
-                <strong className="text-gray-900 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
+                <strong className="text-gray-900 dark:text-gray-100 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                   correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
                   correctCount/totalQuestions >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
@@ -1012,7 +1014,7 @@ export function QuestionReviewFull({
               </div>
             )}
             <span>
-              Time: <strong className="text-gray-900">{timeDisplay}</strong>
+              Time: <strong className="text-gray-900 dark:text-gray-100">{timeDisplay}</strong>
             </span>
           </div>
         </div>
@@ -1164,7 +1166,7 @@ export function QuestionReviewFull({
                     return passageContent ? (
                       <>
                         {passageTitle && (
-                          <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-yellow-300 mb-3">{passageTitle}</h4>
+                          <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
                         )}
                         <p className="text-sm md:text-lg font-medium text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
@@ -1357,7 +1359,7 @@ export function QuestionReviewFull({
             {activeModule === 1 && currentWritingBuildSentence && (
               <div className="w-full max-w-4xl mx-auto p-3 md:p-5">
                 <div className="bg-white">
-                  <h2 className="text-lg md:text-xl font-bold text-black mb-3 text-center">Make an appropriate sentence.</h2>
+                  <h2 className="text-lg md:text-xl font-bold text-black dark:text-gray-100 mb-3 text-center">Make an appropriate sentence.</h2>
 
                   <div className="space-y-3 mt-2 px-1 md:px-4">
                     {/* Avatar 1 + prompt */}
@@ -1542,7 +1544,7 @@ export function QuestionReviewFull({
                     {cmsAcademicQ?.questionText || "Your professor is teaching a class. Write a post responding to the professor's question."}
                   </p>
                   <div className="mb-3">
-                    <p className="text-sm font-semibold text-gray-900 mb-2 font-serif">In your response, you should do the following.</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 font-serif">In your response, you should do the following.</p>
                     <ul className="space-y-1 ml-4">
                       <li className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
@@ -1564,7 +1566,7 @@ export function QuestionReviewFull({
                           <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
-                      <p className="font-bold text-sm md:text-base text-gray-900 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
+                      <p className="font-bold text-sm md:text-base text-gray-900 dark:text-gray-100 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
                     </div>
                     <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
                       {cmsAcademicQ?.professorMessage || cmsAcademicQ?.questionText || '(No professor message in CMS)'}
@@ -1649,7 +1651,7 @@ export function QuestionReviewFull({
               {/* Prompt */}
               <div className="mb-3 rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">Prompt</p>
-                <p className="text-base md:text-lg text-gray-900 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
+                <p className="text-base md:text-lg text-gray-900 dark:text-gray-100 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
               </div>
 
               {/* Reference image + question audio (실제 시험 화면 구조) */}
