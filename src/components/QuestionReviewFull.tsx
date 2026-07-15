@@ -292,7 +292,7 @@ export function QuestionReviewFull({
     const qs: ReviewQuestion[] = [];
     const wrongQs = result.wrongAnswers;
     const wrongIds = new Set(wrongQs.map(w => w.questionId));
-    
+
     // Try to get real questions from CMS data — filtered by active module
     const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
     const isFillBlanksQ = (q: any) => {
@@ -314,11 +314,24 @@ export function QuestionReviewFull({
     const cmsCount = realQuestions.length + readingM1Offset;
     const totalQ = Math.max(result.totalQuestions || 0, cmsCount);
 
+    // 섹션 시도 여부: 이 섹션의 문제 범위에 wrongAnswer가 하나라도 있으면 시도한 것으로 간주.
+    // 시도하지 않은 섹션의 문제는 "안 푼 문제" → 틀린 것으로 표시.
+    const attemptedSection = (() => {
+      const startQ = readingM1Offset + 1;
+      const endQ = totalQ;
+      return wrongQs.some(w => {
+        const num = parseInt(w.questionId);
+        return !isNaN(num) && num >= startQ && num <= endQ;
+      });
+    })();
+
     for (let i = 0; i < totalQ; i++) {
       const realQ = realQuestions[i - readingM1Offset];
       const qNum = i + 1;
       const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
       const isWrong = !!wrong;
+      // 시도하지 않은 섹션의 문제는 정답이 아님 (안 푼 것 = 틀린 것)
+      const isCorrect = !isWrong && attemptedSection;
 
       if (realQ) {
         // Use real CMS question data
@@ -330,7 +343,7 @@ export function QuestionReviewFull({
           userAnswer: isWrong ? (wrong?.userAnswer || '') : (realQ.correctAnswer || 'A'),
           correctAnswer: isWrong ? (wrong?.correctAnswer || realQ.correctAnswer || 'A') : (realQ.correctAnswer || 'A'),
           explanation: wrong?.explanation,
-          isCorrect: !isWrong,
+          isCorrect,
           hasAudio: activeSection === 'Listening',
           audioText: realQ.scriptText || realQ.audioText || undefined,
           scriptText: realQ.scriptText,
@@ -347,7 +360,7 @@ export function QuestionReviewFull({
           options: wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D'],
           userAnswer: wrong?.userAnswer || 'A',
           correctAnswer: wrong?.correctAnswer || 'A',
-          isCorrect: !isWrong,
+          isCorrect,
           hasAudio: activeSection === 'Listening',
           audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
           passageText: passageText,
@@ -625,11 +638,17 @@ export function QuestionReviewFull({
     })
     .slice(0, 10)
     .map((question: any, index: number) => {
-      const cmsWords = Array.isArray(question?.words)
+      const rawWords = Array.isArray(question?.words)
         ? question.words
         : Array.isArray(question?.options)
         ? question.options
         : [];
+      // CSV 헤더 단어(context, review, wordbank 등)가 word bank에 섞이는 현상 방지
+      const HEADER_WORDS = new Set(['context', 'review', 'wordbank', 'word bank', '단어', '문장끝']);
+      const cmsWords = rawWords.filter((w: any) => {
+        const normalized = String(w || '').trim().toLowerCase().replace(/^\[|\]$/g, '');
+        return normalized && !HEADER_WORDS.has(normalized);
+      });
 
       return {
         id: `bs-q${index + 1}`,
@@ -703,6 +722,15 @@ export function QuestionReviewFull({
       let match: RegExpExecArray | null;
       let key = 0;
 
+      // Complete Words 시도 여부: wrongAnswers 중 하나라도 Q1-10 범위에 매칭되면 시도한 것
+      const attemptedCompleteWords = result.wrongAnswers.some(w => {
+        const id = w.questionId || '';
+        const num = parseInt(id);
+        return !isNaN(num) && num >= 1 && num <= 10
+          || id === '1-10' || id.startsWith('blank-')
+          || id.toLowerCase().includes('complete') || id.toLowerCase().includes('fill');
+      });
+
       while ((match = regex.exec(normalizedPassage)) !== null) {
         const blankIndex = Number(match[1]);
         const blank = extractedBlanks[blankIndex];
@@ -710,27 +738,36 @@ export function QuestionReviewFull({
 
         if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
         if (blank) {
-          // Find if user got this blank wrong
+          // Find if user got this blank wrong — 다양한 questionId 포맷 매칭
           const blankNum = blankIndex + 1;
-          const wrongEntry = result.wrongAnswers.find(w =>
-            w.questionId === String(blankNum) || w.questionId === `blank-${blankNum}` ||
-            (w.questionId === '1-10' && w.userAnswer?.split(',')[blankIndex])
-          );
+          const wrongEntry = result.wrongAnswers.find(w => {
+            const id = (w.questionId || '').toLowerCase();
+            return id === String(blankNum) || id === `blank-${blankNum}` || id === `q${blankNum}`
+              || id === `reading-${blankNum}` || id === `complete-words-${blankNum}`
+              || (id === '1-10' && w.userAnswer?.split(',')[blankIndex]);
+          });
           const userAnswerForBlank = wrongEntry?.userAnswer?.split(',')?.[blankIndex]?.trim() || null;
-          const isBlankCorrect = !wrongEntry || (wrongEntry && userAnswerForBlank === blank.answer);
+
+          // 3가지 상태: 정답(초록), 오답(빨강+취소선), 안 풼(회색)
+          const isBlankWrong = !!wrongEntry && userAnswerForBlank !== blank.answer;
+          const isBlankCorrect = !wrongEntry && attemptedCompleteWords;
+          // 안 푼 경우 (시도 안 했거나, wrongEntry 없고 시도 안 함)
+
           parts.push(
             <span key={`blank-${blankIndex}`} className="inline-flex flex-col items-center mx-0.5 align-bottom">
               <span
-                className={`inline-block border-b-2 px-1 text-sm font-bold min-w-[28px] text-center rounded-sm ${
-                  isBlankCorrect
+                className={`inline-block border-b-2 px-1 text-xs font-bold min-w-[24px] text-center rounded-sm ${
+                  isBlankWrong
+                    ? 'border-red-500 text-red-700 bg-red-50'
+                    : isBlankCorrect
                     ? 'border-green-500 text-green-700 bg-green-50'
-                    : 'border-red-500 text-red-700 bg-red-50'
+                    : 'border-gray-400 text-gray-500 bg-gray-100'
                 }`}
                 style={{ minWidth: inputWidth(blank) }}
               >
                 {blank.answer}
               </span>
-              {!isBlankCorrect && userAnswerForBlank && (
+              {isBlankWrong && userAnswerForBlank && (
                 <span className="text-[9px] text-gray-400 line-through">{userAnswerForBlank}</span>
               )}
             </span>
@@ -799,22 +836,22 @@ export function QuestionReviewFull({
   return (
     <div className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col overflow-hidden ${darkMode ? 'dark' : ''}`}>
       {/* Top bar */}
-      <div className="border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 shrink-0">
+      <div className="border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-2 shrink-0">
         <button
           onClick={onBack}
-          className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-3"
+          className="flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors mb-1"
         >
-          <ChevronLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back</span>
+          <ChevronLeft className="w-4 h-4" />
+          <span className="text-xs font-medium">Back</span>
         </button>
 
         {/* Section Tabs */}
-        <div className="flex justify-center mb-2 md:mb-3">
-          <div className="inline-flex bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 md:p-1">
+        <div className="flex justify-center mb-1 md:mb-2">
+          <div className="inline-flex bg-gray-100 dark:bg-gray-800 rounded-full p-0.5">
             {sectionTabs.map(tab => (
               <button
                 key={tab}
-                className={`px-4 md:px-10 py-2 md:py-3 rounded-full text-sm md:text-lg font-bold transition-all cursor-pointer ${
+                className={`px-3 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold transition-all cursor-pointer ${
                   activeSection === tab
                     ? 'bg-[#1e6b73] text-white'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100'
@@ -837,7 +874,7 @@ export function QuestionReviewFull({
               <button
                 key={mod}
                 onClick={() => { setActiveModule(mod); setCurrentQuestionIndex(0); }}
-                className={`text-xs md:text-xl font-medium pb-1.5 md:pb-2 border-b-2 transition-all ${
+                className={`text-xs md:text-base font-medium pb-1 md:pb-1.5 border-b-2 transition-all ${
                   activeModule === mod
                     ? 'border-gray-900 text-gray-900'
                     : 'border-transparent text-gray-400 hover:text-gray-600'
@@ -850,7 +887,7 @@ export function QuestionReviewFull({
         </div>
 
         {/* Question Navigation + Stats */}
-        <div className="relative flex items-center justify-center mt-3 gap-2">
+        <div className="relative flex items-center justify-center mt-2 gap-2">
           {/* Question Pills + Tools + Dark mode — Q pills 바로 옆에 배치 (absolute Stats와 겹치지 않도록) */}
           <div className="flex flex-wrap gap-1.5 justify-center items-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
@@ -859,7 +896,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -879,7 +916,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -900,7 +937,7 @@ export function QuestionReviewFull({
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-10 md:h-10 rounded-full text-[11px] md:text-base font-bold flex items-center justify-center transition-all ${
+                  className={`w-6 h-6 md:w-8 md:h-8 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : isCorrect
@@ -948,12 +985,12 @@ export function QuestionReviewFull({
           </div>
 
           {/* Stats */}
-          <div className="hidden md:flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
+          <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                <span className="text-gray-500 text-base">Score</span>
-                <strong className="text-gray-900 text-base">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
-                <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+              <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-lg">
+                <span className="text-gray-500 text-sm">Score</span>
+                <strong className="text-gray-900 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                   correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
                   correctCount/totalQuestions >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
                   'bg-red-100 text-red-700'
@@ -972,28 +1009,28 @@ export function QuestionReviewFull({
         {/* ===== READING / LISTENING CONTENT ===== */}
         {(activeSection === 'Reading' || activeSection === 'Listening') && (
           showReadingCompleteWordsReview ? (
-            <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 flex flex-col md:flex-row gap-4">
               <div className="flex-1 min-w-0">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-3 md:p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">Complete Words</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-0.5">Complete Words</h3>
                     </div>
                     <button
                       onClick={() => toggleBookmark(readingCompleteWordsConfig?.id || '')}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
                     >
                       {bookmarkedQuestions.has(readingCompleteWordsConfig?.id || '') ? (
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                       ) : (
-                        <StarOff className="w-4 h-4" />
+                        <StarOff className="w-3.5 h-3.5" />
                       )}
                       <span>{bookmarkedQuestions.has(readingCompleteWordsConfig?.id || '') ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
                   </div>
 
-                  <p className="mb-8 text-xl md:text-[1.75rem] text-black dark:text-gray-100 font-bold text-center">
+                  <p className="mb-3 text-base md:text-lg text-black dark:text-gray-100 font-bold text-center">
                     Fill in the missing letters in the paragraph.
                   </p>
 
@@ -1011,7 +1048,7 @@ export function QuestionReviewFull({
 
                   <div
                     ref={passageRef}
-                    className="text-lg md:text-[1.25rem] leading-[1.8] text-black dark:text-gray-100"
+                    className="text-sm md:text-base leading-[1.6] text-black dark:text-gray-100"
                     style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
                     onMouseUp={(e) => {
                       // Complete Words passageText의 [answer:maxLen] → answer 로 정규화하여 offset 매칭
@@ -1024,18 +1061,18 @@ export function QuestionReviewFull({
                   </div>
                 </div>
 
-                <div className="flex justify-between mt-8 pb-6">
+                <div className="flex justify-between mt-4 pb-3">
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     ← Previous
                   </button>
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
                     disabled={currentQuestionIndex === totalQuestions - 1}
-                    className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     style={{ backgroundColor: themeColor }}
                   >
                     Next →
@@ -1094,10 +1131,10 @@ export function QuestionReviewFull({
               </div>
             </div>
           ) : (
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex flex-col md:flex-row gap-4">
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
-              <div className="w-full md:w-1/2 order-1 md:order-none flex flex-col gap-3">
+              <div className="w-full md:w-1/2 order-1 md:order-none flex flex-col gap-2">
                 {/* Reading review 도구 모음 — 하이라이트/밑줄/단어 뜻 언어 전환/단어 검색 */}
                 {toolsOpen && (
                   <ReadingReviewToolbar
@@ -1111,8 +1148,8 @@ export function QuestionReviewFull({
                 )}
                 <div
                   ref={passageRef}
-                  className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 h-full overflow-y-auto"
-                  style={{ maxHeight: '70vh' }}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-y-auto"
+                  style={{ maxHeight: '62vh' }}
                   onMouseUp={(e) => handlePassageMouseUp(e, currentQuestion?.passageText || '', currentTestId, currentPassageKey)}
                 >
                   {(() => {
@@ -1138,7 +1175,7 @@ export function QuestionReviewFull({
                         {passageTitle && (
                           <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
                     ) : (
                       <p className="text-sm text-gray-400 dark:text-gray-500 italic">지문을 불러올 수 없습니다.</p>
@@ -1203,15 +1240,15 @@ export function QuestionReviewFull({
                   key={currentQuestion?.id}
                   className="animate-[fadeIn_0.2s_ease-out]"
                 >
-                  <p className="text-xs md:text-lg font-medium text-gray-500 dark:text-gray-400 mb-3 md:mb-4">
+                  <p className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 md:mb-3">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-lg md:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 md:mb-6 leading-relaxed">
+                  <p className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
-                  <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
+                  <div className="space-y-2 mb-4 md:mb-5">
                     {currentQuestion?.options.map((option, idx) => {
                       // 옵션에서 A./B./C./D. 접두사 제거 (실제 시험 형식)
                       const cleanOption = option.replace(/^[A-D]\.\s*/, '');
@@ -1222,7 +1259,7 @@ export function QuestionReviewFull({
                       return (
                         <div
                           key={idx}
-                          className={`flex items-start gap-2 md:gap-3 p-3 md:p-4 rounded-lg border transition-all ${
+                          className={`flex items-start gap-2 p-2 md:p-2.5 rounded-lg border transition-all ${
                             isCorrectAnswer
                               ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1230,7 +1267,7 @@ export function QuestionReviewFull({
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
-                          <span className={`text-sm md:text-lg flex-1 ${
+                          <span className={`text-sm md:text-base flex-1 ${
                             isCorrectAnswer
                               ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
@@ -1240,10 +1277,10 @@ export function QuestionReviewFull({
                             {cleanOption}
                           </span>
                           {isCorrectAnswer && (
-                            <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                           )}
                           {isUserAnswer && !currentQuestion.isCorrect && !isCorrectAnswer && (
-                            <X className="w-5 h-5 text-red-500 shrink-0" />
+                            <X className="w-4 h-4 text-red-500 shrink-0" />
                           )}
                         </div>
                       );
@@ -1251,13 +1288,13 @@ export function QuestionReviewFull({
                   </div>
 
                   {currentQuestion?.explanation && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <p className="text-sm font-bold text-blue-800 mb-1">Explanation</p>
-                      <p className="text-sm text-blue-700">{currentQuestion.explanation}</p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <p className="text-xs font-bold text-blue-800 mb-1">Explanation</p>
+                      <p className="text-xs text-blue-700">{currentQuestion.explanation}</p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-3">
                     {(() => {
                       // Convert full-text answer to letter (A/B/C/D) using option index
                       const toLetter = (ans: string | undefined) => {
@@ -1270,7 +1307,7 @@ export function QuestionReviewFull({
                         return ans;
                       };
                       return (
-                        <div className="flex flex-col gap-1.5 md:gap-2 text-sm md:text-lg">
+                        <div className="flex flex-col gap-1 text-xs md:text-sm">
                           <span className="text-gray-600">
                             My Answer: <strong className={currentQuestion?.isCorrect ? 'text-emerald-600' : 'text-red-600'}>
                               {toLetter(currentQuestion?.userAnswer)}
@@ -1286,12 +1323,12 @@ export function QuestionReviewFull({
                     })()}
                     <button
                       onClick={() => toggleBookmark(currentQuestion?.id || '')}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
                     >
                       {bookmarkedQuestions.has(currentQuestion?.id || '') ? (
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
                       ) : (
-                        <StarOff className="w-4 h-4" />
+                        <StarOff className="w-3.5 h-3.5" />
                       )}
                       <span>{bookmarkedQuestions.has(currentQuestion?.id || '') ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
@@ -1300,18 +1337,18 @@ export function QuestionReviewFull({
               </>
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-6 md:mt-8 pb-6">
+              <div className="flex justify-between mt-3 md:mt-4 pb-3">
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-4 md:px-7 py-2.5 md:py-3.5 rounded-lg text-sm md:text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   ← Previous
                 </button>
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
                   disabled={currentQuestionIndex === totalQuestions - 1}
-                  className="px-4 md:px-7 py-2.5 md:py-3.5 rounded-lg text-sm md:text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   style={{ backgroundColor: themeColor }}
                 >
                   Next →
@@ -1327,39 +1364,39 @@ export function QuestionReviewFull({
           <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto">
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
-              <div className="w-full max-w-5xl mx-auto p-6 md:p-12">
+              <div className="w-full max-w-4xl mx-auto p-3 md:p-5">
                 <div className="bg-white">
-                  <h2 className="text-3xl md:text-4xl font-bold text-black mb-10 text-center">Make an appropriate sentence.</h2>
+                  <h2 className="text-lg md:text-xl font-bold text-black mb-3 text-center">Make an appropriate sentence.</h2>
 
-                  <div className="space-y-10 mt-8 px-2 md:px-8">
+                  <div className="space-y-3 mt-2 px-1 md:px-4">
                     {/* Avatar 1 + prompt */}
-                    <div className="flex items-center gap-5 md:gap-8">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar1ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar1ImageUrl} alt="Q" className="w-full h-full object-cover" />
-                          : <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
-                      <div className="text-2xl text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                      <div className="text-base md:text-lg text-gray-800">{currentWritingBuildSentence.prompt}</div>
                     </div>
 
                     {/* Avatar 2 + word chips */}
-                    <div className="flex items-center gap-5 md:gap-8">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar2ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar2ImageUrl} alt="A" className="w-full h-full object-cover" />
-                          : <svg className="w-10 h-10 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
                       <div className="flex-1">
                         {/* Word bank */}
-                        <div className="flex flex-wrap gap-2.5">
+                        <div className="flex flex-wrap gap-1.5">
                           {currentWritingBuildSentence.words.map((word, idx) => {
                             const isPrefilled = word.startsWith('[') && word.endsWith(']');
                             const display = word.replace(/^\[|\]$/g, '');
                             return isPrefilled
-                              ? <span key={idx} className="text-2xl font-medium text-gray-700">{display}</span>
-                              : <span key={idx} className="px-4 py-2 border border-gray-300 rounded-lg text-2xl text-gray-700 bg-gray-50">{display}</span>;
+                              ? <span key={idx} className="text-base font-medium text-gray-700">{display}</span>
+                              : <span key={idx} className="px-2.5 py-1 border border-gray-300 rounded-lg text-base text-gray-700 bg-gray-50">{display}</span>;
                           })}
                         </div>
                       </div>
@@ -1379,12 +1416,20 @@ export function QuestionReviewFull({
                     const correctText = currentWritingBuildSentence.correctAnswer || reconstructFromWords();
                     const ending = currentWritingBuildSentence.sentenceEnding || '.';
                     const fullCorrect = `${correctText}${ending}`;
+                    // Writing Build a Sentence 시도 여부 — Q1-10 범위에 wrongAnswer가 하나라도 있으면 시도한 것
+                    const attemptedWriting = result.wrongAnswers.some(w => {
+                      const id = (w.questionId || '').toLowerCase();
+                      const num = parseInt(id);
+                      return !isNaN(num) && num >= 1 && num <= 10
+                        || id.startsWith('writing-bs') || id.startsWith('writing-')
+                        || id.startsWith('build-sentence') || id.includes('sentence');
+                    });
                     return (
-                      <div className="mt-10 space-y-5 px-2 md:px-8">
+                      <div className="mt-4 space-y-2 px-1 md:px-4">
                         {correctText && (
-                          <div>
-                            <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">정답</p>
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 text-xl font-medium text-emerald-800">
+                          <div className="flex items-start gap-2">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1.5 shrink-0 w-12">정답</p>
+                            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm font-medium text-emerald-800">
                               {fullCorrect}
                             </div>
                           </div>
@@ -1393,25 +1438,29 @@ export function QuestionReviewFull({
                         {/* User's answer + grading */}
                         {(() => {
                           const qNum = currentQuestionIndex + 1;
-                          const wrongEntry = result.wrongAnswers.find(
-                            w => w.questionId === `writing-bs-${qNum}` || w.questionId === String(qNum)
-                          );
+                          const wrongEntry = result.wrongAnswers.find(w => {
+                            const id = (w.questionId || '').toLowerCase();
+                            return id === `writing-bs-${qNum}` || id === String(qNum)
+                              || id === `writing-${qNum}` || id === `build-sentence-${qNum}`
+                              || id === `bs-${qNum}` || id === `q${qNum}`;
+                          });
                           const userAns = wrongEntry?.userAnswer;
-                          const isWrong = !!wrongEntry;
+                          // 시도하지 않은 Writing 섹션 → 안 푼 것 = 틀린 것
+                          const isWrong = !!wrongEntry || !attemptedWriting;
                           return (
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">내 답</p>
-                                <span className={`text-sm font-bold px-3 py-1 rounded-full ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                            <div className="flex items-start gap-2">
+                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1.5 shrink-0 w-12">내 답</p>
+                              <div className="flex-1">
+                                <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mb-1 ${isWrong ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>
                                   {isWrong ? '✕ 오답' : '✓ 정답'}
                                 </span>
-                              </div>
-                              <div className={`rounded-xl px-5 py-4 text-xl border ${
-                                isWrong
-                                  ? 'bg-red-50 border-red-200 text-red-800'
-                                  : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                              }`}>
-                                {userAns || (isWrong ? '(미제출)' : fullCorrect)}
+                                <div className={`rounded-lg px-3 py-2 text-sm border ${
+                                  isWrong
+                                    ? 'bg-red-50 border-red-200 text-red-800'
+                                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                }`}>
+                                  {userAns || (isWrong ? '(미제출)' : fullCorrect)}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1422,16 +1471,16 @@ export function QuestionReviewFull({
                 </div>
 
                 {/* Nav buttons */}
-                <div className="flex justify-between mt-10">
+                <div className="flex justify-between mt-4">
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
                   >← Previous</button>
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
                     disabled={currentQuestionIndex === totalQuestions - 1}
-                    className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 transition-all"
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 transition-all"
                     style={{ backgroundColor: themeColor }}
                   >Next →</button>
                 </div>
@@ -1704,14 +1753,14 @@ export function QuestionReviewFull({
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   ← Previous
                 </button>
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.min(speakingQuestionCount - 1, currentQuestionIndex + 1))}
                   disabled={currentQuestionIndex === speakingQuestionCount - 1}
-                  className="px-7 py-3.5 rounded-lg text-lg font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   style={{ backgroundColor: themeColor }}
                 >
                   Next →
