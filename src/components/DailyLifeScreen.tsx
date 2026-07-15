@@ -111,6 +111,7 @@ export function DailyLifeScreen({
                 >
                   Tools
                 </button>
+                <div id="daily-reading-review-toolbar-slot" className="mb-1 shrink-0" />
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className={`p-1.5 rounded-lg transition-colors mb-1 ${
@@ -146,15 +147,16 @@ export function DailyLifeScreen({
                   passageKey={passageKey}
                   maxHeight="65vh"
                   toolsOpen={toolsOpen}
+                  toolbarPortalId="daily-reading-review-toolbar-slot"
                 >
                   <div className="space-y-3">
                     {imageUrl && (
-                      <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
+                      <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 dark:border-gray-700 mb-3" />
                     )}
                     {structured ? (
                       structured
                     ) : (
-                      <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
                         {passageText}
                       </div>
                     )}
@@ -163,12 +165,12 @@ export function DailyLifeScreen({
               ) : (
                 <div className="space-y-3">
                   {imageUrl && (
-                    <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
+                    <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 dark:border-gray-700 mb-3" />
                   )}
                   {structured ? (
                     structured
                   ) : (
-                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
                       {passageText}
                     </div>
                   )}
@@ -177,7 +179,7 @@ export function DailyLifeScreen({
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                 <div className="space-y-3 md:space-y-4 lg:space-y-5">
                   {options.map((option, index) => (
                     <RadioOption

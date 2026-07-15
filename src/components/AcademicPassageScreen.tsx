@@ -130,6 +130,7 @@ export function AcademicPassageScreen({
                 >
                   Tools
                 </button>
+                <div id="academic-reading-review-toolbar-slot" className="mb-1 shrink-0" />
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className={`p-1.5 rounded-lg transition-colors mb-1 ${
@@ -163,6 +164,7 @@ export function AcademicPassageScreen({
                   passageKey={passageKey}
                   maxHeight="none"
                   toolsOpen={toolsOpen}
+                  toolbarPortalId="academic-reading-review-toolbar-slot"
                 />
               ) : (
                 <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">

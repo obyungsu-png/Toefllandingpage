@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ReadingReviewToolbar } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
@@ -112,6 +113,8 @@ interface ReadingReviewPassageProps {
   children?: React.ReactNode;
   /** Tools 패널 표시 여부. 기본 true — 부모에서 Tools 버튼으로 토글 시 false로 전달 */
   toolsOpen?: boolean;
+  /** 상단 Tools 버튼과 다크모드 버튼 사이에 도구모음을 렌더링할 포털 대상 ID */
+  toolbarPortalId?: string;
 }
 
 /**
@@ -129,6 +132,7 @@ export function ReadingReviewPassage({
   maxHeight = '70vh',
   children,
   toolsOpen = true,
+  toolbarPortalId,
 }: ReadingReviewPassageProps) {
   const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
   const [activeColor, setActiveColor] = useState<string>('#fff3a3');
@@ -244,18 +248,23 @@ export function ReadingReviewPassage({
     }
   };
 
+  const toolbar = toolsOpen ? (
+    <ReadingReviewToolbar
+      activeTool={activeTool}
+      activeColor={activeColor}
+      onToolChange={handleToolChange}
+      onClearAll={handleClearAll}
+      language={language}
+      onLanguageChange={setLanguage}
+    />
+  ) : null;
+  const toolbarPortalTarget = toolbarPortalId && typeof document !== 'undefined'
+    ? document.getElementById(toolbarPortalId)
+    : null;
+
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      {toolsOpen && (
-        <ReadingReviewToolbar
-          activeTool={activeTool}
-          activeColor={activeColor}
-          onToolChange={handleToolChange}
-          onClearAll={handleClearAll}
-          language={language}
-          onLanguageChange={setLanguage}
-        />
-      )}
+      {toolbar && (toolbarPortalTarget ? createPortal(toolbar, toolbarPortalTarget) : toolbar)}
       <div
         ref={passageRef}
         className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 overflow-y-auto"
