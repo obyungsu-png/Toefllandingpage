@@ -1352,14 +1352,38 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     await kv.set(`user:id:${user.id}`, user);
 
     // Supabase Auth 유저 생성 (password + email_confirm) — 가입 후 자동 로그인 지원
+    // 이미 유저가 있으면(과거 이메일 세션 등으로 password 없이 생성됐을 수 있음)
+    // password 를 업데이트해 로그인이 되도록 보정한다.
     try {
       const { error: createErr } = await supabase.auth.admin.createUser({
         email: emailLower,
         password,
         email_confirm: true,
       });
-      if (createErr && !/already|registered|exists/i.test(createErr.message)) {
-        console.error('createUser error (legacy):', createErr.message);
+      if (createErr) {
+        if (/already|registered|exists/i.test(createErr.message)) {
+          // 이미 존재 → 유저 id 조회 후 password 세팅
+          const { data: linkData } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: emailLower,
+          });
+          const existingId = linkData?.user?.id;
+          if (existingId) {
+            const { error: updateErr } = await supabase.auth.admin.updateUserById(existingId, {
+              password,
+              email_confirm: true,
+            });
+            if (updateErr) {
+              console.error('updateUserById error (legacy):', updateErr.message);
+            } else {
+              console.log('🔑 Existing Auth user password set:', emailLower);
+            }
+          } else {
+            console.error('Could not resolve existing Auth user id for', emailLower);
+          }
+        } else {
+          console.error('createUser error (legacy):', createErr.message);
+        }
       }
     } catch (err) {
       console.error('Supabase Auth user creation failed (legacy):', err);
@@ -1581,4 +1605,4 @@ app.post('/make-server-e46cd33a/users/login', async (c) => {
   }
 });
 
-Deno.serve(app.fetch);// deployed: 2026-07-11T00:00:00Z
+Deno.serve(app.fetch);// deployed: 2026-07-15T12:00:00Z
