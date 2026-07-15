@@ -953,34 +953,48 @@ export function QuestionReviewFull({
                 </button>
               );
             })}
-
-            {/* Reading: Tools 버튼 + 다크모드 토글 — Q pills와 같은 줄 인라인 */}
-            {activeSection === 'Reading' && (
-              <>
-                <button
-                  onClick={() => setToolsOpen(!toolsOpen)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
-                    toolsOpen
-                      ? 'bg-[#1e6b73] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Tools
-                </button>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                    darkMode
-                      ? 'bg-gray-700 text-yellow-300'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                  title={darkMode ? '라이트 모드' : '다크 모드'}
-                >
-                  {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
-              </>
-            )}
           </div>
+
+          {/* Reading controls: Tools + toolbar + DarkMode — always inline */}
+          {activeSection === 'Reading' && (
+            <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto max-w-full">
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                  toolsOpen
+                    ? 'bg-[#1e6b73] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Tools
+              </button>
+
+              {toolsOpen && (
+                <div className="shrink-0">
+                  <ReadingReviewToolbar
+                    activeTool={activeTool}
+                    activeColor={activeColor}
+                    onToolChange={handleToolChange}
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                  darkMode
+                    ? 'bg-gray-700 text-yellow-300'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title={darkMode ? '라이트 모드' : '다크 모드'}
+              >
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            </div>
+          )}
 
           {/* Stats — 자연스러운 flex flow */}
           <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 ml-auto">
@@ -1000,20 +1014,6 @@ export function QuestionReviewFull({
             </span>
           </div>
         </div>
-
-        {/* Reading: 하위 도구 모음 — Q pills 아래 별도 줄에 전체 너비 표시 */}
-        {activeSection === 'Reading' && toolsOpen && (
-          <div className="flex justify-center pb-2 px-4">
-            <ReadingReviewToolbar
-              activeTool={activeTool}
-              activeColor={activeColor}
-              onToolChange={handleToolChange}
-              onClearAll={handleClearAllHighlights}
-              language={language}
-              onLanguageChange={handleLanguageChange}
-            />
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
