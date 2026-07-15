@@ -968,7 +968,21 @@ export function QuestionReviewFull({
               </button>
             )}
 
-            {/* 다크 모드 토글 — Tools 바로 옆 */}
+            {/* Reading review 도구 모음 — Tools 버튼과 다크 모드 버튼 사이에 인라인으로 표시 */}
+            {activeSection === 'Reading' && toolsOpen && (
+              <div className="shrink-0">
+                <ReadingReviewToolbar
+                  activeTool={activeTool}
+                  activeColor={activeColor}
+                  onToolChange={handleToolChange}
+                  onClearAll={handleClearAllHighlights}
+                  language={language}
+                  onLanguageChange={handleLanguageChange}
+                />
+              </div>
+            )}
+
+            {/* 다크 모드 토글 — Tools 도구 모음 옆 */}
             {activeSection === 'Reading' && (
               <button
                 onClick={() => setDarkMode(!darkMode)}
@@ -1033,18 +1047,6 @@ export function QuestionReviewFull({
                   <p className="mb-3 text-base md:text-lg text-black dark:text-gray-100 font-bold text-center">
                     Fill in the missing letters in the paragraph.
                   </p>
-
-                  {/* Reading review 도구 모음 — Complete Words에도 표시 */}
-                  {toolsOpen && (
-                    <ReadingReviewToolbar
-                      activeTool={activeTool}
-                      activeColor={activeColor}
-                      onToolChange={handleToolChange}
-                      onClearAll={handleClearAllHighlights}
-                      language={language}
-                      onLanguageChange={handleLanguageChange}
-                    />
-                  )}
 
                   <div
                     ref={passageRef}
@@ -1135,17 +1137,6 @@ export function QuestionReviewFull({
             {/* Left Panel: Passage (for Reading) - Equal width 50% */}
             {activeSection === 'Reading' && (
               <div className="w-full md:w-1/2 order-1 md:order-none flex flex-col gap-2">
-                {/* Reading review 도구 모음 — 하이라이트/밑줄/단어 뜻 언어 전환/단어 검색 */}
-                {toolsOpen && (
-                  <ReadingReviewToolbar
-                    activeTool={activeTool}
-                    activeColor={activeColor}
-                    onToolChange={handleToolChange}
-                    onClearAll={handleClearAllHighlights}
-                    language={language}
-                    onLanguageChange={handleLanguageChange}
-                  />
-                )}
                 <div
                   ref={passageRef}
                   className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 md:p-4 h-full overflow-y-auto"
@@ -1173,9 +1164,9 @@ export function QuestionReviewFull({
                     return passageContent ? (
                       <>
                         {passageTitle && (
-                          <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
+                          <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-yellow-300 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        <p className="text-sm md:text-lg font-medium text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
                       </>
                     ) : (
                       <p className="text-sm text-gray-400 dark:text-gray-500 italic">지문을 불러올 수 없습니다.</p>
@@ -1240,11 +1231,11 @@ export function QuestionReviewFull({
                   key={currentQuestion?.id}
                   className="animate-[fadeIn_0.2s_ease-out]"
                 >
-                  <p className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 md:mb-3">
+                  <p className="text-xs md:text-sm font-medium text-gray-500 dark:text-yellow-300 mb-2 md:mb-3">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </p>
 
-                  <p className="text-sm md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 md:mb-4 leading-relaxed">
+                  <p className="text-sm md:text-lg font-semibold text-gray-900 dark:text-gray-50 mb-3 md:mb-4 leading-relaxed">
                     {currentQuestion?.text}
                   </p>
 
@@ -1261,26 +1252,26 @@ export function QuestionReviewFull({
                           key={idx}
                           className={`flex items-start gap-2 p-2 md:p-3 rounded-lg border transition-all ${
                             isCorrectAnswer
-                              ? 'bg-emerald-50 border-emerald-200'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-600'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'bg-red-50 border-red-200'
+                              ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-600'
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
                           <span className={`text-sm md:text-lg flex-1 ${
                             isCorrectAnswer
-                              ? 'text-emerald-700 font-semibold'
+                              ? 'text-emerald-700 dark:text-emerald-300 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'text-red-700 font-medium'
-                              : 'text-gray-700 dark:text-gray-300 font-medium'
+                              ? 'text-red-700 dark:text-red-300 font-medium'
+                              : 'text-gray-700 dark:text-gray-100 font-medium'
                           }`}>
                             {cleanOption}
                           </span>
                           {isCorrectAnswer && (
-                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <Check className="w-4 h-4 text-emerald-500 dark:text-emerald-300 shrink-0" />
                           )}
                           {isUserAnswer && !currentQuestion.isCorrect && !isCorrectAnswer && (
-                            <X className="w-4 h-4 text-red-500 shrink-0" />
+                            <X className="w-4 h-4 text-red-500 dark:text-red-300 shrink-0" />
                           )}
                         </div>
                       );
@@ -1288,13 +1279,13 @@ export function QuestionReviewFull({
                   </div>
 
                   {currentQuestion?.explanation && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-xs font-bold text-blue-800 mb-1">Explanation</p>
-                      <p className="text-xs text-blue-700">{currentQuestion.explanation}</p>
+                    <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-600 rounded-lg p-3 mb-4">
+                      <p className="text-xs font-bold text-blue-800 dark:text-yellow-300 mb-1">Explanation</p>
+                      <p className="text-xs text-blue-700 dark:text-gray-100">{currentQuestion.explanation}</p>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+                  <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
                     {(() => {
                       // Convert full-text answer to letter (A/B/C/D) using option index
                       const toLetter = (ans: string | undefined) => {

@@ -265,7 +265,7 @@ export function ReadingReviewPassage({
         {children ? (
           children
         ) : (
-          <p className="text-[15px] font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm md:text-lg font-medium text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap">
             {passageContent || '지문을 불러올 수 없습니다.'}
           </p>
         )}
