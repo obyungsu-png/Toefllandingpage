@@ -28,7 +28,8 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
     setTranslation(null);
 
     (async () => {
-      if (language === 'en') {
+      const isPhrase = word.trim().includes(' ');
+      if (language === 'en' && !isPhrase) {
         const defs = await getWordDefinitions(word);
         if (cancelled) return;
         if (defs.length === 0) setError(true);
@@ -98,23 +99,23 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
   return createPortal(
     <div
       ref={popupRef}
-      className="fixed z-[100] bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-md"
+      className="fixed z-[100] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 max-w-md"
       style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 300 }}
     >
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-gray-900">{word}</span>
+          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{word}</span>
           {language === 'en' && definitions[0]?.phonetic && (
-            <span className="text-sm text-gray-500">{definitions[0].phonetic}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{definitions[0].phonetic}</span>
           )}
-          {language === 'ko' && translation?.partOfSpeech && (
-            <span className="text-xs text-gray-500 italic">{translation.partOfSpeech}</span>
+          {translation?.partOfSpeech && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 italic">{translation.partOfSpeech}</span>
           )}
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
         >
           ×
         </button>
@@ -123,32 +124,32 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
       {/* 내용 */}
       {loading ? (
         <div className="flex items-center justify-center py-4">
-          <div className="w-5 h-5 border-2 border-gray-300 border-t-[#1e6b73] rounded-full animate-spin"></div>
-          <span className="ml-2 text-sm text-gray-500">검색 중...</span>
+          <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 border-t-[#1e6b73] rounded-full animate-spin"></div>
+          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">검색 중...</span>
         </div>
       ) : error ? (
-        <p className="text-sm text-gray-500 py-2">이 단어의 정의를 찾을 수 없습니다.</p>
-      ) : language === 'en' ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400 py-2">이 단어의 정의를 찾을 수 없습니다.</p>
+      ) : translation ? (
         <div className="space-y-2">
-          {definitions.map((def, i) => (
-            <div key={i} className="text-sm">
-              <span className="text-xs text-gray-400 italic mr-1">{def.partOfSpeech}</span>
-              <span className="text-gray-800">{def.definition}</span>
-              {def.example && (
-                <p className="text-xs text-gray-500 italic mt-0.5">"{def.example}"</p>
-              )}
-            </div>
-          ))}
+          <div>
+            <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">뜻:</span>
+            <span className="text-base font-semibold text-[#1e6b73] dark:text-[#4fd1c5]">{translation?.koreanMeaning}</span>
+          </div>
+          {translation?.englishExplanation && (
+            <p className="text-xs text-gray-600 dark:text-gray-300 italic">{translation.englishExplanation}</p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
-          <div>
-            <span className="text-xs text-gray-400 mr-1">뜻:</span>
-            <span className="text-base font-semibold text-[#1e6b73]">{translation?.koreanMeaning}</span>
-          </div>
-          {translation?.englishExplanation && (
-            <p className="text-xs text-gray-600 italic">{translation.englishExplanation}</p>
-          )}
+          {definitions.map((def, i) => (
+            <div key={i} className="text-sm">
+              <span className="text-xs text-gray-400 dark:text-gray-500 italic mr-1">{def.partOfSpeech}</span>
+              <span className="text-gray-800 dark:text-gray-100">{def.definition}</span>
+              {def.example && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">"{def.example}"</p>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>,

@@ -6,6 +6,7 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { renderDailyLifePassage } from './ReadDailyLifeTemplates';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
+import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface DailyLifeScreenProps {
   question: any; // TPOQuestion
@@ -45,6 +46,15 @@ export function DailyLifeScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
+  const [aiTutorPrompt, setAiTutorPrompt] = useState('');
+
+  // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시 위젯을 열고 자동 전송
+  const handleAiTutorRequest = (prompt: string) => {
+    setAiTutorPrompt(prompt);
+    setAiTutorOpen(true);
+  };
+
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -111,7 +121,6 @@ export function DailyLifeScreen({
                 >
                   Tools
                 </button>
-                <div id="daily-reading-review-toolbar-slot" className="mb-1 shrink-0" />
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className={`p-1.5 rounded-lg transition-colors mb-1 ${
@@ -133,7 +142,7 @@ export function DailyLifeScreen({
       <div className="flex-1 p-2 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
         <div className="max-w-screen-2xl mx-auto pl-0">
           {passageTitle && (
-            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8 text-gray-900 dark:text-white">{passageTitle}</h2>
+            <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
           )}
           <ResizableReadingLayout
             zoom={zoom}
@@ -147,11 +156,11 @@ export function DailyLifeScreen({
                   passageKey={passageKey}
                   maxHeight="65vh"
                   toolsOpen={toolsOpen}
-                  toolbarPortalId="daily-reading-review-toolbar-slot"
+                  onAiTutorRequest={handleAiTutorRequest}
                 >
                   <div className="space-y-3">
                     {imageUrl && (
-                      <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 dark:border-gray-700 mb-3" />
+                      <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
                     )}
                     {structured ? (
                       structured
@@ -165,7 +174,7 @@ export function DailyLifeScreen({
               ) : (
                 <div className="space-y-3">
                   {imageUrl && (
-                    <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 dark:border-gray-700 mb-3" />
+                    <img src={imageUrl} alt="" className="w-full rounded-lg border border-gray-200 mb-3" />
                   )}
                   {structured ? (
                     structured
@@ -206,6 +215,18 @@ export function DailyLifeScreen({
       </div>
 
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+
+      {isReviewMode && (
+        <ToeflAiWidget
+          position="right"
+          showFab={false}
+          open={aiTutorOpen}
+          onOpenChange={setAiTutorOpen}
+          initialQuestion={aiTutorPrompt}
+          contextLabel="Reading · Read in Daily Life"
+          questionData={question}
+        />
+      )}
       <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
     </div>
   );

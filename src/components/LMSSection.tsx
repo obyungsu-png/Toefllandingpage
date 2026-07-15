@@ -25,6 +25,12 @@ export interface LMSContent {
   fileUrl?: string;
   content?: string;
   uploadedAt: Date;
+  /** 객관식 문제 선택지 (2~4개). 있으면 이 콘텐츠는 객관식 문제로 취급됨 */
+  options?: string[];
+  /** 정답 — options 중 하나와 정확히 일치하는 문자열 */
+  correctAnswer?: string;
+  /** 정답 해설 (선택) */
+  explanation?: string;
 }
 
 interface LMSSectionProps {
@@ -95,7 +101,11 @@ export function LMSSection({
     fileType: 'text' as 'text' | 'audio' | 'pdf' | 'image' | 'text-audio',
     content: '',
     audioFile: '', // For text-audio combination
-    audioFileName: '' // Original file name for audio
+    audioFileName: '', // Original file name for audio
+    isMultipleChoice: false,
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    explanation: '',
   });
 
   const skills: ('Reading' | 'Listening' | 'Speaking' | 'Writing')[] = ['Reading', 'Listening', 'Speaking', 'Writing'];
@@ -173,6 +183,10 @@ export function LMSSection({
         console.log('✅ Audio file uploaded to Supabase Storage:', fileUrl);
       }
       
+      const cleanedOptions = formData.isMultipleChoice
+        ? formData.options.map(o => o.trim()).filter(o => o.length > 0)
+        : [];
+
       const newContent: LMSContent = {
         id: Date.now().toString(),
         title: formData.title,
@@ -183,7 +197,10 @@ export function LMSSection({
         fileType: formData.fileType,
         content: formData.fileType === 'text-audio' ? formData.content : fileUrl,
         fileUrl: formData.fileType === 'text-audio' ? fileUrl : undefined,
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
+        ...(formData.isMultipleChoice && cleanedOptions.length >= 2 && formData.correctAnswer
+          ? { options: cleanedOptions, correctAnswer: formData.correctAnswer, explanation: formData.explanation || undefined }
+          : {}),
       };
 
       onAddContent(newContent);
@@ -195,7 +212,11 @@ export function LMSSection({
         fileType: 'text',
         content: '',
         audioFile: '',
-        audioFileName: ''
+        audioFileName: '',
+        isMultipleChoice: false,
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        explanation: '',
       });
       setShowUploadForm(false);
     } catch (error) {
@@ -531,6 +552,70 @@ export function LMSSection({
                     </div>
                   )}
 
+                  {/* 객관식 문제로 만들기 — 모든 스킬/파일타입에 공통 적용 가능 */}
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <label className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.isMultipleChoice}
+                        onChange={(e) => setFormData({ ...formData, isMultipleChoice: e.target.checked })}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">객관식 문제로 만들기 (선택지 + 정답 + 해설)</span>
+                    </label>
+
+                    {formData.isMultipleChoice && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-2">선택지 (2~4개 입력)</label>
+                          <div className="space-y-2">
+                            {formData.options.map((opt, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name="correctAnswerRadio"
+                                  checked={!!opt && formData.correctAnswer === opt}
+                                  onChange={() => setFormData({ ...formData, correctAnswer: opt })}
+                                  title="정답으로 선택"
+                                  className="shrink-0"
+                                  disabled={!opt.trim()}
+                                />
+                                <input
+                                  type="text"
+                                  value={opt}
+                                  placeholder={`선택지 ${idx + 1}`}
+                                  onChange={(e) => {
+                                    const newOptions = [...formData.options];
+                                    const prevValue = newOptions[idx];
+                                    newOptions[idx] = e.target.value;
+                                    setFormData({
+                                      ...formData,
+                                      options: newOptions,
+                                      // 수정 중이던 선택지가 정답으로 지정되어 있었다면 값도 같이 갱신
+                                      correctAnswer: formData.correctAnswer === prevValue ? e.target.value : formData.correctAnswer,
+                                    });
+                                  }}
+                                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">왼쪽 라디오 버튼으로 정답을 선택해주세요.</p>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-2">해설 (선택)</label>
+                          <textarea
+                            value={formData.explanation}
+                            onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                            rows={2}
+                            placeholder="정답 해설을 입력하세요 (선택 사항)"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-3 justify-end">
                     <Button
                       type="button"
@@ -762,6 +847,11 @@ export function LMSSection({
                     e.preventDefault();
                     if (onUpdateContent && editingContent) {
                       const formData = new FormData(e.currentTarget);
+                      const allOptions = [0, 1, 2, 3].map(i => (formData.get(`option${i}`) as string || '').trim());
+                      const correctIdx = formData.get('correctAnswerRadio') as string;
+                      const isMC = formData.get('isMultipleChoice') === 'on';
+                      const correctAnswerText = isMC && correctIdx !== null && correctIdx !== '' ? allOptions[parseInt(correctIdx)] : '';
+                      const cleanedOptions = allOptions.filter(Boolean);
                       const updatedContent: LMSContent = {
                         ...editingContent,
                         title: formData.get('title') as string,
@@ -769,6 +859,9 @@ export function LMSSection({
                         level: parseInt(formData.get('level') as string),
                         day: formData.get('day') as string,
                         content: formData.get('content') as string || editingContent.content,
+                        options: isMC && cleanedOptions.length >= 2 ? cleanedOptions : undefined,
+                        correctAnswer: isMC && correctAnswerText ? correctAnswerText : undefined,
+                        explanation: isMC ? ((formData.get('explanation') as string) || undefined) : undefined,
                       };
                       onUpdateContent(updatedContent);
                       setEditingContent(null);
@@ -852,6 +945,47 @@ export function LMSSection({
                       />
                     </div>
                   )}
+
+                  {/* 객관식 문제 수정 */}
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <label className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        name="isMultipleChoice"
+                        defaultChecked={!!editingContent.options?.length}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">객관식 문제로 만들기 (선택지 + 정답 + 해설)</span>
+                    </label>
+                    <div className="space-y-2">
+                      {[0, 1, 2, 3].map((idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="correctAnswerRadio"
+                            value={idx}
+                            defaultChecked={editingContent.options?.[idx] !== undefined && editingContent.options[idx] === editingContent.correctAnswer}
+                            className="shrink-0"
+                          />
+                          <input
+                            type="text"
+                            name={`option${idx}`}
+                            defaultValue={editingContent.options?.[idx] || ''}
+                            placeholder={`선택지 ${idx + 1}`}
+                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 mb-2">왼쪽 라디오 버튼으로 정답을 선택해주세요.</p>
+                    <textarea
+                      name="explanation"
+                      defaultValue={editingContent.explanation || ''}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
+                      rows={2}
+                      placeholder="정답 해설을 입력하세요 (선택 사항)"
+                    />
+                  </div>
 
                   <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
                     <Button

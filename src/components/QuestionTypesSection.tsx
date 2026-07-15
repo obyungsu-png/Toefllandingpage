@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight, Zap } from 'lucide-react';
+import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Advertisement } from './AdManagement';
@@ -8,7 +8,6 @@ import { AdModal } from './AdModal';
 import { DayTrainingInterface } from "./DayTrainingInterface";
 import { LMSContent } from "./LMSSection";
 import { SATVocaPage } from "./SATVocaPage";
-import { TemplateMastery } from "./TemplateMastery";
 
 // Question Type Card Component
 function QuestionTypeCard({ 
@@ -190,7 +189,6 @@ export function QuestionTypesSection({
   const [showDayTrainingInterface, setShowDayTrainingInterface] = useState(false);
   const [selectedQuestionType, setSelectedQuestionType] = useState<string>('');
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
-  const [showTemplateMastery, setShowTemplateMastery] = useState(false);
 
   // Guard to prevent auto-save before config is restored
   const isInitialized = useRef(false);
@@ -244,15 +242,6 @@ export function QuestionTypesSection({
           }
         }}
         lmsContents={lmsContents}
-      />
-    );
-  }
-
-  // Show Template Mastery full-screen
-  if (showTemplateMastery) {
-    return (
-      <TemplateMastery 
-        onBack={() => setShowTemplateMastery(false)} 
       />
     );
   }
@@ -318,7 +307,7 @@ export function QuestionTypesSection({
           <p className="text-sm md:text-base text-gray-600">다양한 문제 유형별로 체계적인 훈련을 받으세요.</p>
         </div>
 
-        {/* Skills Navigation + Template Mastery */}
+        {/* Skills Navigation */}
         <div className="mb-4 md:mb-6">
           <div className="flex gap-1.5 md:gap-3 items-center">
             {/* Skill Tabs */}
@@ -337,25 +326,7 @@ export function QuestionTypesSection({
                 </button>
               ))}
             </div>
-
-            {/* Template Mastery Button - Desktop */}
-            <button
-              onClick={() => setShowTemplateMastery(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-3 rounded-lg font-bold text-sm transition-all duration-300 shadow-md bg-gradient-to-r from-[#005f61] to-[#00838f] text-white hover:from-[#004d4f] hover:to-[#006d75] whitespace-nowrap"
-            >
-              <Zap className="w-4 h-4" />
-              템플릿 뽀개기
-            </button>
           </div>
-
-          {/* Template Mastery Button - Mobile */}
-          <button
-            onClick={() => setShowTemplateMastery(true)}
-            className="md:hidden w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold text-xs transition-all duration-300 shadow-md bg-gradient-to-r from-[#005f61] to-[#00838f] text-white active:scale-[0.98]"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            토플 템플릿 뽀개기 - Writing & Speaking 템플릿 암기 훈련
-          </button>
         </div>
 
         {/* Skill Description */}

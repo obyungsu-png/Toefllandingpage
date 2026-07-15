@@ -33,6 +33,8 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
   const [progress, setProgress] = useState(0);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // State for match score from PronunciationAnalyzer (다른 훅들과 함께 최상단에 선언 — 훅 순서 일관성 유지)
+  const [pronunciationScore, setPronunciationScore] = useState<number>(0);
 
   const totalQuestions = questions.length;
   const currentQ = questions[currentQuestion - 1];
@@ -88,6 +90,24 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
       }
     };
   }, []);
+
+  // 업로드된 LMS 콘텐츠(문제)가 없으면 currentQ가 undefined가 되어 크래시가 나므로
+  // 여기서 빈 상태 화면을 보여주고 이후 로직을 실행하지 않음
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center max-w-sm">
+          <p className="text-gray-800 font-semibold text-lg mb-2">아직 등록된 문제가 없습니다</p>
+          <p className="text-gray-500 text-sm mb-6">
+            CMS(콘텐츠 관리) 또는 LMS 탭에서 Level {level} · {day}에 해당하는 오디오/문제를 먼저 업로드해주세요.
+          </p>
+          <Button onClick={onBack} className="bg-[#357a7e] hover:bg-[#2d6669] text-white">
+            돌아가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Play uploaded MP3 audio or use TTS
   const playAudio = () => {
@@ -215,9 +235,6 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
     setShowResult(true);
     stopAudio();
   };
-
-  // State for match score from PronunciationAnalyzer
-  const [pronunciationScore, setPronunciationScore] = useState<number>(0);
 
   // Get evaluation message based on score
   const getEvaluationMessage = (score: number) => {

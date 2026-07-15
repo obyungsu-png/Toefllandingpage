@@ -230,9 +230,11 @@ interface ToeflAiWidgetProps {
   showFab?: boolean;
   /** AI 추천 질문 목록. 미지정 시 기본값 사용 */
   suggestedQuestions?: string[];
+  /** 열릴 때 자동으로 채팅에 채워 넣고 즉시 전송할 질문 (드래그 선택 → AI 튜터 서브메뉴 클릭 시 사용) */
+  initialQuestion?: string;
 }
 
-export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions }: ToeflAiWidgetProps) {
+export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions, initialQuestion }: ToeflAiWidgetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open !== undefined ? open : internalOpen;
   const setIsOpen = (value: boolean) => {
@@ -261,10 +263,24 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     setChatInput(q);
   };
 
-  const handleSendMessage = async () => {
-    if (!chatInput.trim() || isAiLoading) return;
+  const lastAutoSentRef = useRef<string | null>(null);
+  // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시
+  // initialQuestion이 주어지면 패널이 열리자마자 자동으로 전송
+  useEffect(() => {
+    if (isOpen && initialQuestion && lastAutoSentRef.current !== initialQuestion) {
+      lastAutoSentRef.current = initialQuestion;
+      handleSendMessage(initialQuestion);
+    }
+    if (!isOpen) {
+      lastAutoSentRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialQuestion]);
 
-    const userMessage = chatInput;
+  const handleSendMessage = async (overrideText?: string) => {
+    const userMessage = overrideText ?? chatInput;
+    if (!userMessage.trim() || isAiLoading) return;
+
     setChatInput('');
 
     const newHistory: ChatMessage[] = [

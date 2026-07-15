@@ -16,21 +16,24 @@ export interface WordTranslation {
  * @returns 한국어 뜻, 품사, 영어 설명
  */
 export async function translateWord(word: string, context?: string): Promise<WordTranslation | null> {
-  const cleaned = word.trim().replace(/[^a-zA-Z'-]/g, '');
+  const cleaned = word.trim().replace(/[^a-zA-Z'\-\s]/g, '').replace(/\s+/g, ' ').trim();
   if (!cleaned) return null;
 
+  const isPhrase = cleaned.includes(' ');
+  const label = isPhrase ? 'phrase' : 'word';
+
   const prompt = context
-    ? `Translate the English word "${cleaned}" as used in this context: "${context.slice(0, 200)}". 
+    ? `Translate the English ${label} "${cleaned}" as used in this context: "${context.slice(0, 200)}". 
 Return ONLY a JSON object with these fields:
-- koreanMeaning: the Korean translation of the word (brief, 1-3 words)
-- partOfSpeech: the part of speech in English (noun, verb, adjective, etc.)
+- koreanMeaning: the Korean translation of the ${label} (brief, 1-6 words)
+- partOfSpeech: the part of speech in English (noun, verb, adjective, etc. — or "phrase" if not a single word)
 - englishExplanation: a brief English explanation (1 sentence, max 20 words)
 
 No markdown, no code blocks, just the JSON object.`
-    : `Translate the English word "${cleaned}".
+    : `Translate the English ${label} "${cleaned}".
 Return ONLY a JSON object with these fields:
-- koreanMeaning: the Korean translation of the word (brief, 1-3 words)
-- partOfSpeech: the part of speech in English (noun, verb, adjective, etc.)
+- koreanMeaning: the Korean translation of the ${label} (brief, 1-6 words)
+- partOfSpeech: the part of speech in English (noun, verb, adjective, etc. — or "phrase" if not a single word)
 - englishExplanation: a brief English explanation (1 sentence, max 20 words)
 
 No markdown, no code blocks, just the JSON object.`;

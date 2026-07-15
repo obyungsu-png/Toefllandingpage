@@ -5,6 +5,7 @@ import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
+import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface AcademicPassageScreenProps {
   question: any; // TPOQuestion
@@ -50,6 +51,14 @@ export function AcademicPassageScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [aiTutorOpen, setAiTutorOpen] = useState(false);
+  const [aiTutorPrompt, setAiTutorPrompt] = useState('');
+
+  // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시 위젯을 열고 자동 전송
+  const handleAiTutorRequest = (prompt: string) => {
+    setAiTutorPrompt(prompt);
+    setAiTutorOpen(true);
+  };
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -130,7 +139,6 @@ export function AcademicPassageScreen({
                 >
                   Tools
                 </button>
-                <div id="academic-reading-review-toolbar-slot" className="mb-1 shrink-0" />
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className={`p-1.5 rounded-lg transition-colors mb-1 ${
@@ -164,7 +172,7 @@ export function AcademicPassageScreen({
                   passageKey={passageKey}
                   maxHeight="none"
                   toolsOpen={toolsOpen}
-                  toolbarPortalId="academic-reading-review-toolbar-slot"
+                  onAiTutorRequest={handleAiTutorRequest}
                 />
               ) : (
                 <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
@@ -201,6 +209,18 @@ export function AcademicPassageScreen({
       </div>
 
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+
+      {isReviewMode && (
+        <ToeflAiWidget
+          position="right"
+          showFab={false}
+          open={aiTutorOpen}
+          onOpenChange={setAiTutorOpen}
+          initialQuestion={aiTutorPrompt}
+          contextLabel={`Reading · ${passageTitle || 'Academic Passage'}`}
+          questionData={question}
+        />
+      )}
 
       <MobileQuestionNav
         onBack={onBack}

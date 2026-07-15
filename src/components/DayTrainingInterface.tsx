@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { Button } from './ui/button';
 import { LMSContent } from './LMSSection';
 import { ListenAndResponse } from './ListenAndResponse';
+import { LMSQuestionTrainer } from './LMSQuestionTrainer';
 
 interface DayTrainingInterfaceProps {
   questionType: string;
@@ -31,46 +32,50 @@ export function DayTrainingInterface({ questionType, skill, onClose, lmsContents
     );
   };
 
-  // Check if day is enabled (only Level 1, DAY 01 for Listen and Response)
+  // Day is enabled whenever there's uploaded LMS content for it (works for every question type now)
   const isDayEnabled = (day: string) => {
-    if (questionType === 'Listen and Response') {
-      return selectedLevel === 1 && day === '01';
-    }
-    // For other question types, check if there's uploaded content
     return getContentForDay(day).length > 0;
   };
 
   const handleDayClick = (day: string) => {
-    // Special handling for Listen and Response
-    if (questionType === 'Listen and Response' && selectedLevel === 1 && day === '01') {
-      setSelectedDay(day);
-      return;
-    }
-    
     const dayContents = getContentForDay(day);
     if (dayContents.length > 0) {
-      alert(`DAY ${day} 학습을 시작합니다.\n업로드된 자료: ${dayContents.length}개`);
+      setSelectedDay(day);
     } else {
       alert(`DAY ${day}에 업로드된 자료가 없습니다.\nLMS 탭에서 자료를 업로드해주세요.`);
     }
   };
 
-  // If a day is selected for Listen and Response, show the component
-  if (selectedDay && questionType === 'Listen and Response') {
-    // Get LMS contents for this specific day and level
-    const dayContents = lmsContents.filter(content => 
+  // 이 DAY의 콘텐츠 중 하나라도 객관식(options)이 있으면 범용 트레이너 사용,
+  // 'Listen and Response'이면서 전부 객관식이 아니면 기존 받아쓰기(ListenAndResponse) 화면 사용
+  if (selectedDay) {
+    const dayContents = lmsContents.filter(content =>
       content.skill === skill &&
       content.questionType === questionType &&
       content.level === selectedLevel &&
       content.day === selectedDay
     );
 
+    const hasAnyOptions = dayContents.some(c => c.options?.length);
+
+    if (questionType === 'Listen and Response' && !hasAnyOptions) {
+      return (
+        <ListenAndResponse
+          level={selectedLevel}
+          day={`DAY ${selectedDay}`}
+          onBack={() => setSelectedDay(null)}
+          lmsContents={dayContents}
+        />
+      );
+    }
+
     return (
-      <ListenAndResponse
+      <LMSQuestionTrainer
+        contents={dayContents}
+        questionType={questionType}
         level={selectedLevel}
-        day={`DAY ${selectedDay}`}
+        day={selectedDay}
         onBack={() => setSelectedDay(null)}
-        lmsContents={dayContents}
       />
     );
   }
