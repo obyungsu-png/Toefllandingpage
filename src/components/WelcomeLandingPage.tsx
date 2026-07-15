@@ -104,7 +104,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20headphones%20and%20laptop%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+                src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
                 alt="Studying English with headphones"
                 className="w-full h-full object-cover"
               />
@@ -119,7 +119,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20happy%20Asian%20high%20school%20students%20studying%20English%20together%20in%20group%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20friendly%20atmosphere&image_size=landscape_4_3"
+                src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
                 alt="Students studying together"
                 className="w-full h-full object-cover"
               />
@@ -132,7 +132,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20cheerful%20Asian%20high%20school%20girl%20studying%20English%20with%20headphones%20and%20laptop%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20energetic%20atmosphere&image_size=portrait_4_3"
+                src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
                 alt="Studying English with headphones"
                 className="w-full h-full object-cover"
               />
@@ -145,7 +145,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20student%20reading%20English%20textbook%20with%20notebook%2C%20vibrant%20colors%2C%20anime%20art%20style%2C%20focused%20expression&image_size=landscape_4_3"
+                src="/landing/Group_of_cheerful_Asian_high_s_2026-07-09T09-41-57.png"
                 alt="Reading English textbook"
                 className="w-full h-full object-cover"
               />

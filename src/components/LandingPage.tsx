@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://a.storyblok.com/f/268942/1280x853/b872ac25d2/ultimate-guide-to-the-toefl-exam.jpeg/m/808x0/smart/filters:quality(75)"
+              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
               alt="High school student studying TOEFL"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -176,7 +176,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUnleKF7AgcaWOZTc2GcVgmL09Wx_S-Qg-SqTzdKievQ&s=10"
+              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
               alt="Student solving SAT questions"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -191,7 +191,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtvaQhUfs0ZNtoMasXZdGPAC6SO1unsKLitfB3e-1igg&s=10"
+              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
               alt="Students practicing English conversation"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
