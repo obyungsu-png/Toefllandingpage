@@ -1416,7 +1416,7 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
             <Film className="w-9 h-9 md:w-10 md:h-10" style={{ color: c }} />
           </div>
           {f.title && <h2 className="text-lg md:text-xl font-['Georgia',_serif] font-bold mb-3 md:mb-4" style={{ color: c }}>{f.title}</h2>}
-          {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base">{f.body}</p>}
+          {f.body && <p className="font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-sm md:text-base text-gray-800 dark:text-gray-100">{f.body}</p>}
         </div>
       );
 

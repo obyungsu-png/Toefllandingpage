@@ -109,13 +109,13 @@ export function ResizableReadingLayout({
     return (
       <div className="flex flex-col h-full relative">
         {/* Mobile Tab Header — back arrow removed, just Passage/Questions tabs */}
-        <div className="flex items-center border-b border-gray-200 bg-white sticky top-0 z-10 px-1">
+        <div className="flex items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10 px-1">
           <button 
             onClick={() => { setMobileTab('passage'); setPassageExpanded(false); }}
             className={`flex-1 py-3 text-center text-base font-bold transition-colors ${
               mobileTab === 'passage' 
                 ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' 
-                : 'text-gray-400'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             Passage
@@ -125,7 +125,7 @@ export function ResizableReadingLayout({
             className={`flex-1 py-3 text-center text-base font-bold transition-colors ${
               mobileTab === 'questions' 
                 ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' 
-                : 'text-gray-400'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             Questions
@@ -133,12 +133,12 @@ export function ResizableReadingLayout({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-white scrollbar-thin pb-4">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 scrollbar-thin pb-4">
           {mobileTab === 'passage' ? (
             /* Passage View - larger text */
             <div className="p-4">
               {passageTitle && (
-                <h2 className="text-2xl font-bold text-black mb-4 font-['Inter',_sans-serif]">
+                <h2 className="text-2xl font-bold text-black dark:text-gray-100 mb-4 font-['Inter',_sans-serif]">
                   {passageTitle}
                 </h2>
               )}
@@ -155,17 +155,17 @@ export function ResizableReadingLayout({
                   {!passageExpanded ? (
                     /* Collapsed summary - no border */
                     <div 
-                      className="bg-gray-50 rounded-lg p-3 cursor-pointer"
+                      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 cursor-pointer"
                       onClick={() => setPassageExpanded(true)}
                     >
-                      <div className="text-base text-gray-700 font-['Inter',_sans-serif] line-clamp-2">
+                      <div className="text-base text-gray-700 dark:text-gray-300 font-['Inter',_sans-serif] line-clamp-2">
                         {passageSummary}
                       </div>
                     </div>
                   ) : (
                     /* Expanded: show full passage content - no border, no background */
                     <div className="mobile-expanded-passage max-h-[50vh] overflow-y-auto scrollbar-thin">
-                      <div className="text-base text-gray-800 font-['Inter',_sans-serif]">
+                      <div className="text-base text-gray-800 dark:text-gray-100 font-['Inter',_sans-serif]">
                         {leftContent}
                       </div>
                     </div>
@@ -207,7 +207,7 @@ export function ResizableReadingLayout({
     >
       {/* Left side - Passage */}
       <div className="w-full md:flex-shrink-0" style={showDivider ? { width: windowWidth < 768 ? '100%' : `${leftWidth}px` } : {}}>
-        <div className="h-[50vh] md:h-[540px] overflow-hidden bg-white" onWheel={onWheel}>
+        <div className="h-[50vh] md:h-[540px] overflow-hidden bg-white dark:bg-gray-900" onWheel={onWheel}>
           <div className={`p-2 md:p-3 h-full overflow-y-auto scrollbar-thin`}>
               <div style={zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' } : undefined}>
                 {leftContent}
@@ -219,11 +219,11 @@ export function ResizableReadingLayout({
       {/* Draggable divider */}
       {showDivider && (
         <div
-          className="hidden md:flex w-1 h-[540px] cursor-col-resize hover:bg-gray-200 transition-colors items-center justify-center group"
+          className="hidden md:flex w-1 h-[540px] cursor-col-resize hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors items-center justify-center group"
           onMouseDown={handleMouseDown}
           style={{ userSelect: 'none' }}
         >
-          <div className="w-[1px] h-8 bg-gray-200 rounded-full group-hover:bg-gray-400"></div>
+          <div className="w-[1px] h-8 bg-gray-200 dark:bg-gray-600 rounded-full group-hover:bg-gray-400 dark:group-hover:bg-gray-400"></div>
         </div>
       )}
 

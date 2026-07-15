@@ -33,12 +33,12 @@ export function RadioOption({ id, name, value, checked, onChange, label, size = 
       {/* Custom radio visual: single element, dot drawn via inset box-shadow */}
       <div
         className={`${outerSize} flex-shrink-0 mt-1 rounded-full border-[2px] ${
-          checked ? 'border-[#0d9488] bg-[#0d9488]' : 'border-black bg-transparent'
+          checked ? 'border-[#0d9488] bg-[#0d9488]' : 'border-black dark:border-gray-300 bg-transparent'
         }`}
         style={checked ? { boxShadow: 'inset 0 0 0 2.5px white' } : undefined}
       />
       <span
-        className={labelClassName || `${defaultLabel} font-['Inter',_sans-serif] text-black leading-relaxed`}
+        className={labelClassName || `${defaultLabel} font-['Inter',_sans-serif] text-black dark:text-gray-100 leading-relaxed`}
       >
         {label}
       </span>

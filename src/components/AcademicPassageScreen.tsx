@@ -150,7 +150,7 @@ export function AcademicPassageScreen({
       {/* Main content */}
       <div className="flex-1 p-2 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
         <div className="max-w-screen-2xl mx-auto pl-0">
-          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
+          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
@@ -161,18 +161,18 @@ export function AcademicPassageScreen({
                   passageText={passageText}
                   testId={testId}
                   passageKey={passageKey}
-                  maxHeight="65vh"
+                  maxHeight="none"
                   toolsOpen={toolsOpen}
                 />
               ) : (
-                <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
                   {passageText}
                 </div>
               )
             }
             rightContent={
               <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                 <div className="space-y-3 md:space-y-4 lg:space-y-5">
                   {options.map((option, index) => (
                     <RadioOption
