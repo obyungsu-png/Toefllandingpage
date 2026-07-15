@@ -1,6 +1,13 @@
 import { X } from 'lucide-react';
 // motion removed - using CSS animations
 
+const floatStyle = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+  }
+`;
+
 interface WelcomeLandingPageProps {
   onStartPractice: () => void;
 }
@@ -8,6 +15,7 @@ interface WelcomeLandingPageProps {
 export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps) {
   return (
     <div className="min-h-screen bg-[#e8e4f3] flex flex-col">
+      <style>{floatStyle}</style>
       {/* Top Banner */}
       <div className="bg-[#e8ed3d] px-6 py-3 flex items-center justify-between">
         <div className="flex-1 text-center">
@@ -118,7 +126,6 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img
-                loading="lazy"
                 src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
                 alt="Boy and girl studying together"
                 className="w-full h-full object-cover"
@@ -131,7 +138,6 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
               <img
-                loading="lazy"
                 src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
                 alt="Boy reading English textbook"
                 className="w-full h-full object-cover"
@@ -144,7 +150,6 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
               <img
-                loading="lazy"
                 src="/landing/Group_of_cheerful_Asian_high_s_2026-07-09T09-41-57.png"
                 alt="Boy and girl practicing English conversation"
                 className="w-full h-full object-cover"

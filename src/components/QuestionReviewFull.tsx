@@ -954,57 +954,39 @@ export function QuestionReviewFull({
               );
             })}
 
+            {/* Reading: Tools 버튼 + 다크모드 토글 — Q pills와 같은 줄 인라인 */}
+            {activeSection === 'Reading' && (
+              <>
+                <button
+                  onClick={() => setToolsOpen(!toolsOpen)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                    toolsOpen
+                      ? 'bg-[#1e6b73] text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Tools
+                </button>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                    darkMode
+                      ? 'bg-gray-700 text-yellow-300'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title={darkMode ? '라이트 모드' : '다크 모드'}
+                >
+                  {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Reading controls: Tools + toolbar + DarkMode — flex-nowrap으로 항상 인라인 유지 */}
-          {activeSection === 'Reading' && (
-            <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto max-w-[65vw]">
-              {/* Tools 버튼 */}
-              <button
-                onClick={() => setToolsOpen(!toolsOpen)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
-                  toolsOpen
-                    ? 'bg-[#1e6b73] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                Tools
-              </button>
-
-              {/* 도구 모음 — Tools와 DarkMode 사이에 인라인 */}
-              {toolsOpen && (
-                <div className="shrink-0">
-                  <ReadingReviewToolbar
-                    activeTool={activeTool}
-                    activeColor={activeColor}
-                    onToolChange={handleToolChange}
-                    onClearAll={handleClearAllHighlights}
-                    language={language}
-                    onLanguageChange={handleLanguageChange}
-                  />
-                </div>
-              )}
-
-              {/* 다크 모드 토글 */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                  darkMode
-                    ? 'bg-gray-700 text-yellow-300'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                title={darkMode ? '라이트 모드' : '다크 모드'}
-              >
-                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            </div>
-          )}
-
-          {/* Stats */}
-          <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 absolute right-0">
+          {/* Stats — 자연스러운 flex flow */}
+          <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 ml-auto">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
-              <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 rounded-lg">
-                <span className="text-gray-500 text-sm">Score</span>
+              <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 text-sm">Score</span>
                 <strong className="text-gray-900 dark:text-gray-100 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                   correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
@@ -1018,6 +1000,20 @@ export function QuestionReviewFull({
             </span>
           </div>
         </div>
+
+        {/* Reading: 하위 도구 모음 — Q pills 아래 별도 줄에 전체 너비 표시 */}
+        {activeSection === 'Reading' && toolsOpen && (
+          <div className="flex justify-center pb-2 px-4">
+            <ReadingReviewToolbar
+              activeTool={activeTool}
+              activeColor={activeColor}
+              onToolChange={handleToolChange}
+              onClearAll={handleClearAllHighlights}
+              language={language}
+              onLanguageChange={handleLanguageChange}
+            />
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -1254,17 +1250,17 @@ export function QuestionReviewFull({
                           key={idx}
                           className={`flex items-start gap-2 p-2 md:p-3 rounded-lg border transition-all ${
                             isCorrectAnswer
-                              ? 'bg-emerald-50 border-emerald-200'
+                              ? 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-700'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'bg-red-50 border-red-200'
+                              ? 'bg-red-50 dark:bg-red-900/40 border-red-200 dark:border-red-700'
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
                           <span className={`text-sm md:text-lg flex-1 ${
                             isCorrectAnswer
-                              ? 'text-emerald-700 font-semibold'
+                              ? 'text-emerald-700 dark:text-emerald-300 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'text-red-700 font-medium'
+                              ? 'text-red-700 dark:text-red-300 font-medium'
                               : 'text-gray-700 dark:text-gray-100 font-medium'
                           }`}>
                             {cleanOption}
@@ -1281,9 +1277,9 @@ export function QuestionReviewFull({
                   </div>
 
                   {currentQuestion?.explanation && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-xs font-bold text-blue-800 mb-1">Explanation</p>
-                      <p className="text-xs text-blue-700">{currentQuestion.explanation}</p>
+                    <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                      <p className="text-xs font-bold text-blue-800 dark:text-blue-200 mb-1">Explanation</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">{currentQuestion.explanation}</p>
                     </div>
                   )}
 
@@ -1358,27 +1354,27 @@ export function QuestionReviewFull({
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
               <div className="w-full max-w-4xl mx-auto p-3 md:p-5">
-                <div className="bg-white">
+                <div className="bg-white dark:bg-gray-800">
                   <h2 className="text-lg md:text-xl font-bold text-black dark:text-gray-100 mb-3 text-center">Make an appropriate sentence.</h2>
 
                   <div className="space-y-3 mt-2 px-1 md:px-4">
                     {/* Avatar 1 + prompt */}
                     <div className="flex items-center gap-3 md:gap-4">
-                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar1ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar1ImageUrl} alt="Q" className="w-full h-full object-cover" />
-                          : <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
-                      <div className="text-base md:text-lg text-gray-800">{currentWritingBuildSentence.prompt}</div>
+                      <div className="text-base md:text-lg text-gray-800 dark:text-gray-100">{currentWritingBuildSentence.prompt}</div>
                     </div>
 
                     {/* Avatar 2 + word chips */}
                     <div className="flex items-center gap-3 md:gap-4">
-                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                         {currentWritingBuildSentence.avatar2ImageUrl
                           ? <img src={currentWritingBuildSentence.avatar2ImageUrl} alt="A" className="w-full h-full object-cover" />
-                          : <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                          : <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
                         }
                       </div>
                       <div className="flex-1">
@@ -1388,8 +1384,8 @@ export function QuestionReviewFull({
                             const isPrefilled = word.startsWith('[') && word.endsWith(']');
                             const display = word.replace(/^\[|\]$/g, '');
                             return isPrefilled
-                              ? <span key={idx} className="text-lg font-medium text-gray-700">{display}</span>
-                              : <span key={idx} className="px-3 py-1.5 border border-gray-300 rounded-lg text-lg text-gray-700 bg-gray-50">{display}</span>;
+                              ? <span key={idx} className="text-lg font-medium text-gray-700 dark:text-gray-200">{display}</span>
+                              : <span key={idx} className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-lg text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700">{display}</span>;
                           })}
                         </div>
                       </div>
@@ -1422,7 +1418,7 @@ export function QuestionReviewFull({
                         {correctText && (
                           <div className="flex items-start gap-2">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1.5 shrink-0 w-12">정답</p>
-                            <div className="flex-1 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-base font-medium text-emerald-800">
+                            <div className="flex-1 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg px-3 py-2 text-base font-medium text-emerald-800 dark:text-emerald-200">
                               {fullCorrect}
                             </div>
                           </div>
@@ -1449,8 +1445,8 @@ export function QuestionReviewFull({
                                 </span>
                                 <div className={`rounded-lg px-3 py-2 text-base border ${
                                   isWrong
-                                    ? 'bg-red-50 border-red-200 text-red-800'
-                                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                    ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-800 dark:text-red-200'
+                                    : 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200'
                                 }`}>
                                   {userAns || (isWrong ? '(미제출)' : fullCorrect)}
                                 </div>
@@ -1484,11 +1480,11 @@ export function QuestionReviewFull({
             {activeModule === 2 && (
               <>
                 {/* Left: Prompt */}
-                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-sm md:text-base text-gray-800 leading-relaxed mb-3">
+                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-300 dark:border-gray-700">
+                  <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed mb-3">
                     {cmsEmailQ?.emailScenario || 'A new poetry magazine has asked its readers for submissions, and you want to submit two of your poems. However, you had a problem using the online submission form, and you are not certain that your submissions were received.'}
                   </p>
-                  <p className="text-sm md:text-base text-gray-800 font-bold mb-2">
+                  <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 font-bold mb-2">
                     {cmsEmailQ?.emailInstruction || 'Write an email to the editor of the magazine. In your email, do the following.'}
                   </p>
                   <ul className="space-y-1.5 mb-3">
@@ -1497,31 +1493,31 @@ export function QuestionReviewFull({
                       : ['Tell the editor what you like about the new magazine.', 'Describe the problem you experienced.', 'Ask about the status of your submissions.']
                     ).map((bullet: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
-                        <span className="text-sm md:text-base text-gray-800">{bullet}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-gray-300 mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800 dark:text-gray-100">{bullet}</span>
                       </li>
                     ))}
                   </ul>
-                  <p className="text-sm md:text-base text-gray-800">Write as much as you can and in complete sentences.</p>
+                  <p className="text-sm md:text-base text-gray-800 dark:text-gray-100">Write as much as you can and in complete sentences.</p>
                 </div>
                 {/* Right: Email response area */}
-                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-gray-50">
-                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3">Your Response:</h3>
-                  <div className="mb-2 text-sm md:text-base text-gray-700">
+                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-gray-50 dark:bg-gray-900">
+                  <h3 className="text-base md:text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Your Response:</h3>
+                  <div className="mb-2 text-sm md:text-base text-gray-700 dark:text-gray-300">
                     <span className="font-bold">To:</span> {cmsEmailQ?.emailTo || 'editor@sunshinepoetymagazine.com'}
                   </div>
-                  <div className="mb-3 text-sm md:text-base text-gray-700">
+                  <div className="mb-3 text-sm md:text-base text-gray-700 dark:text-gray-300">
                     <span className="font-bold">Subject:</span> {cmsEmailQ?.emailSubject || 'Problem using submission form'}
                   </div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
-                  <div className={`bg-white border rounded-lg p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 border-gray-300' : 'text-gray-400 italic border-gray-200'}`}>
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">내가 쓴 답안</p>
+                  <div className={`bg-white dark:bg-gray-800 border rounded-lg p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600' : 'text-gray-400 italic border-gray-200 dark:border-gray-700'}`}>
                     {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
                   <div className="flex justify-end mt-3">
                     <button
                       onClick={() => toggleBookmark('writing-email')}
-                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
+                      className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
                     >
                       {bookmarkedQuestions.has('writing-email') ? (
                         <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
@@ -1539,24 +1535,24 @@ export function QuestionReviewFull({
             {activeModule === 3 && (
               <>
                 {/* Left: Professor prompt */}
-                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white border-b md:border-b-0 md:border-r border-gray-300">
-                  <p className="text-sm md:text-base text-gray-800 leading-relaxed mb-3 font-serif">
+                <div className="md:w-2/5 p-3 md:p-5 overflow-auto bg-white dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-300 dark:border-gray-700">
+                  <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed mb-3 font-serif">
                     {cmsAcademicQ?.questionText || "Your professor is teaching a class. Write a post responding to the professor's question."}
                   </p>
                   <div className="mb-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 font-serif">In your response, you should do the following.</p>
                     <ul className="space-y-1 ml-4">
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
-                        <span className="text-sm md:text-base text-gray-800 font-serif">Express and support your opinion.</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-gray-300 mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800 dark:text-gray-100 font-serif">Express and support your opinion.</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-black mt-2 flex-shrink-0" />
-                        <span className="text-sm md:text-base text-gray-800 font-serif">Make a contribution to the discussion in your own words.</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-gray-300 mt-2 flex-shrink-0" />
+                        <span className="text-sm md:text-base text-gray-800 dark:text-gray-100 font-serif">Make a contribution to the discussion in your own words.</span>
                       </li>
                     </ul>
                   </div>
-                  <p className="text-sm md:text-base text-gray-800 mb-4 font-serif">An effective response will contain at least 100 words.</p>
+                  <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 mb-4 font-serif">An effective response will contain at least 100 words.</p>
                   <div className="border-t border-gray-300 pt-4">
                     <div className="flex flex-col items-center mb-3">
                       <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] mb-1.5 bg-gray-100 flex items-center justify-center">
@@ -1568,15 +1564,15 @@ export function QuestionReviewFull({
                       </div>
                       <p className="font-bold text-sm md:text-base text-gray-900 dark:text-gray-100 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
                     </div>
-                    <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
+                    <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed font-serif">
                       {cmsAcademicQ?.professorMessage || cmsAcademicQ?.questionText || '(No professor message in CMS)'}
                     </p>
                   </div>
                 </div>
                 {/* Right: Student responses + user response */}
-                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3]">
+                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3] dark:bg-gray-900">
                   <div className="space-y-3 mb-4">
-                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 p-3 shadow-sm border border-[#e7e3d7]">
+                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 p-3 shadow-sm border border-[#e7e3d7] dark:border-gray-700">
                       <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
                         {cmsAcademicQ?.student1ImageUrl ? (
                           <img src={cmsAcademicQ.student1ImageUrl} alt="Student 1" className="w-full h-full object-cover" />
@@ -1585,13 +1581,13 @@ export function QuestionReviewFull({
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student1Name && <p className="font-bold text-sm text-gray-700 font-serif mb-0.5">{cmsAcademicQ.student1Name}</p>}
-                        <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student1Name && <p className="font-bold text-sm text-gray-700 dark:text-gray-200 font-serif mb-0.5">{cmsAcademicQ.student1Name}</p>}
+                        <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed font-serif">
                           {cmsAcademicQ?.student1Message || '(No student 1 message in CMS)'}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 p-3 shadow-sm border border-[#e7e3d7]">
+                    <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 p-3 shadow-sm border border-[#e7e3d7] dark:border-gray-700">
                       <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
                         {cmsAcademicQ?.student2ImageUrl ? (
                           <img src={cmsAcademicQ.student2ImageUrl} alt="Student 2" className="w-full h-full object-cover" />
@@ -1600,17 +1596,17 @@ export function QuestionReviewFull({
                         )}
                       </div>
                       <div className="flex-1">
-                        {cmsAcademicQ?.student2Name && <p className="font-bold text-sm text-gray-700 font-serif mb-0.5">{cmsAcademicQ.student2Name}</p>}
-                        <p className="text-sm md:text-base text-gray-800 leading-relaxed font-serif">
+                        {cmsAcademicQ?.student2Name && <p className="font-bold text-sm text-gray-700 dark:text-gray-200 font-serif mb-0.5">{cmsAcademicQ.student2Name}</p>}
+                        <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed font-serif">
                           {cmsAcademicQ?.student2Message || '(No student 2 message in CMS)'}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-[#ddd4c4]">
-                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-2 font-serif">Your Response:</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-4 shadow-sm border border-[#ddd4c4] dark:border-gray-700">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 font-serif">Your Response:</h3>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
-                    <div className={`border rounded-xl p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 text-gray-800 border-gray-200' : 'bg-gray-50 text-gray-400 italic border-gray-200'}`}>
+                    <div className={`border rounded-xl p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 italic border-gray-200 dark:border-gray-600'}`}>
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
                     <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
