@@ -1252,26 +1252,26 @@ export function QuestionReviewFull({
                           key={idx}
                           className={`flex items-start gap-2 p-2 md:p-3 rounded-lg border transition-all ${
                             isCorrectAnswer
-                              ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-600'
+                              ? 'bg-emerald-50 border-emerald-200'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-600'
+                              ? 'bg-red-50 border-red-200'
                               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                           }`}
                         >
                           <span className={`text-sm md:text-lg flex-1 ${
                             isCorrectAnswer
-                              ? 'text-emerald-700 dark:text-emerald-300 font-semibold'
+                              ? 'text-emerald-700 font-semibold'
                               : isUserAnswer && !currentQuestion.isCorrect
-                              ? 'text-red-700 dark:text-red-300 font-medium'
+                              ? 'text-red-700 font-medium'
                               : 'text-gray-700 dark:text-gray-100 font-medium'
                           }`}>
                             {cleanOption}
                           </span>
                           {isCorrectAnswer && (
-                            <Check className="w-4 h-4 text-emerald-500 dark:text-emerald-300 shrink-0" />
+                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                           )}
                           {isUserAnswer && !currentQuestion.isCorrect && !isCorrectAnswer && (
-                            <X className="w-4 h-4 text-red-500 dark:text-red-300 shrink-0" />
+                            <X className="w-4 h-4 text-red-500 shrink-0" />
                           )}
                         </div>
                       );
@@ -1279,9 +1279,9 @@ export function QuestionReviewFull({
                   </div>
 
                   {currentQuestion?.explanation && (
-                    <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-600 rounded-lg p-3 mb-4">
-                      <p className="text-xs font-bold text-blue-800 dark:text-yellow-300 mb-1">Explanation</p>
-                      <p className="text-xs text-blue-700 dark:text-gray-100">{currentQuestion.explanation}</p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                      <p className="text-xs font-bold text-blue-800 mb-1">Explanation</p>
+                      <p className="text-xs text-blue-700">{currentQuestion.explanation}</p>
                     </div>
                   )}
 
