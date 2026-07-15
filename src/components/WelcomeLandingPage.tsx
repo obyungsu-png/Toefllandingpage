@@ -104,7 +104,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20focused%20Asian%20high%20school%20boy%20studying%20TOEFL%20with%20headphones%20and%20laptop%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20cozy%20study%20atmosphere%2C%20soft%20warm%20lighting%2C%20determined%20expression&image_size=portrait_4_3"
+                src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
                 alt="Boy studying TOEFL with headphones"
                 className="w-full h-full object-cover"
               />
@@ -119,7 +119,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20boy%20and%20girl%20studying%20English%20together%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20focused%20and%20friendly%20atmosphere%2C%20notebooks%20and%20textbooks%20on%20desk&image_size=landscape_4_3"
+                src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
                 alt="Boy and girl studying together"
                 className="w-full h-full object-cover"
               />
@@ -132,7 +132,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20determined%20Asian%20high%20school%20boy%20reading%20English%20textbook%20with%20notebook%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20serious%20study%20expression%2C%20evening%20warm%20lighting&image_size=portrait_4_3"
+                src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
                 alt="Boy reading English textbook"
                 className="w-full h-full object-cover"
               />
@@ -145,7 +145,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20boy%20and%20girl%20practicing%20English%20conversation%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20engaged%20discussion%2C%20study%20room%20setting&image_size=landscape_4_3"
+                src="/landing/Group_of_cheerful_Asian_high_s_2026-07-09T09-41-57.png"
                 alt="Boy and girl practicing English conversation"
                 className="w-full h-full object-cover"
               />
