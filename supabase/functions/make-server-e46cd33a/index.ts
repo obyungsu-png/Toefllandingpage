@@ -1351,6 +1351,20 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
     await kv.set(`user:username:${username}`, user);
     await kv.set(`user:id:${user.id}`, user);
 
+    // Supabase Auth 유저 생성 (password + email_confirm) — 가입 후 자동 로그인 지원
+    try {
+      const { error: createErr } = await supabase.auth.admin.createUser({
+        email: emailLower,
+        password,
+        email_confirm: true,
+      });
+      if (createErr && !/already|registered|exists/i.test(createErr.message)) {
+        console.error('createUser error (legacy):', createErr.message);
+      }
+    } catch (err) {
+      console.error('Supabase Auth user creation failed (legacy):', err);
+    }
+
     console.log('✅ User registered:', username);
     return c.json({
       success: true,
