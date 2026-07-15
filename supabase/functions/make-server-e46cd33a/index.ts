@@ -1267,15 +1267,19 @@ app.post('/make-server-e46cd33a/users/register', async (c) => {
   try {
     const { email, username, password, verifyCode } = await c.req.json();
 
-    // Validate email (모든 방식에서 필수)
-    if (!email) {
-      return c.json({ error: 'Email is required' }, 400);
+    // 이메일이 없으면 username으로부터 합성 이메일 생성 (아이디+비밀번호 가입 지원)
+    let emailLower: string;
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return c.json({ error: 'Invalid email format' }, 400);
+      }
+      emailLower = email.toLowerCase();
+    } else if (username) {
+      emailLower = `${username.trim().toLowerCase()}@members.allmyexam.com`;
+    } else {
+      return c.json({ error: 'Email or username is required' }, 400);
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return c.json({ error: 'Invalid email format' }, 400);
-    }
-    const emailLower = email.toLowerCase();
 
     // ── Email + 인증번호 등록 (신규 방식) ──
     if (verifyCode) {

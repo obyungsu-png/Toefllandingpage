@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80&auto=format&fit=crop"
+              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
               alt="High school student studying TOEFL"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 6s ease-in-out infinite' }}
@@ -176,7 +176,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80&auto=format&fit=crop"
+              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
               alt="Middle school student solving SAT questions"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 7s ease-in-out 1s infinite' }}
@@ -191,7 +191,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80&auto=format&fit=crop"
+              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
               alt="Group of students practicing English conversation"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               style={{ animation: 'floatY 5s ease-in-out 0.5s infinite' }}

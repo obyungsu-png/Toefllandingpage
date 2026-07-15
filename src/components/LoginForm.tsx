@@ -189,6 +189,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
       body: JSON.stringify({
         username: username.trim().toLowerCase(),
         password,
+        email: usernameToEmail(username),
       }),
     });
 
@@ -221,7 +222,7 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
 
     const uname = username.trim();
     if (!isValidUsername(uname)) {
-      alert('아이디는 영문/숫자/밑줄 3~20자로 입력해주세요.');
+      alert('아이디는 영문/숫자 3~20자로 입력해주세요.');
       return;
     }
     if (password.length < 6) {
