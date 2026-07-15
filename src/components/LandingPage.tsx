@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20focused%20Asian%20high%20school%20boy%20studying%20TOEFL%20with%20headphones%20and%20laptop%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20cozy%20study%20atmosphere%2C%20soft%20warm%20lighting&image_size=landscape_4_3"
               alt="High school student studying TOEFL"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -176,7 +176,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20determined%20Asian%20high%20school%20boy%20reading%20English%20textbook%20with%20notebook%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20serious%20study%20expression%2C%20evening%20warm%20lighting&image_size=portrait_4_3"
               alt="Student solving SAT questions"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -191,7 +191,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
+              src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20boy%20and%20girl%20practicing%20English%20conversation%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20engaged%20discussion%2C%20study%20room%20setting&image_size=landscape_4_3"
               alt="Students practicing English conversation"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

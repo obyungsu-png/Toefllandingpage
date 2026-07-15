@@ -98,14 +98,14 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
           {/* Right Images */}
           <div className="md:hidden flex justify-center mb-8">
             {/* Mobile Single Image */}
-            <div 
+            <div
               className="rounded-lg overflow-hidden shadow-lg w-full max-w-[400px] h-[250px]"
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img
                 loading="lazy"
-                src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
-                alt="Studying English with headphones"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20focused%20Asian%20high%20school%20boy%20studying%20TOEFL%20with%20headphones%20and%20laptop%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20cozy%20study%20atmosphere%2C%20soft%20warm%20lighting%2C%20determined%20expression&image_size=portrait_4_3"
+                alt="Boy studying TOEFL with headphones"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -113,40 +113,40 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
 
           <div className="hidden md:grid flex-none w-[500px] grid-cols-2 gap-4">
             {/* Top Left Image */}
-            <div 
+            <div
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img
                 loading="lazy"
-                src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
-                alt="Students studying together"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20boy%20and%20girl%20studying%20English%20together%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20focused%20and%20friendly%20atmosphere%2C%20notebooks%20and%20textbooks%20on%20desk&image_size=landscape_4_3"
+                alt="Boy and girl studying together"
                 className="w-full h-full object-cover"
               />
             </div>
-            
+
             {/* Top Right Image - spans 2 rows */}
-            <div 
+            <div
               className="rounded-lg overflow-hidden shadow-lg row-span-2 h-[380px]"
               style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
               <img
                 loading="lazy"
-                src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
-                alt="Studying English with headphones"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20determined%20Asian%20high%20school%20boy%20reading%20English%20textbook%20with%20notebook%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20serious%20study%20expression%2C%20evening%20warm%20lighting&image_size=portrait_4_3"
+                alt="Boy reading English textbook"
                 className="w-full h-full object-cover"
               />
             </div>
-            
+
             {/* Bottom Left Image */}
-            <div 
+            <div
               className="rounded-lg overflow-hidden shadow-lg h-[180px]"
               style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
               <img
                 loading="lazy"
-                src="/landing/Group_of_cheerful_Asian_high_s_2026-07-09T09-41-57.png"
-                alt="Reading English textbook"
+                src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Animated%20illustration%20of%20Asian%20high%20school%20boy%20and%20girl%20practicing%20English%20conversation%2C%20warm%20muted%20tones%2C%20anime%20art%20style%2C%20engaged%20discussion%2C%20study%20room%20setting&image_size=landscape_4_3"
+                alt="Boy and girl practicing English conversation"
                 className="w-full h-full object-cover"
               />
             </div>
