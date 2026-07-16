@@ -5,7 +5,7 @@
  * App.tsx에서 추출됨
  */
 
-import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
+import { SERVER_BASE_URL, serverFetch } from '../utils/apiConfig';
 import type { TPOTest } from '../components/ContentManagement';
 
 interface UseTestHandlersParams {
@@ -82,14 +82,10 @@ export function useTestHandlers({
   const handleAddTest = async (test: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(test.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getServerHeaders()
-          },
           body: JSON.stringify(test)
         }
       );
@@ -104,21 +100,17 @@ export function useTestHandlers({
       console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
       console.error('❌ Error saving test:', error);
-      alert('테스트 저장 중 오류가 발생했습니다.');
+      alert(error instanceof Error ? error.message : '테스트 저장 중 오류가 발생했습니다.');
     }
   };
 
   const handleUpdateTest = async (updatedTest: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(updatedTest.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getServerHeaders()
-          },
           body: JSON.stringify(updatedTest)
         }
       );
@@ -133,7 +125,7 @@ export function useTestHandlers({
       console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
       console.error('❌ Error updating test:', error);
-      alert('테스트 업데이트 중 오류가 발생했습니다.');
+      alert(error instanceof Error ? error.message : '테스트 업데이트 중 오류가 발생했습니다.');
     }
   };
 
@@ -147,13 +139,10 @@ export function useTestHandlers({
       }
       
       const endpoint = getTestEndpoint(testToDelete.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}/${testToDelete.testNumber}`,
         {
           method: 'DELETE',
-          headers: {
-            ...getServerHeaders()
-          }
         }
       );
       
@@ -167,7 +156,7 @@ export function useTestHandlers({
       console.log(`✅ Deleted ${testToDelete.testType} ${testToDelete.testNumber} from server`);
     } catch (error) {
       console.error('❌ Error deleting test:', error);
-      alert('테스트 삭제 중 오류가 발생했습니다.');
+      alert(error instanceof Error ? error.message : '테스트 삭제 중 오류가 발생했습니다.');
     }
   };
 

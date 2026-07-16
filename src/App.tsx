@@ -88,7 +88,7 @@ const ReviewTrainingOverlay = lazy(() => import('./components/ReviewTrainingOver
 import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
-import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
+import { SERVER_BASE_URL, getServerHeaders, serverFetch } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
@@ -1485,14 +1485,10 @@ function AppContent() {
   const handleAddTest = async (test: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(test.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getServerHeaders()
-          },
           body: JSON.stringify(test)
         }
       );
@@ -1507,21 +1503,17 @@ function AppContent() {
       console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
       console.error('❌ Error saving test:', error);
-      alert('테스트 저장 중 오류가 발생했습니다.');
+      alert(error instanceof Error ? error.message : '테스트 저장 중 오류가 발생했습니다.');
     }
   };
 
   const handleUpdateTest = async (updatedTest: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(updatedTest.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getServerHeaders()
-          },
           body: JSON.stringify(updatedTest)
         }
       );
@@ -1536,7 +1528,7 @@ function AppContent() {
       console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
       console.error('❌ Error updating test:', error);
-      alert('테스트 업데이트 중 오류가 발생했습니다.');
+      alert(error instanceof Error ? error.message : '테스트 업데이트 중 오류가 발생했습니다.');
     }
   };
 
@@ -1550,13 +1542,10 @@ function AppContent() {
       }
       
       const endpoint = getTestEndpoint(testToDelete.testType);
-      const response = await fetch(
+      const response = await serverFetch(
         `${SERVER_BASE_URL}/${endpoint}/${testToDelete.testNumber}`,
         {
           method: 'DELETE',
-          headers: {
-            ...getServerHeaders()
-          }
         }
       );
       
