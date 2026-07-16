@@ -89,48 +89,162 @@ interface WritingReviewAiTutorProps {
 }
 
 // ── 차원 메타데이터 (라벨 + 설명) ────────────────────────────────────────────
-const DIMENSION_META: Record<DimensionKey, { label: string; desc: string }> = {
-  registerAndTone:      { label: '격식 & 톤',       desc: '수신자 관계에 맞는 격식 (Formal/Casual)' },
-  taskCompletion:       { label: '과제 완수도',      desc: '3가지 bullet 요구사항 모두 충족' },
-  emailStructure:       { label: '이메일 구조',      desc: '인사 → 목적 → 본문 → 액션 → 맺음' },
-  peerEngagement:       { label: '동료 의견 연계',   desc: 'Andrew/Claire 의견 명시적 인용/반박' },
-  elaboration:          { label: '논증 구체성',      desc: '명확한 입장 + 예시/논리 전개' },
-  syntacticComplexity:  { label: '구문/어휘 다양성', desc: 'AWL 학술 어휘 + 복문 사용' },
-  grammarAccuracy:     { label: '문법 정확도',      desc: '주어-동사 일치, 시제, 관사' },
+// 2026 토플 라이팅 공식 채점 기준 반영
+const DIMENSION_META: Record<DimensionKey, { label: string; desc: string; priority: string }> = {
+  // ── Email 차원 (Task 1) ──
+  registerAndTone: {
+    label: '사회언어학적 격식 (Register & Tone)',
+    desc: '수신자와의 관계에 맞는 톤앤매너 (Professor=격식 / Peer=반격식)',
+    priority: '최우선',
+  },
+  taskCompletion: {
+    label: '과제 완수도 (Task Completion)',
+    desc: '3가지 불렛포인트 요구사항 빠짐없이 충족 (누락/모호 서술 감점)',
+    priority: '핵심',
+  },
+  emailStructure: {
+    label: '구성 및 일관성 (Organization & Cohesion)',
+    desc: '인사말 → 목적 → 본문 → 향후 조치 → 맺음말 구조 + 문단 구분',
+    priority: '핵심',
+  },
+  grammarAccuracy: {
+    label: '언어 사용 정확성 (Language Accuracy)',
+    desc: '문법 오류(시제/수일치/관사) + 관용 표현(Collocation) 정확성',
+    priority: '기본',
+  },
+  // ── Discussion 차원 (Task 2) ──
+  peerEngagement: {
+    label: '토론 기여도 및 동료 상호작용 (Contribution & Peer Engagement)',
+    desc: 'Andrew/Claire 의견 유기적 인용/반박하며 토론 흐름에 합류',
+    priority: '고득점 열쇠',
+  },
+  elaboration: {
+    label: '논증 구체성 및 전개 (Elaboration & Support)',
+    desc: '명확한 입장 + 참신한 예시/근거 (개인경험, 사회트렌드, 구체적 시나리오)',
+    priority: '핵심',
+  },
+  syntacticComplexity: {
+    label: '구문 및 어휘적 다양성 (Syntactic & Lexical Complexity)',
+    desc: 'AWL 학술 어휘(beneficial/detrimental/advocate) + 복문(분사구문/관계대명사절/명사절)',
+    priority: '핵심',
+  },
 };
+
+// 분량 기준 (2026 토플 공식)
+const WORD_COUNT_RULE = {
+  email: { min: 80, max: 120, desc: '80~120 단어 (분량 준수 중요)' },
+  discussion: { min: 100, max: null, desc: '100단어 이상 (풍부한 논증 필요)' },
+} as const;
 
 function getDimensionsFor(type: WritingType): DimensionKey[] {
   if (type === 'email') return ['registerAndTone', 'taskCompletion', 'emailStructure', 'grammarAccuracy'];
   return ['peerEngagement', 'elaboration', 'syntacticComplexity', 'grammarAccuracy'];
 }
 
-// ── 채점 프롬프트 빌더 (2026 스펙 핵심 규칙 포함) ────────────────────────────
+// ── 채점 프롬프트 빌더 (2026 토플 공식 채점 기준 상세 반영) ────────────────────
 function buildRubricPrompt(writingType: WritingType): string {
   const dims = getDimensionsFor(writingType);
+  const wordRule = WORD_COUNT_RULE[writingType];
+  const wordRange = wordRule.max ? `${wordRule.min}~${wordRule.max}단어` : `${wordRule.min}단어 이상`;
+
   const base = `너는 2026년 개편 TOEFL iBT Writing 공인 채점관이다.
 반드시 0.0 ~ 6.0 사이의 점수로 평가하라 (6.0이 만점).
 각 차원별 점수 산출 전, 반드시 학생 글에서 근거 문장을 발췌한 뒤(CoT) 점수를 매기고 피드백을 작성하라.
 
-[평가 차원 — ${writingType === 'email' ? 'Email' : 'Academic Discussion'}]
-${dims.map(d => `- ${d}: ${DIMENSION_META[d].desc}`).join('\n')}`;
+[과제 분량 기준 — 반드시 확인]
+${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — ${wordRange}
+${wordRule.desc}
+분량 미달/초과 시 overall 점수에서 감점 반영.
+
+[평가 차원 — ${writingType === 'email' ? 'Email (Task 1)' : 'Academic Discussion (Task 2)'}]
+${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
 
   if (writingType === 'email') {
     return `${base}
 
-[Email 채점 핵심 규칙 — 반드시 적용]
-1. Register & Tone: 수신자가 Professor인데 "Hey / Thanks / I want" 등 캐주얼 표현이 감지되면 registerAndTone 점수를 3.0 이하로 제한.
-2. Task Completion: 제시된 Required Points(bullets) 중 언급되지 않았거나 의미가 전달되지 않은 항목이 있으면 항목당 taskCompletion 점수에서 1.0점 감점.
-3. Email Structure: 인사(Salutation) → 목적 → 본문 → 액션 → 맺음(Sign-off) 구조가 갖춰져야 함. 하나라도 누락 시 emailStructure에서 감점.
-4. Grammar Accuracy: 주어-동사 일치, 시제 일관성, 관사(a/an/the) 오류를 집계. 오류 1건당 0.5점 감점 (최소 1.0).`;
+[Email 채점 상세 기준 — 2026 토플 공식]
+
+① 사회언어학적 격식 (Register & Tone) — 최우선 차원
+수신자와의 '관계'에 맞는 올바른 톤앤매너를 구사했는가?
+- 수신자가 교수(Professor)나 대학 행정 직원(Administrator)인 경우:
+  * 격식 있는 인사: "Dear Professor [Name]", "Dear Dr. [Name]"
+  * 완곡한 부탁 조동사: "I would highly appreciate it if...", "I was wondering if you could..."
+  * 격식 있는 맺음말: "Sincerely", "Best regards", "Respectfully yours"
+  * 금지 표현 감지 시 registerAndTone 점수를 3.0 이하로 제한: "Hey", "Thanks", "I want", "Can you", "ASAP"
+- 수신자가 동료 학생(Classmate/Peer)인 경우:
+  * 반격식 톤: "Hi [Name]", "Can you let me know...", "Thanks", "Best"
+  * 너무 딱딱하면(Dear Professor 등) 오히려 부자연스러움 → 적절한 캐주얼 톤 필요
+
+② 과제 완수도 (Task Completion) — 핵심 차원
+문제에서 요구한 구체적 조건(보통 3가지 불렛포인트)을 빠짐없이 충족했는가?
+- 예: "1) 과제 연장 요청 이유, 2) 현재까지의 진행 상황, 3) 구체적인 새로운 제출일 제안"
+- 세 가지 중 단 하나라도 누락되거나 모호하게 서술되면 감점
+- 누락된 항목당 taskCompletion 점수에서 1.0점 감점 (최소 1.0)
+- 모호 서술(예: "I'll submit later"처럼 구체적 날짜 없음)도 미충족으로 간주
+
+③ 구성 및 일관성 (Organization & Cohesion) — 핵심 차원
+이메일의 정석적인 구조를 따르고 있는가?
+- 필수 구조 흐름: [인사말 ➡️ 메일을 쓰는 목적 ➡️ 상세 본문(이유/대안) ➡️ 향후 조치/기대 ➡️ 맺음말]
+- 문단 구분(Paragraph)이 한눈에 들어오도록 구조화되어야 함
+- 하나라도 누락 시 emailStructure에서 감점
+- 연결어(However, Furthermore, Therefore 등) 적절히 사용하여 일관성 유지
+
+④ 언어 사용의 정확성 (Language Accuracy) — 기본 차원
+의미 전달을 방해하는 문법 오류나 어색한 표현이 없는가?
+- 단순 오타, 시제 일치, 주어-동사 수 일치 등 기술적 문법 오류 집계
+- 격식에 맞는 비즈니스/학술용 관용 표현(Collocation) 정확성 평가
+  * 올바른 관용: "take into consideration", "look forward to hearing", "submit a request"
+  * 틀린 관용: "take into consider", "look forward to hear", "give a request"
+- 오류 1건당 0.5점 감점 (최소 1.0)`;
   }
 
   return `${base}
 
-[Academic Discussion 채점 핵심 규칙 — 반드시 적용]
-1. Peer Engagement: 동료(Andrew, Claire 등)를 명시적으로 인용하거나 반박하지 않고, 단독 에세이 형태로 본인의 주장만 나열한 경우 peerEngagement 점수를 3.0 이하로 제한.
-2. Elaboration: 입장 표명 후 구체적 예시나 논리적 전개가 부족하면 elaboration 점수를 3.0 이하로 제한.
-3. Syntactic Complexity: 중등 수준 기초 어휘(good, bad, happy, problem 등) 비율이 80% 이상이면 syntacticComplexity 감점. 학술 대체 어휘(positive, detrimental, delighted, significant challenge 등)를 upgradedSentences로 제안.
-4. Grammar Accuracy: 주어-동사 일치, 시제, 관사 오류. 오류 1건당 0.5점 감점 (최소 1.0).`;
+[Academic Discussion 채점 상세 기준 — 2026 토플 공식]
+
+① 토론 기여도 및 동료 상호작용 (Contribution & Peer Engagement) — 고득점 열쇠
+앞서 발언한 동료 학생들(Andrew, Claire 등)의 의견을 유기적으로 인용/반박하며 토론 흐름에 합류했는가?
+- 모범 패턴: "While I understand Andrew's concern about cost, I strongly agree with Claire that..."
+  * 동료 의견을 먼저 인정/요약 → 자신의 입장 연결
+  * "I agree/disagree with [Name] that..." 형태로 명시적 인용
+- 금지 패턴 (감점 대상):
+  * 단순히 "I think..." / "In my opinion..." 으로만 시작 (동료 언급 없음)
+  * 자기 혼자만의 단독 에세이 형태 (동료 의견 무시)
+  * 동료 이름 언급 없이 "Some people say..." 식의 회피
+- 단독 에세이 형태 감지 시 peerEngagement 점수를 3.0 이하로 제한
+
+② 논증의 구체성 및 전개 (Elaboration & Support) — 핵심 차원
+본인의 입장을 명확히 하고, 이를 뒷받침하는 구체적이고 참신한 예시/근거를 제시했는가?
+- 고득점(5~6점 밴드) 요건:
+  * 개인적 경험: "In my experience as a university student..."
+  * 사회적 트렌드: "With the rise of remote learning..."
+  * 구체적인 시나리오: "For instance, if a student were to..."
+- 감점 대상:
+  * 막연하고 뻔한 주장: "It is good", "I think it is bad"
+  * 예시 없는 단정: "This is always true"
+  * 논리 전개 없는 주장 나열
+- 입장 표명 후 구체적 예시/논리적 전개가 부족하면 elaboration 점수를 3.0 이하로 제한
+
+③ 구문 및 어휘적 다양성 (Syntactic & Lexical Complexity) — 핵심 차원
+대학 세미나 수준에 걸맞은 학술용 단어(AWL)와 복잡한 문장 구조를 활용했는가?
+- 어휘 업그레이드 (기초 → 학술):
+  * good → beneficial, advantageous, favorable
+  * bad → detrimental, adverse, unfavorable
+  * think → advocate, argue, contend, maintain
+  * help → facilitate, assist, enable
+  * important → crucial, pivotal, significant
+  * problem → challenge, issue, concern
+- 복문(Complex Sentence) 구조 적절히 섞여야 함:
+  * 분사구문: "Taking into consideration...,"
+  * 관계대명사절: "students who..., which means..."
+  * 명사절: "What I believe is that..."
+  * 부사절: "Although..., while..., whereas..."
+- 기초 어휘(good, bad, think, help 등) 비율이 80% 이상이면 syntacticComplexity 감점
+- 학술 대체 어휘는 upgradedSentences로 제안
+
+④ 언어 사용의 정확성 (Language Accuracy) — 기본 차원
+- 주어-동사 일치, 시제 일관성, 관사(a/an/the) 오류 집계
+- 오류 1건당 0.5점 감점 (최소 1.0)`;
 }
 
 // ── 헬퍼: API 호출 (GLM/Claude 공통) ────────────────────────────────────────
@@ -302,14 +416,36 @@ export function WritingReviewAiTutor({
       const rubricPrompt = buildRubricPrompt(writingType);
       const dims = getDimensionsFor(writingType);
 
-      // 1차 정량 분석 (로컬 휴리스틱 — 즉시)
+      // 1차 정량 분석 (로컬 휴리스틱 — 즉시, 2026 토플 공식 기준)
       const wordCount = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
       const lowerText = rewrittenText.toLowerCase();
-      const casualHits = (lowerText.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah)\b/g) || []).length;
-      const formalHits = (lowerText.match(/\b(dear|sincerely|regards|would appreciate|kindly|respectfully|yours truly)\b/g) || []).length;
-      const transitionHits = (lowerText.match(/\b(however|furthermore|consequently|therefore|moreover|in contrast|for instance|to illustrate|as a result)\b/g) || []).length;
-      const academicWordHits = (lowerText.match(/\b(significant|detrimental|advantageous|pivotal|crucial|subsequently|nevertheless|implementation|environment|demonstrate)\b/g) || []).length;
-      const basicWordHits = (lowerText.match(/\b(good|bad|big|small|happy|sad|thing|stuff|a lot|really|very)\b/g) || []).length;
+      const rule = WORD_COUNT_RULE[writingType];
+      const wordCountStatus = rule.max
+        ? (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : wordCount > rule.max ? `초과 (+${wordCount - rule.max}단어)` : '적정')
+        : (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : '적정');
+
+      // Email: 수신자별 격식 키워드 (2026 공식 기준)
+      const casualHits = (lowerText.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah|asap|can you)\b/g) || []).length;
+      const formalHits = (lowerText.match(/\b(dear|sincerely|regards|would (highly )?appreciate|kindly|respectfully|yours truly|i was wondering if)\b/g) || []).length;
+
+      // Discussion: 동료 인용 패턴 (고득점 열쇠)
+      const peerQuoteHits = (lowerText.match(/\b(while i (understand|agree|disagree)|i (strongly )?(agree|disagree) with|i see (your|andrew's|claire's) point|as (andrew|claire) (mentioned|suggested|argued|pointed out))\b/g) || []).length;
+      const aloneEssayHits = (lowerText.match(/\b(i think|in my opinion|i believe|personally)\b/g) || []).length;
+
+      // 연결어
+      const transitionHits = (lowerText.match(/\b(however|furthermore|consequently|therefore|moreover|in contrast|for instance|to illustrate|as a result|nevertheless|nonetheless)\b/g) || []).length;
+
+      // 학술 어휘 (AWL) — 2026 기준 확장
+      const academicWordHits = (lowerText.match(/\b(beneficial|detrimental|adverse|unfavorable|advantageous|favorable|advocate|argue|contend|maintain|facilitate|assist|enable|crucial|pivotal|significant|subsequently|nevertheless|implementation|environment|demonstrate|challenge|concern)\b/g) || []).length;
+      // 기초 어휘 (감점 대상) — 2026 기준 확장
+      const basicWordHits = (lowerText.match(/\b(good|bad|big|small|happy|sad|thing|stuff|think|help|important|problem|a lot|really|very)\b/g) || []).length;
+      const basicWordRatio = basicWordHits / Math.max(wordCount, 1);
+
+      // 복문 구조 감지 (분사구문/관계대명사절/명사절/부사절)
+      const complexSentenceHits = (rewrittenText.match(/\b(Taking|Considering|Given|Based on|Although|While|Whereas|Since|Because|If|Unless|When|Whenever)\b/g) || []).length
+        + (rewrittenText.match(/\b(who|which|that|whose|whom)\b/g) || []).length
+        + (rewrittenText.match(/\b(What I|Whether|Why|How)\s+(believe|think|argue|is that)\b/gi) || []).length;
+
       const uniqueWords = new Set(rewrittenText.toLowerCase().match(/[a-z]+/g) || []).size;
       const lexicalDiversity = uniqueWords / Math.max(wordCount, 1);
 
@@ -320,11 +456,15 @@ export function WritingReviewAiTutor({
 ${taskContext}
 
 [1차 정량 분석 결과 — 참고용]
-- 단어 수: ${wordCount} (이메일 80-120 / 토론 100+ 권장)
-- Casual 표현: ${casualHits}회 (hey, thanks, gonna...)
-- Formal 표현: ${formalHits}회 (dear, sincerely, would appreciate...)
-- 연결어: ${transitionHits}회 (however, furthermore, consequently...)
-- 학술 어휘: ${academicWordHits}회 / 기초 어휘: ${basicWordHits}회
+- 단어 수: ${wordCount} (기준: ${rule.max ? `${rule.min}~${rule.max}` : `${rule.min}+`}단어) → ${wordCountStatus}
+${writingType === 'email'
+  ? `- Casual 표현: ${casualHits}회 (hey, thanks, gonna, wanna, ok, asap... — Professor 수신 시 감점 대상)
+- Formal 표현: ${formalHits}회 (dear, sincerely, would appreciate, i was wondering if...)`
+  : `- 동료 인용 패턴: ${peerQuoteHits}회 (While I agree with... / I disagree with [Name] that...)
+- 단독 에세이 패턴: ${aloneEssayHits}회 (I think / In my opinion... — 동료 언급 없으면 감점)`}
+- 연결어: ${transitionHits}회 (however, furthermore, consequently, therefore...)
+- 학술 어휘(AWL): ${academicWordHits}회 / 기초 어휘: ${basicWordHits}회 (비율 ${(basicWordRatio * 100).toFixed(1)}%)
+- 복문 구조: ${complexSentenceHits}회 (분사구문/관계대명사절/명사절/부사절)
 - 어휘 다양성(Lexical Diversity): ${lexicalDiversity.toFixed(2)} (1.0에 가까울수록 다양)
 
 반드시 다음 JSON 형식으로만 응답 (다른 텍스트 절대 금지):
@@ -488,14 +628,30 @@ ${analysis.upgradedText}
   };
 
   // ── Tone Meter (이메일 전용 실시간 격식 게이지) ──
+  // 2026 토플 공식: Professor 수신 시 격식 표현 필수, Peer 수신 시 반격식
   const toneScore = useMemo(() => {
     if (writingType !== 'email') return null;
     const lower = rewrittenText.toLowerCase();
-    const casual = (lower.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah|hi there)\b/g) || []).length;
-    const formal = (lower.match(/\b(dear|sincerely|regards|would appreciate|kindly|respectfully|yours truly)\b/g) || []).length;
+    // 캐주얼 표현 (Professor 수신 시 감점 대상)
+    const casual = (lower.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah|hi there|i want|can you|asap)\b/g) || []).length;
+    // 격식 표현 (Professor 수신 시 요구)
+    const formal = (lower.match(/\b(dear|sincerely|regards|would (highly )?appreciate|kindly|respectfully|yours truly|i was wondering if)\b/g) || []).length;
     const total = casual + formal;
     if (total === 0) return 50; // 중립
     return Math.round((formal / total) * 100);
+  }, [rewrittenText, writingType]);
+
+  // ── 분량 기준 위반 감지 (UI 경고용) ──
+  const wordCountViolation = useMemo(() => {
+    const wc = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
+    const rule = WORD_COUNT_RULE[writingType];
+    if (rule.max) {
+      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
+      if (wc > rule.max) return { status: 'over', diff: wc - rule.max, rule };
+    } else {
+      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
+    }
+    return null;
   }, [rewrittenText, writingType]);
 
   // ── Semantic Highlight 적용된 원본 텍스트 ──
@@ -685,8 +841,29 @@ ${analysis.upgradedText}
             value={rewrittenText}
             onChange={e => setRewrittenText(e.target.value)}
             placeholder="여기서 에세이를 수정하며 실시간으로 점수를 올려보세요..."
-            className="w-full h-48 md:h-64 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-[#1e6b73] dark:focus:ring-[#2d8a8c]"
+            className={`w-full h-48 md:h-64 bg-gray-50 dark:bg-gray-800 border rounded-lg p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-100 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-[#1e6b73] dark:focus:ring-[#2d8a8c] ${
+              wordCountViolation ? 'border-red-300 dark:border-red-700' : 'border-gray-300 dark:border-gray-700'
+            }`}
           />
+
+          {/* 분량 기준 표시 (2026 토플 공식) */}
+          <div className="mt-1.5 flex items-center justify-between text-xs">
+            <span className="text-gray-500 dark:text-gray-400">
+              분량 기준: {WORD_COUNT_RULE[writingType].desc}
+            </span>
+            <span className={`font-medium ${
+              wordCountViolation
+                ? wordCountViolation.status === 'under' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                : 'text-green-600 dark:text-green-400'
+            }`}>
+              {rewrittenText.trim().split(/\s+/).filter(Boolean).length} 단어
+              {wordCountViolation && (
+                <span className="ml-1">
+                  ({wordCountViolation.status === 'under' ? `미달 -${wordCountViolation.diff}` : `초과 +${wordCountViolation.diff}`})
+                </span>
+              )}
+            </span>
+          </div>
 
           {/* 액션 버튼 */}
           <div className="flex flex-wrap gap-2 mt-3">
@@ -735,14 +912,23 @@ ${analysis.upgradedText}
                     const dim = analysis.rubric.dimensions[key];
                     const meta = DIMENSION_META[key];
                     const score = dim?.score ?? 0;
+                    // priority별 배지 색상
+                    const priorityBadge = meta.priority === '최우선' || meta.priority === '고득점 열쇠'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                      : meta.priority === '핵심'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
                     return (
                       <div key={key} className="bg-white/60 dark:bg-gray-900/40 rounded-lg px-3 py-2">
                         <div className="flex items-center justify-between mb-1">
-                          <div>
-                            <div className="text-xs font-bold text-gray-700 dark:text-gray-200">{meta.label}</div>
-                            <div className="text-[10px] text-gray-400">{meta.desc}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{meta.label}</span>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${priorityBadge}`}>{meta.priority}</span>
+                            </div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">{meta.desc}</div>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 ml-2">
                             <div className="w-14 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                               <div className="h-full bg-[#1e6b73] rounded-full transition-all" style={{ width: `${(score / 6) * 100}%` }} />
                             </div>
