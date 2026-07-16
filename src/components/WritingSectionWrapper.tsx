@@ -50,6 +50,8 @@ interface WritingSectionWrapperProps {
   onScreenChange?: (screen: WritingScreen) => void;
   // CMS-driven writing questions (passed from TPO/Test/Training)
   writingQuestions?: any[];
+  /** 실전문제 Review 모드 — WritingEmailQ1/Q2에 AI 튜터 버튼 표시 */
+  isReviewMode?: boolean;
 }
 
 export function WritingSectionWrapper({
@@ -58,6 +60,7 @@ export function WritingSectionWrapper({
   onComplete,
   onScreenChange,
   writingQuestions = [],
+  isReviewMode = false,
 }: WritingSectionWrapperProps) {
   const [screen, setScreen] = useState<WritingScreen>(initialScreen);
   
@@ -553,6 +556,7 @@ export function WritingSectionWrapper({
             onNext={goNext}
             onHome={onHome}
             writingQuestion={emailWritingQuestion}
+            isReviewMode={isReviewMode}
           />
         );
       })()}
@@ -582,6 +586,7 @@ export function WritingSectionWrapper({
             student2Message={adProps.student2Message}
             promptTitle={adProps.promptTitle}
             promptInstructions={adProps.promptInstructions}
+            isReviewMode={isReviewMode}
           />
         );
       })()}

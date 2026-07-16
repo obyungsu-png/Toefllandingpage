@@ -7278,6 +7278,7 @@ function AppContent() {
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
           onScreenChange={setCurrentWritingReviewScreen}
+          isReviewMode={isReviewMode}
           writingQuestions={(() => {
             // Pull Writing questions from the active CMS bank
             const tpoNum = currentTest?.tpoNumber;

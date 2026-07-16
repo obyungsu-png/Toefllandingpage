@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Sparkles } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
+import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 
 interface WritingEmailQ1Props {
   onBack: () => void;
@@ -13,9 +15,11 @@ interface WritingEmailQ1Props {
     emailSubject?: string;
     emailTo?: string;
   } | null;
+  /** 실전문제 Review 모드 — AI 튜터 버튼 표시 */
+  isReviewMode?: boolean;
 }
 
-export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQuestion }: WritingEmailQ1Props) {
+export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQuestion, isReviewMode = false }: WritingEmailQ1Props) {
   const [emailBody, setEmailBody] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [hideWordCount, setHideWordCount] = useState(false);
@@ -243,9 +247,34 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
               className="w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Start typing your email here..."
             />
+
+            {/* AI 튜터 버튼 — 실전문제 Review 모드에서만 표시 */}
+            {isReviewMode && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={() => setShowAiTutor(true)}
+                  disabled={!emailBody.trim()}
+                  className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  AI 튜터로 첨삭받기
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Writing AI 튜터 — Email 첨삭 (실전문제 Review 모드) */}
+      {showAiTutor && (
+        <WritingReviewAiTutor
+          writingType="email"
+          userAnswer={emailBody}
+          questionData={writingQuestion}
+          onClose={() => setShowAiTutor(false)}
+        />
+      )}
 
       {/* Time Remaining Dialog */}
       {showTimeDialog && (

@@ -10,8 +10,6 @@ import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
-import { WritingReviewAiTutor } from './WritingReviewAiTutor';
-import { Sparkles } from 'lucide-react';
 
 /**
  * Reading review — Range API로 하이라이트/밑줄을 DOM에 적용 — 선택한 색상 반영
@@ -218,10 +216,6 @@ export function QuestionReviewFull({
     return (localStorage.getItem('wordLookupLanguage') as 'en' | 'ko') || 'en';
   });
   const [popupData, setPopupData] = useState<{ word: string; context?: string; x: number; y: number } | null>(null);
-
-  // Writing AI 튜터 상태 (Email / Academic Discussion)
-  const [writingAiOpen, setWritingAiOpen] = useState(false);
-  const [writingAiType, setWritingAiType] = useState<'email' | 'discussion'>('email');
 
   // Reading review — 하이라이트 저장/로드 (Supabase)
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -1520,16 +1514,7 @@ export function QuestionReviewFull({
                     {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                  <div className="flex justify-between items-center mt-4">
-                    <button
-                      onClick={() => { setWritingAiOpen(true); setWritingAiType('email'); }}
-                      disabled={!result.wrongAnswers[0]?.userAnswer}
-                      className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      AI 튜터로 첨삭받기
-                      <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
-                    </button>
+                  <div className="flex justify-end items-center mt-4">
                     <button
                       onClick={() => toggleBookmark('writing-email')}
                       className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
@@ -1625,16 +1610,7 @@ export function QuestionReviewFull({
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
                     <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                    <div className="flex justify-between items-center mt-4">
-                      <button
-                        onClick={() => { setWritingAiOpen(true); setWritingAiType('discussion'); }}
-                        disabled={!result.wrongAnswers[1]?.userAnswer}
-                        className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        AI 튜터로 첨삭받기
-                        <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
-                      </button>
+                    <div className="flex justify-end items-center mt-4">
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
                         className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
@@ -1822,20 +1798,6 @@ export function QuestionReviewFull({
           x={popupData.x}
           y={popupData.y}
           onClose={() => setPopupData(null)}
-        />
-      )}
-
-      {/* Writing AI 튜터 — Email / Academic Discussion 첨삭 */}
-      {writingAiOpen && (
-        <WritingReviewAiTutor
-          writingType={writingAiType}
-          userAnswer={
-            writingAiType === 'email'
-              ? (result.wrongAnswers[0]?.userAnswer || '')
-              : (result.wrongAnswers[1]?.userAnswer || '')
-          }
-          questionData={writingAiType === 'email' ? cmsEmailQ : cmsAcademicQ}
-          onClose={() => setWritingAiOpen(false)}
         />
       )}
     </div>

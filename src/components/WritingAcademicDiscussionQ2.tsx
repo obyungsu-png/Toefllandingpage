@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Sparkles } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 
 interface WritingAcademicDiscussionQ2Props {
   onBack: () => void;
@@ -19,6 +21,8 @@ interface WritingAcademicDiscussionQ2Props {
   student2Message?: string;
   promptTitle?: string;
   promptInstructions?: string;
+  /** 실전문제 Review 모드 — AI 튜터 버튼 표시 */
+  isReviewMode?: boolean;
 }
 
 export function WritingAcademicDiscussionQ2({
@@ -37,6 +41,7 @@ export function WritingAcademicDiscussionQ2({
   student2Message,
   promptTitle,
   promptInstructions,
+  isReviewMode = false,
 }: WritingAcademicDiscussionQ2Props) {
   const [response, setResponse] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -46,6 +51,7 @@ export function WritingAcademicDiscussionQ2({
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'passage' | 'response'>('passage');
+  const [showAiTutor, setShowAiTutor] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -289,9 +295,42 @@ export function WritingAcademicDiscussionQ2({
               className="w-full h-64 md:h-[30rem] p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Write your response here..."
             />
+
+            {/* AI 튜터 버튼 — 실전문제 Review 모드에서만 표시 */}
+            {isReviewMode && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={() => setShowAiTutor(true)}
+                  disabled={!response.trim()}
+                  className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  AI 튜터로 첨삭받기
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Writing AI 튜터 — Academic Discussion 첨삭 (실전문제 Review 모드) */}
+      {showAiTutor && (
+        <WritingReviewAiTutor
+          writingType="discussion"
+          userAnswer={response}
+          questionData={{
+            professorName,
+            professorMessage,
+            student1Name,
+            student1Message,
+            student2Name,
+            student2Message,
+            questionText: promptInstructions,
+          }}
+          onClose={() => setShowAiTutor(false)}
+        />
+      )}
 
       {/* Time Remaining Dialog */}
       {showTimeDialog && (
