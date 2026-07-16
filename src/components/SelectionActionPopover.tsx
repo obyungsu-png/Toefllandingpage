@@ -194,6 +194,17 @@ export function SelectionActionPopover({
     return () => cancelAnimationFrame(t);
   }, []);
 
+  // 색상/AI 서브패널 fade-in 트리거 — 닫혀있을 때는 DOM에서 완전히 제거해야 하므로
+  // (maxHeight:0 방식은 폭이 레이아웃에 남아 툴바 우측에 빈 공간이 생기는 버그가 있었음)
+  const [subPanelMounted, setSubPanelMounted] = useState(false);
+  useEffect(() => {
+    if (activePanel) {
+      const t = requestAnimationFrame(() => setSubPanelMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setSubPanelMounted(false);
+  }, [activePanel]);
+
   // 화면 경계 보정
   useEffect(() => {
     if (!popoverRef.current) return;
@@ -288,7 +299,7 @@ export function SelectionActionPopover({
       onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
     >
       {/* 메인 툴바 */}
-      <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg px-2 py-1.5">
+      <div className="inline-flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg px-2 py-1.5 w-fit">
         <button
           {...underlineGesture}
           className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors select-none ${
@@ -342,45 +353,47 @@ export function SelectionActionPopover({
         )}
       </div>
 
-      {/* 색상 스와치 서브패널 */}
-      <div
-        className="overflow-hidden transition-all duration-200 ease-out"
-        style={{
-          maxHeight: activePanel === 'underline' || activePanel === 'highlight' ? 48 : 0,
-          opacity: activePanel === 'underline' || activePanel === 'highlight' ? 1 : 0,
-          marginTop: activePanel === 'underline' || activePanel === 'highlight' ? 6 : 0,
-        }}
-      >
-        {activePanel === 'underline' && (
-          <ColorSwatchRow colors={UNDERLINE_COLORS} current={defaultUnderline} onPick={pickUnderlineColor} />
-        )}
-        {activePanel === 'highlight' && (
-          <ColorSwatchRow colors={HIGHLIGHT_COLORS} current={defaultHighlight} onPick={pickHighlightColor} />
-        )}
-      </div>
-
-      {/* AI 튜터 서브메뉴 — Explain / Translate / Analyze / Rewrite (가로 배치) */}
-      <div
-        className="overflow-hidden transition-all duration-200 ease-out"
-        style={{
-          maxHeight: activePanel === 'ai' ? 50 : 0,
-          opacity: activePanel === 'ai' ? 1 : 0,
-          marginTop: activePanel === 'ai' ? 6 : 0,
-        }}
-      >
-        <div className="flex flex-row gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1.5">
-          {AI_TUTOR_ACTIONS.map((action) => (
-            <button
-              key={action.key}
-              onClick={() => handleAiAction(action.key)}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-[#667eea]/10 dark:hover:bg-[#667eea]/20 hover:text-[#667eea] dark:hover:text-[#8b9bff] rounded-md transition-colors whitespace-nowrap"
-              title={action.label}
-            >
-              {action.label}
-            </button>
-          ))}
+      {/* 색상 스와치 서브패널 — 열려있을 때만 DOM에 렌더링 (닫혀있을 때 폭이 레이아웃에 영향 주지 않도록) */}
+      {(activePanel === 'underline' || activePanel === 'highlight') && (
+        <div
+          className="mt-1.5 transition-all duration-150 ease-out w-fit"
+          style={{
+            opacity: subPanelMounted ? 1 : 0,
+            transform: subPanelMounted ? 'translateY(0)' : 'translateY(-4px)',
+          }}
+        >
+          {activePanel === 'underline' && (
+            <ColorSwatchRow colors={UNDERLINE_COLORS} current={defaultUnderline} onPick={pickUnderlineColor} />
+          )}
+          {activePanel === 'highlight' && (
+            <ColorSwatchRow colors={HIGHLIGHT_COLORS} current={defaultHighlight} onPick={pickHighlightColor} />
+          )}
         </div>
-      </div>
+      )}
+
+      {/* AI 튜터 서브메뉴 — Explain / Translate / Analyze / Rewrite (가로 배치), 열려있을 때만 렌더링 */}
+      {activePanel === 'ai' && (
+        <div
+          className="mt-1.5 transition-all duration-150 ease-out w-fit"
+          style={{
+            opacity: subPanelMounted ? 1 : 0,
+            transform: subPanelMounted ? 'translateY(0)' : 'translateY(-4px)',
+          }}
+        >
+          <div className="flex flex-row gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1.5 w-fit">
+            {AI_TUTOR_ACTIONS.map((action) => (
+              <button
+                key={action.key}
+                onClick={() => handleAiAction(action.key)}
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-[#667eea]/10 dark:hover:bg-[#667eea]/20 hover:text-[#667eea] dark:hover:text-[#8b9bff] rounded-md transition-colors whitespace-nowrap"
+                title={action.label}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* AI 튜터 말풍선 응답 — 사전 팝업 스타일 */}
       {(aiLoading || aiResponse) && (
