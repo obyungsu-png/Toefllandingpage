@@ -1263,6 +1263,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     explanation: '',
     translationNote: '',
     scriptText: '',
+    dictationBlanks: '',
+    organization: '',
+    organizationBlanks: '',
     analysisNote: '',
     vocabularyNote: '',
     passageText: '',
@@ -1359,6 +1362,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       emailTo: (formData as any).emailTo || undefined,
       translationNote: (formData as any).translationNote || undefined,
       scriptText: (formData as any).scriptText || undefined,
+      dictationBlanks: (formData as any).dictationBlanks || undefined,
+      organization: (formData as any).organization || undefined,
+      organizationBlanks: (formData as any).organizationBlanks || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -2678,15 +2684,53 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 — Review의 Script 탭에 표시)</span>
+                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 원본 — Dictation에 사용)</span>
               </label>
               <textarea
                 value={(formData as any).scriptText || ''}
                 onChange={(e) => setFormData({ ...formData, scriptText: e.target.value } as any)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
                 rows={3}
-                placeholder="리스닝 오디오의 스크립트(대본)를 입력하세요..."
+                placeholder="리스닝 오디오의 스크립트(대본) 원본을 입력하세요..."
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Dictation 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Review Dictation에서 빈칸으로 만들 단어들)</span>
+              </label>
+              <input
+                type="text"
+                value={(formData as any).dictationBlanks || ''}
+                onChange={(e) => setFormData({ ...formData, dictationBlanks: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                placeholder="예: important, decision, future, opportunity"
+              />
+              <p className="text-xs text-gray-500 mt-1">Script 원본에서 빈칸으로 만들 핵심 단어들을 쉼표로 구분해서 입력하세요.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Organization <span className="text-xs text-gray-400 font-normal">(구조/요약 — Announcement/Conversation/Lecture용, Dictation 아래 표시)</span>
+              </label>
+              <textarea
+                value={(formData as any).organization || ''}
+                onChange={(e) => setFormData({ ...formData, organization: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                rows={3}
+                placeholder="청취 내용의 구조/요약을 입력하세요. (예: 목적 → 배경 → 세부사항 → 결론)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Organization 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Organization에서 빈칸으로 만들 단어들)</span>
+              </label>
+              <input
+                type="text"
+                value={(formData as any).organizationBlanks || ''}
+                onChange={(e) => setFormData({ ...formData, organizationBlanks: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                placeholder="예: purpose, background, conclusion"
+              />
+              <p className="text-xs text-gray-500 mt-1">Organization에서 빈칸으로 만들 핵심 단어들을 쉼표로 구분해서 입력하세요.</p>
             </div>
           </div>
         )}
@@ -2798,6 +2842,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     emailTo: question.emailTo || '',
     translationNote: question.translationNote || '',
     scriptText: (question as any).scriptText || '',
+    dictationBlanks: (question as any).dictationBlanks || '',
+    organization: (question as any).organization || '',
+    organizationBlanks: (question as any).organizationBlanks || '',
     analysisNote: (question as any).analysisNote || '',
     vocabularyNote: question.vocabularyNote || '',
     colorTheme: (() => {
@@ -2883,6 +2930,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       student2ImageUrl: (formData as any).student2ImageUrl || undefined,
       translationNote: (formData as any).translationNote || undefined,
       scriptText: (formData as any).scriptText || undefined,
+      dictationBlanks: (formData as any).dictationBlanks || undefined,
+      organization: (formData as any).organization || undefined,
+      organizationBlanks: (formData as any).organizationBlanks || undefined,
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -3939,15 +3989,53 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 — Review의 Script 탭에 표시)</span>
+                Script <span className="text-xs text-gray-400 font-normal">(리스닝 스크립트 원본 — Dictation에 사용)</span>
               </label>
               <textarea
                 value={(formData as any).scriptText || ''}
                 onChange={(e) => setFormData({ ...formData, scriptText: e.target.value } as any)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
                 rows={3}
-                placeholder="리스닝 오디오의 스크립트(대본)를 입력하세요..."
+                placeholder="리스닝 오디오의 스크립트(대본) 원본을 입력하세요..."
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Dictation 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Review Dictation에서 빈칸으로 만들 단어들)</span>
+              </label>
+              <input
+                type="text"
+                value={(formData as any).dictationBlanks || ''}
+                onChange={(e) => setFormData({ ...formData, dictationBlanks: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                placeholder="예: important, decision, future, opportunity"
+              />
+              <p className="text-xs text-gray-500 mt-1">Script 원본에서 빈칸으로 만들 핵심 단어들을 쉼표로 구분해서 입력하세요.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Organization <span className="text-xs text-gray-400 font-normal">(구조/요약 — Announcement/Conversation/Lecture용, Dictation 아래 표시)</span>
+              </label>
+              <textarea
+                value={(formData as any).organization || ''}
+                onChange={(e) => setFormData({ ...formData, organization: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                rows={3}
+                placeholder="청취 내용의 구조/요약을 입력하세요. (예: 목적 → 배경 → 세부사항 → 결론)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Organization 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Organization에서 빈칸으로 만들 단어들)</span>
+              </label>
+              <input
+                type="text"
+                value={(formData as any).organizationBlanks || ''}
+                onChange={(e) => setFormData({ ...formData, organizationBlanks: e.target.value } as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] text-sm"
+                placeholder="예: purpose, background, conclusion"
+              />
+              <p className="text-xs text-gray-500 mt-1">Organization에서 빈칸으로 만들 핵심 단어들을 쉼표로 구분해서 입력하세요.</p>
             </div>
           </div>
         )}
@@ -4819,6 +4907,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     const questions: TPOQuestion[] = [];
     let lastPassage = ''; // inherit passageText from previous Q for academic reading
     let lastScript = ''; // inherit scriptText from previous Q for listening grouped Qs
+    let lastDictationBlanks = ''; // inherit dictationBlanks from previous Q for listening grouped Qs
+    let lastOrganization = ''; // inherit organization from previous Q for listening grouped Qs
+    let lastOrganizationBlanks = ''; // inherit organizationBlanks from previous Q for listening grouped Qs
 
     const isCompleteWordsBulkType = (raw: string): boolean => {
       const normalized = raw.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -4893,7 +4984,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       };
 
       const passageText = after(['지문:', '본문:', '내용:', 'text:', 'Text:', 'passage:', 'Passage:']) || undefined;
-      const scriptText = after(['스크립트:']) || undefined;
+      const scriptText = after(['스크립트:', 'script:']) || undefined;
+      const dictationBlanks = single(['빈칸단어:', 'dictation:', 'dictation blanks:', '빈칸단어']) || undefined;
+      const organization = after(['구조:', 'organization:', 'organization', '구조']) || undefined;
+      const organizationBlanks = single(['구조빈칸:', 'organization blanks:', '구조빈칸']) || undefined;
 
       // Audio/image filenames — stored as pending markers, matched later via 미디어 일괄 매칭
       // Reading has NO audio — only image.
@@ -4979,6 +5073,25 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       }
       if (effectiveScript) lastScript = effectiveScript;
 
+      // Dictation blanks / Organization inheritance for Listening (grouped Qs share)
+      let effectiveDictationBlanks = dictationBlanks;
+      if (!effectiveDictationBlanks && lastDictationBlanks) {
+        effectiveDictationBlanks = lastDictationBlanks || undefined;
+      }
+      if (effectiveDictationBlanks) lastDictationBlanks = effectiveDictationBlanks;
+
+      let effectiveOrganization = organization;
+      if (!effectiveOrganization && lastOrganization) {
+        effectiveOrganization = lastOrganization || undefined;
+      }
+      if (effectiveOrganization) lastOrganization = effectiveOrganization;
+
+      let effectiveOrganizationBlanks = organizationBlanks;
+      if (!effectiveOrganizationBlanks && lastOrganizationBlanks) {
+        effectiveOrganizationBlanks = lastOrganizationBlanks || undefined;
+      }
+      if (effectiveOrganizationBlanks) lastOrganizationBlanks = effectiveOrganizationBlanks;
+
       // Email fields
       const emailTo = single(['받는이:']);
       const emailSubject = single(['제목:']);
@@ -5056,6 +5169,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
           explanation,
           passageText: finalPassageText || undefined,
           scriptText: effectiveScript || undefined,
+          dictationBlanks: effectiveDictationBlanks || undefined,
+          organization: effectiveOrganization || undefined,
+          organizationBlanks: effectiveOrganizationBlanks || undefined,
           analysisNote,
           vocabularyNote,
           translationNote,
@@ -5111,6 +5227,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   const CSV_COLUMNS = [
     'questionNumber', 'questionType', 'difficulty', 'module',
     'passageTitle', 'passageText', 'scriptText',
+    'dictationBlanks', 'organization', 'organizationBlanks',
     'questionText', 'optionA', 'optionB', 'optionC', 'optionD',
     'correctAnswer', 'explanation', 'audioFileName', 'imageFileName',
   ];
@@ -5136,6 +5253,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Man: Excuse me, could you tell me where the library is?\nWoman: Sure, it\'s the building right across the quad, next to the science building.',
+      'library, science building',
+      '목적: 도서관 위치 안내 → 세부정보: 건물 위치 설명',
+      'purpose, location',
       'Choose the best response.',
       'It\'s across the quad, next to the science building.', 'I don\'t know where it is.', 'The library is closed today.', 'You should ask someone else.',
       'A',
@@ -5150,6 +5270,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Sample Passage Title',
       'Full passage text goes here. Line breaks are OK inside this cell.',
       section === 'Speaking' ? 'Full listening script goes here.' : '',
+      '',
+      '',
+      '',
       'What is the main idea of the passage?',
       'First option', 'Second option', 'Third option', 'Fourth option',
       'First option',
@@ -5167,6 +5290,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       'When peo[ple] think of inven[tion], they imagine tech[nology]. But edu[cation] shapes our cul[ture] and soc[iety]. Without mo[ney] or moti[vation], suc[cess] and pro[gress] are hard.',
       '',
+      '',
+      '',
+      '',
       'Fill in the missing letters in the blank.',
       '', '', '', '',
       '', '', '', '',
@@ -5180,6 +5306,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Module 1',
       'Read an Email',
       'Dear Edward, Thank you for being a valued member of Art For Everyone. We noticed that your annual membership is set to expire on October 1st. To continue enjoying unlimited access, please renew before the expiration date. Best regards, Membership Services Team',
+      '',
+      '',
+      '',
       '',
       'What is the main purpose of the email?',
       'To announce a membership renewal', 'To ask for a donation', 'To complain about a service', 'To introduce a new artist',
@@ -5198,6 +5327,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Read an Academic Passage',
       'The theory of plate tectonics revolutionized geology in the 1960s. Before this theory, scientists could not explain many geological phenomena...',
       '',
+      '',
+      '',
+      '',
       'What is the main idea of the passage?',
       'Option A', 'Option B', 'Option C', 'Option D',
       'B',
@@ -5214,6 +5346,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Module 1',
       'Read a Table',
       '유형: table\n색상: teal\n필드:\n제목: Class Schedule\n행: | Day | Time | Subject |\n|---|---|---|\n| Mon | 9:00 | Math |\n| Tue | 10:00 | English |\n| Wed | 11:00 | Science |',
+      '',
+      '',
+      '',
       '',
       'What subject does the student have on Tuesday at 10:00?',
       'Math', 'English', 'Science', 'History',
@@ -5232,6 +5367,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Read an Information Box',
       '유형: infobox\n색상: blue\n필드:\n제목: Library Hours\n내용: The library is open Monday through Friday from 8:00 AM to 10:00 PM. On weekends, hours are 10:00 AM to 6:00 PM. Holidays may affect these hours.',
       '',
+      '',
+      '',
+      '',
       'When is the library open on weekends?',
       '8:00 AM to 10:00 PM', '10:00 AM to 6:00 PM', 'Closed on weekends', '9:00 AM to 5:00 PM',
       'B',
@@ -5248,6 +5386,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Module 1',
       'Read a Memo',
       '유형: memo\n색상: gray\n필드:\n받는사람: All Teaching Staff\n보낸사람: Principal Office\n날짜: September 5\n제목: Faculty Meeting Rescheduled\n본문: The faculty meeting originally scheduled for Thursday has been moved to Friday at 3:30 PM in the main conference room. Please bring your department curriculum proposals. Attendance is mandatory.',
+      '',
+      '',
+      '',
       '',
       'When will the faculty meeting take place?',
       'Thursday at 3:30 PM', 'Friday at 3:30 PM', 'Thursday in the morning', 'Friday in the morning',
@@ -5283,6 +5424,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Read a flyer',
       '유형: flyer\n색상: teal\n필드:\n제목: Campus Career Fair — Spring Edition\n본문: Meet recruiters from over 50 companies across tech, finance, healthcare, and nonprofit sectors. Bring multiple copies of your resume and dress professionally.\n\nAll students and recent alumni are welcome. Preregister online to skip the on-site check-in line and receive a digital company directory in advance.\n\nDon\'t miss the panel sessions on interview skills and resume workshops running throughout the day.',
       '',
+      '',
+      '',
+      '',
       'What is the main purpose of the career fair?',
       'To offer free interview training', 'To help students connect with potential employers', 'To recruit volunteers for campus events', 'To promote specific companies',
       'B',
@@ -5299,6 +5443,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Module 1',
       'Read an FAQ',
       '유형: faq\n색상: purple\n필드:\n제목: Community Pool — Frequently Asked Questions\n질문답변: Q. What are the pool hours?\nA. The pool is open daily from 6 AM to 9 PM. Lap swimming is available from 6 AM to 8 AM.\n\nQ. Can guests use the pool?\nA. Yes. Each member may bring up to two guests. Guest passes are $5 per person per visit.\n\nQ. Is the pool heated?\nA. Yes, the pool is maintained at 82°F (28°C) year-round.',
+      '',
+      '',
+      '',
       '',
       'How much does a guest pass cost?',
       '$2 per person', '$5 per person', 'Free for members', '$10 per person',
@@ -5318,6 +5465,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Man: Are you going to the study group meeting tonight?\nWoman: Yes, I am. It starts at 7 PM in the library.',
+      'study group, library',
+      '목적: 스터디 그룹 모임 → 세부정보: 시간/장소',
+      'purpose, time, location',
       'Choose the best response.',
       'I\'ll be there at 7.', 'No, I missed it.', 'The library is closed.', 'What time is it?',
       'A',
@@ -5335,6 +5485,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Student: Professor Johnson, I\'d like to ask about the research paper deadline.\nProfessor: The paper is due next Friday. I expect at least 10 pages with proper citations.\nStudent: Can I use online sources?\nProfessor: Yes, but make sure they\'re academic sources, not just any website.',
+      'research paper, deadline, citations',
+      '목적: 리서치 페이퍼 마감일 문의 → 요구사항: 10페이지, 학술적 출처',
+      'requirements, deadline, sources',
       'What does the professor require for the research paper?',
       'At least 5 pages with any sources', 'At least 10 pages with academic citations', 'No online sources allowed', 'Only books from the library',
       'B',
@@ -5352,6 +5505,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Attention students. The campus bookstore will be closed this Saturday for inventory. Regular hours will resume on Monday. If you need to purchase textbooks, please do so before Friday evening. Thank you.',
+      'bookstore, inventory, Saturday',
+      '목적: 공지 → 세부정보: 토요일 휴무, 월요일 정상영업 → 조치: 금요일까지 구매',
+      'purpose, action, schedule',
       'Why will the bookstore be closed on Saturday?',
       'For renovation', 'For inventory', 'For a holiday', 'For staff training',
       'B',
@@ -5369,6 +5525,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Professor: Today we\'ll examine the concept of symbiosis in marine ecosystems. Symbiosis refers to the close, long-term interaction between different biological species. The three main types are mutualism, where both species benefit; commensalism, where one benefits and the other is unaffected; and parasitism, where one benefits at the expense of the other. A classic example of mutualism is the relationship between clownfish and sea anemones — the clownfish gains protection while the anemone receives nutrients from the fish\'s waste.',
+      'symbiosis, mutualism, clownfish',
+      '주제: 해양 생태계의 공생 → 분류: 상리공생/편리공생/기생 → 예시: 흰동가리와 말미잘',
+      'topic, classification, example',
       'According to the professor, what is an example of mutualism?',
       'A tick feeding on a dog', 'A barnacle attaching to a whale', 'A clownfish and sea anemone relationship', 'A lion hunting a zebra',
       'C',
@@ -5386,6 +5545,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Professor: The phenomenon of ocean acidification is directly linked to increased atmospheric CO2. When CO2 dissolves in seawater, it forms carbonic acid, which lowers the ocean\'s pH. This process threatens calcifying organisms like corals and mollusks, whose calcium carbonate structures dissolve more readily in acidic conditions. Recent studies indicate that the current rate of acidification is unprecedented in the geological record, raising serious concerns about marine biodiversity.',
+      'acidification, carbonic acid, corals',
+      '원인: CO2 증가 → 과정: 탄산 형성, pH 감소 → 영향: 석회화 생물 위협',
+      'cause, process, impact',
       'What is the main concern about ocean acidification mentioned in the lecture?',
       'It increases fish populations', 'It dissolves calcium carbonate structures of calcifying organisms', 'It raises ocean temperatures directly', 'It reduces atmospheric CO2 levels',
       'B',
@@ -5403,6 +5565,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Man: Did you finish the chemistry lab report?\nWoman: Not yet. I still need to analyze the data from yesterday\'s experiment.',
+      'lab report, data, experiment',
+      '상황: 화학 실험 보고서 → 진행상황: 데이터 분석 남음',
+      'situation, progress',
       'Choose the best response.',
       'The experiment was successful.', 'I\'ll help you analyze the data.', 'The report is due tomorrow.', 'Where is the lab?',
       'B',
@@ -5420,6 +5585,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '',
       'Student: Professor Lee, I\'m interested in joining your research team next semester. What are the requirements?\nProfessor: You need to have completed Biology 201 with a B or higher, and submit a brief statement of interest. Prior lab experience is preferred but not required.\nStudent: I took Biology 201 last fall and got an A. I\'ll prepare the statement this week.\nProfessor: Great. The application deadline is March 15th.',
+      'research team, requirements, deadline',
+      '목적: 연구팀 합류 문의 → 요구사항: Biology 201 B+ → 기한: 3월 15일',
+      'purpose, requirements, deadline',
       'What is one requirement to join the research team?',
       'A letter of recommendation', 'Completion of Biology 201 with a B or higher', 'Two years of lab experience', 'A published research paper',
       'B',
@@ -5440,6 +5608,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Campus Announcement',
       '',
       'The library will be closed on Saturday for maintenance. Please return all books by Friday evening.',
+      '',
+      '',
+      '',
+      '',
       'Listen and repeat the announcement.',
       '', '', '', '',
       'The library will be closed on Saturday for maintenance. Please return all books by Friday evening.',
@@ -5458,6 +5630,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Module 2',
       '',
       '유형: email\n필드:\nto: Customer Service\nsubject: Recent order\nbody: You recently purchased a shirt online for the upcoming university gala. When the shirt arrived, you noticed some issues. Write an email to customer service. In your email, do the following: Explain what you liked about your online shopping experience. | Describe the issue with the shirt you received. | Suggest a resolution for the issue.',
+      '',
+      '',
+      '',
       '',
       'Write an email to customer service based on the scenario. Write as much as you can and in complete sentences.',
       '', '', '', '',
@@ -5478,6 +5653,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '',
       '유형: memo\n필드:\n제목: Art History Class Discussion\nbody: 교수(Dr. Gupta): Today we will discuss the role of art in society. What do you think? Does art challenge norms or preserve heritage?  Claire: I think art can challenge societal norms by presenting alternative perspectives.  Paul: I believe art\'s role in preserving heritage is its most important role.',
       '',
+      '',
+      '',
+      '',
       "Write a post responding to the professor's question. Express and support your opinion, and make a contribution to the discussion in your own words. An effective response will contain at least 100 words.",
       '', '', '', '',
       '',
@@ -5493,6 +5671,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Build a Sentence',
       '쉬움',
       'Module 1',
+      '',
+      '',
+      '',
       '',
       '',
       '',
@@ -5586,6 +5767,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
         const iNum = idx('questionNumber'), iType = idx('questionType'), iDiff = idx('difficulty'), iMod = idx('module');
         const iPTitle = idx('passageTitle'), iPText = idx('passageText'), iScript = idx('scriptText');
+        const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
 
@@ -5694,6 +5876,9 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               passageTitle: finalPassageTitle,
               passageText: finalPassageText,
               scriptText: get(iScript) || undefined,
+              dictationBlanks: get(iDictBlanks) || undefined,
+              organization: get(iOrg) || undefined,
+              organizationBlanks: get(iOrgBlanks) || undefined,
               difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
               ...(blanks ? { blanks } : {}),
               ...(bsWords ? { words: bsWords } : {}),

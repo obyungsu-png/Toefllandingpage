@@ -140,6 +140,9 @@ interface ReviewQuestion {
   hasAudio?: boolean;
   audioText?: string;
   scriptText?: string;
+  dictationBlanks?: string;
+  organization?: string;
+  organizationBlanks?: string;
   passageText?: string;
   imageUrl?: string;
   audioUrl?: string;
@@ -206,6 +209,20 @@ export function QuestionReviewFull({
   const [playbackRate, setPlaybackRate] = useState(1);
   const progressInterval = useRef<number | null>(null);
   const listeningAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Listening Dictation + Organization 빈칸 입력 상태
+  const [dictationAnswers, setDictationAnswers] = useState<Record<number, string>>({});
+  const [dictationChecked, setDictationChecked] = useState(false);
+  const [orgAnswers, setOrgAnswers] = useState<Record<number, string>>({});
+  const [orgChecked, setOrgChecked] = useState(false);
+
+  // 문제 전환 시 Dictation/Organization 상태 초기화
+  useEffect(() => {
+    setDictationAnswers({});
+    setDictationChecked(false);
+    setOrgAnswers({});
+    setOrgChecked(false);
+  }, [currentQuestionIndex, activeSection]);
 
   // Reading review — 하이라이트/밑줄/단어 뜻 팝업 도구 상태
   const [activeTool, setActiveTool] = useState<'highlight' | 'underline' | null>(null);
@@ -347,6 +364,9 @@ export function QuestionReviewFull({
           hasAudio: activeSection === 'Listening',
           audioText: realQ.scriptText || realQ.audioText || undefined,
           scriptText: realQ.scriptText,
+          dictationBlanks: realQ.dictationBlanks,
+          organization: realQ.organization,
+          organizationBlanks: realQ.organizationBlanks,
           audioUrl: realQ.audioUrl,
           passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
@@ -1227,6 +1247,144 @@ export function QuestionReviewFull({
                         CMS에 등록된 오디오가 없습니다.
                       </div>
                     )}
+
+                    {/* Dictation — 리스닝 스크립트 빈칸 채우기 */}
+                    {transcript && (() => {
+                      const blankList = (realQ?.dictationBlanks || (currentQuestion as any)?.dictationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+                      const blankSet = new Set(blankList.map((w: string) => w.toLowerCase()));
+                      const tokens = transcript.split(/(\s+)/);
+                      let blankIdx = 0;
+                      return (
+                        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide">✨ Dictation</p>
+                            {blankList.length > 0 && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setDictationChecked(!dictationChecked)}
+                                  className="text-xs px-2 py-1 rounded bg-[#2d7a7c] text-white hover:bg-[#1e5a5c]"
+                                >
+                                  {dictationChecked ? '정답 숨기기' : '정답 확인'}
+                                </button>
+                                <button
+                                  onClick={() => { setDictationAnswers({}); setDictationChecked(false); }}
+                                  className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  초기화
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
+                            {blankList.length === 0 ? (
+                              transcript
+                            ) : (
+                              tokens.map((token, i) => {
+                                const lower = token.toLowerCase().replace(/[^a-z0-9']/g, '');
+                                if (lower && blankSet.has(lower)) {
+                                  const idx = blankIdx++;
+                                  const userAns = dictationAnswers[idx] || '';
+                                  const isCorrect = userAns.toLowerCase().trim() === lower;
+                                  return (
+                                    <input
+                                      key={i}
+                                      type="text"
+                                      value={userAns}
+                                      onChange={(e) => setDictationAnswers({ ...dictationAnswers, [idx]: e.target.value })}
+                                      className={`inline-block mx-1 px-2 py-0.5 border rounded text-sm ${
+                                        dictationChecked
+                                          ? (isCorrect
+                                            ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                            : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300')
+                                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100'
+                                      }`}
+                                      style={{ width: `${Math.max(60, token.length * 10)}px` }}
+                                      placeholder="..."
+                                    />
+                                  );
+                                }
+                                return <span key={i}>{token}</span>;
+                              })
+                            )}
+                          </p>
+                          {blankList.length > 0 && dictationChecked && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              빈칸: {blankList.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Organization — 구조/요약 빈칸 채우기 (Announcement/Conversation/Lecture용) */}
+                    {(() => {
+                      const orgText = realQ?.organization || (currentQuestion as any)?.organization;
+                      if (!orgText) return null;
+                      const orgBlankList = (realQ?.organizationBlanks || (currentQuestion as any)?.organizationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+                      const orgBlankSet = new Set(orgBlankList.map((w: string) => w.toLowerCase()));
+                      const tokens = orgText.split(/(\s+)/);
+                      let blankIdx = 0;
+                      return (
+                        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide">📋 Organization</p>
+                            {orgBlankList.length > 0 && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setOrgChecked(!orgChecked)}
+                                  className="text-xs px-2 py-1 rounded bg-[#2d7a7c] text-white hover:bg-[#1e5a5c]"
+                                >
+                                  {orgChecked ? '정답 숨기기' : '정답 확인'}
+                                </button>
+                                <button
+                                  onClick={() => { setOrgAnswers({}); setOrgChecked(false); }}
+                                  className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  초기화
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-sm leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-wrap">
+                            {orgBlankList.length === 0 ? (
+                              orgText
+                            ) : (
+                              tokens.map((token, i) => {
+                                const lower = token.toLowerCase().replace(/[^a-z0-9']/g, '');
+                                if (lower && orgBlankSet.has(lower)) {
+                                  const idx = blankIdx++;
+                                  const userAns = orgAnswers[idx] || '';
+                                  const isCorrect = userAns.toLowerCase().trim() === lower;
+                                  return (
+                                    <input
+                                      key={i}
+                                      type="text"
+                                      value={userAns}
+                                      onChange={(e) => setOrgAnswers({ ...orgAnswers, [idx]: e.target.value })}
+                                      className={`inline-block mx-1 px-2 py-0.5 border rounded text-sm ${
+                                        orgChecked
+                                          ? (isCorrect
+                                            ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                            : 'border-red-400 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300')
+                                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100'
+                                      }`}
+                                      style={{ width: `${Math.max(60, token.length * 10)}px` }}
+                                      placeholder="..."
+                                    />
+                                  );
+                                }
+                                return <span key={i}>{token}</span>;
+                              })
+                            )}
+                          </p>
+                          {orgBlankList.length > 0 && orgChecked && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              빈칸: {orgBlankList.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 </div>

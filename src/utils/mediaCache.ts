@@ -260,6 +260,11 @@ export async function createCachedAudio(url?: string): Promise<HTMLAudioElement>
     const resolvedUrl = await getMediaUrl(url);
     audio.src = resolvedUrl;
   }
+  // 오디오 종료 시 잔여 노이즈(측/틱/팝 소리) 방지 — volume=0으로 뮤트
+  // (onended property와 별도로 동작하므로 컴포넌트에서 onended 덮어써도 OK)
+  audio.addEventListener('ended', () => {
+    try { audio.volume = 0; } catch {}
+  });
   return audio;
 }
 
@@ -287,6 +292,10 @@ export function createCachedAudioSync(url?: string): HTMLAudioElement {
       }).catch(() => {});
     }
   }
+  // 오디오 종료 시 잔여 노이즈(측/틱/팝 소리) 방지 — volume=0으로 뮤트
+  audio.addEventListener('ended', () => {
+    try { audio.volume = 0; } catch {}
+  });
   return audio;
 }
 
