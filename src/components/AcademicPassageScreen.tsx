@@ -5,7 +5,6 @@ import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
-import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface AcademicPassageScreenProps {
   question: any; // TPOQuestion
@@ -31,6 +30,11 @@ interface AcademicPassageScreenProps {
  * visual layout that was previously hardcoded per fixed question number
  * (Module1Question16-20Screen etc). Data comes entirely from the CMS
  * question object passed in — no hardcoded fallback text.
+ *
+ * AI 튜터는 우측 통합 아이콘 바(ReviewAssistantPanel)로 일원화되어 있어
+ * 여기서는 별도의 ToeflAiWidget을 마운트하지 않음 (중복 패널 방지).
+ * Tools(밑줄/하이라이트/사전)는 왼쪽 지문뿐 아니라 오른쪽 질문/보기 영역에도
+ * 동일하게 적용됨.
  */
 export function AcademicPassageScreen({
   question,
@@ -51,14 +55,7 @@ export function AcademicPassageScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [aiTutorOpen, setAiTutorOpen] = useState(false);
-  const [aiTutorPrompt, setAiTutorPrompt] = useState('');
 
-  // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시 위젯을 열고 자동 전송
-  const handleAiTutorRequest = (prompt: string) => {
-    setAiTutorPrompt(prompt);
-    setAiTutorOpen(true);
-  };
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -71,6 +68,8 @@ export function AcademicPassageScreen({
 
   const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
   const questionNumber = question?.questionNumber ?? '';
+  // 오른쪽(질문+보기) 영역 하이라이트용 텍스트 컨텍스트 — 사전 조회 시 문맥으로 사용
+  const questionAreaText = [question?.questionText, ...options].filter(Boolean).join('\n');
 
   return (
     <div className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${darkMode ? 'dark' : ''}`}>
@@ -172,7 +171,6 @@ export function AcademicPassageScreen({
                   passageKey={passageKey}
                   maxHeight="none"
                   toolsOpen={toolsOpen}
-                  onAiTutorRequest={handleAiTutorRequest}
                 />
               ) : (
                 <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
@@ -181,46 +179,65 @@ export function AcademicPassageScreen({
               )
             }
             rightContent={
-              <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
-                <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                  {options.map((option, index) => (
-                    <RadioOption
-                      key={index}
-                      id={`academic-q${questionNumber}-option-${index}`}
-                      name={`academic-q${questionNumber}`}
-                      value={option}
-                      checked={selectedAnswer === option}
-                      onChange={() => {
-                        setSelectedAnswer(option);
-                        if (typeof window !== 'undefined') {
-                          (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
-                        }
-                      }}
-                      label={option.replace(/^[A-D]\.\s*/, '')}
-                      size="sm"
-                    />
-                  ))}
-                </div>
-              </>
+              isReviewMode && testId && passageKey ? (
+                <ReadingReviewPassage
+                  passageText={questionAreaText}
+                  testId={testId}
+                  passageKey={`${passageKey}-question`}
+                  maxHeight="none"
+                  toolsOpen={toolsOpen}
+                >
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                    {options.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`academic-q${questionNumber}-option-${index}`}
+                        name={`academic-q${questionNumber}`}
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => {
+                          setSelectedAnswer(option);
+                          if (typeof window !== 'undefined') {
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                          }
+                        }}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                </ReadingReviewPassage>
+              ) : (
+                <>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                    {options.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`academic-q${questionNumber}-option-${index}`}
+                        name={`academic-q${questionNumber}`}
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => {
+                          setSelectedAnswer(option);
+                          if (typeof window !== 'undefined') {
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                          }
+                        }}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                </>
+              )
             }
           />
         </div>
       </div>
 
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
-
-      {isReviewMode && (
-        <ToeflAiWidget
-          position="right"
-          showFab={false}
-          open={aiTutorOpen}
-          onOpenChange={setAiTutorOpen}
-          initialQuestion={aiTutorPrompt}
-          contextLabel={`Reading · ${passageTitle || 'Academic Passage'}`}
-          questionData={question}
-        />
-      )}
 
       <MobileQuestionNav
         onBack={onBack}

@@ -6,7 +6,6 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { renderDailyLifePassage } from './ReadDailyLifeTemplates';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
-import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface DailyLifeScreenProps {
   question: any; // TPOQuestion
@@ -29,6 +28,9 @@ interface DailyLifeScreenProps {
  * social_media/advertisement/article/form/custom), reusing the already-proven
  * renderDailyLifePassage() renderer for structured (필드:) content, and falling
  * back to plain paragraph text for freeform (지문:) content like reviews.
+ *
+ * AI 튜터는 우측 통합 아이콘 바(ReviewAssistantPanel)로 일원화되어 있어
+ * 여기서는 별도의 ToeflAiWidget을 마운트하지 않음 (중복 패널 방지).
  */
 export function DailyLifeScreen({
   question,
@@ -46,14 +48,6 @@ export function DailyLifeScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [aiTutorOpen, setAiTutorOpen] = useState(false);
-  const [aiTutorPrompt, setAiTutorPrompt] = useState('');
-
-  // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시 위젯을 열고 자동 전송
-  const handleAiTutorRequest = (prompt: string) => {
-    setAiTutorPrompt(prompt);
-    setAiTutorOpen(true);
-  };
 
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
@@ -156,7 +150,6 @@ export function DailyLifeScreen({
                   passageKey={passageKey}
                   maxHeight="65vh"
                   toolsOpen={toolsOpen}
-                  onAiTutorRequest={handleAiTutorRequest}
                 >
                   <div className="space-y-3">
                     {imageUrl && (
@@ -187,28 +180,59 @@ export function DailyLifeScreen({
               )
             }
             rightContent={
-              <>
-                <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
-                <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                  {options.map((option, index) => (
-                    <RadioOption
-                      key={index}
-                      id={`daily-q${questionNumber}-option-${index}`}
-                      name={`daily-q${questionNumber}`}
-                      value={option}
-                      checked={selectedAnswer === option}
-                      onChange={() => {
-                        setSelectedAnswer(option);
-                        if (typeof window !== 'undefined') {
-                          (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
-                        }
-                      }}
-                      label={option.replace(/^[A-D]\.\s*/, '')}
-                      size="sm"
-                    />
-                  ))}
-                </div>
-              </>
+              isReviewMode && testId && passageKey ? (
+                <ReadingReviewPassage
+                  passageText={[question?.questionText, ...options].filter(Boolean).join('\n')}
+                  testId={testId}
+                  passageKey={`${passageKey}-question`}
+                  maxHeight="none"
+                  toolsOpen={toolsOpen}
+                >
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                    {options.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`daily-q${questionNumber}-option-${index}`}
+                        name={`daily-q${questionNumber}`}
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => {
+                          setSelectedAnswer(option);
+                          if (typeof window !== 'undefined') {
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                          }
+                        }}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                </ReadingReviewPassage>
+              ) : (
+                <>
+                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <div className="space-y-3 md:space-y-4 lg:space-y-5">
+                    {options.map((option, index) => (
+                      <RadioOption
+                        key={index}
+                        id={`daily-q${questionNumber}-option-${index}`}
+                        name={`daily-q${questionNumber}`}
+                        value={option}
+                        checked={selectedAnswer === option}
+                        onChange={() => {
+                          setSelectedAnswer(option);
+                          if (typeof window !== 'undefined') {
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                          }
+                        }}
+                        label={option.replace(/^[A-D]\.\s*/, '')}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                </>
+              )
             }
           />
         </div>
@@ -216,17 +240,6 @@ export function DailyLifeScreen({
 
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
 
-      {isReviewMode && (
-        <ToeflAiWidget
-          position="right"
-          showFab={false}
-          open={aiTutorOpen}
-          onOpenChange={setAiTutorOpen}
-          initialQuestion={aiTutorPrompt}
-          contextLabel="Reading · Read in Daily Life"
-          questionData={question}
-        />
-      )}
       <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
     </div>
   );

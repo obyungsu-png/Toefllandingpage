@@ -10,9 +10,12 @@ interface WordPopupProps {
   x: number;
   y: number;
   onClose: () => void;
+  /** 팝업 안에서 EN/KO를 바로 전환할 수 있게 하는 콜백 (선택).
+   *  제공되면 헤더에 작은 EN/KO 토글 버튼이 표시됨. */
+  onLanguageChange?: (language: 'en' | 'ko') => void;
 }
 
-export function WordPopup({ word, context, language, x, y, onClose }: WordPopupProps) {
+export function WordPopup({ word, context, language, x, y, onClose, onLanguageChange }: WordPopupProps) {
   const [loading, setLoading] = useState(true);
   const [definitions, setDefinitions] = useState<WordDefinition[]>([]);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
@@ -113,12 +116,38 @@ export function WordPopup({ word, context, language, x, y, onClose }: WordPopupP
             <span className="text-xs text-gray-500 dark:text-gray-400 italic">{translation.partOfSpeech}</span>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-2">
+          {onLanguageChange && (
+            <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-700 rounded-md p-0.5">
+              <button
+                onClick={() => onLanguageChange('en')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                  language === 'en'
+                    ? 'bg-[#1e6b73] text-white'
+                    : 'text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => onLanguageChange('ko')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${
+                  language === 'ko'
+                    ? 'bg-[#1e6b73] text-white'
+                    : 'text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                KO
+              </button>
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {/* 내용 */}

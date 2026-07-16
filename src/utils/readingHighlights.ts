@@ -7,6 +7,8 @@ export interface Highlight {
   start_offset: number;
   end_offset: number;
   type: 'h' | 'u'; // 'h'=highlight, 'u'=underline
+  /** 하이라이트/밑줄 색상 (hex). 예전 데이터에는 없을 수 있어 optional */
+  color?: string;
   expires_at: string;
 }
 
@@ -60,6 +62,7 @@ export async function saveHighlight(highlight: Omit<Highlight, 'id' | 'expires_a
         start_offset: highlight.start_offset,
         end_offset: highlight.end_offset,
         type: highlight.type,
+        color: highlight.color || null,
         expires_at: expiryDate.toISOString(),
       })
       .select('id')
@@ -86,7 +89,7 @@ export async function loadHighlights(testId: string, passageKey: string): Promis
   try {
     const { data, error } = await supabase
       .from('reading_highlights')
-      .select('id, test_id, passage_key, start_offset, end_offset, type, expires_at')
+      .select('id, test_id, passage_key, start_offset, end_offset, type, color, expires_at')
       .eq('user_id', userId)
       .eq('test_id', testId)
       .eq('passage_key', passageKey)

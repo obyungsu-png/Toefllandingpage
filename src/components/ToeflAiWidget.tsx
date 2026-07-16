@@ -29,10 +29,14 @@ const MODEL_OPTIONS: { key: AiModel; label: string; modelId: string }[] = [
 ];
 
 const BASE_SYSTEM_PROMPT =
-  'TOEFL 튜터 AI. 한국어로 간결·실용적으로 답변. 영어 예문+한글 설명. Reading/Listening/Speaking/Writing 전문.';
+  'TOEFL 튜터 AI. 반드시 핵심만 간결하게 답변 — 불필요한 배경 설명, 반복, 장황한 부연 설명 금지. ' +
+  '기본은 3~6줄 이내로 핵심 답변만 제시. 예문은 꼭 필요할 때 1개만. ' +
+  '더 자세한 설명은 사용자가 "더 설명해줘"처럼 명시적으로 요청할 때만 제공. ' +
+  '한국어로 실용적으로 답변. 영어 예문+한글 설명. Reading/Listening/Speaking/Writing 전문.';
 
 const OUTPUT_FORMAT_INSTRUCTION =
-  '[형식] 마크다운(#,**,*,`) 금지. <b>강조</b>, <u>항목명</u> 사용. 목록은 새 줄만. 줄바꿈으로 구조화.';
+  '[형식] 마크다운(#,**,*,`) 금지. <b>강조</b>, <u>항목명</u> 사용. 목록은 새 줄만. 줄바꿈으로 구조화. ' +
+  '군더더기 문장(예: "네, 알겠습니다", "좋은 질문이네요") 없이 바로 본론만 답변.';
 
 // ───────────────────────────────────────────────────────────────────────────
 //  문제 데이터 → 컨텍스트 문자열 변환
@@ -317,7 +321,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           { role: 'system', content: systemPrompt },
           ...newHistory.slice(-2).map((msg) => ({ role: msg.role, content: msg.content })),
         ],
-        max_tokens: 1200,
+        max_tokens: 600,
         temperature: 0.6,
         stream: true,
       };

@@ -211,6 +211,9 @@ export function ReadingTestEngine({
         getCurrentSectionData={() => sectionData}
         testBankType={testBankType}
         handleTabChange={handleTabChange}
+        isReviewMode={isReviewMode}
+        testId={`${testBankType}-${currentTest?.tpoNumber ?? 'unknown'}-reading`}
+        passageKey={`reading-m${module}-q${current.question.questionNumber}`}
       />
     );
   }

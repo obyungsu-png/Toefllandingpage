@@ -7119,6 +7119,9 @@ function AppContent() {
           setShowModule1Details={setShowModule1Details}
           currentTest={currentTest}
           getCurrentSectionData={getCurrentSectionData}
+          isReviewMode={isReviewMode}
+          testId={`${testBankType}-${currentTest?.tpoNumber ?? 'unknown'}-reading`}
+          passageKey="reading-m1-complete-words"
         />
       )}
       

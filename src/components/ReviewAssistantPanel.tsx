@@ -536,7 +536,13 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           <button
             type="button"
             title="AI 튜터"
-            onClick={onOpenAiTutor}
+            onClick={() => {
+              // 우측에 AI 튜터 패널이 새로 열리므로, 겹치지 않도록
+              // 현재 열려있는 탭 콘텐츠 드로어(Dictation/Key Words/Analysis 등)를
+              // 먼저 잠시 닫아준다.
+              setActiveTab(null);
+              onOpenAiTutor();
+            }}
             className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span

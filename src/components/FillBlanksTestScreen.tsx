@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import { ReadingReviewPassage } from './ReadingReviewPassage';
 import {
   getQuestionRangeLabel,
   isCompleteWordsType,
@@ -31,6 +33,12 @@ interface FillBlanksTestScreenProps {
   /** Optional: override what "Back" does (e.g. go to a previous Complete
    *  Words group instead of the module intro). */
   onBack?: () => void;
+  /** 리뷰 모드 — Tools(밑줄/하이라이트/사전) + 다크 모드 토글 활성화 */
+  isReviewMode?: boolean;
+  /** Supabase 하이라이트 저장용 테스트 ID */
+  testId?: string;
+  /** Supabase 하이라이트 저장용 지문 키 */
+  passageKey?: string;
 }
 
 const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
@@ -47,9 +55,14 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   module = 1,
   onNext,
   onBack,
+  isReviewMode = false,
+  testId,
+  passageKey,
 }) => {
   const [inputValues, setInputValues] = React.useState<Record<number, string>>({});
   const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
   
@@ -217,7 +230,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+    <div className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${darkMode ? 'dark' : ''}`}>
       {/* Content layout */}
       <div className="flex-1 flex flex-col overflow-auto">
         {/* Header */}
@@ -273,34 +286,82 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
         </div>
 
         {/* Navigation tabs */}
-        <div className="bg-white border-b border-gray-300 shrink-0">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 shrink-0">
           <div className="px-3 sm:px-8 py-2 sm:py-3">
-            <div className="flex gap-4 sm:gap-8">
-              <div className="text-gray-700 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">
+            <div className="flex gap-4 sm:gap-8 items-end">
+              <div className="text-gray-700 dark:text-gray-200 font-['Inter',_sans-serif] text-sm sm:text-base font-bold border-b-2 border-[#1e6b73] pb-2">
                 Reading
               </div>
-              <div className="text-gray-500 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+              <div className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
                 {fillBlanksQuestion ? getQuestionRangeLabel(fillBlanksQuestion, 1) : `Question 1-${inputs.length || 10}`}
               </div>
+              {isReviewMode && (
+                <>
+                  <button
+                    onClick={() => setToolsOpen(!toolsOpen)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors mb-1 ${
+                      toolsOpen
+                        ? 'bg-[#1e6b73] text-white shadow-sm'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    Tools
+                  </button>
+                  <button
+                    onClick={() => setDarkMode(!darkMode)}
+                    className={`p-1.5 rounded-lg transition-colors mb-1 ${
+                      darkMode
+                        ? 'bg-gray-700 text-yellow-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                    title={darkMode ? '라이트 모드' : '다크 모드'}
+                  >
+                    {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 bg-white overflow-auto">
+        <div className="flex-1 bg-white dark:bg-gray-900 overflow-auto">
           <div className="p-4 sm:p-5 md:p-12 pt-8 sm:pt-16 md:pt-24 flex flex-col items-center">
-            <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black font-bold font-['Inter',_sans-serif] text-center px-2">
+            <h1 className="mb-10 sm:mb-12 md:mb-14 text-xl sm:text-2xl md:text-[1.75rem] text-black dark:text-gray-100 font-bold font-['Inter',_sans-serif] text-center px-2">
               Fill in the missing letters in the paragraph.
             </h1>
 
-            <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
-              {renderPassageWithInputs() || (
-                <div className="text-center text-gray-500 py-20">
-                  <p className="text-lg font-semibold mb-2">이 문제는 아직 업로드되지 않았습니다.</p>
-                  <p className="text-sm">CMS에서 Complete Words 문제를 업로드한 뒤 다시 시도해주세요.</p>
+            {isReviewMode && testId && passageKey ? (
+              <ReadingReviewPassage
+                passageText={passageText}
+                testId={testId}
+                passageKey={passageKey}
+                maxHeight="none"
+                toolsOpen={toolsOpen}
+                className="max-w-[900px] w-full"
+              >
+                <div
+                  className="text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black dark:text-gray-100 font-['Inter',_sans-serif] px-1 sm:px-4"
+                  style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}
+                >
+                  {renderPassageWithInputs() || (
+                    <div className="text-center text-gray-500 dark:text-gray-400 py-20">
+                      <p className="text-lg font-semibold mb-2">이 문제는 아직 업로드되지 않았습니다.</p>
+                      <p className="text-sm">CMS에서 Complete Words 문제를 업로드한 뒤 다시 시도해주세요.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </ReadingReviewPassage>
+            ) : (
+              <div className="max-w-[900px] w-full text-lg sm:text-lg md:text-[1.25rem] leading-[1.8] sm:leading-relaxed md:leading-[1.8] text-black dark:text-gray-100 font-['Inter',_sans-serif] px-1 sm:px-4" style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+                {renderPassageWithInputs() || (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-20">
+                    <p className="text-lg font-semibold mb-2">이 문제는 아직 업로드되지 않았습니다.</p>
+                    <p className="text-sm">CMS에서 Complete Words 문제를 업로드한 뒤 다시 시도해주세요.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
