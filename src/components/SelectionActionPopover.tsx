@@ -359,25 +359,23 @@ export function SelectionActionPopover({
         )}
       </div>
 
-      {/* AI 튜터 서브메뉴 — Explain / Translate / Analyze / Rewrite */}
+      {/* AI 튜터 서브메뉴 — Explain / Translate / Analyze / Rewrite (가로 배치) */}
       <div
         className="overflow-hidden transition-all duration-200 ease-out"
         style={{
-          maxHeight: activePanel === 'ai' ? 120 : 0,
+          maxHeight: activePanel === 'ai' ? 50 : 0,
           opacity: activePanel === 'ai' ? 1 : 0,
           marginTop: activePanel === 'ai' ? 6 : 0,
         }}
       >
-        <div className="flex flex-col gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-2 min-w-[140px]">
+        <div className="flex flex-row gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1.5">
           {AI_TUTOR_ACTIONS.map((action) => (
             <button
               key={action.key}
               onClick={() => handleAiAction(action.key)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-[#667eea]/10 dark:hover:bg-[#667eea]/20 rounded-lg transition-colors text-left"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-[#667eea]/10 dark:hover:bg-[#667eea]/20 hover:text-[#667eea] dark:hover:text-[#8b9bff] rounded-md transition-colors whitespace-nowrap"
+              title={action.label}
             >
-              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#667eea]/20 text-[#667eea] text-xs font-bold">
-                {action.label[0]}
-              </span>
               {action.label}
             </button>
           ))}
