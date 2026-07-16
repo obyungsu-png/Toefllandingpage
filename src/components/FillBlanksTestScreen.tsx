@@ -3,6 +3,7 @@ import { Moon, Sun } from 'lucide-react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
+import { ReadingReviewActions } from './ReadingReviewToolbar';
 import {
   getQuestionRangeLabel,
   isCompleteWordsType,
@@ -63,6 +64,8 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
   const [filledInputs, setFilledInputs] = React.useState<Record<number, boolean>>({});
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'ko'>('en');
+  const [clearTrigger, setClearTrigger] = useState(0);
 
   const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
   
@@ -318,6 +321,13 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
                   >
                     {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                   </button>
+                  {toolsOpen && (
+                    <ReadingReviewActions
+                      onClearAll={() => setClearTrigger(c => c + 1)}
+                      language={language}
+                      onLanguageChange={setLanguage}
+                    />
+                  )}
                 </>
               )}
             </div>
@@ -338,6 +348,9 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
                 passageKey={passageKey}
                 maxHeight="none"
                 toolsOpen={toolsOpen}
+                language={language}
+                onLanguageChange={setLanguage}
+                clearTrigger={clearTrigger}
                 className="max-w-[900px] w-full"
               >
                 <div
