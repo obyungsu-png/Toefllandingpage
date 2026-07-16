@@ -1520,13 +1520,15 @@ export function QuestionReviewFull({
                     {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                  <div className="flex justify-between items-center mt-3">
+                  <div className="flex justify-between items-center mt-4">
                     <button
                       onClick={() => { setWritingAiOpen(true); setWritingAiType('email'); }}
-                      className="flex items-center gap-1.5 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:shadow-md transition-all"
+                      disabled={!result.wrongAnswers[0]?.userAnswer}
+                      className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <Sparkles className="w-4 h-4" />
                       AI 튜터로 첨삭받기
+                      <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
                     </button>
                     <button
                       onClick={() => toggleBookmark('writing-email')}
@@ -1623,13 +1625,15 @@ export function QuestionReviewFull({
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
                     <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                    <div className="flex justify-between items-center mt-3">
+                    <div className="flex justify-between items-center mt-4">
                       <button
                         onClick={() => { setWritingAiOpen(true); setWritingAiType('discussion'); }}
-                        className="flex items-center gap-1.5 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:shadow-md transition-all"
+                        disabled={!result.wrongAnswers[1]?.userAnswer}
+                        className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
+                        <Sparkles className="w-4 h-4" />
                         AI 튜터로 첨삭받기
+                        <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
                       </button>
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
