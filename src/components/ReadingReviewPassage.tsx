@@ -344,6 +344,8 @@ export function ReadingReviewPassage({
           onUnderline={(color) => applyAndSave('u', color)}
           onHighlight={(color) => applyAndSave('h', color)}
           onDictionary={handleDictionary}
+          showAiTutor={true}
+          selectedText={selectionPopover.text}
         />
       )}
 

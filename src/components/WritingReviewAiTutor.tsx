@@ -8,7 +8,7 @@
  * 2) 우측: Rewrite 에디터 (학생이 직접 수정)
  * 3) "AI 분석" 버튼 → 점수표 + 항목별 루브릭 + 인라인 Diff(삭제 빨강/추가 초록)
  * 4) 하이라이트 클릭 → 팝업 [문법 오류 설명]/[어휘 추천]/[문장 다듬기]
- * 5) "모범 에세이 생성" → AI 30점짜리 모범 답안을 나란히 비교
+ * 5) "모범 에세이 생성" → AI 6점 만점 모범 답안을 나란히 비교
  * 6) "첨삭 템플릿 내보내기" → 강사용 PDF/텍스트 리포트
  *
  * 모바일에서는 탭 전환 (원본 / 교정 / 점수).
@@ -44,11 +44,11 @@ interface CorrectionItem {
 }
 
 interface RubricScore {
-  grammar: number;       // 0-5
-  vocabulary: number;    // 0-5
-  coherence: number;     // 0-5
-  taskCompletion: number; // 0-5
-  overall: number;       // 0-30 (iBT 환산)
+  grammar: number;       // 0-6
+  vocabulary: number;    // 0-6
+  coherence: number;     // 0-6
+  taskCompletion: number; // 0-6
+  overall: number;       // 0-6 (2026년 개편 토플 국제표준)
   feedback: string;
 }
 
@@ -203,17 +203,16 @@ export function WritingReviewAiTutor({
   const [error, setError] = useState<string | null>(null);
   const [liveScore, setLiveScore] = useState<number | null>(null);
 
-  // 학생이 수정할 때마다 실시간 점수 변화 (경량 휴리스틱)
+  // 학생이 수정할 때마다 실시간 점수 변화 (경량 휴리스틱, 0-6점 기준)
   useEffect(() => {
     if (!analysis) return;
     const oldScore = analysis.rubric.overall;
     const lenDiff = rewrittenText.length - studentText.length;
-    // 단순 휴리스틱: 단어 수 증가 + 길이 증가 + 문장 다양성
-    const wordCount = rewrittenText.trim().split(/\s+/).length;
     const sentences = rewrittenText.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
-    const baseBonus = Math.min(3, Math.floor(lenDiff / 50));
-    const varietyBonus = Math.min(2, Math.max(0, sentences - 3));
-    const newScore = Math.min(30, oldScore + baseBonus + varietyBonus);
+    // 6점 만점 기준 보너스 (작게 측정)
+    const baseBonus = Math.min(1.5, lenDiff / 100);
+    const varietyBonus = Math.min(1, Math.max(0, (sentences - 3) / 2));
+    const newScore = Math.min(6, Math.round((oldScore + baseBonus + varietyBonus) * 10) / 10);
     setLiveScore(newScore);
   }, [rewrittenText, analysis, studentText]);
 
@@ -230,12 +229,13 @@ export function WritingReviewAiTutor({
     try {
       const taskContext = buildTaskContext(writingType, questionData);
       const systemPrompt = `너는 ETS TOEFL iBT 공식 채점관이자 영어 작문 교육 전문가다.
+2026년 1월 개편된 토플 시험 기준으로 채점한다.
 학생의 ${writingType === 'email' ? 'Write an Email' : 'Academic Discussion'} 답안을 아래 4대 채점 영역으로 분석하라:
-1. Grammar Accuracy (문법 정확도, 0-5점)
-2. Vocabulary Diversity (어휘 다양성, 0-5점)
-3. Coherence & Development (논리적 연결성, 0-5점)
-4. Task Completion (과제 수행도, 0-5점)
-overall: 0-30점 (iBT 환산)
+1. Grammar Accuracy (문법 정확도, 0-6점)
+2. Vocabulary Diversity (어휘 다양성, 0-6점)
+3. Coherence & Development (논리적 연결성, 0-6점)
+4. Task Completion (과제 수행도, 0-6점)
+overall: 0-6점 (2026년 개편 국제표준)
 
 반드시 다음 JSON 형식으로만 응답 (다른 텍스트 절대 금지):
 {
@@ -261,8 +261,9 @@ overall: 0-30점 (iBT 환산)
 [문제 컨텍스트]
 ${taskContext}
 
-[채점 기준]
-- 통합형/토론형 모두 ETS 공식 루브릭 준용
+[채점 기준 — 2026년 개편 토플 국제표준 6점 만점]
+- 6점: 완벽한 통달, 5점: 능숙, 4점: 상, 3점: 중, 2점: 하, 1점: 미흡, 0점: 미응답
+- 통합형/토론형 모두 2026년 개편 루브릭 준용
 - 문법: 주어-동사 일치, 시제, 관사, 전치사, 복문 구조
 - 어휘: 단조로운 단어 반복 감점, 학술 어휘 가산
 - 논리: 연결어(Furthermore, However 등) 적절성, 아이디어 전개
@@ -304,10 +305,11 @@ ${taskContext}
     try {
       const taskContext = buildTaskContext(writingType, questionData);
       const systemPrompt = `너는 TOEFL iBT 만점 작문 전문가다.
-학생의 주장과 논리적 뼈대를 유지하되, 30점 만점 기준 모범 에세이를 작성하라.
+2026년 개편 토플 기준 6점 만점 모범 에세이를 작성하라.
+학생의 주장과 논리적 뼈대를 유지하되, 6점 만점 기준 모범 에세이를 작성하라.
 한국어 설명 없이 영어 에세이 본문만 제공. 150-200단어 이내.`;
 
-      const userPrompt = `[문제 컨텍스트]\n${taskContext}\n\n[학생 원본]\n${rewrittenText}\n\n[요청] 학생의 주장을 유지하되 30점 만점짜리 모범 답안을 작성해줘.`;
+      const userPrompt = `[문제 컨텍스트]\n${taskContext}\n\n[학생 원본]\n${rewrittenText}\n\n[요청] 학생의 주장을 유지하되 6점 만점 기준 모범 답안을 작성해줘.`;
 
       const content = await callAi(systemPrompt, userPrompt, false, 1500, 0.5);
       setAnalysis(prev => prev ? {
@@ -333,13 +335,13 @@ ${taskContext}
   발행일: ${date}
 ═══════════════════════════════════════════════════
 
-■ 점수 요약
-  - Grammar Accuracy:     ${analysis.rubric.grammar}/5
-  - Vocabulary Diversity: ${analysis.rubric.vocabulary}/5
-  - Coherence & Dev:      ${analysis.rubric.coherence}/5
-  - Task Completion:      ${analysis.rubric.taskCompletion}/5
+■ 점수 요약 (2026년 개편 토플 국제표준 6점 만점)
+  - Grammar Accuracy:     ${analysis.rubric.grammar}/6
+  - Vocabulary Diversity: ${analysis.rubric.vocabulary}/6
+  - Coherence & Dev:      ${analysis.rubric.coherence}/6
+  - Task Completion:      ${analysis.rubric.taskCompletion}/6
   ─────────────────────────────────
-  - Total (iBT):          ${analysis.rubric.overall}/30
+  - Total:                ${analysis.rubric.overall}/6
 
 ■ 종합 피드백
 ${analysis.rubric.feedback}
@@ -482,10 +484,10 @@ ${analysis.upgradedText}
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-gray-400">실시간:</span>
                 <span className={`font-bold px-2 py-0.5 rounded ${liveScore > analysis.rubric.overall ? 'text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-900/30' : 'text-gray-600 bg-gray-100 dark:text-gray-300 dark:bg-gray-700'}`}>
-                  {liveScore}/30
+                  {liveScore}/6
                 </span>
                 {liveScore > analysis.rubric.overall && (
-                  <span className="text-green-600 text-xs">+{liveScore - analysis.rubric.overall}점 상승</span>
+                  <span className="text-green-600 text-xs">+{(liveScore - analysis.rubric.overall).toFixed(1)}점 상승</span>
                 )}
               </div>
             )}
@@ -536,7 +538,7 @@ ${analysis.upgradedText}
                   </h4>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-bold text-[#1e6b73]">{analysis.rubric.overall}</span>
-                    <span className="text-xs text-gray-400">/30</span>
+                    <span className="text-xs text-gray-400">/6</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
@@ -550,9 +552,9 @@ ${analysis.upgradedText}
                       <span className="text-gray-600 dark:text-gray-300">{label}</span>
                       <div className="flex items-center gap-1">
                         <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#1e6b73] rounded-full" style={{ width: `${(score / 5) * 100}%` }} />
-                        </div>
-                        <span className="font-bold text-gray-700 dark:text-gray-200">{score}/5</span>
+                        <div className="h-full bg-[#1e6b73] rounded-full" style={{ width: `${(score / 6) * 100}%` }} />
+                      </div>
+                        <span className="font-bold text-gray-700 dark:text-gray-200">{score}/6</span>
                       </div>
                     </div>
                   ))}
@@ -625,7 +627,7 @@ ${analysis.upgradedText}
               {showModelEssay && analysis.modelEssay.content && (
                 <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 border border-purple-200 dark:border-purple-800">
                   <h4 className="text-sm font-bold text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-1.5">
-                    <BookOpen className="w-4 h-4" /> AI 모범 에세이 (30점 만점 기준)
+                    <BookOpen className="w-4 h-4" /> AI 모범 에세이 (6점 만점 기준)
                   </h4>
                   <p className="text-xs text-purple-600 dark:text-purple-400 mb-2 italic">{analysis.modelEssay.rationale}</p>
                   <div className="bg-white dark:bg-gray-900 rounded p-3 text-sm text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap border border-purple-100 dark:border-gray-700">
