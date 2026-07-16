@@ -23,13 +23,53 @@ const DEFAULT_INTERVIEW_IMAGE = '/listening-images/interview-default.png';
 
 
 // Upload file to Supabase Storage, return public URL
-async function uploadToStorage(file: File, bucket: string): Promise<string> {
+// 재시도 로직: 일시적 네트워크 에러는 자동 재시도, 클라이언트 에러(RLS/버킷 없음)는 즉시 실패
+async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Promise<string> {
   const ext = file.name.split('.').pop() || 'bin';
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
-  if (error) throw error;
-  const { data } = supabaseClient.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // 매 시도마다 새 경로 사용 — 이전 실패한 경로와 충돌 방지
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    try {
+      const { error, data } = await supabaseClient.storage.from(bucket).upload(path, file, {
+        upsert: true,
+        cacheControl: '3600',
+      });
+      if (error) {
+        // 클라이언트 에러 (RLS, 버킷 없음, 파일 형식 오류 등)는 재시도 불가
+        const isClientError =
+          error.statusCode === 400 ||
+          error.statusCode === 401 ||
+          error.statusCode === 403 ||
+          error.statusCode === 404 ||
+          error.statusCode === 413 ||
+          /not found|policy|permission|denied|too large|unsupported/i.test(error.message);
+        console.error(`[uploadToStorage] 업로드 실패 (시도 ${attempt + 1}/${maxRetries + 1}) — bucket: ${bucket}, path: ${path}`, error);
+        if (isClientError || attempt === maxRetries) {
+          throw new Error(`Storage 업로드 실패 (${bucket}): ${error.message}`);
+        }
+        lastError = new Error(`Storage 업로드 실패 (${bucket}): ${error.message}`);
+      } else {
+        const { data: urlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+        console.log(`[uploadToStorage] 업로드 성공 — ${bucket}/${path}`);
+        return urlData.publicUrl;
+      }
+    } catch (err: any) {
+      // 네트워크 에러 (TypeError: Failed to fetch 등)는 재시도
+      const isNetworkError = err?.name === 'AbortError'
+        || err?.name === 'TypeError'
+        || /Failed to fetch|NetworkError|load failed|ERR_TIMED_OUT|ERR_NETWORK_CHANGED/i.test(err?.message || '');
+      console.error(`[uploadToStorage] 예외 (시도 ${attempt + 1}/${maxRetries + 1}) — bucket: ${bucket}:`, err);
+      if (!isNetworkError || attempt === maxRetries) {
+        throw err instanceof Error ? err : new Error(String(err));
+      }
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+    // 점진적 backoff (500ms, 1000ms)
+    await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+  }
+  throw lastError || new Error(`Storage 업로드 실패 (${bucket})`);
 }
 
 // Compress image before uploading to Supabase — resize to max 1200px, JPEG 80% quality
@@ -1328,8 +1368,31 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     loadImages();
   }, []);
 
+  // 갤러리 이미지 업로드: Storage + listening_images 테이블에 저장
+  const handleUploadGalleryImage = async (category: string, file: File) => {
+    try {
+      const url = await uploadToStorage(await compressImage(file), 'listening-images');
+      const label = file.name.replace(/\.[^/.]+$/, '');
+      const { data, error } = await supabaseClient
+        .from('listening_images')
+        .insert([{ url, category, label }])
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) {
+        setUploadedImages(prev => [...prev, data as UploadedImage]);
+      }
+    } catch (err) {
+      console.error('Failed to upload gallery image:', err);
+      alert('업로드 실패: ' + (err as Error).message);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 업로드 실패 누적 — onSubmit 전에 한 번에 알림
+    const uploadErrors: string[] = [];
 
     const question: TPOQuestion = {
       id: `q-${Date.now()}`,
@@ -1379,8 +1442,11 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.audioFile) {
       try {
         question.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio');
-      } catch {
-        question.audioUrl = URL.createObjectURL(formData.audioFile);
+      } catch (err) {
+        // blob: URL fallback 금지 — 새로고침 후 사라지고 Edge Function 저장 실패 원인
+        console.error('[handleSubmit] audioFile 업로드 실패:', err);
+        uploadErrors.push(`오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.audioUrl = '';
       }
     } else if (formData.audioUrl.trim() && !formData.audioUrl.startsWith('blob:')) {
       question.audioUrl = formData.audioUrl.trim();
@@ -1390,8 +1456,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if (formData.imageFile) {
       try {
         question.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images');
-      } catch {
-        question.imageUrl = URL.createObjectURL(formData.imageFile);
+      } catch (err) {
+        console.error('[handleSubmit] imageFile 업로드 실패:', err);
+        uploadErrors.push(`이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.imageUrl = '';
       }
     } else if (formData.imageUrl.trim() && !formData.imageUrl.startsWith('blob:')) {
       question.imageUrl = formData.imageUrl.trim();
@@ -1401,8 +1469,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if ((formData as any).introImageFile) {
       try {
         (question as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images');
-      } catch {
-        (question as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] introImageFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (question as any).introImageUrl = '';
       }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
@@ -1412,8 +1482,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if ((formData as any).introAudioFile) {
       try {
         (question as any).introAudioUrl = await uploadToStorage((formData as any).introAudioFile, 'listening-audio');
-      } catch {
-        (question as any).introAudioUrl = URL.createObjectURL((formData as any).introAudioFile);
+      } catch (err) {
+        console.error('[handleSubmit] introAudioFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (question as any).introAudioUrl = '';
       }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
@@ -1438,8 +1510,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.avatar1ImageFile) {
       try {
         question.avatar1ImageUrl = await uploadToStorage(await compressImage(formData.avatar1ImageFile), 'writing-avatars');
-      } catch {
-        question.avatar1ImageUrl = URL.createObjectURL(formData.avatar1ImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] avatar1ImageFile 업로드 실패:', err);
+        uploadErrors.push(`아바타1: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.avatar1ImageUrl = '';
       }
     }
     if (formData.avatar2ImageUrl.trim()) {
@@ -1447,8 +1521,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.avatar2ImageFile) {
       try {
         question.avatar2ImageUrl = await uploadToStorage(await compressImage(formData.avatar2ImageFile), 'writing-avatars');
-      } catch {
-        question.avatar2ImageUrl = URL.createObjectURL(formData.avatar2ImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] avatar2ImageFile 업로드 실패:', err);
+        uploadErrors.push(`아바타2: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.avatar2ImageUrl = '';
       }
     }
     if (formData.words.trim()) {
@@ -1464,8 +1540,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.professorImageFile) {
       try {
         question.professorImageUrl = await uploadToStorage(await compressImage(formData.professorImageFile), 'writing-avatars');
-      } catch {
-        question.professorImageUrl = URL.createObjectURL(formData.professorImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] professorImageFile 업로드 실패:', err);
+        uploadErrors.push(`교수 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.professorImageUrl = '';
       }
     }
     if (formData.student1ImageUrl.trim()) {
@@ -1473,8 +1551,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.student1ImageFile) {
       try {
         question.student1ImageUrl = await uploadToStorage(await compressImage(formData.student1ImageFile), 'writing-avatars');
-      } catch {
-        question.student1ImageUrl = URL.createObjectURL(formData.student1ImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] student1ImageFile 업로드 실패:', err);
+        uploadErrors.push(`학생1 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.student1ImageUrl = '';
       }
     }
     if (formData.student2ImageUrl.trim()) {
@@ -1482,8 +1562,10 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.student2ImageFile) {
       try {
         question.student2ImageUrl = await uploadToStorage(await compressImage(formData.student2ImageFile), 'writing-avatars');
-      } catch {
-        question.student2ImageUrl = URL.createObjectURL(formData.student2ImageFile);
+      } catch (err) {
+        console.error('[handleSubmit] student2ImageFile 업로드 실패:', err);
+        uploadErrors.push(`학생2 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        question.student2ImageUrl = '';
       }
     }
     if (formData.professorName.trim()) question.professorName = formData.professorName.trim();
@@ -1496,6 +1578,15 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     // 스피킹 Take an Interview: imageUrl이 비어있으면 기본 인터뷰 이미지 자동 적용
     if (section === 'Speaking' && formData.questionType === 'Take an Interview' && !question.imageUrl) {
       question.imageUrl = DEFAULT_INTERVIEW_IMAGE;
+    }
+
+    // 업로드 실패가 있으면 알림 — 텍스트는 정상 저장되지만 미디어는 누락됨
+    if (uploadErrors.length > 0) {
+      alert(
+        `일부 미디어 업로드에 실패했습니다.\n\n` +
+        uploadErrors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+        `\n\n텍스트는 정상적으로 저장됩니다. 저장 후 해당 미디어를 다시 업로드해주세요.`
+      );
     }
 
     onSubmit(question);
@@ -2890,6 +2981,9 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 업로드 실패 누적 — onSubmit 전에 한 번에 알림
+    const uploadErrors: string[] = [];
+
     const updatedQuestion: TPOQuestion = {
       id: question.id,
       questionNumber: formData.questionNumber,
@@ -2946,26 +3040,42 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     // Handle file uploads to Supabase or use URL from gallery
     if (formData.audioFile) {
       try { updatedQuestion.audioUrl = await uploadToStorage(formData.audioFile, 'listening-audio'); }
-      catch { updatedQuestion.audioUrl = URL.createObjectURL(formData.audioFile); }
+      catch (err) {
+        console.error('[handleSubmit] audioFile 업로드 실패:', err);
+        uploadErrors.push(`오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.audioUrl = '';
+      }
     } else if ((formData as any).audioUrl?.trim() && !(formData as any).audioUrl.startsWith('blob:')) {
       updatedQuestion.audioUrl = (formData as any).audioUrl.trim();
     }
     if (formData.imageFile) {
       try { updatedQuestion.imageUrl = await uploadToStorage(await compressImage(formData.imageFile), 'listening-images'); }
-      catch { updatedQuestion.imageUrl = URL.createObjectURL(formData.imageFile); }
+      catch (err) {
+        console.error('[handleSubmit] imageFile 업로드 실패:', err);
+        uploadErrors.push(`이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.imageUrl = '';
+      }
     } else if ((formData as any).imageUrl?.trim() && !(formData as any).imageUrl.startsWith('blob:')) {
       updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
     }
     if ((formData as any).introImageFile) {
       try { (updatedQuestion as any).introImageUrl = await uploadToStorage(await compressImage((formData as any).introImageFile), 'listening-images'); }
-      catch { (updatedQuestion as any).introImageUrl = URL.createObjectURL((formData as any).introImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] introImageFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (updatedQuestion as any).introImageUrl = '';
+      }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (updatedQuestion as any).introImageUrl = ((formData as any).introImageUrl || '').trim();
     }
     if ((formData as any).introAudioFile) {
       try { (updatedQuestion as any).introAudioUrl = await uploadToStorage((formData as any).introAudioFile, 'listening-audio'); }
-      catch { (updatedQuestion as any).introAudioUrl = URL.createObjectURL((formData as any).introAudioFile); }
+      catch (err) {
+        console.error('[handleSubmit] introAudioFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (updatedQuestion as any).introAudioUrl = '';
+      }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (updatedQuestion as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
@@ -2973,9 +3083,10 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if (formData.videoFile) {
       try {
         updatedQuestion.videoUrl = await uploadToStorage(formData.videoFile, 'listening-video');
-      } catch {
-        alert('동영상 업로드에 실패했습니다. 다시 시도해주세요.');
-        return;
+      } catch (err) {
+        console.error('[handleSubmit] videoFile 업로드 실패:', err);
+        uploadErrors.push(`동영상: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.videoUrl = '';
       }
     }
     // Build Sentence words + sentenceEnding + context
@@ -2994,7 +3105,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.avatar1ImageUrl = (formData as any).avatar1ImageUrl.trim();
     } else if ((formData as any).avatar1ImageFile) {
       try { updatedQuestion.avatar1ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar1ImageFile), 'writing-avatars'); }
-      catch { updatedQuestion.avatar1ImageUrl = URL.createObjectURL((formData as any).avatar1ImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] avatar1ImageFile 업로드 실패:', err);
+        uploadErrors.push(`아바타1: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.avatar1ImageUrl = '';
+      }
     } else {
       (updatedQuestion as any).avatar1ImageUrl = undefined;
     }
@@ -3002,7 +3117,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.avatar2ImageUrl = (formData as any).avatar2ImageUrl.trim();
     } else if ((formData as any).avatar2ImageFile) {
       try { updatedQuestion.avatar2ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar2ImageFile), 'writing-avatars'); }
-      catch { updatedQuestion.avatar2ImageUrl = URL.createObjectURL((formData as any).avatar2ImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] avatar2ImageFile 업로드 실패:', err);
+        uploadErrors.push(`아바타2: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.avatar2ImageUrl = '';
+      }
     } else {
       (updatedQuestion as any).avatar2ImageUrl = undefined;
     }
@@ -3011,7 +3130,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.professorImageUrl = (formData as any).professorImageUrl.trim();
     } else if ((formData as any).professorImageFile) {
       try { updatedQuestion.professorImageUrl = await uploadToStorage(await compressImage((formData as any).professorImageFile), 'writing-avatars'); }
-      catch { updatedQuestion.professorImageUrl = URL.createObjectURL((formData as any).professorImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] professorImageFile 업로드 실패:', err);
+        uploadErrors.push(`교수 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.professorImageUrl = '';
+      }
     } else {
       (updatedQuestion as any).professorImageUrl = undefined;
     }
@@ -3019,7 +3142,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.student1ImageUrl = (formData as any).student1ImageUrl.trim();
     } else if ((formData as any).student1ImageFile) {
       try { updatedQuestion.student1ImageUrl = await uploadToStorage(await compressImage((formData as any).student1ImageFile), 'writing-avatars'); }
-      catch { updatedQuestion.student1ImageUrl = URL.createObjectURL((formData as any).student1ImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] student1ImageFile 업로드 실패:', err);
+        uploadErrors.push(`학생1 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.student1ImageUrl = '';
+      }
     } else {
       (updatedQuestion as any).student1ImageUrl = undefined;
     }
@@ -3027,7 +3154,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       updatedQuestion.student2ImageUrl = (formData as any).student2ImageUrl.trim();
     } else if ((formData as any).student2ImageFile) {
       try { updatedQuestion.student2ImageUrl = await uploadToStorage(await compressImage((formData as any).student2ImageFile), 'writing-avatars'); }
-      catch { updatedQuestion.student2ImageUrl = URL.createObjectURL((formData as any).student2ImageFile); }
+      catch (err) {
+        console.error('[handleSubmit] student2ImageFile 업로드 실패:', err);
+        uploadErrors.push(`학생2 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        updatedQuestion.student2ImageUrl = '';
+      }
     } else {
       (updatedQuestion as any).student2ImageUrl = undefined;
     }
@@ -3038,6 +3169,15 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     updatedQuestion.student1Message = ((formData as any).student1Message || '').trim() || undefined;
     updatedQuestion.student2Name = ((formData as any).student2Name || '').trim() || undefined;
     updatedQuestion.student2Message = ((formData as any).student2Message || '').trim() || undefined;
+
+    // 업로드 실패가 있으면 알림 — 텍스트는 정상 저장되지만 미디어는 누락됨
+    if (uploadErrors.length > 0) {
+      alert(
+        `일부 미디어 업로드에 실패했습니다.\n\n` +
+        uploadErrors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+        `\n\n텍스트는 정상적으로 저장됩니다. 저장 후 해당 미디어를 다시 업로드해주세요.`
+      );
+    }
 
     onSubmit(updatedQuestion);
   };

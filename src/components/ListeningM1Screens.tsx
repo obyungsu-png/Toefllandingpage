@@ -396,7 +396,7 @@ function QuestionScreen({
     if (prevQuestionRef.current !== data.questionNum) {
       audioPlayedRef.current = false;
       prevQuestionRef.current = data.questionNum;
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (audioRef.current) { if (!audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } audioRef.current = null; }
     }
   }, [data.questionNum]);
 
@@ -411,13 +411,13 @@ function QuestionScreen({
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
       }, 1000);
-      return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; } };
+      return () => { clearTimeout(timer); if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } };
     }
   }, [displayAudio, data.questionNum, hideAudio]);
 
   const handlePlayAudio = async () => {
     if (!displayAudio || isPlaying) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); }
     const audio = await createCachedAudio(displayAudio);
     audioRef.current = audio;
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
@@ -601,7 +601,7 @@ function InterstitialScreen({
     playedRef.current = false;
     setIsPlaying(false);
     setAudioEnded(false);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (audioRef.current) { if (!audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } audioRef.current = null; }
   }, [cmsAudioUrl]);
 
   React.useEffect(() => {
@@ -613,14 +613,14 @@ function InterstitialScreen({
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
     }, 1000);
-    return () => { clearTimeout(timer); audioRef.current?.pause(); };
+    return () => { clearTimeout(timer); if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } };
   }, [cmsAudioUrl]);
 
   const canGoNext = !cmsAudioUrl || audioEnded;
 
   const handleReplay = async () => {
     if (!cmsAudioUrl || isPlaying) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
+    if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); }
     const audio = await createCachedAudio(cmsAudioUrl);
     audioRef.current = audio;
     audio.play().then(() => setIsPlaying(true)).catch(() => {});

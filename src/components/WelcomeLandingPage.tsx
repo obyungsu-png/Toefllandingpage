@@ -112,7 +112,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
             >
               <img
                 loading="lazy"
-                src="/landing/toefl-speaking-study-1.png"
+                src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
                 alt="Boy studying TOEFL with headphones"
                 className="w-full h-full object-cover"
               />
@@ -126,7 +126,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3s ease-in-out infinite' }}
             >
               <img
-                src="/landing/toefl-speaking-study-3.png"
+                src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
                 alt="Boy and girl studying together"
                 className="w-full h-full object-cover"
               />
@@ -138,7 +138,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 4s ease-in-out 0.5s infinite' }}
             >
               <img
-                src="/landing/toefl-speaking-study-2.png"
+                src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
                 alt="Boy reading English textbook"
                 className="w-full h-full object-cover"
               />
@@ -150,7 +150,7 @@ export function WelcomeLandingPage({ onStartPractice }: WelcomeLandingPageProps)
               style={{ animation: 'float 3.5s ease-in-out 1s infinite' }}
             >
               <img
-                src="/landing/toefl-speaking-study-1.png"
+                src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
                 alt="Boy and girl practicing English conversation"
                 className="w-full h-full object-cover"
               />

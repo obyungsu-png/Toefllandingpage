@@ -23,7 +23,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
     playedRef.current = false;
     setIsPlaying(false);
     setAudioEnded(false);
-    if (audioRef.current) { audioRef.current.volume = 0; audioRef.current.pause(); audioRef.current = null; }
+    if (audioRef.current) { if (!audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } audioRef.current = null; }
   }, [audioUrl]);
 
   // 1초 후 자동재생
@@ -36,7 +36,7 @@ export function ListeningM2Lecture({ onBack, onNext, onHome, onVolumeClick, imag
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
       audio.onended = () => { setIsPlaying(false); setAudioEnded(true); };
     }, 1000);
-    return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.volume = 0; audioRef.current.pause(); } };
+    return () => { clearTimeout(timer); if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } };
   }, [audioUrl]);
 
   // 오디오 없으면 바로 Next 가능, 있으면 끝나야 Next 가능

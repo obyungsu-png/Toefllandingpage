@@ -24,7 +24,7 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
 
   useEffect(() => {
     audioPlayedRef.current = false;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (audioRef.current) { if (!audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } audioRef.current = null; }
     setIsPlaying(false);
   }, [audioUrl]);
 
@@ -37,7 +37,7 @@ export function ListeningM2Q14({ onBack, onNext, onHome, onVolumeClick, imageUrl
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
         audio.onended = () => setIsPlaying(false);
       }, 1000);
-      return () => { clearTimeout(timer); if (audioRef.current) { audioRef.current.pause(); } };
+      return () => { clearTimeout(timer); if (audioRef.current && !audioRef.current.ended) { audioRef.current.volume = 0; audioRef.current.pause(); } };
     }
   }, [audioUrl]);
 
