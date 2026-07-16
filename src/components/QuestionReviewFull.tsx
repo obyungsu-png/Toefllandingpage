@@ -7,7 +7,7 @@ import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
-import { ReadingReviewToolbar } from './ReadingReviewToolbar';
+import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
 
@@ -955,7 +955,7 @@ export function QuestionReviewFull({
             })}
           </div>
 
-          {/* Reading controls: Tools + toolbar + DarkMode — always inline */}
+          {/* Reading controls: Tools + colors + DarkMode + actions — always inline */}
           {activeSection === 'Reading' && (
             <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto max-w-full">
               <button
@@ -978,6 +978,7 @@ export function QuestionReviewFull({
                     onClearAll={handleClearAllHighlights}
                     language={language}
                     onLanguageChange={handleLanguageChange}
+                    colorsOnly
                   />
                 </div>
               )}
@@ -993,6 +994,16 @@ export function QuestionReviewFull({
               >
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
+
+              {toolsOpen && (
+                <div className="shrink-0">
+                  <ReadingReviewActions
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                  />
+                </div>
+              )}
             </div>
           )}
 
