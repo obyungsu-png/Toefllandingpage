@@ -15,6 +15,10 @@ const DEFAULT_AVATARS = [
   { url: '/avatars/avatar-female-brown.png', label: '여성 4' },
 ];
 
+// 스피킹 Take an Interview 기본 사진 (public/listening-images/ 에서 서빙)
+// — 사용자가 이미지를 업로드하지 않으면 이 기본 이미지가 자동 적용됨
+const DEFAULT_INTERVIEW_IMAGE = '/listening-images/interview-default.png';
+
 
 
 
@@ -1422,12 +1426,12 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       }
     }
 
-    // Build Sentence: avatars + words
+    // Build Sentence: avatars + words (compressImage 적용 — 용량 최소화)
     if (formData.avatar1ImageUrl.trim()) {
       question.avatar1ImageUrl = formData.avatar1ImageUrl.trim();
     } else if (formData.avatar1ImageFile) {
       try {
-        question.avatar1ImageUrl = await uploadToStorage(formData.avatar1ImageFile, 'writing-avatars');
+        question.avatar1ImageUrl = await uploadToStorage(await compressImage(formData.avatar1ImageFile), 'writing-avatars');
       } catch {
         question.avatar1ImageUrl = URL.createObjectURL(formData.avatar1ImageFile);
       }
@@ -1436,7 +1440,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.avatar2ImageUrl = formData.avatar2ImageUrl.trim();
     } else if (formData.avatar2ImageFile) {
       try {
-        question.avatar2ImageUrl = await uploadToStorage(formData.avatar2ImageFile, 'writing-avatars');
+        question.avatar2ImageUrl = await uploadToStorage(await compressImage(formData.avatar2ImageFile), 'writing-avatars');
       } catch {
         question.avatar2ImageUrl = URL.createObjectURL(formData.avatar2ImageFile);
       }
@@ -1448,12 +1452,12 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     // Build a Sentence 상황 설명 (context)
     if (formData.context.trim()) question.context = formData.context.trim();
 
-    // Academic Discussion: professor + 2 students avatars + messages
+    // Academic Discussion: professor + 2 students avatars + messages (compressImage 적용)
     if (formData.professorImageUrl.trim()) {
       question.professorImageUrl = formData.professorImageUrl.trim();
     } else if (formData.professorImageFile) {
       try {
-        question.professorImageUrl = await uploadToStorage(formData.professorImageFile, 'writing-avatars');
+        question.professorImageUrl = await uploadToStorage(await compressImage(formData.professorImageFile), 'writing-avatars');
       } catch {
         question.professorImageUrl = URL.createObjectURL(formData.professorImageFile);
       }
@@ -1462,7 +1466,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.student1ImageUrl = formData.student1ImageUrl.trim();
     } else if (formData.student1ImageFile) {
       try {
-        question.student1ImageUrl = await uploadToStorage(formData.student1ImageFile, 'writing-avatars');
+        question.student1ImageUrl = await uploadToStorage(await compressImage(formData.student1ImageFile), 'writing-avatars');
       } catch {
         question.student1ImageUrl = URL.createObjectURL(formData.student1ImageFile);
       }
@@ -1471,7 +1475,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       question.student2ImageUrl = formData.student2ImageUrl.trim();
     } else if (formData.student2ImageFile) {
       try {
-        question.student2ImageUrl = await uploadToStorage(formData.student2ImageFile, 'writing-avatars');
+        question.student2ImageUrl = await uploadToStorage(await compressImage(formData.student2ImageFile), 'writing-avatars');
       } catch {
         question.student2ImageUrl = URL.createObjectURL(formData.student2ImageFile);
       }
@@ -1482,6 +1486,11 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     if ((formData as any).student1Name?.trim()) question.student1Name = (formData as any).student1Name.trim();
     if (formData.student2Message.trim()) question.student2Message = formData.student2Message.trim();
     if ((formData as any).student2Name?.trim()) question.student2Name = (formData as any).student2Name.trim();
+
+    // 스피킹 Take an Interview: imageUrl이 비어있으면 기본 인터뷰 이미지 자동 적용
+    if (section === 'Speaking' && formData.questionType === 'Take an Interview' && !question.imageUrl) {
+      question.imageUrl = DEFAULT_INTERVIEW_IMAGE;
+    }
 
     onSubmit(question);
   };
@@ -1774,6 +1783,18 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
               <input type="file" accept="image/*" className="text-sm w-full"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) }); }}
               />
+              {/* Take an Interview 기본 이미지 미리보기 (업로드된 이미지가 없을 때만 표시) */}
+              {formData.questionType === 'Take an Interview' && !formData.imageUrl && (
+                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3">
+                  <img src={DEFAULT_INTERVIEW_IMAGE} alt="기본 인터뷰 이미지" className="w-16 h-16 object-cover rounded border border-rose-200" />
+                  <div className="flex-1 text-xs text-rose-700">
+                    <strong>기본 인터뷰 이미지</strong>가 자동 적용됩니다.
+                    <button type="button"
+                      onClick={() => setFormData({ ...formData, imageFile: null, imageUrl: DEFAULT_INTERVIEW_IMAGE })}
+                      className="ml-2 text-rose-600 hover:underline font-medium">이 이미지 선택</button>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="text-xs text-gray-500 bg-white rounded-lg p-2.5 border border-rose-100">
               💡 <strong>음성</strong>은 아래 <strong>Audio File</strong>, <strong>동영상</strong>은 <strong>Video File</strong>에 업로드하세요. 학생은 듣거나 본 뒤 마이크로 답변을 녹음합니다.
@@ -2918,11 +2939,11 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     } else {
       (updatedQuestion as any).context = undefined;
     }
-    // Build Sentence avatars (편집 모드에서도 아바타 이미지 저장)
+    // Build Sentence avatars (편집 모드에서도 아바타 이미지 저장 — compressImage 적용)
     if ((formData as any).avatar1ImageUrl?.trim() && !(formData as any).avatar1ImageUrl.startsWith('blob:')) {
       updatedQuestion.avatar1ImageUrl = (formData as any).avatar1ImageUrl.trim();
     } else if ((formData as any).avatar1ImageFile) {
-      try { updatedQuestion.avatar1ImageUrl = await uploadToStorage((formData as any).avatar1ImageFile, 'writing-avatars'); }
+      try { updatedQuestion.avatar1ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar1ImageFile), 'writing-avatars'); }
       catch { updatedQuestion.avatar1ImageUrl = URL.createObjectURL((formData as any).avatar1ImageFile); }
     } else {
       (updatedQuestion as any).avatar1ImageUrl = undefined;
@@ -2930,11 +2951,43 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).avatar2ImageUrl?.trim() && !(formData as any).avatar2ImageUrl.startsWith('blob:')) {
       updatedQuestion.avatar2ImageUrl = (formData as any).avatar2ImageUrl.trim();
     } else if ((formData as any).avatar2ImageFile) {
-      try { updatedQuestion.avatar2ImageUrl = await uploadToStorage((formData as any).avatar2ImageFile, 'writing-avatars'); }
+      try { updatedQuestion.avatar2ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar2ImageFile), 'writing-avatars'); }
       catch { updatedQuestion.avatar2ImageUrl = URL.createObjectURL((formData as any).avatar2ImageFile); }
     } else {
       (updatedQuestion as any).avatar2ImageUrl = undefined;
     }
+    // Academic Discussion: professor + 2 students avatars (편집 모드에서도 저장 — compressImage 적용)
+    if ((formData as any).professorImageUrl?.trim() && !(formData as any).professorImageUrl.startsWith('blob:')) {
+      updatedQuestion.professorImageUrl = (formData as any).professorImageUrl.trim();
+    } else if ((formData as any).professorImageFile) {
+      try { updatedQuestion.professorImageUrl = await uploadToStorage(await compressImage((formData as any).professorImageFile), 'writing-avatars'); }
+      catch { updatedQuestion.professorImageUrl = URL.createObjectURL((formData as any).professorImageFile); }
+    } else {
+      (updatedQuestion as any).professorImageUrl = undefined;
+    }
+    if ((formData as any).student1ImageUrl?.trim() && !(formData as any).student1ImageUrl.startsWith('blob:')) {
+      updatedQuestion.student1ImageUrl = (formData as any).student1ImageUrl.trim();
+    } else if ((formData as any).student1ImageFile) {
+      try { updatedQuestion.student1ImageUrl = await uploadToStorage(await compressImage((formData as any).student1ImageFile), 'writing-avatars'); }
+      catch { updatedQuestion.student1ImageUrl = URL.createObjectURL((formData as any).student1ImageFile); }
+    } else {
+      (updatedQuestion as any).student1ImageUrl = undefined;
+    }
+    if ((formData as any).student2ImageUrl?.trim() && !(formData as any).student2ImageUrl.startsWith('blob:')) {
+      updatedQuestion.student2ImageUrl = (formData as any).student2ImageUrl.trim();
+    } else if ((formData as any).student2ImageFile) {
+      try { updatedQuestion.student2ImageUrl = await uploadToStorage(await compressImage((formData as any).student2ImageFile), 'writing-avatars'); }
+      catch { updatedQuestion.student2ImageUrl = URL.createObjectURL((formData as any).student2ImageFile); }
+    } else {
+      (updatedQuestion as any).student2ImageUrl = undefined;
+    }
+    // Academic Discussion names + messages (편집 모드에서도 항상 저장 — 빈 값이면 undefined)
+    updatedQuestion.professorName = ((formData as any).professorName || '').trim() || undefined;
+    updatedQuestion.professorMessage = ((formData as any).professorMessage || '').trim() || undefined;
+    updatedQuestion.student1Name = ((formData as any).student1Name || '').trim() || undefined;
+    updatedQuestion.student1Message = ((formData as any).student1Message || '').trim() || undefined;
+    updatedQuestion.student2Name = ((formData as any).student2Name || '').trim() || undefined;
+    updatedQuestion.student2Message = ((formData as any).student2Message || '').trim() || undefined;
 
     onSubmit(updatedQuestion);
   };
@@ -3187,6 +3240,18 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               <input type="file" accept="image/*" className="text-sm w-full"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, imageFile: f, imageUrl: URL.createObjectURL(f) } as any); }}
               />
+              {/* Take an Interview 기본 이미지 미리보기 (업로드된 이미지가 없을 때만 표시) */}
+              {formData.questionType === 'Take an Interview' && !(formData as any).imageUrl && (
+                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3">
+                  <img src={DEFAULT_INTERVIEW_IMAGE} alt="기본 인터뷰 이미지" className="w-14 h-14 object-cover rounded border border-rose-200" />
+                  <div className="flex-1 text-xs text-rose-700">
+                    <strong>기본 인터뷰 이미지</strong>가 자동 적용됩니다.
+                    <button type="button"
+                      onClick={() => setFormData({ ...formData, imageFile: null, imageUrl: DEFAULT_INTERVIEW_IMAGE } as any)}
+                      className="ml-2 text-rose-600 hover:underline font-medium">이 이미지 선택</button>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="text-xs text-gray-500 bg-white rounded-lg p-2.5 border border-rose-100">
               💡 <strong>음성</strong>은 아래 <strong>Audio File</strong>, <strong>동영상</strong>은 <strong>Video File</strong>에 업로드하세요.
