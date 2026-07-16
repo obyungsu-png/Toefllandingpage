@@ -5,6 +5,7 @@ import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
+import { ReadingReviewActions } from './ReadingReviewToolbar';
 
 interface AcademicPassageScreenProps {
   question: any; // TPOQuestion
@@ -55,6 +56,8 @@ export function AcademicPassageScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'ko'>('en');
+  const [clearTrigger, setClearTrigger] = useState(0);
 
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
@@ -149,6 +152,13 @@ export function AcademicPassageScreen({
                 >
                   {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                 </button>
+                {toolsOpen && (
+                  <ReadingReviewActions
+                    onClearAll={() => setClearTrigger(c => c + 1)}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                  />
+                )}
               </>
             )}
           </div>
@@ -171,6 +181,9 @@ export function AcademicPassageScreen({
                   passageKey={passageKey}
                   maxHeight="none"
                   toolsOpen={toolsOpen}
+                  language={language}
+                  onLanguageChange={setLanguage}
+                  clearTrigger={clearTrigger}
                 />
               ) : (
                 <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">

@@ -6,6 +6,7 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { renderDailyLifePassage } from './ReadDailyLifeTemplates';
 import { ReadingReviewPassage } from './ReadingReviewPassage';
+import { ReadingReviewActions } from './ReadingReviewToolbar';
 
 interface DailyLifeScreenProps {
   question: any; // TPOQuestion
@@ -48,6 +49,8 @@ export function DailyLifeScreen({
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'ko'>('en');
+  const [clearTrigger, setClearTrigger] = useState(0);
 
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
@@ -126,6 +129,13 @@ export function DailyLifeScreen({
                 >
                   {darkMode ? <Sun size={16} /> : <Moon size={16} />}
                 </button>
+                {toolsOpen && (
+                  <ReadingReviewActions
+                    onClearAll={() => setClearTrigger(c => c + 1)}
+                    language={language}
+                    onLanguageChange={setLanguage}
+                  />
+                )}
               </>
             )}
           </div>
@@ -150,6 +160,9 @@ export function DailyLifeScreen({
                   passageKey={passageKey}
                   maxHeight="65vh"
                   toolsOpen={toolsOpen}
+                  language={language}
+                  onLanguageChange={setLanguage}
+                  clearTrigger={clearTrigger}
                 >
                   <div className="space-y-3">
                     {imageUrl && (

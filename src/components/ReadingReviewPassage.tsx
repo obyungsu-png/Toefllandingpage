@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Eraser, Globe } from 'lucide-react';
 import { WordPopup } from './WordPopup';
 import { SelectionActionPopover } from './SelectionActionPopover';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
@@ -131,6 +130,14 @@ interface ReadingReviewPassageProps {
   children?: React.ReactNode;
   /** Tools(설정) 드롭다운 표시 여부 — 지우기 / 언어전환. 기본 true, 부모의 Tools 버튼으로 토글 */
   toolsOpen?: boolean;
+  /** 단어 뜻 언어 (부모에서 관리) */
+  language?: 'en' | 'ko';
+  /** 언어 전환 콜백 (부모에서 관리) */
+  onLanguageChange?: (lang: 'en' | 'ko') => void;
+  /** 모두 지우기 콜백 (부모에서 관리) */
+  onClearAll?: () => void;
+  /** 부모에서 "지우기" 버튼 클릭 시 증가시키는 카운터 — 변경되면 내부 handleClearAll 호출 */
+  clearTrigger?: number;
 }
 
 /**
@@ -151,8 +158,15 @@ export function ReadingReviewPassage({
   maxHeight = '70vh',
   children,
   toolsOpen = true,
+  language: languageProp,
+  onLanguageChange,
+  onClearAll,
+  clearTrigger,
 }: ReadingReviewPassageProps) {
-  const [language, setLanguage] = useState<'en' | 'ko'>('en');
+  // 부모에서 language를 관리하지 않으면 내부 상태 사용 (하위 호환)
+  const [internalLanguage, setInternalLanguage] = useState<'en' | 'ko'>('en');
+  const language = languageProp ?? internalLanguage;
+  const setLanguage = onLanguageChange ?? setInternalLanguage;
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [dictionaryData, setDictionaryData] = useState<{ word: string; context: string; x: number; y: number } | null>(null);
   const [selectionPopover, setSelectionPopover] = useState<{ text: string; x: number; y: number } | null>(null);
@@ -191,6 +205,13 @@ export function ReadingReviewPassage({
       stripMarks(passageRef.current);
     }
   };
+
+  // 부모에서 clearTrigger 변경 시 자동 호출
+  useEffect(() => {
+    if (clearTrigger && clearTrigger > 0) {
+      handleClearAll();
+    }
+  }, [clearTrigger]);
 
   const closeSelectionPopover = useCallback(() => {
     setSelectionPopover(null);
@@ -297,29 +318,7 @@ export function ReadingReviewPassage({
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
       <div className="relative">
-        {/* Tools 드롭다운 — 지우기 / 언어전환 (상단 Tools 버튼으로 토글) */}
-        {toolsOpen && (
-          <div className="absolute -top-2 right-2 z-10 flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md px-2 py-1.5 -translate-y-full">
-            <button
-              onClick={handleClearAll}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-              title="모든 밑줄/하이라이트 지우기"
-            >
-              <Eraser size={14} />
-              <span>지우기</span>
-            </button>
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-600 mx-1" />
-            <button
-              onClick={() => setLanguage(language === 'en' ? 'ko' : 'en')}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="사전 언어 전환"
-            >
-              <Globe size={14} />
-              <span className={`px-1.5 py-0.5 rounded ${language === 'en' ? 'bg-[#1e6b73] text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-200'}`}>EN</span>
-              <span className={`px-1.5 py-0.5 rounded ${language === 'ko' ? 'bg-[#1e6b73] text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-200'}`}>KO</span>
-            </button>
-          </div>
-        )}
+        {/* 지우기/EN-KO는 부모 헤더의 ReadingReviewActions로 이동 — 여기서 제거 */}
         <div
           ref={passageRef}
           className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 overflow-y-auto select-text"
