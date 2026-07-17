@@ -83,87 +83,69 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
 };
 
 function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): DictationExercise {
-  // CMS 스크립트가 있으면 실제 데이터 사용
   if (cmsScript) {
     const allLines = cmsScript.split('\n').map(l => l.trim()).filter(Boolean);
-
-    // 1) Narrator/Announcer 안내문("Listen to a conversation" 등)은 받아쓰기에 부적합 — 제외
-    //    화자 레이블(Woman:/Man:/Professor:/Host: 등) 뒤의 본문 줄만 후보로 추출
-    const speakerPattern = /^(Woman|Man|Student|Professor|Host|Announcer|Speaker)\s*:\s*(.+)$/i;
     const narratorPattern = /^Narrator\s*:/i;
 
-    const candidateLines: string[] = [];
+    // Narrator 안내문 제외, 나머지 전체 줄 유지
+    const cleanLines = allLines.filter(l => !narratorPattern.test(l) && l.trim());
+    if (cleanLines.length === 0) return buildFallbackDictation(variant);
 
-    for (const line of allLines) {
-      if (narratorPattern.test(line)) continue; // Narrator 줄 전체 제외
+    // 전체 스크립트를 하나의 문자열로 (fullSentence = TTS용)
+    const fullScript = cleanLines.join(' ');
 
-      const m = line.match(speakerPattern);
-      if (m) {
-        // 화자 레이블 뒤 본문만 추출
-        const body = m[2].trim();
-        if (body.split(/\s+/).length >= 6) candidateLines.push(body); // 6단어 이상만
-      } else if (!line.includes(':')) {
-        // 화자 레이블 없는 순수 본문 줄 (일부 포맷)
-        if (line.split(/\s+/).length >= 6) candidateLines.push(line);
-      }
+    // 빈칸 대상 단어 수집: 화자 레이블 첫 단어 제외, 3글자 이상 내용어
+    const contentWords: { lineIdx: number; wordIdx: number; word: string }[] = [];
+    cleanLines.forEach((line, lineIdx) => {
+      const words = line.split(/\s+/);
+      words.forEach((w, wordIdx) => {
+        const isLabel = wordIdx === 0 && /^\w+:$/.test(w);
+        const clean = w.replace(/[^a-zA-Z\'\-]/g, '');
+        if (!isLabel && clean.length >= 3) {
+          contentWords.push({ lineIdx, wordIdx, word: w });
+        }
+      });
+    });
+
+    // 전체 내용어 수에 비례해 빈칸 개수 결정 (최소 3, 최대 8)
+    const totalBlanks = Math.min(Math.max(3, Math.floor(contentWords.length / 6)), 8);
+    const step = Math.max(1, Math.floor(contentWords.length / totalBlanks));
+    const selectedBlanks: typeof contentWords = [];
+    for (let i = Math.floor(step / 2); i < contentWords.length && selectedBlanks.length < totalBlanks; i += step) {
+      selectedBlanks.push(contentWords[i]);
     }
 
-    // 2) 후보가 없으면 Narrator 제외한 나머지 줄에서 가장 긴 줄 사용
-    if (candidateLines.length === 0) {
-      const fallbackLines = allLines
-        .filter(l => !narratorPattern.test(l))
-        .map(l => l.replace(/^[^:]+:\s*/, '').trim()) // 레이블 제거
-        .filter(l => l.split(/\s+/).length >= 4);
-      if (fallbackLines.length > 0) {
-        fallbackLines.sort((a, b) => b.length - a.length);
-        candidateLines.push(fallbackLines[0]);
-      }
-    }
+    const blankSet = new Set(selectedBlanks.map(b => `${b.lineIdx}-${b.wordIdx}`));
+    const blanks = selectedBlanks.map(b => b.word);
 
-    // 3) 중간 줄을 받아쓰기 문장으로 선택 (도입부보다 중간~후반이 더 내용 풍부)
-    const sentence = candidateLines.length > 0
-      ? candidateLines[Math.floor(candidateLines.length / 2)]
-      : allLines.find(l => !narratorPattern.test(l) && l.split(/\s+/).length >= 4) || allLines[0] || '';
-
-    const cleanSentence = sentence.replace(/^[^:]+:\s*/, '').trim(); // 혹시 남은 레이블 제거
-
-    const words = cleanSentence.split(/\s+/).filter(w => w);
-    if (words.length < 3) {
-      // 문장이 너무 짧으면 fallback
-      return buildFallbackDictation(variant);
-    }
-
-    // 4) 빈칸 선택: 3글자 이상 내용어 위주, 고르게 분포
-    const blankCount = Math.min(Math.max(2, Math.floor(words.length / 4)), 4);
-    const blankIndices: number[] = [];
-    const step = Math.max(1, Math.floor((words.length - 2) / (blankCount + 1)));
-    for (let i = step; i < words.length - 1 && blankIndices.length < blankCount; i += step) {
-      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
-      if (word.length >= 3) blankIndices.push(i);
-    }
-    // 부족하면 보충
-    for (let i = words.length - 2; i >= 1 && blankIndices.length < blankCount; i--) {
-      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
-      if (!blankIndices.includes(i) && word.length >= 3) blankIndices.push(i);
-    }
-    if (blankIndices.length === 0) blankIndices.push(Math.floor(words.length / 2));
-    blankIndices.sort((a, b) => a - b);
-
-    // 5) 정답 목록 (구두점 포함 원형 그대로)
-    const blanks = blankIndices.map(idx => words[idx]);
-
-    // 6) segments 생성 (빈칸 사이 텍스트 조각)
+    // segments 생성: 전체 스크립트를 순회하며 빈칸 위치에 segment 경계 삽입
     const segments: string[] = [];
-    let prev = 0;
-    for (const idx of blankIndices) {
-      segments.push(words.slice(prev, idx).join(' '));
-      prev = idx + 1;
-    }
-    segments.push(words.slice(prev).join(' '));
+    let currentSegment = '';
+    let blankCount = 0;
+
+    cleanLines.forEach((line, lineIdx) => {
+      const words = line.split(/\s+/);
+      if (lineIdx > 0) currentSegment += '\n';
+      words.forEach((word, wordIdx) => {
+        const key = `${lineIdx}-${wordIdx}`;
+        if (blankSet.has(key) && blankCount < blanks.length) {
+          segments.push(currentSegment);
+          currentSegment = '';
+          blankCount++;
+        } else {
+          if (wordIdx > 0 || (lineIdx > 0 && wordIdx === 0)) {
+            // 줄 첫 단어는 앞에 공백 없이 (\n으로 이미 구분됨), 그 외엔 공백
+            if (!(wordIdx === 0 && lineIdx > 0)) currentSegment += ' ';
+          }
+          currentSegment += word;
+        }
+      });
+    });
+    segments.push(currentSegment);
 
     return {
-      prompt: '오디오를 듣고, 들리는 내용을 빈칸에 입력하세요.',
-      fullSentence: cleanSentence,
+      prompt: '전체 스크립트를 보며 빈칸에 알맞은 단어를 입력하세요.',
+      fullSentence: fullScript,
       blanks,
       segments,
     };
@@ -171,7 +153,6 @@ function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): Dic
 
   return buildFallbackDictation(variant);
 }
-
 /** CMS 스크립트 없을 때 사용하는 기본값 */
 function buildFallbackDictation(variant: ReviewVariant): DictationExercise {
   if (variant === 'speaking-repeat') {
@@ -354,107 +335,86 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const isDictationCorrect = (index: number) => normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
   const renderDictation = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
-        <div>
-          <p className="text-sm font-semibold text-[#1f2937]">받아쓰기</p>
-          <p className="mt-1 text-xs leading-5 text-[#5b6470]">
-            🔊 버튼을 누르면 아래 문장을 읽어드립니다. 들리는 단어를 빈칸에 입력하세요.
-          </p>
-          {audioUrl && (
-            <p className="mt-0.5 text-xs text-[#94a3b8]">💡 전체 오디오는 상단 ▶ 버튼에서 들을 수 있습니다.</p>
-          )}
-        </div>
+    <div className="space-y-3">
+      {/* 헤더 — 간소화: 제목 + 음성 버튼만 */}
+      <div className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
+        <p className="text-sm font-semibold text-[#1f2937]">받아쓰기 — 빈칸에 알맞은 단어를 입력하세요</p>
         <button
           type="button"
           onClick={playDictation}
-          title={isDictationPlaying ? '정지' : '문장 듣기'}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
+          title={isDictationPlaying ? '정지' : '오디오 듣기'}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
           style={{ backgroundColor: isDictationPlaying ? '#ef4444' : theme.accent }}
         >
-          {isDictationPlaying ? <span className="text-base">■</span> : <Volume2 className="h-5 w-5" />}
+          {isDictationPlaying ? <span className="text-sm">■</span> : <Volume2 className="h-4 w-4" />}
         </button>
       </div>
 
-      <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-4">
-        <div className="flex flex-wrap items-end gap-x-2 gap-y-3 text-[15px] leading-7 text-[#1f2937]">
+      {/* 전체 스크립트 + 빈칸 */}
+      <div className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-4">
+        <div className="text-[14px] leading-8 text-[#1f2937] whitespace-pre-wrap">
           {dictationExercise.segments.map((segment, index) => (
-            <div key={`${segment}-${index}`} className="contents">
+            <span key={index}>
               <span>{segment}</span>
               {index < dictationExercise.blanks.length && (
-                <span className="inline-flex flex-col items-start gap-1 align-bottom">
-                  <span className="inline-flex items-center gap-2">
-                    <input
-                      ref={(element) => {
-                        dictationInputRefs.current[index] = element;
-                      }}
-                      value={dictationInputs[index] || ''}
-                      onChange={(event) => {
-                        const nextValue = event.target.value;
-                        const next = [...dictationInputs];
-                        next[index] = nextValue;
-                        setDictationInputs(next);
-                        setDictationChecked(false);
-                      }}
-                      onKeyDown={(event) => {
-                        // Tab 또는 Enter로 다음 칸 이동
-                        if ((event.key === 'Tab' || event.key === 'Enter') && index < dictationExercise.blanks.length - 1) {
-                          event.preventDefault();
-                          dictationInputRefs.current[index + 1]?.focus();
-                          dictationInputRefs.current[index + 1]?.select();
+                <span className="inline-flex items-center gap-1 align-bottom">
+                  <input
+                    ref={(element) => { dictationInputRefs.current[index] = element; }}
+                    value={dictationInputs[index] || ''}
+                    onChange={(event) => {
+                      const next = [...dictationInputs];
+                      next[index] = event.target.value;
+                      setDictationInputs(next);
+                      setDictationChecked(false);
+                    }}
+                    onKeyDown={(event) => {
+                      if ((event.key === 'Tab' || event.key === 'Enter') && index < dictationExercise.blanks.length - 1) {
+                        event.preventDefault();
+                        dictationInputRefs.current[index + 1]?.focus();
+                        dictationInputRefs.current[index + 1]?.select();
+                      }
+                      if (event.key !== 'Backspace' && event.key !== 'Delete' && event.key.length === 1) {
+                        const projected = (dictationInputs[index] || '') + event.key;
+                        const answerLen = normalizeDictationValue(dictationExercise.blanks[index]).length;
+                        if (index < dictationExercise.blanks.length - 1 && normalizeDictationValue(projected).length >= answerLen && answerLen >= 3) {
+                          setTimeout(() => { dictationInputRefs.current[index + 1]?.focus(); dictationInputRefs.current[index + 1]?.select(); }, 50);
                         }
-                        // 입력이 정답 길이에 도달하면 자동으로 다음 칸으로
-                        if (event.key !== 'Backspace' && event.key !== 'Delete' && event.key.length === 1) {
-                          const projected = (dictationInputs[index] || '') + event.key;
-                          const answerLen = normalizeDictationValue(dictationExercise.blanks[index]).length;
-                          if (
-                            index < dictationExercise.blanks.length - 1 &&
-                            normalizeDictationValue(projected).length >= answerLen &&
-                            answerLen >= 3
-                          ) {
-                            setTimeout(() => {
-                              dictationInputRefs.current[index + 1]?.focus();
-                              dictationInputRefs.current[index + 1]?.select();
-                            }, 50);
-                          }
-                        }
-                      }}
-                      className={`border-b-2 bg-transparent px-1 py-0.5 text-center outline-none ${
-                        dictationChecked
-                          ? isDictationCorrect(index)
-                            ? 'border-green-500 text-green-700'
-                            : 'border-red-500 text-red-600'
-                          : 'border-[#94a3b8] text-[#1f2937]'
-                      }`}
-                      style={{ width: `${Math.max(dictationExercise.blanks[index].length * 11, 72)}px` }}
-                    />
-                    {dictationChecked && (
-                      <span className={`text-xs font-semibold ${isDictationCorrect(index) ? 'text-green-600' : 'text-red-500'}`}>
-                        {isDictationCorrect(index) ? '맞음' : `정답: ${dictationExercise.blanks[index]}`}
-                      </span>
-                    )}
-                  </span>
+                      }
+                    }}
+                    className={`inline-block border-b-2 bg-transparent px-1 py-0 text-center outline-none align-baseline ${
+                      dictationChecked
+                        ? isDictationCorrect(index) ? 'border-green-500 text-green-700' : 'border-red-500 text-red-600'
+                        : 'border-[#94a3b8] text-[#1f2937]'
+                    }`}
+                    style={{ width: `${Math.max(dictationExercise.blanks[index].length * 10, 64)}px` }}
+                  />
+                  {dictationChecked && !isDictationCorrect(index) && (
+                    <span className="text-xs font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
+                  )}
                 </span>
               )}
-            </div>
+            </span>
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-3 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setDictationChecked(true)}
-            className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-full px-4 py-1.5 text-sm font-semibold text-white"
             style={{ backgroundColor: theme.accent }}
           >
             정답 확인
           </button>
-          {dictationChecked && <p className="text-xs text-[#64748b]">틀린 칸은 빨간색, 맞은 칸은 초록색으로 표시됩니다.</p>}
+          {dictationChecked && (
+            <p className="text-xs text-[#64748b]">
+              {dictationExercise.blanks.filter((_, i) => isDictationCorrect(i)).length}/{dictationExercise.blanks.length} 정답
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
-
   const renderWords = () => {
     if (vocabularyNote) {
       const lines = vocabularyNote.split('\n').filter(l => l.trim());
