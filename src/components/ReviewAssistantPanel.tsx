@@ -305,16 +305,32 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
   };
 
-  // Dictation 음성 — 항상 TTS로 fullSentence(받아쓰기 대상 문장)만 읽어줌
-  // CMS 전체 오디오(audioUrl)는 대화/강의 전체라 받아쓰기 문장과 다르므로 사용 안 함
-
+  // Dictation 음성 — CMS 오디오 있으면 그걸 재생, 없으면 TTS fallback
   const playDictation = () => {
-    if (!('speechSynthesis' in window)) return;
     if (isDictationPlaying) {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis?.cancel();
+      audioRef.current?.pause();
       setIsDictationPlaying(false);
       return;
     }
+
+    if (audioUrl) {
+      // CMS 실제 오디오가 있으면 그걸 사용
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      const audio = createCachedAudioSync(audioUrl);
+      audioRef.current = audio;
+      setIsDictationPlaying(true);
+      audio.play().catch(() => setIsDictationPlaying(false));
+      audio.onended = () => setIsDictationPlaying(false);
+      audio.onpause = () => setIsDictationPlaying(false);
+      return;
+    }
+
+    // TTS fallback — CMS 오디오 없을 때
+    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(dictationExercise.fullSentence);
     utterance.rate = 0.82;
