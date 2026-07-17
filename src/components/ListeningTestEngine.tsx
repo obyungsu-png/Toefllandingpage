@@ -378,10 +378,10 @@ function GroupIntroScreen({
       // audio.ended 대신 audioEndedRef 사용 (더 정확)
       if (audioEndedRef.current) return;
       // 아직 재생 중인 경우에만 mute + pause (순서: mute 먼저 → 노이즈 차단 후 pause)
-      // 주의: currentTime = 0 금지 — 되감으면 브라우저가 "칙/틱" 클릭 노이즈를 발생시킴
       audio.muted = true;
       audio.volume = 0;
       audio.pause();
+      audio.currentTime = 0;
     } catch { /* ignore */ }
   };
 
@@ -664,10 +664,10 @@ function ListeningQuestionScreen({
       // audio.ended 대신 audioEndedRef 사용 (더 정확)
       if (audioEndedRef.current) return;
       // 아직 재생 중인 경우에만 mute + pause (순서: mute 먼저 → 노이즈 차단 후 pause)
-      // 주의: currentTime = 0 금지 — 되감으면 브라우저가 "칙/틱" 클릭 노이즈를 발생시킴
       audio.muted = true;
       audio.volume = 0;
       audio.pause();
+      audio.currentTime = 0;
     } catch { /* ignore */ }
   };
 

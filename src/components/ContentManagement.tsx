@@ -2978,6 +2978,45 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     student2ImageFile: null,
   });
 
+  // 업로드된 갤러리 이미지 (listening_images 테이블에서 로드 — Add 모드와 동일)
+  interface UploadedImage {
+    id: string;
+    url: string;
+    category: string;
+    label: string;
+  }
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        const { data, error } = await supabaseClient.from('listening_images').select('*');
+        if (!error && data) {
+          setUploadedImages(data as UploadedImage[]);
+        }
+      } catch {}
+    };
+    loadImages();
+  }, []);
+
+  // 갤러리 이미지 업로드: Storage + listening_images 테이블에 저장 (Add 모드와 동일)
+  const handleUploadGalleryImage = async (category: string, file: File) => {
+    try {
+      const url = await uploadToStorage(await compressImage(file), 'listening-images');
+      const label = file.name.replace(/\.[^/.]+$/, '');
+      const { data, error } = await supabaseClient
+        .from('listening_images')
+        .insert([{ url, category, label }])
+        .select()
+        .single();
+      if (!error && data) {
+        setUploadedImages(prev => [...prev, data as UploadedImage]);
+      }
+    } catch (err) {
+      console.error('Failed to upload gallery image:', err);
+      alert('갤러리 이미지 업로드에 실패했습니다.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -3043,7 +3082,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] audioFile 업로드 실패:', err);
         uploadErrors.push(`오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.audioUrl = '';
+        updatedQuestion.audioUrl = question.audioUrl || '';
       }
     } else if ((formData as any).audioUrl?.trim() && !(formData as any).audioUrl.startsWith('blob:')) {
       updatedQuestion.audioUrl = (formData as any).audioUrl.trim();
@@ -3053,7 +3092,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] imageFile 업로드 실패:', err);
         uploadErrors.push(`이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.imageUrl = '';
+        updatedQuestion.imageUrl = question.imageUrl || '';
       }
     } else if ((formData as any).imageUrl?.trim() && !(formData as any).imageUrl.startsWith('blob:')) {
       updatedQuestion.imageUrl = (formData as any).imageUrl.trim();
@@ -3063,7 +3102,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] introImageFile 업로드 실패:', err);
         uploadErrors.push(`인트로 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        (updatedQuestion as any).introImageUrl = '';
+        (updatedQuestion as any).introImageUrl = (question as any).introImageUrl || '';
       }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
@@ -3074,7 +3113,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] introAudioFile 업로드 실패:', err);
         uploadErrors.push(`인트로 오디오: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        (updatedQuestion as any).introAudioUrl = '';
+        (updatedQuestion as any).introAudioUrl = (question as any).introAudioUrl || '';
       }
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
@@ -3086,7 +3125,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       } catch (err) {
         console.error('[handleSubmit] videoFile 업로드 실패:', err);
         uploadErrors.push(`동영상: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.videoUrl = '';
+        updatedQuestion.videoUrl = question.videoUrl || '';
       }
     }
     // Build Sentence words + sentenceEnding + context
@@ -3108,7 +3147,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] avatar1ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타1: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.avatar1ImageUrl = '';
+        updatedQuestion.avatar1ImageUrl = question.avatar1ImageUrl || '';
       }
     } else {
       (updatedQuestion as any).avatar1ImageUrl = undefined;
@@ -3120,7 +3159,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] avatar2ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타2: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.avatar2ImageUrl = '';
+        updatedQuestion.avatar2ImageUrl = question.avatar2ImageUrl || '';
       }
     } else {
       (updatedQuestion as any).avatar2ImageUrl = undefined;
@@ -3133,7 +3172,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] professorImageFile 업로드 실패:', err);
         uploadErrors.push(`교수 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.professorImageUrl = '';
+        updatedQuestion.professorImageUrl = question.professorImageUrl || '';
       }
     } else {
       (updatedQuestion as any).professorImageUrl = undefined;
@@ -3145,7 +3184,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] student1ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생1 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.student1ImageUrl = '';
+        updatedQuestion.student1ImageUrl = question.student1ImageUrl || '';
       }
     } else {
       (updatedQuestion as any).student1ImageUrl = undefined;
@@ -3157,7 +3196,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       catch (err) {
         console.error('[handleSubmit] student2ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생2 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
-        updatedQuestion.student2ImageUrl = '';
+        updatedQuestion.student2ImageUrl = question.student2ImageUrl || '';
       }
     } else {
       (updatedQuestion as any).student2ImageUrl = undefined;
@@ -3530,12 +3569,12 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
           </div>
         )}
 
-        {/* Image Upload for Reading questions (Edit form) */}
-        {section === 'Reading' && (
+        {/* Image Upload for Reading/Writing/Speaking questions (Edit form) — Add 모드와 일치 */}
+        {(section === 'Reading' || section === 'Writing' || section === 'Speaking') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Image File (Optional)
-              <span className="ml-2 text-xs text-gray-400 font-normal">(지문 옆에 표시되는 이미지)</span>
+              <span className="ml-2 text-xs text-gray-400 font-normal">(문제에 표시되는 이미지 — 추가/제거 가능)</span>
             </label>
             {(formData as any).imageUrl && (
               <div className="mb-3 flex items-center gap-3 p-2 bg-green-50 border border-green-200 rounded-lg">
@@ -3589,43 +3628,63 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               <span className="text-xs text-gray-400">또는 URL 직접 입력</span>
             </div>
             <div className="space-y-3">
-              {[
-                { category: '🎙 Listen and Response (1인)', images: [
-                  { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
-                  { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
-                  { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
-                  { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
-                  { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
-                  { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
-                ]},
-                { category: '💬 Short Conversation (2인)', images: [
-                  { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
-                  { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
-                ]},
-                { category: '📢 Announcement', images: [
-                  { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
-                  { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
-                  { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
-                  { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
-                  { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
-                  { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
-                  { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
-                  { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
-                ]},
-              ].map(({ category, images }) => (
-                <div key={category}>
-                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">{category}</p>
-                  <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                    {images.map((img) => (
-                      <button key={img.url} type="button" onClick={() => setFormData({ ...formData, imageUrl: img.url } as any)}
-                        className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${(formData as any).imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'}`} title={img.label}>
-                        <img src={img.url} alt={img.label} className="object-contain bg-white rounded" style={{ width: '72px', height: '100px', objectPosition: 'center top' }} />
-                        <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {(() => {
+                const baseGallery = [
+                  { category: '🎙 Listen and Response (1인)', images: [
+                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                  ]},
+                  { category: '💬 Short Conversation (2인)', images: [
+                    { url: '/listening-images/two-people-conversation-1.png', label: '대화1' },
+                    { url: '/listening-images/two-people-conversation-2.png', label: '대화2' },
+                  ]},
+                  { category: '📢 Announcement', images: [
+                    { url: '/listening-images/man-pink-shirt-2.png', label: '남성 핑크2' },
+                    { url: '/listening-images/woman-purple-scarf.png', label: '여성 보라' },
+                    { url: '/listening-images/woman-navy-cardigan.png', label: '여성 네이비' },
+                    { url: '/listening-images/man-green-polo.png', label: '남성 그린' },
+                    { url: '/listening-images/woman-green-polo.png', label: '여성 그린' },
+                    { url: '/listening-images/man-burgundy-turtleneck.png', label: '남성 버건디' },
+                    { url: '/listening-images/woman-navy-cardigan-2.png', label: '여성 네이비2' },
+                    { url: '/listening-images/man-pink-shirt.png', label: '남성 핑크' },
+                  ]},
+                ];
+                return baseGallery.map(({ category, images }) => {
+                  const mergedImages = [
+                    ...images,
+                    ...uploadedImages
+                      .filter(img => img.category === category)
+                      .map(img => ({ url: img.url, label: img.label }))
+                  ];
+                  return (
+                    <div key={category}>
+                      <p className="text-[10px] font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+                        {category}
+                        <label className="cursor-pointer px-2 py-1 bg-[#2d7a7c] text-white text-[9px] rounded hover:bg-[#1e6b73]">
+                          + 추가
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUploadGalleryImage(category, file);
+                          }} />
+                        </label>
+                      </p>
+                      <div className="flex gap-2 flex-wrap p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        {mergedImages.map((img) => (
+                          <button key={img.url} type="button" onClick={() => setFormData({ ...formData, imageUrl: img.url } as any)}
+                            className={`flex flex-col items-center gap-1 rounded-lg border-2 transition-all hover:border-[#2d7a7c] overflow-hidden ${(formData as any).imageUrl === img.url ? 'border-[#2d7a7c] bg-[#f0fafa]' : 'border-transparent'}`} title={img.label}>
+                            <img src={img.url} alt={img.label} className="object-contain bg-white rounded" style={{ width: '72px', height: '100px', objectPosition: 'center top' }} />
+                            <span className="text-[9px] text-gray-500 pb-0.5">{img.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         )}

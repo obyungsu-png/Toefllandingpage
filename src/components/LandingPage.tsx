@@ -161,7 +161,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Cheerful_Asian_high_school_gir_2026-07-09T09-47-41.png"
+              src="https://images.unsplash.com/photo-1631061184412-b18f5fb1dc70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
               alt="High school student studying TOEFL"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -176,7 +176,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Happy_Asian_high_school_girl_w_2026-07-09T09-47-43.png"
+              src="https://images.unsplash.com/photo-1649920442906-3c8ef428fb6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
               alt="Student solving SAT questions"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -191,7 +191,7 @@ export function LandingPage({ onStartTest }: LandingPageProps) {
           >
             <img
               loading="lazy"
-              src="/landing/Two_cheerful_Asian_high_school_2026-07-09T09-47-46.png"
+              src="https://images.unsplash.com/photo-1585984968562-1443b72fb0dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
               alt="Students practicing English conversation"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

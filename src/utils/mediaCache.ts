@@ -260,9 +260,6 @@ export async function createCachedAudio(url?: string): Promise<HTMLAudioElement>
     const resolvedUrl = await getMediaUrl(url);
     audio.src = resolvedUrl;
   }
-  // 주의: ended 리스너에서 volume=0 금지 — 종료된 오디오의 volume을 변경하면
-  // 브라우저가 "칙/틱" 클릭 노이즈를 발생시킴.
-  // 대신 컴포넌트 cleanup에서 audio.ended를 체크하여 volume/pause를 건드리지 않음.
   return audio;
 }
 
@@ -290,9 +287,6 @@ export function createCachedAudioSync(url?: string): HTMLAudioElement {
       }).catch(() => {});
     }
   }
-  // 주의: ended 리스너에서 volume=0 금지 — 종료된 오디오의 volume을 변경하면
-  // 브라우저가 "칙/틱" 클릭 노이즈를 발생시킴.
-  // 대신 컴포넌트 cleanup에서 audio.ended를 체크하여 volume/pause를 건드리지 않음.
   return audio;
 }
 

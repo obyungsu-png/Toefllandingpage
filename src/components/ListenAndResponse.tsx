@@ -85,11 +85,7 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
     return () => {
       window.speechSynthesis.cancel();
       if (audioRef.current) {
-        // 오디오가 이미 종료된 경우 volume/pause 변경 금지 — 브라우저 클릭/팝 노이즈 원인
-        if (!audioRef.current.ended) {
-          audioRef.current.volume = 0;
-          audioRef.current.pause();
-        }
+        audioRef.current.pause();
         audioRef.current = null;
       }
     };
@@ -164,11 +160,8 @@ export function ListenAndResponse({ level, day, onBack, lmsContents = [] }: List
   const stopAudio = () => {
     window.speechSynthesis.cancel();
     if (audioRef.current) {
-      // 오디오가 이미 종료된 경우 volume/pause 변경 금지 — 브라우저 클릭/팝 노이즈 원인
-      if (!audioRef.current.ended) {
-        audioRef.current.volume = 0;
-        audioRef.current.pause();
-      }
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     setIsPlaying(false);
     setProgress(0);
