@@ -235,9 +235,11 @@ interface ToeflAiWidgetProps {
   initialQuestion?: string;
   /** 패널 고정(pinned) 모드 지원 — Writing 등에서 글 작성하면서 AI 튜터 유지 */
   pinnable?: boolean;
+  /** pinned 상태 변화를 부모에게 알림 (글 작성 영역 padding 처리용) */
+  onPinnedChange?: (pinned: boolean) => void;
 }
 
-export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions, initialQuestion, pinnable = false }: ToeflAiWidgetProps) {
+export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions, initialQuestion, pinnable = false, onPinnedChange }: ToeflAiWidgetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open !== undefined ? open : internalOpen;
   const setIsOpen = (value: boolean) => {
@@ -254,6 +256,15 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
 
   // ── Pinned (고정) 모드: Writing에서 AI 튜터를 띄워놓고 글 작성 ──
   const [pinned, setPinned] = useState(false);
+  // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치 초기화
+  const togglePinned = useCallback((next: boolean) => {
+    setPinned(next);
+    if (next) {
+      // 고정 시 패널을 우측 상단에서 살짝 아래로 배치 (글 작성 영역과 겹침 최소화)
+      setPanelPos({ x: 0, y: 0 });
+    }
+    onPinnedChange?.(next);
+  }, [onPinnedChange]);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
   const [panelSize, setPanelSize] = useState({ w: 380, h: 480 });
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -659,20 +670,20 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                 {/* Pin/Unpin 버튼 — pinnable일 때만 표시 */}
                 {pinnable && (
                   <button
-                    onClick={() => setPinned(!pinned)}
+                    onClick={() => togglePinned(!pinned)}
                     className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                       pinned
                         ? 'bg-teal-600 text-white hover:bg-teal-700'
                         : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
                     }`}
-                    title={pinned ? '고정 해제' : '패널 고정'}
+                    title={pinned ? '고정 해제' : '패널 고정 — 헤더를 드래그해 위치 이동, 우하단 모서리로 크기 조절'}
                   >
                     {pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
                     {pinned ? '고정해제' : '고정'}
                   </button>
                 )}
                 <button
-                  onClick={() => { setPinned(false); setIsOpen(false); }}
+                  onClick={() => { togglePinned(false); setIsOpen(false); }}
                   className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm transition-colors"
                 >
                   {pinned ? <X className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}

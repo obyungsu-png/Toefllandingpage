@@ -335,6 +335,12 @@ export function WritingAcademicDiscussionQ2({
                 ref={textareaRef}
                 value={response}
                 onChange={(e) => { setResponse(e.target.value); autoResize(); }}
+                onFocus={(e) => {
+                  // 글쓰기 시작 시 textarea가 화면 중앙에 보이도록 스크롤 → 글쓰기 편하게
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 80);
+                }}
                 className="w-full p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none overflow-hidden"
                 style={{ minHeight: '280px' }}
                 placeholder="Write your response here..."

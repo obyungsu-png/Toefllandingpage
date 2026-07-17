@@ -65,30 +65,51 @@ export function pickBestBritishFemaleVoice(): SpeechSynthesisVoice | null {
   let priorityNames: string[];
 
   if (ios) {
-    // iOS has good built-in voices that work offline
+    // iOS has good built-in voices that work offline — 최신 Enhanced 음성 우선
     priorityNames = [
+      // ── Apple 최신 고품질 음성 (iOS 17+ Enhanced) ──
+      'Serena (Enhanced)',             // iOS 17+ 최신 고품질 영국 여성 음성
+      'Kate (Enhanced)',               // iOS 17+ 최신 고품질 영국 여성 음성
+      'Karen (Enhanced)',              // iOS 호주 여성 음성
+      'Samantha (Enhanced)',           // iOS en-US 고품질 여성 음성
+      // ── Microsoft Natural (Edge on iOS) ──
       'Microsoft Sonia Online (Natural) - English (United Kingdom)',
       'Microsoft Libby Online (Natural) - English (United Kingdom)',
+      // ── Apple 기본 음성 ──
       'Kate',                          // iOS/macOS British female
       'Serena',                        // iOS/macOS British female
       'Fiona',                         // macOS British female (compact)
       'Martha',                        // iOS British female
-      'Google UK English Female',      // last resort on iOS (may not work)
+      // ── Google (last resort, may not work on iOS) ──
+      'Google UK English Female',
       'Microsoft Susan - English (United Kingdom)',
       'Microsoft Hazel - English (United Kingdom)',
       'Stephanie',
     ];
   } else if (isMac()) {
-    // macOS: Apple 기본 고품질 음성 우선, Google은 나중에
-    // (Safari/macOS에서는 Google 음성을 사용할 수 없어 소리가 나지 않음)
+    // macOS: Apple 최신 고품질 음성 우선 (iOS 17+/macOS Sonoma+의 Enhanced/Premium 음성),
+    // Safari/macOS에서는 Google 음성을 사용할 수 없어 소리가 나지 않음
     priorityNames = [
-      'Samantha',                     // macOS 고품질 여성 음성 (en-US지만 품질 좋음)
-      'Kate',                         // macOS 영국 여성 음성
-      'Serena',                       // macOS 영국 여성 음성
-      'Fiona',                        // macOS 영국 여성 음성 (compact)
+      // ── Apple 최신 고품질 음성 (Enhanced / Premium) ──
+      'Samantha (Enhanced)',           // macOS 최신 고품질 en-US 여성 음성
+      'Ava (Premium)',                 // macOS Sonoma+ 최고품질 en-US 여성 음성
+      'Serena (Enhanced)',             // macOS 최신 고품질 영국 여성 음성
+      'Kate (Enhanced)',               // macOS 최신 고품질 영국 여성 음성
+      'Karen (Enhanced)',              // macOS 최신 호주 여성 음성
+      'Tessa (Enhanced)',              // macOS 남아공 여성 음성
+      'Moira (Enhanced)',              // macOS 아일랜드 여성 음성
+      // ── Apple 기본 음성 (fallback) ──
+      'Samantha',                      // macOS 기본 고품질 여성 음성
+      'Kate',                          // macOS 영국 여성 음성
+      'Serena',                        // macOS 영국 여성 음성
+      'Fiona',                         // macOS 영국 여성 음성 (compact)
+      // ── Microsoft Natural (Edge on macOS) ──
       'Microsoft Sonia Online (Natural) - English (United Kingdom)',
       'Microsoft Libby Online (Natural) - English (United Kingdom)',
-      'Google UK English Female',     // Chrome on macOS에서만 작동
+      // ── Google (Chrome on macOS에서만 작동) ──
+      'Google UK English Female',
+      'Google US English',
+      // ── Microsoft 기본 음성 ──
       'Microsoft Susan - English (United Kingdom)',
       'Microsoft Hazel - English (United Kingdom)',
       'Martha', 'Stephanie',

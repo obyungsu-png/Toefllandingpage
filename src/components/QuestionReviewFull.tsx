@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 // motion removed - using CSS animations
-import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic, Moon, Sun } from 'lucide-react';
+import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic, Moon, Sun, Sparkles } from 'lucide-react';
 import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
+import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
@@ -261,6 +262,12 @@ export function QuestionReviewFull({
   const modelInterval = useRef<number | null>(null);
   const userInterval = useRef<number | null>(null);
   const materialInterval = useRef<number | null>(null);
+
+  // Writing review — AI 튜터 패널 고정(pinned) 상태 추적
+  // pinned일 때 글 작성 영역(Your Response)에 right padding을 줘서 패널과 겹침 방지
+  const [aiTutorPinned, setAiTutorPinned] = useState(false);
+  // Writing review — AI 채점(WritingReviewAiTutor) 팝업 표시
+  const [showWritingAiGrader, setShowWritingAiGrader] = useState<'email' | 'discussion' | null>(null);
 
   // Extract TPO number from test name and find test data
   const tpoNumber = (() => {
@@ -1698,7 +1705,7 @@ export function QuestionReviewFull({
                   <p className="text-sm md:text-base text-gray-800 dark:text-gray-100">Write as much as you can and in complete sentences.</p>
                 </div>
                 {/* Right: Email response area */}
-                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-gray-50 dark:bg-gray-900">
+                <div className={`md:w-3/5 p-3 md:p-5 overflow-auto bg-gray-50 dark:bg-gray-900 transition-[padding] duration-200 ${aiTutorPinned ? 'md:pr-[420px]' : ''}`}>
                   <h3 className="text-base md:text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Your Response:</h3>
                   <div className="mb-2 text-sm md:text-base text-gray-700 dark:text-gray-300">
                     <span className="font-bold">To:</span> {cmsEmailQ?.emailTo || 'editor@sunshinepoetymagazine.com'}
@@ -1710,8 +1717,16 @@ export function QuestionReviewFull({
                   <div className={`bg-white dark:bg-gray-800 border rounded-lg p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap ${result.wrongAnswers[0]?.userAnswer ? 'text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600' : 'text-gray-400 italic border-gray-200 dark:border-gray-700'}`}>
                     {result.wrongAnswers[0]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 이메일/토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                  <div className="flex justify-end items-center mt-4">
+                  <div className="flex items-center justify-between mt-4">
+                    <button
+                      onClick={() => setShowWritingAiGrader('email')}
+                      disabled={!result.wrongAnswers[0]?.userAnswer?.trim()}
+                      className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-4 py-2 rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      AI 튜터로 첨삭받기
+                      <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
+                    </button>
                     <button
                       onClick={() => toggleBookmark('writing-email')}
                       className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
@@ -1767,7 +1782,7 @@ export function QuestionReviewFull({
                   </div>
                 </div>
                 {/* Right: Student responses + user response */}
-                <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3] dark:bg-gray-900">
+                <div className={`md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3] dark:bg-gray-900 transition-[padding] duration-200 ${aiTutorPinned ? 'md:pr-[420px]' : ''}`}>
                   <div className="space-y-3 mb-4">
                     <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 p-3 shadow-sm border border-[#e7e3d7] dark:border-gray-700">
                       <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -1806,8 +1821,16 @@ export function QuestionReviewFull({
                     <div className={`border rounded-xl p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 italic border-gray-200 dark:border-gray-600'}`}>
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
-                    <div className="flex justify-end items-center mt-4">
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        onClick={() => setShowWritingAiGrader('discussion')}
+                        disabled={!result.wrongAnswers[1]?.userAnswer?.trim()}
+                        className="flex items-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d8a8c] text-white px-4 py-2 rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-[#1e6b73]/30 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        AI 튜터로 첨삭받기
+                        <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded">6점 만점</span>
+                      </button>
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
                         className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
@@ -1963,12 +1986,14 @@ export function QuestionReviewFull({
       </div>
 
       {/* AI 튜터 위젯 — History 리뷰 결과 화면. 우측 하단 FAB + 슬라이드인 팝업
-          Writing에서는 pinnable=true — 패널 고정 시 오버레이 사라지고 글 작성 가능 */}
+          Writing an Email / Academic Discussion에서만 pinnable=true —
+          패널 고정 시 오버레이 사라지고 헤더 드래그로 위치 이동 가능 (글 작성과 동시 사용) */}
       <ToeflAiWidget
         position="right"
         zIndex={60}
         contextLabel={`Review · ${activeSection} (Q${currentQuestionIndex + 1})`}
-        pinnable={activeSection === 'Writing'}
+        pinnable={activeSection === 'Writing' && (activeModule === 2 || activeModule === 3)}
+        onPinnedChange={setAiTutorPinned}
         suggestedQuestions={
           activeSection === 'Writing' && activeModule === 2
             ? [
@@ -1987,6 +2012,24 @@ export function QuestionReviewFull({
             : undefined
         }
       />
+
+      {/* Writing AI 채점 — TPO review Email/Discussion */}
+      {showWritingAiGrader === 'email' && cmsEmailQ && (
+        <WritingReviewAiTutor
+          writingType="email"
+          userAnswer={result.wrongAnswers[0]?.userAnswer || ''}
+          questionData={cmsEmailQ}
+          onClose={() => setShowWritingAiGrader(null)}
+        />
+      )}
+      {showWritingAiGrader === 'discussion' && cmsAcademicQ && (
+        <WritingReviewAiTutor
+          writingType="discussion"
+          userAnswer={result.wrongAnswers[1]?.userAnswer || ''}
+          questionData={cmsAcademicQ}
+          onClose={() => setShowWritingAiGrader(null)}
+        />
+      )}
 
       {/* 단어 뜻 팝업 — 리딩 review에서 단어 클릭 시 표시 */}
       {popupData && (
