@@ -2362,14 +2362,18 @@ function AppContent() {
         const qNum = parseInt(screen.replace('q', ''), 10);
         let listeningQuestionType = 'Listen and Response';
         let listeningQuestionCandidates = ['Listen and Response'];
-        if (qNum >= 9 && qNum <= 10) listeningQuestionType = 'Short Conversation';
-        if (qNum >= 9 && qNum <= 10) listeningQuestionCandidates = ['Short Conversation', 'Campus Conversation'];
-        else if (qNum >= 11 && qNum <= 12) {
+        if (qNum >= 13 && qNum <= 16) {
+          listeningQuestionType = 'Campus Conversation';
+          listeningQuestionCandidates = ['Campus Conversation', 'Short Conversation'];
+        } else if (qNum >= 17 && qNum <= 20) {
           listeningQuestionType = 'Announcements';
           listeningQuestionCandidates = ['Announcements'];
-        } else if (qNum >= 13) {
+        } else if (qNum >= 21 && qNum <= 24) {
           listeningQuestionType = 'Academic Talk';
-          listeningQuestionCandidates = ['Academic Talk', 'Academic Lecture'];
+          listeningQuestionCandidates = ['Academic Talk', 'Academic Lecture', 'Listen and Respond'];
+        } else if (qNum >= 25) {
+          listeningQuestionType = 'Academic Lecture';
+          listeningQuestionCandidates = ['Academic Lecture', 'Academic Talk'];
         }
 
         const reviewQuestion = findReviewQuestion('Listening', listeningQuestionCandidates, qNum);

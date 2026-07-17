@@ -85,60 +85,108 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
 function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): DictationExercise {
   // CMS 스크립트가 있으면 실제 데이터 사용
   if (cmsScript) {
-    const sentence = cmsScript.trim().split('\n')[0].trim(); // 첫 줄만 사용
-    const words = sentence.split(/\s+/).filter(w => w);
-    // 3~4개 단어를 빈칸으로 (긴 문장일수록 더 많은 빈칸)
-    const blankCount = Math.min(Math.max(3, Math.floor(words.length / 3)), Math.floor(words.length * 0.5));
-    const blankIndices: number[] = [];
-    // 중간~끝쪽에서 균등하게 선택 (처음/마지막 제외)
-    const step = Math.max(1, Math.floor((words.length - 2) / blankCount));
-    for (let i = step; i < words.length - 1 && blankIndices.length < blankCount; i += step) {
-      // 짧은 단어(2글자 이하), 구두점 제외 후 선택
-      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
-      if (word.length > 2) blankIndices.push(i);
+    const allLines = cmsScript.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // 1) Narrator/Announcer 안내문("Listen to a conversation" 등)은 받아쓰기에 부적합 — 제외
+    //    화자 레이블(Woman:/Man:/Professor:/Host: 등) 뒤의 본문 줄만 후보로 추출
+    const speakerPattern = /^(Woman|Man|Student|Professor|Host|Announcer|Speaker)\s*:\s*(.+)$/i;
+    const narratorPattern = /^Narrator\s*:/i;
+
+    const candidateLines: string[] = [];
+
+    for (const line of allLines) {
+      if (narratorPattern.test(line)) continue; // Narrator 줄 전체 제외
+
+      const m = line.match(speakerPattern);
+      if (m) {
+        // 화자 레이블 뒤 본문만 추출
+        const body = m[2].trim();
+        if (body.split(/\s+/).length >= 6) candidateLines.push(body); // 6단어 이상만
+      } else if (!line.includes(':')) {
+        // 화자 레이블 없는 순수 본문 줄 (일부 포맷)
+        if (line.split(/\s+/).length >= 6) candidateLines.push(line);
+      }
     }
-    // 부족하면 뒤에서 채우기
+
+    // 2) 후보가 없으면 Narrator 제외한 나머지 줄에서 가장 긴 줄 사용
+    if (candidateLines.length === 0) {
+      const fallbackLines = allLines
+        .filter(l => !narratorPattern.test(l))
+        .map(l => l.replace(/^[^:]+:\s*/, '').trim()) // 레이블 제거
+        .filter(l => l.split(/\s+/).length >= 4);
+      if (fallbackLines.length > 0) {
+        fallbackLines.sort((a, b) => b.length - a.length);
+        candidateLines.push(fallbackLines[0]);
+      }
+    }
+
+    // 3) 중간 줄을 받아쓰기 문장으로 선택 (도입부보다 중간~후반이 더 내용 풍부)
+    const sentence = candidateLines.length > 0
+      ? candidateLines[Math.floor(candidateLines.length / 2)]
+      : allLines.find(l => !narratorPattern.test(l) && l.split(/\s+/).length >= 4) || allLines[0] || '';
+
+    const cleanSentence = sentence.replace(/^[^:]+:\s*/, '').trim(); // 혹시 남은 레이블 제거
+
+    const words = cleanSentence.split(/\s+/).filter(w => w);
+    if (words.length < 3) {
+      // 문장이 너무 짧으면 fallback
+      return buildFallbackDictation(variant);
+    }
+
+    // 4) 빈칸 선택: 3글자 이상 내용어 위주, 고르게 분포
+    const blankCount = Math.min(Math.max(2, Math.floor(words.length / 4)), 4);
+    const blankIndices: number[] = [];
+    const step = Math.max(1, Math.floor((words.length - 2) / (blankCount + 1)));
+    for (let i = step; i < words.length - 1 && blankIndices.length < blankCount; i += step) {
+      const word = words[i].replace(/[^a-zA-Z'-]/g, '');
+      if (word.length >= 3) blankIndices.push(i);
+    }
+    // 부족하면 보충
     for (let i = words.length - 2; i >= 1 && blankIndices.length < blankCount; i--) {
       const word = words[i].replace(/[^a-zA-Z'-]/g, '');
-      if (!blankIndices.includes(i) && word.length > 2) blankIndices.push(i);
+      if (!blankIndices.includes(i) && word.length >= 3) blankIndices.push(i);
     }
-    if (blankIndices.length === 0) { blankIndices.push(1); } // 최소 1개
+    if (blankIndices.length === 0) blankIndices.push(Math.floor(words.length / 2));
+    blankIndices.sort((a, b) => a - b);
 
+    // 5) 정답 목록 (구두점 포함 원형 그대로)
     const blanks = blankIndices.map(idx => words[idx]);
-    const segments: string[] = [''];
-    let bi = 0;
-    words.forEach((w, idx) => {
-      if (blankIndices.includes(idx)) {
-        segments[bi] += ' ';
-        segments.push('');
-        bi++;
-      } else {
-        segments[bi] += (segments[bi] ? ' ' : '') + w;
-      }
-    });
+
+    // 6) segments 생성 (빈칸 사이 텍스트 조각)
+    const segments: string[] = [];
+    let prev = 0;
+    for (const idx of blankIndices) {
+      segments.push(words.slice(prev, idx).join(' '));
+      prev = idx + 1;
+    }
+    segments.push(words.slice(prev).join(' '));
+
     return {
       prompt: '오디오를 듣고, 들리는 내용을 빈칸에 입력하세요.',
-      fullSentence: sentence,
+      fullSentence: cleanSentence,
       blanks,
       segments,
     };
   }
 
-  // fallback: 하드코딩된 예문
+  return buildFallbackDictation(variant);
+}
+
+/** CMS 스크립트 없을 때 사용하는 기본값 */
+function buildFallbackDictation(variant: ReviewVariant): DictationExercise {
   if (variant === 'speaking-repeat') {
     return {
       prompt: '음성 아이콘을 누르고, 들리는 문장을 빈칸에 입력하세요.',
       fullSentence: 'Please welcome the visitors and guide them to the main hall.',
-      blanks: ['welcome', 'guide', 'main hall'],
-      segments: ['Please ', ' the visitors and ', ' them to the ', '.'],
+      blanks: ['welcome', 'guide', 'main'],
+      segments: ['Please ', ' the visitors and ', ' them to the ', ' hall.'],
     };
   }
-
   return {
     prompt: '음성 아이콘을 누르고, 들리는 내용을 받아쓰세요.',
     fullSentence: 'The orientation session starts at nine and students should bring their ID cards.',
-    blanks: ['nine', 'students', 'ID cards'],
-    segments: ['The orientation session starts at ', ' and ', ' should bring their ', '.'],
+    blanks: ['orientation', 'starts', 'students'],
+    segments: ['The ', ' session ', ' at nine and ', ' should bring their ID cards.'],
   };
 }
 
@@ -211,6 +259,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isDictationPlaying, setIsDictationPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const dictationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const theme = PANEL_THEME[section];
@@ -256,30 +305,35 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
   };
 
-  // Dictation 오디오 — CMS 오디오 우선, 없으면 TTS fallback
+  // Dictation 음성 — 항상 TTS로 fullSentence(받아쓰기 대상 문장)만 읽어줌
+  // CMS 전체 오디오(audioUrl)는 대화/강의 전체라 받아쓰기 문장과 다르므로 사용 안 함
+
   const playDictation = () => {
-    if (audioUrl) {
-      // CMS 실제 오디오가 있으면 그걸 사용
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      const audio = createCachedAudioSync(audioUrl);
-      audioRef.current = audio;
-      audio.play().catch(() => {});
+    if (!('speechSynthesis' in window)) return;
+    if (isDictationPlaying) {
+      window.speechSynthesis.cancel();
+      setIsDictationPlaying(false);
       return;
     }
-
-    // TTS fallback
-    if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(dictationExercise.fullSentence);
-    utterance.rate = 0.85;
+    utterance.rate = 0.82;
     utterance.lang = 'en-US';
+    utterance.onend = () => setIsDictationPlaying(false);
+    utterance.onerror = () => setIsDictationPlaying(false);
+    setIsDictationPlaying(true);
     window.speechSynthesis.speak(utterance);
   };
 
-  const normalizeDictationValue = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+  // 탭이 바뀌거나 문제가 바뀌면 TTS + 오디오 정지
+  useEffect(() => {
+    window.speechSynthesis?.cancel();
+    setIsDictationPlaying(false);
+    return () => { window.speechSynthesis?.cancel(); };
+  }, [contentKey]);
+
+  const normalizeDictationValue = (value: string) =>
+    value.trim().toLowerCase().replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ');
 
   const isDictationCorrect = (index: number) => normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
@@ -288,15 +342,21 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       <div className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
         <div>
           <p className="text-sm font-semibold text-[#1f2937]">받아쓰기</p>
-          <p className="mt-1 text-xs leading-5 text-[#5b6470]">{dictationExercise.prompt}</p>
+          <p className="mt-1 text-xs leading-5 text-[#5b6470]">
+            🔊 버튼을 누르면 아래 문장을 읽어드립니다. 들리는 단어를 빈칸에 입력하세요.
+          </p>
+          {audioUrl && (
+            <p className="mt-0.5 text-xs text-[#94a3b8]">💡 전체 오디오는 상단 ▶ 버튼에서 들을 수 있습니다.</p>
+          )}
         </div>
         <button
           type="button"
           onClick={playDictation}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
-          style={{ backgroundColor: theme.accent }}
+          title={isDictationPlaying ? '정지' : '문장 듣기'}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
+          style={{ backgroundColor: isDictationPlaying ? '#ef4444' : theme.accent }}
         >
-          <Volume2 className="h-5 w-5" />
+          {isDictationPlaying ? <span className="text-base">■</span> : <Volume2 className="h-5 w-5" />}
         </button>
       </div>
 
@@ -319,13 +379,28 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                         next[index] = nextValue;
                         setDictationInputs(next);
                         setDictationChecked(false);
-
-                        if (
-                          index < dictationExercise.blanks.length - 1 &&
-                          normalizeDictationValue(nextValue).length >= normalizeDictationValue(dictationExercise.blanks[index]).length
-                        ) {
+                      }}
+                      onKeyDown={(event) => {
+                        // Tab 또는 Enter로 다음 칸 이동
+                        if ((event.key === 'Tab' || event.key === 'Enter') && index < dictationExercise.blanks.length - 1) {
+                          event.preventDefault();
                           dictationInputRefs.current[index + 1]?.focus();
                           dictationInputRefs.current[index + 1]?.select();
+                        }
+                        // 입력이 정답 길이에 도달하면 자동으로 다음 칸으로
+                        if (event.key !== 'Backspace' && event.key !== 'Delete' && event.key.length === 1) {
+                          const projected = (dictationInputs[index] || '') + event.key;
+                          const answerLen = normalizeDictationValue(dictationExercise.blanks[index]).length;
+                          if (
+                            index < dictationExercise.blanks.length - 1 &&
+                            normalizeDictationValue(projected).length >= answerLen &&
+                            answerLen >= 3
+                          ) {
+                            setTimeout(() => {
+                              dictationInputRefs.current[index + 1]?.focus();
+                              dictationInputRefs.current[index + 1]?.select();
+                            }, 50);
+                          }
                         }
                       }}
                       className={`border-b-2 bg-transparent px-1 py-0.5 text-center outline-none ${
@@ -536,13 +611,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           <button
             type="button"
             title="AI 튜터"
-            onClick={() => {
-              // 우측에 AI 튜터 패널이 새로 열리므로, 겹치지 않도록
-              // 현재 열려있는 탭 콘텐츠 드로어(Dictation/Key Words/Analysis 등)를
-              // 먼저 잠시 닫아준다.
-              setActiveTab(null);
-              onOpenAiTutor();
-            }}
+            onClick={onOpenAiTutor}
             className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span
