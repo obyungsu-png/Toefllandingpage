@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronLeft, Sparkles, Send, Bot, User } from 'lucide-react';
+import { ChevronLeft, Sparkles, Send, Bot, User, Pin, PinOff, X, GripVertical } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -233,9 +233,11 @@ interface ToeflAiWidgetProps {
   suggestedQuestions?: string[];
   /** 열릴 때 자동으로 채팅에 채워 넣고 즉시 전송할 질문 (드래그 선택 → AI 튜터 서브메뉴 클릭 시 사용) */
   initialQuestion?: string;
+  /** 패널 고정(pinned) 모드 지원 — Writing 등에서 글 작성하면서 AI 튜터 유지 */
+  pinnable?: boolean;
 }
 
-export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions, initialQuestion }: ToeflAiWidgetProps) {
+export function ToeflAiWidget({ position = 'right', contextLabel, questionData, zIndex = 90, open, onOpenChange, showFab = true, suggestedQuestions: propQuestions, initialQuestion, pinnable = false }: ToeflAiWidgetProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open !== undefined ? open : internalOpen;
   const setIsOpen = (value: boolean) => {
@@ -249,6 +251,59 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const activeQuestions = propQuestions ?? defaultSuggestedQuestions;
+
+  // ── Pinned (고정) 모드: Writing에서 AI 튜터를 띄워놓고 글 작성 ──
+  const [pinned, setPinned] = useState(false);
+  const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
+  const [panelSize, setPanelSize] = useState({ w: 380, h: 480 });
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null);
+
+  // 드래그로 패널 이동
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    if (!pinned) return;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: panelPos.x, origY: panelPos.y };
+    e.preventDefault();
+  }, [pinned, panelPos]);
+
+  useEffect(() => {
+    if (!pinned) return;
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPanelPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+    };
+    const onUp = () => { dragRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [pinned]);
+
+  // 리사이즈 (우하단 모서리 드래그)
+  const onResizeStart = useCallback((e: React.MouseEvent) => {
+    if (!pinned) return;
+    resizeRef.current = { startX: e.clientX, startY: e.clientY, origW: panelSize.w, origH: panelSize.h };
+    e.preventDefault();
+    e.stopPropagation();
+  }, [pinned, panelSize]);
+
+  useEffect(() => {
+    if (!pinned) return;
+    const onMove = (e: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const dw = e.clientX - resizeRef.current.startX;
+      const dh = e.clientY - resizeRef.current.startY;
+      setPanelSize({
+        w: Math.max(300, resizeRef.current.origW + dw),
+        h: Math.max(300, resizeRef.current.origH + dh),
+      });
+    };
+    const onUp = () => { resizeRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [pinned]);
 
   // 컨텍스트(또는 문제 데이터)가 바뀌면 대화 초기화
   useEffect(() => {
@@ -522,6 +577,30 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         .toefl-ai-panel-suggestion:last-child {
           border-bottom: none;
         }
+        .toefl-ai-pinned-panel {
+          position: fixed;
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          border: 1px solid #e5e7eb;
+        }
+        .toefl-ai-pinned-header {
+          cursor: move;
+          user-select: none;
+        }
+        .toefl-ai-pinned-resize {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 18px;
+          height: 18px;
+          cursor: nwse-resize;
+          background: linear-gradient(135deg, transparent 50%, #cbd5e1 50%);
+          border-bottom-right-radius: 12px;
+        }
       `}</style>
 
       {/* AI 도움 버튼 (이모티콘 FAB) — 통합 모드에서는 숨김 */}
@@ -540,13 +619,27 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         </button>
       )}
 
-      {/* AI 패널 (슬라이드인) */}
+      {/* AI 패널 (슬라이드인 or 고정 플로팅) */}
       {isOpen && (
         <>
-          <div className="toefl-ai-panel-overlay" onClick={() => setIsOpen(false)} />
-          <div className="toefl-ai-panel">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
+          {/* 오버레이 — pinned 모드에서는 제거 (글 작성 영역 확보) */}
+          {!pinned && <div className="toefl-ai-panel-overlay" onClick={() => setIsOpen(false)} />}
+          <div
+            className={pinned ? 'toefl-ai-pinned-panel' : 'toefl-ai-panel'}
+            style={pinned ? {
+              right: `${20 + panelPos.x}px`,
+              top: `${80 + panelPos.y}px`,
+              width: `${panelSize.w}px`,
+              height: `${panelSize.h}px`,
+              zIndex: zIndex + 1,
+            } : undefined}
+          >
+            <div
+              className={`flex items-center justify-between px-5 py-4 border-b ${pinned ? 'toefl-ai-pinned-header' : ''}`}
+              onMouseDown={onDragStart}
+            >
               <div className="flex items-center gap-2">
+                {pinned && <GripVertical className="w-4 h-4 text-gray-300" />}
                 <span className="toefl-ai-fab" style={{ width: 36, height: 36 }}>
                   <span className="toefl-ai-fab-eyes">
                     <span style={{ width: 3, height: 3 }}></span>
@@ -562,13 +655,30 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm transition-colors"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                돌아가기
-              </button>
+              <div className="flex items-center gap-1.5">
+                {/* Pin/Unpin 버튼 — pinnable일 때만 표시 */}
+                {pinnable && (
+                  <button
+                    onClick={() => setPinned(!pinned)}
+                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                      pinned
+                        ? 'bg-teal-600 text-white hover:bg-teal-700'
+                        : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                    }`}
+                    title={pinned ? '고정 해제' : '패널 고정'}
+                  >
+                    {pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+                    {pinned ? '고정해제' : '고정'}
+                  </button>
+                )}
+                <button
+                  onClick={() => { setPinned(false); setIsOpen(false); }}
+                  className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm transition-colors"
+                >
+                  {pinned ? <X className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+                  {pinned ? '닫기' : '돌아가기'}
+                </button>
+              </div>
             </div>
             {/* ── 모델 선택 바 ── */}
             <div className="flex items-center gap-1.5 px-5 py-2 border-b bg-gray-50/80">
@@ -673,6 +783,8 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                 </Button>
               </form>
             </div>
+            {/* 리사이즈 핸들 — pinned 모드에서만 표시 (우하단 모서리 드래그) */}
+            {pinned && <div className="toefl-ai-pinned-resize" onMouseDown={onResizeStart} />}
           </div>
         </>
       )}

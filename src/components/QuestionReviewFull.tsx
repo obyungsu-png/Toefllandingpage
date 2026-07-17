@@ -153,6 +153,9 @@ interface ReviewQuestion {
   passageText?: string;
   imageUrl?: string;
   audioUrl?: string;
+  translation?: string;
+  keyWords?: string[];
+  analysis?: string;
 }
 
 interface WritingBuildSentenceReviewQuestion {
@@ -377,6 +380,9 @@ export function QuestionReviewFull({
           audioUrl: realQ.audioUrl,
           passageText: realQ.passageText || passageText,
           imageUrl: realQ.imageUrl,
+          translation: realQ.translation || realQ.koreanTranslation,
+          keyWords: realQ.keyWords || realQ.vocabulary,
+          analysis: realQ.analysis || realQ.explanation,
         });
       } else {
         // No CMS data — minimal placeholder. Wrong answers still show their detail below.
@@ -1229,11 +1235,11 @@ export function QuestionReviewFull({
 
             {/* Left Panel: Audio Player (for Listening) - Equal width 50% */}
             {activeSection === 'Listening' && (() => {
-              const realQ = (currentSection?.questions || [])[currentQuestionIndex];
-              const transcript = realQ?.scriptText || realQ?.audioText || realQ?.transcript || currentQuestion?.audioText;
-              const translation = realQ?.translation || realQ?.koreanTranslation;
-              const keyWords: string[] = realQ?.keyWords || realQ?.vocabulary || [];
-              const analysis = realQ?.analysis || realQ?.explanation || currentQuestion?.explanation;
+              // currentQuestion에서 직접 데이터 사용 — 모듈 필터링 후에도 올바른 문제 데이터 보장
+              const transcript = currentQuestion?.scriptText || currentQuestion?.audioText;
+              const translation = currentQuestion?.translation;
+              const keyWords: string[] = currentQuestion?.keyWords || [];
+              const analysis = currentQuestion?.analysis || currentQuestion?.explanation;
               return (
                 <div className="w-full md:w-1/2 order-1 md:order-none">
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 h-full overflow-y-auto">
@@ -1272,7 +1278,7 @@ export function QuestionReviewFull({
 
                     {/* Dictation — 리스닝 스크립트 빈칸 채우기 */}
                     {transcript && (() => {
-                      const blankList = (realQ?.dictationBlanks || (currentQuestion as any)?.dictationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+                      const blankList = (currentQuestion?.dictationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
                       const blankSet = new Set(blankList.map((w: string) => w.toLowerCase()));
                       const tokens = transcript.split(/(\s+)/);
                       let blankIdx = 0;
@@ -1340,9 +1346,9 @@ export function QuestionReviewFull({
 
                     {/* Organization — 구조/요약 빈칸 채우기 (Announcement/Conversation/Lecture용) */}
                     {(() => {
-                      const orgText = realQ?.organization || (currentQuestion as any)?.organization;
+                      const orgText = currentQuestion?.organization;
                       if (!orgText) return null;
-                      const orgBlankList = (realQ?.organizationBlanks || (currentQuestion as any)?.organizationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+                      const orgBlankList = (currentQuestion?.organizationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
                       const orgBlankSet = new Set(orgBlankList.map((w: string) => w.toLowerCase()));
                       const tokens = orgText.split(/(\s+)/);
                       let blankIdx = 0;
@@ -1956,11 +1962,13 @@ export function QuestionReviewFull({
         © {new Date().getFullYear()} TOEFL TPO Practice Platform. All Rights Reserved.
       </div>
 
-      {/* AI 튜터 위젯 — History 리뷰 결과 화면. 우측 하단 FAB + 슬라이드인 팝업 */}
+      {/* AI 튜터 위젯 — History 리뷰 결과 화면. 우측 하단 FAB + 슬라이드인 팝업
+          Writing에서는 pinnable=true — 패널 고정 시 오버레이 사라지고 글 작성 가능 */}
       <ToeflAiWidget
         position="right"
         zIndex={60}
         contextLabel={`Review · ${activeSection} (Q${currentQuestionIndex + 1})`}
+        pinnable={activeSection === 'Writing'}
         suggestedQuestions={
           activeSection === 'Writing' && activeModule === 2
             ? [
