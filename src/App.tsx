@@ -4395,26 +4395,50 @@ function AppContent() {
                 {m2NormalizedPassage ? (() => {
                   const parts: React.ReactNode[] = [];
                   let key = 0;
-                  const regex = /\[(\d+)\]/g;
+                  // 빈칸 포함 단어를 inline-block으로 감싸서 줄바꿈 시 분리되지 않도록 함
+                  const wordWithBlankRegex = /\S*\[\d+\]\S*/g;
                   let lastIndex = 0;
                   let match;
-                  while ((match = regex.exec(m2NormalizedPassage)) !== null) {
-                    const id = parseInt(match[1]);
+                  while ((match = wordWithBlankRegex.exec(m2NormalizedPassage)) !== null) {
+                    const wordGroup = match[0];
                     const before = m2NormalizedPassage.substring(lastIndex, match.index);
-                    if (before) parts.push(<span key={`t${key++}`}>{before}</span>);
+                    if (before) parts.push(<span key={`t${key}`}>{before}</span>);
+                    // 단어 그룹 내의 빈칸들을 파싱
+                    const blankRegex = /\[(\d+)\]/g;
+                    let wordLastIndex = 0;
+                    let blankMatch;
+                    const wordParts: React.ReactNode[] = [];
+                    let subKey = 0;
+                    while ((blankMatch = blankRegex.exec(wordGroup)) !== null) {
+                      const id = parseInt(blankMatch[1]);
+                      const beforeBlank = wordGroup.substring(wordLastIndex, blankMatch.index);
+                      if (beforeBlank) wordParts.push(<span key={`w-${key}-${subKey}`}>{beforeBlank}</span>);
+                      wordParts.push(
+                        <input key={`i-${key}-${subKey}`} type="text" data-input-id={`m2-${id}`}
+                          className={`m2-gap-input ${m2FilledInputs[id] ? 'filled' : ''}`}
+                          maxLength={m2Inputs[id]?.maxLength || 5}
+                          value={m2InputValues[id] || ''}
+                          onChange={(e) => handleM2InputChange(id, e.target.value)}
+                          onFocus={() => handleM2Focus(id)} onBlur={() => handleM2Blur(id)}
+                          onKeyPress={(e) => handleM2KeyPress(e, id)}
+                          style={{ width: getM2InputWidth(id) }} />
+                      );
+                      wordLastIndex = blankMatch.index + blankMatch[0].length;
+                      subKey++;
+                    }
+                    if (wordLastIndex < wordGroup.length) {
+                      wordParts.push(<span key={`w-${key}-${subKey}`}>{wordGroup.substring(wordLastIndex)}</span>);
+                    }
+                    // 빈칸 포함 단어 전체를 inline-block으로 감싸서 줄바꿈으로 분리되지 않도록 함
                     parts.push(
-                      <input key={`i${id}`} type="text" data-input-id={`m2-${id}`}
-                        className={`m2-gap-input ${m2FilledInputs[id] ? 'filled' : ''}`}
-                        maxLength={m2Inputs[id]?.maxLength || 5}
-                        value={m2InputValues[id] || ''}
-                        onChange={(e) => handleM2InputChange(id, e.target.value)}
-                        onFocus={() => handleM2Focus(id)} onBlur={() => handleM2Blur(id)}
-                        onKeyPress={(e) => handleM2KeyPress(e, id)}
-                        style={{ width: getM2InputWidth(id) }} />
+                      <span key={`word-${key}`} style={{ display: 'inline-block', verticalAlign: 'baseline' }}>
+                        {wordParts}
+                      </span>
                     );
                     lastIndex = match.index + match[0].length;
+                    key++;
                   }
-                  if (lastIndex < m2NormalizedPassage.length) parts.push(<span key={`t${key++}`}>{m2NormalizedPassage.substring(lastIndex)}</span>);
+                  if (lastIndex < m2NormalizedPassage.length) parts.push(<span key={`t${key}`}>{m2NormalizedPassage.substring(lastIndex)}</span>);
                   return parts;
                 })() : (
                   <>
@@ -6500,6 +6524,12 @@ function AppContent() {
       }
     }, [inputValues, questionKey]);
 
+    // 문제가 변경되면 입력값 초기화 (이전 정답이 다음 문제에 남지 않도록)
+    React.useEffect(() => {
+      setInputValues({});
+      setFilledInputs({});
+    }, [questionKey]);
+
     const getTextWidth = (text: string): number => {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
@@ -6534,36 +6564,61 @@ function AppContent() {
     const renderPassageWithInputs = () => {
       if (!passageText) return null;
       const parts: React.ReactNode[] = [];
-      const regex = /\[(\d+)\]/g;
+      // 빈칸 포함 단어(공백 없는 문자열에 [N]이 포함된 그룹)를 inline-block으로 감싸서
+      // 줄바꿈 시 단어가 끝줄과 다음줄 맨처음으로 분리되지 않도록 함
+      const wordWithBlankRegex = /\S*\[\d+\]\S*/g;
       let lastIndex = 0;
       let key = 0;
       let match;
-      while ((match = regex.exec(passageText)) !== null) {
-        const inputId = parseInt(match[1], 10);
+      while ((match = wordWithBlankRegex.exec(passageText)) !== null) {
+        const wordGroup = match[0];
         const beforeText = passageText.substring(lastIndex, match.index);
-        if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
+        if (beforeText) parts.push(<span key={`text-${key}`}>{beforeText}</span>);
+        // 단어 그룹 내의 빈칸들을 파싱
+        const blankRegex = /\[(\d+)\]/g;
+        let wordLastIndex = 0;
+        let blankMatch;
+        const wordParts: React.ReactNode[] = [];
+        let subKey = 0;
+        while ((blankMatch = blankRegex.exec(wordGroup)) !== null) {
+          const inputId = parseInt(blankMatch[1], 10);
+          const beforeBlank = wordGroup.substring(wordLastIndex, blankMatch.index);
+          if (beforeBlank) wordParts.push(<span key={`w-${key}-${subKey}`}>{beforeBlank}</span>);
+          wordParts.push(
+            <input
+              key={`input-${key}-${subKey}`}
+              type="text"
+              data-input-id={`${inputPrefix}-${inputId}`}
+              className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
+              maxLength={inputs[inputId]?.maxLength || 5}
+              value={inputValues[inputId] || ''}
+              onChange={(e) => handleInputChange(inputId, e.target.value)}
+              onFocus={() => setFilledInputs(prev => ({ ...prev, [inputId]: false }))}
+              onBlur={() => {
+                if ((inputValues[inputId] || '').length > 0) {
+                  setFilledInputs(prev => ({ ...prev, [inputId]: true }));
+                }
+              }}
+              onKeyPress={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+              style={{ width: getInputWidth(inputId) }}
+            />
+          );
+          wordLastIndex = blankMatch.index + blankMatch[0].length;
+          subKey++;
+        }
+        if (wordLastIndex < wordGroup.length) {
+          wordParts.push(<span key={`w-${key}-${subKey}`}>{wordGroup.substring(wordLastIndex)}</span>);
+        }
+        // 빈칸 포함 단어 전체를 inline-block으로 감싸서 줄바꿈으로 분리되지 않도록 함
         parts.push(
-          <input
-            key={`input-${inputId}`}
-            type="text"
-            data-input-id={`${inputPrefix}-${inputId}`}
-            className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
-            maxLength={inputs[inputId]?.maxLength || 5}
-            value={inputValues[inputId] || ''}
-            onChange={(e) => handleInputChange(inputId, e.target.value)}
-            onFocus={() => setFilledInputs(prev => ({ ...prev, [inputId]: false }))}
-            onBlur={() => {
-              if ((inputValues[inputId] || '').length > 0) {
-                setFilledInputs(prev => ({ ...prev, [inputId]: true }));
-              }
-            }}
-            onKeyPress={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-            style={{ width: getInputWidth(inputId) }}
-          />
+          <span key={`word-${key}`} style={{ display: 'inline-block', verticalAlign: 'baseline' }}>
+            {wordParts}
+          </span>
         );
         lastIndex = match.index + match[0].length;
+        key++;
       }
-      if (lastIndex < passageText.length) parts.push(<span key={`text-${key++}`}>{passageText.substring(lastIndex)}</span>);
+      if (lastIndex < passageText.length) parts.push(<span key={`text-${key}`}>{passageText.substring(lastIndex)}</span>);
       return parts;
     };
 
