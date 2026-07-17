@@ -1034,6 +1034,21 @@ export function QuestionReviewFull({
             </div>
           )}
 
+          {/* Listening / Writing / Speaking — DarkMode 토글만 (Tools 없음) */}
+          {activeSection !== 'Reading' && (
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                darkMode
+                  ? 'bg-gray-700 text-yellow-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title={darkMode ? '라이트 모드' : '다크 모드'}
+            >
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
+
           {/* Stats — 자연스러운 flex flow */}
           <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 ml-auto">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
@@ -1221,10 +1236,10 @@ export function QuestionReviewFull({
               const analysis = realQ?.analysis || realQ?.explanation || currentQuestion?.explanation;
               return (
                 <div className="w-full md:w-1/2 order-1 md:order-none">
-                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-5 h-full overflow-y-auto">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 h-full overflow-y-auto">
                     {/* Listening Image (CMS) — full face visible */}
                     {currentQuestion?.imageUrl ? (
-                      <div className="rounded-lg overflow-hidden mb-4 border border-gray-200 bg-white flex items-center justify-center" style={{ maxHeight: '320px' }}>
+                      <div className="rounded-lg overflow-hidden mb-4 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 flex items-center justify-center" style={{ maxHeight: '320px' }}>
                         <img
                           src={currentQuestion.imageUrl}
                           alt="Listening question context"
@@ -1233,7 +1248,7 @@ export function QuestionReviewFull({
                         />
                       </div>
                     ) : (
-                      <div className="rounded-lg mb-4 border-2 border-dashed border-gray-200 bg-white flex items-center justify-center text-gray-300 text-xs" style={{ height: '180px' }}>
+                      <div className="rounded-lg mb-4 border-2 border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-500 text-xs" style={{ height: '180px' }}>
                         No image
                       </div>
                     )}
@@ -1640,7 +1655,7 @@ export function QuestionReviewFull({
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-all"
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-all"
                   >← Previous</button>
                   <button
                     onClick={() => setCurrentQuestionIndex(Math.min(totalQuestions - 1, currentQuestionIndex + 1))}
@@ -1729,13 +1744,13 @@ export function QuestionReviewFull({
                     </ul>
                   </div>
                   <p className="text-sm md:text-base text-gray-800 dark:text-gray-100 mb-4 font-serif">An effective response will contain at least 100 words.</p>
-                  <div className="border-t border-gray-300 pt-4">
+                  <div className="border-t border-gray-300 dark:border-gray-600 pt-4">
                     <div className="flex flex-col items-center mb-3">
-                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] mb-1.5 bg-gray-100 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] mb-1.5 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                         {cmsAcademicQ?.professorImageUrl ? (
                           <img src={cmsAcademicQ.professorImageUrl} alt="Professor" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-7 h-7 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
                       <p className="font-bold text-sm md:text-base text-gray-900 dark:text-gray-100 font-serif">{cmsAcademicQ?.professorName || 'Professor'}</p>
@@ -1749,11 +1764,11 @@ export function QuestionReviewFull({
                 <div className="md:w-3/5 p-3 md:p-5 overflow-auto bg-[#f8f7f3] dark:bg-gray-900">
                   <div className="space-y-3 mb-4">
                     <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 p-3 shadow-sm border border-[#e7e3d7] dark:border-gray-700">
-                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                         {cmsAcademicQ?.student1ImageUrl ? (
                           <img src={cmsAcademicQ.student1ImageUrl} alt="Student 1" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-5 h-5 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
                       <div className="flex-1">
@@ -1764,11 +1779,11 @@ export function QuestionReviewFull({
                       </div>
                     </div>
                     <div className="flex items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-gray-800/80 p-3 shadow-sm border border-[#e7e3d7] dark:border-gray-700">
-                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden border-2 border-[#c9b99b] bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                         {cmsAcademicQ?.student2ImageUrl ? (
                           <img src={cmsAcademicQ.student2ImageUrl} alt="Student 2" className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                          <svg className="w-5 h-5 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         )}
                       </div>
                       <div className="flex-1">
@@ -1781,15 +1796,15 @@ export function QuestionReviewFull({
                   </div>
                   <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 md:p-4 shadow-sm border border-[#ddd4c4] dark:border-gray-700">
                     <h3 className="text-base md:text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 font-serif">Your Response:</h3>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">내가 쓴 답안</p>
+                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">내가 쓴 답안</p>
                     <div className={`border rounded-xl p-3 md:p-4 min-h-32 text-sm md:text-base whitespace-pre-wrap font-serif ${result.wrongAnswers[1]?.userAnswer ? 'bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700 text-gray-400 italic border-gray-200 dark:border-gray-600'}`}>
                       {result.wrongAnswers[1]?.userAnswer || '작성한 답안이 저장되지 않았습니다.'}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">※ 토론 작문은 자유 서술형이라 자동 채점되지 않습니다.</p>
                     <div className="flex justify-end items-center mt-4">
                       <button
                         onClick={() => toggleBookmark('writing-discussion')}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-500 transition-colors"
+                        className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
                       >
                         {bookmarkedQuestions.has('writing-discussion') ? (
                           <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
@@ -1812,7 +1827,7 @@ export function QuestionReviewFull({
             <div key={currentSpeakingQ.id} className="animate-[fadeIn_0.2s_ease-out]">
               {/* Question header */}
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Question {currentQuestionIndex + 1} of {speakingQuestionCount}
                 </p>
                 <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: themeColor }}>
@@ -1821,15 +1836,15 @@ export function QuestionReviewFull({
               </div>
 
               {/* Prompt */}
-              <div className="mb-3 rounded-xl border border-gray-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 mb-2">Prompt</p>
+              <div className="mb-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400 mb-2">Prompt</p>
                 <p className="text-base md:text-lg text-gray-900 dark:text-gray-100 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
               </div>
 
               {/* Reference image + question audio (실제 시험 화면 구조) */}
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 mb-3">
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 mb-3">
                 <div className="flex justify-center mb-3">
-                  <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl border-2 border-gray-300 bg-white overflow-hidden flex items-center justify-center">
+                  <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 overflow-hidden flex items-center justify-center">
                     {currentSpeakingQ.materialImage ? (
                       <ImageWithFallback
                         src={currentSpeakingQ.materialImage}
@@ -1861,13 +1876,13 @@ export function QuestionReviewFull({
                 <div className="text-center mt-2">
                   <button
                     onClick={() => setShowModelText(!showModelText)}
-                    className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
                     {showModelText ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     <span>{showModelText ? 'Hide Script' : 'View Script'}</span>
                   </button>
                   {showModelText && currentSpeakingQ.transcript && (
-                    <p className="text-sm text-gray-700 leading-relaxed mt-2 p-3 bg-white rounded-lg border border-gray-200 animate-[fadeIn_0.2s_ease-out]">
+                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-[fadeIn_0.2s_ease-out]">
                       {currentSpeakingQ.transcript}
                     </p>
                   )}
@@ -1879,10 +1894,10 @@ export function QuestionReviewFull({
                 const qNum = activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8;
                 const recUrl = speakingRecordings[String(qNum)];
                 return (
-                  <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 mb-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800 p-4 mb-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-9 h-9 rounded-full bg-blue-200 flex items-center justify-center">
-                        <Mic className="w-4 h-4 text-blue-600" />
+                      <div className="w-9 h-9 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                        <Mic className="w-4 h-4 text-blue-600 dark:text-blue-300" />
                       </div>
                       <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
                         My Recording — Q{qNum}
@@ -1891,7 +1906,7 @@ export function QuestionReviewFull({
                     {recUrl ? (
                       <AudioPlayer src={recUrl} qNum={qNum} />
                     ) : (
-                      <p className="text-xs text-gray-400 italic">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 italic">
                         녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
                       </p>
                     )}
@@ -1903,7 +1918,7 @@ export function QuestionReviewFull({
               <div className="flex items-center justify-end mb-2">
                 <button
                   onClick={() => toggleBookmark(currentSpeakingQ.id)}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-yellow-500 transition-colors"
+                  className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-yellow-500 transition-colors"
                 >
                   {bookmarkedQuestions.has(currentSpeakingQ.id) ? (
                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -1918,7 +1933,7 @@ export function QuestionReviewFull({
                 <button
                   onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   ← Previous
                 </button>
@@ -1937,7 +1952,7 @@ export function QuestionReviewFull({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-400 shrink-0">
+      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-center text-xs text-gray-400 dark:text-gray-500 shrink-0">
         © {new Date().getFullYear()} TOEFL TPO Practice Platform. All Rights Reserved.
       </div>
 
