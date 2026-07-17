@@ -38,6 +38,14 @@ function isIOS(): boolean {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
+/** Detect macOS (desktop Safari/Chrome) */
+function isMac(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  // MacIntel platform check + userAgent check for macOS
+  return (navigator.platform === 'MacIntel' && navigator.maxTouchPoints === 0) ||
+    /Mac|Macintosh|MacOS/i.test(navigator.userAgent);
+}
+
 /**
  * Pick the best available British female voice.
  * Returns null if speechSynthesis is not supported or no voices loaded.
@@ -69,6 +77,21 @@ export function pickBestBritishFemaleVoice(): SpeechSynthesisVoice | null {
       'Microsoft Susan - English (United Kingdom)',
       'Microsoft Hazel - English (United Kingdom)',
       'Stephanie',
+    ];
+  } else if (isMac()) {
+    // macOS: Apple 기본 고품질 음성 우선, Google은 나중에
+    // (Safari/macOS에서는 Google 음성을 사용할 수 없어 소리가 나지 않음)
+    priorityNames = [
+      'Samantha',                     // macOS 고품질 여성 음성 (en-US지만 품질 좋음)
+      'Kate',                         // macOS 영국 여성 음성
+      'Serena',                       // macOS 영국 여성 음성
+      'Fiona',                        // macOS 영국 여성 음성 (compact)
+      'Microsoft Sonia Online (Natural) - English (United Kingdom)',
+      'Microsoft Libby Online (Natural) - English (United Kingdom)',
+      'Google UK English Female',     // Chrome on macOS에서만 작동
+      'Microsoft Susan - English (United Kingdom)',
+      'Microsoft Hazel - English (United Kingdom)',
+      'Martha', 'Stephanie',
     ];
   } else if (mobile) {
     // Android: Microsoft Natural voices may be available via Edge;

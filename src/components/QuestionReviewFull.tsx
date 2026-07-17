@@ -62,6 +62,9 @@ function parsePassageContent(rawPassage: string | null | undefined): string {
 function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[], passageText: string) {
   if (!highlights.length) return;
 
+  // 다크모드 감지 — 하이라이트된 텍스트가 다크 배경에서 보이도록 색상 조정
+  const isDark = document.documentElement.classList.contains('dark');
+
   highlights.forEach(h => {
     if (h.end_offset > passageText.length) return;
 
@@ -85,6 +88,10 @@ function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[], pass
           mark.style.textDecoration = h.type === 'u' ? 'underline' : 'none';
           mark.style.textDecorationColor = h.type === 'u' ? '#1e6b73' : '';
           mark.style.textDecorationThickness = h.type === 'u' ? '2px' : '';
+          // 다크모드에서 밝은 하이라이트 배경 위의 텍스트가 보이도록 어두운 색상 적용
+          if (h.type === 'h' && isDark) {
+            mark.style.color = '#1a1a1a';
+          }
 
           try {
             range.surroundContents(mark);

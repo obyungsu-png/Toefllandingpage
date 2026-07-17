@@ -88,7 +88,7 @@ const ReviewTrainingOverlay = lazy(() => import('./components/ReviewTrainingOver
 import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
-import { SERVER_BASE_URL, getServerHeaders, serverFetch } from './utils/apiConfig';
+import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
@@ -1485,10 +1485,14 @@ function AppContent() {
   const handleAddTest = async (test: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(test.testType);
-      const response = await serverFetch(
+      const response = await fetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getServerHeaders()
+          },
           body: JSON.stringify(test)
         }
       );
@@ -1503,17 +1507,21 @@ function AppContent() {
       console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
       console.error('❌ Error saving test:', error);
-      alert(error instanceof Error ? error.message : '테스트 저장 중 오류가 발생했습니다.');
+      alert('테스트 저장 중 오류가 발생했습니다.');
     }
   };
 
   const handleUpdateTest = async (updatedTest: TPOTest) => {
     try {
       const endpoint = getTestEndpoint(updatedTest.testType);
-      const response = await serverFetch(
+      const response = await fetch(
         `${SERVER_BASE_URL}/${endpoint}`,
         {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getServerHeaders()
+          },
           body: JSON.stringify(updatedTest)
         }
       );
@@ -1528,7 +1536,7 @@ function AppContent() {
       console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
       console.error('❌ Error updating test:', error);
-      alert(error instanceof Error ? error.message : '테스트 업데이트 중 오류가 발생했습니다.');
+      alert('테스트 업데이트 중 오류가 발생했습니다.');
     }
   };
 
@@ -1542,10 +1550,13 @@ function AppContent() {
       }
       
       const endpoint = getTestEndpoint(testToDelete.testType);
-      const response = await serverFetch(
+      const response = await fetch(
         `${SERVER_BASE_URL}/${endpoint}/${testToDelete.testNumber}`,
         {
           method: 'DELETE',
+          headers: {
+            ...getServerHeaders()
+          }
         }
       );
       
@@ -4395,50 +4406,26 @@ function AppContent() {
                 {m2NormalizedPassage ? (() => {
                   const parts: React.ReactNode[] = [];
                   let key = 0;
-                  // 빈칸 포함 단어를 inline-block으로 감싸서 줄바꿈 시 분리되지 않도록 함
-                  const wordWithBlankRegex = /\S*\[\d+\]\S*/g;
+                  const regex = /\[(\d+)\]/g;
                   let lastIndex = 0;
                   let match;
-                  while ((match = wordWithBlankRegex.exec(m2NormalizedPassage)) !== null) {
-                    const wordGroup = match[0];
+                  while ((match = regex.exec(m2NormalizedPassage)) !== null) {
+                    const id = parseInt(match[1]);
                     const before = m2NormalizedPassage.substring(lastIndex, match.index);
-                    if (before) parts.push(<span key={`t${key}`}>{before}</span>);
-                    // 단어 그룹 내의 빈칸들을 파싱
-                    const blankRegex = /\[(\d+)\]/g;
-                    let wordLastIndex = 0;
-                    let blankMatch;
-                    const wordParts: React.ReactNode[] = [];
-                    let subKey = 0;
-                    while ((blankMatch = blankRegex.exec(wordGroup)) !== null) {
-                      const id = parseInt(blankMatch[1]);
-                      const beforeBlank = wordGroup.substring(wordLastIndex, blankMatch.index);
-                      if (beforeBlank) wordParts.push(<span key={`w-${key}-${subKey}`}>{beforeBlank}</span>);
-                      wordParts.push(
-                        <input key={`i-${key}-${subKey}`} type="text" data-input-id={`m2-${id}`}
-                          className={`m2-gap-input ${m2FilledInputs[id] ? 'filled' : ''}`}
-                          maxLength={m2Inputs[id]?.maxLength || 5}
-                          value={m2InputValues[id] || ''}
-                          onChange={(e) => handleM2InputChange(id, e.target.value)}
-                          onFocus={() => handleM2Focus(id)} onBlur={() => handleM2Blur(id)}
-                          onKeyPress={(e) => handleM2KeyPress(e, id)}
-                          style={{ width: getM2InputWidth(id) }} />
-                      );
-                      wordLastIndex = blankMatch.index + blankMatch[0].length;
-                      subKey++;
-                    }
-                    if (wordLastIndex < wordGroup.length) {
-                      wordParts.push(<span key={`w-${key}-${subKey}`}>{wordGroup.substring(wordLastIndex)}</span>);
-                    }
-                    // 빈칸 포함 단어 전체를 inline-block으로 감싸서 줄바꿈으로 분리되지 않도록 함
+                    if (before) parts.push(<span key={`t${key++}`}>{before}</span>);
                     parts.push(
-                      <span key={`word-${key}`} style={{ display: 'inline-block', verticalAlign: 'baseline' }}>
-                        {wordParts}
-                      </span>
+                      <input key={`i${id}`} type="text" data-input-id={`m2-${id}`}
+                        className={`m2-gap-input ${m2FilledInputs[id] ? 'filled' : ''}`}
+                        maxLength={m2Inputs[id]?.maxLength || 5}
+                        value={m2InputValues[id] || ''}
+                        onChange={(e) => handleM2InputChange(id, e.target.value)}
+                        onFocus={() => handleM2Focus(id)} onBlur={() => handleM2Blur(id)}
+                        onKeyPress={(e) => handleM2KeyPress(e, id)}
+                        style={{ width: getM2InputWidth(id) }} />
                     );
                     lastIndex = match.index + match[0].length;
-                    key++;
                   }
-                  if (lastIndex < m2NormalizedPassage.length) parts.push(<span key={`t${key}`}>{m2NormalizedPassage.substring(lastIndex)}</span>);
+                  if (lastIndex < m2NormalizedPassage.length) parts.push(<span key={`t${key++}`}>{m2NormalizedPassage.substring(lastIndex)}</span>);
                   return parts;
                 })() : (
                   <>
@@ -6524,12 +6511,6 @@ function AppContent() {
       }
     }, [inputValues, questionKey]);
 
-    // 문제가 변경되면 입력값 초기화 (이전 정답이 다음 문제에 남지 않도록)
-    React.useEffect(() => {
-      setInputValues({});
-      setFilledInputs({});
-    }, [questionKey]);
-
     const getTextWidth = (text: string): number => {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
@@ -6564,61 +6545,36 @@ function AppContent() {
     const renderPassageWithInputs = () => {
       if (!passageText) return null;
       const parts: React.ReactNode[] = [];
-      // 빈칸 포함 단어(공백 없는 문자열에 [N]이 포함된 그룹)를 inline-block으로 감싸서
-      // 줄바꿈 시 단어가 끝줄과 다음줄 맨처음으로 분리되지 않도록 함
-      const wordWithBlankRegex = /\S*\[\d+\]\S*/g;
+      const regex = /\[(\d+)\]/g;
       let lastIndex = 0;
       let key = 0;
       let match;
-      while ((match = wordWithBlankRegex.exec(passageText)) !== null) {
-        const wordGroup = match[0];
+      while ((match = regex.exec(passageText)) !== null) {
+        const inputId = parseInt(match[1], 10);
         const beforeText = passageText.substring(lastIndex, match.index);
-        if (beforeText) parts.push(<span key={`text-${key}`}>{beforeText}</span>);
-        // 단어 그룹 내의 빈칸들을 파싱
-        const blankRegex = /\[(\d+)\]/g;
-        let wordLastIndex = 0;
-        let blankMatch;
-        const wordParts: React.ReactNode[] = [];
-        let subKey = 0;
-        while ((blankMatch = blankRegex.exec(wordGroup)) !== null) {
-          const inputId = parseInt(blankMatch[1], 10);
-          const beforeBlank = wordGroup.substring(wordLastIndex, blankMatch.index);
-          if (beforeBlank) wordParts.push(<span key={`w-${key}-${subKey}`}>{beforeBlank}</span>);
-          wordParts.push(
-            <input
-              key={`input-${key}-${subKey}`}
-              type="text"
-              data-input-id={`${inputPrefix}-${inputId}`}
-              className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
-              maxLength={inputs[inputId]?.maxLength || 5}
-              value={inputValues[inputId] || ''}
-              onChange={(e) => handleInputChange(inputId, e.target.value)}
-              onFocus={() => setFilledInputs(prev => ({ ...prev, [inputId]: false }))}
-              onBlur={() => {
-                if ((inputValues[inputId] || '').length > 0) {
-                  setFilledInputs(prev => ({ ...prev, [inputId]: true }));
-                }
-              }}
-              onKeyPress={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-              style={{ width: getInputWidth(inputId) }}
-            />
-          );
-          wordLastIndex = blankMatch.index + blankMatch[0].length;
-          subKey++;
-        }
-        if (wordLastIndex < wordGroup.length) {
-          wordParts.push(<span key={`w-${key}-${subKey}`}>{wordGroup.substring(wordLastIndex)}</span>);
-        }
-        // 빈칸 포함 단어 전체를 inline-block으로 감싸서 줄바꿈으로 분리되지 않도록 함
+        if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
         parts.push(
-          <span key={`word-${key}`} style={{ display: 'inline-block', verticalAlign: 'baseline' }}>
-            {wordParts}
-          </span>
+          <input
+            key={`input-${inputId}`}
+            type="text"
+            data-input-id={`${inputPrefix}-${inputId}`}
+            className={`gap-input ${filledInputs[inputId] ? 'filled' : ''}`}
+            maxLength={inputs[inputId]?.maxLength || 5}
+            value={inputValues[inputId] || ''}
+            onChange={(e) => handleInputChange(inputId, e.target.value)}
+            onFocus={() => setFilledInputs(prev => ({ ...prev, [inputId]: false }))}
+            onBlur={() => {
+              if ((inputValues[inputId] || '').length > 0) {
+                setFilledInputs(prev => ({ ...prev, [inputId]: true }));
+              }
+            }}
+            onKeyPress={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            style={{ width: getInputWidth(inputId) }}
+          />
         );
         lastIndex = match.index + match[0].length;
-        key++;
       }
-      if (lastIndex < passageText.length) parts.push(<span key={`text-${key}`}>{passageText.substring(lastIndex)}</span>);
+      if (lastIndex < passageText.length) parts.push(<span key={`text-${key++}`}>{passageText.substring(lastIndex)}</span>);
       return parts;
     };
 
@@ -7163,9 +7119,6 @@ function AppContent() {
           setShowModule1Details={setShowModule1Details}
           currentTest={currentTest}
           getCurrentSectionData={getCurrentSectionData}
-          isReviewMode={isReviewMode}
-          testId={`${testBankType}-${currentTest?.tpoNumber ?? 'unknown'}-reading`}
-          passageKey="reading-m1-complete-words"
         />
       )}
       
@@ -7322,7 +7275,6 @@ function AppContent() {
         <WritingSectionWrapper
           initialScreen={activeWritingScreen}
           onScreenChange={setCurrentWritingReviewScreen}
-          isReviewMode={isReviewMode}
           writingQuestions={(() => {
             // Pull Writing questions from the active CMS bank
             const tpoNum = currentTest?.tpoNumber;
@@ -7459,22 +7411,100 @@ function AppContent() {
           questionData={activeReviewPanel.questionData}
           suggestedQuestions={(() => {
             const qType = (activeReviewPanel.questionType || '').toLowerCase();
-            if (qType.includes('email') || qType.includes('write an email')) {
-              return [
-                '📌 문제 핵심 요구사항 & 추천 구조',
-                '👥 상황별 맞춤 어휘 & 이메일 표현',
-                '✍️ 이메일 도입부(첫 문장) 추천',
-                '💡 본문 전개용 브레인스토밍 아이디어',
-              ];
-            }
-            if (qType.includes('discussion') || qType.includes('academic')) {
-              return [
-                '📌 토론 주제 및 학생 의견 핵심 요약',
-                '👥 타인 의견 인용 및 연계 표현 추천',
-                '✍️ 토론형 라이팅 도입부(첫 문장) 예시',
-                '💡 독창적 의견 전개를 위한 브레인스토밍',
-              ];
-            }
+            const section = (activeReviewPanel.section || '').toLowerCase();
+
+            // ── READING ──────────────────────────────────────
+            if (qType.includes('complete words') || qType.includes('fill')) return [
+              '🔍 이 빈칸 앞뒤 문맥에서 정답 단서가 뭐야?',
+              '📝 이 단어가 정답인 이유를 문법적으로 설명해줘',
+              '❌ 나머지 보기가 왜 안 되는지 하나씩 알려줘',
+              '📚 이 단어의 뜻과 동의어 2개 알려줘',
+              '✏️ 이 단어를 사용한 예문을 하나 만들어줘',
+            ];
+            if (qType.includes('daily life') || qType.includes('email') || qType.includes('notice') || qType.includes('review') || qType.includes('text message')) return [
+              '🔍 문제가 묻는 정보가 지문 어느 부분에 있어?',
+              '❌ 내가 고른 보기가 왜 틀렸어?',
+              '✅ 정답 보기의 근거가 되는 지문 문장을 찾아줘',
+              '⚠️ 이 지문 유형에서 자주 나오는 함정 패턴이 뭐야?',
+              '💡 이 글의 핵심 내용을 한 문장으로 요약해줘',
+            ];
+            if (qType.includes('academic passage') || qType.includes('academic reading')) return [
+              '🔍 이 문제에서 정답의 근거가 되는 지문 문장을 찾아줘',
+              '❌ EXCEPT 문제에서 언급된 것과 안 된 것을 구분해줘',
+              '📍 문장 삽입 [A][B][C][D] 중 정답 찾는 방법 알려줘',
+              '📚 밑줄 친 단어의 문맥 속 의미를 설명해줘',
+              '💡 이 지문 전체 논리 흐름을 단락별로 정리해줘',
+            ];
+
+            // ── LISTENING ─────────────────────────────────────
+            if (qType.includes('listen and response')) return [
+              '🔍 이 질문이 정확히 무엇을 묻고 있는지 분석해줘',
+              '✅ 정답이 왜 가장 자연스러운 응답인지 설명해줘',
+              '❌ 나머지 3개 보기가 왜 어색한지 하나씩 알려줘',
+              '💬 이런 상황에서 쓰이는 자연스러운 영어 표현 알려줘',
+              '✏️ 비슷한 질문과 응답 패턴을 예시로 하나 더 만들어줘',
+            ];
+            if (qType.includes('campus conversation') || qType.includes('short conversation')) return [
+              '🎯 이 대화에서 화자의 주된 목적이나 문제가 뭐야?',
+              '💬 화자의 태도나 감정을 알 수 있는 표현이 뭐야?',
+              '❌ 내가 틀린 보기와 정답의 차이가 정확히 뭐야?',
+              '🔍 정답의 근거가 되는 대화 부분을 찾아줘',
+              '📚 대화에 나온 구어체 표현의 뜻을 설명해줘',
+            ];
+            if (qType.includes('announcement')) return [
+              '📋 이 공지의 핵심 정보(누가/언제/어디서/왜)를 정리해줘',
+              '🔍 정답의 근거가 되는 공지 내용이 어디야?',
+              '❌ 함정 보기가 공지 내용과 어떻게 다른지 알려줘',
+              '💡 직접 언급 안 된 내용을 추론하는 방법 알려줘',
+              '⚠️ 이 유형에서 자주 틀리는 문제 패턴이 뭐야?',
+            ];
+            if (qType.includes('academic lecture') || qType.includes('academic talk') || qType.includes('podcast')) return [
+              '🎯 교수가 이 예시를 든 이유와 주제 연결 방식을 설명해줘',
+              '📋 강의 전체 흐름을 주제→예시→결론으로 정리해줘',
+              '🔍 "Why does the professor mention X?" 푸는 방법 알려줘',
+              '❌ 내가 틀린 보기와 정답의 차이가 뭐야?',
+              '📚 강의에서 나온 어려운 표현의 뜻을 설명해줘',
+            ];
+
+            // ── SPEAKING ──────────────────────────────────────
+            if (qType.includes('listen and repeat')) return [
+              '🔊 이 문장에서 연음이 일어나는 부분을 찾아줘',
+              '🎯 강세가 오는 단어와 이유를 알려줘',
+              '✂️ 원어민처럼 끊어 읽는 위치를 알려줘',
+              '📝 이 문장의 문법 구조를 설명해줘',
+              '✏️ 이 문장을 내 말로 바꾸면 어떻게 돼?',
+            ];
+            if (qType.includes('interview') || qType.includes('take an interview')) return [
+              '🎯 내 답변의 주장→이유→예시 구조가 자연스러운지 봐줘',
+              '✏️ 더 자연스러운 영어 표현으로 바꿔줘',
+              '📝 이 주제로 60초 모범 답변 예시 보여줘',
+              '❌ 내 답변에서 어색한 문법이나 표현을 고쳐줘',
+              '💡 이 주제로 반대 입장의 답변도 만들어줘',
+            ];
+
+            // ── WRITING ───────────────────────────────────────
+            if (qType.includes('build a sentence')) return [
+              '🔍 이 문장의 주어·동사·목적어를 찾아줘',
+              '📝 관계절·접속사가 이 문장에서 하는 역할을 설명해줘',
+              '⚠️ 어순 배열에서 헷갈리는 부분 이유를 설명해줘',
+              '✏️ 비슷한 구조의 문장을 예시로 하나 더 만들어줘',
+              '💡 이 문장을 더 쉽게 혹은 더 복잡하게 바꿔줘',
+            ];
+            if (qType.includes('write an email')) return [
+              '✅ 3가지 요구사항이 내 이메일에 다 들어있는지 체크해줘',
+              '❌ 어색한 표현을 자연스러운 영어로 고쳐줘',
+              '📝 격식체 이메일에 맞는 표현인지 확인해줘',
+              '💡 모범 답변 예시 보여줘',
+              '✏️ 내 이메일을 더 설득력 있게 다듬어줘',
+            ];
+            if (qType.includes('discussion') || qType.includes('academic discussion')) return [
+              '🎯 내 답변에 교수 질문에 대한 명확한 입장이 있어?',
+              '💬 Claire나 Paul 의견을 인용·반박하는 표현을 써줘',
+              '📝 내 답변을 100단어 이상으로 자연스럽게 늘려줘',
+              '❌ 내 답변에서 어색한 문법이나 논리를 고쳐줘',
+              '💡 반대 입장으로 쓰면 어떻게 돼?',
+            ];
+
             return undefined; // 기본값 사용
           })()}
         />

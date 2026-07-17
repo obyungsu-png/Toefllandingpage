@@ -70,6 +70,9 @@ function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[]) {
   stripMarks(passageEl);
   if (!highlights.length) return;
 
+  // 다크모드 감지 — 하이라이트된 텍스트가 다크 배경에서 보이도록 색상 조정
+  const isDark = document.documentElement.classList.contains('dark');
+
   highlights.forEach(h => {
     const walker = document.createTreeWalker(passageEl, NodeFilter.SHOW_TEXT);
     let node: Text | null;
@@ -91,6 +94,10 @@ function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[]) {
           if (h.type === 'h') {
             mark.style.backgroundColor = color;
             mark.style.textDecoration = 'none';
+            // 다크모드에서 밝은 하이라이트 배경 위의 텍스트가 보이도록 어두운 색상 적용
+            if (isDark) {
+              mark.style.color = '#1a1a1a';
+            }
           } else {
             mark.style.backgroundColor = 'transparent';
             mark.style.textDecoration = 'underline';

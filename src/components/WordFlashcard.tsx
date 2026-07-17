@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 // motion removed - using CSS animations
 import { ChevronLeft, ChevronRight, X, Volume2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { pickBestBritishFemaleVoice } from '../utils/tts';
 
 interface WordFlashcardProps {
   words: Array<{
@@ -50,30 +51,8 @@ export function WordFlashcard({
       utterance.rate = 0.85;
       utterance.pitch = 1.0;
 
-      // Get available voices
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Try to find British English female voice
-      let selectedVoice = voices.find(voice => {
-        const isEnGB = voice.lang === 'en-GB' || voice.lang.startsWith('en-GB');
-        return isEnGB && 
-               (voice.name.includes('Female') || 
-                voice.name.includes('Kate') ||
-                voice.name.includes('Serena') ||
-                voice.name.includes('Emma') ||
-                voice.name.includes('British'));
-      });
-
-      // Fallback to any British English voice
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => voice.lang === 'en-GB' || voice.lang.startsWith('en-GB'));
-      }
-
-      // Final fallback to any English voice
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => voice.lang.startsWith('en'));
-      }
-
+      // tts.ts의 공통 음성 선택 로직 사용 (애플/macOS 호환)
+      const selectedVoice = pickBestBritishFemaleVoice();
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
@@ -86,10 +65,13 @@ export function WordFlashcard({
   useEffect(() => {
     if ('speechSynthesis' in window) {
       const loadVoices = () => {
+        // voices가 로드되면 pickBestBritishFemaleVoice가 사용할 수 있도록 강제 로드
         window.speechSynthesis.getVoices();
       };
       loadVoices();
       window.speechSynthesis.onvoiceschanged = loadVoices;
+      // macOS Safari에서 voices가 지연 로드되는 경우를 위한 추가 시도
+      setTimeout(loadVoices, 500);
     }
   }, []);
 

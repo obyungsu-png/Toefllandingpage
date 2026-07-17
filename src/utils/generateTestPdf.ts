@@ -105,7 +105,7 @@ function formatTemplatePassage(passageText: string): string[] | null {
 
 // ── Line builders per section ────────────────────────────────────────────────
 
-function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
+function readingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   const lines: PdfLine[] = [];
   const blankCount = countFillBlanks(question.questionText) || countFillBlanks(question.passageText);
   const isCompleteWords = /complete words/i.test(question.questionType || '');
@@ -113,7 +113,7 @@ function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   lines.push({ text: isFillBlankSet ? `Q1-Q10  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // Module 2: passage stored as JSON {title, passage, questions:[]}
-  if (question.passageText) {
+  if (!skipPassage && question.passageText) {
     const m2 = parseReadingM2(question.passageText);
     if (m2) {
       if (m2.title) lines.push({ text: m2.title, bold: true });
@@ -151,14 +151,14 @@ function readingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   return lines;
 }
 
-function listeningLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
+function listeningLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   const lines: PdfLine[] = [];
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   if (question.passageTitle) lines.push({ text: question.passageTitle, bold: true });
   if (question.questionText) lines.push({ text: `Q: ${cleanFillBlanks(question.questionText)}` });
 
-  if (question.passageText) {
+  if (!skipPassage && question.passageText) {
     const tpl = formatTemplatePassage(question.passageText);
     if (tpl) {
       lines.push({ text: 'Passage:' });
@@ -185,7 +185,7 @@ function listeningLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   return lines;
 }
 
-function speakingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
+function speakingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   const lines: PdfLine[] = [];
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
@@ -233,7 +233,7 @@ function speakingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   return lines;
 }
 
-function writingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
+function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   const q = question as TPOQuestion & Record<string, string | string[] | undefined>;
   const lines: PdfLine[] = [];
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
@@ -282,13 +282,13 @@ function writingLines(question: TPOQuestion, mode: PdfMode): PdfLine[] {
   return lines;
 }
 
-function questionLines(question: TPOQuestion, section: TPOSection, mode: PdfMode): PdfLine[] {
+function questionLines(question: TPOQuestion, section: TPOSection, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   switch (section.sectionType) {
-    case 'Reading':  return readingLines(question, mode);
-    case 'Listening': return listeningLines(question, mode);
-    case 'Speaking': return speakingLines(question, mode);
-    case 'Writing':  return writingLines(question, mode);
-    default:         return speakingLines(question, mode); // fallback
+    case 'Reading':  return readingLines(question, mode, skipPassage);
+    case 'Listening': return listeningLines(question, mode, skipPassage);
+    case 'Speaking': return speakingLines(question, mode, skipPassage);
+    case 'Writing':  return writingLines(question, mode, skipPassage);
+    default:         return speakingLines(question, mode, skipPassage); // fallback
   }
 }
 
@@ -334,6 +334,7 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
   });
 
   let lastModule = -1;
+  let lastPassageText: string | undefined = undefined;
   for (const question of sortedQuestions) {
     // Print module header when it changes
     const mod = isModule2(question) ? 2 : 1;
@@ -348,7 +349,17 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
       lastModule = mod;
     }
 
-    const lines = questionLines(question, section, mode);
+    // 같은 지문을 공유하는 경우 지문 중복 출력 방지
+    const currentPassageText = question.passageText;
+    const skipPassage = !!(currentPassageText && lastPassageText === currentPassageText);
+
+    const lines = questionLines(question, section, mode, skipPassage);
+
+    // 현재 지문 텍스트 저장
+    if (currentPassageText) {
+      lastPassageText = currentPassageText;
+    }
+
     y = ensureSpace(pdf, y, Math.min(120, Math.max(24, lines.length * 7)));
     for (const line of lines) {
       y = ensureSpace(pdf, y, 11);
