@@ -302,50 +302,93 @@ function safeJsonParse(text: string): any | null {
   }
 }
 
-// ── 인라인 Diff 렌더링 ──────────────────────────────────────────────────────
+// ── 인라인 Diff 렌더링 (LCS 기반 — 삽입/삭제 시에도 정렬 유지) ────────────
 interface DiffSegment {
   type: 'same' | 'delete' | 'add';
   text: string;
 }
 
+// 단어 단위 LCS diff — naive zip 방식의 밀림 현상 해결
 function renderInlineDiff(original: string, corrected: string): DiffSegment[] {
-  const origWords = original.split(/(\s+)/);
-  const corrWords = corrected.split(/(\s+)/);
-  const segments: DiffSegment[] = [];
+  const origTokens = original.split(/(\s+)/).filter(t => t.length > 0);
+  const corrTokens = corrected.split(/(\s+)/).filter(t => t.length > 0);
+  const m = origTokens.length;
+  const n = corrTokens.length;
 
-  let i = 0, j = 0;
-  while (i < origWords.length || j < corrWords.length) {
-    const o = origWords[i] || '';
-    const c = corrWords[j] || '';
-
-    if (o === c) {
-      if (o) segments.push({ type: 'same', text: o });
-      i++; j++;
-    } else {
-      const nextOrigInCorr = c.includes(o) || o.includes(c);
-      if (nextOrigInCorr && o && c) {
-        segments.push({ type: 'delete', text: o });
-        segments.push({ type: 'add', text: c });
-        i++; j++;
-      } else {
-        if (o) segments.push({ type: 'delete', text: o });
-        if (c) segments.push({ type: 'add', text: c });
-        i++; j++;
-      }
+  // LCS 길이 DP 테이블
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--) {
+    for (let j = n - 1; j >= 0; j--) {
+      dp[i][j] = origTokens[i] === corrTokens[j]
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
     }
   }
 
-  // 인접한 same 병합
+  // 백트래킹으로 diff 세그먼트 생성
+  const raw: DiffSegment[] = [];
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (origTokens[i] === corrTokens[j]) {
+      raw.push({ type: 'same', text: corrTokens[j] });
+      i++; j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      raw.push({ type: 'delete', text: origTokens[i] });
+      i++;
+    } else {
+      raw.push({ type: 'add', text: corrTokens[j] });
+      j++;
+    }
+  }
+  while (i < m) raw.push({ type: 'delete', text: origTokens[i++] });
+  while (j < n) raw.push({ type: 'add', text: corrTokens[j++] });
+
+  // 인접한 동일 타입 세그먼트 병합 (공백 토큰 포함)
   const merged: DiffSegment[] = [];
-  for (const seg of segments) {
+  for (const seg of raw) {
     const last = merged[merged.length - 1];
-    if (last && last.type === 'same' && seg.type === 'same') {
+    if (last && last.type === seg.type) {
       last.text += seg.text;
     } else {
       merged.push({ ...seg });
     }
   }
   return merged;
+}
+
+// diff 세그먼트 → Before/After 변경 블록 목록 (읽기 쉬운 카드 표시용)
+interface ChangeBlock {
+  before: string;
+  after: string;
+}
+
+function extractChangeBlocks(segments: DiffSegment[]): ChangeBlock[] {
+  const blocks: ChangeBlock[] = [];
+  let before = '';
+  let after = '';
+  const flush = () => {
+    const b = before.trim();
+    const a = after.trim();
+    if (b || a) blocks.push({ before: b, after: a });
+    before = '';
+    after = '';
+  };
+  for (const seg of segments) {
+    if (seg.type === 'same') {
+      // 공백만 있는 same 세그먼트는 블록을 끊지 않고 유지 → 구(phrase) 단위 변경으로 묶임
+      if (seg.text.trim() === '') {
+        if (before || after) { before += ' '; after += ' '; }
+      } else {
+        flush();
+      }
+    } else if (seg.type === 'delete') {
+      before += seg.text;
+    } else {
+      after += seg.text;
+    }
+  }
+  flush();
+  return blocks;
 }
 
 // ── 색상 클래스 매핑 (Semantic Color Coding) ────────────────────────────────
@@ -685,6 +728,9 @@ ${analysis.upgradedText}
     return renderInlineDiff(rewrittenText, analysis.upgradedText);
   }, [analysis, rewrittenText]);
 
+  // Before/After 변경 블록 — 카드 목록으로 읽기 쉽게 표시
+  const changeBlocks = useMemo(() => extractChangeBlocks(diffSegments), [diffSegments]);
+
   // Tone Meter 상태 분류
   const toneLabel = toneScore !== null
     ? toneScore >= 70 ? 'Formal' : toneScore >= 40 ? 'Neutral' : 'Casual'
@@ -777,19 +823,54 @@ ${analysis.upgradedText}
             }
           </div>
 
-          {/* 인라인 Diff (AI 분석 후) */}
+          {/* AI 교정본 — 교정된 전체 텍스트 + 변경 포인트 카드 (일반 영어 첨삭 형식) */}
           {analysis?.upgradedText && (
-            <div className="mt-4">
-              <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
-                <Wand2 className="w-3.5 h-3.5" /> AI 교정본 (인라인 Diff)
-              </h4>
-              <div className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700 text-sm leading-relaxed">
-                {diffSegments.map((seg, idx) => {
-                  if (seg.type === 'same') return <span key={idx} className="text-gray-800 dark:text-gray-100">{seg.text}</span>;
-                  if (seg.type === 'delete') return <span key={idx} className="text-red-600 line-through bg-red-50 dark:bg-red-900/30 px-0.5 rounded">{seg.text}</span>;
-                  return <span key={idx} className="text-green-700 dark:text-green-400 underline bg-green-50 dark:bg-green-900/30 px-0.5 rounded">{seg.text}</span>;
-                })}
+            <div className="mt-4 space-y-3">
+              {/* 교정된 전체 텍스트 — 변경된 부분만 초록 하이라이트, 깔끔하게 읽기 가능 */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                  <Wand2 className="w-3.5 h-3.5" /> AI 교정본
+                  <span className="font-normal text-gray-400">(초록 = 수정/추가된 표현)</span>
+                </h4>
+                <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700 text-sm leading-7">
+                  {diffSegments.map((seg, idx) => {
+                    if (seg.type === 'delete') return null; // 삭제된 부분은 아래 변경 포인트에서 확인
+                    if (seg.type === 'add') {
+                      return (
+                        <mark key={idx} className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 px-0.5 rounded font-medium">
+                          {seg.text}
+                        </mark>
+                      );
+                    }
+                    return <span key={idx} className="text-gray-800 dark:text-gray-100">{seg.text}</span>;
+                  })}
+                </div>
               </div>
+
+              {/* 변경 포인트 — Before → After 카드 목록 */}
+              {changeBlocks.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                    변경 포인트 ({changeBlocks.length}건)
+                  </h4>
+                  <div className="space-y-2">
+                    {changeBlocks.map((block, idx) => (
+                      <div key={idx} className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                        {block.before && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-bold text-red-500 mr-1">Before</span>
+                            <span className="line-through decoration-red-400">{block.before}</span>
+                          </div>
+                        )}
+                        <div className={`text-sm font-medium text-green-700 dark:text-green-400 ${block.before ? 'mt-1' : ''}`}>
+                          <ArrowRight className="w-3 h-3 inline mr-1" />
+                          {block.after || '(삭제됨)'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

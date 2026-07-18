@@ -39,6 +39,28 @@ function countFillBlanks(text?: string) {
   return [...text.matchAll(/\[[^\]:]+(?::(\d+))?\]/g)].length;
 }
 
+// Build a Sentence Word Bank 셔플 — PDF에서 정답 순서 노출 방지.
+// 문자열 해시를 시드로 사용 → 같은 문제는 항상 같은 순서로 셔플됨 (재생성 시에도 일관).
+function seededShuffleWords(words: string[]): string[] {
+  const arr = [...words];
+  // 간단한 문자열 해시 (djb2)
+  let seed = 5381;
+  const key = words.join('|');
+  for (let i = 0; i < key.length; i++) {
+    seed = ((seed << 5) + seed + key.charCodeAt(i)) >>> 0;
+  }
+  // 시드 기반 Fisher-Yates
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0xffffffff;
+  };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // ── Passage parsers ─────────────────────────────────────────────────────────
 
 // Reading Module 2: {"title":"...","passage":"...","questions":[...]}
@@ -263,13 +285,24 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
 
   // ── Build a Sentence / other ────────────────────────────────────────────
   } else {
+    if (q.context) lines.push({ text: `Context: ${q.context}` });
     if (question.questionText) lines.push({ text: question.questionText });
     if (question.passageText) {
       const tpl = formatTemplatePassage(question.passageText);
       if (tpl) tpl.forEach(t => lines.push({ text: t }));
       else lines.push({ text: cleanFillBlanks(question.passageText) });
     }
-    if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
+    if (question.words?.length) {
+      // Full Test PDF(standard): 정답 문장 순서 그대로 노출되지 않도록 셔플
+      const isBuildSentence = (question.questionType || '').toLowerCase().includes('build a sentence');
+      const displayWords = mode === 'standard' && isBuildSentence
+        ? seededShuffleWords(question.words)
+        : question.words;
+      lines.push({ text: `Word Bank: ${displayWords.join(' / ')}` });
+      if (isBuildSentence && q.sentenceEnding) {
+        lines.push({ text: `Ending: ${q.sentenceEnding}` });
+      }
+    }
     if (question.options?.length) {
       question.options.forEach((opt, i) =>
         lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
