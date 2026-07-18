@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
 import { WritingReviewAiTutor } from './WritingReviewAiTutor';
-import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface WritingEmailQ1Props {
   onBack: () => void;
@@ -30,8 +29,6 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
   const [isMobile, setIsMobile] = useState(false);
   const [showAiTutor, setShowAiTutor] = useState(false);
   const [showPassage, setShowPassage] = useState(false);
-  // AI 튜터 패널 고정(pinned) 상태 — review 모드에서 글 작성과 동시에 AI 튜터 사용
-  const [aiTutorPinned, setAiTutorPinned] = useState(false);
 
 
   useEffect(() => {
@@ -253,8 +250,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
                   e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 80);
               }}
-              className={`w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none transition-[margin] duration-200 ${aiTutorPinned ? 'md:mr-[420px]' : ''}`}
-              style={{ marginRight: aiTutorPinned ? undefined : undefined }}
+              className="w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
               placeholder="Start typing your email here..."
             />
 
@@ -283,18 +279,6 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
           userAnswer={emailBody}
           questionData={writingQuestion}
           onClose={() => setShowAiTutor(false)}
-        />
-      )}
-
-      {/* AI 튜터 슬라이드인 패널 — Review 모드에서만 표시, pinnable로 글 작성과 동시 사용 */}
-      {isReviewMode && (
-        <ToeflAiWidget
-          position="right"
-          zIndex={9999}
-          pinnable
-          onPinnedChange={setAiTutorPinned}
-          contextLabel={`Writing · Write an Email`}
-          questionData={writingQuestion}
         />
       )}
 

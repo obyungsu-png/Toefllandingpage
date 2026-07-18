@@ -7412,6 +7412,7 @@ function AppContent() {
           showFab={false}
           open={isAiTutorOpen}
           onOpenChange={setIsAiTutorOpen}
+          pinnable
           contextLabel={`${activeReviewPanel.section}${activeReviewPanel.questionType ? ' · ' + activeReviewPanel.questionType : ''}`}
           questionData={activeReviewPanel.questionData}
           suggestedQuestions={(() => {

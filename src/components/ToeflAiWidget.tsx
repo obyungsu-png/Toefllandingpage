@@ -638,7 +638,10 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           <div
             className={pinned ? 'toefl-ai-pinned-panel' : 'toefl-ai-panel'}
             style={pinned ? {
-              right: `${20 + panelPos.x}px`,
+              // left 기준으로 마우스 이동 방향과 패널 이동을 일치시킴.
+              // 초기 left = (100vw - 패널 너비 - 20px) = 화면 우측에서 20px 여백
+              // 마우스 오른쪽(dx>0) → panelPos.x 증가 → left 증가 → 패널이 오른쪽으로 이동 ✓
+              left: `calc(100vw - ${panelSize.w + 20}px + ${panelPos.x}px)`,
               top: `${80 + panelPos.y}px`,
               width: `${panelSize.w}px`,
               height: `${panelSize.h}px`,

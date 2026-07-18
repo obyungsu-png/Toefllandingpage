@@ -3,7 +3,6 @@ import { Sparkles } from 'lucide-react';
 import { MobileFooter } from './MobileFooter';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { WritingReviewAiTutor } from './WritingReviewAiTutor';
-import { ToeflAiWidget } from './ToeflAiWidget';
 
 interface WritingAcademicDiscussionQ2Props {
   onBack: () => void;
@@ -53,9 +52,8 @@ export function WritingAcademicDiscussionQ2({
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'passage' | 'response'>('passage');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // AI 채점 팝업 + AI 튜터 패널 고정 상태 (Review 모드)
+  // AI 채점 팝업 (Review 모드)
   const [showAiTutor, setShowAiTutor] = useState(false);
-  const [aiTutorPinned, setAiTutorPinned] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -350,7 +348,7 @@ export function WritingAcademicDiscussionQ2({
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 80);
                 }}
-                className={`w-full p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none overflow-hidden transition-[margin] duration-200 ${aiTutorPinned ? 'md:mr-[420px]' : ''}`}
+                className="w-full p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none overflow-hidden"
                 style={{ minHeight: '280px' }}
                 placeholder="Write your response here..."
               />
@@ -429,27 +427,6 @@ export function WritingAcademicDiscussionQ2({
             promptInstructions,
           }}
           onClose={() => setShowAiTutor(false)}
-        />
-      )}
-
-      {/* AI 튜터 슬라이드인 패널 — Review 모드에서만 표시, pinnable로 글 작성과 동시 사용 */}
-      {isReviewMode && (
-        <ToeflAiWidget
-          position="right"
-          zIndex={9999}
-          pinnable
-          onPinnedChange={setAiTutorPinned}
-          contextLabel={`Writing · Academic Discussion`}
-          questionData={{
-            professorName,
-            professorMessage,
-            student1Name,
-            student1Message,
-            student2Name,
-            student2Message,
-            promptTitle,
-            promptInstructions,
-          }}
         />
       )}
 
