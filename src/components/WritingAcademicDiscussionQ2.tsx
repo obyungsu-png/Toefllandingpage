@@ -436,7 +436,7 @@ export function WritingAcademicDiscussionQ2({
       {isReviewMode && (
         <ToeflAiWidget
           position="right"
-          zIndex={60}
+          zIndex={9999}
           pinnable
           onPinnedChange={setAiTutorPinned}
           contextLabel={`Writing · Academic Discussion`}

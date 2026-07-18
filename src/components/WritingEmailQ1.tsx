@@ -290,7 +290,7 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
       {isReviewMode && (
         <ToeflAiWidget
           position="right"
-          zIndex={60}
+          zIndex={9999}
           pinnable
           onPinnedChange={setAiTutorPinned}
           contextLabel={`Writing · Write an Email`}
