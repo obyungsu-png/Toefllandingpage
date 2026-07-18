@@ -1,0 +1,27 @@
+﻿questionNumber,questionType,difficulty,level,day,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,context
+1,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,The organizer wanted to know if the new equipment would arrive on time.,,Why was the guest lecturer series postponed?
+2,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,What time do the theater doors open?,,I just got tickets to see the new play this weekend.
+3,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Can you tell me if you visited Tokyo?,,I just returned from a semester abroad in Japan.
+4,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Someone else checked it out so it was not available.,,Did you manage to find the book you were looking for at the library?
+5,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,What time are you planning to arrive?,,I'm going to attend the grand opening of the new student center this weekend.
+6,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Can you tell me whether they offered you the position?,,Did you know that I applied for a student internship?
+7,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Where is it being held?,,I heard there's a music festival near campus this weekend.
+8,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,I have no intention of going.,,Are you planning to attend the conference next month?
+9,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Do they offer a discount to university students?,,I just joined a gym that's a few blocks from campus.
+10,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,We went to the restaurant that recently opened downtown.,,Why didn't you attend the campus fair last night?
+11,Write an Email,보통,1,01,,,,,,,"Write an email to the hotel manager, Mr. Carter. In your email, do the following:
+• Explain the purpose of your trip and the number of people in your group.
+• Explain your group's specific requirements.
+• Request the hotel send any additional information needed.
+Write as much as you can and in complete sentences.
+
+To: Mr. Carter
+Subject: Trip Accommodation Inquiry",,,,,,,You are planning a trip with your classmates to a popular tourist destination during your semester break. You need to book accommodations and ensure the hotel can meet your group's needs. You want to contact the hotel to confirm these details.
+12,Academic Discussion,보통,1,01,,"Dr. Gupta: We've been exploring how social media platforms influence public opinion in today's connected world. These platforms allow ideas, news, and perspectives to spread quickly, giving individuals and organizations powerful tools to shape conversations. From raising awareness to mobilizing support, social media plays a key role in how people engage with current events. Do you think its influence is mostly beneficial, or should we be more cautious about its reach and impact?
+
+Claire: I think social media has a negative impact on public opinion. It can often create echo chambers, where people only hear opinions that reinforce their existing beliefs. For example, if my friends on social media all seem to be saying the same thing, how can we be challenged to think more independently?
+
+Andrew: I believe that the influence of social media is mostly beneficial. It allows people to access a wide range of viewpoints and engage in all kinds of discussions and across languages. This enhances understanding and awareness of different issues.",,,,,,,,,,,,"Your professor is teaching a class on sociology. Write a post responding to the professor's question. In your response, you should do the following:
+• Express and support your opinion.
+• Make a contribution to the discussion in your own words.
+An effective response will contain at least 100 words."

@@ -846,6 +846,58 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             </div>
           </div>
         )}
+
+        {/* 영역별 전체 리셋 — 해당 영역의 모든 문제를 삭제 (섹션 자체는 유지) */}
+        {getExistingTest() && (
+          <div className="mt-4 pt-4 border-t-2 border-red-200/40">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-5 bg-red-500 rounded-full" />
+              <h4 className="font-bold text-red-600 text-xs md:text-sm">♻️ 영역별 전체 리셋 <span className="text-gray-400 font-normal">(해당 영역의 문제를 모두 삭제)</span></h4>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 bg-red-50 border border-red-200 rounded-xl p-3 md:p-4">
+              {(['Reading', 'Listening', 'Writing', 'Speaking'] as const).map(sec => {
+                const test = getExistingTest()!;
+                const section = test.sections.find(s => s.sectionType === sec);
+                const count = section?.questions.length || 0;
+                return (
+                  <button
+                    key={sec}
+                    type="button"
+                    disabled={count === 0}
+                    onClick={() => {
+                      setDeleteConfirmation({
+                        type: 'question',
+                        id: `reset-${sec}`,
+                        name: `${sec} 영역 전체 문제 (${count}개)`,
+                        onConfirm: () => {
+                          const t = getExistingTest();
+                          if (!t) return;
+                          const si = t.sections.findIndex(s => s.sectionType === sec);
+                          if (si === -1) return;
+                          const updated = { ...t };
+                          const newSections = [...updated.sections];
+                          newSections[si] = { ...newSections[si], questions: [] };
+                          updated.sections = newSections;
+                          updated.updatedAt = new Date();
+                          onUpdateTest(updated);
+                          setDeleteConfirmation(null);
+                        },
+                      });
+                    }}
+                    className={`px-3 md:px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition-all ${
+                      count === 0
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-red-600 border border-red-300 hover:bg-red-50 hover:border-red-400'
+                    }`}
+                  >
+                    {sec} 리셋
+                    <span className="block text-[10px] font-normal opacity-80 mt-0.5">{count}문제 삭제</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Upload Button */}
@@ -4332,6 +4384,12 @@ function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, on
   const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<TPOQuestion[] | null>(null);
+  // CSV 업로드 시 Module 적용 방식
+  //  - 'auto': CSV의 module 컬럼 값으로 자동 판별 (기존 동작, Module 1+2 혼합 가능)
+  //  - 'm1':  CSV의 모든 행을 Module 1로 강제 저장 (Module 1 전용 CSV)
+  //  - 'm2':  CSV의 모든 행을 Module 2로 강제 저장 (Module 2 전용 CSV)
+  const supportsModule = section === 'Reading' || section === 'Listening';
+  const [csvModuleMode, setCsvModuleMode] = useState<'auto' | 'm1' | 'm2'>('auto');
 
   // ─── Template per section ───
   const getTemplate = (): string => {
@@ -5983,8 +6041,13 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
             // Module suffix — 개별 입력(FillBlanksEditor)과 일치하도록 Module 1/2 모두 명시
             const modVal = get(iMod);
-            // 정확한 매칭: 'Module 2', '모듈 2'만 Module 2로 분류.
-            const isMod2 = supportsModule && /^(?:module\s*2|모듈\s*2)$/i.test(modVal.trim());
+            // CSV Module 적용 모드:
+            //   'm1'/'m2' → CSV의 module 컬럼을 무시하고 강제로 해당 모듈로 저장
+            //   'auto'    → CSV의 module 컬럼 값으로 판별 (기존 동작)
+            const isMod2 = supportsModule && (
+              csvModuleMode === 'm2' ||
+              (csvModuleMode === 'auto' && /^(?:module\s*2|모듈\s*2)$/i.test(modVal.trim()))
+            );
             const isCW = isCompleteWordsType(qType);
             let finalType = qType;
             if (isCW) {
@@ -6245,6 +6308,60 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               <p>• module 열에 <strong>Module 2</strong>라고 적으면 Module 2 문제로 저장됩니다 (비우면 Module 1).</p>
             )}
           </div>
+
+          {/* CSV Module 적용 방식 선택 — Reading/Listening만 해당 */}
+          {supportsModule && (
+            <div className="mb-4 p-3 rounded-lg bg-[#f0fafa] border border-[#2d7a7c]/30">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-1 h-4 bg-[#2d7a7c] rounded-full" />
+                <span className="text-xs md:text-sm font-bold text-[#2d7a7c]">Module 적용 방식</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCsvModuleMode('auto')}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                    csvModuleMode === 'auto'
+                      ? 'bg-[#2d7a7c] text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  자동 (module 컬럼)
+                  <span className="block text-[10px] font-normal opacity-80 mt-0.5">M1+M2 혼합 CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCsvModuleMode('m1')}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                    csvModuleMode === 'm1'
+                      ? 'bg-[#2d7a7c] text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Module 1 강제
+                  <span className="block text-[10px] font-normal opacity-80 mt-0.5">모든 행 → M1</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCsvModuleMode('m2')}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                    csvModuleMode === 'm2'
+                      ? 'bg-[#2d7a7c] text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Module 2 강제
+                  <span className="block text-[10px] font-normal opacity-80 mt-0.5">모든 행 → M2</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2">
+                {csvModuleMode === 'auto' && 'CSV의 module 컬럼 값으로 Module 1/2를 자동 구분합니다. 한 CSV에 M1+M2가 같이 있어도 됩니다.'}
+                {csvModuleMode === 'm1' && 'CSV의 module 컬럼을 무시하고 모든 행을 Module 1로 저장합니다. Module 1 전용 CSV를 올릴 때 사용하세요.'}
+                {csvModuleMode === 'm2' && 'CSV의 module 컬럼을 무시하고 모든 행을 Module 2로 저장합니다. Module 2 전용 CSV를 올릴 때 사용하세요.'}
+              </p>
+            </div>
+          )}
+
           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#2d7a7c] hover:bg-gray-50 transition-colors mb-3">
             <Upload className="w-8 h-8 text-gray-400 mb-2" />
             <span className="text-sm text-gray-500">채운 CSV 파일을 클릭해서 선택하거나 여기로 드래그</span>
