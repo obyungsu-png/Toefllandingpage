@@ -3,7 +3,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
-import { createCachedAudio } from '../utils/mediaCache';
+import { createCachedAudio, stopAllAudio } from '../utils/mediaCache';
 import { speakHighQuality, stopAllSpeech } from '../utils/cloudTts';
 import { isModule2Question } from '../utils/readingQuestionUtils';
 
@@ -177,10 +177,12 @@ export function ListeningTestEngine({
 
   const totalQuestions = moduleQuestions.length;
   const goNext = () => {
+    stopAllAudio(); // 이전 세그먼트 오디오 정지
     if (segmentIndex + 1 < segments.length) setSegmentIndex(segmentIndex + 1);
     else onModuleEnd();
   };
   const goBack = () => {
+    stopAllAudio(); // 이전 세그먼트 오디오 정지
     if (segmentIndex > 0) setSegmentIndex(segmentIndex - 1);
     else onExitBack();
   };

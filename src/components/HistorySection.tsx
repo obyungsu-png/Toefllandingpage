@@ -1060,34 +1060,37 @@ export function HistorySection({
         const fillBlanksWrongs = curResult?.wrongAnswers.filter(isFillBlanksWrong) || [];
         const mcqWrongs = curResult?.wrongAnswers.filter((w: any) => !isFillBlanksWrong(w)) || [];
 
-        // Accurate correct count: Reading has 10 FillBlanks + 10 MCQ
+        // Accurate correct count: 실제 결과에 기록된 correctAnswers를 우선 사용
+        // (미답변 문제가 정답으로 계산되지 않도록)
         const fillBlanksTotal = (scoreModalSection === 'Reading') ? 10 : 0;
         const mcqTotal = totalQ - fillBlanksTotal;
-        const correctQ = Math.max(0, mcqTotal - mcqWrongs.length) + Math.max(0, fillBlanksTotal - fillBlanksWrongs.length);
+        const correctQ = typeof curResult?.correctAnswers === 'number'
+          ? curResult.correctAnswers
+          : Math.max(0, mcqTotal - mcqWrongs.length) + Math.max(0, fillBlanksTotal - fillBlanksWrongs.length);
         const wrongQ = Math.max(0, totalQ - correctQ);
         const color = sectionColors[scoreModalSection];
 
-        // Build a set of wrong MCQ question IDs for fast lookup
-        const wrongMcqIds = new Set(mcqWrongs.map((w: any) => parseInt(w.questionId)).filter(Boolean));
+        // Build a set of wrong question numbers for fast lookup
+        // questionId 형식: "15"(MCQ), "blank-3"(Reading 빈칸), "writing-bs-2"(Writing Build a Sentence)
+        // → 모든 형식에서 끝의 숫자를 추출해 문제 번호로 매칭 (섹션이 달라 번호 충돌 없음)
+        const wrongQNums = new Set<number>();
+        (curResult?.wrongAnswers || []).forEach((w: any) => {
+          const id = String(w.questionId ?? '');
+          const m = id.match(/(\d+)\s*$/);
+          if (m) wrongQNums.add(parseInt(m[1], 10));
+        });
 
-        // Build per-question correctness
+        // 미답변 문제 수 = 전체 - (맞은 수 + 오답 기록 수)
+        // 시험은 순차 진행이므로 뒤쪽 unansweredCount개를 미답변으로 표시
+        const attemptedCount = (curResult?.correctAnswers || 0) + (curResult?.wrongAnswers?.length || 0);
+        const unansweredCount = Math.max(0, totalQ - attemptedCount);
+
+        // Build per-question correctness — 실제 오답 기록 기준 (섹션 무관 공통 로직)
         const qList = Array.from({ length: totalQ }, (_, i) => {
           const qNum = i + 1;
-          const isInFillBlanksRange = qNum <= 10;
-          let isWrong = false;
-          if (isInFillBlanksRange) {
-            // Q1-10: check if there's a matching blank wrong
-            isWrong = fillBlanksWrongs.some((w: any) => {
-              const blankNum = w.questionId?.startsWith('blank-')
-                ? parseInt(w.questionId.replace('blank-', ''))
-                : parseInt(w.questionId);
-              return blankNum === qNum;
-            });
-          } else {
-            // Q11-20: check MCQ wrongs by questionId
-            isWrong = wrongMcqIds.has(qNum);
-          }
-          return { qNum, globalQNum: qNum, isWrong };
+          const isWrong = wrongQNums.has(qNum);
+          const isUnanswered = !isWrong && qNum > totalQ - unansweredCount;
+          return { qNum, globalQNum: qNum, isWrong, isUnanswered };
         });
 
         return (
@@ -1193,16 +1196,18 @@ export function HistorySection({
                         문제를 클릭하면 해당 문제로 바로 이동해요
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {qList.map(({ qNum, globalQNum, isWrong }) => (
+                        {qList.map(({ qNum, globalQNum, isWrong, isUnanswered }) => (
                           <button
                             key={qNum}
                             onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
                             className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
                               isWrong
                                 ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : isUnanswered
+                                  ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
-                            title={`Q${qNum} (전체 ${globalQNum}번) — ${isWrong ? 'Wrong' : 'Correct'} · Click to review`}
+                            title={`Q${qNum} (전체 ${globalQNum}번) — ${isWrong ? 'Wrong' : isUnanswered ? '미답변' : 'Correct'} · Click to review`}
                           >
                             {qNum}
                           </button>

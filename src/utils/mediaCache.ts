@@ -254,13 +254,39 @@ export async function preloadAllMedia(
 //  캐시가 없으면 원래 URL로 폴백합니다.
 // ─────────────────────────────────────────────────────────────────
 
+// 전역 오디오 레지스트리 — 화면 전환(Next/Back) 시 이전 오디오를 확실히 정지하기 위함
+const activeAudios = new Set<HTMLAudioElement>();
+// 오디오 생성 세대 — stopAllAudio 호출 후 생성 진행 중이던 오디오의 재생을 차단
+let audioGeneration = 0;
+
+/** 재생 중인 모든 오디오를 즉시 정지 (화면 전환 시 호출) */
+export function stopAllAudio(): void {
+  audioGeneration++;
+  activeAudios.forEach(a => {
+    try { a.pause(); a.currentTime = 0; } catch { /* noop */ }
+  });
+  activeAudios.clear();
+}
+
+function registerAudio(audio: HTMLAudioElement, generation: number): HTMLAudioElement {
+  activeAudios.add(audio);
+  audio.addEventListener('ended', () => activeAudios.delete(audio));
+  audio.addEventListener('error', () => activeAudios.delete(audio));
+  // 비동기 로딩 중 화면 전환이 발생한 경우 → 재생 자체를 차단
+  if (generation !== audioGeneration) {
+    audio.play = () => Promise.resolve();
+  }
+  return audio;
+}
+
 export async function createCachedAudio(url?: string): Promise<HTMLAudioElement> {
+  const generation = audioGeneration;
   const audio = new Audio();
   if (url) {
     const resolvedUrl = await getMediaUrl(url);
     audio.src = resolvedUrl;
   }
-  return audio;
+  return registerAudio(audio, generation);
 }
 
 /**
@@ -287,7 +313,7 @@ export function createCachedAudioSync(url?: string): HTMLAudioElement {
       }).catch(() => {});
     }
   }
-  return audio;
+  return registerAudio(audio, audioGeneration);
 }
 
 // ─────────────────────────────────────────────────────────────────

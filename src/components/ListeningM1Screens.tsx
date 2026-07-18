@@ -5,7 +5,7 @@ import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 import { RadioOption } from './RadioOption';
 import { MobileFooter } from './MobileFooter';
 import { speakHighQuality, stopAllSpeech } from '../utils/cloudTts';
-import { createCachedAudio } from '../utils/mediaCache';
+import { createCachedAudio, stopAllAudio } from '../utils/mediaCache';
 
 // ============================================================================
 // Listening Module 1 - All Screens Wrapper
@@ -892,6 +892,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
   const currentIndex = SCREEN_ORDER.indexOf(currentScreen);
 
   const goNext = () => {
+    stopAllAudio(); // 이전 화면 오디오 정지
     if (currentScreen === 'module2-intro') {
       onComplete();
       return;
@@ -902,6 +903,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
   };
 
   const goBack = () => {
+    stopAllAudio(); // 이전 화면 오디오 정지
     if (currentIndex > 0) {
       setCurrentScreen(SCREEN_ORDER[currentIndex - 1]);
     }

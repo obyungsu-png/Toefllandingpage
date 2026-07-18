@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pause, Play } from 'lucide-react';
+import { stopAllAudio } from '../utils/mediaCache';
 import { ListeningM2Q1 } from './ListeningM2Q1';
 import { ListeningM2Q2 } from './ListeningM2Q2';
 import { ListeningM2Q3 } from './ListeningM2Q3';
@@ -115,6 +116,7 @@ export function ListeningM2Wrapper({
   }, [onScreenChange, screen]);
 
   const goNext = () => {
+    stopAllAudio(); // 이전 문제 오디오 정지
     const idx = M2_SCREEN_ORDER.indexOf(screen);
     if (idx < M2_SCREEN_ORDER.length - 1) {
       setScreen(M2_SCREEN_ORDER[idx + 1]);
@@ -124,6 +126,7 @@ export function ListeningM2Wrapper({
   };
 
   const goBack = () => {
+    stopAllAudio(); // 이전 문제 오디오 정지
     const idx = M2_SCREEN_ORDER.indexOf(screen);
     if (idx > 0) {
       setScreen(M2_SCREEN_ORDER[idx - 1]);

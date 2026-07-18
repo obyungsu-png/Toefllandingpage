@@ -174,6 +174,11 @@ ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].des
 - 수신자가 동료 학생(Classmate/Peer)인 경우:
   * 반격식 톤: "Hi [Name]", "Can you let me know...", "Thanks", "Best"
   * 너무 딱딱하면(Dear Professor 등) 오히려 부자연스러움 → 적절한 캐주얼 톤 필요
+- 점수 보정 규칙 (중요 — registerAndTone이 다른 차원보다 후하게 채점되지 않도록):
+  * 격식이 '적절한 것'은 기본 요건일 뿐 만점 사유가 아니다. 톤이 대체로 적절필 뿐 특별히 세련되지 않으면 4.0 전후로 부여
+  * 5.0 이상은 인사/부탁/맺음말 전반이 수신자 관계에 완벽히 최적화되고 완곡 표현(would appreciate, I was wondering if)을 정확히 구사한 경우에만 부여
+  * 본문 어디든 톤이 흔들리는 표현(갑작스러운 반말, 지나친 딱딱함, 어색한 경어)이 1건이라도 있으면 0.5점씩 감점
+  * 다른 차원(taskCompletion, grammarAccuracy 등)의 평균보다 registerAndTone이 1.0점 이상 높게 나오면 재검토하여 근거 없는 고득점이면 하향 조정
 
 ② 과제 완수도 (Task Completion) — 핵심 차원
 문제에서 요구한 구체적 조건(보통 3가지 불렛포인트)을 빠짐없이 충족했는가?
