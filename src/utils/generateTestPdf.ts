@@ -20,23 +20,23 @@ function stringifyAnswer(answer?: string | string[]) {
 
 // ── Markup cleaners ─────────────────────────────────────────────────────────
 
-// Fill-in-blank markers: "gu[ides:4]" → "guides"
+// Fill-in-blank markers: "gu[ides:4]" 또는 "peo[ple]" → "guides" / "people"
 function cleanFillBlanks(text: string) {
-  return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => `${prefix}${answer}`);
+  return text.replace(/(\S*?)\[([^\]:]+)(?::(\d+))?\]/g, (_, prefix, answer) => `${prefix}${answer}`);
 }
 
-// Fill-in-blank markers: "gu[ides:4]" → "gu____" for student PDF handouts
+// Fill-in-blank markers: "gu[ides:4]" 또는 "peo[ple]" → "gu____" / "peo____" for student PDF handouts
 function renderFillBlanks(text: string) {
-  return text.replace(/(\S*?)\[([^\]]+):(\d+)\]/g, (_, prefix, answer) => {
+  return text.replace(/(\S*?)\[([^\]:]+)(?::(\d+))?\]/g, (_, prefix, answer) => {
     const blank = '_'.repeat(Math.max(3, String(answer).length));
     return `${prefix}${blank}`;
   });
 }
 
+// 빈칸 마커 개수 카운트 — "peo[ple]", "gu[ides:4]" 두 형식 모두 지원
 function countFillBlanks(text?: string) {
   if (!text) return 0;
-  return [...text.matchAll(/\[[^\]]+:(\d+)\]/g)]
-    .reduce((max, match) => Math.max(max, Number(match[1]) || 0), 0);
+  return [...text.matchAll(/\[[^\]:]+(?::(\d+))?\]/g)].length;
 }
 
 // ── Passage parsers ─────────────────────────────────────────────────────────
@@ -107,10 +107,13 @@ function formatTemplatePassage(passageText: string): string[] | null {
 
 function readingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
   const lines: PdfLine[] = [];
-  const blankCount = countFillBlanks(question.questionText) || countFillBlanks(question.passageText);
-  const isCompleteWords = /complete words/i.test(question.questionType || '');
-  const isFillBlankSet = question.questionNumber === 1 && (blankCount >= 10 || isCompleteWords);
-  lines.push({ text: isFillBlankSet ? `Q1-Q10  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
+  const blankCount = Math.max(countFillBlanks(question.questionText), countFillBlanks(question.passageText));
+  const isCompleteWords = /complete\s*words|fill\s*in\s*the\s*blank|cloze/i.test(question.questionType || '');
+  // Complete Words 유형이면 문제 번호와 무관하게 빈칸(____) 형태로 출력
+  const isFillBlankSet = isCompleteWords || blankCount >= 10;
+  // Complete Words 세트는 10개 빈칸 → 실제 문제 번호 기준 범위 표기 (예: Q1-Q10)
+  const blankSetLabel = `Q${question.questionNumber}-Q${question.questionNumber + 9}`;
+  lines.push({ text: isFillBlankSet ? `${blankSetLabel}  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // Module 2: passage stored as JSON {title, passage, questions:[]}
   if (!skipPassage && question.passageText) {
