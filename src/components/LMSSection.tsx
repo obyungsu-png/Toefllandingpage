@@ -13,6 +13,9 @@ import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 const ContentManagement = lazy(() =>
   import('./ContentManagement').then(module => ({ default: module.ContentManagement }))
 );
+const QuestionTypeCMS = lazy(() =>
+  import('./QuestionTypeCMS').then(module => ({ default: module.QuestionTypeCMS }))
+);
 
 export interface LMSContent {
   id: string;
@@ -31,6 +34,37 @@ export interface LMSContent {
   correctAnswer?: string;
   /** 정답 해설 (선택) */
   explanation?: string;
+  // ── TPO CMS 스타일 확장 필드 (선택) ──
+  /** 문제 번호 */
+  questionNumber?: number | string;
+  /** 난이도 */
+  difficulty?: '쉬움' | '보통' | '어려움';
+  /** 지문 제목 (Reading) */
+  passageTitle?: string;
+  /** 지문 본문 (Reading / Writing) */
+  passageText?: string;
+  /** 오디오 스크립트 (Listening / Speaking) */
+  scriptText?: string;
+  /** Dictation 빈칸 키워드 (Listening) */
+  dictationBlanks?: string;
+  /** Organization 요약 (Listening) */
+  organization?: string;
+  /** Organization 빈칸 키워드 (Listening) */
+  organizationBlanks?: string;
+  /** 문제 텍스트 (질문 본문) */
+  questionText?: string;
+  /** 오디오 URL (Listening / Speaking) */
+  audioUrl?: string;
+  /** 이미지 URL */
+  imageUrl?: string;
+  /** Complete Words 빈칸 */
+  blanks?: Array<{ answer: string; maxLength: number }>;
+  /** Build a Sentence 단어 배열 */
+  words?: string[];
+  /** Build a Sentence 끝부호 */
+  sentenceEnding?: '.' | '?';
+  /** Build a Sentence / Writing 상황 설명 */
+  context?: string;
 }
 
 interface LMSSectionProps {
@@ -336,457 +370,18 @@ export function LMSSection({
           </Suspense>
         )}
 
-        {/* Upload Tab Content */}
+        {/* Upload Tab Content — QuestionTypeCMS (TPO CMS와 동일한 틀) */}
         {activeTab === 'Training' && (
-          <>
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-medium text-gray-800 mb-2">LMS - Learning Resource Management</h1>
-              <p className="text-gray-600">Upload and manage learning resources. Uploaded resources are automatically linked to each section.</p>
-            </div>
-
-            {/* Skills Navigation */}
-            <div className="mb-6">
-              <div className="flex gap-3 flex-wrap">
-                {skills.map((skill) => (
-                  <button
-                    key={skill}
-                    className={`px-6 py-3 rounded-lg font-bold text-sm transition-all duration-300 transform hover:scale-105 shadow-md ${
-                      activeSkill === skill
-                        ? 'bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm'
-                    }`}
-                    onClick={() => setActiveSkill(skill)}
-                  >
-                    {skill}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Upload Button */}
-            <div className="mb-6">
-              <Button
-                onClick={() => setShowUploadForm(!showUploadForm)}
-                className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61] shadow-lg"
-              >
-                <Upload className="w-5 h-5 mr-2" />
-                Upload New Content
-              </Button>
-            </div>
-
-            {/* Upload Form */}
-            {showUploadForm && (
-              <div
-                className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6 animate-[fadeSlideUp_0.3s_ease-out]"
-              >
-                <h3 className="text-xl font-medium text-gray-800 mb-4">Upload New Content - {activeSkill}</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
-                      <select
-                        value={formData.questionType}
-                        onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                        required
-                      >
-                        <option value="">Select...</option>
-                        {questionTypesBySkill[activeSkill].map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
-                      <select
-                        value={formData.level}
-                        onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                      >
-                        {[1, 2, 3, 4, 5, 6].map(level => (
-                          <option key={level} value={level}>Level {level}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">DAY</label>
-                      <select
-                        value={formData.day}
-                        onChange={(e) => setFormData({ ...formData, day: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                      >
-                        {Array.from({ length: 20 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(day => (
-                          <option key={day} value={day}>DAY {day}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">File Type</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="fileType"
-                          value="text"
-                          checked={formData.fileType === 'text'}
-                          onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                          className="mr-2"
-                        />
-                        Text
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="fileType"
-                          value="audio"
-                          checked={formData.fileType === 'audio'}
-                          onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                          className="mr-2"
-                        />
-                        Audio (MP3)
-                      </label>
-                      {(activeSkill === 'Listening' || activeSkill === 'Speaking') && (
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="fileType"
-                            value="text-audio"
-                            checked={formData.fileType === 'text-audio'}
-                            onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                            className="mr-2"
-                          />
-                          Text + Audio
-                        </label>
-                      )}
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="fileType"
-                          value="pdf"
-                          checked={formData.fileType === 'pdf'}
-                          onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                          className="mr-2"
-                        />
-                        PDF
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="fileType"
-                          value="image"
-                          checked={formData.fileType === 'image'}
-                          onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                          className="mr-2"
-                        />
-                        Image
-                      </label>
-                    </div>
-                  </div>
-
-                  {formData.fileType === 'text' ? (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-                      <textarea
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                        rows={6}
-                        required
-                      />
-                    </div>
-                  ) : formData.fileType === 'text-audio' ? (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Text Content (Script)</label>
-                        <textarea
-                          value={formData.content}
-                          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                          rows={6}
-                          placeholder="Enter the audio script or text..."
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Audio File (MP3)</label>
-                        <input
-                          type="file"
-                          accept="audio/*"
-                          onChange={handleFileUpload}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Upload an MP3 audio file for this content</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">File Upload</label>
-                      <input
-                        type="file"
-                        accept={
-                          formData.fileType === 'audio' ? 'audio/*' :
-                          formData.fileType === 'pdf' ? 'application/pdf' :
-                          'image/*'
-                        }
-                        onChange={handleFileUpload}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* 객관식 문제로 만들기 — 모든 스킬/파일타입에 공통 적용 가능 */}
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <label className="flex items-center gap-2 mb-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.isMultipleChoice}
-                        onChange={(e) => setFormData({ ...formData, isMultipleChoice: e.target.checked })}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm font-medium text-gray-700">객관식 문제로 만들기 (선택지 + 정답 + 해설)</span>
-                    </label>
-
-                    {formData.isMultipleChoice && (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-2">선택지 (2~4개 입력)</label>
-                          <div className="space-y-2">
-                            {formData.options.map((opt, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <input
-                                  type="radio"
-                                  name="correctAnswerRadio"
-                                  checked={!!opt && formData.correctAnswer === opt}
-                                  onChange={() => setFormData({ ...formData, correctAnswer: opt })}
-                                  title="정답으로 선택"
-                                  className="shrink-0"
-                                  disabled={!opt.trim()}
-                                />
-                                <input
-                                  type="text"
-                                  value={opt}
-                                  placeholder={`선택지 ${idx + 1}`}
-                                  onChange={(e) => {
-                                    const newOptions = [...formData.options];
-                                    const prevValue = newOptions[idx];
-                                    newOptions[idx] = e.target.value;
-                                    setFormData({
-                                      ...formData,
-                                      options: newOptions,
-                                      // 수정 중이던 선택지가 정답으로 지정되어 있었다면 값도 같이 갱신
-                                      correctAnswer: formData.correctAnswer === prevValue ? e.target.value : formData.correctAnswer,
-                                    });
-                                  }}
-                                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">왼쪽 라디오 버튼으로 정답을 선택해주세요.</p>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-2">해설 (선택)</label>
-                          <textarea
-                            value={formData.explanation}
-                            onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                            rows={2}
-                            placeholder="정답 해설을 입력하세요 (선택 사항)"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 justify-end">
-                    <Button
-                      type="button"
-                      onClick={() => setShowUploadForm(false)}
-                      className="bg-gray-300 text-gray-700 hover:bg-gray-400"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white hover:from-[#1e6b73] hover:to-[#005f61]"
-                      disabled={isUploading}
-                    >
-                      {isUploading ? '⏳ 업로드 중...' : 'Upload'}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Content List */}
-            <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-gray-800">
-                    {activeSkill} Learning Resources ({filteredContents.length})
-                  </h3>
-                  <select
-                    value={groupBy}
-                    onChange={(e) => setGroupBy(e.target.value as 'type' | 'level')}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm"
-                  >
-                    <option value="type">Group by Type</option>
-                    <option value="level">Group by Level</option>
-                  </select>
-                </div>
-                
-                {filteredContents.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                    <p>No uploaded resources yet.</p>
-                  </div>
-                ) : (
-                  (() => {
-                    // Group contents
-                    const groupedContents: Record<string, LMSContent[]> = {};
-                    
-                    if (groupBy === 'type') {
-                      // Group by question type
-                      filteredContents.forEach(content => {
-                        const type = content.questionType;
-                        if (!groupedContents[type]) {
-                          groupedContents[type] = [];
-                        }
-                        groupedContents[type].push(content);
-                      });
-                    } else {
-                      // Group by level
-                      filteredContents.forEach(content => {
-                        const level = `Level ${content.level}`;
-                        if (!groupedContents[level]) {
-                          groupedContents[level] = [];
-                        }
-                        groupedContents[level].push(content);
-                      });
-                    }
-                    
-                    return (
-                      <div className="space-y-4">
-                        {Object.entries(groupedContents).map(([groupName, contents]) => {
-                          const isCollapsed = collapsedGroups.has(groupName);
-                          
-                          return (
-                            <div key={groupName} className="border border-gray-200 rounded-lg overflow-hidden">
-                              {/* Group Header - Collapsible */}
-                              <button
-                                onClick={() => {
-                                  const newCollapsed = new Set(collapsedGroups);
-                                  if (newCollapsed.has(groupName)) {
-                                    newCollapsed.delete(groupName);
-                                  } else {
-                                    newCollapsed.add(groupName);
-                                  }
-                                  setCollapsedGroups(newCollapsed);
-                                }}
-                                className="w-full px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors flex items-center justify-between text-left"
-                              >
-                                <div className="flex items-center gap-3">
-                                  {isCollapsed ? (
-                                    <ChevronRight className="w-5 h-5 text-gray-500" />
-                                  ) : (
-                                    <ChevronDown className="w-5 h-5 text-gray-500" />
-                                  )}
-                                  <span className="font-semibold text-gray-800">
-                                    {groupName}
-                                  </span>
-                                  <span className="px-2 py-1 bg-[#2d7a7c] text-white text-xs rounded-full">
-                                    {contents.length}
-                                  </span>
-                                </div>
-                                <span className="text-sm text-gray-500">
-                                  {isCollapsed ? 'Click to expand' : 'Click to collapse'}
-                                </span>
-                              </button>
-
-                              {/* Group Contents */}
-                              <>
-                                {!isCollapsed && (
-                                  <div
-                                    className="overflow-hidden animate-[fadeIn_0.2s_ease-out]"
-                                  >
-                                    <div className="p-3 space-y-2 bg-white">
-                                      {contents.map((content) => (
-                                        <div
-                                          key={content.id}
-                                          className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                        >
-                                          <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-lg bg-[#2d7a7c]/10 flex items-center justify-center text-[#2d7a7c]">
-                                              {getFileIcon(content.fileType)}
-                                            </div>
-                                            <div className="flex-1">
-                                              <h4 className="font-medium text-gray-800 text-sm">{content.title}</h4>
-                                              <div className="flex gap-3 mt-1">
-                                                {groupBy === 'level' && (
-                                                  <span className="text-xs text-gray-600">{content.questionType}</span>
-                                                )}
-                                                {groupBy === 'type' && (
-                                                  <span className="text-xs text-gray-600">Level {content.level}</span>
-                                                )}
-                                                <span className="text-xs text-gray-600">DAY {content.day}</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div className="flex gap-2 ml-4">
-                                            <Button
-                                              size="sm"
-                                              variant="outline"
-                                              onClick={() => setEditingContent(content)}
-                                            >
-                                              <Edit className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                              size="sm"
-                                              className="bg-red-500 text-white hover:bg-red-600"
-                                              onClick={() => {
-                                                if (confirm('Are you sure you want to delete this content?')) {
-                                                  onDeleteContent(content.id);
-                                                }
-                                              }}
-                                            >
-                                              <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()
-                )}
-              </div>
-            </div>
-          </>
+          <Suspense fallback={<div className="py-12 text-center text-gray-400">Loading...</div>}>
+            <QuestionTypeCMS
+              contents={contents}
+              onAddContent={onAddContent}
+              onUpdateContent={onUpdateContent}
+              onDeleteContent={onDeleteContent}
+            />
+          </Suspense>
         )}
+
 
         {/* Vocabulary Tab Content */}
         {activeTab === 'Vocabulary' && (
