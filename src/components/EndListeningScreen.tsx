@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { generateTestPdf } from '../utils/generateTestPdf';
+import { extractVocabFromTest } from '../utils/extractVocab';
+import { generateVocabPdf } from '../utils/generateVocabPdf';
 import type { TPOTest } from './ContentManagement';
 
 interface ScoreData {
@@ -43,6 +45,8 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
   testData
 }) => {
   const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
+  const [vocabMenuOpen, setVocabMenuOpen] = useState(false);
+  const [vocabLevel, setVocabLevel] = useState<'ALL' | '수능' | '토플' | '토익'>('ALL');
   const score = listeningScore || null;
   const percentage = score ? Math.round((score.correct / score.total) * 100) : 0;
 
@@ -50,6 +54,17 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
     if (!testData) { alert('Test data was not found.'); return; }
     generateTestPdf(testData, mode, section);
     setPdfMenuOpen(false);
+  };
+
+  const handleVocabDownload = (mode: 'question' | 'answer' | 'multiple-choice' | 'multiple-choice-answer') => {
+    if (!testData) { alert('Test data was not found.'); return; }
+    const vocab = extractVocabFromTest(testData, { maxWords: 60, minFrequency: 1 });
+    if (vocab.length === 0) { alert('추출된 단어가 없습니다.'); return; }
+    generateVocabPdf(vocab, mode, {
+      testData: { testType: testData.testType, testNumber: testData.testNumber },
+      level: vocabLevel,
+    });
+    setVocabMenuOpen(false);
   };
 
   // TOEFL Listening 환산 점수 (0-30 raw) → convert to Band Score
@@ -272,6 +287,92 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
                     >
                       <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Listening Only</span>
                       <span className="text-xs text-gray-500">리스닝 영역만 + 정답/해설</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Vocab PDF Download Section */}
+          {testData && (
+            <div className="mt-4">
+              <div className="relative inline-block">
+                <button
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-purple-300 text-purple-700 rounded-lg px-6 py-3 hover:bg-purple-50 transition-colors font-['Inter',_sans-serif] font-semibold shadow-sm w-full sm:w-auto"
+                  onClick={() => { setVocabMenuOpen(!vocabMenuOpen); setPdfMenuOpen(false); }}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                  </svg>
+                  Download Vocab PDF
+                  <svg className={`w-4 h-4 transition-transform ${vocabMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                {vocabMenuOpen && (
+                  <div className="absolute top-full mt-2 left-0 right-0 sm:w-96 bg-white border border-purple-200 rounded-xl shadow-xl z-10 overflow-hidden">
+                    {/* 수준 선택 */}
+                    <div className="px-4 py-3 bg-purple-50 border-b border-purple-100">
+                      <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-2">단어 수준 선택</p>
+                      <div className="flex gap-1 flex-wrap">
+                        {(['ALL', '수능', '토플', '토익'] as const).map(lv => (
+                          <button
+                            key={lv}
+                            onClick={() => setVocabLevel(lv)}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                              vocabLevel === lv
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-100'
+                            }`}
+                          >
+                            {lv === 'ALL' ? '전체' : lv}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-purple-600 mt-2">
+                        이 TPO의 모든 섹션(Reading/Listening/Speaking/Writing)에서 자주 나오는 단어를 추출해 시험지로 만듭니다.
+                      </p>
+                    </div>
+
+                    {/* 주관식 */}
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">주관식 (영단어 → 뜻 쓰기)</p>
+                    </div>
+                    <button
+                      onClick={() => handleVocabDownload('question')}
+                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                    >
+                      <span className="text-purple-700 font-semibold text-sm w-32 shrink-0">Question</span>
+                      <span className="text-xs text-gray-500">빈칸에 한국어 뜻 쓰기</span>
+                    </button>
+                    <button
+                      onClick={() => handleVocabDownload('answer')}
+                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors flex items-center gap-3 border-b border-gray-100"
+                    >
+                      <span className="text-purple-700 font-semibold text-sm w-32 shrink-0">Answer</span>
+                      <span className="text-xs text-gray-500">정답 (영단어 + 뜻 + 정의)</span>
+                    </button>
+
+                    {/* 객관식 */}
+                    <div className="px-4 py-3 bg-green-50 border-b border-gray-100">
+                      <p className="text-xs font-bold text-green-700 uppercase tracking-wide">객관식 (4지선다)</p>
+                    </div>
+                    <button
+                      onClick={() => handleVocabDownload('multiple-choice')}
+                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                    >
+                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Question</span>
+                      <span className="text-xs text-gray-500">4개 보기 중 정답 선택</span>
+                    </button>
+                    <button
+                      onClick={() => handleVocabDownload('multiple-choice-answer')}
+                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Answer</span>
+                      <span className="text-xs text-gray-500">객관식 정답지</span>
                     </button>
                   </div>
                 )}

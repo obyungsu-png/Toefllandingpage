@@ -3,6 +3,8 @@ import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
+import { extractVocabFromTest, vocabToCSV, type ExtractedVocab } from '../utils/extractVocab';
+import { generateVocabPdf } from '../utils/generateVocabPdf';
 
 // 기본 아바타 목록 (public/avatars/ 에서 서빙)
 const DEFAULT_AVATARS = [
@@ -248,6 +250,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [showBulkUploadForm, setShowBulkUploadForm] = useState(false);
   const [showAudioSplitter, setShowAudioSplitter] = useState(false);
   const [showMediaMatcher, setShowMediaMatcher] = useState(false);
+  const [showVocabExtractor, setShowVocabExtractor] = useState(false);
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
   const editFormRef = useRef<HTMLDivElement>(null);
@@ -926,6 +929,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           </Button>
         )}
         <Button
+          onClick={() => setShowVocabExtractor(!showVocabExtractor)}
+          className={`shadow-lg ${showVocabExtractor ? 'bg-emerald-700 text-white' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}
+        >
+          <BookOpen className="w-5 h-5 mr-2" />
+          Vocab Extractor
+        </Button>
+        <Button
           onClick={() => setShowMediaMatcher(!showMediaMatcher)}
           className={`shadow-lg ${showMediaMatcher ? 'bg-indigo-700 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'}`}
         >
@@ -1206,6 +1216,17 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             section={s}
             onUpdateTest={onUpdateTest}
             onClose={() => setShowMediaMatcher(false)}
+          />
+        );
+      })()}
+
+      {/* Vocab Extractor Panel */}
+      {showVocabExtractor && getExistingTest() && (() => {
+        const t = getExistingTest()!;
+        return (
+          <VocabExtractorPanel
+            test={t}
+            onClose={() => setShowVocabExtractor(false)}
           />
         );
       })()}
@@ -6915,4 +6936,182 @@ function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
     v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
   }
   return new Blob([buf], { type: 'audio/wav' });
+}
+
+// ─── Vocab Extractor Panel (TPO별 단어 추출/시험지 생성) ────────────────────────
+function VocabExtractorPanel({ test, onClose }: {
+  test: TPOTest;
+  onClose: () => void;
+}) {
+  const [maxWords, setMaxWords] = useState(60);
+  const [minFrequency, setMinFrequency] = useState(2);
+  const [level, setLevel] = useState<'ALL' | '수능' | '토플' | '토익'>('ALL');
+  const [vocab, setVocab] = useState<ExtractedVocab[]>([]);
+  const [extracted, setExtracted] = useState(false);
+
+  const handleExtract = () => {
+    const result = extractVocabFromTest(test, { maxWords, minFrequency });
+    setVocab(result);
+    setExtracted(true);
+  };
+
+  const handleDownloadCSV = () => {
+    if (vocab.length === 0) { alert('추출된 단어가 없습니다.'); return; }
+    const csv = vocabToCSV(vocab);
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${test.testType}-${test.testNumber}-vocab.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPdf = (mode: 'question' | 'answer' | 'multiple-choice' | 'multiple-choice-answer') => {
+    if (vocab.length === 0) { alert('추출된 단어가 없습니다.'); return; }
+    generateVocabPdf(vocab, mode, {
+      testData: { testType: test.testType, testNumber: test.testNumber },
+      level,
+    });
+  };
+
+  const filtered = level === 'ALL' ? vocab : vocab.filter(v => v.level === level);
+
+  return (
+    <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-6 mb-6 shadow-lg" style={{ animation: 'fadeInUp 0.3s ease-out' }}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-emerald-900 flex items-center gap-2">
+          <BookOpen className="w-5 h-5" />
+          Vocab Extractor — {test.testType} {test.testNumber}
+        </h3>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <p className="text-sm text-emerald-800 mb-4 bg-emerald-100 p-3 rounded-lg">
+        이 {test.testType}의 모든 섹션(Reading/Listening/Speaking/Writing)에서 자주 나오는 영단어를 자동 추출합니다.
+        추출된 단어는 수능/토플/토익 수준으로 분류되며, CSV로 내려받거나 시험지 PDF(주관식/객관식)로 생성할 수 있습니다.
+        한국어 뜻은 기존 단어장과 매칭된 경우에만 표시되며, 매칭되지 않은 단어는 CSV로 편집 후 대량 업로드할 수 있습니다.
+      </p>
+
+      {/* 설정 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">최대 단어 수</label>
+          <input
+            type="number" min={10} max={300} value={maxWords}
+            onChange={e => setMaxWords(Math.max(10, Math.min(300, Number(e.target.value) || 60)))}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">최소 빈도</label>
+          <select value={minFrequency} onChange={e => setMinFrequency(Number(e.target.value))}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <option value={1}>1회 이상 (모든 단어)</option>
+            <option value={2}>2회 이상 (추천)</option>
+            <option value={3}>3회 이상</option>
+            <option value={5}>5회 이상</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">수준 필터 (PDF)</label>
+          <select value={level} onChange={e => setLevel(e.target.value as any)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <option value="ALL">전체</option>
+            <option value="수능">수능</option>
+            <option value="토플">토플</option>
+            <option value="토익">토익</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button onClick={handleExtract} className="bg-emerald-600 hover:bg-emerald-700">
+          <BookOpen className="w-4 h-4 mr-2" /> 단어 추출
+        </Button>
+        {extracted && vocab.length > 0 && (
+          <>
+            <Button onClick={handleDownloadCSV} className="bg-gray-700 hover:bg-gray-800">
+              <FileText className="w-4 h-4 mr-2" /> CSV 다운로드
+            </Button>
+            <Button onClick={() => handleDownloadPdf('question')} className="bg-blue-600 hover:bg-blue-700">
+              주관식 문제 PDF
+            </Button>
+            <Button onClick={() => handleDownloadPdf('answer')} className="bg-blue-800 hover:bg-blue-900">
+              주관식 정답 PDF
+            </Button>
+            <Button onClick={() => handleDownloadPdf('multiple-choice')} className="bg-green-600 hover:bg-green-700">
+              객관식 문제 PDF
+            </Button>
+            <Button onClick={() => handleDownloadPdf('multiple-choice-answer')} className="bg-green-800 hover:bg-green-900">
+              객관식 정답 PDF
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* 추출 결과 */}
+      {extracted && (
+        <div className="bg-white rounded-lg border border-emerald-200 overflow-hidden">
+          <div className="px-4 py-2 bg-emerald-100 border-b border-emerald-200 text-sm font-semibold text-emerald-900 flex justify-between">
+            <span>추출 결과: {filtered.length}개 단어{level !== 'ALL' && ` (${level} 수준)`}</span>
+            <span className="text-xs text-emerald-700">전체 {vocab.length}개</span>
+          </div>
+          <div className="max-h-96 overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-100 sticky top-0">
+                <tr>
+                  <th className="px-2 py-2 text-left">#</th>
+                  <th className="px-2 py-2 text-left">Word</th>
+                  <th className="px-2 py-2 text-left">Level</th>
+                  <th className="px-2 py-2 text-left">Korean</th>
+                  <th className="px-2 py-2 text-left">Definition</th>
+                  <th className="px-2 py-2 text-left">Freq</th>
+                  <th className="px-2 py-2 text-left">Sections</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((v, i) => (
+                  <tr key={v.word} className={i % 2 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="px-2 py-1 text-gray-500">{i + 1}</td>
+                    <td className="px-2 py-1 font-semibold text-emerald-900">{v.word}</td>
+                    <td className="px-2 py-1">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        v.level === '토플' ? 'bg-purple-100 text-purple-800' :
+                        v.level === '수능' ? 'bg-blue-100 text-blue-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`}>{v.level}</span>
+                    </td>
+                    <td className="px-2 py-1 text-gray-700">{v.korean || <span className="text-gray-400 italic">미등록</span>}</td>
+                    <td className="px-2 py-1 text-gray-500 max-w-[200px] truncate" title={v.definition}>{v.definition || '-'}</td>
+                    <td className="px-2 py-1 text-center">{v.frequency}</td>
+                    <td className="px-2 py-1 text-[10px] text-gray-500">{v.sourceSections.join(', ')}</td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">해당 조건의 단어가 없습니다.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 도움말 */}
+      <div className="mt-4 text-xs text-gray-600 bg-gray-100 p-3 rounded">
+        <p className="font-semibold mb-1">💡 사용 순서:</p>
+        <ol className="list-decimal list-inside space-y-0.5">
+          <li>최대 단어 수 / 최소 빈도 설정 후 "단어 추출" 클릭</li>
+          <li>추출 결과 확인 후 "CSV 다운로드"로 저장</li>
+          <li>엑셀에서 한국어 뜻(korean)과 영영 정의(definition) 입력 후 저장</li>
+          <li>Vocabulary Management &gt; Custom 탭에서 대량 업로드 (CSV 모드)</li>
+          <li>또는 바로 주관식/객관식 PDF 시험지 생성</li>
+        </ol>
+      </div>
+    </div>
+  );
 }
