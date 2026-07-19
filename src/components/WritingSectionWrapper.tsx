@@ -180,6 +180,7 @@ export function WritingSectionWrapper({
     const fields = parseWritingPassageFields(emailQ.passageText);
     const hasJson = Object.keys(fields).length > 0;
 
+    // 직접 CMS 필드 우선 (Add Question 폼에서 저장된 emailScenario 등), 없으면 passageText JSON fallback
     const questionText = emailQ.questionText || '';
     const rawBody = hasJson
       ? (fields.body || fields.본문 || fields.내용 || fields.emailbody || '')
@@ -223,11 +224,15 @@ export function WritingSectionWrapper({
       }
     }
 
+    // 직접 CMS 필드가 있으면 우선 사용 (Add Question 폼에서 저장된 값)
+    if (emailQ.emailScenario) emailScenario = emailQ.emailScenario;
+    if (emailQ.emailBullets && emailQ.emailBullets.length > 0) bullets = emailQ.emailBullets;
+
     return {
-      emailTo: fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '',
-      emailSubject: fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '',
+      emailTo: emailQ.emailTo || fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '',
+      emailSubject: emailQ.emailSubject || fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '',
       emailScenario,
-      emailInstruction: questionText,
+      emailInstruction: emailQ.emailInstruction || questionText,
       emailBullets: bullets,
     };
   };
@@ -575,13 +580,13 @@ export function WritingSectionWrapper({
             onBack={goBack}
             onNext={goNext}
             onHome={onHome}
-            professorImageUrl={adQ?.professorImageUrl}
+            professorImageUrl={adQ?.avatar1ImageUrl}
             professorName={adProps.professorName}
             professorMessage={adProps.professorMessage}
-            student1ImageUrl={adQ?.student1ImageUrl}
+            student1ImageUrl={adQ?.avatar2ImageUrl}
             student1Name={adProps.student1Name}
             student1Message={adProps.student1Message}
-            student2ImageUrl={adQ?.student2ImageUrl}
+            student2ImageUrl={adQ?.avatar2ImageUrl}
             student2Name={adProps.student2Name}
             student2Message={adProps.student2Message}
             promptTitle={adProps.promptTitle}
