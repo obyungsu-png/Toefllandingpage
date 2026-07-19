@@ -431,14 +431,25 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
 
 // ── Public entry point ───────────────────────────────────────────────────────
 
-export function generateTestPdf(testData: TPOTest, mode: PdfMode) {
+/**
+ * 테스트 PDF 생성
+ * @param testData  전체 TPOTest 데이터
+ * @param mode      'standard' (문제만) | 'annotated' (정답/해설 포함)
+ * @param sectionType  지정하면 해당 영역만 PDF에 포함 (예: 'Listening'). 생략 시 전체 영역.
+ */
+export function generateTestPdf(
+  testData: TPOTest,
+  mode: PdfMode,
+  sectionType?: TPOSection['sectionType']
+) {
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const today = new Date();
   const dateText = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(18);
-  pdf.text(`${testData.testType} ${testData.testNumber}`, 14, 20);
+  const titleSection = sectionType ? `${sectionType} — ` : '';
+  pdf.text(`${titleSection}${testData.testType} ${testData.testNumber}`, 14, 20);
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
@@ -447,14 +458,15 @@ export function generateTestPdf(testData: TPOTest, mode: PdfMode) {
   if (testData.dateMemo) pdf.text(`Memo: ${testData.dateMemo}`, 14, 40);
 
   let y = 50;
-  const orderedSections = [...testData.sections].sort(
-    (a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType)
-  );
+  const orderedSections = [...testData.sections]
+    .sort((a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType))
+    .filter(s => !sectionType || s.sectionType === sectionType);
 
   for (const section of orderedSections) {
     y = renderSection(pdf, section, mode, y);
   }
 
   const suffix = mode === 'annotated' ? 'annotated' : 'standard';
-  pdf.save(`${testData.testType}-${testData.testNumber}-${suffix}-${dateText}.pdf`);
+  const sectionTag = sectionType ? `-${sectionType.toLowerCase()}` : '';
+  pdf.save(`${testData.testType}-${testData.testNumber}${sectionTag}-${suffix}-${dateText}.pdf`);
 }

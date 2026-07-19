@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
+import { generateTestPdf } from '../utils/generateTestPdf';
+import type { TPOTest } from './ContentManagement';
 
 interface ScoreData {
   correct: number;
@@ -28,6 +30,7 @@ interface EndListeningScreenProps {
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   setActiveWritingScreen: React.Dispatch<React.SetStateAction<any>>;
   listeningScore?: ScoreData | null;
+  testData?: TPOTest | null;
 }
 
 const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
@@ -36,10 +39,18 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
   handleTabChange,
   setActiveTab,
   setActiveWritingScreen,
-  listeningScore
+  listeningScore,
+  testData
 }) => {
+  const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
   const score = listeningScore || null;
   const percentage = score ? Math.round((score.correct / score.total) * 100) : 0;
+
+  const handleDownload = (mode: 'standard' | 'annotated', section?: 'Reading' | 'Listening' | 'Speaking' | 'Writing') => {
+    if (!testData) { alert('Test data was not found.'); return; }
+    generateTestPdf(testData, mode, section);
+    setPdfMenuOpen(false);
+  };
 
   // TOEFL Listening 환산 점수 (0-30 raw) → convert to Band Score
   const toeflEstimate = score ? Math.max(0, Math.min(30, Math.round((score.correct / score.total) * 28 + 1))) : 0;
@@ -176,7 +187,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+            <button
               className="flex items-center justify-center gap-2 bg-[#2d5f8a] text-white rounded-lg px-6 py-3 hover:bg-[#234a6b] transition-colors font-['Inter',_sans-serif] font-semibold shadow-md"
               onClick={() => {
                 setShowEndListening(false);
@@ -189,7 +200,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
               </svg>
               Continue to Writing Section
             </button>
-            <button 
+            <button
               className="flex items-center justify-center gap-2 bg-white border-2 border-[#2d5f8a] text-[#2d5f8a] rounded-lg px-6 py-3 hover:bg-gray-50 transition-colors font-['Inter',_sans-serif] font-semibold shadow-sm"
               onClick={() => {
                 setShowEndListening(false);
@@ -203,6 +214,70 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
               View Results in History
             </button>
           </div>
+
+          {/* PDF Download Section */}
+          {testData && (
+            <div className="mt-8">
+              <div className="relative inline-block">
+                <button
+                  className="flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg px-6 py-3 hover:bg-gray-50 transition-colors font-['Inter',_sans-serif] font-semibold shadow-sm w-full sm:w-auto"
+                  onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download PDF
+                  <svg className={`w-4 h-4 transition-transform ${pdfMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                {pdfMenuOpen && (
+                  <div className="absolute top-full mt-2 left-0 right-0 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-10 overflow-hidden">
+                    {/* 문제만 다운로드 */}
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">문제만 다운로드</p>
+                    </div>
+                    <button
+                      onClick={() => handleDownload('standard')}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                    >
+                      <span className="text-blue-600 font-semibold text-sm w-32 shrink-0">Full Test</span>
+                      <span className="text-xs text-gray-500">전체 영역 (R/L/S/W)</span>
+                    </button>
+                    <button
+                      onClick={() => handleDownload('standard', 'Listening')}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-100"
+                    >
+                      <span className="text-blue-600 font-semibold text-sm w-32 shrink-0">Listening Only</span>
+                      <span className="text-xs text-gray-500">리스닝 영역만</span>
+                    </button>
+
+                    {/* 정답/해설 포함 다운로드 */}
+                    <div className="px-4 py-3 bg-green-50 border-b border-gray-100">
+                      <p className="text-xs font-bold text-green-700 uppercase tracking-wide">정답/해설 포함</p>
+                    </div>
+                    <button
+                      onClick={() => handleDownload('annotated')}
+                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                    >
+                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Full Test</span>
+                      <span className="text-xs text-gray-500">전체 영역 + 정답/해설</span>
+                    </button>
+                    <button
+                      onClick={() => handleDownload('annotated', 'Listening')}
+                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3"
+                    >
+                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Listening Only</span>
+                      <span className="text-xs text-gray-500">리스닝 영역만 + 정답/해설</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       

@@ -7198,6 +7198,7 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setActiveWritingScreen={setActiveWritingScreen}
           listeningScore={sectionScores.listening}
+          testData={getCurrentTestData()}
         />
         </Suspense>
       )}
