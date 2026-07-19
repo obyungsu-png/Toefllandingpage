@@ -5508,6 +5508,12 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     'dictationBlanks', 'organization', 'organizationBlanks',
     'questionText', 'optionA', 'optionB', 'optionC', 'optionD',
     'correctAnswer', 'explanation', 'audioFileName', 'imageFileName',
+    // Write an Email (Writing) — previously only editable one-by-one in the
+    // Add/Edit form; CSV bulk upload silently dropped these, leaving the
+    // email prompt blank on the actual test screen. Now carried via CSV too.
+    'emailScenario', 'emailInstruction',
+    'emailBullet1', 'emailBullet2', 'emailBullet3', 'emailBullet4',
+    'emailTo', 'emailSubject',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -5899,25 +5905,28 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     ].map(csvEscape).join(',') : null;
 
     // Writing: 이메일 작성 예시 (Module 2 — Build a Sentence 다음 순서)
-    // passageText에 "유형: email" 구조화 서식 사용 → CMS에서 JSON 템플릿으로 자동 변환
-    // body 안의 "|" 로 구분된 항목들은 자동으로 bullets 로 분리됨
+    // emailScenario/emailInstruction/emailBullet1-4/emailTo/emailSubject 컬럼을 사용합니다.
+    // (이 컬럼들만이 실제 시험 화면(WritingEmailQ1)에 반영됩니다 — passageText/questionText는
+    //  이 문제 유형에서는 화면에 쓰이지 않으니 비워두세요.)
     const writingExample = section === 'Writing' ? [
       '11',
       'Write an Email',
       '보통',
       'Module 2',
-      '',
-      '유형: email\n필드:\nto: Customer Service\nsubject: Recent order\nbody: You recently purchased a shirt online for the upcoming university gala. When the shirt arrived, you noticed some issues. Write an email to customer service. In your email, do the following: Explain what you liked about your online shopping experience. | Describe the issue with the shirt you received. | Suggest a resolution for the issue.',
-      '',
-      '',
-      '',
-      '',
-      'Write an email to customer service based on the scenario. Write as much as you can and in complete sentences.',
+      '', '', '', '', '', '',
+      '', // questionText — Write an Email에는 사용되지 않음, 비워둠
       '', '', '', '',
-      '',
+      '', // correctAnswer — 자유 응답이므로 비워둠
       '자유 응답 (에세이 채점) — 정답 없음, 평가 기준: 3가지 요구사항 포함 여부',
+      '', '',
+      'You recently purchased a shirt online for the upcoming university gala. When the shirt arrived, you noticed some issues.',
+      'Write an email to customer service. In your email, do the following:',
+      'Explain what you liked about your online shopping experience.',
+      'Describe the issue with the shirt you received.',
+      'Suggest a resolution for the issue.',
       '',
-      '',
+      'Customer Service',
+      'Recent order',
     ].map(csvEscape).join(',') : null;
 
     // Writing: Academic Discussion 예시 (Module 2 — Email 다음 순서)
@@ -6048,6 +6057,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
+        const iEmailScenario = idx('emailScenario'), iEmailInstruction = idx('emailInstruction');
+        const iEmailBullet1 = idx('emailBullet1'), iEmailBullet2 = idx('emailBullet2'),
+              iEmailBullet3 = idx('emailBullet3'), iEmailBullet4 = idx('emailBullet4');
+        const iEmailTo = idx('emailTo'), iEmailSubject = idx('emailSubject');
 
         const supportsModule = section === 'Reading' || section === 'Listening';
         const questions: TPOQuestion[] = [];
@@ -6148,6 +6161,23 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               }
             }
 
+            // Write an Email: emailScenario/emailInstruction/emailBullets/emailTo/emailSubject
+            // are the ONLY fields WritingEmailQ1 reads at runtime — passageText/questionText
+            // are not used as a fallback, so these must come from their own columns.
+            const isWriteEmail = finalType.toLowerCase().includes('write an email') || qType.toLowerCase().includes('write an email');
+            let emailFields: Partial<TPOQuestion> = {};
+            if (isWriteEmail) {
+              const bullets = [get(iEmailBullet1), get(iEmailBullet2), get(iEmailBullet3), get(iEmailBullet4)]
+                .filter(b => b !== '');
+              emailFields = {
+                emailScenario: get(iEmailScenario) || undefined,
+                emailInstruction: get(iEmailInstruction) || undefined,
+                emailBullets: bullets.length > 0 ? bullets : undefined,
+                emailTo: get(iEmailTo) || undefined,
+                emailSubject: get(iEmailSubject) || undefined,
+              };
+            }
+
             questions.push({
               id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
               questionNumber,
@@ -6166,6 +6196,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               ...(blanks ? { blanks } : {}),
               ...(bsWords ? { words: bsWords } : {}),
               ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
+              ...emailFields,
             } as TPOQuestion);
           } catch (rowErr: any) {
             errors.push(`행 ${r + 1}: ${rowErr?.message || '파싱 오류'}`);
