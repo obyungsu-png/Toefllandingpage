@@ -47,6 +47,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
   const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
   const [vocabMenuOpen, setVocabMenuOpen] = useState(false);
   const [vocabLevel, setVocabLevel] = useState<'ALL' | '수능' | '토플' | '토익'>('ALL');
+  const [activePdfTab, setActivePdfTab] = useState<'test' | 'section' | 'vocab'>('test');
   const score = listeningScore || null;
   const percentage = score ? Math.round((score.correct / score.total) * 100) : 0;
 
@@ -233,153 +234,191 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
             </button>
           </div>
 
-          {/* PDF Download Section */}
+          {/* PDF Download Section — 탭 형태 */}
           {testData && (
-            <div className="mt-8">
-              <div className="relative inline-block">
+            <div className="mt-8 w-full">
+              {/* 탭 버튼 그룹 */}
+              <div className="flex gap-1 border-b-2 border-gray-200 mb-4">
                 <button
-                  className="flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg px-6 py-3 hover:bg-gray-50 transition-colors font-['Inter',_sans-serif] font-semibold shadow-sm w-full sm:w-auto"
-                  onClick={() => setPdfMenuOpen(!pdfMenuOpen)}
+                  onClick={() => { setActivePdfTab('test'); setPdfMenuOpen(false); setVocabMenuOpen(false); }}
+                  className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-0.5 ${
+                    activePdfTab === 'test'
+                      ? 'border-[#1e6b73] text-[#1e6b73] bg-[#1e6b73]/5'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  <svg className="w-4 h-4 inline mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
                   </svg>
-                  Download PDF
-                  <svg className={`w-4 h-4 transition-transform ${pdfMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
+                  Full PDF
                 </button>
-
-                {pdfMenuOpen && (
-                  <div className="absolute top-full mt-2 left-0 right-0 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-10 overflow-hidden">
-                    {/* 문제만 다운로드 */}
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">문제만 다운로드</p>
-                    </div>
-                    <button
-                      onClick={() => handleDownload('standard')}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-50"
-                    >
-                      <span className="text-blue-600 font-semibold text-sm w-32 shrink-0">Full Test</span>
-                      <span className="text-xs text-gray-500">전체 영역 (R/L/S/W)</span>
-                    </button>
-                    <button
-                      onClick={() => handleDownload('standard', 'Listening')}
-                      className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-100"
-                    >
-                      <span className="text-blue-600 font-semibold text-sm w-32 shrink-0">Listening Only</span>
-                      <span className="text-xs text-gray-500">리스닝 영역만</span>
-                    </button>
-
-                    {/* 정답/해설 포함 다운로드 */}
-                    <div className="px-4 py-3 bg-green-50 border-b border-gray-100">
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-wide">정답/해설 포함</p>
-                    </div>
-                    <button
-                      onClick={() => handleDownload('annotated')}
-                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3 border-b border-gray-50"
-                    >
-                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Full Test</span>
-                      <span className="text-xs text-gray-500">전체 영역 + 정답/해설</span>
-                    </button>
-                    <button
-                      onClick={() => handleDownload('annotated', 'Listening')}
-                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3"
-                    >
-                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Listening Only</span>
-                      <span className="text-xs text-gray-500">리스닝 영역만 + 정답/해설</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Vocab PDF Download Section */}
-          {testData && (
-            <div className="mt-4">
-              <div className="relative inline-block">
                 <button
-                  className="flex items-center justify-center gap-2 bg-white border-2 border-purple-300 text-purple-700 rounded-lg px-6 py-3 hover:bg-purple-50 transition-colors font-['Inter',_sans-serif] font-semibold shadow-sm w-full sm:w-auto"
-                  onClick={() => { setVocabMenuOpen(!vocabMenuOpen); setPdfMenuOpen(false); }}
+                  onClick={() => { setActivePdfTab('section'); setPdfMenuOpen(false); setVocabMenuOpen(false); }}
+                  className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-0.5 ${
+                    activePdfTab === 'section'
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-4 h-4 inline mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="9" y1="3" x2="9" y2="21"/>
+                    <line x1="15" y1="3" x2="15" y2="21"/>
+                  </svg>
+                  영역별 PDF
+                </button>
+                <button
+                  onClick={() => { setActivePdfTab('vocab'); setPdfMenuOpen(false); setVocabMenuOpen(false); }}
+                  className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-0.5 ${
+                    activePdfTab === 'vocab'
+                      ? 'border-purple-600 text-purple-600 bg-purple-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <svg className="w-4 h-4 inline mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
                   </svg>
-                  Download Vocab PDF
-                  <svg className={`w-4 h-4 transition-transform ${vocabMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
+                  단어 시험지
                 </button>
+              </div>
 
-                {vocabMenuOpen && (
-                  <div className="absolute top-full mt-2 left-0 right-0 sm:w-96 bg-white border border-purple-200 rounded-xl shadow-xl z-10 overflow-hidden">
-                    {/* 수준 선택 */}
-                    <div className="px-4 py-3 bg-purple-50 border-b border-purple-100">
-                      <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-2">단어 수준 선택</p>
-                      <div className="flex gap-1 flex-wrap">
-                        {(['ALL', '수능', '토플', '토익'] as const).map(lv => (
-                          <button
-                            key={lv}
-                            onClick={() => setVocabLevel(lv)}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                              vocabLevel === lv
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-100'
-                            }`}
-                          >
-                            {lv === 'ALL' ? '전체' : lv}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-purple-600 mt-2">
-                        이 TPO의 모든 섹션(Reading/Listening/Speaking/Writing)에서 자주 나오는 단어를 추출해 시험지로 만듭니다.
-                      </p>
-                    </div>
-
-                    {/* 주관식 */}
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">주관식 (영단어 → 뜻 쓰기)</p>
-                    </div>
+              {/* ─── Full PDF 탭 내용 ─── */}
+              {activePdfTab === 'test' && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => handleVocabDownload('question')}
-                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                      onClick={() => handleDownload('standard')}
+                      className="flex flex-col items-center gap-1 bg-white border-2 border-gray-300 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-400 transition-colors"
                     >
-                      <span className="text-purple-700 font-semibold text-sm w-32 shrink-0">Question</span>
-                      <span className="text-xs text-gray-500">빈칸에 한국어 뜻 쓰기</span>
+                      <span className="text-2xl">📝</span>
+                      <span className="text-sm font-semibold text-gray-700">문제만</span>
+                      <span className="text-xs text-gray-500">전체 영역 (R/L/S/W)</span>
                     </button>
                     <button
-                      onClick={() => handleVocabDownload('answer')}
-                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition-colors flex items-center gap-3 border-b border-gray-100"
+                      onClick={() => handleDownload('annotated')}
+                      className="flex flex-col items-center gap-1 bg-white border-2 border-green-300 rounded-lg p-4 hover:bg-green-50 hover:border-green-500 transition-colors"
                     >
-                      <span className="text-purple-700 font-semibold text-sm w-32 shrink-0">Answer</span>
-                      <span className="text-xs text-gray-500">정답 (영단어 + 뜻 + 정의)</span>
-                    </button>
-
-                    {/* 객관식 */}
-                    <div className="px-4 py-3 bg-green-50 border-b border-gray-100">
-                      <p className="text-xs font-bold text-green-700 uppercase tracking-wide">객관식 (4지선다)</p>
-                    </div>
-                    <button
-                      onClick={() => handleVocabDownload('multiple-choice')}
-                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3 border-b border-gray-50"
-                    >
-                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Question</span>
-                      <span className="text-xs text-gray-500">4개 보기 중 정답 선택</span>
-                    </button>
-                    <button
-                      onClick={() => handleVocabDownload('multiple-choice-answer')}
-                      className="w-full text-left px-4 py-3 hover:bg-green-50 transition-colors flex items-center gap-3"
-                    >
-                      <span className="text-green-700 font-semibold text-sm w-32 shrink-0">Answer</span>
-                      <span className="text-xs text-gray-500">객관식 정답지</span>
+                      <span className="text-2xl">✅</span>
+                      <span className="text-sm font-semibold text-gray-700">정답/해설 포함</span>
+                      <span className="text-xs text-gray-500">전체 영역 + 정답</span>
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* ─── 영역별 PDF 탭 내용 ─── */}
+              {activePdfTab === 'section' && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <p className="text-xs text-blue-700 mb-3 font-medium">
+                    각 영역별로 개별 PDF를 다운로드할 수 있습니다. 정답/해설 포함 여부를 선택하세요.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['Reading', 'Listening', 'Speaking', 'Writing'] as const).map(sec => (
+                      <div key={sec} className="bg-white rounded-lg p-3 border border-blue-200">
+                        <p className="text-xs font-bold text-blue-800 mb-2">{sec}</p>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleDownload('standard', sec)}
+                            className="flex-1 text-xs px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-blue-100 transition-colors font-medium"
+                          >
+                            문제만
+                          </button>
+                          <button
+                            onClick={() => handleDownload('annotated', sec)}
+                            className="flex-1 text-xs px-2 py-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
+                          >
+                            정답 포함
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── 단어 시험지 탭 내용 ─── */}
+              {activePdfTab === 'vocab' && (
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  {/* 수준 선택 */}
+                  <div className="mb-3">
+                    <p className="text-xs font-bold text-purple-700 mb-1.5">단어 수준 선택</p>
+                    <div className="flex gap-1 flex-wrap">
+                      {(['ALL', '수능', '토플', '토익'] as const).map(lv => (
+                        <button
+                          key={lv}
+                          onClick={() => setVocabLevel(lv)}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                            vocabLevel === lv
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-100'
+                          }`}
+                        >
+                          {lv === 'ALL' ? '전체' : lv}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-purple-600 mt-1.5">
+                      이 TPO의 모든 섹션에서 자주 나오는 단어를 추출해 시험지로 만듭니다.
+                    </p>
+                  </div>
+
+                  {/* 주관식 */}
+                  <div className="mb-3">
+                    <p className="text-xs font-bold text-gray-600 mb-1.5">주관식 (영단어 → 뜻 쓰기)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => handleVocabDownload('question')}
+                        className="flex items-center gap-2 bg-white border-2 border-purple-300 rounded-lg p-3 hover:bg-purple-50 transition-colors text-left"
+                      >
+                        <span className="text-lg">✍️</span>
+                        <div>
+                          <p className="text-sm font-semibold text-purple-700">문제</p>
+                          <p className="text-[10px] text-gray-500">빈칸에 한국어 뜻 쓰기</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleVocabDownload('answer')}
+                        className="flex items-center gap-2 bg-white border-2 border-purple-300 rounded-lg p-3 hover:bg-purple-50 transition-colors text-left"
+                      >
+                        <span className="text-lg">📋</span>
+                        <div>
+                          <p className="text-sm font-semibold text-purple-700">정답</p>
+                          <p className="text-[10px] text-gray-500">영단어 + 뜻 + 정의</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 객관식 */}
+                  <div>
+                    <p className="text-xs font-bold text-gray-600 mb-1.5">객관식 (4지선다)</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => handleVocabDownload('multiple-choice')}
+                        className="flex items-center gap-2 bg-white border-2 border-green-300 rounded-lg p-3 hover:bg-green-50 transition-colors text-left"
+                      >
+                        <span className="text-lg">🔤</span>
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">문제</p>
+                          <p className="text-[10px] text-gray-500">4개 보기 중 정답 선택</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleVocabDownload('multiple-choice-answer')}
+                        className="flex items-center gap-2 bg-white border-2 border-green-300 rounded-lg p-3 hover:bg-green-50 transition-colors text-left"
+                      >
+                        <span className="text-lg">✅</span>
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">정답</p>
+                          <p className="text-[10px] text-gray-500">객관식 정답지</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
