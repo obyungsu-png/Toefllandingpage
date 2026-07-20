@@ -105,7 +105,7 @@ export function extractVocabFromTest(
   } = {}
 ): ExtractedVocab[] {
   const maxWords = options.maxWords ?? 50;
-  const minFrequency = options.minFrequency ?? 2;
+  const minFrequency = options.minFrequency ?? 1; // 기본값 1 — TPO는 문제 수가 적어 2회 이상 등장 단어가 드묾
   const includeSections = options.includeSections;
   const existingVocab = options.existingVocab ?? [];
 
@@ -119,7 +119,7 @@ export function extractVocabFromTest(
   const frequency = new Map<string, number>();
   const sources = new Map<string, Set<string>>();
 
-  const collectFromText = (text: string | undefined, section: string) => {
+  const collectFromText = (text: string | undefined | null, section: string) => {
     if (!text) return;
     const tokens = tokenize(text);
     for (const tok of tokens) {
@@ -135,28 +135,49 @@ export function extractVocabFromTest(
     for (const q of section.questions) {
       const question = q as TPOQuestion & Record<string, unknown>;
       const secName = section.sectionType;
+      // 핵심 텍스트 필드
       collectFromText(question.passageText as string | undefined, secName);
       collectFromText(question.questionText as string | undefined, secName);
       collectFromText(question.scriptText as string | undefined, secName);
       collectFromText(question.passageTitle as string | undefined, secName);
       collectFromText(question.explanation as string | undefined, secName);
-      // options 배열
+      collectFromText(question.interstitialTitle as string | undefined, secName);
+      collectFromText(question.translationNote as string | undefined, secName);
+      collectFromText(question.analysisNote as string | undefined, secName);
+      collectFromText(question.vocabularyNote as string | undefined, secName);
+      // options 배열 (있으면)
       if (Array.isArray(question.options)) {
         for (const opt of question.options as string[]) collectFromText(opt, secName);
       }
+      // 개별 옵션 필드 (CSV 업로드 시 options 배열 대신 optionA~D로 저장되는 경우)
+      const w = question as any;
+      collectFromText(w.optionA as string | undefined, secName);
+      collectFromText(w.optionB as string | undefined, secName);
+      collectFromText(w.optionC as string | undefined, secName);
+      collectFromText(w.optionD as string | undefined, secName);
       // correctAnswer (문자열 또는 문자열 배열)
       const ans = question.correctAnswer;
       if (typeof ans === 'string') collectFromText(ans, secName);
       else if (Array.isArray(ans)) for (const a of ans) if (typeof a === 'string') collectFromText(a, secName);
-      // context (Writing)
-      collectFromText((question as any).context as string | undefined, secName);
-      // emailScenario, professorMessage 등 Writing 추가 필드
-      const w = question as any;
+      // Writing 전용 필드
+      collectFromText(w.context as string | undefined, secName);
       collectFromText(w.emailScenario as string | undefined, secName);
       collectFromText(w.emailInstruction as string | undefined, secName);
+      collectFromText(w.emailSubject as string | undefined, secName);
+      collectFromText(w.emailTo as string | undefined, secName);
+      if (Array.isArray(w.emailBullets)) for (const b of w.emailBullets) collectFromText(b, secName);
       collectFromText(w.professorMessage as string | undefined, secName);
       collectFromText(w.student1Message as string | undefined, secName);
       collectFromText(w.student2Message as string | undefined, secName);
+      collectFromText(w.professorName as string | undefined, secName);
+      collectFromText(w.student1Name as string | undefined, secName);
+      collectFromText(w.student2Name as string | undefined, secName);
+      // Build a Sentence 정답에서 단어 추출
+      collectFromText(w.correctAnswer as string | undefined, secName);
+      // blanks (Complete Words 정답)
+      if (Array.isArray(w.blanks)) for (const b of w.blanks) collectFromText(b?.answer, secName);
+      // words (Build a Sentence 단어 목록)
+      if (Array.isArray(w.words)) for (const wd of w.words) collectFromText(wd, secName);
     }
   }
 

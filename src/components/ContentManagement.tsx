@@ -1221,8 +1221,27 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       })()}
 
       {/* Vocab Extractor Panel */}
-      {showVocabExtractor && getExistingTest() && (() => {
-        const t = getExistingTest()!;
+      {showVocabExtractor && (() => {
+        const t = getExistingTest();
+        if (!t) {
+          return (
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6 mb-6 shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  Vocab Extractor
+                </h3>
+                <button onClick={() => setShowVocabExtractor(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-amber-800">
+                먼저 {activeTestType} {selectedTestNumber}번 TPO/Test를 선택하거나 생성해주세요.
+                Vocab Extractor는 선택된 TPO의 모든 섹션(Reading/Listening/Speaking/Writing)에서 단어를 추출합니다.
+              </p>
+            </div>
+          );
+        }
         return (
           <VocabExtractorPanel
             test={t}
@@ -6975,7 +6994,7 @@ function VocabExtractorPanel({ test, onClose }: {
   onClose: () => void;
 }) {
   const [maxWords, setMaxWords] = useState(60);
-  const [minFrequency, setMinFrequency] = useState(2);
+  const [minFrequency, setMinFrequency] = useState(1); // 기본값 1 — 모든 단어 추출
   const [level, setLevel] = useState<'ALL' | '수능' | '토플' | '토익'>('ALL');
   const [vocab, setVocab] = useState<ExtractedVocab[]>([]);
   const [extracted, setExtracted] = useState(false);
@@ -6984,6 +7003,9 @@ function VocabExtractorPanel({ test, onClose }: {
     const result = extractVocabFromTest(test, { maxWords, minFrequency });
     setVocab(result);
     setExtracted(true);
+    if (result.length === 0) {
+      alert('추출된 단어가 없습니다.\n\n가능한 원인:\n1. 이 TPO에 아직 문제가 업로드되지 않음\n2. 최소 빈도가 너무 높음 — "1회 이상"으로 변경해보세요\n3. 최대 단어 수가 너무 적음');
+    }
   };
 
   const handleDownloadCSV = () => {
@@ -7042,8 +7064,8 @@ function VocabExtractorPanel({ test, onClose }: {
           <label className="block text-xs font-semibold text-gray-600 mb-1">최소 빈도</label>
           <select value={minFrequency} onChange={e => setMinFrequency(Number(e.target.value))}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-            <option value={1}>1회 이상 (모든 단어)</option>
-            <option value={2}>2회 이상 (추천)</option>
+            <option value={1}>1회 이상 (모든 단어) — 추천</option>
+            <option value={2}>2회 이상</option>
             <option value={3}>3회 이상</option>
             <option value={5}>5회 이상</option>
           </select>

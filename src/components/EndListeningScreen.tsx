@@ -59,7 +59,10 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
   const handleVocabDownload = (mode: 'question' | 'answer' | 'multiple-choice' | 'multiple-choice-answer') => {
     if (!testData) { alert('Test data was not found.'); return; }
     const vocab = extractVocabFromTest(testData, { maxWords: 60, minFrequency: 1 });
-    if (vocab.length === 0) { alert('추출된 단어가 없습니다.'); return; }
+    if (vocab.length === 0) {
+      alert('추출된 단어가 없습니다.\n\n이 TPO에 업로드된 문제 데이터가 없거나, 문제 텍스트가 비어 있을 수 있습니다.\nCMS에서 해당 TPO에 문제를 먼저 업로드해주세요.');
+      return;
+    }
     generateVocabPdf(vocab, mode, {
       testData: { testType: testData.testType, testNumber: testData.testNumber },
       level: vocabLevel,
