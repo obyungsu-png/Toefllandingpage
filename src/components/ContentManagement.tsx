@@ -5533,6 +5533,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     'emailScenario', 'emailInstruction',
     'emailBullet1', 'emailBullet2', 'emailBullet3', 'emailBullet4',
     'emailTo', 'emailSubject',
+    // Build a Sentence / Writing: 회색 상황 박스 (질문 위 추가 컨텍스트)
+    'context',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -6076,6 +6078,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
+        const iContext = idx('context'); // Build a Sentence / Writing 상황 박스 (회색 박스)
         const iEmailScenario = idx('emailScenario'), iEmailInstruction = idx('emailInstruction');
         const iEmailBullet1 = idx('emailBullet1'), iEmailBullet2 = idx('emailBullet2'),
               iEmailBullet3 = idx('emailBullet3'), iEmailBullet4 = idx('emailBullet4');
@@ -6168,7 +6171,23 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             const isBuildSentence = finalType.toLowerCase().includes('build a sentence') || qType.toLowerCase().includes('build a sentence');
             let bsWords: string[] | undefined;
             let bsSentenceEnding: '.' | '?' | undefined;
+            // Build a Sentence 런타임 컴포넌트(WritingBuildSentenceBase.tsx)는 아바타 말풍선의
+            // 질문을 questionText에서 읽습니다. CSV 작성 시 questionText에는 헤딩(예: "Build a Sentence Q1")을
+            // 넣고 실제 질문을 passageText에 넣는 경우가 많으므로, Build a Sentence 유형인 경우
+            // passageText를 questionText로 승격합니다. (context는 별도 컬럼에서 읽음)
+            let bsQuestionText = get(iQText);
+            let bsPassageText = finalPassageText;
+            let bsContext = get(iContext) || undefined;
             if (isBuildSentence) {
+              // passageText에 실제 질문이 들어 있는 경우: questionText로 승격
+              if (finalPassageText && finalPassageText.trim().length > 0) {
+                // passageText가 "유형:" 등 Daily Life 서식이 아닌 경우에만 승격
+                if (!/^유형:|^format:|^형식:/im.test(finalPassageText)) {
+                  bsQuestionText = finalPassageText;
+                  bsPassageText = undefined; // passageText는 비움
+                }
+              }
+              // correctAnswer에서 words/sentenceEnding 파생
               const answerSentence = get(iAns).trim();
               if (answerSentence) {
                 // 끝부호 추출 (마침표/물음표)
@@ -6200,18 +6219,20 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             questions.push({
               id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
               questionNumber,
-              questionText: get(iQText),
+              questionText: isBuildSentence ? bsQuestionText : get(iQText),
               questionType: finalType,
               options,
               correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
               explanation: get(iExp) || undefined,
               passageTitle: finalPassageTitle,
-              passageText: finalPassageText,
+              passageText: isBuildSentence ? bsPassageText : finalPassageText,
               scriptText: get(iScript) || undefined,
               dictationBlanks: get(iDictBlanks) || undefined,
               organization: get(iOrg) || undefined,
               organizationBlanks: get(iOrgBlanks) || undefined,
               difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+              // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
+              context: isBuildSentence ? bsContext : (get(iContext) || undefined),
               ...(blanks ? { blanks } : {}),
               ...(bsWords ? { words: bsWords } : {}),
               ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
