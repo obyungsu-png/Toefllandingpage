@@ -6216,28 +6216,54 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               };
             }
 
-            questions.push({
-              id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
-              questionNumber,
-              questionText: isBuildSentence ? bsQuestionText : get(iQText),
-              questionType: finalType,
-              options,
-              correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
-              explanation: get(iExp) || undefined,
-              passageTitle: finalPassageTitle,
-              passageText: isBuildSentence ? bsPassageText : finalPassageText,
-              scriptText: get(iScript) || undefined,
-              dictationBlanks: get(iDictBlanks) || undefined,
-              organization: get(iOrg) || undefined,
-              organizationBlanks: get(iOrgBlanks) || undefined,
-              difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
-              // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
-              context: isBuildSentence ? bsContext : (get(iContext) || undefined),
-              ...(blanks ? { blanks } : {}),
-              ...(bsWords ? { words: bsWords } : {}),
-              ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
-              ...emailFields,
-            } as TPOQuestion);
+            // Take an Interview: "8-11" 통합행을 Q8, Q9, Q10, Q11 개별 행으로 자동 분리
+            const isTakeInterview = finalType.toLowerCase().includes('take an interview') || qType.toLowerCase().includes('take an interview');
+            const rawQNum = String(rawNum || '').trim();
+            const isCombinedInterview = isTakeInterview && /^8\s*[-~–_]\s*11$/.test(rawQNum);
+
+            if (isCombinedInterview) {
+              // 통합행을 4개 개별 행으로 분리
+              for (let n = 8; n <= 11; n++) {
+                questions.push({
+                  id: `q-${Date.now()}-${n}-${r}-${Math.random().toString(36).slice(2, 7)}`,
+                  questionNumber: n,
+                  questionText: `Answer the researcher's question. (Question ${n} — audio only)`,
+                  questionType: finalType,
+                  options,
+                  correctAnswer: get(iAns) || undefined,
+                  explanation: get(iExp) || undefined,
+                  passageTitle: finalPassageTitle,
+                  passageText: finalPassageText,
+                  scriptText: get(iScript) || undefined,
+                  difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+                  context: get(iContext) || undefined,
+                  ...emailFields,
+                } as TPOQuestion);
+              }
+            } else {
+              questions.push({
+                id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
+                questionNumber,
+                questionText: isBuildSentence ? bsQuestionText : get(iQText),
+                questionType: finalType,
+                options,
+                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
+                explanation: get(iExp) || undefined,
+                passageTitle: finalPassageTitle,
+                passageText: isBuildSentence ? bsPassageText : finalPassageText,
+                scriptText: get(iScript) || undefined,
+                dictationBlanks: get(iDictBlanks) || undefined,
+                organization: get(iOrg) || undefined,
+                organizationBlanks: get(iOrgBlanks) || undefined,
+                difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+                // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
+                context: isBuildSentence ? bsContext : (get(iContext) || undefined),
+                ...(blanks ? { blanks } : {}),
+                ...(bsWords ? { words: bsWords } : {}),
+                ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
+                ...emailFields,
+              } as TPOQuestion);
+            }
           } catch (rowErr: any) {
             errors.push(`행 ${r + 1}: ${rowErr?.message || '파싱 오류'}`);
           }
