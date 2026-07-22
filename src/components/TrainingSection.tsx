@@ -8,6 +8,7 @@ import { Advertisement } from './AdManagement';
 import { TrainingInterface } from './TrainingInterface';
 import { LMSContent } from './LMSSection';
 import { TPOTest, TPOQuestion } from './ContentManagement';
+import { isCompleteWordsType, getCompleteWordsBlankCount } from '../utils/readingQuestionUtils';
 
 // ============================================================================
 // Question Types Data by Subject
@@ -31,13 +32,64 @@ const questionTypesBySubject = {
     { id: 'academic-discussion', name: 'Academic Discussion', icon: BookOpen, description: '학술 토론 작문 과제' }
   ],
   'Speaking': [
-    { id: 'independent-task', name: 'Independent Task', icon: BookOpen, description: '독립형 말하기 과제' },
-    { id: 'integrated-read', name: 'Integrated (Read)', icon: BarChart3, description: '읽기 통합형 과제' },
-    { id: 'integrated-listen', name: 'Integrated (Listen)', icon: BookOpen, description: '듣기 통합형 과제' }
+    { id: 'listen-repeat', name: 'Listen and Repeat', icon: BookOpen, description: '듣고 따라 말하기' },
+    { id: 'take-interview', name: 'Take an Interview', icon: BarChart3, description: '인터뷰 응답 과제' }
   ],
   'Vocabulary': [
     { id: 'word-practice', name: 'Word Practice', icon: BookOpen, description: '단어 암기 및 복습' }
   ]
+};
+
+// ============================================================================
+// 유형/난이도 매칭 헬퍼
+// ============================================================================
+
+/** 난이도 정규화 — '쉬움'/'어려움'이 명시되지 않은 문제는 모두 '보통'으로 간주 */
+const normalizeTrainingDifficulty = (difficulty?: string): '쉬움' | '보통' | '어려움' => {
+  const d = (difficulty || '').trim();
+  if (d === '쉬움' || d === '어려움') return d;
+  return '보통';
+};
+
+const isDailyLifeTrainingType = (t: string) =>
+  t.includes('daily life') || t.includes('read in daily life') ||
+  t.includes('notice') || t.includes('email') || t.includes('social media') ||
+  t.includes('advertisement') || t.includes('article') || t.includes('form') ||
+  t.includes('review') || t.includes('text_message') || t.includes('text-message') ||
+  t.includes('실용문');
+
+const isAcademicTrainingType = (t: string) =>
+  t.includes('academic reading') || t.includes('academic') ||
+  t.includes('reading passage') || t.includes('insert text');
+
+/** CMS 문제의 questionType이 훈련에서 선택한 유형과 일치하는지 판별 */
+const matchesTrainingQuestionType = (question: TPOQuestion, typeName: string): boolean => {
+  const qt = (question.questionType || '').toLowerCase();
+  const target = (typeName || '').toLowerCase();
+
+  // Complete Words — Fill in the Blanks / Cloze 등 모든 변형 자동 인식
+  if (target.includes('complete words')) return isCompleteWordsType(question.questionType);
+  // Read in Daily Life — Notice / Email / Social Media / Article 등 실용문 전체
+  if (target.includes('daily life')) return !isCompleteWordsType(question.questionType) && isDailyLifeTrainingType(qt);
+  // Read an Academic Passage
+  if (target.includes('academic passage')) {
+    return !isCompleteWordsType(question.questionType) && !isDailyLifeTrainingType(qt) && isAcademicTrainingType(qt);
+  }
+  // Listening 유형 세분 매칭
+  if (target.includes('listen and response')) return qt.includes('listen and response') || qt.includes('listen and respond');
+  if (target.includes('short conversation')) return qt.includes('short conversation') || qt.includes('campus conversation') || qt.includes('conversation');
+  if (target.includes('announcements')) return qt.includes('announcement');
+  if (target.includes('academic talk')) return qt.includes('academic talk') || qt.includes('academic lecture') || qt.includes('lecture');
+  // Writing
+  if (target.includes('build a sentence')) return qt.includes('build a sentence') || qt.includes('sentence');
+  if (target.includes('write an email')) return qt.includes('email');
+  if (target.includes('academic discussion')) return qt.includes('discussion');
+  // Speaking
+  if (target.includes('listen and repeat')) return qt.includes('listen and repeat') || qt.includes('repeat') || qt.includes('independent');
+  if (target.includes('take an interview')) return qt.includes('interview') || qt.includes('integrated');
+
+  // 기본: 느슨한 포함 매칭
+  return qt.includes(target) || target.includes(qt);
 };
 
 // ============================================================================
@@ -230,20 +282,10 @@ export function TrainingSection({
     return uploadedTrainingFiles.filter(file => file.subcategory === typeId).length;
   };
 
-  // CMS stores questionType as "Complete Words (Module 1)" / "Read in Daily Life
-  // (Module 2)" etc., but the training picker uses the base label. Strip the
-  // module suffix so both modules count for the same training bucket.
-  const normalizeType = (t: string | undefined) =>
-    (t || '').replace(/\s*\(Module\s*\d+\)\s*$/i, '').trim();
-
-  // Legacy questions may have no difficulty at all — treat them as '보통' so
-  // they still appear under the default Normal bucket instead of vanishing.
-  const normalizeDifficulty = (d: string | undefined): '쉬움' | '보통' | '어려움' => {
-    if (d === '쉬움' || d === '보통' || d === '어려움') return d;
-    return '보통';
-  };
-
   // Get questions by difficulty from TPO tests (filtered by year/month)
+  // - 유형 매칭: Complete Words 등 변형 유형 자동 인식 (matchesTrainingQuestionType)
+  // - 난이도: 미기입 문제는 '보통'으로 간주 (normalizeTrainingDifficulty)
+  // - module 정보 제거: 훈련은 단일 모듈로 진행 (엔진이 module 2로 오분류하지 않도록)
   const getQuestionsByDifficulty = (
     subject: string,
     questionTypeName: string,
@@ -251,18 +293,21 @@ export function TrainingSection({
   ): TPOQuestion[] => {
     const allQuestions: TPOQuestion[] = [];
     const filteredTests = getFilteredTests();
-    const targetType = normalizeType(questionTypeName);
 
-    // Iterate through filtered TPO tests
     filteredTests.forEach(test => {
-      // Find section matching the subject
       const section = test.sections.find(s => s.sectionType === subject);
       if (section) {
-        // Filter questions by type and difficulty
-        const filteredQuestions = section.questions.filter(q =>
-          normalizeType(q.questionType) === targetType &&
-          normalizeDifficulty(q.difficulty) === difficulty
-        );
+        const filteredQuestions = section.questions
+          .filter(q =>
+            matchesTrainingQuestionType(q, questionTypeName) &&
+            normalizeTrainingDifficulty(q.difficulty as string | undefined) === difficulty
+          )
+          .map(q => ({
+            ...q,
+            difficulty: normalizeTrainingDifficulty(q.difficulty as string | undefined),
+            module: undefined,
+            moduleName: undefined,
+          } as TPOQuestion));
         allQuestions.push(...filteredQuestions);
       }
     });
@@ -281,6 +326,19 @@ export function TrainingSection({
     for (let index = pool.length - 1; index > 0; index -= 1) {
       const randomIndex = Math.floor(Math.random() * (index + 1));
       [pool[index], pool[randomIndex]] = [pool[randomIndex], pool[index]];
+    }
+
+    // Complete Words는 1개 그룹이 여러 빈칸(보통 10문제)을 포함하므로
+    // 요청 문제 수에 도달할 때까지 그룹을 누적
+    if (questionTypeName.toLowerCase().includes('complete words')) {
+      const selected: TPOQuestion[] = [];
+      let blankTotal = 0;
+      for (const q of pool) {
+        if (blankTotal >= requestedCount) break;
+        selected.push(q);
+        blankTotal += Math.max(1, getCompleteWordsBlankCount(q));
+      }
+      return selected;
     }
 
     return pool.slice(0, Math.min(requestedCount, pool.length));

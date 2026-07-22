@@ -1,12 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, X, Headphones, RotateCcw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, Bot, CheckCircle2, ClipboardCheck, Play, RotateCcw, Sparkles, Wrench, X } from 'lucide-react';
 import type { TPOQuestion } from './ContentManagement';
-import { RadioOption } from './RadioOption';
+import { ReadingTestEngine } from './ReadingTestEngine';
+import { ListeningTestEngine } from './ListeningTestEngine';
+import { ReviewAssistantPanel, type ReviewSection, type ReviewVariant, type ReviewDifficulty } from './ReviewAssistantPanel';
+import { ToeflAiWidget } from './ToeflAiWidget';
+import { isCompleteWordsType, getCompleteWordsBlankCount } from '../utils/readingQuestionUtils';
+// Writing — 실전 TPO와 동일한 화면 컴포넌트 재사용
+import { WritingBuildSentenceIntro } from './WritingBuildSentenceIntro';
+import { WritingBuildSentenceQ1 } from './WritingBuildSentenceQ1';
+import { WritingEmailIntro } from './WritingEmailIntro';
+import { WritingEmailQ1 } from './WritingEmailQ1';
+import { WritingAcademicDiscussionIntro } from './WritingAcademicDiscussionIntro';
+import { WritingAcademicDiscussionQ2 } from './WritingAcademicDiscussionQ2';
+import { WritingEnd } from './WritingEnd';
+import { buildEmailWritingQuestion, buildAcademicDiscussionProps } from './WritingSectionWrapper';
+// Speaking — 실전 TPO와 동일한 화면 컴포넌트 재사용
+import { SpeakingListenRepeatIntro } from './SpeakingListenRepeatIntro';
+import { SpeakingQ1 } from './SpeakingQ1';
+import { SpeakingQ1Record } from './SpeakingQ1Record';
+import { SpeakingTakeInterviewIntro } from './SpeakingTakeInterviewIntro';
+import { SpeakingInterviewIntro } from './SpeakingInterviewIntro';
+import { SpeakingQ8Prep } from './SpeakingQ8Prep';
+import { SpeakingQ8Record } from './SpeakingQ8Record';
+import { useVolumeControl, VolumeControl } from './VolumeControl';
 
 type TrainingSubject = 'Reading' | 'Listening' | 'Writing' | 'Speaking' | 'Vocabulary';
 type TrainingDifficulty = '쉬움' | '보통' | '어려움';
-type TrainingMode = 'multiple-choice' | 'fill-blanks' | 'build-sentence' | 'open-response';
-type Phase = 'start' | 'question' | 'review';
+type TrainingStep = 'intro' | 'test' | 'result';
+type TrainingRunMode = 'start' | 'review';
 
 export interface TrainingProgress {
   subject: TrainingSubject;
@@ -32,35 +54,24 @@ interface TrainingInterfaceProps {
   resumeAnswers?: Record<number, string>;
 }
 
-function getTrainingMode(question: TPOQuestion): TrainingMode {
-  if (question.options && question.options.length > 0) return 'multiple-choice';
-  if (question.blanks && question.blanks.length > 0) return 'fill-blanks';
-  if (question.words && question.words.length > 0) return 'build-sentence';
-  return 'open-response';
-}
+const SUBJECT_THEME: Record<TrainingSubject, { bg: string; card: string; accent: string; soft: string; border: string }> = {
+  Reading: { bg: 'from-[#eef9f8] via-[#e6f6f4] to-[#d8efec]', card: '#1d6f73', accent: '#164e52', soft: '#eef8f7', border: '#b9dedd' },
+  Listening: { bg: 'from-[#eef4ff] via-[#e4eeff] to-[#d7e6ff]', card: '#2563eb', accent: '#1d4ed8', soft: '#eef4ff', border: '#c7d8ff' },
+  Writing: { bg: 'from-[#fff7ed] via-[#fff1df] to-[#ffe4bf]', card: '#d97706', accent: '#b45309', soft: '#fff6e7', border: '#f5d7aa' },
+  Speaking: { bg: 'from-[#f8f3ff] via-[#f2ecff] to-[#e4d8ff]', card: '#7c3aed', accent: '#6d28d9', soft: '#f4efff', border: '#d9c9ff' },
+  Vocabulary: { bg: 'from-[#f6fbef] via-[#eef9e5] to-[#e3f4d1]', card: '#4d7c0f', accent: '#3f6212', soft: '#f4fbe8', border: '#d5ebb3' },
+};
+
+// ─── 공통 헬퍼 ───────────────────────────────────────────────────────────────
 
 function normalizeAnswer(value: string) {
   return value.trim().toLowerCase().replace(/[.,!?]/g, '').replace(/\s+/g, ' ');
 }
 
-function getDisplayAnswer(question: TPOQuestion) {
-  if (Array.isArray(question.correctAnswer)) return question.correctAnswer.join(', ');
-  if (typeof question.correctAnswer === 'string') return question.correctAnswer;
-  if (question.blanks && question.blanks.length > 0) return question.blanks.map((b) => b.answer).join(', ');
-  return '';
-}
-
-function getCorrectOptionIndex(question: TPOQuestion) {
-  if (!question.options || question.options.length === 0) return -1;
-  if (typeof question.correctAnswer === 'string') {
-    const numericIndex = Number(question.correctAnswer);
-    if (!Number.isNaN(numericIndex) && question.options[numericIndex] !== undefined) return numericIndex;
-    return question.options.findIndex((o) => normalizeAnswer(o) === normalizeAnswer(question.correctAnswer || ''));
-  }
-  if (Array.isArray(question.correctAnswer) && question.correctAnswer.length > 0) {
-    return question.options.findIndex((o) => normalizeAnswer(o) === normalizeAnswer(question.correctAnswer?.[0] || ''));
-  }
-  return -1;
+function normalizeDifficulty(difficulty?: string): TrainingDifficulty {
+  const d = (difficulty || '').trim();
+  if (d === '쉬움' || d === '어려움') return d;
+  return '보통';
 }
 
 function getDifficultyLabel(difficulty: TrainingDifficulty) {
@@ -69,62 +80,528 @@ function getDifficultyLabel(difficulty: TrainingDifficulty) {
   return 'Normal';
 }
 
-// Compact TPO-style header shared by intro/question/review phases.
-function TpoHeader({
-  onHome,
-  onBack,
-  onNext,
-  nextLabel = 'Next',
-  backLabel = 'Back',
-  showBack = false,
-  showNext = false,
-  nextDisabled = false,
-}: {
+/** MC 문제의 정답 옵션 인덱스 (correctAnswer가 인덱스 또는 옵션 텍스트) */
+function getCorrectOptionIndex(question: TPOQuestion) {
+  if (!question.options || question.options.length === 0) return -1;
+  if (typeof question.correctAnswer === 'string') {
+    const numericIndex = Number(question.correctAnswer);
+    if (!Number.isNaN(numericIndex) && question.options[numericIndex] !== undefined) {
+      return numericIndex;
+    }
+    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer || ''));
+  }
+  if (Array.isArray(question.correctAnswer) && question.correctAnswer.length > 0) {
+    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer?.[0] || ''));
+  }
+  return -1;
+}
+
+const isDailyLifeType = (t: string) =>
+  t.includes('daily life') || t.includes('read in daily life') ||
+  t.includes('notice') || t.includes('email') || t.includes('social media') ||
+  t.includes('advertisement') || t.includes('article') || t.includes('form') ||
+  t.includes('review') || t.includes('text_message') || t.includes('text-message') ||
+  t.includes('실용문');
+
+const sortByNumber = (a: any, b: any) => {
+  const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
+  const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
+  return na - nb;
+};
+
+function getWritingQuestionKind(q: TPOQuestion): 'bs' | 'email' | 'ad' {
+  const t = (q.questionType || '').toLowerCase();
+  if (t.includes('discussion')) return 'ad';
+  if (t.includes('email')) return 'email';
+  return 'bs';
+}
+
+function getSpeakingQuestionKind(q: TPOQuestion): 'repeat' | 'interview' {
+  const t = (q.questionType || '').toLowerCase();
+  if (t.includes('interview') || t.includes('integrated')) return 'interview';
+  return 'repeat';
+}
+
+// ─── 결과 채점 (실전 엔진이 window 전역에 기록한 답안 수집) ────────────────────
+
+interface TrainingScoreResult {
+  correctCount: number;
+  totalCount: number;
+  answers: Record<number, string>;
+  correctIndexes: number[];
+  wrongIndexes: number[];
+}
+
+function collectTrainingScore(questions: TPOQuestion[]): TrainingScoreResult {
+  const moduleAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
+  const completeWordsAnswers = (typeof window !== 'undefined' && (window as any).__completeWordsAnswers) || {};
+
+  let correctCount = 0;
+  let totalCount = 0;
+  const answers: Record<number, string> = {};
+  const correctIndexes: number[] = [];
+  const wrongIndexes: number[] = [];
+
+  questions.forEach((q, index) => {
+    if (isCompleteWordsType(q.questionType)) {
+      // Complete Words — 빈칸 단위 채점
+      const key = String(q.id || q.questionNumber || `cw-${index}`);
+      const userBlanks = completeWordsAnswers[key] || {};
+      const blanks = q.blanks && q.blanks.length > 0
+        ? q.blanks
+        : Array.from({ length: getCompleteWordsBlankCount(q) }, (_, i) => ({ id: i, answer: '' }));
+      let groupCorrect = 0;
+      let groupTotal = 0;
+      blanks.forEach((blank: any, blankIdx: number) => {
+        const expected = blank?.answer || '';
+        if (!expected) return;
+        groupTotal += 1;
+        const userValue = userBlanks[blank?.id ?? blankIdx] ?? userBlanks[blankIdx] ?? '';
+        if (normalizeAnswer(String(userValue)) === normalizeAnswer(String(expected))) {
+          groupCorrect += 1;
+        }
+      });
+      if (groupTotal > 0) {
+        totalCount += groupTotal;
+        correctCount += groupCorrect;
+        answers[index] = Object.values(userBlanks).join('|');
+        if (groupCorrect === groupTotal) correctIndexes.push(index);
+        else wrongIndexes.push(index);
+      }
+      return;
+    }
+
+    if (q.options && q.options.length > 0) {
+      const userAns = moduleAnswers[q.questionNumber as any];
+      const correctIdx = getCorrectOptionIndex(q);
+      if (correctIdx >= 0) {
+        totalCount += 1;
+        const isCorrect = userAns !== undefined && normalizeAnswer(String(userAns)) === normalizeAnswer(String(q.options[correctIdx]));
+        if (userAns !== undefined) answers[index] = String(userAns);
+        if (isCorrect) {
+          correctCount += 1;
+          correctIndexes.push(index);
+        } else {
+          wrongIndexes.push(index);
+        }
+      }
+    }
+  });
+
+  return { correctCount, totalCount, answers, correctIndexes, wrongIndexes };
+}
+
+function countAnsweredQuestions(questions: TPOQuestion[]): Record<number, string> {
+  const moduleAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
+  const completeWordsAnswers = (typeof window !== 'undefined' && (window as any).__completeWordsAnswers) || {};
+  const answers: Record<number, string> = {};
+  questions.forEach((q, index) => {
+    if (isCompleteWordsType(q.questionType)) {
+      const key = String(q.id || q.questionNumber || `cw-${index}`);
+      const userBlanks = completeWordsAnswers[key];
+      if (userBlanks && Object.values(userBlanks).some((v: any) => String(v || '').trim())) {
+        answers[index] = Object.values(userBlanks).join('|');
+      }
+    } else if (q.options && q.options.length > 0) {
+      const userAns = moduleAnswers[q.questionNumber as any];
+      if (userAns !== undefined) answers[index] = String(userAns);
+    }
+  });
+  return answers;
+}
+
+// ─── Writing 훈련 플로우 — 실전 WritingSectionWrapper 화면을 그대로 재사용 ──────
+
+interface TrainingWritingFlowProps {
+  questions: TPOQuestion[];
+  isReviewMode: boolean;
+  onComplete: () => void;
   onHome: () => void;
-  onBack?: () => void;
-  onNext?: () => void;
-  nextLabel?: string;
-  backLabel?: string;
-  showBack?: boolean;
-  showNext?: boolean;
-  nextDisabled?: boolean;
-}) {
+  onCurrentChange: (question: TPOQuestion | null, kind: 'bs' | 'email' | 'ad' | null) => void;
+}
+
+function TrainingWritingFlow({ questions, isReviewMode, onComplete, onHome, onCurrentChange }: TrainingWritingFlowProps) {
+  const sorted = useMemo(() => [...questions].sort(sortByNumber), [questions]);
+
+  type WSegment =
+    | { kind: 'intro'; wtype: 'bs' | 'email' | 'ad' }
+    | { kind: 'question'; question: TPOQuestion; wtype: 'bs' | 'email' | 'ad' }
+    | { kind: 'end' };
+
+  const segments = useMemo<WSegment[]>(() => {
+    const segs: WSegment[] = [];
+    const seen = new Set<string>();
+    sorted.forEach((q) => {
+      const wtype = getWritingQuestionKind(q);
+      if (!seen.has(wtype)) {
+        seen.add(wtype);
+        segs.push({ kind: 'intro', wtype });
+      }
+      segs.push({ kind: 'question', question: q, wtype });
+    });
+    segs.push({ kind: 'end' });
+    return segs;
+  }, [sorted]);
+
+  const [index, setIndex] = useState(0);
+  const current = segments[index];
+
+  useEffect(() => {
+    if (current.kind === 'question') onCurrentChange(current.question, current.wtype);
+    else onCurrentChange(null, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  const goNext = () => {
+    if (index + 1 < segments.length) setIndex(index + 1);
+    else onComplete();
+  };
+  const goBack = () => {
+    if (index > 0) setIndex(index - 1);
+    else onHome();
+  };
+
+  if (current.kind === 'intro') {
+    if (current.wtype === 'bs') return <WritingBuildSentenceIntro onBack={goBack} onNext={goNext} onHome={onHome} />;
+    if (current.wtype === 'email') return <WritingEmailIntro onNext={goNext} onHome={onHome} />;
+    return <WritingAcademicDiscussionIntro onBegin={goNext} onHome={onHome} />;
+  }
+
+  if (current.kind === 'question') {
+    const q = current.question;
+    if (current.wtype === 'bs') {
+      return (
+        <WritingBuildSentenceQ1
+          key={q.id || String(q.questionNumber)}
+          onBack={goBack}
+          onNext={goNext}
+          onHome={onHome}
+          avatar1ImageUrl={(q as any).avatar1ImageUrl}
+          avatar2ImageUrl={(q as any).avatar2ImageUrl}
+          questionText={q.questionText}
+          words={q.words}
+          sentenceEnding={(q as any).sentenceEnding}
+          context={(q as any).context}
+        />
+      );
+    }
+    if (current.wtype === 'email') {
+      return (
+        <WritingEmailQ1
+          key={q.id || String(q.questionNumber)}
+          onBack={goBack}
+          onNext={goNext}
+          onHome={onHome}
+          writingQuestion={buildEmailWritingQuestion(q)}
+          isReviewMode={isReviewMode}
+        />
+      );
+    }
+    const adProps = buildAcademicDiscussionProps(q);
+    return (
+      <WritingAcademicDiscussionQ2
+        key={q.id || String(q.questionNumber)}
+        onBack={goBack}
+        onNext={goNext}
+        onHome={onHome}
+        professorImageUrl={(q as any).avatar1ImageUrl}
+        professorName={adProps.professorName}
+        professorMessage={adProps.professorMessage}
+        student1ImageUrl={(q as any).avatar2ImageUrl}
+        student1Name={adProps.student1Name}
+        student1Message={adProps.student1Message}
+        student2ImageUrl={(q as any).avatar2ImageUrl}
+        student2Name={adProps.student2Name}
+        student2Message={adProps.student2Message}
+        promptTitle={adProps.promptTitle}
+        promptInstructions={adProps.promptInstructions}
+        isReviewMode={isReviewMode}
+      />
+    );
+  }
+
+  return <WritingEnd onNext={onComplete} onHome={onHome} />;
+}
+
+// ─── Speaking 훈련 플로우 — 실전 SpeakingSectionWrapper 화면을 그대로 재사용 ────
+
+interface TrainingSpeakingFlowProps {
+  questions: TPOQuestion[];
+  isReviewMode: boolean;
+  onComplete: () => void;
+  onHome: () => void;
+  onCurrentChange: (question: TPOQuestion | null, kind: 'repeat' | 'interview' | null) => void;
+}
+
+function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onCurrentChange }: TrainingSpeakingFlowProps) {
+  const sorted = useMemo(() => [...questions].sort(sortByNumber), [questions]);
+  const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
+  const volumeProps = { onVolumeClick: toggleVolume, isVolumeOpen, volumeButtonRef };
+
+  type SSegment =
+    | { kind: 'repeat-intro' }
+    | { kind: 'repeat-listen'; question: TPOQuestion }
+    | { kind: 'repeat-record'; question: TPOQuestion }
+    | { kind: 'interview-intro' }
+    | { kind: 'interview-scenario'; question: TPOQuestion }
+    | { kind: 'interview-prep'; question: TPOQuestion }
+    | { kind: 'interview-record'; question: TPOQuestion };
+
+  const segments = useMemo<SSegment[]>(() => {
+    const segs: SSegment[] = [];
+    const firstKind = sorted.length > 0 ? getSpeakingQuestionKind(sorted[0]) : null;
+    let repeatIntroDone = false;
+    let interviewIntroDone = false;
+    sorted.forEach((q) => {
+      const skind = getSpeakingQuestionKind(q);
+      if (skind === 'repeat') {
+        if (!repeatIntroDone) {
+          repeatIntroDone = true;
+          segs.push({ kind: 'repeat-intro' });
+        }
+        segs.push({ kind: 'repeat-listen', question: q });
+        segs.push({ kind: 'repeat-record', question: q });
+      } else {
+        if (!interviewIntroDone) {
+          interviewIntroDone = true;
+          segs.push({ kind: 'interview-intro' });
+          segs.push({ kind: 'interview-scenario', question: q });
+        }
+        segs.push({ kind: 'interview-prep', question: q });
+        segs.push({ kind: 'interview-record', question: q });
+      }
+    });
+    void firstKind;
+    return segs;
+  }, [sorted]);
+
+  const [index, setIndex] = useState(0);
+  const current = segments[index];
+
+  useEffect(() => {
+    if (current.kind === 'repeat-listen' || current.kind === 'repeat-record') {
+      onCurrentChange(current.question, 'repeat');
+    } else if (current.kind === 'interview-prep' || current.kind === 'interview-record' || current.kind === 'interview-scenario') {
+      onCurrentChange(current.question, 'interview');
+    } else {
+      onCurrentChange(null, null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  const goNext = () => {
+    if (index + 1 < segments.length) setIndex(index + 1);
+    else onComplete();
+  };
+  const goBack = () => {
+    if (index > 0) setIndex(index - 1);
+    else onHome();
+  };
+
+  const renderSegment = () => {
+    switch (current.kind) {
+      case 'repeat-intro':
+        return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />;
+      case 'repeat-listen': {
+        const q = current.question as any;
+        return (
+          <SpeakingQ1
+            key={`listen-${q.id || q.questionNumber}`}
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            imageUrl={q.introImageUrl || q.imageUrl}
+            introAudioUrl={q.introAudioUrl}
+            questionText={q.questionText}
+          />
+        );
+      }
+      case 'repeat-record': {
+        const q = current.question as any;
+        return (
+          <SpeakingQ1Record
+            key={`record-${q.id || q.questionNumber}`}
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            imageUrl={q.imageUrl}
+            audioUrl={q.audioUrl}
+            questionText={q.questionText}
+            responseDelay={q.responseDelay}
+            stopDuration={q.stopDuration}
+            duration={q.duration}
+          />
+        );
+      }
+      case 'interview-intro':
+        return <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />;
+      case 'interview-scenario': {
+        const q = current.question as any;
+        return (
+          <SpeakingInterviewIntro
+            key={`scenario-${q.id || q.questionNumber}`}
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            imageUrl={q.introImageUrl || q.imageUrl}
+            introAudioUrl={q.introAudioUrl}
+            questionText={q.questionText}
+          />
+        );
+      }
+      case 'interview-prep': {
+        const q = current.question as any;
+        return (
+          <SpeakingQ8Prep
+            key={`prep-${q.id || q.questionNumber}`}
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            {...volumeProps}
+            imageUrl={q.imageUrl}
+            audioUrl={q.audioUrl}
+            videoUrl={q.videoUrl}
+            questionText={q.questionText}
+            audioPlayDuration={q.audioPlayDuration}
+          />
+        );
+      }
+      case 'interview-record': {
+        const q = current.question as any;
+        return (
+          <SpeakingQ8Record
+            key={`record-${q.id || q.questionNumber}`}
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            {...volumeProps}
+            imageUrl={q.imageUrl}
+            questionText={q.questionText}
+            responseDelay={q.responseDelay}
+            stopDuration={q.stopDuration}
+            duration={q.duration}
+          />
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="bg-[#1e6b73] h-12 sm:h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg">
-      <div
-        className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={onHome}
-      >
-        *toefl ibt
-      </div>
-      <div className="flex items-center gap-2 sm:gap-3">
-        {showBack && (
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1 sm:gap-2 bg-[#0A6068] border border-white rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-white" />
-            <span className="text-white font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">{backLabel}</span>
+    <>
+      {renderSegment()}
+      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+    </>
+  );
+}
+
+// ─── Vocabulary 훈련 플로우 (TPO 실전 엔진 없음 — 심플 카드 UI 유지) ────────────
+
+interface TrainingVocabularyFlowProps {
+  questions: TPOQuestion[];
+  theme: { card: string; accent: string; soft: string; border: string };
+  onComplete: (correctCount: number) => void;
+  onExit: () => void;
+}
+
+function TrainingVocabularyFlow({ questions, theme, onComplete, onExit }: TrainingVocabularyFlowProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+
+  const currentQuestion = questions[currentIndex];
+  const options = currentQuestion?.options || [];
+  const correctOptionIndex = currentQuestion ? getCorrectOptionIndex(currentQuestion) : -1;
+  const isLast = currentIndex === questions.length - 1;
+
+  useEffect(() => {
+    setSelectedOptionIndex(null);
+    setChecked(false);
+  }, [currentIndex]);
+
+  if (!currentQuestion) return null;
+
+  const handleCheck = () => {
+    if (selectedOptionIndex === null || checked) return;
+    if (selectedOptionIndex === correctOptionIndex) setCorrectCount((prev) => prev + 1);
+    setChecked(true);
+  };
+
+  const handleNext = () => {
+    if (isLast) {
+      onComplete(correctCount);
+      return;
+    }
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-gradient-to-br from-[#f6fbef] via-[#eef9e5] to-[#e3f4d1] px-4">
+      <div className="w-full max-w-3xl rounded-[32px] border bg-white/95 p-6 shadow-2xl sm:p-8" style={{ borderColor: theme.border }}>
+        <div className="flex items-center justify-between">
+          <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: theme.card }}>
+            Question {currentIndex + 1} / {questions.length}
+          </span>
+          <button type="button" onClick={onExit} className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-500">
+            닫기
           </button>
-        )}
-        {showNext && (
-          <button
-            onClick={onNext}
-            disabled={nextDisabled}
-            className={`flex items-center gap-1 sm:gap-2 rounded-lg px-3 sm:px-5 py-1.5 sm:py-2 border-2 transition-colors ${
-              nextDisabled
-                ? 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'
-                : 'bg-white border-[#0A6068] text-[#0A6068] hover:bg-gray-100'
-            }`}
-          >
-            <span className="font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">{nextLabel}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
+        </div>
+        <h2 className="mt-5 text-2xl font-bold text-slate-900">{currentQuestion.questionText || '문제를 확인하세요.'}</h2>
+        <div className="mt-6 space-y-3">
+          {options.map((option, index) => {
+            const isCorrect = checked && index === correctOptionIndex;
+            const isWrong = checked && selectedOptionIndex === index && index !== correctOptionIndex;
+            return (
+              <button
+                key={`${currentQuestion.id}-opt-${index}`}
+                type="button"
+                onClick={() => !checked && setSelectedOptionIndex(index)}
+                className={`w-full rounded-[20px] border px-5 py-4 text-left text-sm font-medium transition-all ${
+                  isCorrect
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : isWrong
+                      ? 'border-red-400 bg-red-50 text-red-700'
+                      : selectedOptionIndex === index
+                        ? 'border-slate-400 bg-slate-50 text-slate-800'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {option.replace(/^[A-D]\.\s*/, '')}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-6 flex justify-end">
+          {!checked ? (
+            <button
+              type="button"
+              disabled={selectedOptionIndex === null}
+              onClick={handleCheck}
+              className="rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:bg-slate-300"
+              style={{ backgroundColor: selectedOptionIndex !== null ? theme.card : '#cbd5e1' }}
+            >
+              정답 확인
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
+              style={{ backgroundColor: theme.card }}
+            >
+              {isLast ? '훈련 종료' : '다음 문제'}
+              {!isLast && <ArrowRight className="h-4 w-4" />}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+// ─── 메인 TrainingInterface ─────────────────────────────────────────────────
 
 export function TrainingInterface({
   subject,
@@ -133,55 +610,173 @@ export function TrainingInterface({
   questions,
   onClose,
   onComplete,
-  resumeIndex = 0,
-  resumeCorrectCount = 0,
-  resumeAnswers = {},
 }: TrainingInterfaceProps) {
-  // If the user is resuming mid-session, skip the intro and drop them straight
-  // into the question they left off on.
-  const [phase, setPhase] = useState<Phase>(resumeIndex > 0 ? 'question' : 'start');
-  const [currentIndex, setCurrentIndex] = useState(resumeIndex);
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
-  const [blankInputs, setBlankInputs] = useState<string[]>([]);
-  const [sentenceAnswer, setSentenceAnswer] = useState('');
-  const [writtenAnswer, setWrittenAnswer] = useState('');
-  const [checked, setChecked] = useState(false);
-  const [correctCount, setCorrectCount] = useState(resumeCorrectCount);
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>(resumeAnswers);
-  const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const theme = SUBJECT_THEME[subject];
+  const [step, setStep] = useState<TrainingStep>('intro');
+  const [mode, setMode] = useState<TrainingRunMode>('start');
+  const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
+  const [reviewQuestion, setReviewQuestion] = useState<TPOQuestion | null>(null);
+  const [reviewKind, setReviewKind] = useState<string | null>(null);
+  const [result, setResult] = useState<TrainingScoreResult | null>(null);
+  const startTimeRef = useRef(Date.now());
 
-  const currentQuestion = questions[currentIndex];
-  const mode = useMemo(() => (currentQuestion ? getTrainingMode(currentQuestion) : 'open-response'), [currentQuestion]);
-  const correctOptionIndex = getCorrectOptionIndex(currentQuestion);
-  const totalQuestions = questions.length;
-  const progressPct = totalQuestions > 0 ? ((currentIndex + 1) / totalQuestions) * 100 : 0;
-  const isLast = currentIndex === totalQuestions - 1;
-  const answeredCount = checked ? currentIndex + 1 : currentIndex;
-  const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const isReview = mode === 'review';
 
+  // 실전 엔진들이 기록하는 답안 전역 상태 초기화
   useEffect(() => {
-    setSelectedOptionIndex(null);
-    setBlankInputs(currentQuestion?.blanks ? Array(currentQuestion.blanks.length).fill('') : []);
-    setSentenceAnswer('');
-    setWrittenAnswer('');
-    setChecked(false);
-  }, [currentIndex, currentQuestion]);
+    if (typeof window !== 'undefined') {
+      (window as any).__moduleAnswers = {};
+      (window as any).__completeWordsAnswers = {};
+      (window as any).__fillBlanksAnswers = {};
+    }
+    startTimeRef.current = Date.now();
+  }, []);
 
-  // Empty state — no questions available for this bucket.
+  // Reading 엔진 세그먼트 키 → 현재 문제 매핑 (엔진의 분류/정렬과 동일한 로직)
+  const readingSegmentGroups = useMemo(() => {
+    const cw = questions.filter((q) => isCompleteWordsType(q.questionType)).sort(sortByNumber);
+    const daily = questions.filter((q) => {
+      const t = (q.questionType || '').toLowerCase();
+      return !isCompleteWordsType(q.questionType) && isDailyLifeType(t);
+    }).sort(sortByNumber);
+    const academic = questions.filter((q) => {
+      const t = (q.questionType || '').toLowerCase();
+      return !isCompleteWordsType(q.questionType) && !isDailyLifeType(t);
+    }).sort(sortByNumber);
+    return { cw, daily, academic };
+  }, [questions]);
+
+  const listeningSorted = useMemo(() => [...questions].sort(sortByNumber), [questions]);
+
+  const handleReadingSegmentChange = (legacyKey: string) => {
+    const { cw, daily, academic } = readingSegmentGroups;
+    let q: TPOQuestion | null = null;
+    if (legacyKey.startsWith('fillBlanks')) {
+      const idx = legacyKey === 'fillBlanks' ? 0 : parseInt(legacyKey.replace('fillBlanks', ''), 10) - 1;
+      q = cw[idx] || null;
+    } else if (legacyKey.startsWith('daily')) {
+      const idx = parseInt(legacyKey.replace('daily', ''), 10) - 1;
+      q = daily[idx] || null;
+    } else if (legacyKey.startsWith('academic')) {
+      const idx = parseInt(legacyKey.replace('academic', ''), 10) - 1;
+      q = academic[idx] || null;
+    }
+    setReviewQuestion(q);
+    setReviewKind(q ? (isCompleteWordsType(q.questionType) ? 'cw' : isDailyLifeType((q.questionType || '').toLowerCase()) ? 'daily' : 'academic') : null);
+  };
+
+  const handleListeningSegmentChange = (legacyKey: string) => {
+    const match = legacyKey.match(/^q(\d+)$/);
+    if (match) {
+      const idx = parseInt(match[1], 10) - 1;
+      setReviewQuestion(listeningSorted[idx] || null);
+      setReviewKind('listening');
+    } else {
+      setReviewQuestion(null);
+      setReviewKind(null);
+    }
+  };
+
+  const handleWritingCurrentChange = (q: TPOQuestion | null, kind: 'bs' | 'email' | 'ad' | null) => {
+    setReviewQuestion(q);
+    setReviewKind(kind);
+  };
+
+  const handleSpeakingCurrentChange = (q: TPOQuestion | null, kind: 'repeat' | 'interview' | null) => {
+    setReviewQuestion(q);
+    setReviewKind(kind);
+  };
+
+  // 훈련 종료 — 채점 후 결과 화면
+  const handleTestComplete = () => {
+    const score = collectTrainingScore(questions);
+    setResult(score);
+    setStep('result');
+  };
+
+  const handleVocabularyComplete = (correctCount: number) => {
+    setResult({
+      correctCount,
+      totalCount: questions.length,
+      answers: {},
+      correctIndexes: [],
+      wrongIndexes: [],
+    });
+    setStep('result');
+  };
+
+  // 중간 종료 — 진행률 저장 (기존 TrainingSection 계약 유지)
+  const handleExit = () => {
+    const answers = countAnsweredQuestions(questions);
+    const progress: TrainingProgress = {
+      subject,
+      questionType,
+      difficulty,
+      questions,
+      currentIndex: 0,
+      correctCount: 0,
+      answers,
+      startTime: startTimeRef.current,
+      sessionTitle: `${subject} ${questionType} 훈련`,
+    };
+    onClose(progress);
+  };
+
+  const handleResultClose = () => {
+    const finalResult = result || { correctCount: 0, totalCount: questions.length };
+    onComplete?.({ correctCount: finalResult.correctCount, totalQuestions: finalResult.totalCount });
+    onClose();
+  };
+
+  const handleRestart = () => {
+    if (typeof window !== 'undefined') {
+      (window as any).__moduleAnswers = {};
+      (window as any).__completeWordsAnswers = {};
+      (window as any).__fillBlanksAnswers = {};
+    }
+    setResult(null);
+    setReviewQuestion(null);
+    setReviewKind(null);
+    startTimeRef.current = Date.now();
+    setStep('intro');
+  };
+
+  // ── 리뷰 패널 설정 ──
+  const reviewPanelConfig = (() => {
+    if (!isReview || step !== 'test' || subject === 'Vocabulary') return null;
+    let variant: ReviewVariant = 'reading';
+    if (subject === 'Reading') variant = 'reading';
+    else if (subject === 'Listening') variant = 'listening';
+    else if (subject === 'Writing') variant = reviewKind === 'bs' ? 'writing-basic' : 'writing-guided';
+    else if (subject === 'Speaking') variant = reviewKind === 'interview' ? 'speaking-interview' : 'speaking-repeat';
+
+    return {
+      section: subject as ReviewSection,
+      variant,
+      contentKey: `training-${subject}-${reviewQuestion?.id || reviewQuestion?.questionNumber || 'intro'}`,
+      questionType,
+      currentDifficulty: normalizeDifficulty(reviewQuestion?.difficulty as string | undefined) as ReviewDifficulty,
+      translationNote: reviewQuestion?.translationNote,
+      analysisNote: (reviewQuestion as any)?.analysisNote,
+      vocabularyNote: reviewQuestion?.vocabularyNote,
+      audioUrl: reviewQuestion?.audioUrl || (reviewQuestion as any)?.passageAudioUrl || undefined,
+      scriptText: reviewQuestion?.scriptText || reviewQuestion?.passageText || undefined,
+    };
+  })();
+
+  // ── 빈 문제 ──
   if (!questions.length) {
     return (
-      <div className="fixed inset-0 z-[95] bg-white flex flex-col">
-        <TpoHeader onHome={() => onClose()} />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center max-w-md">
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">연동된 훈련 문제가 없습니다</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              현재 선택한 과목, 유형, 난이도 조합에 맞는 문제가 아직 등록되지 않았습니다.
-            </p>
+      <div className={`fixed inset-0 z-[95] overflow-y-auto bg-gradient-to-br ${theme.bg}`}>
+        <div className="flex min-h-screen items-center justify-center px-4 py-8">
+          <div className="w-full max-w-2xl rounded-[32px] border border-white/70 bg-white/90 p-8 text-center shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
+            <h2 className="text-2xl font-bold text-slate-900">연동된 훈련 문제가 없습니다</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-500">현재 선택한 과목, 유형, 난이도 조합에 맞는 문제가 아직 등록되지 않았습니다.</p>
             <button
               type="button"
               onClick={() => onClose()}
-              className="inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white bg-[#1e6b73] hover:bg-[#155056]"
+              className="mt-6 inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white"
+              style={{ backgroundColor: theme.card }}
             >
               돌아가기
             </button>
@@ -191,127 +786,93 @@ export function TrainingInterface({
     );
   }
 
-  const objectiveResult = (() => {
-    if (mode === 'multiple-choice') return selectedOptionIndex === correctOptionIndex;
-    if (mode === 'fill-blanks')
-      return blankInputs.every((input, index) => normalizeAnswer(input) === normalizeAnswer(currentQuestion.blanks?.[index]?.answer || ''));
-    if (mode === 'build-sentence') return normalizeAnswer(sentenceAnswer) === normalizeAnswer(getDisplayAnswer(currentQuestion));
-    return false;
-  })();
-
-  const canCheck = (() => {
-    if (mode === 'multiple-choice') return selectedOptionIndex !== null;
-    if (mode === 'fill-blanks') return blankInputs.every((i) => i.trim().length > 0);
-    if (mode === 'build-sentence') return sentenceAnswer.trim().length > 0;
-    return writtenAnswer.trim().length > 0;
-  })();
-
-  const handleCheck = () => {
-    if (!canCheck || checked) return;
-    let currentAnswer = '';
-    if (mode === 'multiple-choice') currentAnswer = String(selectedOptionIndex);
-    else if (mode === 'fill-blanks') currentAnswer = blankInputs.join('|');
-    else if (mode === 'build-sentence') currentAnswer = sentenceAnswer;
-    else currentAnswer = writtenAnswer;
-
-    setUserAnswers((prev) => ({ ...prev, [currentIndex]: currentAnswer }));
-    if (mode !== 'open-response' && objectiveResult) {
-      setCorrectCount((prev) => prev + 1);
-    }
-    setChecked(true);
-  };
-
-  const handleNext = () => {
-    if (isLast) {
-      // Trigger completion save then land on the review screen (not the exit).
-      onComplete?.({ correctCount, totalQuestions });
-      setPhase('review');
-      return;
-    }
-    setCurrentIndex((prev) => prev + 1);
-  };
-
-  const handleExit = () => {
-    const progress: TrainingProgress = {
-      subject,
-      questionType,
-      difficulty,
-      questions,
-      currentIndex,
-      correctCount,
-      answers: { ...userAnswers },
-      startTime: Date.now(),
-      sessionTitle: `${subject} ${questionType} 훈련`,
-    };
-    onClose(progress);
-  };
-
-  // ── Start / Intro phase ─────────────────────────────────────────────────
-  if (phase === 'start') {
+  // ── STEP 1: 인트로 — Start / Review 선택 (실전 TPO 카드와 동일한 개념) ──
+  if (step === 'intro') {
     return (
       <div className="fixed inset-0 z-[95] bg-gray-50 flex flex-col">
-        <TpoHeader
-          onHome={() => onClose()}
-          showNext
-          nextLabel="Begin"
-          onNext={() => setPhase('question')}
-        />
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-4 sm:px-8 py-2 sm:py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block text-sm sm:text-base">
+        {/* 실전 TPO와 동일한 틸 헤더 */}
+        <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-4 sm:px-8 shadow-lg shrink-0">
+          <div className="flex items-center">
+            <div
+              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleExit}
+            >
+              *toefl ibt
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleExit}
+            className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-4 py-2 hover:bg-[#084d52] transition-colors"
+          >
+            <X className="w-4 h-4 text-white" />
+            <span className="text-white font-['Inter',_sans-serif] font-semibold text-sm">Exit</span>
+          </button>
+        </div>
+
+        {/* Navigation tab */}
+        <div className="bg-white border-b border-gray-300 shrink-0">
+          <div className="px-4 sm:px-8 py-3">
+            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2 inline-block">
               {subject} Training
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-white flex items-start sm:items-center justify-center pb-20 sm:pb-0">
-          <div className="max-w-3xl w-full px-4 sm:px-8 py-6 sm:py-12">
-            <h1 className="text-2xl sm:text-4xl font-['Inter',_sans-serif] font-bold text-gray-900 mb-3">
-              {questionType}
-            </h1>
-            <div className="w-24 h-1 bg-gray-300 mb-6" />
-
-            <div className="space-y-4 text-gray-700 font-['Inter',_sans-serif] leading-relaxed text-sm sm:text-base">
-              <p>
-                실전 TPO와 동일한 흐름으로 <strong>{questionType}</strong> 유형 문제를 풀어보세요.
-                각 문항을 풀고 정답을 확인한 뒤 다음으로 넘어가며, 마지막 문항 이후에는 결과와
-                오답 리뷰를 확인할 수 있습니다.
-              </p>
-
-              <div className="my-4 sm:my-6">
-                <table className="w-full border border-black text-sm sm:text-base">
-                  <thead>
-                    <tr className="bg-[#2d7a7c] text-white">
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">항목</th>
-                      <th className="border border-black px-3 sm:px-6 py-2 sm:py-3 text-left font-['Inter',_sans-serif]">내용</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Subject</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">{subject}</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Question Type</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">{questionType}</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Difficulty</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">
-                        {getDifficultyLabel(difficulty)} · {difficulty}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">Total Questions</td>
-                      <td className="border border-black px-3 sm:px-6 py-2 sm:py-3 font-['Inter',_sans-serif]">{totalQuestions}문항</td>
-                    </tr>
-                  </tbody>
-                </table>
+        {/* Main content */}
+        <div className="flex-1 overflow-auto flex items-center justify-center p-4 md:p-10">
+          <div className="w-full max-w-3xl">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em]" style={{ borderColor: theme.border, color: theme.accent, backgroundColor: '#ffffffcc' }}>
+                <Sparkles className="h-3.5 w-3.5" />
+                {subject} Training
               </div>
-
-              <p className="text-sm text-gray-500">
-                우측 상단의 <strong>Begin</strong> 버튼을 눌러 훈련을 시작하세요.
+              <h1 className="mt-4 text-3xl md:text-4xl font-['Inter',_sans-serif] font-bold text-gray-900">{questionType}</h1>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: theme.border, color: theme.accent }}>{subject}</span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">{getDifficultyLabel(difficulty)} · {difficulty}</span>
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">{questions.length}문제</span>
+              </div>
+              <p className="mt-4 text-sm md:text-base text-gray-500">
+                실전 TPO/Test와 동일한 화면과 흐름으로 훈련합니다. 모드를 선택하세요.
               </p>
+            </div>
+
+            {/* Start / Review 선택 카드 — 실전 TPO의 Start/Review와 동일 개념 */}
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => { setMode('start'); setStep('test'); }}
+                className="group rounded-[20px] border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-[#1e6b73] hover:shadow-xl"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1e6b73] text-white shadow-md transition-transform group-hover:scale-105">
+                  <Play className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-xl font-bold text-gray-900">Start</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  실전 시험과 완전히 동일한 환경에서 원본 그대로 문제를 풉니다.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#1e6b73]">
+                  시험 시작 <ArrowRight className="h-4 w-4" />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setMode('review'); setStep('test'); }}
+                className="group rounded-[20px] border-2 border-gray-200 bg-white p-6 text-left transition-all hover:border-[#7c3aed] hover:shadow-xl"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#667eea] to-[#8fd6ee] text-white shadow-md transition-transform group-hover:scale-105">
+                  <Wrench className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-xl font-bold text-gray-900">Review</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  동일한 시험 화면에서 Tools(하이라이트/밑줄/사전)와 AI 튜터를 함께 사용합니다.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#667eea]">
+                  <Bot className="h-4 w-4" /> 복습 모드로 시작 <ArrowRight className="h-4 w-4" />
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -319,208 +880,100 @@ export function TrainingInterface({
     );
   }
 
-  // ── Review phase ────────────────────────────────────────────────────────
-  if (phase === 'review') {
-    // Deep review of a single question inside the review screen.
-    if (reviewIndex !== null) {
-      const q = questions[reviewIndex];
-      const savedAnswer = userAnswers[reviewIndex] || '';
-      const qMode = getTrainingMode(q);
-      const qCorrectIndex = getCorrectOptionIndex(q);
-      const wasCorrect = (() => {
-        if (qMode === 'multiple-choice') return Number(savedAnswer) === qCorrectIndex;
-        if (qMode === 'fill-blanks') {
-          const parts = savedAnswer.split('|');
-          return q.blanks?.every((b, i) => normalizeAnswer(parts[i] || '') === normalizeAnswer(b.answer)) ?? false;
-        }
-        if (qMode === 'build-sentence') return normalizeAnswer(savedAnswer) === normalizeAnswer(getDisplayAnswer(q));
-        return null; // open-response — no auto grade
-      })();
+  // ── STEP 3: 결과 ──
+  if (step === 'result') {
+    const finalResult = result || { correctCount: 0, totalCount: 0, answers: {}, correctIndexes: [], wrongIndexes: [] };
+    const hasScoredQuestions = finalResult.totalCount > 0;
+    const accuracy = hasScoredQuestions ? Math.round((finalResult.correctCount / finalResult.totalCount) * 100) : 0;
+    const elapsedSec = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const elapsedMin = Math.floor(elapsedSec / 60);
+    const elapsedRest = elapsedSec % 60;
 
-      return (
-        <div className="fixed inset-0 z-[95] bg-white flex flex-col">
-          <TpoHeader
-            onHome={() => onClose()}
-            showBack
-            backLabel="Back to Review"
-            onBack={() => setReviewIndex(null)}
-          />
-          <div className="bg-white border-b border-gray-300">
-            <div className="px-4 sm:px-8 py-2 sm:py-3">
-              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
-                {subject} · Review · Q{reviewIndex + 1}
+    return (
+      <div className={`fixed inset-0 z-[95] overflow-y-auto bg-gradient-to-br ${theme.bg}`}>
+        <div className="flex min-h-screen items-center justify-center px-4 py-8">
+          <div className="w-full max-w-2xl rounded-[32px] border border-white/70 bg-white/95 p-8 shadow-[0_28px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl">
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: theme.soft }}>
+                <ClipboardCheck className="h-8 w-8" style={{ color: theme.card }} />
+              </div>
+              <h2 className="mt-5 text-3xl font-bold text-slate-900">훈련 완료</h2>
+              <p className="mt-2 text-sm text-slate-500">{subject} · {questionType} · {mode === 'review' ? 'Review 모드' : 'Start 모드'}</p>
+            </div>
+
+            <div className="mt-7 grid grid-cols-3 gap-3">
+              <div className="rounded-[20px] border bg-white px-4 py-4 text-center" style={{ borderColor: theme.border }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">문제 수</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">{questions.length}</p>
+              </div>
+              <div className="rounded-[20px] border bg-white px-4 py-4 text-center" style={{ borderColor: theme.border }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">정답</p>
+                <p className="mt-1 text-2xl font-bold" style={{ color: theme.card }}>
+                  {hasScoredQuestions ? `${finalResult.correctCount}/${finalResult.totalCount}` : '-'}
+                </p>
+              </div>
+              <div className="rounded-[20px] border bg-white px-4 py-4 text-center" style={{ borderColor: theme.border }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">소요 시간</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">{elapsedMin}:{String(elapsedRest).padStart(2, '0')}</p>
               </div>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-auto bg-white">
-            <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
-              <div className="mb-4 flex items-center gap-2 text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                <span>Question {reviewIndex + 1} of {totalQuestions}</span>
-                {wasCorrect === true && <span className="text-green-600">· 정답</span>}
-                {wasCorrect === false && <span className="text-red-600">· 오답</span>}
-              </div>
-
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-6 font-['Inter',_sans-serif]">
-                {q.questionText || '문제를 확인하세요.'}
-              </h2>
-
-              {q.passageText && (
-                <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4 whitespace-pre-wrap text-sm text-gray-700 leading-6">
-                  {q.passageText}
+            {hasScoredQuestions && (
+              <div className="mt-5">
+                <div className="flex items-center justify-between text-sm font-semibold text-slate-700">
+                  <span>정답률</span>
+                  <span>{accuracy}%</span>
                 </div>
-              )}
-
-              {q.audioUrl && (
-                <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Headphones className="h-4 w-4" /> Audio
-                  </div>
-                  <audio controls className="w-full" src={q.audioUrl} />
+                <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${accuracy}%`, background: `linear-gradient(90deg, ${theme.card} 0%, ${theme.accent} 100%)` }}
+                  />
                 </div>
-              )}
-
-              {qMode === 'multiple-choice' && (
-                <div className="space-y-3">
-                  {q.options?.map((option, index) => {
-                    const isCorrect = index === qCorrectIndex;
-                    const isPicked = Number(savedAnswer) === index;
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {questions.map((q, index) => {
+                    const isCorrect = finalResult.correctIndexes.includes(index);
+                    const isWrong = finalResult.wrongIndexes.includes(index);
+                    if (!isCorrect && !isWrong) return null;
                     return (
-                      <div
-                        key={`review-${q.id}-${index}`}
-                        className={`w-full rounded-lg border px-4 py-3 text-sm font-medium ${
-                          isCorrect
-                            ? 'border-green-500 bg-green-50 text-green-700'
-                            : isPicked
-                              ? 'border-red-400 bg-red-50 text-red-700'
-                              : 'border-gray-200 bg-white text-gray-700'
+                      <span
+                        key={q.id || index}
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${
+                          isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
                         }`}
                       >
-                        {option.replace(/^[A-D]\.\s*/, '')}
-                        {isCorrect && <span className="ml-2 text-xs font-bold">✓ 정답</span>}
-                        {isPicked && !isCorrect && <span className="ml-2 text-xs font-bold">내 선택</span>}
-                      </div>
+                        {index + 1}
+                      </span>
                     );
                   })}
                 </div>
-              )}
-
-              {qMode !== 'multiple-choice' && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">내 답변</p>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 whitespace-pre-wrap">
-                      {savedAnswer.replace(/\|/g, ', ') || '(답변 없음)'}
-                    </div>
-                  </div>
-                  {getDisplayAnswer(q) && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">정답</p>
-                      <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800 whitespace-pre-wrap">
-                        {getDisplayAnswer(q)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {q.explanation && (
-                <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">해설</p>
-                  {q.explanation}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Review index list — summary of all answered questions.
-    return (
-      <div className="fixed inset-0 z-[95] bg-white flex flex-col">
-        <TpoHeader
-          onHome={() => onClose()}
-          showNext
-          nextLabel="Exit"
-          onNext={() => onClose()}
-        />
-        <div className="bg-white border-b border-gray-300">
-          <div className="px-4 sm:px-8 py-2 sm:py-3">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
-              {subject} Training Complete
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-auto bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
-            <div className="text-center mb-8">
-              <div className="mb-4 flex justify-center">
-                <CheckCircle2 className="w-14 h-14 text-[#1e6b73]" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 font-['Inter',_sans-serif]">
-                Training Complete
-              </h1>
-              <p className="text-gray-600">
-                총 <strong>{totalQuestions}</strong>문항 중 <strong>{correctCount}</strong>문항 정답 ·
-                정답률 <strong>{totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0}%</strong>
+            )}
+
+            {!hasScoredQuestions && (
+              <p className="mt-6 rounded-[20px] border px-4 py-4 text-center text-sm leading-6 text-slate-500" style={{ borderColor: theme.border, backgroundColor: theme.soft }}>
+                서술형/말하기 훈련은 자동 채점되지 않습니다. 작성한 답변을 다시 검토핵보세요.
               </p>
-            </div>
+            )}
 
-            <div className="rounded-lg border border-gray-200 divide-y divide-gray-200 overflow-hidden">
-              {questions.map((q, index) => {
-                const saved = userAnswers[index];
-                const qMode = getTrainingMode(q);
-                const qCorrectIndex = getCorrectOptionIndex(q);
-                let status: 'correct' | 'wrong' | 'skipped' | 'open' = 'skipped';
-                if (saved !== undefined) {
-                  if (qMode === 'open-response') {
-                    status = 'open';
-                  } else if (qMode === 'multiple-choice') {
-                    status = Number(saved) === qCorrectIndex ? 'correct' : 'wrong';
-                  } else if (qMode === 'fill-blanks') {
-                    const parts = saved.split('|');
-                    const ok = q.blanks?.every((b, i) => normalizeAnswer(parts[i] || '') === normalizeAnswer(b.answer)) ?? false;
-                    status = ok ? 'correct' : 'wrong';
-                  } else if (qMode === 'build-sentence') {
-                    status = normalizeAnswer(saved) === normalizeAnswer(getDisplayAnswer(q)) ? 'correct' : 'wrong';
-                  }
-                }
-
-                const statusBadge =
-                  status === 'correct' ? { text: '정답', cls: 'bg-green-100 text-green-700 border-green-300' }
-                  : status === 'wrong' ? { text: '오답', cls: 'bg-red-100 text-red-700 border-red-300' }
-                  : status === 'open' ? { text: '작성', cls: 'bg-blue-100 text-blue-700 border-blue-300' }
-                  : { text: '미풀이', cls: 'bg-gray-100 text-gray-600 border-gray-300' };
-
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => setReviewIndex(index)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="w-10 flex-shrink-0 text-sm font-bold text-gray-500">Q{index + 1}</span>
-                    <span className={`flex-shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusBadge.cls}`}>
-                      {statusBadge.text}
-                    </span>
-                    <span className="flex-1 min-w-0 text-sm text-gray-700 truncate">
-                      {q.questionText || q.questionType || '문제'}
-                    </span>
-                    <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 type="button"
-                onClick={() => onClose()}
-                className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white bg-[#1e6b73] hover:bg-[#155056]"
+                onClick={handleRestart}
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-sm font-semibold transition-colors"
+                style={{ borderColor: theme.card, color: theme.card }}
               >
-                <RotateCcw className="w-4 h-4" /> 훈련 종료
+                <RotateCcw className="h-4 w-4" />
+                다시 풀기
+              </button>
+              <button
+                type="button"
+                onClick={handleResultClose}
+                className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white"
+                style={{ backgroundColor: theme.card }}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                훈련 종료
               </button>
             </div>
           </div>
@@ -529,251 +982,97 @@ export function TrainingInterface({
     );
   }
 
-  // ── Question phase (TPO-style test screen) ──────────────────────────────
+  // ── STEP 2: 시험 — 실전 TPO/Test와 동일한 엔진/화면 사용 ──
   return (
-    <div className="fixed inset-0 z-[95] bg-white flex flex-col">
-      <TpoHeader
-        onHome={handleExit}
-        showBack={!checked && currentIndex > 0}
-        backLabel="Back"
-        onBack={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-        showNext={checked}
-        nextLabel={isLast ? 'Review' : 'Next'}
-        onNext={handleNext}
-      />
+    <>
+      {subject === 'Reading' && (
+        <ReadingTestEngine
+          sectionData={{ questions }}
+          module={1}
+          currentTest={{ tpoNumber: 0, section: 'Reading' }}
+          testBankType="training"
+          handleTabChange={() => {}}
+          isReviewMode={isReview}
+          onSegmentChange={handleReadingSegmentChange}
+          onModuleEnd={handleTestComplete}
+          onExitBack={handleExit}
+          onHome={handleExit}
+        />
+      )}
 
-      {/* Section indicator + progress */}
-      <div className="bg-white border-b border-gray-300">
-        <div className="px-4 sm:px-8 py-2 sm:py-3 flex items-center justify-between gap-4">
-          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-sm sm:text-base">
-            {subject}
-            <span className="ml-2 text-xs sm:text-sm font-medium text-gray-500">
-              · {questionType} · {getDifficultyLabel(difficulty)}
-            </span>
-          </div>
-          <div className="text-xs sm:text-sm font-semibold text-gray-600 flex items-center gap-3">
-            <span>문항 {currentIndex + 1} / {totalQuestions}</span>
-            <span className="hidden sm:inline text-gray-400">|</span>
-            <span className="hidden sm:inline">정답률 {mode === 'open-response' ? '—' : `${accuracy}%`}</span>
-            <button
-              onClick={handleExit}
-              className="ml-2 inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50"
-              title="닫기"
-            >
-              <X className="w-3.5 h-3.5" /> 닫기
-            </button>
-          </div>
-        </div>
-        {/* Slim progress bar under the tab strip */}
-        <div className="h-1 bg-gray-100">
-          <div className="h-full bg-[#1e6b73] transition-all duration-300" style={{ width: `${progressPct}%` }} />
-        </div>
-      </div>
+      {subject === 'Listening' && (
+        <ListeningTestEngine
+          sectionData={{ questions }}
+          module={1}
+          currentTest={{ tpoNumber: 0, section: 'Listening' }}
+          testBankType="training"
+          handleTabChange={() => {}}
+          onSegmentChange={handleListeningSegmentChange}
+          onModuleEnd={handleTestComplete}
+          onExitBack={handleExit}
+          onHome={handleExit}
+        />
+      )}
 
-      {/* Main content — question + inputs */}
-      <div className="flex-1 overflow-auto bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
-          {/* Passage / notes */}
-          {(currentQuestion.passageTitle || currentQuestion.passageText) && (
-            <div className="mb-6">
-              {currentQuestion.passageTitle && (
-                <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-2 font-['Inter',_sans-serif]">
-                  {currentQuestion.passageTitle}
-                </h3>
-              )}
-              {currentQuestion.passageText && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">
-                  {currentQuestion.passageText}
-                </div>
-              )}
-            </div>
-          )}
+      {subject === 'Writing' && (
+        <TrainingWritingFlow
+          questions={questions}
+          isReviewMode={isReview}
+          onComplete={handleTestComplete}
+          onHome={handleExit}
+          onCurrentChange={handleWritingCurrentChange}
+        />
+      )}
 
-          {/* Image */}
-          {currentQuestion.imageUrl && (
-            <div className="mb-6 overflow-hidden rounded-lg border border-gray-200">
-              <img src={currentQuestion.imageUrl} alt={currentQuestion.passageTitle || 'Question visual'} className="h-auto w-full object-cover" />
-            </div>
-          )}
+      {subject === 'Speaking' && (
+        <TrainingSpeakingFlow
+          questions={questions}
+          isReviewMode={isReview}
+          onComplete={handleTestComplete}
+          onHome={handleExit}
+          onCurrentChange={handleSpeakingCurrentChange}
+        />
+      )}
 
-          {/* Audio */}
-          {(currentQuestion.audioUrl || currentQuestion.passageAudioUrl) && (
-            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Headphones className="h-4 w-4" />
-                Audio
-              </div>
-              <audio controls className="w-full" src={currentQuestion.audioUrl || currentQuestion.passageAudioUrl} />
-            </div>
-          )}
+      {subject === 'Vocabulary' && (
+        <TrainingVocabularyFlow
+          questions={questions}
+          theme={theme}
+          onComplete={handleVocabularyComplete}
+          onExit={handleExit}
+        />
+      )}
 
-          {/* Question */}
-          <h2 className="text-lg sm:text-2xl font-bold leading-snug text-gray-900 mb-6 font-['Inter',_sans-serif]">
-            {currentQuestion.questionText || '문제를 확인하세요.'}
-          </h2>
+      {/* Review 모드 — 실전 TPO Review와 동일한 오른쪽 통합 아이콘 바 + AI 튜터 */}
+      {reviewPanelConfig && (
+        <ReviewAssistantPanel
+          section={reviewPanelConfig.section}
+          variant={reviewPanelConfig.variant}
+          contentKey={reviewPanelConfig.contentKey}
+          questionType={reviewPanelConfig.questionType}
+          currentDifficulty={reviewPanelConfig.currentDifficulty}
+          onStartTraining={() => {}}
+          onOpenAiTutor={() => setIsAiTutorOpen(true)}
+          translationNote={reviewPanelConfig.translationNote}
+          analysisNote={reviewPanelConfig.analysisNote}
+          vocabularyNote={reviewPanelConfig.vocabularyNote}
+          audioUrl={reviewPanelConfig.audioUrl}
+          scriptText={reviewPanelConfig.scriptText}
+        />
+      )}
 
-          {/* Multiple choice */}
-          {mode === 'multiple-choice' && (
-            <div className="space-y-3">
-              {currentQuestion.options?.map((option, index) => {
-                const isCorrect = checked && index === correctOptionIndex;
-                const isWrong = checked && selectedOptionIndex === index && index !== correctOptionIndex;
-                const isPicked = selectedOptionIndex === index;
-                return (
-                  <div
-                    key={`${currentQuestion.id}-option-${index}`}
-                    onClick={() => !checked && setSelectedOptionIndex(index)}
-                    className={`w-full rounded-lg border px-4 py-3 text-left text-sm sm:text-base transition-colors ${
-                      checked ? '' : 'cursor-pointer'
-                    } ${
-                      isCorrect
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : isWrong
-                          ? 'border-red-400 bg-red-50 text-red-700'
-                          : isPicked
-                            ? 'border-[#1e6b73] bg-[#e6f3f4] text-[#1e6b73]'
-                            : 'border-gray-300 bg-white text-gray-800 hover:border-gray-400 hover:bg-gray-50'
-                    }`}
-                  >
-                    <RadioOption
-                      id={`opt-${currentQuestion.id}-${index}`}
-                      name={`opts-${currentQuestion.id}`}
-                      value={String(index)}
-                      checked={isPicked}
-                      onChange={() => !checked && setSelectedOptionIndex(index)}
-                      label={option.replace(/^[A-D]\.\s*/, '')}
-                      size="sm"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Fill blanks */}
-          {mode === 'fill-blanks' && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {currentQuestion.blanks?.map((blank, index) => {
-                  const isCorrect = checked && normalizeAnswer(blankInputs[index] || '') === normalizeAnswer(blank.answer);
-                  return (
-                    <label key={`${currentQuestion.id}-blank-${index}`} className="space-y-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Blank {index + 1}</span>
-                      <input
-                        value={blankInputs[index] || ''}
-                        onChange={(e) => {
-                          const next = [...blankInputs];
-                          next[index] = e.target.value;
-                          setBlankInputs(next);
-                        }}
-                        disabled={checked}
-                        className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors ${
-                          checked ? (isCorrect ? 'border-green-400' : 'border-red-300') : 'border-gray-300 focus:border-[#1e6b73]'
-                        }`}
-                        placeholder="정답을 입력하세요"
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Build sentence */}
-          {mode === 'build-sentence' && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-              <div className="flex flex-wrap gap-2 mb-3">
-                {currentQuestion.words?.map((word) => (
-                  <span key={`${currentQuestion.id}-${word}`} className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700">
-                    {word}
-                  </span>
-                ))}
-              </div>
-              <textarea
-                value={sentenceAnswer}
-                onChange={(e) => setSentenceAnswer(e.target.value)}
-                disabled={checked}
-                className="min-h-[120px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-6 text-gray-800 outline-none focus:border-[#1e6b73]"
-                placeholder="단어를 조합해 문장을 완성해보세요"
-              />
-            </div>
-          )}
-
-          {/* Open response */}
-          {mode === 'open-response' && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-              <textarea
-                value={writtenAnswer}
-                onChange={(e) => setWrittenAnswer(e.target.value)}
-                disabled={checked}
-                className="min-h-[220px] w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm leading-6 text-gray-800 outline-none focus:border-[#1e6b73]"
-                placeholder="실전처럼 바로 답변을 작성해보세요"
-              />
-            </div>
-          )}
-
-          {/* Feedback after check */}
-          {checked && (
-            <div
-              className={`mt-6 rounded-lg border px-4 py-4 text-sm leading-6 ${
-                mode === 'open-response'
-                  ? 'border-gray-200 bg-gray-50 text-gray-700'
-                  : objectiveResult
-                    ? 'border-green-200 bg-green-50 text-green-700'
-                    : 'border-red-200 bg-red-50 text-red-700'
-              }`}
-            >
-              {mode !== 'open-response' && (
-                <p className="font-semibold">{objectiveResult ? '정답입니다.' : '정답을 다시 확인해보세요.'}</p>
-              )}
-              {mode !== 'open-response' && !objectiveResult && getDisplayAnswer(currentQuestion) && (
-                <p className="mt-1 font-medium">정답: {getDisplayAnswer(currentQuestion)}</p>
-              )}
-              {currentQuestion.explanation && (
-                <p className={mode !== 'open-response' ? 'mt-2' : ''}>{currentQuestion.explanation}</p>
-              )}
-              {mode === 'open-response' && !currentQuestion.explanation && (
-                <p>실전형 서술 문제이므로 작성한 답변을 구조와 논리 흐름 중심으로 다시 점검해보세요.</p>
-              )}
-            </div>
-          )}
-
-          {/* Bottom action row (redundant with header Next; keeps the check flow visible on long screens) */}
-          <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-5 text-gray-500">
-              정답을 확인한 뒤 상단의 <strong>Next</strong>로 다음 문항으로 이동하세요.
-            </p>
-            {!checked ? (
-              <button
-                type="button"
-                disabled={!canCheck}
-                onClick={handleCheck}
-                className={`inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-semibold text-white ${
-                  canCheck ? 'bg-[#1e6b73] hover:bg-[#155056]' : 'bg-gray-300 cursor-not-allowed'
-                }`}
-              >
-                {mode === 'open-response' ? '작성 완료' : '정답 확인'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white bg-[#1e6b73] hover:bg-[#155056]"
-              >
-                {isLast ? '리뷰 보기' : '다음 문제'}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {checked && mode !== 'open-response' && objectiveResult && (
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700">
-              <CheckCircle2 className="h-4 w-4" />
-              현재까지 {correctCount}문항을 정확히 풀었습니다.
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      {reviewPanelConfig && (
+        <ToeflAiWidget
+          position="right"
+          zIndex={86}
+          showFab={false}
+          open={isAiTutorOpen}
+          onOpenChange={setIsAiTutorOpen}
+          pinnable
+          contextLabel={`${subject} Training${questionType ? ' · ' + questionType : ''}`}
+          questionData={reviewQuestion || undefined}
+        />
+      )}
+    </>
   );
 }

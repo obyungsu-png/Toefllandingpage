@@ -43,6 +43,228 @@ const WRITING_SCREEN_ORDER: WritingScreen[] = [
   'end',
 ];
 
+// ─── Writing passageText JSON template parsing ───
+// CSV import converts "유형: email\n필드:\nto: ...\nsubject: ...\nbody: ..."
+// into a JSON template string stored in passageText. These helpers parse
+// that JSON back into the structured fields the email/academic discussion
+// screens need to render the scenario, professor/student messages, etc.
+// (Module-level exports — TrainingInterface의 훈련 플로우에서도 재사용)
+
+export const parseWritingPassageFields = (passageText?: string): Record<string, string> => {
+  if (!passageText) return {};
+  try {
+    const parsed = JSON.parse(passageText);
+    if (parsed && typeof parsed === 'object' && parsed.fields) {
+      return parsed.fields as Record<string, string>;
+    }
+  } catch {
+    // not a JSON template — fall through
+  }
+  return {};
+};
+
+// Extract professor name from body text like "교수(Dr. Gupta): message"
+const extractProfessorNameFromBody = (body: string): string => {
+  if (!body) return '';
+  const m = body.match(/^교수\(([^)]+)\)\s*[:：]/);
+  if (m) return m[1].trim();
+  const m2 = body.match(/^professor\s+([^:：()]+?)\s*[:：]/i);
+  if (m2) return m2[1].trim();
+  return '';
+};
+
+// Strip the "교수(Name):" / "professor Name:" prefix from body to get message
+const stripProfessorPrefixFromBody = (body: string): string => {
+  if (!body) return '';
+  return body
+    .replace(/^교수\([^)]+\)\s*[:：]\s*/, '')
+    .replace(/^professor\s+[^:：()]+?\s*[:：]\s*/i, '')
+    .trim();
+};
+
+// Build the email writingQuestion object expected by WritingEmailQ1 from the
+// raw CMS question (passageText JSON + questionText).
+//
+// CSV body 형식:
+//   "시나리오... Write an email... In your email, do the following: 요구사항1 | 요구사항2 | 요구사항3"
+// - `|` 로 구분된 요구사항들을 bullets 로 분리
+// - "do the following:" 이전 텍스트는 시나리오, 이후 첫 번째 요구사항은 bullets[0]
+export const buildEmailWritingQuestion = (emailQ: any) => {
+  if (!emailQ) return null;
+  const fields = parseWritingPassageFields(emailQ.passageText);
+  const hasJson = Object.keys(fields).length > 0;
+
+  // 직접 CMS 필드 우선 (Add Question 폼에서 저장된 emailScenario 등), 없으면 passageText JSON fallback
+  const questionText = emailQ.questionText || '';
+  const rawBody = hasJson
+    ? (fields.body || fields.본문 || fields.내용 || fields.emailbody || '')
+    : (emailQ.passageText || '');
+
+  // body 에서 `|` 로 구분된 요구사항(bullets) 분리
+  let emailScenario = rawBody;
+  let bullets: string[] = [];
+
+  if (rawBody.includes('|')) {
+    const parts = rawBody.split('|').map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      const firstPart = parts[0]; // 시나리오 + 지시문 + 첫 번째 요구사항
+      bullets = parts.slice(1);   // 나머지 요구사항들
+
+      // "do the following:" 마커로 시나리오와 첫 번째 요구사항 분리
+      const markerMatch = firstPart.match(/do the following\s*[:：]\s*/i);
+      if (markerMatch && markerMatch.index !== undefined) {
+        const before = firstPart.slice(0, markerMatch.index + markerMatch[0].length).trim();
+        const after = firstPart.slice(markerMatch.index + markerMatch[0].length).trim();
+        if (after) bullets = [after, ...bullets];
+
+        // 시나리오와 지시문 분리 ("Write an email" 시작점 기준)
+        const instrStart = before.search(/write an email/i);
+        emailScenario = instrStart > 0
+          ? before.slice(0, instrStart).trim()
+          : before;
+      } else {
+        emailScenario = firstPart;
+      }
+    }
+  }
+
+  // questionText 에서도 bullets 시도 (레거시: - / • / * / 1. 형식)
+  if (bullets.length === 0) {
+    for (const rawLine of questionText.split('\n')) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const bulletMatch = line.match(/^(?:[-•*]|\d+[.)])\s+(.+)$/);
+      if (bulletMatch) bullets.push(bulletMatch[1].trim());
+    }
+  }
+
+  // 직접 CMS 필드가 있으면 우선 사용 (Add Question 폼에서 저장된 값)
+  if (emailQ.emailScenario) emailScenario = emailQ.emailScenario;
+  if (emailQ.emailBullets && emailQ.emailBullets.length > 0) bullets = emailQ.emailBullets;
+
+  return {
+    emailTo: emailQ.emailTo || fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '',
+    emailSubject: emailQ.emailSubject || fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '',
+    emailScenario,
+    emailInstruction: emailQ.emailInstruction || questionText,
+    emailBullets: bullets,
+  };
+};
+
+// Extract academic discussion props (professor/student info) from the raw
+// CMS question's passageText JSON fields.
+//
+// CSV body 형식:
+//   "교수(Dr. Gupta): 교수 메시지  Claire: 학생1 메시지  Paul: 학생2 메시지"
+// - 화자 마커("이름:" 또는 "교수(이름):")로 메시지를 분리
+// - 첫 번째 화자 = 교수, 두 번째 = 학생1, 세 번째 = 학생2
+export const buildAcademicDiscussionProps = (adQ: any) => {
+  const empty = {
+    professorName: '', professorMessage: '',
+    student1Name: '', student1Message: '',
+    student2Name: '', student2Message: '',
+    promptTitle: '', promptInstructions: '',
+  };
+  if (!adQ) return empty;
+
+  const fields = parseWritingPassageFields(adQ.passageText);
+  const hasJson = Object.keys(fields).length > 0;
+  const body = hasJson
+    ? (fields.body || fields.본문 || fields.내용 || '')
+    : (adQ.passageText || '');
+
+  // 화자 분리: "교수(Name):", "Professor Name:", "Claire:", "Paul:" 등
+  // 정규식으로 모든 화자 마커의 위치를 찾고, 각 구간을 메시지로 추출
+  const speakers: Array<{ name: string; message: string }> = [];
+  const speakerRegex =
+    /(?:^|\s+)(교수\([^)]+\)|Professor\s+[A-Z][a-zA-Z]+|[A-Z][a-zA-Z]+)\s*[:：]\s*/g;
+  const matches: Array<{ name: string; start: number; markerEnd: number }> = [];
+  let m;
+  while ((m = speakerRegex.exec(body)) !== null) {
+    // 마커 시작 위치 (앞쪽 공백 제외)
+    const leadingWs = m[0].length - m[0].replace(/^\s+/, '').length;
+    matches.push({
+      name: m[1],
+      start: m.index + leadingWs,
+      markerEnd: m.index + m[0].length,
+    });
+  }
+
+  if (matches.length > 0) {
+    for (let i = 0; i < matches.length; i++) {
+      const msgStart = matches[i].markerEnd;
+      const msgEnd = i + 1 < matches.length ? matches[i + 1].start : body.length;
+      const message = body.slice(msgStart, msgEnd).trim();
+      const rawName = matches[i].name;
+      // "교수(Name)" → "Name" 추출
+      const profMatch = rawName.match(/^교수\(([^)]+)\)$/);
+      const name = profMatch ? profMatch[1] : rawName;
+      if (message) speakers.push({ name, message });
+    }
+  }
+
+  // 명시적 필드 우선, 없으면 body 파싱 결과 사용
+  let professorName =
+    fields.professorName || fields.교수이름 || fields.professor ||
+    fields.교수 || adQ.professorName || '';
+  let professorMessage =
+    fields.professorMessage || fields.교수메시지 || fields.교수메세지 ||
+    adQ.professorMessage || '';
+
+  let student1Name =
+    fields.student1Name || fields.학생1이름 || fields.student1 ||
+    adQ.student1Name || '';
+  let student1Message =
+    fields.student1Message || fields.학생1메시지 || fields.학생1메세지 ||
+    adQ.student1Message || '';
+  let student2Name =
+    fields.student2Name || fields.학생2이름 || fields.student2 ||
+    adQ.student2Name || '';
+  let student2Message =
+    fields.student2Message || fields.학생2메시지 || fields.학생2메세지 ||
+    adQ.student2Message || '';
+
+  // body 파싱 결과로 빈 값 채우기
+  if (speakers.length >= 1) {
+    if (!professorName) professorName = speakers[0].name;
+    if (!professorMessage) professorMessage = speakers[0].message;
+  }
+  if (speakers.length >= 2) {
+    if (!student1Name) student1Name = speakers[1].name;
+    if (!student1Message) student1Message = speakers[1].message;
+  }
+  if (speakers.length >= 3) {
+    if (!student2Name) student2Name = speakers[2].name;
+    if (!student2Message) student2Message = speakers[2].message;
+  }
+
+  // body에 화자 마커가 없는 경우 (레거시 fallback)
+  if (speakers.length === 0 && body) {
+    if (!professorName) professorName = extractProfessorNameFromBody(body);
+    if (!professorMessage) {
+      professorMessage = hasJson
+        ? stripProfessorPrefixFromBody(body)
+        : body;
+    }
+  }
+
+  // promptTitle = questionText (지시문), promptInstructions = 토론 주제
+  const promptTitle = adQ.questionText || '';
+  const promptInstructions = fields.subject || fields.title || fields.제목 ||
+    fields.주제 || adQ.passageTitle || '';
+
+  return {
+    professorName,
+    professorMessage,
+    student1Name,
+    student1Message,
+    student2Name,
+    student2Message,
+    promptTitle,
+    promptInstructions,
+  };
+};
+
 interface WritingSectionWrapperProps {
   initialScreen: WritingScreen;
   onHome: () => void;
@@ -129,227 +351,6 @@ export function WritingSectionWrapper({
       const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
       return na - nb;
     });
-
-  // ─── Writing passageText JSON template parsing ───
-  // CSV import converts "유형: email\n필드:\nto: ...\nsubject: ...\nbody: ..."
-  // into a JSON template string stored in passageText. These helpers parse
-  // that JSON back into the structured fields the email/academic discussion
-  // screens need to render the scenario, professor/student messages, etc.
-
-  const parseWritingPassageFields = (passageText?: string): Record<string, string> => {
-    if (!passageText) return {};
-    try {
-      const parsed = JSON.parse(passageText);
-      if (parsed && typeof parsed === 'object' && parsed.fields) {
-        return parsed.fields as Record<string, string>;
-      }
-    } catch {
-      // not a JSON template — fall through
-    }
-    return {};
-  };
-
-  // Extract professor name from body text like "교수(Dr. Gupta): message"
-  const extractProfessorNameFromBody = (body: string): string => {
-    if (!body) return '';
-    const m = body.match(/^교수\(([^)]+)\)\s*[:：]/);
-    if (m) return m[1].trim();
-    const m2 = body.match(/^professor\s+([^:：()]+?)\s*[:：]/i);
-    if (m2) return m2[1].trim();
-    return '';
-  };
-
-  // Strip the "교수(Name):" / "professor Name:" prefix from body to get message
-  const stripProfessorPrefixFromBody = (body: string): string => {
-    if (!body) return '';
-    return body
-      .replace(/^교수\([^)]+\)\s*[:：]\s*/, '')
-      .replace(/^professor\s+[^:：()]+?\s*[:：]\s*/i, '')
-      .trim();
-  };
-
-  // Build the email writingQuestion object expected by WritingEmailQ1 from the
-  // raw CMS question (passageText JSON + questionText).
-  //
-  // CSV body 형식:
-  //   "시나리오... Write an email... In your email, do the following: 요구사항1 | 요구사항2 | 요구사항3"
-  // - `|` 로 구분된 요구사항들을 bullets 로 분리
-  // - "do the following:" 이전 텍스트는 시나리오, 이후 첫 번째 요구사항은 bullets[0]
-  const buildEmailWritingQuestion = (emailQ: any) => {
-    if (!emailQ) return null;
-    const fields = parseWritingPassageFields(emailQ.passageText);
-    const hasJson = Object.keys(fields).length > 0;
-
-    // 직접 CMS 필드 우선 (Add Question 폼에서 저장된 emailScenario 등), 없으면 passageText JSON fallback
-    const questionText = emailQ.questionText || '';
-    const rawBody = hasJson
-      ? (fields.body || fields.본문 || fields.내용 || fields.emailbody || '')
-      : (emailQ.passageText || '');
-
-    // body 에서 `|` 로 구분된 요구사항(bullets) 분리
-    let emailScenario = rawBody;
-    let bullets: string[] = [];
-
-    if (rawBody.includes('|')) {
-      const parts = rawBody.split('|').map(p => p.trim()).filter(Boolean);
-      if (parts.length > 1) {
-        const firstPart = parts[0]; // 시나리오 + 지시문 + 첫 번째 요구사항
-        bullets = parts.slice(1);   // 나머지 요구사항들
-
-        // "do the following:" 마커로 시나리오와 첫 번째 요구사항 분리
-        const markerMatch = firstPart.match(/do the following\s*[:：]\s*/i);
-        if (markerMatch && markerMatch.index !== undefined) {
-          const before = firstPart.slice(0, markerMatch.index + markerMatch[0].length).trim();
-          const after = firstPart.slice(markerMatch.index + markerMatch[0].length).trim();
-          if (after) bullets = [after, ...bullets];
-
-          // 시나리오와 지시문 분리 ("Write an email" 시작점 기준)
-          const instrStart = before.search(/write an email/i);
-          emailScenario = instrStart > 0
-            ? before.slice(0, instrStart).trim()
-            : before;
-        } else {
-          emailScenario = firstPart;
-        }
-      }
-    }
-
-    // questionText 에서도 bullets 시도 (레거시: - / • / * / 1. 형식)
-    if (bullets.length === 0) {
-      for (const rawLine of questionText.split('\n')) {
-        const line = rawLine.trim();
-        if (!line) continue;
-        const bulletMatch = line.match(/^(?:[-•*]|\d+[.)])\s+(.+)$/);
-        if (bulletMatch) bullets.push(bulletMatch[1].trim());
-      }
-    }
-
-    // 직접 CMS 필드가 있으면 우선 사용 (Add Question 폼에서 저장된 값)
-    if (emailQ.emailScenario) emailScenario = emailQ.emailScenario;
-    if (emailQ.emailBullets && emailQ.emailBullets.length > 0) bullets = emailQ.emailBullets;
-
-    return {
-      emailTo: emailQ.emailTo || fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '',
-      emailSubject: emailQ.emailSubject || fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '',
-      emailScenario,
-      emailInstruction: emailQ.emailInstruction || questionText,
-      emailBullets: bullets,
-    };
-  };
-
-  // Extract academic discussion props (professor/student info) from the raw
-  // CMS question's passageText JSON fields.
-  //
-  // CSV body 형식:
-  //   "교수(Dr. Gupta): 교수 메시지  Claire: 학생1 메시지  Paul: 학생2 메시지"
-  // - 화자 마커("이름:" 또는 "교수(이름):")로 메시지를 분리
-  // - 첫 번째 화자 = 교수, 두 번째 = 학생1, 세 번째 = 학생2
-  const buildAcademicDiscussionProps = (adQ: any) => {
-    const empty = {
-      professorName: '', professorMessage: '',
-      student1Name: '', student1Message: '',
-      student2Name: '', student2Message: '',
-      promptTitle: '', promptInstructions: '',
-    };
-    if (!adQ) return empty;
-
-    const fields = parseWritingPassageFields(adQ.passageText);
-    const hasJson = Object.keys(fields).length > 0;
-    const body = hasJson
-      ? (fields.body || fields.본문 || fields.내용 || '')
-      : (adQ.passageText || '');
-
-    // 화자 분리: "교수(Name):", "Professor Name:", "Claire:", "Paul:" 등
-    // 정규식으로 모든 화자 마커의 위치를 찾고, 각 구간을 메시지로 추출
-    const speakers: Array<{ name: string; message: string }> = [];
-    const speakerRegex =
-      /(?:^|\s+)(교수\([^)]+\)|Professor\s+[A-Z][a-zA-Z]+|[A-Z][a-zA-Z]+)\s*[:：]\s*/g;
-    const matches: Array<{ name: string; start: number; markerEnd: number }> = [];
-    let m;
-    while ((m = speakerRegex.exec(body)) !== null) {
-      // 마커 시작 위치 (앞쪽 공백 제외)
-      const leadingWs = m[0].length - m[0].replace(/^\s+/, '').length;
-      matches.push({
-        name: m[1],
-        start: m.index + leadingWs,
-        markerEnd: m.index + m[0].length,
-      });
-    }
-
-    if (matches.length > 0) {
-      for (let i = 0; i < matches.length; i++) {
-        const msgStart = matches[i].markerEnd;
-        const msgEnd = i + 1 < matches.length ? matches[i + 1].start : body.length;
-        const message = body.slice(msgStart, msgEnd).trim();
-        const rawName = matches[i].name;
-        // "교수(Name)" → "Name" 추출
-        const profMatch = rawName.match(/^교수\(([^)]+)\)$/);
-        const name = profMatch ? profMatch[1] : rawName;
-        if (message) speakers.push({ name, message });
-      }
-    }
-
-    // 명시적 필드 우선, 없으면 body 파싱 결과 사용
-    let professorName =
-      fields.professorName || fields.교수이름 || fields.professor ||
-      fields.교수 || adQ.professorName || '';
-    let professorMessage =
-      fields.professorMessage || fields.교수메시지 || fields.교수메세지 ||
-      adQ.professorMessage || '';
-
-    let student1Name =
-      fields.student1Name || fields.학생1이름 || fields.student1 ||
-      adQ.student1Name || '';
-    let student1Message =
-      fields.student1Message || fields.학생1메시지 || fields.학생1메세지 ||
-      adQ.student1Message || '';
-    let student2Name =
-      fields.student2Name || fields.학생2이름 || fields.student2 ||
-      adQ.student2Name || '';
-    let student2Message =
-      fields.student2Message || fields.학생2메시지 || fields.학생2메세지 ||
-      adQ.student2Message || '';
-
-    // body 파싱 결과로 빈 값 채우기
-    if (speakers.length >= 1) {
-      if (!professorName) professorName = speakers[0].name;
-      if (!professorMessage) professorMessage = speakers[0].message;
-    }
-    if (speakers.length >= 2) {
-      if (!student1Name) student1Name = speakers[1].name;
-      if (!student1Message) student1Message = speakers[1].message;
-    }
-    if (speakers.length >= 3) {
-      if (!student2Name) student2Name = speakers[2].name;
-      if (!student2Message) student2Message = speakers[2].message;
-    }
-
-    // body에 화자 마커가 없는 경우 (레거시 fallback)
-    if (speakers.length === 0 && body) {
-      if (!professorName) professorName = extractProfessorNameFromBody(body);
-      if (!professorMessage) {
-        professorMessage = hasJson
-          ? stripProfessorPrefixFromBody(body)
-          : body;
-      }
-    }
-
-    // promptTitle = questionText (지시문), promptInstructions = 토론 주제
-    const promptTitle = adQ.questionText || '';
-    const promptInstructions = fields.subject || fields.title || fields.제목 ||
-      fields.주제 || adQ.passageTitle || '';
-
-    return {
-      professorName,
-      professorMessage,
-      student1Name,
-      student1Message,
-      student2Name,
-      student2Message,
-      promptTitle,
-      promptInstructions,
-    };
-  };
 
   // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
   useEffect(() => {
