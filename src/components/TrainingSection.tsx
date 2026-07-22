@@ -811,22 +811,6 @@ export function TrainingSection({
           </div>
         )}
 
-        {/* ===== EMPTY STATE ===== */}
-        {uploadedTrainingFiles.length === 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mt-4 text-center shadow">
-            <Target className="w-10 h-10 text-[#2d7a7c]/30 mx-auto mb-3" />
-            <h3 className="text-sm text-[#2d5a5d] mb-2 font-medium">업로드된 전문 훈련 자료가 없습니다</h3>
-            <p className="text-xs text-gray-600 mb-3">
-              업로드 탭에서 전문 훈련용 자료를 업로드하면 개인 맞춤형 훈련을 받을 수 있습니다.
-            </p>
-            <Button
-              onClick={() => setActiveTab('업로드')}
-              className="bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] text-white px-5 py-2 rounded-lg hover:from-[#005f61] hover:to-[#004d56] transition-all duration-300 shadow-md"
-            >
-              전문 훈련 자료 업로드하기
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
