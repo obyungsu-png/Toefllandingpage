@@ -230,6 +230,19 @@ export function TrainingSection({
     return uploadedTrainingFiles.filter(file => file.subcategory === typeId).length;
   };
 
+  // CMS stores questionType as "Complete Words (Module 1)" / "Read in Daily Life
+  // (Module 2)" etc., but the training picker uses the base label. Strip the
+  // module suffix so both modules count for the same training bucket.
+  const normalizeType = (t: string | undefined) =>
+    (t || '').replace(/\s*\(Module\s*\d+\)\s*$/i, '').trim();
+
+  // Legacy questions may have no difficulty at all — treat them as '보통' so
+  // they still appear under the default Normal bucket instead of vanishing.
+  const normalizeDifficulty = (d: string | undefined): '쉬움' | '보통' | '어려움' => {
+    if (d === '쉬움' || d === '보통' || d === '어려움') return d;
+    return '보통';
+  };
+
   // Get questions by difficulty from TPO tests (filtered by year/month)
   const getQuestionsByDifficulty = (
     subject: string,
@@ -238,21 +251,22 @@ export function TrainingSection({
   ): TPOQuestion[] => {
     const allQuestions: TPOQuestion[] = [];
     const filteredTests = getFilteredTests();
-    
+    const targetType = normalizeType(questionTypeName);
+
     // Iterate through filtered TPO tests
     filteredTests.forEach(test => {
       // Find section matching the subject
       const section = test.sections.find(s => s.sectionType === subject);
       if (section) {
         // Filter questions by type and difficulty
-        const filteredQuestions = section.questions.filter(q => 
-          q.questionType === questionTypeName && 
-          q.difficulty === difficulty
+        const filteredQuestions = section.questions.filter(q =>
+          normalizeType(q.questionType) === targetType &&
+          normalizeDifficulty(q.difficulty) === difficulty
         );
         allQuestions.push(...filteredQuestions);
       }
     });
-    
+
     return allQuestions;
   };
 
