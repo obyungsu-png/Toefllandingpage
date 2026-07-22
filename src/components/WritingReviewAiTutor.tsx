@@ -95,7 +95,7 @@ const DIMENSION_META: Record<DimensionKey, { label: string; desc: string; priori
   registerAndTone: {
     label: '사회언어학적 격식 (Register & Tone)',
     desc: '수신자와의 관계에 맞는 톤앤매너 (Professor=격식 / Peer=반격식)',
-    priority: '최우선',
+    priority: '핵심',
   },
   taskCompletion: {
     label: '과제 완수도 (Task Completion)',

@@ -78,6 +78,37 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
   const [copied, setCopied] = useState(false);
   const [genError, setGenError] = useState('');
   const [licenseHistory, setLicenseHistory] = useState<LicenseKeyRecord[]>([]);
+
+  // 관리자 메모 (학생별 노트) — localStorage 저장
+  const NOTES_STORAGE_KEY = 'student_admin_notes_v1';
+  const [adminNotes, setAdminNotes] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
+
+  const saveNote = (userId: string, text: string) => {
+    setAdminNotes(prev => {
+      const next = { ...prev };
+      if (text.trim() === '') delete next[userId];
+      else next[userId] = text;
+      try { localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const startEditNote = (userId: string) => {
+    setEditingNoteId(userId);
+    setEditingNoteText(adminNotes[userId] || '');
+  };
+  const commitNote = () => {
+    if (editingNoteId) saveNote(editingNoteId, editingNoteText);
+    setEditingNoteId(null);
+    setEditingNoteText('');
+  };
+  const cancelNote = () => { setEditingNoteId(null); setEditingNoteText(''); };
   const [historyLoading, setHistoryLoading] = useState(false);
 
   // 일괄: 체크박스 + 일괄연장 모달 + 상세 모달
@@ -402,6 +433,45 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
                         {hasDevice && <Button size="sm" variant="outline" className="text-[11px] px-2 py-1 text-orange-600 border-orange-200 hover:bg-orange-50" onClick={() => handleDeviceReset(s, s.pc_machine_id ? 'pc' : s.tablet_machine_id ? 'tablet' : 'mobile')}><Smartphone className="w-3 h-3 mr-0.5" />초기화</Button>}
                         <Button size="sm" variant="outline" className="text-[11px] px-2 py-1 text-red-400 border-red-200 hover:bg-red-50" onClick={() => handleDeleteProfile(s)}><X className="w-3 h-3" /></Button>
                       </div>
+                    </div>
+                    {/* 관리자 메모 */}
+                    <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+                      {editingNoteId === s.user_id ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={editingNoteText}
+                            onChange={e => setEditingNoteText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) commitNote(); if (e.key === 'Escape') cancelNote(); }}
+                            placeholder="관리자 메모: 학습 진도, 상담 이력, 특이사항 등..."
+                            rows={2}
+                            autoFocus
+                            className="w-full px-3 py-2 border border-amber-300 bg-amber-50 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400/40 resize-none"
+                          />
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400">Ctrl+Enter 저장 · Esc 취소</span>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="outline" className="text-[10px] px-2 py-0.5" onClick={cancelNote}>취소</Button>
+                              <Button size="sm" className="text-[10px] px-2 py-0.5 bg-amber-500 text-white hover:bg-amber-600" onClick={commitNote}>저장</Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : adminNotes[s.user_id] ? (
+                        <div
+                          onClick={() => startEditNote(s.user_id)}
+                          className="group flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors"
+                          title="클릭하여 편집"
+                        >
+                          <span className="text-[10px] font-bold text-amber-700 mt-0.5 shrink-0">📝 메모</span>
+                          <span className="text-xs text-gray-700 whitespace-pre-wrap break-words flex-1">{adminNotes[s.user_id]}</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditNote(s.user_id)}
+                          className="w-full text-left px-3 py-1.5 border border-dashed border-gray-200 rounded-lg text-[11px] text-gray-400 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50/30 transition-colors"
+                        >
+                          + 관리자 메모 추가 (학습 진도, 상담 이력 등)
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
