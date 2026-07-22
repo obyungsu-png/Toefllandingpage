@@ -229,9 +229,9 @@ export interface TPOTest {
 interface ContentManagementProps {
   tests?: TPOTest[];
   tpoTests?: TPOTest[];
-  onAddTest: (test: TPOTest) => void;
-  onUpdateTest: (test: TPOTest) => void;
-  onDeleteTest: (id: string) => void;
+  onAddTest: (test: TPOTest) => void | Promise<void>;
+  onUpdateTest: (test: TPOTest) => void | Promise<void>;
+  onDeleteTest: (id: string) => void | Promise<void>;
 }
 
 export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpdateTest, onDeleteTest }: ContentManagementProps) {
@@ -403,7 +403,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   // Move an existing test from its current number to a new number.
   // Safely: copy under the new key, remove the old one, and follow the
   // view to the new number. Refuses if the target number is already taken.
-  const handleRenumberTest = () => {
+  const handleRenumberTest = async () => {
     setRenumberError(null);
     const currentTest = getExistingTest();
     if (!currentTest) {
@@ -426,8 +426,11 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       testNumber: renumberTarget,
     };
 
-    onUpdateTest(movedTest);   // save under the new number
-    onDeleteTest(currentTest.id); // remove the old number's entry
+    // Serialize save→delete: firing both at once races the DELETE's CORS
+    // preflight against the POST on the same edge function and the browser
+    // surfaces it as a missing Access-Control-Allow-Origin header.
+    await onUpdateTest(movedTest);
+    await onDeleteTest(currentTest.id);
     setSelectedTestNumber(renumberTarget); // follow it to the new spot
     setShowRenumberForm(false);
     setRenumberTarget('');
