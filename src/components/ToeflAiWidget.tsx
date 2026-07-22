@@ -332,14 +332,18 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
 
   const lastAutoSentRef = useRef<string | null>(null);
   // 드래그 선택 → AI 튜터 서브메뉴(Explain/Translate/Analyze/Rewrite) 클릭 시
-  // initialQuestion이 주어지면 패널이 열리자마자 자동으로 전송
+  // initialQuestion이 주어지면 입력란에 채워 넣고 [전송] 버튼만 강조 (자동 호출 X)
+  // 사용자가 [전송] 버튼을 명시적으로 눌러야 API가 호출되어 비용 절감
+  const [pendingAutoQuestion, setPendingAutoQuestion] = useState<string | null>(null);
   useEffect(() => {
     if (isOpen && initialQuestion && lastAutoSentRef.current !== initialQuestion) {
       lastAutoSentRef.current = initialQuestion;
-      handleSendMessage(initialQuestion);
+      setChatInput(initialQuestion);
+      setPendingAutoQuestion(initialQuestion);
     }
     if (!isOpen) {
       lastAutoSentRef.current = null;
+      setPendingAutoQuestion(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialQuestion]);
@@ -773,24 +777,38 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
             )}
 
             <div className="p-3 border-t bg-white shrink-0">
+              {pendingAutoQuestion && chatInput === pendingAutoQuestion && (
+                <div className="mb-2 px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-[11px] text-teal-700 flex items-center justify-between">
+                  <span>📋 선택한 텍스트로 질문이 입력되었어요. <strong>[전송]</strong> 버튼을 눌러 분석을 시작하세요.</span>
+                  <button
+                    type="button"
+                    onClick={() => { setChatInput(''); setPendingAutoQuestion(null); }}
+                    className="ml-2 text-teal-400 hover:text-teal-600"
+                    aria-label="자동 채움 취소"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  setPendingAutoQuestion(null);
                   handleSendMessage();
                 }}
                 className="flex gap-2"
               >
                 <Input
                   value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
+                  onChange={(e) => { setChatInput(e.target.value); if (pendingAutoQuestion) setPendingAutoQuestion(null); }}
                   placeholder="말씀해 주세요..."
-                  className="flex-1 text-sm bg-gray-50 focus:bg-white transition-colors"
+                  className={`flex-1 text-sm transition-colors ${pendingAutoQuestion && chatInput === pendingAutoQuestion ? 'bg-teal-50 border-teal-300 focus:bg-white ring-1 ring-teal-300' : 'bg-gray-50 focus:bg-white'}`}
                   disabled={isAiLoading}
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  className="bg-teal-600 hover:bg-teal-700 text-white shrink-0"
+                  className={`shrink-0 text-white transition-all ${pendingAutoQuestion && chatInput === pendingAutoQuestion ? 'bg-teal-600 hover:bg-teal-700 ring-2 ring-teal-300 animate-pulse' : 'bg-teal-600 hover:bg-teal-700'}`}
                   disabled={!chatInput.trim() || isAiLoading}
                 >
                   <Send className="w-4 h-4" />
