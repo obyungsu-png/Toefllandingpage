@@ -5,7 +5,7 @@ const http = require('http');
 
 // Claude API 설정 (Electron main process에서 직접 호출 — CORS 제한 없음)
 const CLAUDE_API_ORIGIN = 'https://apiclaude.cc';
-const CLAUDE_API_KEY = 'sk-3bd59126ffdfa8ed1fcca872704a87bd00f8a81e00edb4b0126551f2dd8cb070';
+const CLAUDE_API_KEY = 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
 
 // Google Translate TTS (고품질 음성 합성용)
 const GOOGLE_TTS_ORIGIN = 'https://translate.google.com';
