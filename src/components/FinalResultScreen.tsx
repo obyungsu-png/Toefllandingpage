@@ -4,8 +4,8 @@ import type { SectionScores } from './EndSpeakingScreen';
 interface FinalResultScreenProps {
   setShowFinalResult: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  handleTabChange: (tab: any) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<any>>;
   sectionScores: SectionScores;
 }
 

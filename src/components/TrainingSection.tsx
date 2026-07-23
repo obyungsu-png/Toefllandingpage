@@ -99,7 +99,7 @@ const matchesTrainingQuestionType = (question: TPOQuestion, typeName: string): b
 interface TrainingSectionProps {
   uploadedFiles?: any[];
   onStartTest?: (testInfo: any) => void;
-  setActiveTab?: (tab: string) => void;
+  setActiveTab?: (tab: any) => void;
   lmsContents?: LMSContent[];
   tpoTests?: TPOTest[];
   advertisements?: any[];

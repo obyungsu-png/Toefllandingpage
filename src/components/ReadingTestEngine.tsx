@@ -15,7 +15,7 @@ interface ReadingTestEngineProps {
   onExitBack: () => void;
   onHome: () => void;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   currentTest: any;
   /** Optional: a legacy screen key from saved progress (e.g. 'q18', 'readNotice2',
    *  'm2q13') to approximately resume at the right segment, instead of always

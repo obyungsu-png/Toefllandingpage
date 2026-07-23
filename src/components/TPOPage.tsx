@@ -15,9 +15,9 @@ interface TPOPageProps {
   setActiveTestSetRange: (range: TestSetRange) => void;
   tpoTests: TPOTest[];
   isContentLocked: (index: number, freeCount: number) => boolean;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: any) => void;
   setCurrentTest: (test: { tpoNumber: number; section: string }) => void;
-  setTestBankType: (type: string) => void;
+  setTestBankType: (type: any) => void;
   setShowListeningIntro: (show: boolean | string) => void;
   setShowReadingIntro: (show: boolean) => void;
   setShowWritingIntro: (show: boolean) => void;

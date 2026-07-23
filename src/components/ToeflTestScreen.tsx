@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface ToeflTestScreenProps {
-  testBankType: 'tpo' | 'test';
-  currentTest?: { section: string };
+  testBankType: 'tpo' | 'test' | 'training';
+  currentTest?: { section: string } | null | undefined;
   onBackToHome: () => void;
   onContinue: () => void;
 }

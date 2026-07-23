@@ -3,9 +3,10 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 
 interface ScoreData {
   correct?: number;
-  total: number;
+  total?: number;
   aiScore?: number;
   feedback?: string;
+  score?: number;
 }
 
 const convertToBand = (rawScore: number): number => {
@@ -25,8 +26,8 @@ const convertToBand = (rawScore: number): number => {
 interface EndSpeakingScreenProps {
   setShowEndSpeaking: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  handleTabChange: (tab: any) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<any>>;
   speakingScore?: ScoreData | null;
   onAllSectionsComplete?: (scores: SectionScores) => void;
   onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;

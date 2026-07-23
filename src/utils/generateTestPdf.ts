@@ -134,7 +134,7 @@ function readingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
   // Complete Words 유형이면 문제 번호와 무관하게 빈칸(____) 형태로 출력
   const isFillBlankSet = isCompleteWords || blankCount >= 10;
   // Complete Words 세트는 10개 빈칸 → 실제 문제 번호 기준 범위 표기 (예: Q1-Q10)
-  const blankSetLabel = `Q${question.questionNumber}-Q${question.questionNumber + 9}`;
+  const blankSetLabel = `Q${question.questionNumber}-Q${Number(question.questionNumber) + 9}`;
   lines.push({ text: isFillBlankSet ? `${blankSetLabel}  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // Module 2: passage stored as JSON {title, passage, questions:[]}

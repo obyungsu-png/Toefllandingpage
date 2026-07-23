@@ -92,6 +92,8 @@ interface LMSSectionProps {
   onAddVocabularyScore: (score: VocabularyScore) => void;
   onUpdateVocabularyScore: (score: VocabularyScore) => void;
   onDeleteVocabularyScore: (id: string) => void;
+  shareConfig?: any;
+  onShareConfigChange?: (config: any) => void;
 }
 
 export function LMSSection({ 

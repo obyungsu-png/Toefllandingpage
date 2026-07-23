@@ -14,12 +14,12 @@ interface ListeningTestEngineProps {
   onExitBack: () => void;
   onHome: () => void;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   currentTest: any;
   /** Optional legacy screen key for progress restore (e.g. 'q5', 'm2q3') */
   initialLegacyKey?: string;
   /** Called when visible segment changes, with a legacy-compatible key. */
-  onSegmentChange?: (legacyKey: string) => void;
+  onSegmentChange?: (legacyKey: any) => void;
 }
 
 const sortByNumber = (a: any, b: any) => {

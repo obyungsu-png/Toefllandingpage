@@ -9,7 +9,7 @@ import imgImage2 from "figma:asset/7615d3db1985346bf3765462a56a60209586cceb.png"
 import searchIcon from 'figma:asset/ab6582843d6eb491acced5759e69c588ae59039e.png';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
 import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Toaster } from './components/ui/sonner';
+import { Toaster, toast } from './components/ui/sonner';
 import type { LMSContent } from './components/LMSSection';
 import type { TPOQuestion, TPOTest } from './components/ContentManagement';
 import type { Advertisement } from './components/AdManagement';
@@ -107,7 +107,7 @@ import {
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
 type TPORange = 'TPO 1-5';
-type TestSetRange = '1-5';
+type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
 type TestBankType = 'tpo' | 'test' | 'training';
 type DeferredDataKey = 'history' | 'questionTypes' | 'training' | 'admin';
 
@@ -2098,7 +2098,7 @@ function AppContent() {
           testName: `${getCurrentTestLabel()} - ${section}`,
           testNumber: currentTest?.tpoNumber,
           bankType: testBankType,
-          status: 'incomplete',
+          status: 'in-progress',
           date: new Date().toISOString(),
           score: 0,
           totalQuestions,
@@ -3362,7 +3362,7 @@ function AppContent() {
                   <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3">{currentQuestion.questionText}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                    {answerOptions.map((option, index) => (
+                    {answerOptions.map((option: any, index: number) => (
                       <RadioOption
                         key={index}
                         id={`module1-q16-option-${index}`}
@@ -3540,7 +3540,7 @@ function AppContent() {
                   <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ17?.questionText || cmsQItem17?.questionText || "According to the passage, what is true about the mirror test?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                    {answerOptions.map((option, index) => (
+                    {answerOptions.map((option: any, index: number) => (
                       <RadioOption
                         key={index}
                         id={`module1-q17-option-${index}`}
@@ -3719,7 +3719,7 @@ function AppContent() {
                   <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ18?.questionText || cmsQItem18?.questionText || "Which animals besides great apes have shown signs of self-recognition?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                    {answerOptions.map((option, index) => (
+                    {answerOptions.map((option: any, index: number) => (
                       <RadioOption
                         key={index}
                         id={`module1-q18-option-${index}`}
@@ -3899,7 +3899,7 @@ function AppContent() {
                   <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ19?.questionText || cmsQItem19?.questionText || "What is the significance of the cleaner fish experiment?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                    {answerOptions.map((option, index) => (
+                    {answerOptions.map((option: any, index: number) => (
                       <RadioOption
                         key={index}
                         id={`module1-q19-option-${index}`}
@@ -4080,7 +4080,7 @@ function AppContent() {
                   <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 lg:mb-8 mt-3 md:mt-6">{cmsAcQ20?.questionText || cmsQItem20?.questionText || "According to the passage, when do children typically recognize themselves in a mirror?"}</h3>
                 
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
-                    {answerOptions.map((option, index) => (
+                    {answerOptions.map((option: any, index: number) => (
                       <RadioOption
                         key={index}
                         id={`module1-q20-option-${index}`}
@@ -4511,7 +4511,7 @@ function AppContent() {
           </div>
         </div>
         
-        <VolumeControl isOpen={isM2FBVolumeOpen} onClose={closeM2FBVolume} buttonRef={m2FBVolumeButtonRef} />
+        <VolumeControl isOpen={isM2FBVolumeOpen} onClose={closeM2FBVolume} buttonRef={m2FBVolumeButtonRef as any} />
         
         <MobileQuestionNav 
           onBack={() => {
@@ -6632,7 +6632,7 @@ function AppContent() {
           </div>
         </div>
 
-        <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef} />
+        <VolumeControl isOpen={isOpen} onClose={closeVolume} buttonRef={buttonRef as any} />
         <MobileQuestionNav onBack={onBack} onHome={onHome} onNext={onNext} />
       </div>
     );
@@ -7149,7 +7149,7 @@ function AppContent() {
           setShowReadNoticeTest={setShowReadNoticeTest}
           setShowModule1Details={setShowModule1Details}
           currentTest={currentTest}
-          getCurrentSectionData={getCurrentSectionData}
+          getCurrentSectionData={getCurrentSectionData as any}
         />
       )}
       
@@ -7390,7 +7390,7 @@ function AppContent() {
           testBankType={testBankType}
           handleTabChange={handleTabChange}
           setActiveTab={setActiveTab}
-          speakingScore={sectionScores.speaking}
+          speakingScore={{ ...sectionScores.speaking, total: 30 } as any}
           onAiScore={handleSaveAiScore}
           onAllSectionsComplete={(scores) => {
             setSectionScores(prev => ({ ...prev, ...scores }));
@@ -7558,7 +7558,7 @@ function AppContent() {
       )}
       
       {/* Volume Control */}
-      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef as any} />
       
       {/* TOEFL Test Screen Overlay */}
       {showToelfTest && !showReadingSection && !showFillBlanksTest && !showReadNoticeTest && !showReadNoticeTest2 && (
@@ -7782,7 +7782,7 @@ function AppContent() {
         />
       )}
 
-      {!showLoginForm && activeTab === 'Question Types-old' && (
+      {!showLoginForm && (activeTab as string) === 'Question Types-old' && (
         <div className="bg-gradient-to-b from-white to-gray-50 relative shrink-0 w-full shadow-sm">
           {/* Skills Navigation */}
           <div className="border-b border-gray-200 bg-white">

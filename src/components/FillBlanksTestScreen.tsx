@@ -16,11 +16,11 @@ interface FillBlanksTestScreenProps {
   setShowReadingSection: React.Dispatch<React.SetStateAction<boolean>>;
   setShowToeflTest: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   setShowReadNoticeTest: React.Dispatch<React.SetStateAction<boolean>>;
   setShowModule1Details: React.Dispatch<React.SetStateAction<boolean>>;
   currentTest: any;
-  getCurrentSectionData: (section: string) => any;
+  getCurrentSectionData: (section: any) => any;
   /** Optional: render this specific question instead of auto-finding the first
    *  Complete Words question. Used by ReadingTestEngine to support multiple
    *  Complete Words groups (e.g. Q1-10 and Q11-20) in the same module. */

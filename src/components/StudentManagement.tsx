@@ -167,12 +167,12 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
   const dashboardStats = useMemo((): DashboardStats => {
     const now = new Date(); const d7 = new Date(now.getTime() + 7 * 86400000); const ms = new Date(now.getFullYear(), now.getMonth(), 1);
     let a = 0, e = 0, s = 0, n = 0, i = 0, o = 0, rev = 0;
-    enrichedStudents.forEach(s => {
-      const ed = new Date(s.expire_date); if (ed >= now) a++; else e++;
-      if (ed >= now && ed <= d7) s++; if (new Date(s.created_at) >= ms) n++;
-      if (s.user_type === '내학생') i++; else o++;
-      const lk = s.licenseKeys[0];
-      if (lk) rev += lk.actual_price || (lk.duration_months * (s.user_type === '내학생' ? 30000 : 20000));
+    enrichedStudents.forEach(st => {
+      const ed = new Date(st.expire_date); if (ed >= now) a++; else e++;
+      if (ed >= now && ed <= d7) s++; if (new Date(st.created_at) >= ms) n++;
+      if (st.user_type === '내학생') i++; else o++;
+      const lk = st.licenseKeys[0];
+      if (lk) rev += lk.actual_price || (lk.duration_months * (st.user_type === '내학생' ? 30000 : 20000));
     });
     return { totalStudents: enrichedStudents.length, activeStudents: a, expiredStudents: e, expiringSoon: s, newThisMonth: n, innerStudents: i, outerStudents: o, monthlyRevenue: rev };
   }, [enrichedStudents]);

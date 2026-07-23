@@ -4,7 +4,7 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 interface ReadingIntroScreenProps {
   setShowReadingIntro: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   setShowModule1Intro: React.Dispatch<React.SetStateAction<boolean>>;
 }
 

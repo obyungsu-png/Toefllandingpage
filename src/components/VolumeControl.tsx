@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 interface VolumeControlProps {
   isOpen: boolean;
   onClose: () => void;
-  buttonRef: React.RefObject<HTMLButtonElement>;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function VolumeControl({ isOpen, onClose, buttonRef }: VolumeControlProps) {

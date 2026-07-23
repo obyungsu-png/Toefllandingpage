@@ -41,11 +41,11 @@ async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Prom
       if (error) {
         // 클라이언트 에러 (RLS, 버킷 없음, 파일 형식 오류 등)는 재시도 불가
         const isClientError =
-          error.statusCode === 400 ||
-          error.statusCode === 401 ||
-          error.statusCode === 403 ||
-          error.statusCode === 404 ||
-          error.statusCode === 413 ||
+          Number(error.statusCode) === 400 ||
+          Number(error.statusCode) === 401 ||
+          Number(error.statusCode) === 403 ||
+          Number(error.statusCode) === 404 ||
+          Number(error.statusCode) === 413 ||
           /not found|policy|permission|denied|too large|unsupported/i.test(error.message);
         console.error(`[uploadToStorage] 업로드 실패 (시도 ${attempt + 1}/${maxRetries + 1}) — bucket: ${bucket}, path: ${path}`, error);
         if (isClientError || attempt === maxRetries) {
@@ -105,7 +105,7 @@ async function compressImage(file: File, maxSize = 1200, quality = 0.8): Promise
   ctx.drawImage(img, 0, 0, width, height);
 
   const blob: Blob = await new Promise((resolve) =>
-    canvas.toBlob(resolve, 'image/jpeg', quality)
+    canvas.toBlob(resolve as any, 'image/jpeg', quality)
   );
 
   const compressedName = file.name.replace(/\.(png|jpe?g|webp|bmp)$/i, '.jpg');
@@ -176,6 +176,9 @@ export interface TPOQuestion {
   scriptText?: string; // Listening dictation/transcript script (shown in Review Script tab)
   analysisNote?: string;
   vocabularyNote?: string;
+  dictationBlanks?: string;
+  organization?: string;
+  organizationBlanks?: string;
 }
 
 export interface TPOSection {
@@ -343,7 +346,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         { id: `${testType}-${testNumber}-writing`, sectionType: 'Writing', questions: [] },
         { id: `${testType}-${testNumber}-speaking`, sectionType: 'Speaking', questions: [] },
       ],
-    };
+    } as any;
     
     onAddTest(newTest);
   };
@@ -1379,7 +1382,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
 // Question Upload Form Component
 interface QuestionUploadFormProps {
-  testType: 'TPO' | 'Test';
+  testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypes: string[];
@@ -3000,7 +3003,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
 
 // Question Edit Form Component
 interface QuestionEditFormProps {
-  testType: 'TPO' | 'Test';
+  testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypes: string[];
@@ -4119,7 +4122,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                     ))}
                   </div>
                   <input type="file" accept="image/*" className="text-[10px] w-16"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, professorImageFile: f, professorImageUrl: URL.createObjectURL(f) }); }}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, professorImageFile: f as any, professorImageUrl: URL.createObjectURL(f) }); }}
                   />
                 </div>
                 <div className="flex-1 space-y-2">
@@ -4161,7 +4164,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                       ))}
                     </div>
                     <input type="file" accept="image/*" className="text-[10px] w-12"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student1ImageFile: f, student1ImageUrl: URL.createObjectURL(f) }); }}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student1ImageFile: f as any, student1ImageUrl: URL.createObjectURL(f) }); }}
                     />
                   </div>
                   <div className="flex-1 space-y-1.5">
@@ -4201,7 +4204,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                       ))}
                     </div>
                     <input type="file" accept="image/*" className="text-[10px] w-12"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student2ImageFile: f, student2ImageUrl: URL.createObjectURL(f) }); }}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student2ImageFile: f as any, student2ImageUrl: URL.createObjectURL(f) }); }}
                     />
                   </div>
                   <div className="flex-1 space-y-1.5">
@@ -4414,7 +4417,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
 
 // Bulk Upload Form Component (Text-based)
 interface BulkUploadFormProps {
-  testType: 'TPO' | 'Test';
+  testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypeOptions?: string[];

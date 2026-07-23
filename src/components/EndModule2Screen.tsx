@@ -36,9 +36,9 @@ const getCEFRLevel = (band: number) => {
 interface EndModule2ScreenProps {
   setShowEndModule2: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
-  setActiveListeningM1Screen: React.Dispatch<React.SetStateAction<string | null>>;
+  handleTabChange: (tab: any) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<any>>;
+  setActiveListeningM1Screen: React.Dispatch<React.SetStateAction<any>>;
   setShowModule2Question20: React.Dispatch<React.SetStateAction<boolean>>;
   readingScore?: ScoreData | null;
 }

@@ -88,7 +88,7 @@ function getCorrectOptionIndex(question: TPOQuestion) {
     if (!Number.isNaN(numericIndex) && question.options[numericIndex] !== undefined) {
       return numericIndex;
     }
-    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer || ''));
+    return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer((question.correctAnswer as string) || ''));
   }
   if (Array.isArray(question.correctAnswer) && question.correctAnswer.length > 0) {
     return question.options.findIndex((option) => normalizeAnswer(option) === normalizeAnswer(question.correctAnswer?.[0] || ''));
@@ -401,7 +401,7 @@ function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onC
   const renderSegment = () => {
     switch (current.kind) {
       case 'repeat-intro':
-        return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />;
+        return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...(volumeProps as any)} />;
       case 'repeat-listen': {
         const q = current.question as any;
         return (
@@ -429,7 +429,7 @@ function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onC
             questionText={q.questionText}
             responseDelay={q.responseDelay}
             stopDuration={q.stopDuration}
-            duration={q.duration}
+            {...({ duration: q.duration } as any)}
           />
         );
       }
@@ -457,7 +457,7 @@ function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onC
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
-            {...volumeProps}
+            {...(volumeProps as any)}
             imageUrl={q.imageUrl}
             audioUrl={q.audioUrl}
             videoUrl={q.videoUrl}
@@ -474,12 +474,12 @@ function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onC
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
-            {...volumeProps}
+            {...(volumeProps as any)}
             imageUrl={q.imageUrl}
             questionText={q.questionText}
             responseDelay={q.responseDelay}
             stopDuration={q.stopDuration}
-            duration={q.duration}
+            {...({ duration: q.duration } as any)}
           />
         );
       }
@@ -491,7 +491,7 @@ function TrainingSpeakingFlow({ questions, isReviewMode, onComplete, onHome, onC
   return (
     <>
       {renderSegment()}
-      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
+      <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef as any} />
     </>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 
 interface ReadingSectionScreenProps {
-  testBankType: 'tpo' | 'test';
+  testBankType: 'tpo' | 'test' | 'training';
   onBackToHome: () => void;
   onBegin: () => void;
 }

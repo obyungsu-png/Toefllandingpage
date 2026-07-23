@@ -34,7 +34,7 @@ const getCEFRLevel = (band: number) => {
 interface EndModule1ScreenProps {
   setShowEndModule1: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   saveSectionResultToHistory: (
     category: 'Reading' | 'Listening' | 'Writing' | 'Speaking',
     totalQuestions: number,

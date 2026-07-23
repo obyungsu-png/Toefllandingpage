@@ -28,8 +28,8 @@ const convertToBand = (rawScore: number): number => {
 interface EndListeningScreenProps {
   setShowEndListening: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
-  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  handleTabChange: (tab: any) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<any>>;
   setActiveWritingScreen: React.Dispatch<React.SetStateAction<any>>;
   listeningScore?: ScoreData | null;
   testData?: TPOTest | null;

@@ -6,7 +6,7 @@ interface Module1IntroScreenProps {
   setShowReadingSection: React.Dispatch<React.SetStateAction<boolean>>;
   setShowToeflTest: React.Dispatch<React.SetStateAction<boolean>>;
   testBankType: string;
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: any) => void;
   setShowFillBlanksTest: React.Dispatch<React.SetStateAction<boolean>>;
   setShowReadingIntro: React.Dispatch<React.SetStateAction<boolean>>;
 }
