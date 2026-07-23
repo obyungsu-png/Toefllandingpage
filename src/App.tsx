@@ -6945,6 +6945,33 @@ function AppContent() {
           오프라인 모드 — 캐시된 데이터를 사용 중입니다
         </div>
       )}
+      {/* Electron 업데이트 발견 — 수동 다운로드 (자동 다운로드 비활성화) */}
+      {updateVersion && !updateDownloaded && (
+        <div className="fixed bottom-4 right-4 z-[9999] bg-blue-600 text-white rounded-lg shadow-xl p-4 max-w-sm">
+          <p className="font-semibold text-sm mb-2">📦 새 버전 {updateVersion} 발견</p>
+          <button
+            onClick={async () => {
+              await (window as any).electronAPI?.downloadUpdate?.();
+            }}
+            className="text-xs bg-white text-blue-700 px-3 py-1.5 rounded font-medium hover:bg-blue-50"
+          >
+            다운로드
+          </button>
+        </div>
+      )}
+      {/* Electron 수동 업데이트 확인 버튼 (Electron 환경에서만 표시) */}
+      {(window as any).electronAPI?.isElectron && !updateVersion && !updateDownloaded && (
+        <button
+          onClick={async () => {
+            const v = await (window as any).electronAPI?.checkUpdate?.();
+            if (v) setUpdateVersion(v);
+          }}
+          className="fixed bottom-4 right-4 z-[9999] bg-gray-600 text-white rounded-lg shadow-lg p-2 text-xs font-medium hover:bg-gray-700"
+          title="새 버전 확인"
+        >
+          업데이트 확인
+        </button>
+      )}
       {/* Electron 업데이트 다운로드 완료 알림 */}
       {updateDownloaded && (
         <div className="fixed bottom-4 right-4 z-[9999] bg-green-600 text-white rounded-lg shadow-xl p-4 max-w-sm">

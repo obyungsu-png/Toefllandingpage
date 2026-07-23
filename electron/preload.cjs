@@ -12,8 +12,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ── 컴퓨터 고유 ID (라이선스 기기 바인딩) ──
   getMachineId: () => ipcRenderer.invoke('get-machine-id'),
 
-  // ── 자동 업데이트 ──
+  // ── 수동 업데이트 ──
   checkUpdate: () => ipcRenderer.invoke('check-update'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
   installUpdate: () => ipcRenderer.send('install-update'),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_, version) => callback(version)),
   onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', (_, version) => callback(version)),

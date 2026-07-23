@@ -125,20 +125,12 @@ function createWindow() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  Claude API 세션 인터셉터 — CORS 우회 + 인증 헤더 자동 추가
-//  (렌더러에서 https://apiclaude.cc/v1/chat/completions 직접 fetch 가능)
+//  Claude API 세션 인터셉터 — CORS 우회만 수행 (인증은 렌더러에서 직접 전달)
+//  자동 토큰 소모 방지: Authorization 헤더 자동 추가 제거
+//  렌더러(ToeflAiWidget, WritingReviewAiTutor)에서 명시적으로 API 키를 전달할 때만 호출됨
 // ─────────────────────────────────────────────────────────────────
 function setupClaudeApiInterceptor() {
-  // 1. 요청 헤더: Authorization 자동 추가
-  session.defaultSession.webRequest.onBeforeSendHeaders(
-    { urls: [`${CLAUDE_API_ORIGIN}/*`] },
-    (details, callback) => {
-      details.requestHeaders['Authorization'] = `Bearer ${CLAUDE_API_KEY}`;
-      callback({ requestHeaders: details.requestHeaders });
-    }
-  );
-
-  // 2. 응답 헤더: CORS 헤더 주입 (Chromium CORS 검사 통과)
+  // 응답 헤더: CORS 헤더 주입 (Chromium CORS 검사 통과)
   session.defaultSession.webRequest.onHeadersReceived(
     { urls: [`${CLAUDE_API_ORIGIN}/*`] },
     (details, callback) => {
@@ -165,7 +157,8 @@ function setupGoogleTtsInterceptor() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  자동 업데이트 (GitHub Releases)
+//  수동 업데이트 (GitHub Releases)
+//  자동 다운로드 비활성화 — 사용자가 명시적으로 확인·다운로드·설치
 // ─────────────────────────────────────────────────────────────────
 function setupAutoUpdater() {
   let autoUpdater;
@@ -176,24 +169,25 @@ function setupAutoUpdater() {
     return;
   }
 
-  autoUpdater.autoDownload = true;
+  // 자동 다운로드 비활성화 — 사용자가 수동으로 다운로드 버튼을 누를 때만 다운로드
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('update-available', (info) => {
-    console.log('📦 업데이트 발견:', info.version, '— 다운로드 중...');
+    console.log('📦 업데이트 발견:', info.version, '— 다운로드 대기 (사용자 확인 필요)');
     mainWindow?.webContents.send('update-available', info.version);
   });
 
   autoUpdater.on('update-downloaded', (info) => {
-    console.log('✅ 업데이트 다운로드 완료:', info.version, '— 재시작 시 적용');
+    console.log('✅ 업데이트 다운로드 완료:', info.version, '— 설치 대기 (사용자 확인 필요)');
     mainWindow?.webContents.send('update-downloaded', info.version);
   });
 
   autoUpdater.on('error', (err) => {
-    console.error('❌ 자동 업데이트 오류:', err.message);
+    console.error('❌ 업데이트 오류:', err.message);
   });
 
-  // IPC: 수동 업데이트 확인
+  // IPC: 수동 업데이트 확인 (사용자가 버튼 클릭 시)
   ipcMain.handle('check-update', async () => {
     try {
       const result = await autoUpdater.checkForUpdates();
@@ -204,15 +198,23 @@ function setupAutoUpdater() {
     }
   });
 
+  // IPC: 업데이트 다운로드 (사용자가 다운로드 버튼 클릭 시)
+  ipcMain.handle('download-update', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+      return true;
+    } catch (e) {
+      console.error('Download failed:', e.message);
+      return false;
+    }
+  });
+
   // IPC: 업데이트 설치 (앱 재시작)
   ipcMain.on('install-update', () => {
     autoUpdater.quitAndInstall();
   });
 
-  // 앱 시작 후 5초 뒤 업데이트 확인
-  setTimeout(() => {
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {});
-  }, 5000);
+  // 앱 시작 시 자동 확인 제거 — 사용자가 명시적으로 확인 버튼을 누를 때만 작동
 }
 
 // ─────────────────────────────────────────────────────────────────
