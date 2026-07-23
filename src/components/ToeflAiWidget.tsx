@@ -20,6 +20,8 @@ const CLAUDE_PROXY_ENDPOINT = isElectron
   ? 'https://apiclaude.cc/v1/chat/completions'   // Electron: 세션 인터셉터가 인증+CORS 처리
   : '/api/claude/chat/completions';                // 웹: Vercel 프록시
 const CLAUDE_MODEL = 'claude-sonnet-5';
+// Claude API 키 — Electron에서 직접 호출 시 필요 (웹에서는 Vercel 프록시가 처리)
+const CLAUDE_API_KEY = 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
 
 type AiModel = 'glm' | 'claude';
 
@@ -376,7 +378,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     try {
       const isClaude = selectedModel === 'claude';
       const endpoint = isClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
-      const apiKey = isClaude ? '' : GLM_API_KEY;
+      const apiKey = isClaude ? CLAUDE_API_KEY : GLM_API_KEY;
       const modelId = isClaude ? CLAUDE_MODEL : GLM_MODEL;
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };

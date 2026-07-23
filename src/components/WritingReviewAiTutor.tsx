@@ -31,6 +31,8 @@ const CLAUDE_PROXY_ENDPOINT = isElectron
   ? 'https://apiclaude.cc/v1/chat/completions'
   : '/api/claude/chat/completions';
 const CLAUDE_MODEL = 'claude-sonnet-5';
+// Claude API 키 — Electron에서 직접 호출 시 필요 (웹에서는 Vercel 프록시가 처리)
+const CLAUDE_API_KEY = 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
 
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 type WritingType = 'email' | 'discussion';
@@ -261,7 +263,7 @@ async function callAi(
   temperature: number = 0.4,
 ): Promise<string> {
   const endpoint = useClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
-  const apiKey = useClaude ? '' : GLM_API_KEY;
+  const apiKey = useClaude ? CLAUDE_API_KEY : GLM_API_KEY;
   const modelId = useClaude ? CLAUDE_MODEL : GLM_MODEL;
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
