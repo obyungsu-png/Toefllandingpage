@@ -1,14 +1,14 @@
-﻿questionNumber,questionType,difficulty,level,day,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,context
-1,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,The organizer wanted to know if the new equipment would arrive on time.,,Why was the guest lecturer series postponed?
-2,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,What time do the theater doors open?,,I just got tickets to see the new play this weekend.
-3,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Can you tell me if you visited Tokyo?,,I just returned from a semester abroad in Japan.
-4,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Someone else checked it out so it was not available.,,Did you manage to find the book you were looking for at the library?
-5,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,What time are you planning to arrive?,,I'm going to attend the grand opening of the new student center this weekend.
-6,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Can you tell me whether they offered you the position?,,Did you know that I applied for a student internship?
-7,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Where is it being held?,,I heard there's a music festival near campus this weekend.
-8,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,I have no intention of going.,,Are you planning to attend the conference next month?
-9,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,Do they offer a discount to university students?,,I just joined a gym that's a few blocks from campus.
-10,Build a Sentence,보통,1,01,,,,,,,Make an appropriate sentence.,,,,,We went to the restaurant that recently opened downtown.,,Why didn't you attend the campus fair last night?
+questionNumber,questionType,difficulty,level,day,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,context
+1,Build a Sentence,보통,1,01,,Why was the guest lecturer series postponed?,,,,,,,,,,The organizer wanted to know if the new equipment would arrive on time.,,
+2,Build a Sentence,보통,1,01,,I just got tickets to see the new play this weekend.,,,,,,,,,,What time do the theater doors open?,,
+3,Build a Sentence,보통,1,01,,I just returned from a semester abroad in Japan.,,,,,,,,,,Can you tell me if you visited Tokyo?,,
+4,Build a Sentence,보통,1,01,,Did you manage to find the book you were looking for at the library?,,,,,,,,,,Someone else checked it out so it was not available.,,
+5,Build a Sentence,보통,1,01,,I'm going to attend the grand opening of the new student center this weekend.,,,,,,,,,,What time are you planning to arrive?,,
+6,Build a Sentence,보통,1,01,,Did you know that I applied for a student internship?,,,,,,,,,,Can you tell me whether they offered you the position?,,
+7,Build a Sentence,보통,1,01,,I heard there's a music festival near campus this weekend.,,,,,,,,,,Where is it being held?,,
+8,Build a Sentence,보통,1,01,,Are you planning to attend the conference next month?,,,,,,,,,,I have no intention of going.,,
+9,Build a Sentence,보통,1,01,,I just joined a gym that's a few blocks from campus.,,,,,,,,,,Do they offer a discount to university students?,,
+10,Build a Sentence,보통,1,01,,Why didn't you attend the campus fair last night?,,,,,,,,,,We went to the restaurant that recently opened downtown.,,
 11,Write an Email,보통,1,01,,,,,,,"Write an email to the hotel manager, Mr. Carter. In your email, do the following:
 • Explain the purpose of your trip and the number of people in your group.
 • Explain your group's specific requirements.

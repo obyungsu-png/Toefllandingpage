@@ -288,26 +288,41 @@ const writingHeader = 'questionNumber,questionType,difficulty,level,day,passageT
 const writingRows = [];
 
 // Q1-10 Build a Sentence
+//
+// TPO2 템플릿 규약:
+//  - avatar1(친구 말풍선)에 들어갈 대사는 passageText 컬럼에 둔다.
+//    Build a Sentence는 CSV 파서가 passageText → questionText로 자동 승격한다.
+//  - 상단 큰 제목("Make an appropriate sentence.")은 컴포넌트에 하드코딩돼 있으므로
+//    questionText / context / explanation은 모두 비운다. (context를 채우면 회색 상황
+//    박스가 뜨면서 h2와 시각적으로 중복돼 보인다 — TPO12 리포트 이슈)
+//  - correctAnswer는 정답 문장(단어 조합 원본), sentenceEnding은 파서가 자동 추출.
+// 컬럼 순서: questionNumber, questionType, difficulty, level, day, passageTitle,
+//           passageText, scriptText, dictationBlanks, organization,
+//           organizationBlanks, questionText, optionA, optionB, optionC, optionD,
+//           correctAnswer, explanation, context
 const bsData = [
-  ['1','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','What time are you planning to arrive','','I\'m going to attend the grand opening of the new student center this weekend.'],
-  ['2','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','I have never been interested in those types of events','','Are you planning to attend the English language learning conference next month?'],
-  ['3','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Can you tell me if any of the messages were important','','A biology professor sent us three emails this morning.'],
-  ['4','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Someone else had checked it out so it was not available','','Did you manage to find the book you were looking for at the library?'],
-  ['5','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Do you know how many weeks it will be there?','','A temporary art exhibition is opening at the campus museum today.'],
-  ['6','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Can you tell me whether the data is reliable','','What did you think about our group report on climate change?'],
-  ['7','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Do you know if the presentation materials are available online','','A biology seminar on Thursday was very informative.'],
-  ['8','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Do you know if the agenda has been sent out','','Are you attending the student council meeting tomorrow?'],
-  ['9','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Where can I buy a copy for myself?','','I just finished reading this fascinating book for class.'],
-  ['10','Build a Sentence','보통','1','01','','','','','','Make an appropriate sentence.','','','','','Could you let me know if the trip is for business or leisure','','What places should I visit in New York during our semester break?'],
+  ['1','Build a Sentence','보통','1','01','',"I'm going to attend the grand opening of the new student center this weekend.",'','','','','','','','','','What time are you planning to arrive','',''],
+  ['2','Build a Sentence','보통','1','01','','Are you planning to attend the English language learning conference next month?','','','','','','','','','','I have never been interested in those types of events','',''],
+  ['3','Build a Sentence','보통','1','01','','A biology professor sent us three emails this morning.','','','','','','','','','','Can you tell me if any of the messages were important','',''],
+  ['4','Build a Sentence','보통','1','01','','Did you manage to find the book you were looking for at the library?','','','','','','','','','','Someone else had checked it out so it was not available','',''],
+  ['5','Build a Sentence','보통','1','01','','A temporary art exhibition is opening at the campus museum today.','','','','','','','','','','Do you know how many weeks it will be there?','',''],
+  ['6','Build a Sentence','보통','1','01','','What did you think about our group report on climate change?','','','','','','','','','','Can you tell me whether the data is reliable','',''],
+  ['7','Build a Sentence','보통','1','01','','A biology seminar on Thursday was very informative.','','','','','','','','','','Do you know if the presentation materials are available online','',''],
+  ['8','Build a Sentence','보통','1','01','','Are you attending the student council meeting tomorrow?','','','','','','','','','','Do you know if the agenda has been sent out','',''],
+  ['9','Build a Sentence','보통','1','01','','I just finished reading this fascinating book for class.','','','','','','','','','','Where can I buy a copy for myself?','',''],
+  ['10','Build a Sentence','보통','1','01','','What places should I visit in New York during our semester break?','','','','','','','','','','Could you let me know if the trip is for business or leisure','',''],
 ];
 bsData.forEach(r => writingRows.push(makeRow(r)));
 
 // Q11 Write an Email (Printer Malfunction)
+// 19열: ..., passageText(이메일 헤더), scriptText, dictBlanks, organization,
+//       organizationBlanks, questionText(작성 지시), optionA-D, correctAnswer,
+//       explanation, context(상황 설명)
 writingRows.push(makeRow([
   '11','Write an Email','보통','1','01','',
   `To: Mr. Evans
 Subject: Printer Malfunction Issues`,
-  '','',
+  '','','','',
   `Write an email to the IT manager, Mr. Evans. In your email, do the following:
 • Describe the issues you are experiencing with the printer.
 • Explain how these issues are affecting your work.
@@ -324,10 +339,13 @@ const adStudentMsgs = `Andrew: Literature plays a significant role in shaping so
 
 Claire: While literature has some impact, other forms of media like television and social media are more influential in shaping societal values today. These platforms reach a broader audience and can quickly spread ideas and trends. Most people prefer these newer forms of media because they are less challenging than literary works are.`;
 
+// 19열: ..., passageText(교수+학생 게시글), scriptText, dictBlanks, organization,
+//       organizationBlanks, questionText(작성 지시), optionA-D, correctAnswer,
+//       explanation, context
 writingRows.push(makeRow([
   '12','Academic Discussion','보통','1','01','',
   adProfMsg + '\n\n' + adStudentMsgs,
-  '','','',
+  '','','','',
   `Your professor is teaching a class on literature. Write a post responding to the professor's question.
 In your response, you should do the following:
 • Express and support your opinion.
