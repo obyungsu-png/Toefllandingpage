@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 
-type TestSetRange = '1-5';
+type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
 type YearFilter = 'all' | '2024' | '2025' | '2026';
 type MonthFilter = 'all' | 'jan-mar' | 'apr-jun' | 'jul-sep' | 'oct-dec';
 

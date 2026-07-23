@@ -1,4 +1,6 @@
-import { Highlighter, Underline, Eraser, Globe } from 'lucide-react';
+import { useState } from 'react';
+import { Highlighter, Underline, Eraser, Globe, PenLine } from 'lucide-react';
+import { DrawingOverlay } from './DrawingOverlay';
 
 interface ReadingReviewToolbarProps {
   activeTool: 'highlight' | 'underline' | null;
@@ -164,7 +166,7 @@ export function ReadingReviewToolbar({
   );
 }
 
-/** 지우기 + EN/KO 액션 버튼 (다크모드 버튼 오른쪽에 배치용) */
+/** 지우기 + 필기 + EN/KO 액션 버튼 (다크모드 버튼 오른쪽에 배치용) */
 export function ReadingReviewActions({
   onClearAll,
   language,
@@ -174,6 +176,8 @@ export function ReadingReviewActions({
   language: 'en' | 'ko';
   onLanguageChange: (lang: 'en' | 'ko') => void;
 }) {
+  const [penOpen, setPenOpen] = useState(false);
+
   return (
     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 shadow-sm">
       {/* 지우개 버튼 */}
@@ -184,6 +188,17 @@ export function ReadingReviewActions({
       >
         <Eraser size={14} />
         <span className="hidden sm:inline">지우기</span>
+      </button>
+      {/* 구분선 */}
+      <div className="w-px h-4 bg-gray-200 dark:bg-gray-600"></div>
+      {/* 필기(펜) 버튼 — 전체 화면 캔버스 오버레이 */}
+      <button
+        onClick={() => setPenOpen(true)}
+        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        title="필기 (펜)"
+      >
+        <PenLine size={14} />
+        <span className="hidden sm:inline">필기</span>
       </button>
       {/* 구분선 */}
       <div className="w-px h-4 bg-gray-200 dark:bg-gray-600"></div>
@@ -198,6 +213,9 @@ export function ReadingReviewActions({
         <span className="text-gray-300 dark:text-gray-500">|</span>
         <span className={`px-1.5 py-0.5 rounded ${language === 'ko' ? 'bg-[#1e6b73] text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-200'}`}>KO</span>
       </button>
+
+      {/* 필기 오버레이 — portal로 전체 화면에 렌더링 */}
+      {penOpen && <DrawingOverlay onClose={() => setPenOpen(false)} />}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { TPOTest } from './ContentManagement';
 import { TPOCardMobileCompact } from './TPOCardMobileCompact';
 
 
-type TestSetRange = '1-5';
+type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
 
 interface TPOPageProps {
   isMobile: boolean;

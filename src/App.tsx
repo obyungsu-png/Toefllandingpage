@@ -14,7 +14,7 @@ import type { LMSContent } from './components/LMSSection';
 import type { TPOQuestion, TPOTest } from './components/ContentManagement';
 import type { Advertisement } from './components/AdManagement';
 import { Button } from './components/ui/button';
-const QuestionUploader = lazy(() => import('./components/QuestionUploader').then(m => ({ default: m.QuestionUploader })));
+const QuestionUploader = lazy(() => import('./components/QuestionUploader').then(m => ({ default: m.QuestionUploadForm })));
 const QuestionTypesSection = lazy(() => import('./components/QuestionTypesSection').then(m => ({ default: m.QuestionTypesSection })));
 const AdManagement = lazy(() => import('./components/AdManagement').then(m => ({ default: m.AdManagement })));
 const TPOPage = lazy(() => import('./components/TPOPage').then(m => ({ default: m.TPOPage })));
@@ -7271,7 +7271,7 @@ function AppContent() {
         <ListeningTestEngine
           sectionData={getCurrentSectionData('Listening')}
           module={2}
-          initialLegacyKey={activeListeningM2Screen !== 'intro' ? activeListeningM2Screen : undefined}
+          initialLegacyKey={(activeListeningM2Screen as string) !== 'intro' ? activeListeningM2Screen : undefined}
           onSegmentChange={setCurrentListeningReviewScreen}
           currentTest={currentTest}
           testBankType={testBankType}
