@@ -85,68 +85,114 @@ const stripProfessorPrefixFromBody = (body: string): string => {
 // Build the email writingQuestion object expected by WritingEmailQ1 from the
 // raw CMS question (passageText JSON + questionText).
 //
-// CSV body 형식:
-//   "시나리오... Write an email... In your email, do the following: 요구사항1 | 요구사항2 | 요구사항3"
-// - `|` 로 구분된 요구사항들을 bullets 로 분리
-// - "do the following:" 이전 텍스트는 시나리오, 이후 첫 번째 요구사항은 bullets[0]
+// CSV 형식 (TPO 2 기준 — 모든 라이팅 CSV가 이 형식을 따름):
+//   passageText = "To: Mr. Evans\nSubject: Printer Malfunction Issues"
+//   questionText = "Write an email to the IT manager, Mr. Evans. In your email, do the following:\n• Describe...\n• Explain...\n• Suggest...\nWrite as much as you can and in complete sentences."
+//   context      = "You are a student who works in the Office of Readmissions..."
+//
+// 파싱 규칙:
+// - "To: ..." / "Subject: ..." 라인을 passageText 또는 questionText에서 추출 → emailTo / emailSubject
+// - context 필드("You are a student...")를 emailScenario로 사용 (passageText가 아님)
+// - questionText에서 "•" bullets를 분리 → emailBullets
+// - questionText에서 bullets/To/Subject를 제외한 본문 → emailInstruction
+// - 직접 CMS 필드(emailScenario 등)가 있으면 최우선
 export const buildEmailWritingQuestion = (emailQ: any) => {
   if (!emailQ) return null;
   const fields = parseWritingPassageFields(emailQ.passageText);
   const hasJson = Object.keys(fields).length > 0;
 
-  // 직접 CMS 필드 우선 (Add Question 폼에서 저장된 emailScenario 등), 없으면 passageText JSON fallback
   const questionText = emailQ.questionText || '';
-  const rawBody = hasJson
+  const rawPassage = hasJson
     ? (fields.body || fields.본문 || fields.내용 || fields.emailbody || '')
     : (emailQ.passageText || '');
 
-  // body 에서 `|` 로 구분된 요구사항(bullets) 분리
-  let emailScenario = rawBody;
+  // ── To / Subject 라인 추출 헬퍼 ──
+  // "To: Mr. Evans" / "Subject: Printer Malfunction Issues" 형태의 라인을
+  // 찾아 값을 추출하고, 원본 텍스트에서 해당 라인을 제거한 cleaned 텍스트 반환.
+  const extractToAndSubject = (text: string): { to: string; subject: string; cleaned: string } => {
+    if (!text) return { to: '', subject: '', cleaned: '' };
+    let to = '';
+    let subject = '';
+    const keptLines: string[] = [];
+    for (const rawLine of text.split('\n')) {
+      const toMatch = rawLine.match(/^\s*To\s*[:：]\s*(.+)$/i);
+      const subjectMatch = rawLine.match(/^\s*Subject\s*[:：]\s*(.+)$/i);
+      if (toMatch) { to = toMatch[1].trim(); continue; }
+      if (subjectMatch) { subject = subjectMatch[1].trim(); continue; }
+      keptLines.push(rawLine);
+    }
+    return { to, subject, cleaned: keptLines.join('\n').trim() };
+  };
+
+  // passageText에서 To/Subject 추출 (csv_3.30 / csv_4.1 형식)
+  const fromPassage = extractToAndSubject(rawPassage);
+  // questionText에서도 To/Subject 추출 (csv_4.28 형식 — 끝에 붙어있는 경우)
+  const fromQuestion = extractToAndSubject(questionText);
+
+  // ── emailTo / emailSubject ──
+  // 직접 CMS 필드 > passageText에서 추출 > questionText에서 추출 > JSON fields
+  const emailTo =
+    emailQ.emailTo || fromPassage.to || fromQuestion.to ||
+    fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '';
+  const emailSubject =
+    emailQ.emailSubject || fromPassage.subject || fromQuestion.subject ||
+    fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '';
+
+  // ── emailScenario ──
+  // 직접 CMS 필드 > context 필드("You are a student...") > passageText에서 To/Subject 제거한 나머지
+  const cleanedPassage = fromPassage.cleaned;
+  const emailScenario =
+    emailQ.emailScenario || emailQ.context || cleanedPassage || '';
+
+  // ── emailInstruction + emailBullets ──
+  // questionText에서 To/Subject 라인을 제거한 뒤, "•" bullets와 instruction 분리
+  const cleanedQuestion = fromQuestion.cleaned;
+  let emailInstruction = emailQ.emailInstruction || '';
   let bullets: string[] = [];
+  const instructionLines: string[] = [];
 
-  if (rawBody.includes('|')) {
-    const parts = rawBody.split('|').map(p => p.trim()).filter(Boolean);
+  for (const rawLine of cleanedQuestion.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    // "• Describe..." / "- Describe..." / "1. Describe..." 형식
+    const bulletMatch = line.match(/^(?:[•\-*]|\d+[.)])\s+(.+)$/);
+    if (bulletMatch) {
+      bullets.push(bulletMatch[1].trim());
+    } else {
+      instructionLines.push(line);
+    }
+  }
+  // "Write as much as you can and in complete sentences."는 WritingEmailQ1에서
+  // 하드코딩으로 표시되므로 instruction에서 제외 (중복 방지)
+  const filteredInstructions = instructionLines.filter(
+    line => !/^write as much as you can/i.test(line)
+  );
+  if (!emailInstruction && filteredInstructions.length > 0) {
+    emailInstruction = filteredInstructions.join('\n');
+  }
+
+  // 레거시: JSON body에서 "|"로 구분된 요구사항 (do the following: ... | ... | ...)
+  if (bullets.length === 0 && cleanedPassage.includes('|')) {
+    const parts = cleanedPassage.split('|').map(p => p.trim()).filter(Boolean);
     if (parts.length > 1) {
-      const firstPart = parts[0]; // 시나리오 + 지시문 + 첫 번째 요구사항
-      bullets = parts.slice(1);   // 나머지 요구사항들
-
-      // "do the following:" 마커로 시나리오와 첫 번째 요구사항 분리
+      const firstPart = parts[0];
+      bullets = parts.slice(1);
       const markerMatch = firstPart.match(/do the following\s*[:：]\s*/i);
       if (markerMatch && markerMatch.index !== undefined) {
-        const before = firstPart.slice(0, markerMatch.index + markerMatch[0].length).trim();
         const after = firstPart.slice(markerMatch.index + markerMatch[0].length).trim();
         if (after) bullets = [after, ...bullets];
-
-        // 시나리오와 지시문 분리 ("Write an email" 시작점 기준)
-        const instrStart = before.search(/write an email/i);
-        emailScenario = instrStart > 0
-          ? before.slice(0, instrStart).trim()
-          : before;
-      } else {
-        emailScenario = firstPart;
       }
     }
   }
 
-  // questionText 에서도 bullets 시도 (레거시: - / • / * / 1. 형식)
-  if (bullets.length === 0) {
-    for (const rawLine of questionText.split('\n')) {
-      const line = rawLine.trim();
-      if (!line) continue;
-      const bulletMatch = line.match(/^(?:[-•*]|\d+[.)])\s+(.+)$/);
-      if (bulletMatch) bullets.push(bulletMatch[1].trim());
-    }
-  }
-
-  // 직접 CMS 필드가 있으면 우선 사용 (Add Question 폼에서 저장된 값)
-  if (emailQ.emailScenario) emailScenario = emailQ.emailScenario;
+  // 직접 CMS 필드가 있으면 최우선 (Add Question 폼에서 저장된 값)
   if (emailQ.emailBullets && emailQ.emailBullets.length > 0) bullets = emailQ.emailBullets;
 
   return {
-    emailTo: emailQ.emailTo || fields.to || fields.받는사람 || fields.recipient || fields.받는이 || '',
-    emailSubject: emailQ.emailSubject || fields.subject || fields.제목 || fields.주제 || fields.메일제목 || '',
+    emailTo,
+    emailSubject,
     emailScenario,
-    emailInstruction: emailQ.emailInstruction || questionText,
+    emailInstruction,
     emailBullets: bullets,
   };
 };
@@ -248,8 +294,9 @@ export const buildAcademicDiscussionProps = (adQ: any) => {
     }
   }
 
-  // promptTitle = questionText (지시문), promptInstructions = 토론 주제
-  const promptTitle = adQ.questionText || '';
+  // promptTitle = questionText (지시문), 없으면 context 필드 fallback.
+  // promptInstructions = 토론 주제
+  const promptTitle = adQ.questionText || adQ.context || '';
   const promptInstructions = fields.subject || fields.title || fields.제목 ||
     fields.주제 || adQ.passageTitle || '';
 
