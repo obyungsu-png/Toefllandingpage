@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const CLAUDE_API_URL = 'https://apiclaude.cc/v1/chat/completions';
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
+// 보안: API 키는 환경변수에서만 가져옵니다. (문서 추출본 — 실제 빌드에 미사용)
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || '[REDACTED]';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
