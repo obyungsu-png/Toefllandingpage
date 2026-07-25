@@ -149,12 +149,15 @@
       port: 3000,
       open: true,
       proxy: {
+        // 개발 환경에서 /api/claude/* 를 apiclaude.cc로 프록시.
+        // 보안: API 키는 .env.local의 VITE_DEV_CLAUDE_API_KEY에서 읽음.
+        // (프로덕션에서는 Vercel 서버리스 함수 api/claude/chat/completions.ts가 처리)
         '/api/claude': {
           target: 'https://apiclaude.cc',
           changeOrigin: true,
           rewrite: (path) => '/v1/chat/completions',
           headers: {
-            Authorization: 'Bearer sk-7bb2bdf867bc08ac04bae5cd03dbc96351d08d6f0ec80716596a22b7a74b06f9',
+            Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
           },
         },
       },

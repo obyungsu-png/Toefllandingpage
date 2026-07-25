@@ -3,9 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 
-// Claude API 설정 (Electron main process에서 직접 호출 — CORS 제한 없음)
-const CLAUDE_API_ORIGIN = 'https://apiclaude.cc';
-const CLAUDE_API_KEY = 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
+// Claude API는 이제 Vercel 서버리스 프록시를 통해서만 호출됩니다.
+// (보안: API 키는 Electron에 노출되지 않고 Vercel 환경변수에서만 관리)
+// CLAUDE_PROXY_ORIGIN은 Electron에서 절대 URL로 호출할 Vercel 프록시의 origin.
+// 환경변수 CLAUDE_PROXY_ORIGIN이 있으면 사용, 없으면 패키지명 기반 추정 URL.
+const CLAUDE_PROXY_ORIGIN = process.env.CLAUDE_PROXY_ORIGIN
+  || 'https://toefl-allmyexam.vercel.app';
 
 // Google Translate TTS (고품질 음성 합성용)
 const GOOGLE_TTS_ORIGIN = 'https://translate.google.com';
@@ -125,14 +128,14 @@ function createWindow() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  Claude API 세션 인터셉터 — CORS 우회만 수행 (인증은 렌더러에서 직접 전달)
-//  자동 토큰 소모 방지: Authorization 헤더 자동 추가 제거
-//  렌더러(ToeflAiWidget, WritingReviewAiTutor)에서 명시적으로 API 키를 전달할 때만 호출됨
+//  Claude 프록시 세션 인터셉터 — Vercel 프록시 호출 시 CORS 우회
+//  이제 Claude API 키는 Electron에 저장되지 않고 Vercel 환경변수에서만 관리됨.
+//  Electron 렌더러는 Vercel 프록시(CLAUDE_PROXY_ORIGIN)를 통해 Claude를 호출.
 // ─────────────────────────────────────────────────────────────────
 function setupClaudeApiInterceptor() {
   // 응답 헤더: CORS 헤더 주입 (Chromium CORS 검사 통과)
   session.defaultSession.webRequest.onHeadersReceived(
-    { urls: [`${CLAUDE_API_ORIGIN}/*`] },
+    { urls: [`${CLAUDE_PROXY_ORIGIN}/*`] },
     (details, callback) => {
       details.responseHeaders['access-control-allow-origin'] = ['*'];
       details.responseHeaders['access-control-allow-methods'] = ['POST, OPTIONS'];

@@ -7,15 +7,26 @@ import { Input } from './ui/input';
 // ───────────────────────────────────────────────────────────────────────────
 //  API 설정 — GLM + Claude 듀블 모델 지원
 //  - GLM: 직접 호출 (CORS 허용)
-//  - Claude: 항상 Vercel 서버리스 프록시(/api/claude/chat/completions) 경유
-//           클라이언트에 API 키를 노출하지 않음 (보안)
+//  - Claude: 항상 Vercel 서버리스 프록시 경유 — 클라이언트에 API 키 노출 없음 (보안)
+//    - 웹: /api/claude/chat/completions (상대 경로)
+//    - Electron: 배포된 Vercel 절대 URL (VITE_CLAUDE_PROXY_URL 환경변수)
 // ───────────────────────────────────────────────────────────────────────────
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
 const GLM_MODEL = 'glm-4-flash';
 
-// Claude는 항상 Vercel 프록시를 통해서만 호출 — API 키는 서버 환경변수에서만 관리
-const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
+// Electron 여부 확인
+const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
+
+// Claude 프록시 엔드포인트:
+// - 웹에서는 상대 경로(/api/claude/chat/completions) 사용 → Vercel가 자동 라우팅
+// - Electron에서는 절대 URL 필요 → VITE_CLAUDE_PROXY_URL 환경변수에서 읽음
+//   예: .env.local에 VITE_CLAUDE_PROXY_URL=https://your-app.vercel.app/api/claude/chat/completions
+//   환경변수 미설정 시 fallback으로 패키지명 기반 추정 URL 사용
+const CLAUDE_PROXY_ENDPOINT = isElectron
+  ? (import.meta.env.VITE_CLAUDE_PROXY_URL as string | undefined)
+    || 'https://toefl-allmyexam.vercel.app/api/claude/chat/completions'
+  : '/api/claude/chat/completions';
 const CLAUDE_MODEL = 'claude-sonnet-5';
 
 type AiModel = 'glm' | 'claude';
