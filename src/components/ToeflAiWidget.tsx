@@ -7,21 +7,16 @@ import { Input } from './ui/input';
 // ───────────────────────────────────────────────────────────────────────────
 //  API 설정 — GLM + Claude 듀블 모델 지원
 //  - GLM: 직접 호출 (CORS 허용)
-//  - Claude: Electron에서는 직접 호출(세션 인터셉터가 CORS+인증 처리),
-//           웹에서는 Vercel 서버리스 프록시 경유
+//  - Claude: 항상 Vercel 서버리스 프록시(/api/claude/chat/completions) 경유
+//           클라이언트에 API 키를 노출하지 않음 (보안)
 // ───────────────────────────────────────────────────────────────────────────
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
 const GLM_MODEL = 'glm-4-flash';
 
-// Electron 여부 확인 → Claude 엔드포인트 분기
-const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
-const CLAUDE_PROXY_ENDPOINT = isElectron
-  ? 'https://apiclaude.cc/v1/chat/completions'   // Electron: 세션 인터셉터가 인증+CORS 처리
-  : '/api/claude/chat/completions';                // 웹: Vercel 프록시
+// Claude는 항상 Vercel 프록시를 통해서만 호출 — API 키는 서버 환경변수에서만 관리
+const CLAUDE_PROXY_ENDPOINT = '/api/claude/chat/completions';
 const CLAUDE_MODEL = 'claude-sonnet-5';
-// Claude API 키 — Electron에서 직접 호출 시 필요 (웹에서는 Vercel 프록시가 처리)
-const CLAUDE_API_KEY = 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
 
 type AiModel = 'glm' | 'claude';
 
@@ -378,14 +373,18 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     try {
       const isClaude = selectedModel === 'claude';
       const endpoint = isClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
-      const apiKey = isClaude ? CLAUDE_API_KEY : GLM_API_KEY;
       const modelId = isClaude ? CLAUDE_MODEL : GLM_MODEL;
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'User-Agent': 'OBS',
       };
-      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+      // Claude는 Vercel 프록시가 서버 환경변수에서 키를 주입하므로
+      // 클라이언트에서 Authorization 헤더를 보내지 않음.
+      // GLM만 클라이언트에서 직접 호출 (CORS 허용됨).
+      if (!isClaude) {
+        headers['Authorization'] = `Bearer ${GLM_API_KEY}`;
+      }
 
       const requestBody: Record<string, any> = {
         model: modelId,

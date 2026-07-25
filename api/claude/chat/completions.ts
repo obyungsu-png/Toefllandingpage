@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const CLAUDE_API_URL = 'https://apiclaude.cc/v1/chat/completions';
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || 'sk-54ae310275be8eebb33ecd4112b373367a66adf31cabb15f8e5dcdea9bb51882';
+// 보안: API 키는 Vercel 환경변수에서만 가져옵니다.
+// 클라이언트 코드에 하드코딩된 키를 제거하여 키 탈취 방지.
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +22,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.writeHead(405, CORS_HEADERS);
     res.end('Method Not Allowed');
+    return;
+  }
+
+  // 보안: CLAUDE_API_KEY 환경변수가 설정되어 있지 않으면 요청 거부
+  if (!CLAUDE_API_KEY) {
+    res.writeHead(500, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      error: 'CLAUDE_API_KEY 환경변수가 설정되지 않았습니다. Vercel 프로젝트 설정에서 환경변수를 추가해주세요.'
+    }));
     return;
   }
 
