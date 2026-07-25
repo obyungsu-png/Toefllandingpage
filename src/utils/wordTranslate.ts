@@ -67,7 +67,7 @@ interface TranslateResult {
 async function translateWithGoogle(text: string, sourceLang: string, targetLang: string): Promise<TranslateResult | null> {
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&dt=bd&q=${encodeURIComponent(text)}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { 'User-Agent': 'OBS' } });
     if (!response.ok) return null;
 
     const data = await response.json();
@@ -98,7 +98,7 @@ async function translateWithGoogle(text: string, sourceLang: string, targetLang:
 async function translateWithMyMemory(text: string, sourceLang: string, targetLang: string): Promise<string | null> {
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { 'User-Agent': 'OBS' } });
     if (!response.ok) return null;
 
     const data = await response.json();

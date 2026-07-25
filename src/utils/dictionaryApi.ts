@@ -21,7 +21,7 @@ export async function getWordDefinitions(word: string): Promise<WordDefinition[]
   if (!cleaned) return [];
 
   try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleaned)}`);
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleaned)}`, { headers: { 'User-Agent': 'OBS' } });
     if (!response.ok) return [];
 
     const data = await response.json();

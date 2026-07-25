@@ -381,7 +381,10 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       const apiKey = isClaude ? CLAUDE_API_KEY : GLM_API_KEY;
       const modelId = isClaude ? CLAUDE_MODEL : GLM_MODEL;
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'OBS',
+      };
       if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
       const requestBody: Record<string, any> = {

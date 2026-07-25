@@ -54,6 +54,7 @@ export async function serverFetch(
 ): Promise<Response> {
   // Authorization 헤더 자동 주입 (누락된 경우)
   const headers: Record<string, string> = {
+    'User-Agent': 'OBS',
     ...(init.headers as Record<string, string> | undefined),
   };
   if (!headers['Authorization'] && !headers['authorization']) {

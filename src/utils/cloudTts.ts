@@ -75,7 +75,7 @@ function splitTextIntoChunks(text: string): string[] {
 async function fetchGoogleTtsChunk(text: string, lang = 'en-GB'): Promise<Blob | null> {
   try {
     const url = `${GOOGLE_TTS_BASE}?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: { 'User-Agent': 'OBS' } });
     if (!res.ok) return null;
     return await res.blob();
   } catch {
