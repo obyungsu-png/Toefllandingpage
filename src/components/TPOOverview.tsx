@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from './ui/button';
-import { Plus, Trash2, ChevronRight, BookOpen, Headphones, PenTool, Mic, AlertCircle, Pencil } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, BookOpen, Headphones, PenTool, Mic, AlertCircle, Pencil, ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import type { TPOSection, TPOTest } from './ContentManagement';
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -29,8 +29,16 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
   const [newTestType, setNewTestType] = useState<'TPO' | 'Test' | 'Training'>('TPO');
   const [newTestNumber, setNewTestNumber] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; number: number } | null>(null);
+  // 정렬 방향 — 기본 내림차순(최신 year가 먼저). 사용자가 year/month를 CMS에 넣으면 자동으로 정렬됨.
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const parseTests = (): TPOSet[] => {
+  // Lookup year/month for a test (CMS 메타데이터)
+  const getMeta = (type: string, number: number) =>
+    tests.find(t => t.testType === type && t.testNumber === number);
+
+  // TPO/Test/Training 카드를 type별로 그룹화 → 같은 type 내에서는 year+month 기준 자동 정렬.
+  // year/month가 없는 항목은 번호순으로 뒤로 보냄 (이전 버전 호환).
+  const parsedTests = useMemo((): TPOSet[] => {
     const sets: TPOSet[] = [];
     Object.keys(allTests).forEach(key => {
       const match = key.match(/^(TPO|Test|Training)(\d+)$/);
@@ -49,10 +57,41 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
         });
       }
     });
-    return sets.sort((a, b) => a.type !== b.type ? a.type.localeCompare(b.type) : a.number - b.number);
-  };
 
-  const parsedTests = parseTests();
+    return sets.sort((a, b) => {
+      // 1) type별 그룹 (TPO, Test, Training 사전순)
+      if (a.type !== b.type) return a.type.localeCompare(b.type);
+
+      const aMeta = getMeta(a.type, a.number);
+      const bMeta = getMeta(b.type, b.number);
+
+      const aYear = aMeta?.year;
+      const bYear = bMeta?.year;
+
+      // 2) year가 없는 항목은 항상 뒤로 (메타데이터 미설정 항목)
+      if (aYear === undefined && bYear !== undefined) return 1;
+      if (aYear !== undefined && bYear === undefined) return -1;
+
+      // 3) year 기준 정렬 (asc: 과거가 먼저, desc: 최신이 먼저)
+      if (aYear !== undefined && bYear !== undefined && aYear !== bYear) {
+        return sortOrder === 'asc' ? aYear - bYear : bYear - aYear;
+      }
+
+      // 4) year가 같으면 month 기준 정렬
+      const aMonth = aMeta?.month;
+      const bMonth = bMeta?.month;
+
+      if (aMonth === undefined && bMonth !== undefined) return 1;
+      if (aMonth !== undefined && bMonth === undefined) return -1;
+
+      if (aMonth !== undefined && bMonth !== undefined && aMonth !== bMonth) {
+        return sortOrder === 'asc' ? aMonth - bMonth : bMonth - aMonth;
+      }
+
+      // 5) year/month가 같거나 둘 다 없으면 번호순 (fallback)
+      return sortOrder === 'asc' ? a.number - b.number : b.number - a.number;
+    });
+  }, [allTests, tests, sortOrder]);
 
   const getCompletion = (s: TPOSet['sections']) => {
     const total = 20 + 28 + 2 + 6;
@@ -74,10 +113,6 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
     groupedTests[t.type].push(t);
   });
 
-  // Lookup year/month for a test
-  const getMeta = (type: string, number: number) =>
-    tests.find(t => t.testType === type && t.testNumber === number);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -85,11 +120,23 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">📚 Content Management</h1>
-            <p className="text-white/70 text-sm">TPO / Test / Training 세트 관리</p>
+            <p className="text-white/70 text-sm">TPO / Test / Training 세트 관리 · 연도/월 자동 정렬</p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="bg-white text-[#2d7a7c] hover:bg-gray-100 font-bold">
-            <Plus className="w-4 h-4 mr-2" />새 테스트 만들기
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* 정렬 토글 — year+month 기준 오름/내림 */}
+            <Button
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              variant="outline"
+              className="bg-white/15 text-white border-white/30 hover:bg-white/25 hover:text-white font-semibold"
+              title={sortOrder === 'desc' ? '내림차순 (최신 year가 먼저)' : '오름차순 (과거 year가 먼저)'}
+            >
+              {sortOrder === 'desc' ? <ArrowDownWideNarrow className="w-4 h-4 mr-2" /> : <ArrowUpNarrowWide className="w-4 h-4 mr-2" />}
+              {sortOrder === 'desc' ? '내림차순' : '오름차순'}
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)} className="bg-white text-[#2d7a7c] hover:bg-gray-100 font-bold">
+              <Plus className="w-4 h-4 mr-2" />새 테스트 만들기
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -97,10 +144,11 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-start gap-3">
         <Pencil className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800 leading-relaxed">
-          <strong>연도(Year) · 월(Month) 수정 방법</strong><br />
+          <strong>연도(Year) · 월(Month) 설정 시 자동 정렬</strong><br />
           카드를 클릭 → 우측 패널 상단 <strong>Classic 편집 탭</strong> 선택 →
           {' '}<span className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">Test Metadata (for filtering)</span> 섹션에서
-          {' '}<strong>Year</strong>와 <strong>Month</strong> 드롭다운을 변경 후 <strong>Save</strong>하세요.
+          {' '}<strong>Year</strong>와 <strong>Month</strong> 드롭다운을 변경 후 <strong>Save</strong>하면, 카드 목록이
+          {' '}<strong>Year → Month</strong> 기준으로 자동 재정렬됩니다. 우측 상단 버튼으로 오름/내림차순을 전환할 수 있어요.
         </div>
       </div>
 
