@@ -91,6 +91,8 @@ function restoreHighlights(passageEl: HTMLElement, highlights: Highlight[]) {
 
           const color = h.color || (h.type === 'h' ? DEFAULT_HIGHLIGHT_COLOR : DEFAULT_UNDERLINE_COLOR);
           const mark = document.createElement(h.type === 'h' ? 'mark' : 'u');
+          // 개별 삭제를 위한 id 속성 추가 (지우개 모드에서 클릭 시 식별)
+          if (h.id) mark.setAttribute('data-highlight-id', h.id);
           if (h.type === 'h') {
             mark.style.backgroundColor = color;
             mark.style.textDecoration = 'none';
@@ -145,6 +147,8 @@ interface ReadingReviewPassageProps {
   onClearAll?: () => void;
   /** 부모에서 "지우기" 버튼 클릭 시 증가시키는 카운터 — 변경되면 내부 handleClearAll 호출 */
   clearTrigger?: number;
+  /** 지우개 모드 — true일 때 하이라이트/밑줄 클릭 시 개별 삭제 */
+  eraseMode?: boolean;
 }
 
 /**
@@ -169,6 +173,7 @@ export function ReadingReviewPassage({
   onLanguageChange,
   onClearAll,
   clearTrigger,
+  eraseMode = false,
 }: ReadingReviewPassageProps) {
   // 부모에서 language를 관리하지 않으면 내부 상태 사용 (하위 호환)
   const [internalLanguage, setInternalLanguage] = useState<'en' | 'ko'>('en');
@@ -211,6 +216,22 @@ export function ReadingReviewPassage({
     if (passageRef.current) {
       stripMarks(passageRef.current);
     }
+  };
+
+  // 개별 하이라이트 삭제 (지우개 모드에서 클릭 시)
+  const handleEraseClick = async (e: React.MouseEvent) => {
+    if (!eraseMode) return;
+    // 클릭된 요소 또는 조상 중 mark/u 태그 찾기
+    const target = e.target as HTMLElement;
+    const markEl = target.closest('mark, u') as HTMLElement | null;
+    if (!markEl) return;
+    const highlightId = markEl.getAttribute('data-highlight-id');
+    if (!highlightId) return;
+
+    // Supabase에서 삭제
+    await deleteHighlight(highlightId);
+    // 로컬 상태에서 제거 → restoreHighlights 이펙트가 DOM을 다시 그림
+    setHighlights(prev => prev.filter(h => h.id !== highlightId));
   };
 
   // 부모에서 clearTrigger 변경 시 자동 호출
