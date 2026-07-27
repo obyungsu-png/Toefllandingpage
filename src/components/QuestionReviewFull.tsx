@@ -250,7 +250,7 @@ export function QuestionReviewFull({
   const passageRef = useRef<HTMLDivElement | null>(null);
 
   // Speaking-specific state
-  // Real recordings — load from DB (30-day retention) with sessionStorage fallback
+  // Real recordings — load from DB (10-day retention) with sessionStorage fallback
   const [speakingRecordings, setSpeakingRecordings] = useState<Record<string, string>>({});
   const [speakingUserPlaying, setSpeakingUserPlaying] = useState(false);
   const [speakingMaterialPlaying, setSpeakingMaterialPlaying] = useState(false);

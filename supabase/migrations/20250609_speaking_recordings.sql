@@ -1,4 +1,4 @@
--- speaking_recordings: store student recording URLs for 30-day review
+-- speaking_recordings: store student recording URLs for 10-day review
 -- session_id = localStorage UUID per browser (anonymous user identifier)
 
 create table if not exists public.speaking_recordings (
@@ -9,7 +9,7 @@ create table if not exists public.speaking_recordings (
   question_number integer     not null,
   recording_url   text        not null,
   created_at      timestamptz not null default now(),
-  expires_at      timestamptz not null default (now() + interval '30 days')
+  expires_at      timestamptz not null default (now() + interval '10 days')
 );
 
 -- Unique constraint for upsert (one recording per Q per test per session)

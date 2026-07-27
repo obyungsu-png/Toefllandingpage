@@ -292,9 +292,17 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
 
   // ── 패널 고정(pinned) — 중앙 모달 팝업으로 띄워 리뷰 화면과 동시 사용 ──
   // 핀 클릭 시 화면 중앙에 트렌디한 모달창으로 팝업, 드래그 이동 + 우하단 핸들로 크기 조절 가능
+  // 모바일 대응: 화면 폭에 따라 기본 사이즈 자동 조정 (작은 화면에서는 거의 풀스크린)
+  const getDefaultPanelSize = () => {
+    if (typeof window === 'undefined') return { width: 760, height: 600 };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (vw < 640) return { width: Math.min(760, vw * 0.92), height: Math.min(600, vh * 0.85) };
+    return { width: 760, height: 600 };
+  };
   const [panelPinned, setPanelPinned] = useState(false);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
-  const [panelSize, setPanelSize] = useState({ width: 760, height: 600 });
+  const [panelSize, setPanelSize] = useState(getDefaultPanelSize);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null);
 
@@ -1557,7 +1565,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   onClick={() => {
                     setPanelPinned(p => !p);
                     setPanelPos({ x: 0, y: 0 });
-                    setPanelSize({ width: 760, height: 600 });
+                    setPanelSize(getDefaultPanelSize());
                   }}
                   title={panelPinned ? '고정 해제' : '패널 고정 — 중앙 모달로 띄워 리뷰와 동시에 사용'}
                   className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
@@ -1571,7 +1579,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setActiveTab(null); setPanelPinned(false); setPanelPos({ x: 0, y: 0 }); setPanelSize({ width: 760, height: 600 }); }}
+                  onClick={() => { setActiveTab(null); setPanelPinned(false); setPanelPos({ x: 0, y: 0 }); setPanelSize(getDefaultPanelSize()); }}
                   className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                     panelPinned
                       ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'

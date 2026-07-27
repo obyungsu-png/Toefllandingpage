@@ -1,7 +1,7 @@
 /**
  * uploadRecording — Supabase recordings 버킷에 녹음 파일 저장 + DB 기록
  * - Storage: recordings/{testType}-{testNumber}/q{N}-{timestamp}.webm
- * - DB: speaking_recordings 테이블 (30일 보관 후 자동 만료)
+ * - DB: speaking_recordings 테이블 (10일 보관 후 자동 만료)
  */
 import { supabase } from './supabase/client';
 
@@ -58,7 +58,7 @@ export async function uploadRecording(
       return blobUrl;
     }
 
-    // 2. Save URL + metadata to DB (30-day retention)
+    // 2. Save URL + metadata to DB (10-day retention)
     const { error: dbErr } = await supabase
       .from('speaking_recordings')
       .upsert({
@@ -67,7 +67,7 @@ export async function uploadRecording(
         test_number:     parseInt(testNumber, 10),
         question_number: Number(questionNumber),
         recording_url:   url,
-        expires_at:      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at:      new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       }, {
         onConflict: 'session_id,test_type,test_number,question_number',
         ignoreDuplicates: false,

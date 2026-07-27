@@ -1,7 +1,7 @@
 /**
  * cleanup-recordings — Supabase Edge Function
  *
- * Deletes student speaking recordings older than 30 days.
+ * Deletes student speaking recordings older than 10 days.
  * Schedule: run daily via Supabase cron (pg_cron) or external scheduler.
  *
  * Storage bucket: "recordings"
@@ -23,7 +23,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const BUCKET = 'recordings';
-const RETENTION_DAYS = 30;
+const RETENTION_DAYS = 10;
 
 Deno.serve(async (req) => {
   // Allow only authenticated service-role calls

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronLeft, Sparkles, Send, Bot, User, Pin, PinOff, X, GripVertical } from 'lucide-react';
+import { ChevronLeft, Sparkles, Send, Bot, User, Pin, PinOff, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -262,19 +262,28 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const activeQuestions = propQuestions ?? defaultSuggestedQuestions;
 
-  // ── Pinned (고정) 모드: Writing에서 AI 튜터를 띄워놓고 글 작성 ──
+  // ── Pinned (고정) 모드: 화면 중앙 트렌디 모달 팝업으로 AI 튜터를 띄워놓고 글 작성 ──
+  // 모바일 대응: 화면 폭에 따라 기본 사이즈 자동 조정
+  const getDefaultPanelSize = useCallback(() => {
+    if (typeof window === 'undefined') return { w: 760, h: 600 };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (vw < 640) return { w: Math.min(760, vw * 0.92), h: Math.min(600, vh * 0.85) };
+    return { w: 760, h: 600 };
+  }, []);
   const [pinned, setPinned] = useState(false);
-  // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치 초기화
+  // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치/크기 초기화
   const togglePinned = useCallback((next: boolean) => {
     setPinned(next);
     if (next) {
-      // 고정 시 패널을 우측 상단에서 살짝 아래로 배치 (글 작성 영역과 겹침 최소화)
+      // 고정 시 중앙 모달 기준 위치로 초기화
       setPanelPos({ x: 0, y: 0 });
+      setPanelSize(getDefaultPanelSize());
     }
     onPinnedChange?.(next);
-  }, [onPinnedChange]);
+  }, [onPinnedChange, getDefaultPanelSize]);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
-  const [panelSize, setPanelSize] = useState({ w: 380, h: 480 });
+  const [panelSize, setPanelSize] = useState(getDefaultPanelSize);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null);
 
@@ -313,9 +322,12 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
       if (!resizeRef.current) return;
       const dw = e.clientX - resizeRef.current.startX;
       const dh = e.clientY - resizeRef.current.startY;
+      // 최소 480×400, 최대 뷰포트의 92% — 중앙 모달이 화면을 넘어가지 않도록
+      const maxW = Math.max(480, window.innerWidth * 0.92);
+      const maxH = Math.max(400, window.innerHeight * 0.92);
       setPanelSize({
-        w: Math.max(300, resizeRef.current.origW + dw),
-        h: Math.max(300, resizeRef.current.origH + dh),
+        w: Math.min(Math.max(resizeRef.current.origW + dw, 480), maxW),
+        h: Math.min(Math.max(resizeRef.current.origH + dh, 400), maxH),
       });
     };
     const onUp = () => { resizeRef.current = null; };
@@ -610,26 +622,51 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         .toefl-ai-pinned-panel {
           position: fixed;
           background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+          border-radius: 24px;
+          box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28), 0 8px 24px rgba(15, 23, 42, 0.12);
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          border: 1px solid #e5e7eb;
+          border: 1px solid rgba(13, 148, 136, 0.18);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
         }
         .toefl-ai-pinned-header {
-          cursor: move;
+          cursor: grab;
           user-select: none;
+        }
+        .toefl-ai-pinned-header:active {
+          cursor: grabbing;
+        }
+        /* 트렌디 그라데이션 헤더 — AI 튜터 테마(teal) 135° 그라데이션 */
+        .toefl-ai-gradient-header {
+          background: linear-gradient(135deg, #0d9488 0%, #14b8a6cc 60%, #2dd4bf99 100%);
+          border-bottom: none;
+        }
+        /* 중앙 모달 팝업 spring 애니메이션 */
+        .toefl-ai-modal-pop {
+          animation: toeflAiModalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes toeflAiModalPop {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
         .toefl-ai-pinned-resize {
           position: absolute;
-          bottom: 0;
-          right: 0;
-          width: 18px;
-          height: 18px;
+          bottom: 6px;
+          right: 6px;
+          width: 20px;
+          height: 20px;
           cursor: nwse-resize;
-          background: linear-gradient(135deg, transparent 50%, #cbd5e1 50%);
-          border-bottom-right-radius: 12px;
+          z-index: 10;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          opacity: 0.4;
+          transition: opacity 0.15s;
+        }
+        .toefl-ai-pinned-resize:hover {
+          opacity: 0.7;
         }
       `}</style>
 
@@ -649,43 +686,59 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         </button>
       )}
 
-      {/* AI 패널 (슬라이드인 or 고정 플로팅) */}
+      {/* AI 패널 (슬라이드인 or 중앙 모달 팝업) */}
       {isOpen && (
         <>
-          {/* 오버레이 — pinned 모드에서는 제거 (글 작성 영역 확보) */}
+          {/* 오버레이 — pinned 모드에서는 제거 (리뷰 화면과 동시 사용) */}
           {!pinned && <div className="toefl-ai-panel-overlay" onClick={() => setIsOpen(false)} />}
           <div
-            className={pinned ? 'toefl-ai-pinned-panel' : 'toefl-ai-panel'}
+            className={pinned ? 'toefl-ai-pinned-panel toefl-ai-modal-pop' : 'toefl-ai-panel'}
             style={pinned ? {
-              // left 기준으로 마우스 이동 방향과 패널 이동을 일치시킴.
-              // 초기 left = (100vw - 패널 너비 - 20px) = 화면 우측에서 20px 여백
-              // 마우스 오른쪽(dx>0) → panelPos.x 증가 → left 증가 → 패널이 오른쪽으로 이동 ✓
-              left: `calc(100vw - ${panelSize.w + 20}px + ${panelPos.x}px)`,
-              top: `${80 + panelPos.y}px`,
+              // 화면 중앙 모달 — top/left 50% + translate(-50%, -50%) + 드래그 오프셋
+              top: '50%',
+              left: '50%',
               width: `${panelSize.w}px`,
+              maxWidth: '92vw',
               height: `${panelSize.h}px`,
+              maxHeight: '92vh',
+              transform: `translate(-50%, -50%) translate(${panelPos.x}px, ${panelPos.y}px)`,
               zIndex: zIndex + 1,
             } : undefined}
           >
+            {/* ── 트렌디 그라데이션 헤더 (고정 모드) — 드래그 핸들 역할 ── */}
             <div
-              className={`flex items-center justify-between px-5 py-4 border-b ${pinned ? 'toefl-ai-pinned-header' : ''}`}
+              className={`flex items-center justify-between px-6 py-4 ${pinned ? 'toefl-ai-pinned-header toefl-ai-gradient-header' : 'border-b border-gray-100'}`}
               onMouseDown={onDragStart}
             >
-              <div className="flex items-center gap-2">
-                {pinned && <GripVertical className="w-4 h-4 text-gray-300" />}
-                <span className="toefl-ai-fab" style={{ width: 36, height: 36 }}>
+              <div className="flex items-center gap-3">
+                <span
+                  className="toefl-ai-fab shrink-0"
+                  style={pinned
+                    ? { width: 36, height: 36, background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(8px)' }
+                    : { width: 36, height: 36 }
+                  }
+                >
                   <span className="toefl-ai-fab-eyes">
                     <span style={{ width: 3, height: 3 }}></span>
                     <span style={{ width: 3, height: 3 }}></span>
                   </span>
                 </span>
                 <div className="flex flex-col">
-                  <span className="font-bold text-gray-800">AI 튜터</span>
-                  {contextLabel && (
+                  <span
+                    className="font-bold tracking-tight"
+                    style={{ color: pinned ? '#ffffff' : '#1f2937' }}
+                  >
+                    AI 튜터
+                  </span>
+                  {pinned ? (
+                    <span className="text-[11px] font-medium text-white/70 leading-tight">
+                      헤더를 드래그해 이동 · 우하단 핸들로 크기 조절
+                    </span>
+                  ) : contextLabel ? (
                     <span className="text-[11px] text-gray-400 leading-tight max-w-[260px] truncate">
                       {contextLabel}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
@@ -693,20 +746,24 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                 {pinnable && (
                   <button
                     onClick={() => togglePinned(!pinned)}
-                    className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                       pinned
-                        ? 'bg-teal-600 text-white hover:bg-teal-700'
+                        ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
                         : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
                     }`}
-                    title={pinned ? '고정 해제' : '패널 고정 — 헤더를 드래그해 위치 이동, 우하단 모서리로 크기 조절'}
+                    title={pinned ? '고정 해제' : '중앙 모달로 고정 — 헤더 드래그 이동, 우하단 핸들로 크기 조절'}
                   >
                     {pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                    {pinned ? '고정해제' : '고정'}
+                    {pinned ? '고정됨' : '고정'}
                   </button>
                 )}
                 <button
                   onClick={() => { togglePinned(false); setIsOpen(false); }}
-                  className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm transition-colors"
+                  className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                    pinned
+                      ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
+                      : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                  }`}
                 >
                   {pinned ? <X className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
                   {pinned ? '닫기' : '돌아가기'}
@@ -830,8 +887,19 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
                 </Button>
               </form>
             </div>
-            {/* 리사이즈 핸들 — pinned 모드에서만 표시 (우하단 모서리 드래그) */}
-            {pinned && <div className="toefl-ai-pinned-resize" onMouseDown={onResizeStart} />}
+            {/* 리사이즈 핸들 — pinned 모드에서만 표시 (우하단 점 패턴 드래그) */}
+            {pinned && (
+              <div className="toefl-ai-pinned-resize group" onMouseDown={onResizeStart} title="드래그해서 크기 조절">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400">
+                  <circle cx="13" cy="3" r="1.2" fill="currentColor" />
+                  <circle cx="13" cy="8" r="1.2" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+                  <circle cx="13" cy="13" r="1.2" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1.2" fill="currentColor" />
+                  <circle cx="3" cy="13" r="1.2" fill="currentColor" />
+                </svg>
+              </div>
+            )}
           </div>
         </>
       )}
