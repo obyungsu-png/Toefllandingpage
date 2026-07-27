@@ -290,10 +290,13 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const dictationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const theme = PANEL_THEME[section];
 
-  // ── 패널 고정(pinned) — 탭 패널을 띄워놓고 리뷰 화면과 동시 사용 ──
+  // ── 패널 고정(pinned) — 중앙 모달 팝업으로 띄워 리뷰 화면과 동시 사용 ──
+  // 핀 클릭 시 화면 중앙에 트렌디한 모달창으로 팝업, 드래그 이동 + 우하단 핸들로 크기 조절 가능
   const [panelPinned, setPanelPinned] = useState(false);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
+  const [panelSize, setPanelSize] = useState({ width: 760, height: 600 });
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const resizeRef = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null);
 
   // ── Dictation 학습 상태 ──
   // 모드 분리: 훈련(빈칸 받아쓰기) vs 복습(풀 스크립트 + 하이라이트 싱크)
@@ -394,22 +397,45 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setIsPlayingAudio(false);
   }, [audioUrl, contentKey]);
 
-  // ── 패널 드래그 (고정 모드) ──
+  // ── 패널 드래그 (고정 모드) — 모달 헤더를 잡고 화면 내 이동 ──
   const onPanelDragStart = (e: React.MouseEvent) => {
     if (!panelPinned) return;
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: panelPos.x, origY: panelPos.y };
     e.preventDefault();
   };
 
+  // ── 패널 리사이즈 (고정 모드) — 우하단 핸들을 드래그해 크기 조절 ──
+  const onPanelResizeStart = (e: React.MouseEvent) => {
+    if (!panelPinned) return;
+    resizeRef.current = { startX: e.clientX, startY: e.clientY, origW: panelSize.width, origH: panelSize.height };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   useEffect(() => {
     if (!panelPinned) return;
     const onMove = (e: MouseEvent) => {
-      if (!dragRef.current) return;
-      const dx = e.clientX - dragRef.current.startX;
-      const dy = e.clientY - dragRef.current.startY;
-      setPanelPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+      // 드래그 이동
+      if (dragRef.current) {
+        const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
+        setPanelPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+      }
+      // 리사이즈 — 최소 480×400, 최대 뷰포트의 92%
+      if (resizeRef.current) {
+        const dx = e.clientX - resizeRef.current.startX;
+        const dy = e.clientY - resizeRef.current.startY;
+        const maxW = Math.max(480, window.innerWidth * 0.92);
+        const maxH = Math.max(400, window.innerHeight * 0.92);
+        const newW = Math.min(Math.max(resizeRef.current.origW + dx, 480), maxW);
+        const newH = Math.min(Math.max(resizeRef.current.origH + dy, 400), maxH);
+        setPanelSize({ width: newW, height: newH });
+      }
     };
-    const onUp = () => { dragRef.current = null; };
+    const onUp = () => {
+      dragRef.current = null;
+      resizeRef.current = null;
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
@@ -1452,8 +1478,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         )}
       </div>
 
-      {/* ── Content panel: right-side slide-in drawer, matching AI 튜터's style ──
-          고정(pinned) 시 오버레이 제거 + 플로팅 드래그 가능 패널로 전환 (AI 튜터와 동일 UX) ── */}
+      {/* ── Content panel ──
+          • 미고정: 오른쪽 슬라이드 인 drawer (AI 튜터와 동일 스타일)
+          • 고정(pinned): 화면 중앙 트렌디 모달 팝업 — 헤더 드래그로 이동 + 우하단 핸들로 크기 조절 ── */}
       {activeTab && activeTabMeta && (
         <>
           {!panelPinned && (
@@ -1464,18 +1491,20 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             />
           )}
           <div
-            className="fixed bg-white flex flex-col z-[85]"
+            className={`fixed bg-white flex flex-col z-[85] ${panelPinned ? 'review-panel-modal' : ''}`}
             style={panelPinned ? {
-              top: 72,
-              right: 16,
-              width: 420,
-              maxWidth: '100vw',
-              height: '82vh',
-              borderRadius: 20,
-              border: `1.5px solid ${theme.border}`,
-              boxShadow: '0 18px 50px rgba(0,0,0,0.25)',
-              transform: `translate(${panelPos.x}px, ${panelPos.y}px)`,
-              animation: 'reviewPanelFadeIn 0.2s ease',
+              top: '50%',
+              left: '50%',
+              width: panelSize.width,
+              maxWidth: '92vw',
+              height: panelSize.height,
+              maxHeight: '92vh',
+              borderRadius: 24,
+              border: `1px solid ${theme.border}40`,
+              boxShadow: '0 24px 70px rgba(15, 23, 42, 0.28), 0 8px 24px rgba(15, 23, 42, 0.12)',
+              transform: `translate(-50%, -50%) translate(${panelPos.x}px, ${panelPos.y}px)`,
+              animation: 'reviewModalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              overflow: 'hidden',
             } : {
               top: 0,
               right: 0,
@@ -1486,45 +1515,97 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               animation: 'reviewPanelSlideIn 0.25s ease',
             }}
           >
+            {/* ── 트렌디 그라데이션 헤더 (고정 모드) — 드래그 핸들 역할 ── */}
             <div
-              className={`flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0 ${panelPinned ? 'cursor-grab active:cursor-grabbing select-none' : ''}`}
+              className={`relative flex items-center justify-between px-6 py-4 shrink-0 ${panelPinned ? 'cursor-grab active:cursor-grabbing select-none' : ''}`}
               onMouseDown={onPanelDragStart}
+              style={panelPinned ? {
+                background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 60%, ${theme.accent}99 100%)`,
+                borderBottom: 'none',
+              } : {
+                borderBottom: '1px solid #f1f5f9',
+              }}
             >
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }}>
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm"
+                  style={panelPinned
+                    ? { background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(8px)' }
+                    : { background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }
+                  }
+                >
                   <activeTabMeta.icon className="h-4 w-4" />
                 </div>
-                <h3 className="text-base font-bold text-[#0f172a]">{activeTabMeta.title}</h3>
+                <div className="flex flex-col">
+                  <h3
+                    className="text-base font-bold tracking-tight"
+                    style={{ color: panelPinned ? '#ffffff' : '#0f172a' }}
+                  >
+                    {activeTabMeta.title}
+                  </h3>
+                  {panelPinned && (
+                    <span className="text-[11px] font-medium text-white/70 leading-tight">
+                      헤더를 드래그해 이동 · 우하단 핸들로 크기 조절
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-1.5">
-                {/* 고정 토글 — AI 튜터의 고정과 동일: 띄워놓고 리뷰 화면과 동시 사용 */}
+                {/* 고정 토글 — 핀 클릭 시 중앙 모달 팝업으로 전환 */}
                 <button
                   type="button"
-                  onClick={() => { setPanelPinned(p => !p); setPanelPos({ x: 0, y: 0 }); }}
-                  title={panelPinned ? '고정 해제' : '패널 고정 — 띄워놓고 리뷰와 동시에 사용'}
-                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors ${
+                  onClick={() => {
+                    setPanelPinned(p => !p);
+                    setPanelPos({ x: 0, y: 0 });
+                    setPanelSize({ width: 760, height: 600 });
+                  }}
+                  title={panelPinned ? '고정 해제' : '패널 고정 — 중앙 모달로 띄워 리뷰와 동시에 사용'}
+                  className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
                     panelPinned
-                      ? 'border-transparent text-white'
-                      : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                      ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
+                      : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
                   }`}
-                  style={panelPinned ? { backgroundColor: theme.accent } : undefined}
                 >
-                  {panelPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                  {panelPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                   {panelPinned ? '고정됨' : '고정'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setActiveTab(null); setPanelPinned(false); setPanelPos({ x: 0, y: 0 }); }}
-                  className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 shadow-sm"
+                  onClick={() => { setActiveTab(null); setPanelPinned(false); setPanelPos({ x: 0, y: 0 }); setPanelSize({ width: 760, height: 600 }); }}
+                  className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                    panelPinned
+                      ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
+                      : 'border border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
                 >
-                  <X className="h-3 w-3" />
-                  Close
+                  <X className="h-3.5 w-3.5" />
+                  닫기
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex-1 overflow-y-auto p-6">
               {renderActiveTab()}
             </div>
+            {/* ── 리사이즈 핸들 (우하단) — 고정 모드에서만 노출 ── */}
+            {panelPinned && (
+              <div
+                onMouseDown={onPanelResizeStart}
+                className="absolute bottom-1.5 right-1.5 w-5 h-5 cursor-nwse-resize z-[86] group"
+                title="드래그해서 크기 조절"
+              >
+                <svg
+                  width="20" height="20" viewBox="0 0 20 20" fill="none"
+                  className="text-gray-300 group-hover:text-gray-400 transition-colors"
+                >
+                  <circle cx="16" cy="4" r="1.3" fill="currentColor" />
+                  <circle cx="16" cy="10" r="1.3" fill="currentColor" />
+                  <circle cx="10" cy="10" r="1.3" fill="currentColor" />
+                  <circle cx="16" cy="16" r="1.3" fill="currentColor" />
+                  <circle cx="10" cy="16" r="1.3" fill="currentColor" />
+                  <circle cx="4" cy="16" r="1.3" fill="currentColor" />
+                </svg>
+              </div>
+            )}
           </div>
           <style>{`
             @keyframes reviewPanelSlideIn {
@@ -1534,6 +1615,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             @keyframes reviewPanelFadeIn {
               from { opacity: 0; }
               to { opacity: 1; }
+            }
+            @keyframes reviewModalPop {
+              0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+            .review-panel-modal {
+              backdrop-filter: blur(20px);
+              -webkit-backdrop-filter: blur(20px);
             }
           `}</style>
         </>
