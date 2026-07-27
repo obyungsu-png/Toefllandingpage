@@ -1230,7 +1230,19 @@ export function QuestionReviewFull({
                         {passageTitle && (
                           <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">{passageTitle}</h4>
                         )}
-                        <p className="text-sm md:text-lg font-medium text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap">{passageContent}</p>
+                        {/* 텍스트는 ref 콜백으로 주입 — 하이라이트(mark/u) DOM 직접 조작과
+                            React 자식 렌더가 충돌해 insertBefore NotFoundError가 나던 것을 방지.
+                            React는 빈 <p>만 관리하고, 텍스트는 dataset 비교로 같을 때 재주입하지 않아
+                            하이라이트가 유지됨 */}
+                        <p
+                          ref={(el) => {
+                            if (el && el.dataset.passage !== passageContent) {
+                              el.dataset.passage = passageContent;
+                              el.textContent = passageContent;
+                            }
+                          }}
+                          className="text-sm md:text-lg font-medium text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-wrap"
+                        />
                       </>
                     ) : (
                       <p className="text-sm text-gray-400 dark:text-gray-500 italic">지문을 불러올 수 없습니다.</p>
@@ -1986,13 +1998,13 @@ export function QuestionReviewFull({
       </div>
 
       {/* AI 튜터 위젯 — History 리뷰 결과 화면. 우측 하단 FAB + 슬라이드인 팝업
-          Writing an Email / Academic Discussion에서만 pinnable=true —
-          패널 고정 시 오버레이 사라지고 헤더 드래그로 위치 이동 가능 (글 작성과 동시 사용) */}
+          모든 섹션에서 pinnable=true — Listening/Reading 리뷰에서도 스크립트·지문을
+          복습하면서 AI 튜터를 띄워놓을 수 있도록 고정 기능 확장 */}
       <ToeflAiWidget
         position="right"
         zIndex={60}
         contextLabel={`Review · ${activeSection} (Q${currentQuestionIndex + 1})`}
-        pinnable={activeSection === 'Writing' && (activeModule === 2 || activeModule === 3)}
+        pinnable={true}
         onPinnedChange={setAiTutorPinned}
         suggestedQuestions={
           activeSection === 'Writing' && activeModule === 2

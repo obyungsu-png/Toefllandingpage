@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bot, ClipboardList, FileText, Languages, MessageSquareText, Pause, Play, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
@@ -171,6 +171,45 @@ function buildFallbackDictation(variant: ReviewVariant): DictationExercise {
   };
 }
 
+/** 스크립트를 문장 단위로 분할 — 마침표/물음표/느낌표 + 줄바꿈 기준.
+ *  문장별 TTS 재생·반복·클릭 이동에 사용 */
+function splitIntoSentences(script: string): string[] {
+  if (!script) return [];
+  // Narrator: 같은 안내 줄 제거
+  const lines = script.split('\n').map(l => l.trim()).filter(l => l && !/^Narrator\s*:/i.test(l));
+  const joined = lines.join(' ');
+  // 문장 종결 부호 기준 분할 (종결 부호를 문장에 붙여서 유지)
+  const raw = joined.match(/[^.!?]+[.!?]+["']?\s*/g) || [joined];
+  return raw.map(s => s.trim()).filter(s => s.length > 1);
+}
+
+/** 오답 노트 — 틀린 빈칸 단어를 localStorage에 저장해 재학습 가능하게 */
+const WRONG_NOTE_KEY = 'dictation_wrong_notes';
+interface WrongNoteEntry { word: string; sentence: string; savedAt: number; contentKey: string; }
+
+function loadWrongNotes(): WrongNoteEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(WRONG_NOTE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveWrongNotes(entries: Omit<WrongNoteEntry, 'savedAt'>[]) {
+  if (!entries.length) return;
+  const existing = loadWrongNotes();
+  const now = Date.now();
+  const merged = [...existing];
+  entries.forEach(e => {
+    // 같은 단어+문장 조합은 중복 저장하지 않고 최신으로 갱신
+    const idx = merged.findIndex(m => m.word === e.word && m.sentence === e.sentence);
+    if (idx >= 0) merged[idx] = { ...e, savedAt: now };
+    else merged.push({ ...e, savedAt: now });
+  });
+  // 최대 200개 유지
+  localStorage.setItem(WRONG_NOTE_KEY, JSON.stringify(merged.slice(-200)));
+}
+
 function getWords(section: ReviewSection, variant: ReviewVariant) {
   if (section === 'Reading') {
     return [
@@ -242,17 +281,60 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isDictationPlaying, setIsDictationPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Dictation 전용 오디오 — Play Audio(audioRef)와 분리해 서로 덮어쓰지 않도록
+  const dictationAudioRef = useRef<HTMLAudioElement | null>(null);
   const dictationInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const theme = PANEL_THEME[section];
 
+  // ── 패널 고정(pinned) — 탭 패널을 띄워놓고 리뷰 화면과 동시 사용 ──
+  const [panelPinned, setPanelPinned] = useState(false);
+  const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  // ── Dictation 학습 상태 ──
+  const [showSentences, setShowSentences] = useState(false); // 문장별 듣기 목록 표시
+  const [activeSentenceIdx, setActiveSentenceIdx] = useState<number | null>(null); // 현재 재생 중인 문장
+  const [loopSentenceIdx, setLoopSentenceIdx] = useState<number | null>(null); // 구간 반복 대상 문장
+  const [hintIndices, setHintIndices] = useState<Set<number>>(new Set()); // 첫 글자 힌트를 연 빈칸
+  const [wrongAttempts, setWrongAttempts] = useState(0); // 정답 확인 후 틀린 횟수 (3회 이상 시 힌트 권유)
+  const sentenceUtterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const loopActiveRef = useRef(false);
+  const loopSentenceIdxRef = useRef<number | null>(null); // ontimeupdate 클로저에서 최신 반복 문장 참조용
+  const fullPlayActiveRef = useRef(false); // TTS 전체 듣기 순차 재생 중 여부
+  const sentenceListRef = useRef<HTMLDivElement | null>(null); // 문장 목록 스크롤 컨테이너
+
   const dictationExercise = useMemo(() => buildDictationExercise(variant, scriptText || translationNote), [variant, scriptText, translationNote]);
+  const dictationSentences = useMemo(() => splitIntoSentences(scriptText || translationNote || ''), [scriptText, translationNote]);
+  // 문장 시작 비율 — CMS 오디오 전체 재생 시 하이라이트 싱크 + 문장 클릭 seek 추정용
+  // (문장별 정확한 타임스탬프가 없으므로 글자 수 비율로 근사)
+  const sentenceRatios = useMemo(() => {
+    const total = dictationSentences.reduce((acc, s) => acc + s.length, 0);
+    let acc = 0;
+    return dictationSentences.map(s => {
+      const start = total > 0 ? acc / total : 0;
+      acc += s.length;
+      return start;
+    });
+  }, [dictationSentences]);
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
   const activeTabMeta = activeTab ? getTabMeta(activeTab) : null;
 
+  // state + ref 동기화 — 오디오 이벤트 핸들러 클로저에서도 최신 반복 문장 참조
+  const updateLoopSentence = (idx: number | null) => {
+    loopSentenceIdxRef.current = idx;
+    setLoopSentenceIdx(idx);
+  };
+
   useEffect(() => {
     setActiveTab(null);
+    setPanelPinned(false);
     setDictationInputs(Array(dictationExercise.blanks.length).fill(''));
     setDictationChecked(false);
+    setHintIndices(new Set());
+    setWrongAttempts(0);
+    setActiveSentenceIdx(null);
+    updateLoopSentence(null);
+    setShowSentences(false);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
   // ── audioUrl 변경 시 기존 오디오 정리 — 문제 바뀌면 이전 오디오가 재생되지 않도록 ──
@@ -263,6 +345,27 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
     setIsPlayingAudio(false);
   }, [audioUrl, contentKey]);
+
+  // ── 패널 드래그 (고정 모드) ──
+  const onPanelDragStart = (e: React.MouseEvent) => {
+    if (!panelPinned) return;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: panelPos.x, origY: panelPos.y };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (!panelPinned) return;
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPanelPos({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+    };
+    const onUp = () => { dragRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [panelPinned]);
 
   // Play/Pause Audio — Listening/Speaking 섹션의 오디오 재생/일시정지 (토글)
   const handlePlayAudio = () => {
@@ -286,69 +389,324 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
   };
 
-  // Dictation 음성 — CMS 오디오 있으면 그걸 재생, 없으면 TTS fallback
+  // ── Dictation 전체 듣기 — CMS 오디오는 pause/resume 토글 (멈춘 지점부터 이어 재생),
+  //    TTS fallback은 문장 단위 순차 재생 + 현재 문장 하이라이트, pause/resume 지원 ──
   const playDictation = () => {
     if (isDictationPlaying) {
-      window.speechSynthesis?.cancel();
-      audioRef.current?.pause();
+      // 일시정지 (TTS + 오디오 모두) — 다시 누륩면 이어서 재생
+      if (window.speechSynthesis?.speaking) window.speechSynthesis.pause();
+      dictationAudioRef.current?.pause();
       setIsDictationPlaying(false);
       return;
     }
 
     if (audioUrl) {
-      // CMS 실제 오디오가 있으면 그걸 사용
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      // CMS 실제 오디오 — 이전에 일시정지한 오디오가 있으면 이어서 재생
+      if (dictationAudioRef.current && dictationAudioRef.current.paused && dictationAudioRef.current.currentTime > 0) {
+        dictationAudioRef.current.play().then(() => setIsDictationPlaying(true)).catch(() => setIsDictationPlaying(false));
+        return;
       }
       const audio = createCachedAudioSync(audioUrl);
-      audioRef.current = audio;
+      dictationAudioRef.current = audio;
       setIsDictationPlaying(true);
+      setShowSentences(true); // 전체 듣기 시 문장 목록 자동 표시 (하이라이트 싱크 확인용)
       audio.play().catch(() => setIsDictationPlaying(false));
-      audio.onended = () => setIsDictationPlaying(false);
+      // 재생 위치 → 현재 문장 하이라이트 싱크 (글자 수 비율 근사)
+      audio.ontimeupdate = () => {
+        const duration = audio.duration || 0;
+        if (!duration) return;
+        const ratio = audio.currentTime / duration;
+        // 구간 반복 활성 시 반복 문장 끝에 도달하면 다시 해당 문장 시작으로
+        const loopIdx = loopSentenceIdxRef.current;
+        if (loopIdx !== null) {
+          const loopStart = sentenceRatios[loopIdx] ?? 0;
+          const loopEnd = sentenceRatios[loopIdx + 1] ?? 1;
+          if (ratio >= loopEnd || ratio < loopStart) {
+            audio.currentTime = loopStart * duration;
+            setActiveSentenceIdx(loopIdx);
+            return;
+          }
+        }
+        let idx = 0;
+        for (let i = 0; i < sentenceRatios.length; i++) {
+          if (sentenceRatios[i] <= ratio) idx = i; else break;
+        }
+        setActiveSentenceIdx(idx);
+      };
+      audio.onended = () => { setIsDictationPlaying(false); setActiveSentenceIdx(null); updateLoopSentence(null); };
       audio.onpause = () => setIsDictationPlaying(false);
       return;
     }
 
-    // TTS fallback — CMS 오디오 없을 때
+    // TTS fallback — CMS 오디오 없을 때 (일시정지 상태면 resume)
     if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsDictationPlaying(true);
+      return;
+    }
+    playAllSentences(0);
+  };
+
+  // ── TTS 전체 듣기 — 문장 단위 순차 재생 + 현재 문장 하이라이트.
+  //    startIdx부터 끝까지 읽음. 문장 클릭으로 중간 점프 가능 ──
+  const playAllSentences = (startIdx: number) => {
+    if (!('speechSynthesis' in window) || dictationSentences.length === 0) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(dictationExercise.fullSentence);
-    utterance.rate = 0.82;
-    utterance.lang = 'en-US';
-    utterance.onend = () => setIsDictationPlaying(false);
-    utterance.onerror = () => setIsDictationPlaying(false);
+    loopActiveRef.current = false;
+    updateLoopSentence(null);
+    fullPlayActiveRef.current = true;
     setIsDictationPlaying(true);
-    window.speechSynthesis.speak(utterance);
+    setShowSentences(true);
+
+    const speakNext = (i: number) => {
+      if (!fullPlayActiveRef.current || i >= dictationSentences.length) {
+        fullPlayActiveRef.current = false;
+        setIsDictationPlaying(false);
+        setActiveSentenceIdx(null);
+        return;
+      }
+      setActiveSentenceIdx(i);
+      const utterance = new SpeechSynthesisUtterance(dictationSentences[i]);
+      utterance.rate = 0.82;
+      utterance.lang = 'en-US';
+      utterance.onend = () => speakNext(i + 1);
+      utterance.onerror = () => {
+        fullPlayActiveRef.current = false;
+        setIsDictationPlaying(false);
+        setActiveSentenceIdx(null);
+      };
+      sentenceUtterRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    };
+    speakNext(startIdx);
+  };
+
+  // ── 문장 클릭 — CMS 오디오: 해당 문장 위치로 seek(추정) 후 이어서 재생,
+  //    TTS 전체 재생 중: 그 문장부터 다시 순차 재생, 그 외: 그 문장만 재생 ──
+  const handleSentenceClick = (idx: number) => {
+    if (audioUrl) {
+      // 오디오 없이 처음 클릭 → 전체 재생을 그 문장부터 시작
+      if (!dictationAudioRef.current) {
+        playDictation();
+        return;
+      }
+      const audio = dictationAudioRef.current;
+      const duration = audio.duration || 0;
+      if (duration) audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+      setActiveSentenceIdx(idx);
+      updateLoopSentence(null);
+      audio.play().then(() => setIsDictationPlaying(true)).catch(() => {});
+      return;
+    }
+    if (fullPlayActiveRef.current) {
+      playAllSentences(idx);
+      return;
+    }
+    playSentence(idx);
+  };
+
+  // ── 문장별 TTS 재생 — 해당 문장만 읽기. loop=true면 무한 구간 반복 ──
+  const playSentence = (idx: number, loop = false) => {
+    const sentence = dictationSentences[idx];
+    if (!sentence) return;
+
+    // CMS 오디오 모드 — 구간 반복 토글: ontimeupdate에서 해당 문장 구간만 반복
+    if (audioUrl) {
+      if (loop) {
+        if (loopSentenceIdx === idx) {
+          updateLoopSentence(null); // 반복 해제
+          return;
+        }
+        updateLoopSentence(idx);
+        // 오디오가 없으면 전체 재생 시작 후 반복 구간 적용
+        if (!dictationAudioRef.current) { playDictation(); return; }
+        const audio = dictationAudioRef.current;
+        const duration = audio.duration || 0;
+        if (duration) audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+        setActiveSentenceIdx(idx);
+        audio.play().then(() => setIsDictationPlaying(true)).catch(() => {});
+        return;
+      }
+      handleSentenceClick(idx);
+      return;
+    }
+
+    if (!('speechSynthesis' in window)) return;
+
+    // 같은 문장 재생 중 다시 누륨 → 정지
+    if (activeSentenceIdx === idx && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      fullPlayActiveRef.current = false;
+      loopActiveRef.current = false;
+      setActiveSentenceIdx(null);
+      setIsDictationPlaying(false);
+      if (loop) updateLoopSentence(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    fullPlayActiveRef.current = false; // 단일 문장 재생 시 전체 재생 모드 해제
+    setIsDictationPlaying(false);
+    loopActiveRef.current = loop;
+    if (loop) updateLoopSentence(idx); else updateLoopSentence(null);
+    setActiveSentenceIdx(idx);
+
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.rate = 0.82;
+      utterance.lang = 'en-US';
+      utterance.onend = () => {
+        // 구간 반복 활성 시 같은 문장 다시 재생
+        if (loopActiveRef.current) {
+          speak();
+        } else {
+          setActiveSentenceIdx(null);
+        }
+      };
+      utterance.onerror = () => { loopActiveRef.current = false; setActiveSentenceIdx(null); updateLoopSentence(null); };
+      sentenceUtterRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    };
+    speak();
   };
 
   // 탭이 바뀌거나 문제가 바뀌면 TTS + 오디오 정지
   useEffect(() => {
     window.speechSynthesis?.cancel();
+    fullPlayActiveRef.current = false;
+    loopActiveRef.current = false;
     setIsDictationPlaying(false);
+    setActiveSentenceIdx(null);
+    if (dictationAudioRef.current) {
+      dictationAudioRef.current.pause();
+      dictationAudioRef.current = null;
+    }
     return () => { window.speechSynthesis?.cancel(); };
   }, [contentKey]);
+
+  // 재생 중인 문장이 목록에서 보이도록 자동 스크롤
+  useEffect(() => {
+    if (activeSentenceIdx === null || !sentenceListRef.current) return;
+    sentenceListRef.current
+      .querySelector(`[data-sentence-idx="${activeSentenceIdx}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [activeSentenceIdx]);
 
   const normalizeDictationValue = (value: string) =>
     value.trim().toLowerCase().replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ');
 
   const isDictationCorrect = (index: number) => normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
+  // 정답 확인 — 틀린 빈칸은 오답 노트에 저장 + 틀린 횟수 추적 (3회 이상 시 힌트 권유)
+  const handleCheckDictation = () => {
+    setDictationChecked(true);
+    const wrongEntries: { word: string; sentence: string; contentKey: string }[] = [];
+    let wrongCount = 0;
+    dictationExercise.blanks.forEach((blank, i) => {
+      if (!isDictationCorrect(i)) {
+        wrongCount++;
+        // 틀린 단어가 포함된 문장 찾기
+        const sentence = dictationSentences.find(s => s.toLowerCase().includes(blank.toLowerCase())) || dictationExercise.fullSentence.slice(0, 120);
+        wrongEntries.push({ word: blank, sentence, contentKey });
+      }
+    });
+    if (wrongEntries.length > 0) {
+      saveWrongNotes(wrongEntries);
+      setWrongAttempts(prev => prev + 1);
+    } else {
+      setWrongAttempts(0);
+    }
+  };
+
+  // 첫 글자 힌트 토글
+  const toggleHint = (index: number) => {
+    setHintIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index); else next.add(index);
+      return next;
+    });
+  };
+
   const renderDictation = () => (
     <div className="space-y-3">
-      {/* 헤더 — 간소화: 제목 + 음성 버튼만 */}
+      {/* 헤더 — 제목 + 전체 듣기(pause/resume) + 문장별 듣기 토글 */}
       <div className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
         <p className="text-sm font-semibold text-[#1f2937]">받아쓰기 — 빈칸에 알맞은 단어를 입력하세요</p>
-        <button
-          type="button"
-          onClick={playDictation}
-          title={isDictationPlaying ? '정지' : '오디오 듣기'}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
-          style={{ backgroundColor: isDictationPlaying ? '#ef4444' : theme.accent }}
-        >
-          {isDictationPlaying ? <span className="text-sm">■</span> : <Volume2 className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* 문장별 듣기 목록 토글 */}
+          {dictationSentences.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setShowSentences(s => !s)}
+              title={showSentences ? '문장 목록 닫기' : '문장별 듣기 열기 — 원하는 문장만 반복 청취'}
+              className={`flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-semibold shadow-sm transition-colors ${
+                showSentences ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+              style={showSentences ? { backgroundColor: theme.accent } : undefined}
+            >
+              문장별
+            </button>
+          )}
+          {/* 전체 듣기 — pause/resume 토글 (멈춘 지점부터 이어서) */}
+          <button
+            type="button"
+            onClick={playDictation}
+            title={isDictationPlaying ? '일시정지 (다시 누륩면 이어서 재생)' : '전체 오디오 듣기'}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
+            style={{ backgroundColor: isDictationPlaying ? '#e67e22' : theme.accent }}
+          >
+            {isDictationPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
+
+      {/* 문장별 듣기 목록 — 클릭하면 해당 문장으로 이동(전체 재생 중 점프/seek), 반복 버튼으로 무한 루프 */}
+      {showSentences && dictationSentences.length > 1 && (
+        <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3 space-y-1.5 max-h-56 overflow-y-auto">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">스크립트 — 문장 클릭 시 해당 부분부터 재생</p>
+          {dictationSentences.map((sentence, idx) => {
+            const isActive = activeSentenceIdx === idx;
+            const isLooping = loopSentenceIdx === idx;
+            return (
+              <div
+                key={idx}
+                data-sentence-idx={idx}
+                className={`flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors ${
+                  isActive ? 'bg-[#eef4ff] border border-[#c7d8ff]' : 'hover:bg-gray-50 border border-transparent'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSentenceClick(idx)}
+                  title={isActive && !isLooping ? '정지 / 다시 듣기' : '이 문장부터 듣기'}
+                  className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white"
+                  style={{ backgroundColor: isActive ? '#ef4444' : theme.accent }}
+                >
+                  {isActive ? <span className="text-[9px]">■</span> : <Play className="h-3 w-3" />}
+                </button>
+                <span
+                  className={`flex-1 text-xs leading-5 cursor-pointer transition-colors ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#334155]'}`}
+                  onClick={() => handleSentenceClick(idx)}
+                >
+                  {sentence}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => playSentence(idx, true)}
+                  title={isLooping ? '반복 정지' : '이 문장 무한 반복'}
+                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    isLooping ? 'text-white' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  }`}
+                  style={isLooping ? { backgroundColor: '#e67e22' } : undefined}
+                >
+                  <Repeat className="h-3 w-3" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 전체 스크립트 + 빈칸 */}
       <div className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-4">
@@ -388,6 +746,19 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                     }`}
                     style={{ width: `${Math.max(dictationExercise.blanks[index].length * 10, 64)}px` }}
                   />
+                  {/* 첫 글자 힌트 — 클릭 시 첫 글자 표시/숨김 */}
+                  <button
+                    type="button"
+                    onClick={() => toggleHint(index)}
+                    title={hintIndices.has(index) ? '힌트 숨기기' : '첫 글자 힌트'}
+                    className={`inline-flex items-center justify-center h-5 min-w-[20px] rounded px-0.5 text-[10px] font-bold transition-colors ${
+                      hintIndices.has(index)
+                        ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                        : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'
+                    }`}
+                  >
+                    {hintIndices.has(index) ? dictationExercise.blanks[index].charAt(0).toUpperCase() : <Lightbulb className="h-3 w-3" />}
+                  </button>
                   {dictationChecked && !isDictationCorrect(index) && (
                     <span className="text-xs font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
                   )}
@@ -397,10 +768,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           ))}
         </div>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3 flex-wrap">
           <button
             type="button"
-            onClick={() => setDictationChecked(true)}
+            onClick={handleCheckDictation}
             className="rounded-full px-4 py-1.5 text-sm font-semibold text-white"
             style={{ backgroundColor: theme.accent }}
           >
@@ -411,7 +782,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               {dictationExercise.blanks.filter((_, i) => isDictationCorrect(i)).length}/{dictationExercise.blanks.length} 정답
             </p>
           )}
+          {/* 3번 이상 틀리면 힌트 사용 권유 */}
+          {wrongAttempts >= 3 && dictationChecked && dictationExercise.blanks.some((_, i) => !isDictationCorrect(i)) && (
+            <p className="text-xs text-amber-600 font-medium">💡 어려우면 빈칸 옆 전구 아이콘으로 첫 글자 힌트를 확인하세요</p>
+          )}
         </div>
+        {dictationChecked && dictationExercise.blanks.some((_, i) => !isDictationCorrect(i)) && (
+          <p className="mt-2 text-[11px] text-gray-400">틀린 단어는 오답 노트에 자동 저장되었습니다.</p>
+        )}
       </div>
     </div>
   );
@@ -606,38 +984,75 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         )}
       </div>
 
-      {/* ── Content panel: right-side slide-in drawer, matching AI 튜터's style ── */}
+      {/* ── Content panel: right-side slide-in drawer, matching AI 튜터's style ──
+          고정(pinned) 시 오버레이 제거 + 플로팅 드래그 가능 패널로 전환 (AI 튜터와 동일 UX) ── */}
       {activeTab && activeTabMeta && (
         <>
+          {!panelPinned && (
+            <div
+              className="fixed inset-0 z-[84]"
+              style={{ background: 'rgba(15, 23, 42, 0.35)', animation: 'reviewPanelFadeIn 0.2s ease' }}
+              onClick={() => setActiveTab(null)}
+            />
+          )}
           <div
-            className="fixed inset-0 z-[84]"
-            style={{ background: 'rgba(15, 23, 42, 0.35)', animation: 'reviewPanelFadeIn 0.2s ease' }}
-            onClick={() => setActiveTab(null)}
-          />
-          <div
-            className="fixed top-0 right-0 h-full bg-white flex flex-col z-[85]"
-            style={{
+            className="fixed bg-white flex flex-col z-[85]"
+            style={panelPinned ? {
+              top: 72,
+              right: 16,
+              width: 420,
+              maxWidth: '100vw',
+              height: '82vh',
+              borderRadius: 20,
+              border: `1.5px solid ${theme.border}`,
+              boxShadow: '0 18px 50px rgba(0,0,0,0.25)',
+              transform: `translate(${panelPos.x}px, ${panelPos.y}px)`,
+              animation: 'reviewPanelFadeIn 0.2s ease',
+            } : {
+              top: 0,
+              right: 0,
+              height: '100%',
               width: 420,
               maxWidth: '100vw',
               boxShadow: '-8px 0 30px rgba(0,0,0,0.15)',
               animation: 'reviewPanelSlideIn 0.25s ease',
             }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+            <div
+              className={`flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0 ${panelPinned ? 'cursor-grab active:cursor-grabbing select-none' : ''}`}
+              onMouseDown={onPanelDragStart}
+            >
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}dd 100%)` }}>
                   <activeTabMeta.icon className="h-4 w-4" />
                 </div>
                 <h3 className="text-base font-bold text-[#0f172a]">{activeTabMeta.title}</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab(null)}
-                className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 shadow-sm"
-              >
-                <X className="h-3 w-3" />
-                Close
-              </button>
+              <div className="flex items-center gap-1.5">
+                {/* 고정 토글 — AI 튜터의 고정과 동일: 띄워놓고 리뷰 화면과 동시 사용 */}
+                <button
+                  type="button"
+                  onClick={() => { setPanelPinned(p => !p); setPanelPos({ x: 0, y: 0 }); }}
+                  title={panelPinned ? '고정 해제' : '패널 고정 — 띄워놓고 리뷰와 동시에 사용'}
+                  className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors ${
+                    panelPinned
+                      ? 'border-transparent text-white'
+                      : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                  style={panelPinned ? { backgroundColor: theme.accent } : undefined}
+                >
+                  {panelPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                  {panelPinned ? '고정됨' : '고정'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab(null); setPanelPinned(false); setPanelPos({ x: 0, y: 0 }); }}
+                  className="flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 shadow-sm"
+                >
+                  <X className="h-3 w-3" />
+                  Close
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
               {renderActiveTab()}
