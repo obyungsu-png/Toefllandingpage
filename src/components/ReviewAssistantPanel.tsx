@@ -296,6 +296,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [dictationMode, setDictationMode] = useState<'training' | 'review'>('training');
   const [showWrongNotes, setShowWrongNotes] = useState(false); // 오답 노트 조회 토글
   const [wrongNoteFilter, setWrongNoteFilter] = useState<'this' | 'all'>('this'); // 오답 노트 필터
+  const [wrongNotesVersion, setWrongNotesVersion] = useState(0); // 오답 노트 변경 시 재렌더링 트리거 (삭제 후 즉시 반영)
   const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
   const [showSentences, setShowSentences] = useState(false); // 훈련 모드에서 문장별 듣기 목록 표시
   const [activeSentenceIdx, setActiveSentenceIdx] = useState<number | null>(null); // 현재 재생 중인 문장
@@ -631,6 +632,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     if (wrongEntries.length > 0) {
       saveWrongNotes(wrongEntries);
       setWrongAttempts(prev => prev + 1);
+      setWrongNotesVersion(v => v + 1); // 복습 모드 오답 카운트 즉시 갱신
     } else {
       setWrongAttempts(0);
     }
@@ -959,6 +961,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           📒 오답 노트 {showWrongNotes ? '닫기' : '보기'}
         </button>
         {(() => {
+          void wrongNotesVersion; // 삭제 시 카운트 즉시 갱신
           const allNotes = loadWrongNotes();
           const thisCount = allNotes.filter(n => n.contentKey === contentKey).length;
           return (
@@ -970,6 +973,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       </div>
 
       {showWrongNotes && (() => {
+        // wrongNotesVersion 참조 — 삭제 시 즉시 재렌더링
+        void wrongNotesVersion;
         const allNotes = loadWrongNotes();
         const filtered = wrongNoteFilter === 'this'
           ? allNotes.filter(n => n.contentKey === contentKey)
@@ -1002,6 +1007,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   onClick={() => {
                     if (confirm('오답 노트를 모두 삭제할까요?')) {
                       localStorage.removeItem(WRONG_NOTE_KEY);
+                      setWrongNotesVersion(v => v + 1);
                       setShowWrongNotes(false);
                     }
                   }}
@@ -1028,12 +1034,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   <button
                     type="button"
                     onClick={() => {
-                      // 개별 삭제 — 같은 word+sentence 조합 제거
+                      // 개별 삭제 — 같은 word+sentence 조합 제거 + version 증가로 즉시 재렌더링
                       const remaining = loadWrongNotes().filter(n => !(n.word === note.word && n.sentence === note.sentence));
                       localStorage.setItem(WRONG_NOTE_KEY, JSON.stringify(remaining.slice(-200)));
-                      // 강제 재렌더링 유도
-                      setShowWrongNotes(false);
-                      setTimeout(() => setShowWrongNotes(true), 0);
+                      setWrongNotesVersion(v => v + 1);
                     }}
                     title="이 오답 삭제"
                     className="text-gray-300 hover:text-red-500 shrink-0"
