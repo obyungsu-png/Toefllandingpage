@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
@@ -299,6 +299,15 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [wrongNotesVersion, setWrongNotesVersion] = useState(0); // 오답 노트 변경 시 재렌더링 트리거 (삭제 후 즉시 반영)
   const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
   const [showSentences, setShowSentences] = useState(false); // 훈련 모드에서 문장별 듣기 목록 표시
+  // 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 (1·2단계 집중 훈련)
+  const [autoStopMode, setAutoStopMode] = useState(false);
+  const [autoStopIdx, setAutoStopIdx] = useState<number | null>(null); // 자동 정지된 문장 인덱스
+  // 쉐도잉 녹음 — 복습 모드에서 사용자 음성 녹음 후 원본과 비교
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const recordedAudioRef = useRef<HTMLAudioElement | null>(null);
   const [activeSentenceIdx, setActiveSentenceIdx] = useState<number | null>(null); // 현재 재생 중인 문장
   const [loopSentenceIdx, setLoopSentenceIdx] = useState<number | null>(null); // 구간 반복 대상 문장
   const [hintIndices, setHintIndices] = useState<Set<number>>(new Set()); // 첫 글자 힌트를 연 빈칸
@@ -353,6 +362,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setShowWrongNotes(false);
     setShowTranslation(false);
     setWrongNoteFilter('this');
+    setAutoStopMode(false);
+    setAutoStopIdx(null);
+    // 녹음 중이면 정리
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    setRecordedUrl(null);
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
   // ── audioUrl 변경 시 기존 오디오 정리 — 문제 바뀌면 이전 오디오가 재생되지 않도록 ──
@@ -461,6 +478,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
       setIsDictationPlaying(true);
+      return;
+    }
+    // 문장 자동 정지 모드 — 첫 문장 또는 이어서
+    if (autoStopMode) {
+      playAutoStop(autoStopIdx !== null ? Math.min(autoStopIdx + 1, dictationSentences.length - 1) : 0);
       return;
     }
     playAllSentences(0);
@@ -589,6 +611,68 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     speak();
   };
 
+  // ── 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 ──
+  const playAutoStop = (idx: number) => {
+    if (!('speechSynthesis' in window)) return;
+    const sentence = dictationSentences[idx];
+    if (!sentence) return;
+    window.speechSynthesis.cancel();
+    fullPlayActiveRef.current = false;
+    loopActiveRef.current = false;
+    updateLoopSentence(null);
+    setIsDictationPlaying(true);
+    setActiveSentenceIdx(idx);
+    setAutoStopIdx(null);
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.rate = 0.82;
+    utterance.lang = 'en-US';
+    utterance.onend = () => {
+      setActiveSentenceIdx(null);
+      setAutoStopIdx(idx); // "다음 문장" 버튼 표시
+      setIsDictationPlaying(false);
+    };
+    utterance.onerror = () => { setActiveSentenceIdx(null); setAutoStopIdx(null); setIsDictationPlaying(false); };
+    sentenceUtterRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // ── 쉐도잉 녹음 — MediaRecorder로 마이크 녹음 후 재생/삭제 ──
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      recordedChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+        setRecordedUrl(url);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      alert('마이크 접근 권한이 필요합니다. 브라우저 설정을 확인하세요.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const deleteRecording = () => {
+    stopRecording();
+    if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+    setRecordedUrl(null);
+  };
+
   // 탭이 바뀌거나 문제가 바뀌면 TTS + 오디오 정지
   useEffect(() => {
     window.speechSynthesis?.cancel();
@@ -682,16 +766,59 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           {dictationMode === 'training' ? '받아쓰기 — 빈칸 채우기' : '풀 스크립트 — 클릭·하이라이트 싱크'}
         </span>
         {/* 전체 듣기 — pause/resume 토글 (멈춘 지점부터 이어서) */}
-        <button
-          type="button"
-          onClick={playDictation}
-          title={isDictationPlaying ? '일시정지 (다시 누르면 이어서 재생)' : '전체 오디오 듣기'}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
-          style={{ backgroundColor: isDictationPlaying ? '#e67e22' : theme.accent }}
-        >
-          {isDictationPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {/* 문장 자동 정지 모드 — TTS에서 한 문장씩 자동 정지 (CMS 오디오 없을 때) */}
+          {!audioUrl && dictationSentences.length > 1 && (
+            <button
+              type="button"
+              onClick={() => { setAutoStopMode(s => !s); setAutoStopIdx(null); }}
+              title={autoStopMode ? '자동 정지 모드 끄기' : '자동 정지 모드 — 한 문장씩 재생 후 정지'}
+              className={`flex h-8 items-center justify-center rounded-full px-2.5 text-[10px] font-bold shadow-sm transition-colors ${
+                autoStopMode ? 'text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+              }`}
+              style={autoStopMode ? { backgroundColor: '#7c3aed' } : undefined}
+            >
+              자동정지
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={playDictation}
+            title={isDictationPlaying ? '일시정지 (다시 누르면 이어서 재생)' : '전체 오디오 듣기'}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
+            style={{ backgroundColor: isDictationPlaying ? '#e67e22' : theme.accent }}
+          >
+            {isDictationPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
+      {/* 자동 정지 모드 "다음 문장" 버튼 — 한 문장 재생 완료 후 표시 */}
+      {autoStopMode && autoStopIdx !== null && !isDictationPlaying && (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-violet-50 border border-violet-200 px-3 py-2">
+          <span className="text-xs font-semibold text-violet-700">
+            문장 {autoStopIdx + 1}/{dictationSentences.length} 완료
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => playAutoStop(autoStopIdx)}
+              className="flex items-center gap-1 rounded-full bg-white border border-violet-200 px-2.5 py-1 text-[11px] font-semibold text-violet-600 hover:bg-violet-50"
+            >
+              <Repeat className="h-3 w-3" /> 다시
+            </button>
+            {autoStopIdx + 1 < dictationSentences.length && (
+              <button
+                type="button"
+                onClick={() => playAutoStop(autoStopIdx + 1)}
+                className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold text-white"
+                style={{ backgroundColor: '#7c3aed' }}
+              >
+                다음 문장 ▶
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* 4단계 학습 플로우 인디케이터 — 현재 단계 하이라이트 */}
       <div className="flex items-center justify-between gap-1 px-1">
         {stepLabels.map((label, i) => {
@@ -874,20 +1001,62 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── 복습 모드 — 풀 스크립트 + 하이라이트 싱크 + 클릭 점프 + 구간 반복 (4단계) ──
   const renderReviewMode = () => (
     <>
-      {/* 풀 스크립트 컨트롤 — 번역 토글 + 구간 반복 해제 */}
+      {/* 풀 스크립트 컨트롤 — 번역 토글 + 쉐도잉 녹음 + 구간 반복 해제 */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        {translationSentences.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowTranslation(s => !s)}
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
-              showTranslation ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
-            style={showTranslation ? { backgroundColor: '#2563eb' } : undefined}
-          >
-            <Languages className="h-3 w-3" /> 번역 {showTranslation ? '숨기기' : '보기'}
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {translationSentences.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowTranslation(s => !s)}
+              className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
+                showTranslation ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+              style={showTranslation ? { backgroundColor: '#2563eb' } : undefined}
+            >
+              <Languages className="h-3 w-3" /> 번역 {showTranslation ? '숨기기' : '보기'}
+            </button>
+          )}
+          {/* 쉐도잉 녹음 — 마이크로 내 음성 녹음 후 비교 */}
+          {!isRecording ? (
+            <button
+              type="button"
+              onClick={startRecording}
+              className="flex items-center gap-1 rounded-full bg-white border border-red-200 px-3 py-1 text-xs font-semibold text-red-500 hover:bg-red-50"
+              title="내 음성 녹음 (쉐도잉)"
+            >
+              <Mic className="h-3 w-3" /> 녹음
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="flex items-center gap-1 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white animate-pulse"
+              title="녹음 중지"
+            >
+              <span className="h-2 w-2 rounded-full bg-white" /> 녹음 중... (탭하여 정지)
+            </button>
+          )}
+          {recordedUrl && !isRecording && (
+            <button
+              type="button"
+              onClick={() => { recordedAudioRef.current?.play(); }}
+              className="flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-600"
+              title="녹음 재생"
+            >
+              <Play className="h-3 w-3" /> 내 녹음
+            </button>
+          )}
+          {recordedUrl && !isRecording && (
+            <button
+              type="button"
+              onClick={deleteRecording}
+              className="text-xs text-gray-400 hover:text-red-500"
+              title="녹음 삭제"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         {loopSentenceIdx !== null && (
           <button
             type="button"
@@ -898,6 +1067,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           </button>
         )}
       </div>
+      {/* 숨겨진 녹음 재생용 audio 요소 */}
+      {recordedUrl && <audio ref={recordedAudioRef} src={recordedUrl} className="hidden" />}
 
       {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤 */}
       <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto">
