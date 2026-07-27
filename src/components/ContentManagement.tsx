@@ -6127,10 +6127,35 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             let finalPassageText = passageText;
             let finalPassageTitle = get(iPTitle) || undefined;
 
-            // Daily Life 구조화 서식 감지: passageText 셀 안에
-            // "유형: email\n필드:\nto: ...\nfrom: ..." 형태로 내장되어 있으면
-            // 텍스트/AI 모드와 동일한 구조화 JSON으로 변환
-            if (passageText && /^유형:|^format:|^형식:/im.test(passageText)) {
+            // Daily Life 구조화 서식 감지 — 두 가지 입력 방식을 모두 허용:
+            //   (a) passageText 셀 안에 raw JSON 이 이미 들어 있는 경우
+            //       예: {"structure":"flyer","color":"orange","fields":{...}}
+            //   (b) 사람이 편집하기 쉬운 "유형: email\n필드:\nto: ..." 형태
+            //       — 이 경우 텍스트/AI 모드와 동일한 구조화 JSON으로 자동 변환
+            const looksLikeJson =
+              !!passageText && /^\s*\{[\s\S]*"structure"\s*:/.test(passageText);
+            if (looksLikeJson) {
+              try {
+                const parsed = JSON.parse(passageText!);
+                const structure = typeof parsed?.structure === 'string' ? parsed.structure : undefined;
+                const fields = parsed?.fields && typeof parsed.fields === 'object' ? parsed.fields : undefined;
+                if (structure && fields && Object.keys(fields).length > 0) {
+                  // Ensure templateId + color defaults so the runtime renderer picks it up.
+                  const color = typeof parsed?.color === 'string' ? parsed.color : 'teal';
+                  finalPassageText = JSON.stringify({
+                    templateId: parsed.templateId || `csv-${structure}`,
+                    structure,
+                    color,
+                    fields,
+                  });
+                  if (!finalPassageTitle && DAILY_FORMAT_TITLES[structure]) {
+                    finalPassageTitle = DAILY_FORMAT_TITLES[structure];
+                  }
+                }
+              } catch {
+                // JSON이 아니면 그대로 두고 아래 "유형:" 분기가 처리
+              }
+            } else if (passageText && /^유형:|^format:|^형식:/im.test(passageText)) {
               const formatMatch = passageText.match(/^(?:유형|format|형식):\s*(.+)$/im);
               const dailyFormat = formatMatch ? normalizeDailyFormat(formatMatch[1].trim()) : undefined;
               const colorMatch = passageText.match(/^(?:색상|color|테마):\s*(.+)$/im);
@@ -6203,13 +6228,31 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 const stripped = answerSentence.replace(/[.?]$/, '').trim();
                 bsWords = stripped.split(/\s+/).filter(Boolean);
               }
+              // 표준 CSV 양식(csv_4.27_writing_1 기준)에서는 상황 프롬프트가
+              // explanation 컬럼에 "Prompt: ..." 형태로 들어옵니다.
+              // context 컬럼이 비어 있으면 그 문자열을 회색 상황 박스로 승격.
+              if (!bsContext) {
+                const explRaw = get(iExp);
+                const promptMatch = explRaw.match(/^\s*Prompt\s*[:：]\s*([\s\S]+)$/i);
+                if (promptMatch) {
+                  bsContext = promptMatch[1].trim();
+                }
+              }
             }
 
-            // Write an Email: emailScenario/emailInstruction/emailBullets/emailTo/emailSubject
-            // are the ONLY fields WritingEmailQ1 reads at runtime — passageText/questionText
-            // are not used as a fallback, so these must come from their own columns.
+            // Write an Email
+            //   (a) 전용 컬럼(emailScenario/emailInstruction/emailBullet1-4/emailTo/emailSubject)이
+            //       있으면 그 값을 그대로 사용.
+            //   (b) 표준 CSV 양식(csv_4.27_writing_1 기준)처럼 전용 컬럼 없이
+            //       questionText 안에 지시문/불릿/To·Subject 가 모두 담기고,
+            //       explanation 이 "Scenario: ..." 로 시나리오를 담는 경우:
+            //       - explanation 에서 "Scenario:" 접두어를 제거해 context 로 승격
+            //         (WritingSectionWrapper.buildEmailWritingQuestion 이 context 를
+            //          emailScenario 로 자동 인식) — questionText 는 그대로 두면
+            //          같은 헬퍼가 To/Subject/불릿/instruction 을 자동 분리합니다.
             const isWriteEmail = finalType.toLowerCase().includes('write an email') || qType.toLowerCase().includes('write an email');
             let emailFields: Partial<TPOQuestion> = {};
+            let weContext: string | undefined;
             if (isWriteEmail) {
               const bullets = [get(iEmailBullet1), get(iEmailBullet2), get(iEmailBullet3), get(iEmailBullet4)]
                 .filter(b => b !== '');
@@ -6220,6 +6263,20 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 emailTo: get(iEmailTo) || undefined,
                 emailSubject: get(iEmailSubject) || undefined,
               };
+
+              // Fallback: 전용 컬럼이 하나도 없을 때 explanation "Scenario:"를 활용
+              const noEmailCols =
+                !emailFields.emailScenario && !emailFields.emailInstruction &&
+                !emailFields.emailBullets && !emailFields.emailTo && !emailFields.emailSubject;
+              if (noEmailCols) {
+                const scMatch = get(iExp).match(/^\s*Scenario\s*[:：]\s*([\s\S]+)$/i);
+                if (scMatch) {
+                  const scenarioText = scMatch[1].trim();
+                  // context 컬럼이 이미 있으면 그것을 우선; 없으면 explanation의 시나리오 사용
+                  weContext = get(iContext) || scenarioText;
+                  emailFields.emailScenario = scenarioText;
+                }
+              }
             }
 
             // Take an Interview: "8-11" 통합행을 Q8, Q9, Q10, Q11 개별 행으로 자동 분리
@@ -6229,11 +6286,16 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
             if (isCombinedInterview) {
               // 통합행을 4개 개별 행으로 분리
+              // 표준 CSV 양식은 questionText 를 "Answer the researcher's questions.
+              // (4 questions — audio only)" 처럼 단일 문자열로 넣어두므로, 그것이
+              // 있으면 각 하위 문제에 그대로 사용하고, 없을 때만 문제 번호가 들어간
+              // 기본 문구로 대체합니다.
+              const interviewText = get(iQText);
               for (let n = 8; n <= 11; n++) {
                 questions.push({
                   id: `q-${Date.now()}-${n}-${r}-${Math.random().toString(36).slice(2, 7)}`,
                   questionNumber: n,
-                  questionText: `Answer the researcher's question. (Question ${n} — audio only)`,
+                  questionText: interviewText || `Answer the researcher's question. (Question ${n} — audio only)`,
                   questionType: finalType,
                   options,
                   correctAnswer: get(iAns) || undefined,
@@ -6263,7 +6325,11 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 organizationBlanks: get(iOrgBlanks) || undefined,
                 difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
-                context: isBuildSentence ? bsContext : (get(iContext) || undefined),
+                context: isBuildSentence
+                  ? bsContext
+                  : (isWriteEmail
+                      ? (weContext ?? (get(iContext) || undefined))
+                      : (get(iContext) || undefined)),
                 ...(blanks ? { blanks } : {}),
                 ...(bsWords ? { words: bsWords } : {}),
                 ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
