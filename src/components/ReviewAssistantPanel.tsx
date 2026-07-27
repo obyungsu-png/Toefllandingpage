@@ -295,6 +295,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // 모드 분리: 훈련(빈칸 받아쓰기) vs 복습(풀 스크립트 + 하이라이트 싱크)
   const [dictationMode, setDictationMode] = useState<'training' | 'review'>('training');
   const [showWrongNotes, setShowWrongNotes] = useState(false); // 오답 노트 조회 토글
+  const [wrongNoteFilter, setWrongNoteFilter] = useState<'this' | 'all'>('this'); // 오답 노트 필터
+  const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
   const [showSentences, setShowSentences] = useState(false); // 훈련 모드에서 문장별 듣기 목록 표시
   const [activeSentenceIdx, setActiveSentenceIdx] = useState<number | null>(null); // 현재 재생 중인 문장
   const [loopSentenceIdx, setLoopSentenceIdx] = useState<number | null>(null); // 구간 반복 대상 문장
@@ -308,6 +310,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
 
   const dictationExercise = useMemo(() => buildDictationExercise(variant, scriptText || translationNote), [variant, scriptText, translationNote]);
   const dictationSentences = useMemo(() => splitIntoSentences(scriptText || translationNote || ''), [scriptText, translationNote]);
+  // 한국어 번역 문장 분할 — translationNote를 한국어 문장 단위로 쪼개 영어 문장과 인덱스 매칭
+  // (정확한 1:1 매칭이 안 될 수 있으나, 전체 번역이 있으면 문장별 표시에 활용)
+  const translationSentences = useMemo(() => {
+    if (!translationNote) return [];
+    // 한국어 종결 부호 + 줄바꿈 기준 분할
+    const raw = translationNote.match(/[^.!?。。\n]+[.!?。。]?\s*/g) || [translationNote];
+    return raw.map(s => s.trim()).filter(s => s.length > 0);
+  }, [translationNote]);
   // 문장 시작 비율 — CMS 오디오 전체 재생 시 하이라이트 싱크 + 문장 클릭 seek 추정용
   // (문장별 정확한 타임스탬프가 없으므로 글자 수 비율로 근사)
   const sentenceRatios = useMemo(() => {
@@ -340,6 +350,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setShowSentences(false);
     setDictationMode('training');
     setShowWrongNotes(false);
+    setShowTranslation(false);
+    setWrongNoteFilter('this');
   }, [contentKey, dictationExercise.blanks.length, tabs]);
 
   // ── audioUrl 변경 시 기존 오디오 정리 — 문제 바뀌면 이전 오디오가 재생되지 않도록 ──
@@ -633,41 +645,76 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     });
   };
 
+  // 현재 학습 단계 계산 — 4단계 프레임워크 인디케이터용
+  // 1: 무자막 정취 (훈련+입력없음) / 2: 받아쓰기 (훈련+입력시작) / 3: 갭분석 (훈련+정답확인) / 4: 쉐도잉 (복습)
+  const currentStep = dictationMode === 'review' ? 4
+    : dictationChecked ? 3
+    : dictationInputs.some(i => (i || '').trim().length > 0) ? 2
+    : 1;
+  const stepLabels = ['무자막 정취', '받아쓰기', '갭 분석', '쉐도잉'];
+
   // ── Dictation 헤더 — 모드 토글(훈련/복습) + 전체 듣기 (공통) ──
   const renderDictationHeader = () => (
-    <div className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
-      {/* 모드 토글 — 훈련(빈칸 받아쓰기) / 복습(풀 스크립트 + 싱크) */}
-      <div className="flex items-center gap-1 rounded-full bg-white/60 p-0.5 border border-gray-200">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2 rounded-xl border px-3 py-2" style={{ backgroundColor: theme.soft, borderColor: theme.border }}>
+        {/* 모드 토글 — 훈련(빈칸 받아쓰기) / 복습(풀 스크립트 + 싱크) */}
+        <div className="flex items-center gap-1 rounded-full bg-white/60 p-0.5 border border-gray-200">
+          <button
+            type="button"
+            onClick={() => { setDictationMode('training'); setShowWrongNotes(false); }}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${dictationMode === 'training' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            style={dictationMode === 'training' ? { backgroundColor: theme.accent } : undefined}
+          >
+            훈련
+          </button>
+          <button
+            type="button"
+            onClick={() => { setDictationMode('review'); setShowSentences(false); }}
+            className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${dictationMode === 'review' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            style={dictationMode === 'review' ? { backgroundColor: theme.accent } : undefined}
+          >
+            복습
+          </button>
+        </div>
+        <span className="text-[11px] text-gray-500 font-medium hidden sm:block">
+          {dictationMode === 'training' ? '받아쓰기 — 빈칸 채우기' : '풀 스크립트 — 클릭·하이라이트 싱크'}
+        </span>
+        {/* 전체 듣기 — pause/resume 토글 (멈춘 지점부터 이어서) */}
         <button
           type="button"
-          onClick={() => { setDictationMode('training'); setShowWrongNotes(false); }}
-          className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${dictationMode === 'training' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          style={dictationMode === 'training' ? { backgroundColor: theme.accent } : undefined}
+          onClick={playDictation}
+          title={isDictationPlaying ? '일시정지 (다시 누르면 이어서 재생)' : '전체 오디오 듣기'}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
+          style={{ backgroundColor: isDictationPlaying ? '#e67e22' : theme.accent }}
         >
-          훈련
-        </button>
-        <button
-          type="button"
-          onClick={() => { setDictationMode('review'); setShowSentences(false); }}
-          className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${dictationMode === 'review' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          style={dictationMode === 'review' ? { backgroundColor: theme.accent } : undefined}
-        >
-          복습
+          {isDictationPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
       </div>
-      <span className="text-[11px] text-gray-500 font-medium hidden sm:block">
-        {dictationMode === 'training' ? '받아쓰기 — 빈칸 채우기' : '풀 스크립트 — 클릭·하이라이트 싱크'}
-      </span>
-      {/* 전체 듣기 — pause/resume 토글 (멈춘 지점부터 이어서) */}
-      <button
-        type="button"
-        onClick={playDictation}
-        title={isDictationPlaying ? '일시정지 (다시 누르면 이어서 재생)' : '전체 오디오 듣기'}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-opacity active:opacity-70"
-        style={{ backgroundColor: isDictationPlaying ? '#e67e22' : theme.accent }}
-      >
-        {isDictationPlaying ? <Pause className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-      </button>
+      {/* 4단계 학습 플로우 인디케이터 — 현재 단계 하이라이트 */}
+      <div className="flex items-center justify-between gap-1 px-1">
+        {stepLabels.map((label, i) => {
+          const stepNum = i + 1;
+          const isCurrent = currentStep === stepNum;
+          const isDone = currentStep > stepNum;
+          return (
+            <div key={i} className="flex items-center gap-1 flex-1">
+              <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 transition-all ${
+                isCurrent ? 'text-white shadow-sm' : isDone ? 'text-white/90' : 'text-gray-400 bg-gray-100'
+              }`} style={isCurrent || isDone ? { backgroundColor: isCurrent ? theme.accent : '#9ca3af' } : undefined}>
+                <span className={`text-[10px] font-bold flex h-4 w-4 items-center justify-center rounded-full ${
+                  isCurrent ? 'bg-white' : isDone ? 'bg-white/30' : 'bg-gray-300'
+                }`} style={isCurrent ? { color: theme.accent } : undefined}>
+                  {isDone ? '✓' : stepNum}
+                </span>
+                <span className="text-[10px] font-semibold whitespace-nowrap">{label}</span>
+              </div>
+              {i < stepLabels.length - 1 && (
+                <div className={`h-0.5 flex-1 rounded ${isDone ? 'bg-gray-400' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 
@@ -825,23 +872,40 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── 복습 모드 — 풀 스크립트 + 하이라이트 싱크 + 클릭 점프 + 구간 반복 (4단계) ──
   const renderReviewMode = () => (
     <>
+      {/* 풀 스크립트 컨트롤 — 번역 토글 + 구간 반복 해제 */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        {translationSentences.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowTranslation(s => !s)}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
+              showTranslation ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+            style={showTranslation ? { backgroundColor: '#2563eb' } : undefined}
+          >
+            <Languages className="h-3 w-3" /> 번역 {showTranslation ? '숨기기' : '보기'}
+          </button>
+        )}
+        {loopSentenceIdx !== null && (
+          <button
+            type="button"
+            onClick={() => updateLoopSentence(null)}
+            className="flex items-center gap-1 rounded-full bg-[#e67e22] px-3 py-1 text-xs font-bold text-white"
+          >
+            <Repeat className="h-3 w-3" /> 반복 중 (문장 {loopSentenceIdx + 1}) ✕
+          </button>
+        )}
+      </div>
+
       {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤 */}
       <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto">
-        <div className="flex items-center justify-between mb-2 sticky top-0 bg-white py-1">
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">풀 스크립트 — 문장 클릭 시 해당 부분부터 재생</p>
-          {loopSentenceIdx !== null && (
-            <button
-              type="button"
-              onClick={() => updateLoopSentence(null)}
-              className="flex items-center gap-1 rounded-full bg-[#e67e22] px-2 py-0.5 text-[10px] font-bold text-white"
-            >
-              <Repeat className="h-3 w-3" /> 반복 중 (문장 {loopSentenceIdx + 1}) ✕
-            </button>
-          )}
-        </div>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 sticky top-0 bg-white py-1">
+          풀 스크립트 — 문장 클릭 시 해당 부분부터 재생
+        </p>
         {dictationSentences.length > 0 ? dictationSentences.map((sentence, idx) => {
           const isActive = activeSentenceIdx === idx;
           const isLooping = loopSentenceIdx === idx;
+          const translation = showTranslation ? translationSentences[idx] : undefined;
           return (
             <div
               key={idx}
@@ -854,11 +918,16 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               onClick={() => handleSentenceClick(idx)}
             >
               <span className="text-[10px] font-bold text-gray-300 mt-0.5 shrink-0 w-5">{idx + 1}</span>
-              <span
-                className={`flex-1 text-sm leading-6 transition-colors ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}
-              >
-                {sentence}
-              </span>
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm leading-6 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
+                  {sentence}
+                </span>
+                {translation && (
+                  <span className="text-xs leading-5 text-gray-500 mt-0.5 block border-l-2 border-blue-100 pl-2">
+                    {translation}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); playSentence(idx, true); }}
@@ -877,8 +946,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         )}
       </div>
 
-      {/* 오답 노트 조회 — 토글 버튼 + 패널 */}
-      <div className="flex items-center gap-2">
+      {/* 오답 노트 조회 — 토글 버튼 + 필터 + 패널 */}
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           onClick={() => setShowWrongNotes(s => !s)}
@@ -889,21 +958,44 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         >
           📒 오답 노트 {showWrongNotes ? '닫기' : '보기'}
         </button>
-        <span className="text-[11px] text-gray-400">
-          {loadWrongNotes().filter(n => n.contentKey === contentKey).length}개 (이 문제) / {loadWrongNotes().length}개 (전체)
-        </span>
+        {(() => {
+          const allNotes = loadWrongNotes();
+          const thisCount = allNotes.filter(n => n.contentKey === contentKey).length;
+          return (
+            <span className="text-[11px] text-gray-400">
+              이 문제 {thisCount}개 / 전체 {allNotes.length}개
+            </span>
+          );
+        })()}
       </div>
 
       {showWrongNotes && (() => {
         const allNotes = loadWrongNotes();
-        const thisNotes = allNotes.filter(n => n.contentKey === contentKey);
-        const displayNotes = thisNotes.length > 0 ? thisNotes : allNotes;
+        const filtered = wrongNoteFilter === 'this'
+          ? allNotes.filter(n => n.contentKey === contentKey)
+          : allNotes;
         return (
           <div className="rounded-xl border border-red-200 bg-red-50/40 px-4 py-3 space-y-2 max-h-64 overflow-y-auto">
+            {/* 필터 토글 */}
             <div className="flex items-center justify-between sticky top-0">
-              <p className="text-xs font-bold text-red-700">
-                {thisNotes.length > 0 ? '이 문제 오답' : '전체 오답'} ({displayNotes.length})
-              </p>
+              <div className="flex items-center gap-1 rounded-full bg-white p-0.5 border border-red-200">
+                <button
+                  type="button"
+                  onClick={() => setWrongNoteFilter('this')}
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${wrongNoteFilter === 'this' ? 'text-white' : 'text-gray-500'}`}
+                  style={wrongNoteFilter === 'this' ? { backgroundColor: '#dc2626' } : undefined}
+                >
+                  이 문제
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWrongNoteFilter('all')}
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${wrongNoteFilter === 'all' ? 'text-white' : 'text-gray-500'}`}
+                  style={wrongNoteFilter === 'all' ? { backgroundColor: '#dc2626' } : undefined}
+                >
+                  전체
+                </button>
+              </div>
               {allNotes.length > 0 && (
                 <button
                   type="button"
@@ -919,18 +1011,35 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 </button>
               )}
             </div>
-            {displayNotes.length === 0 ? (
+            {filtered.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-4">저장된 오답이 없습니다.</p>
             ) : (
-              displayNotes.slice().reverse().map((note, i) => (
-                <div key={i} className="rounded-lg bg-white border border-red-100 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-red-600">{note.word}</span>
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(note.savedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
+              filtered.slice().reverse().map((note, i) => (
+                <div key={i} className="rounded-lg bg-white border border-red-100 px-3 py-2 flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-red-600">{note.word}</span>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(note.savedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-600 leading-5">{note.sentence}</p>
                   </div>
-                  <p className="mt-1 text-xs text-gray-600 leading-5">{note.sentence}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // 개별 삭제 — 같은 word+sentence 조합 제거
+                      const remaining = loadWrongNotes().filter(n => !(n.word === note.word && n.sentence === note.sentence));
+                      localStorage.setItem(WRONG_NOTE_KEY, JSON.stringify(remaining.slice(-200)));
+                      // 강제 재렌더링 유도
+                      setShowWrongNotes(false);
+                      setTimeout(() => setShowWrongNotes(true), 0);
+                    }}
+                    title="이 오답 삭제"
+                    className="text-gray-300 hover:text-red-500 shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))
             )}
