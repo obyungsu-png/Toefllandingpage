@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
-import { computeChronoDisplayNumbers } from '../utils/testLabel';
+import { computeChronoDisplayNumbers, effectiveDay } from '../utils/testLabel';
 
 type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
 type YearFilter = 'all' | '2024' | '2025' | '2026';
@@ -15,6 +15,7 @@ interface TPOTest {
   year?: number;
   month?: number;
   day?: number;
+  dateMemo?: string;
   isOfficial?: boolean;
   reading?: {
     passages: any[];
@@ -109,10 +110,13 @@ export function TestPage({
         return sortOrder === 'asc' ? a.month - b.month : b.month - a.month;
       }
 
-      if (a?.day === undefined && b?.day !== undefined) return -1;
-      if (a?.day !== undefined && b?.day === undefined) return 1;
-      if (a?.day !== undefined && b?.day !== undefined && a.day !== b.day) {
-        return sortOrder === 'asc' ? a.day - b.day : b.day - a.day;
+      // 정식 Day 필드가 비어 있으면 "날짜 메모"(예: "4/6")에서 일(day)을 추출해 대신 사용한다.
+      const aDay = effectiveDay(a);
+      const bDay = effectiveDay(b);
+      if (aDay === undefined && bDay !== undefined) return -1;
+      if (aDay !== undefined && bDay === undefined) return 1;
+      if (aDay !== undefined && bDay !== undefined && aDay !== bDay) {
+        return sortOrder === 'asc' ? aDay - bDay : bDay - aDay;
       }
 
       return sortOrder === 'asc' ? numA - numB : numB - numA;

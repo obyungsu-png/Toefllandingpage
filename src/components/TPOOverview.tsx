@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Plus, Trash2, ChevronRight, BookOpen, Headphones, PenTool, Mic, AlertCircle, Pencil, ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import type { TPOSection, TPOTest } from './ContentManagement';
-import { computeChronoDisplayNumbers } from '../utils/testLabel';
+import { computeChronoDisplayNumbers, effectiveDay } from '../utils/testLabel';
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -90,9 +90,10 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
         return sortOrder === 'asc' ? aMonth - bMonth : bMonth - aMonth;
       }
 
-      // 5) year/month가 같으면 day 기준 정렬 (예: 4/27)
-      const aDay = aMeta?.day;
-      const bDay = bMeta?.day;
+      // 5) year/month가 같으면 day 기준 정렬 (예: 4/27).
+      //    정식 Day 필드가 비어 있으면 "날짜 메모"(예: "4/6")에서 일(day)을 추출해 대신 사용한다.
+      const aDay = effectiveDay(aMeta);
+      const bDay = effectiveDay(bMeta);
 
       if (aDay === undefined && bDay !== undefined) return -1;
       if (aDay !== undefined && bDay === undefined) return 1;
@@ -263,7 +264,8 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
               const meta = getMeta(test.type, test.number);
               const completion = getCompletion(test.sections);
               const total = test.sections.reading + test.sections.listening + test.sections.writing + test.sections.speaking;
-              const hasDate = meta?.year || meta?.month || meta?.day;
+              const metaDay = effectiveDay(meta);
+              const hasDate = meta?.year || meta?.month || metaDay;
               const displayNumber = chronoDisplayNumbers.get(test.type)?.get(test.number) ?? test.number;
 
               return (
@@ -296,7 +298,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
                         )}
                         {meta?.month && (
                           <span className="text-[11px] px-2 py-0.5 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
-                            {MONTH_SHORT[meta.month - 1]}{meta?.day ? ` ${meta.day}` : ''}
+                            {MONTH_SHORT[meta.month - 1]}{metaDay ? ` ${metaDay}` : ''}
                           </span>
                         )}
                       </div>

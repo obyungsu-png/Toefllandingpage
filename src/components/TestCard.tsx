@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock, CheckCircle2, CalendarDays } from 'lucide-react';
 import { TPOTest } from './ContentManagement';
+import { effectiveDay } from '../utils/testLabel';
 
 interface TestCardProps {
   number: number;
@@ -170,7 +171,7 @@ export function TestCard({ number, displayNumber, onStartTest, onReviewTest, onC
             )}
             {testData.month && (
               <span className="text-xs px-2.5 py-1 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
-                {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{testData.day ? ` ${testData.day}` : ''}
+                {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{effectiveDay(testData) ? ` ${effectiveDay(testData)}` : ''}
               </span>
             )}
           </div>

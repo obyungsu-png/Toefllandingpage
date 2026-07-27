@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock, BookOpen, Headphones, PencilLine, Mic, Play, ArrowRightCircle, ClipboardCheck } from 'lucide-react';
 import { TPOTest } from './ContentManagement';
+import { effectiveDay } from '../utils/testLabel';
 
 interface TPOCardMobileCompactProps {
   number: number;
@@ -95,7 +96,7 @@ export function TPOCardMobileCompact({
         )}
         {testData?.month && (
           <span className="text-[10px] px-2 py-0.5 bg-[#f0fafa] text-[#1e6b73] rounded-md font-semibold shrink-0">
-            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{testData.day ? ` ${testData.day}` : ''}
+            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{effectiveDay(testData) ? ` ${effectiveDay(testData)}` : ''}
           </span>
         )}
 
