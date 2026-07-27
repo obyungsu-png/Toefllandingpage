@@ -166,7 +166,7 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
             )}
             {testData.month && (
               <span className="text-xs px-2.5 py-1 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
-                {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}
+                {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{testData.day ? ` ${testData.day}` : ''}
               </span>
             )}
           </div>

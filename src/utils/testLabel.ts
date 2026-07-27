@@ -18,9 +18,17 @@ export function formatTestLabel(
 
   const { year, month, testType } = testData;
 
+  // 회차(N회)는 testNumber가 아니라 실제 시행 순서(day)를 기준으로 매긴다.
+  // day가 없는 항목은 같은 year/month 안에서 먼저 시행된 것으로 간주해 앞에 두고,
+  // day가 같거나 둘 다 없으면 testNumber로 안정적인 순서를 만든다.
   const sameMonth = allTests
     .filter(t => t.testType === testType && t.year === year && t.month === month)
-    .sort((a, b) => a.testNumber - b.testNumber);
+    .sort((a, b) => {
+      if (a.day === undefined && b.day !== undefined) return -1;
+      if (a.day !== undefined && b.day === undefined) return 1;
+      if (a.day !== undefined && b.day !== undefined && a.day !== b.day) return a.day - b.day;
+      return a.testNumber - b.testNumber;
+    });
 
   const round = sameMonth.findIndex(t => t.testNumber === testData.testNumber) + 1;
   if (round < 1) return fallbackLabel;

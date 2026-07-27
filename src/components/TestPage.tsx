@@ -13,6 +13,7 @@ interface TPOTest {
   testType: 'TPO' | 'Test' | 'Training';
   year?: number;
   month?: number;
+  day?: number;
   isOfficial?: boolean;
   reading?: {
     passages: any[];
@@ -67,6 +68,7 @@ export function TestPage({
   
   const [yearFilter, setYearFilter] = useState<YearFilter>('all');
   const [monthFilter, setMonthFilter] = useState<MonthFilter>('all');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4; // 한 페이지에 4개씩 표시
 
@@ -75,6 +77,9 @@ export function TestPage({
     setCurrentPage(1);
   }, [yearFilter, monthFilter]);
 
+  // Test 카드 정렬 — TPOPage/CMS(TPOOverview)와 동일한 규칙:
+  // Year → Month → Day 순으로 정렬하고, 날짜가 전혀 설정되지 않은 세트는
+  // 정렬 방향과 무관하게 항상 맨 앞에 표시. 같은 날짜(또는 둘 다 미설정)면 번호순.
   const allTestNumbers = useMemo(() => {
     // Dynamically generate test numbers based on actual Test data
     const maxTestNumber = testTests.reduce((max, test) => {
@@ -83,10 +88,35 @@ export function TestPage({
       }
       return max;
     }, 0);
-    
-    // Generate array [1, 2, 3, ..., maxTestNumber]
-    return Array.from({ length: maxTestNumber }, (_, i) => i + 1);
-  }, [testTests]);
+
+    const numbers = Array.from({ length: maxTestNumber }, (_, i) => i + 1);
+    const getMeta = (num: number) => testTests.find(t => t.testType === 'Test' && t.testNumber === num);
+
+    return numbers.slice().sort((numA, numB) => {
+      const a = getMeta(numA);
+      const b = getMeta(numB);
+
+      if (a?.year === undefined && b?.year !== undefined) return -1;
+      if (a?.year !== undefined && b?.year === undefined) return 1;
+      if (a?.year !== undefined && b?.year !== undefined && a.year !== b.year) {
+        return sortOrder === 'asc' ? a.year - b.year : b.year - a.year;
+      }
+
+      if (a?.month === undefined && b?.month !== undefined) return -1;
+      if (a?.month !== undefined && b?.month === undefined) return 1;
+      if (a?.month !== undefined && b?.month !== undefined && a.month !== b.month) {
+        return sortOrder === 'asc' ? a.month - b.month : b.month - a.month;
+      }
+
+      if (a?.day === undefined && b?.day !== undefined) return -1;
+      if (a?.day !== undefined && b?.day === undefined) return 1;
+      if (a?.day !== undefined && b?.day !== undefined && a.day !== b.day) {
+        return sortOrder === 'asc' ? a.day - b.day : b.day - a.day;
+      }
+
+      return sortOrder === 'asc' ? numA - numB : numB - numA;
+    });
+  }, [testTests, sortOrder]);
 
   const getFilteredTestNumbers = (): number[] => {
     let numbers = allTestNumbers;
@@ -201,6 +231,23 @@ export function TestPage({
       {/* Filter Section */}
       <div className="border-b border-gray-200">
         <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-5 space-y-4">
+          {/* Sort order toggle */}
+          <div className="flex items-center gap-4 md:gap-5">
+            <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-12">정렬</span>
+            <div className="flex gap-2 md:gap-3">
+              <FilterPill
+                active={sortOrder === 'asc'}
+                label="오름차순 ↑"
+                onClick={() => setSortOrder('asc')}
+              />
+              <FilterPill
+                active={sortOrder === 'desc'}
+                label="내림차순 ↓"
+                onClick={() => setSortOrder('desc')}
+              />
+            </div>
+          </div>
+
           {/* Row 1: Year */}
           <div className="flex items-center gap-4 md:gap-5">
             <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-12">Year</span>

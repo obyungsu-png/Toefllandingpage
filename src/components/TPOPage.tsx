@@ -92,13 +92,41 @@ export function TPOPage({
     ).sort((a, b) => a - b);
   }, [yearFilter, tpoTests, availableMonths]);
 
+  // TPO 카드 정렬 — CMS(TPOOverview)와 동일한 규칙:
+  // Year → Month → Day 순으로 정렬하고, 날짜가 전혀 설정되지 않은 세트는
+  // 정렬 방향과 무관하게 항상 맨 앞에 표시. 같은 날짜(또는 둘 다 미설정)면 번호순.
   const allTestNumbers = useMemo(() => {
     const maxTestNumber = tpoTests.reduce((max, test) => {
       if (test.testType === 'TPO' && test.testNumber > max) return test.testNumber;
       return max;
     }, 0);
     const numbers = Array.from({ length: maxTestNumber }, (_, i) => i + 1);
-    return sortOrder === 'desc' ? numbers.slice().reverse() : numbers;
+    const getMeta = (num: number) => tpoTests.find(t => t.testType === 'TPO' && t.testNumber === num);
+
+    return numbers.slice().sort((numA, numB) => {
+      const a = getMeta(numA);
+      const b = getMeta(numB);
+
+      if (a?.year === undefined && b?.year !== undefined) return -1;
+      if (a?.year !== undefined && b?.year === undefined) return 1;
+      if (a?.year !== undefined && b?.year !== undefined && a.year !== b.year) {
+        return sortOrder === 'asc' ? a.year - b.year : b.year - a.year;
+      }
+
+      if (a?.month === undefined && b?.month !== undefined) return -1;
+      if (a?.month !== undefined && b?.month === undefined) return 1;
+      if (a?.month !== undefined && b?.month !== undefined && a.month !== b.month) {
+        return sortOrder === 'asc' ? a.month - b.month : b.month - a.month;
+      }
+
+      if (a?.day === undefined && b?.day !== undefined) return -1;
+      if (a?.day !== undefined && b?.day === undefined) return 1;
+      if (a?.day !== undefined && b?.day !== undefined && a.day !== b.day) {
+        return sortOrder === 'asc' ? a.day - b.day : b.day - a.day;
+      }
+
+      return sortOrder === 'asc' ? numA - numB : numB - numA;
+    });
   }, [tpoTests, sortOrder]);
 
   const filteredNumbers = useMemo(() => {

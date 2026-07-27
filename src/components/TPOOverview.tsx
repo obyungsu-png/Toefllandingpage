@@ -68,9 +68,10 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
       const aYear = aMeta?.year;
       const bYear = bMeta?.year;
 
-      // 2) year가 없는 항목은 항상 뒤로 (메타데이터 미설정 항목)
-      if (aYear === undefined && bYear !== undefined) return 1;
-      if (aYear !== undefined && bYear === undefined) return -1;
+      // 2) 날짜(year)가 전혀 없는 항목은 정렬 방향과 무관하게 항상 맨 앞으로
+      //    (날짜 미설정 = 아직 분류되지 않은 최신 업로드로 취급)
+      if (aYear === undefined && bYear !== undefined) return -1;
+      if (aYear !== undefined && bYear === undefined) return 1;
 
       // 3) year 기준 정렬 (asc: 과거가 먼저, desc: 최신이 먼저)
       if (aYear !== undefined && bYear !== undefined && aYear !== bYear) {
@@ -81,14 +82,25 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
       const aMonth = aMeta?.month;
       const bMonth = bMeta?.month;
 
-      if (aMonth === undefined && bMonth !== undefined) return 1;
-      if (aMonth !== undefined && bMonth === undefined) return -1;
+      if (aMonth === undefined && bMonth !== undefined) return -1;
+      if (aMonth !== undefined && bMonth === undefined) return 1;
 
       if (aMonth !== undefined && bMonth !== undefined && aMonth !== bMonth) {
         return sortOrder === 'asc' ? aMonth - bMonth : bMonth - aMonth;
       }
 
-      // 5) year/month가 같거나 둘 다 없으면 번호순 (fallback)
+      // 5) year/month가 같으면 day 기준 정렬 (예: 4/27)
+      const aDay = aMeta?.day;
+      const bDay = bMeta?.day;
+
+      if (aDay === undefined && bDay !== undefined) return -1;
+      if (aDay !== undefined && bDay === undefined) return 1;
+
+      if (aDay !== undefined && bDay !== undefined && aDay !== bDay) {
+        return sortOrder === 'asc' ? aDay - bDay : bDay - aDay;
+      }
+
+      // 6) year/month/day가 모두 같거나 없으면 번호순 (fallback)
       return sortOrder === 'asc' ? a.number - b.number : b.number - a.number;
     });
   }, [allTests, tests, sortOrder]);
@@ -120,7 +132,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">📚 Content Management</h1>
-            <p className="text-white/70 text-sm">TPO / Test / Training 세트 관리 · 연도/월 자동 정렬</p>
+            <p className="text-white/70 text-sm">TPO / Test / Training 세트 관리 · 연도/월/일 자동 정렬</p>
           </div>
           <div className="flex items-center gap-2">
             {/* 정렬 토글 — year+month 기준 오름/내림 */}
@@ -144,11 +156,12 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex items-start gap-3">
         <Pencil className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800 leading-relaxed">
-          <strong>연도(Year) · 월(Month) 설정 시 자동 정렬</strong><br />
+          <strong>연도(Year) · 월(Month) · 일(Day) 설정 시 자동 정렬</strong><br />
           카드를 클릭 → 우측 패널 상단 <strong>Classic 편집 탭</strong> 선택 →
           {' '}<span className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">Test Metadata (for filtering)</span> 섹션에서
-          {' '}<strong>Year</strong>와 <strong>Month</strong> 드롭다운을 변경 후 <strong>Save</strong>하면, 카드 목록이
-          {' '}<strong>Year → Month</strong> 기준으로 자동 재정렬됩니다. 우측 상단 버튼으로 오름/내림차순을 전환할 수 있어요.
+          {' '}<strong>Year</strong> · <strong>Month</strong> · <strong>Day</strong> 드롭다운을 변경 후 <strong>Save</strong>하면, 카드 목록이
+          {' '}<strong>Year → Month → Day</strong> 기준으로 자동 재정렬됩니다. 우측 상단 버튼으로 오름/내림차순을 전환할 수 있고,
+          {' '}날짜를 아직 설정하지 않은 세트는 정렬 방향과 무관하게 항상 맨 앞에 표시됩니다.
         </div>
       </div>
 
@@ -232,7 +245,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
               const meta = getMeta(test.type, test.number);
               const completion = getCompletion(test.sections);
               const total = test.sections.reading + test.sections.listening + test.sections.writing + test.sections.speaking;
-              const hasDate = meta?.year || meta?.month;
+              const hasDate = meta?.year || meta?.month || meta?.day;
 
               return (
                 <div
@@ -254,7 +267,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
                       {test.type} {test.number}
                     </span>
 
-                    {/* Year / Month badges */}
+                    {/* Year / Month / Day badges */}
                     {hasDate ? (
                       <div className="flex items-center gap-1">
                         {meta?.year && (
@@ -264,7 +277,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
                         )}
                         {meta?.month && (
                           <span className="text-[11px] px-2 py-0.5 bg-[#e67e22] text-white rounded-full font-bold shadow-sm">
-                            {MONTH_SHORT[meta.month - 1]}
+                            {MONTH_SHORT[meta.month - 1]}{meta?.day ? ` ${meta.day}` : ''}
                           </span>
                         )}
                       </div>

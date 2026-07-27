@@ -223,6 +223,7 @@ export interface TPOTest {
   sections: TPOSection[];
   year?: number;
   month?: number;
+  day?: number;
   isOfficial?: boolean;
   dateMemo?: string;
   createdAt: Date;
@@ -283,6 +284,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [previewQuestion, setPreviewQuestion] = useState<TPOQuestion | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
+  const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
   const [isOfficial, setIsOfficial] = useState(false);
   const [dateMemo, setDateMemo] = useState<string>('');
   const [showFillBlanksBuilder, setShowFillBlanksBuilder] = useState(false);
@@ -312,11 +314,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     if (test) {
       setSelectedYear(test.year);
       setSelectedMonth(test.month);
+      setSelectedDay(test.day);
       setIsOfficial(test.isOfficial || false);
       setDateMemo(test.dateMemo || '');
     } else {
       setSelectedYear(undefined);
       setSelectedMonth(undefined);
+      setSelectedDay(undefined);
       setIsOfficial(false);
       setDateMemo('');
     }
@@ -469,6 +473,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         sections: [],
         year: selectedYear,
         month: selectedMonth,
+        day: selectedDay,
         isOfficial: isOfficial,
         dateMemo: dateMemo || undefined,
         createdAt: new Date(),
@@ -742,9 +747,9 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         <div className="mt-4 pt-4 border-t-2 border-[#2d7a7c]/20">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-1 h-5 bg-[#2d7a7c] rounded-full" />
-            <h4 className="font-bold text-[#2d7a7c] text-xs md:text-sm">📅 연도 · 월 설정 <span className="text-gray-400 font-normal">(카드 배지 + 필터 연동)</span></h4>
+            <h4 className="font-bold text-[#2d7a7c] text-xs md:text-sm">📅 연도 · 월 · 일 설정 <span className="text-gray-400 font-normal">(카드 배지 + 필터 + 정렬 연동)</span></h4>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 bg-[#f0fafa] border border-[#2d7a7c]/20 rounded-xl p-3 md:p-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4 bg-[#f0fafa] border border-[#2d7a7c]/20 rounded-xl p-3 md:p-4">
             {/* Year */}
             <div>
               <label className="block text-xs md:text-sm font-bold text-[#2d7a7c] mb-2">🗓 Year</label>
@@ -789,6 +794,29 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   <option key={m} value={m}>
                     {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1]} ({m}월)
                   </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Day */}
+            <div>
+              <label className="block text-xs md:text-sm font-bold text-[#c0392b] mb-2">📍 Day</label>
+              <select
+                value={selectedDay || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedDay(val ? parseInt(val) : undefined);
+                  const test = getExistingTest();
+                  if (test) {
+                    const updatedTest = { ...test, day: val ? parseInt(val) : undefined, updatedAt: new Date() };
+                    onUpdateTest(updatedTest);
+                  }
+                }}
+                className="w-full px-3 md:px-4 py-2 border-2 border-[#c0392b]/30 rounded-lg focus:ring-2 focus:ring-[#c0392b] focus:border-transparent text-sm md:text-base font-medium bg-white"
+              >
+                <option value="">미설정</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                  <option key={d} value={d}>{d}일</option>
                 ))}
               </select>
             </div>
@@ -1038,6 +1066,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   sections: [],
                   year: selectedYear,
                   month: selectedMonth,
+                  day: selectedDay,
                   isOfficial: isOfficial,
                   dateMemo: dateMemo || undefined,
                   createdAt: new Date(),
@@ -1160,6 +1189,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                   sections: [],
                   year: selectedYear,
                   month: selectedMonth,
+                  day: selectedDay,
                   isOfficial: isOfficial,
                   dateMemo: dateMemo || undefined,
                   createdAt: new Date(),

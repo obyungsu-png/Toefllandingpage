@@ -90,7 +90,7 @@ export function TPOCardMobileCompact({
         )}
         {testData?.month && (
           <span className="text-[10px] px-2 py-0.5 bg-[#f0fafa] text-[#1e6b73] rounded-md font-semibold shrink-0">
-            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}
+            {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][testData.month - 1]}{testData.day ? ` ${testData.day}` : ''}
           </span>
         )}
 
