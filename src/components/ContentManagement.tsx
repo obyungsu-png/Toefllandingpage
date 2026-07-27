@@ -179,6 +179,9 @@ export interface TPOQuestion {
   dictationBlanks?: string;
   organization?: string;
   organizationBlanks?: string;
+  /** 문장별 타임스탬프 (초 단위) — Listening/Speaking 오디오-텍스트 싱크 정확도 향상.
+   *  CMS에서 입력하면 ReviewAssistantPanel에서 글자 수 비율 fallback 대신 정확한 싱크 사용 */
+  sentenceTimestamps?: Array<{ start: number; end: number }>;
 }
 
 export interface TPOSection {
@@ -214,6 +217,30 @@ export function upsertQuestions(questions: TPOQuestion[], newQuestions: TPOQuest
     result = upsertQuestion(result, q);
   }
   return result;
+}
+
+/** 초(seconds)를 "m:ss.ss" 형식 문자열로 변환 — CMS 타임스탬프 입력 폼 표시용.
+ *  예: 3.5 → "0:03.50", 75.25 → "1:15.25" */
+export function formatTimestamp(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '';
+  const min = Math.floor(seconds / 60);
+  const sec = seconds - min * 60;
+  return `${min}:${sec.toFixed(2).padStart(5, '0')}`;
+}
+
+/** "m:ss.ss" 형식 문자열을 초(seconds)로 변환 — CMS 폼에서 저장 시 사용.
+ *  파싱 실패 시 null 반환. "1:15.25" → 75.25, "0:03.5" → 3.5 */
+export function parseTimestamp(value: string): number | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  // m:ss.ss 또는 ss.ss 형식 허용
+  const match = trimmed.match(/^(?:(\d+):)?(\d{1,2}(?:\.\d+)?)$/);
+  if (!match) return null;
+  const min = match[1] ? parseInt(match[1], 10) : 0;
+  const sec = parseFloat(match[2]);
+  if (Number.isNaN(sec) || sec >= 60) return null;
+  return min * 60 + sec;
 }
 
 export interface TPOTest {
@@ -1436,6 +1463,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     organizationBlanks: '',
     analysisNote: '',
     vocabularyNote: '',
+    // 문장별 타임스탬프 — "m:ss.ss" 문자열 형태로 보관 (저장 시 초 단위로 변환)
+    sentenceTimestamps: [] as Array<{ start: string; end: string }>,
     passageText: '',
     passageTitle: '',
     colorTheme: '' as string,
@@ -1556,6 +1585,20 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       dictationBlanks: (formData as any).dictationBlanks || undefined,
       organization: (formData as any).organization || undefined,
       organizationBlanks: (formData as any).organizationBlanks || undefined,
+      // 문장별 타임스탬프 — 폼의 "m:ss.ss" 문자열을 초 단위로 변환해서 저장.
+      // start/end 모두 유효한 항목만 유지, 하나도 없으면 undefined로 저장하지 않음
+      sentenceTimestamps: (() => {
+        const raw = (formData as any).sentenceTimestamps || [];
+        const parsed = raw
+          .map((ts: any) => {
+            const start = parseTimestamp(ts?.start);
+            const end = parseTimestamp(ts?.end);
+            if (start === null || end === null || end <= start) return null;
+            return { start, end };
+          })
+          .filter((ts: any) => ts !== null);
+        return parsed.length > 0 ? parsed : undefined;
+      })(),
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -2913,6 +2956,67 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 placeholder="리스닝 오디오의 스크립트(대본) 원본을 입력하세요..."
               />
             </div>
+            {/* ── 문장별 타임스탬프 입력 — 정확한 오디오-텍스트 싱크를 위해 (선택) ── */}
+            {(() => {
+              const scriptText = (formData as any).scriptText || '';
+              if (!scriptText.trim()) {
+                return (
+                  <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-xs text-gray-400 italic">
+                      ⏱ 문장별 타임스탬프: 먼저 Script를 입력하면 문장별로 분할되어 시작/종료 시간을 입력할 수 있습니다. (선택)
+                    </p>
+                  </div>
+                );
+              }
+              // 문장 분할 (ReviewAssistantPanel.tsx의 splitIntoSentences와 동일 로직)
+              const lines = scriptText.split('\n').map((l: string) => l.trim()).filter((l: string) => l && !/^Narrator\s*:/i.test(l));
+              const joined = lines.join(' ');
+              const sentences = (joined.match(/[^.!?]+[.!?]+["']?\s*/g) || [joined]).map((s: string) => s.trim()).filter((s: string) => s.length > 1);
+              const timestamps: Array<{ start: string; end: string }> = (formData as any).sentenceTimestamps || [];
+              // 문장 수에 맞게 timestamps 배열 길이 조정 (남/모자라는 항목은 빈 문자열로)
+              const adjustedTs = sentences.map((_, idx) => timestamps[idx] || { start: '', end: '' });
+              const updateTs = (idx: number, field: 'start' | 'end', value: string) => {
+                const newTs = adjustedTs.map((t) => ({ ...t }));
+                newTs[idx] = { ...newTs[idx], [field]: value };
+                setFormData({ ...formData, sentenceTimestamps: newTs } as any);
+              };
+              return (
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      ⏱ 문장별 타임스탬프 <span className="text-xs text-gray-400 font-normal">(선택 — 정확한 오디오-텍스트 싱크)</span>
+                    </label>
+                    <span className="text-xs text-gray-400">{sentences.length}문장</span>
+                  </div>
+                  <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                    {sentences.map((s, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-400 w-5 shrink-0 text-right">{idx + 1}</span>
+                        <span className="flex-1 text-gray-600 truncate" title={s}>{s}</span>
+                        <input
+                          type="text"
+                          value={adjustedTs[idx]?.start || ''}
+                          onChange={(e) => updateTs(idx, 'start', e.target.value)}
+                          className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
+                          placeholder="0:00.00"
+                        />
+                        <span className="text-gray-400">→</span>
+                        <input
+                          type="text"
+                          value={adjustedTs[idx]?.end || ''}
+                          onChange={(e) => updateTs(idx, 'end', e.target.value)}
+                          className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
+                          placeholder="0:00.00"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    형식: <code className="bg-gray-200 px-1 rounded">m:ss.ss</code> (예: <code className="bg-gray-200 px-1 rounded">0:03.50</code>, <code className="bg-gray-200 px-1 rounded">1:15.25</code>) — 비워두면 글자 수 비율로 자동 추정됩니다.
+                  </p>
+                </div>
+              );
+            })()}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Dictation 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Review Dictation에서 빈칸으로 만들 단어들)</span>
@@ -3066,6 +3170,14 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     organizationBlanks: (question as any).organizationBlanks || '',
     analysisNote: (question as any).analysisNote || '',
     vocabularyNote: question.vocabularyNote || '',
+    // 문장별 타임스탬프 — 초 단위를 mm:ss.ss 문자열로 변환해서 폼에 표시
+    sentenceTimestamps: (Array.isArray((question as any).sentenceTimestamps)
+      ? (question as any).sentenceTimestamps
+      : []
+    ).map((ts: any) => ({
+      start: typeof ts?.start === 'number' ? formatTimestamp(ts.start) : '',
+      end: typeof ts?.end === 'number' ? formatTimestamp(ts.end) : '',
+    })) as Array<{ start: string; end: string }>,
     colorTheme: (() => {
       try { return JSON.parse(question.passageText || '').color || 'teal'; } catch { return 'teal'; }
     })() as string,
@@ -3194,6 +3306,20 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       dictationBlanks: (formData as any).dictationBlanks || undefined,
       organization: (formData as any).organization || undefined,
       organizationBlanks: (formData as any).organizationBlanks || undefined,
+      // 문장별 타임스탬프 — 폼의 "m:ss.ss" 문자열을 초 단위로 변환해서 저장.
+      // start/end 모두 유효한 항목만 유지, 하나도 없으면 undefined로 저장하지 않음
+      sentenceTimestamps: (() => {
+        const raw = (formData as any).sentenceTimestamps || [];
+        const parsed = raw
+          .map((ts: any) => {
+            const start = parseTimestamp(ts?.start);
+            const end = parseTimestamp(ts?.end);
+            if (start === null || end === null || end <= start) return null;
+            return { start, end };
+          })
+          .filter((ts: any) => ts !== null);
+        return parsed.length > 0 ? parsed : undefined;
+      })(),
       analysisNote: (formData as any).analysisNote || undefined,
       vocabularyNote: (formData as any).vocabularyNote || undefined,
       duration: formData.duration || undefined,
@@ -4326,6 +4452,67 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 placeholder="리스닝 오디오의 스크립트(대본) 원본을 입력하세요..."
               />
             </div>
+            {/* ── 문장별 타임스탬프 입력 — 정확한 오디오-텍스트 싱크를 위해 (선택) ── */}
+            {(() => {
+              const scriptText = (formData as any).scriptText || '';
+              if (!scriptText.trim()) {
+                return (
+                  <div className="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                    <p className="text-xs text-gray-400 italic">
+                      ⏱ 문장별 타임스탬프: 먼저 Script를 입력하면 문장별로 분할되어 시작/종료 시간을 입력할 수 있습니다. (선택)
+                    </p>
+                  </div>
+                );
+              }
+              // 문장 분할 (ReviewAssistantPanel.tsx의 splitIntoSentences와 동일 로직)
+              const lines = scriptText.split('\n').map((l: string) => l.trim()).filter((l: string) => l && !/^Narrator\s*:/i.test(l));
+              const joined = lines.join(' ');
+              const sentences = (joined.match(/[^.!?]+[.!?]+["']?\s*/g) || [joined]).map((s: string) => s.trim()).filter((s: string) => s.length > 1);
+              const timestamps: Array<{ start: string; end: string }> = (formData as any).sentenceTimestamps || [];
+              // 문장 수에 맞게 timestamps 배열 길이 조정 (남/모자라는 항목은 빈 문자열로)
+              const adjustedTs = sentences.map((_, idx) => timestamps[idx] || { start: '', end: '' });
+              const updateTs = (idx: number, field: 'start' | 'end', value: string) => {
+                const newTs = adjustedTs.map((t) => ({ ...t }));
+                newTs[idx] = { ...newTs[idx], [field]: value };
+                setFormData({ ...formData, sentenceTimestamps: newTs } as any);
+              };
+              return (
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      ⏱ 문장별 타임스탬프 <span className="text-xs text-gray-400 font-normal">(선택 — 정확한 오디오-텍스트 싱크)</span>
+                    </label>
+                    <span className="text-xs text-gray-400">{sentences.length}문장</span>
+                  </div>
+                  <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                    {sentences.map((s, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-400 w-5 shrink-0 text-right">{idx + 1}</span>
+                        <span className="flex-1 text-gray-600 truncate" title={s}>{s}</span>
+                        <input
+                          type="text"
+                          value={adjustedTs[idx]?.start || ''}
+                          onChange={(e) => updateTs(idx, 'start', e.target.value)}
+                          className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
+                          placeholder="0:00.00"
+                        />
+                        <span className="text-gray-400">→</span>
+                        <input
+                          type="text"
+                          value={adjustedTs[idx]?.end || ''}
+                          onChange={(e) => updateTs(idx, 'end', e.target.value)}
+                          className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
+                          placeholder="0:00.00"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    형식: <code className="bg-gray-200 px-1 rounded">m:ss.ss</code> (예: <code className="bg-gray-200 px-1 rounded">0:03.50</code>, <code className="bg-gray-200 px-1 rounded">1:15.25</code>) — 비워두면 글자 수 비율로 자동 추정됩니다.
+                  </p>
+                </div>
+              );
+            })()}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Dictation 빈칸 단어 <span className="text-xs text-gray-400 font-normal">(쉼표로 구분 — Review Dictation에서 빈칸으로 만들 단어들)</span>

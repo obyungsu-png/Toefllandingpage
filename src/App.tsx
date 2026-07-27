@@ -2327,7 +2327,7 @@ function AppContent() {
       : null);
   };
 
-  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; questionData?: any } | null = null;
+  let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; sentenceTimestamps?: Array<{ start: number; end: number }>; questionData?: any } | null = null;
 
   if (isReviewMode) {
     const isReadingQuestionVisible = showReadingSection || showModule1ReadingEngine || showModule2ReadingEngine || showFillBlanksTest || showReadNoticeTest || showReadNoticeTest2 || showSocialMediaTest || showSocialMediaTest2 || showSocialMediaTest3 || showModule1Question16 || showModule1Question17 || showModule1Question18 || showModule1Question19 || showModule1Question20 || showModule2FillBlanks || showModule2Question11 || showModule2Question12 || showModule2Question13 || showModule2Question14 || showModule2Question15 || showModule2Question16 || showModule2Question17 || showModule2Question18 || showModule2Question19 || showModule2Question20;
@@ -2388,6 +2388,7 @@ function AppContent() {
           vocabularyNote: reviewQuestion?.vocabularyNote,
           audioUrl: reviewQuestion?.audioUrl || undefined,
           scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || undefined,
+          sentenceTimestamps: reviewQuestion?.sentenceTimestamps,
           questionData: reviewQuestion || undefined,
         };
       }
@@ -2438,6 +2439,7 @@ function AppContent() {
           difficulty: reviewQuestion?.difficulty,
           audioUrl: reviewQuestion?.audioUrl || undefined,
           scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || (reviewQuestion as any)?.questionText || undefined,
+          sentenceTimestamps: reviewQuestion?.sentenceTimestamps,
           questionData: reviewQuestion || undefined,
         };
       }
@@ -7428,6 +7430,7 @@ function AppContent() {
           vocabularyNote={activeReviewPanel.vocabularyNote}
           audioUrl={activeReviewPanel.audioUrl}
           scriptText={activeReviewPanel.scriptText}
+          sentenceTimestamps={activeReviewPanel.sentenceTimestamps}
         />
         </Suspense>
       )}

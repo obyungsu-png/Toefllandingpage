@@ -761,6 +761,7 @@ export function TrainingInterface({
       vocabularyNote: reviewQuestion?.vocabularyNote,
       audioUrl: reviewQuestion?.audioUrl || (reviewQuestion as any)?.passageAudioUrl || undefined,
       scriptText: reviewQuestion?.scriptText || reviewQuestion?.passageText || undefined,
+      sentenceTimestamps: reviewQuestion?.sentenceTimestamps,
     };
   })();
 
@@ -1058,7 +1059,8 @@ export function TrainingInterface({
           vocabularyNote={reviewPanelConfig.vocabularyNote}
           audioUrl={reviewPanelConfig.audioUrl}
           scriptText={reviewPanelConfig.scriptText}
-        />
+          sentenceTimestamps={reviewPanelConfig.sentenceTimestamps}
+/>
       )}
 
       {reviewPanelConfig && (

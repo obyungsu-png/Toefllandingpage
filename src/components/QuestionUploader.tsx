@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Upload } from 'lucide-react';
 
@@ -29,6 +29,8 @@ export interface TPOQuestion {
   questionGroupId?: string;
   translationNote?: string;
   vocabularyNote?: string;
+  /** 문장별 타임스탬프 (초 단위) — Listening/Speaking 오디오-텍스트 싱크 정확도 향상 */
+  sentenceTimestamps?: Array<{ start: number; end: number }>;
 }
 
 const GROUPED_LISTENING_TYPES = ['Short Conversation', 'Announcements', 'Academic Talk', 'Campus Conversation', 'Academic Lecture'];
