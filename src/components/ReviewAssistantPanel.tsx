@@ -29,6 +29,9 @@ interface ReviewAssistantPanelProps {
   audioUrl?: string;
   /** Dictation용 — CMS 스크립트/전사본 텍스트 */
   scriptText?: string;
+  /** 문장별 타임스탬프 (초 단위) — CMS에 입력되면 정확한 오디오-텍스트 싱크.
+   *  없으면 글자 수 비율로 근사 (기존 동작 유지) */
+  sentenceTimestamps?: { start: number; end: number }[];
 }
 
 interface DictationExercise {
@@ -273,7 +276,7 @@ function getTabMeta(tab: string) {
   };
 }
 
-export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote, audioUrl, scriptText }: ReviewAssistantPanelProps) {
+export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote, audioUrl, scriptText, sentenceTimestamps }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
@@ -329,8 +332,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     return raw.map(s => s.trim()).filter(s => s.length > 0);
   }, [translationNote]);
   // 문장 시작 비율 — CMS 오디오 전체 재생 시 하이라이트 싱크 + 문장 클릭 seek 추정용
-  // (문장별 정확한 타임스탬프가 없으므로 글자 수 비율로 근사)
+  // sentenceTimestamps(CMS 타임스탬프)가 있으면 정확히 사용, 없으면 글자 수 비율로 근사
   const sentenceRatios = useMemo(() => {
+    if (sentenceTimestamps && sentenceTimestamps.length > 0) {
+      const totalDuration = sentenceTimestamps[sentenceTimestamps.length - 1]?.end || 1;
+      return sentenceTimestamps.map(t => (t.start || 0) / totalDuration);
+    }
     const total = dictationSentences.reduce((acc, s) => acc + s.length, 0);
     let acc = 0;
     return dictationSentences.map(s => {
@@ -338,7 +345,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       acc += s.length;
       return start;
     });
-  }, [dictationSentences]);
+  }, [dictationSentences, sentenceTimestamps]);
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
   const activeTabMeta = activeTab ? getTabMeta(activeTab) : null;
 
@@ -533,7 +540,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       }
       const audio = dictationAudioRef.current;
       const duration = audio.duration || 0;
-      if (duration) audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+      // CMS 타임스탬프가 있으면 직접 사용 (정확), 없으면 글자 수 비율 추정
+      if (sentenceTimestamps && sentenceTimestamps[idx]) {
+        audio.currentTime = sentenceTimestamps[idx].start;
+      } else if (duration) {
+        audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+      }
       setActiveSentenceIdx(idx);
       updateLoopSentence(null);
       audio.play().then(() => setIsDictationPlaying(true)).catch(() => {});
@@ -562,8 +574,13 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         // 오디오가 없으면 전체 재생 시작 후 반복 구간 적용
         if (!dictationAudioRef.current) { playDictation(); return; }
         const audio = dictationAudioRef.current;
-        const duration = audio.duration || 0;
-        if (duration) audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+        // CMS 타임스탬프가 있으면 직접 사용, 없으면 글자 수 비율
+        if (sentenceTimestamps && sentenceTimestamps[idx]) {
+          audio.currentTime = sentenceTimestamps[idx].start;
+        } else {
+          const duration = audio.duration || 0;
+          if (duration) audio.currentTime = (sentenceRatios[idx] ?? 0) * duration;
+        }
         setActiveSentenceIdx(idx);
         audio.play().then(() => setIsDictationPlaying(true)).catch(() => {});
         return;
