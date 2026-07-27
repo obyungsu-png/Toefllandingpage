@@ -4,6 +4,10 @@ import { TPOTest } from './ContentManagement';
 
 interface TestCardProps {
   number: number;
+  /** 카드 헤더에 보여줄 번호 — 시행 날짜 기준 자동 재배정된 번호.
+   *  진행상황 저장/시작/복습 등 기능은 계속 실제 number를 사용하고, 화면 텍스트만 이 값으로 대체된다.
+   *  없으면 기존처럼 number를 그대로 표시한다. */
+  displayNumber?: number;
   onStartTest: (section: string) => void;
   onReviewTest?: (section: string) => void;
   onContinueTest?: (section: string) => void;
@@ -14,7 +18,7 @@ interface TestCardProps {
   bankType?: string;
 }
 
-export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, isLocked = false, onUnlockClick, testData, customTitle, bankType = 'tpo' }: TestCardProps) {
+export function TestCard({ number, displayNumber, onStartTest, onReviewTest, onContinueTest, isLocked = false, onUnlockClick, testData, customTitle, bankType = 'tpo' }: TestCardProps) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -156,7 +160,7 @@ export function TestCard({ number, onStartTest, onReviewTest, onContinueTest, is
       )}
 
       <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] rounded-t-[12px] shadow-md flex items-center justify-between px-4 py-3 min-h-[52px]">
-        <p className="font-['Inter',_sans-serif] text-white text-xl sm:text-2xl font-bold tracking-wide">{customTitle || `Test ${number}`}</p>
+        <p className="font-['Inter',_sans-serif] text-white text-xl sm:text-2xl font-bold tracking-wide">{customTitle || `Test ${displayNumber ?? number}`}</p>
         {testData && (testData.year || testData.month) && (
           <div className="flex items-center gap-1.5 shrink-0">
             {testData.year && (

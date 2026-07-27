@@ -4,6 +4,10 @@ import { TPOTest } from './ContentManagement';
 
 interface TPOCardMobileCompactProps {
   number: number;
+  /** 카드 헤더에 보여줄 번호 — 시행 날짜 기준 자동 재배정된 번호.
+   *  진행상황 저장/시작/복습 등 기능은 계속 실제 number를 사용하고, 화면 텍스트만 이 값으로 대체된다.
+   *  없으면 기존처럼 number를 그대로 표시한다. */
+  displayNumber?: number;
   onStartTest: (section: string) => void;
   onReviewTest?: (section: string) => void;
   onContinueTest?: (section: string) => void;
@@ -25,6 +29,7 @@ const SECTIONS: { key: SectionKey; label: string; icon: typeof BookOpen }[] = [
 
 export function TPOCardMobileCompact({
   number,
+  displayNumber,
   onStartTest,
   onReviewTest,
   onContinueTest,
@@ -81,7 +86,7 @@ export function TPOCardMobileCompact({
       {/* Single-line header row — clean white/gray */}
       <div className="flex items-center gap-2.5 px-4 py-3 bg-white">
         <p className="font-bold text-gray-900 text-base tracking-tight whitespace-nowrap shrink-0">
-          {customTitle || `TPO ${number}`}
+          {customTitle || `TPO ${displayNumber ?? number}`}
         </p>
         {testData?.year && (
           <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md font-semibold shrink-0">

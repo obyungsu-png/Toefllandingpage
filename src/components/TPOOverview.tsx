@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Plus, Trash2, ChevronRight, BookOpen, Headphones, PenTool, Mic, AlertCircle, Pencil, ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import type { TPOSection, TPOTest } from './ContentManagement';
+import { computeChronoDisplayNumbers } from '../utils/testLabel';
 
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -105,6 +106,17 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
     });
   }, [allTests, tests, sortOrder]);
 
+  // 카드 헤더에 보여줄 "TPO N" / "Test N" / "Training N" 번호 — 실제 시행 순서
+  // (Year→Month→Day)에 맞춰 타입별로 자동 재배정. 클릭/삭제 등 기능은 계속
+  // 실제 number(test.number)를 사용하고, 화면 텍스트만 이 값으로 대체된다.
+  const chronoDisplayNumbers = useMemo(() => {
+    const map = new Map<string, Map<number, number>>();
+    (['TPO', 'Test', 'Training'] as const).forEach(type => {
+      map.set(type, computeChronoDisplayNumbers(tests, type));
+    });
+    return map;
+  }, [tests]);
+
   const getCompletion = (s: TPOSet['sections']) => {
     const total = 20 + 28 + 2 + 6;
     return Math.min(100, Math.round(((s.reading + s.listening + s.writing + s.speaking) / total) * 100));
@@ -162,6 +174,8 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
           {' '}<strong>Year</strong> · <strong>Month</strong> · <strong>Day</strong> 드롭다운을 변경 후 <strong>Save</strong>하면, 카드 목록이
           {' '}<strong>Year → Month → Day</strong> 기준으로 자동 재정렬됩니다. 우측 상단 버튼으로 오름/내림차순을 전환할 수 있고,
           {' '}날짜를 아직 설정하지 않은 세트는 정렬 방향과 무관하게 항상 맨 앞에 표시됩니다.
+          {' '}카드에 보이는 <strong>TPO/Test 번호 자체도 실제 시행 날짜 순서로 자동 재배정</strong>되어 표시됩니다
+          {' '}(내부 저장 번호·진행상황과는 무관하며 화면 표시만 바뀝니다).
         </div>
       </div>
 
@@ -209,7 +223,11 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
               <AlertCircle className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">정말 삭제하시겠습니까?</h3>
-                <p className="text-gray-600"><strong>{deleteConfirm.type} {deleteConfirm.number}</strong>의 모든 문제가 영구적으로 삭제됩니다.</p>
+                <p className="text-gray-600">
+                  <strong>
+                    {deleteConfirm.type} {chronoDisplayNumbers.get(deleteConfirm.type)?.get(deleteConfirm.number) ?? deleteConfirm.number}
+                  </strong>의 모든 문제가 영구적으로 삭제됩니다.
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -246,6 +264,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
               const completion = getCompletion(test.sections);
               const total = test.sections.reading + test.sections.listening + test.sections.writing + test.sections.speaking;
               const hasDate = meta?.year || meta?.month || meta?.day;
+              const displayNumber = chronoDisplayNumbers.get(test.type)?.get(test.number) ?? test.number;
 
               return (
                 <div
@@ -264,7 +283,7 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
                   {/* ── Teal header bar (mirrors TPOCard style) ── */}
                   <div className="bg-gradient-to-r from-[#2d7a7c] to-[#3d8a8c] px-4 py-3 flex items-center justify-between">
                     <span className="text-white font-bold text-base tracking-wide">
-                      {test.type} {test.number}
+                      {test.type} {displayNumber}
                     </span>
 
                     {/* Year / Month / Day badges */}

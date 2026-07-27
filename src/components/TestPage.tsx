@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
+import { computeChronoDisplayNumbers } from '../utils/testLabel';
 
 type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
 type YearFilter = 'all' | '2024' | '2025' | '2026';
@@ -117,6 +118,14 @@ export function TestPage({
       return sortOrder === 'asc' ? numA - numB : numB - numA;
     });
   }, [testTests, sortOrder]);
+
+  // 카드에 보여줄 "Test N" 번호 — 실제 시행 순서(Year→Month→Day)에 맞춰 자동 재배정.
+  // 정렬 토글(오름/내림)은 카드가 놓이는 위치만 바꾸고, 이 번호 자체는 항상
+  // 가장 먼저 시행된 세트가 1번이 되도록 고정한다 (날짜 미설정은 1번부터 배정).
+  const chronoDisplayNumbers = useMemo(
+    () => computeChronoDisplayNumbers(testTests, 'Test'),
+    [testTests]
+  );
 
   const getFilteredTestNumbers = (): number[] => {
     let numbers = allTestNumbers;
@@ -334,6 +343,7 @@ export function TestPage({
                   <div key={number} className="w-full max-w-full">
                     <TestCard
                       number={number}
+                      displayNumber={chronoDisplayNumbers.get(number)}
                       isLocked={isContentLocked(index, 3)}
                       onUnlockClick={() => setActiveTab('Pricing')}
                       testData={testData}
