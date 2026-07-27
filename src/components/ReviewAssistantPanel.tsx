@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
+import { WrongNotesManager } from './WrongNotesManager';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -298,6 +299,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // 모드 분리: 훈련(빈칸 받아쓰기) vs 복습(풀 스크립트 + 하이라이트 싱크)
   const [dictationMode, setDictationMode] = useState<'training' | 'review'>('training');
   const [showWrongNotes, setShowWrongNotes] = useState(false); // 오답 노트 조회 토글
+  const [showWrongNotesManager, setShowWrongNotesManager] = useState(false); // 오답 노트 통합 관리 모달
   const [wrongNoteFilter, setWrongNoteFilter] = useState<'this' | 'all'>('this'); // 오답 노트 필터
   const [wrongNotesVersion, setWrongNotesVersion] = useState(0); // 오답 노트 변경 시 재렌더링 트리거 (삭제 후 즉시 반영)
   const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
@@ -1152,6 +1154,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         >
           📒 오답 노트 {showWrongNotes ? '닫기' : '보기'}
         </button>
+        <button
+          type="button"
+          onClick={() => setShowWrongNotesManager(true)}
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 transition-colors"
+          title="모든 TPO의 오답을 한곳에서 관리"
+        >
+          🗂 전체 관리
+        </button>
         {(() => {
           void wrongNotesVersion; // 삭제 시 카운트 즉시 갱신
           const allNotes = loadWrongNotes();
@@ -1528,6 +1538,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           `}</style>
         </>
       )}
+
+      {/* 오답 노트 통합 관리 모달 — 모든 TPO의 오답을 한곳에서 조회/삭제/내보내기 */}
+      <WrongNotesManager
+        open={showWrongNotesManager}
+        onClose={() => setShowWrongNotesManager(false)}
+        currentContentKey={contentKey}
+        onChanged={() => setWrongNotesVersion(v => v + 1)}
+      />
     </div>
   );
 }

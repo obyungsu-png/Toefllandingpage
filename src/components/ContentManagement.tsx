@@ -285,6 +285,8 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
   const [editingTest, setEditingTest] = useState<TPOTest | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<TPOQuestion | null>(null);
   const editFormRef = useRef<HTMLDivElement>(null);
+  // 타임스탬프 입력용 오디오 ref — 재생 중 현재 시간을 클릭 입력하는 데 사용
+  const timestampAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // 편집 폼이 열리면 자동으로 스크롤
   // Note: Storage buckets (listening-audio, listening-images, listening-video)는
@@ -2980,6 +2982,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 newTs[idx] = { ...newTs[idx], [field]: value };
                 setFormData({ ...formData, sentenceTimestamps: newTs } as any);
               };
+              const audioSrc = (formData as any).audioUrl || (formData as any).passageAudioUrl;
               return (
                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-2">
@@ -2988,9 +2991,27 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                     </label>
                     <span className="text-xs text-gray-400">{sentences.length}문장</span>
                   </div>
+                  {/* 오디오 플레이어 — 재생 중 ▶/■ 버튼으로 현재 시간 클릭 입력 */}
+                  {audioSrc ? (
+                    <div className="mb-2 p-2 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-500">📌 오디오를 재생하면서 원하는 시점에 아래 ▶(시작)/■(종료) 버튼 클릭</span>
+                      </div>
+                      <audio
+                        ref={timestampAudioRef}
+                        controls
+                        src={audioSrc}
+                        className="w-full h-9"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                      <span className="text-xs text-amber-700">💡 Audio File을 먼저 업로드하면 재생 중 ▶/■ 버튼으로 현재 시간을 클릭 입력할 수 있습니다.</span>
+                    </div>
+                  )}
                   <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                     {sentences.map((s, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs">
+                      <div key={idx} className="flex items-center gap-1.5 text-xs">
                         <span className="text-gray-400 w-5 shrink-0 text-right">{idx + 1}</span>
                         <span className="flex-1 text-gray-600 truncate" title={s}>{s}</span>
                         <input
@@ -3000,6 +3021,16 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                           className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
                           placeholder="0:00.00"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const t = timestampAudioRef.current?.currentTime;
+                            if (typeof t === 'number') updateTs(idx, 'start', formatTimestamp(t));
+                          }}
+                          disabled={!audioSrc}
+                          className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="오디오 현재 시간을 시작 시간으로 입력"
+                        >▶</button>
                         <span className="text-gray-400">→</span>
                         <input
                           type="text"
@@ -3008,11 +3039,22 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                           className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
                           placeholder="0:00.00"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const t = timestampAudioRef.current?.currentTime;
+                            if (typeof t === 'number') updateTs(idx, 'end', formatTimestamp(t));
+                          }}
+                          disabled={!audioSrc}
+                          className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="오디오 현재 시간을 종료 시간으로 입력"
+                        >■</button>
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     형식: <code className="bg-gray-200 px-1 rounded">m:ss.ss</code> (예: <code className="bg-gray-200 px-1 rounded">0:03.50</code>, <code className="bg-gray-200 px-1 rounded">1:15.25</code>) — 비워두면 글자 수 비율로 자동 추정됩니다.
+                    {audioSrc && ' · ▶=시작, ■=종료 버튼으로 현재 재생 시간을 클릭 입력하세요.'}
                   </p>
                 </div>
               );
@@ -4476,6 +4518,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 newTs[idx] = { ...newTs[idx], [field]: value };
                 setFormData({ ...formData, sentenceTimestamps: newTs } as any);
               };
+              const audioSrc = (formData as any).audioUrl || (formData as any).passageAudioUrl;
               return (
                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-2">
@@ -4484,9 +4527,27 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                     </label>
                     <span className="text-xs text-gray-400">{sentences.length}문장</span>
                   </div>
+                  {/* 오디오 플레이어 — 재생 중 ▶/■ 버튼으로 현재 시간 클릭 입력 */}
+                  {audioSrc ? (
+                    <div className="mb-2 p-2 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-500">📌 오디오를 재생하면서 원하는 시점에 아래 ▶(시작)/■(종료) 버튼 클릭</span>
+                      </div>
+                      <audio
+                        ref={timestampAudioRef}
+                        controls
+                        src={audioSrc}
+                        className="w-full h-9"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                      <span className="text-xs text-amber-700">💡 Audio File을 먼저 업로드하면 재생 중 ▶/■ 버튼으로 현재 시간을 클릭 입력할 수 있습니다.</span>
+                    </div>
+                  )}
                   <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                     {sentences.map((s, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs">
+                      <div key={idx} className="flex items-center gap-1.5 text-xs">
                         <span className="text-gray-400 w-5 shrink-0 text-right">{idx + 1}</span>
                         <span className="flex-1 text-gray-600 truncate" title={s}>{s}</span>
                         <input
@@ -4496,6 +4557,16 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                           className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
                           placeholder="0:00.00"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const t = timestampAudioRef.current?.currentTime;
+                            if (typeof t === 'number') updateTs(idx, 'start', formatTimestamp(t));
+                          }}
+                          disabled={!audioSrc}
+                          className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="오디오 현재 시간을 시작 시간으로 입력"
+                        >▶</button>
                         <span className="text-gray-400">→</span>
                         <input
                           type="text"
@@ -4504,11 +4575,22 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                           className="w-16 px-1.5 py-0.5 border border-gray-300 rounded text-xs font-mono focus:ring-1 focus:ring-[#2d7a7c]"
                           placeholder="0:00.00"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const t = timestampAudioRef.current?.currentTime;
+                            if (typeof t === 'number') updateTs(idx, 'end', formatTimestamp(t));
+                          }}
+                          disabled={!audioSrc}
+                          className="px-1.5 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="오디오 현재 시간을 종료 시간으로 입력"
+                        >■</button>
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     형식: <code className="bg-gray-200 px-1 rounded">m:ss.ss</code> (예: <code className="bg-gray-200 px-1 rounded">0:03.50</code>, <code className="bg-gray-200 px-1 rounded">1:15.25</code>) — 비워두면 글자 수 비율로 자동 추정됩니다.
+                    {audioSrc && ' · ▶=시작, ■=종료 버튼으로 현재 재생 시간을 클릭 입력하세요.'}
                   </p>
                 </div>
               );
