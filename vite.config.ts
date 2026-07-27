@@ -121,7 +121,6 @@
             ],
             'vendor-ui': [
               'lucide-react',
-              'recharts',
               'embla-carousel-react',
               'cmdk',
               'react-resizable-panels',
@@ -133,12 +132,12 @@
               'clsx',
               'tailwind-merge',
             ],
+            // ⚡ 성능 최적화: 무거운 라이브러리(jspdf, html2canvas, docx, file-saver, recharts)는
+            // manualChunks에서 제거 → Vite가 사용하는 lazy 청크에 자동 포함
+            // 이렇게 하면 PDF/문서 생성 기능을 사용할 때만 로드되어 초기 로딩이 ~1MB 감소
+            // vendor-data에는 Supabase+hono만 유지 (전역에서 사용되므로 초기 로딩 포함)
             'vendor-data': [
               '@supabase/supabase-js',
-              'docx',
-              'file-saver',
-              'html2canvas',
-              'jspdf',
               'hono',
             ],
           },

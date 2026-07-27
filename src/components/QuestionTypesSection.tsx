@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Advertisement } from './AdManagement';
@@ -7,7 +7,9 @@ import { AdModal } from './AdModal';
 // motion removed - using CSS animations
 import { DayTrainingInterface } from "./DayTrainingInterface";
 import { LMSContent } from "./LMSSection";
-import { SATVocaPage } from "./SATVocaPage";
+// ⚡ 성능 최적화: SATVocaPage를 lazy로 로드 — jspdf/html2canvas/docx (약 1MB)가
+// SAT 단어 학습 화면 진입 시에만 로드되도록 분리
+const SATVocaPage = lazy(() => import('./SATVocaPage').then(m => ({ default: m.SATVocaPage })));
 
 // Question Type Card Component
 function QuestionTypeCard({ 
@@ -248,7 +250,11 @@ export function QuestionTypesSection({
 
   // Show SAT Voca Page for Vocabulary skill
   if (activeSkill === 'Vocabulary') {
-    return <SATVocaPage testType="SAT" onBack={() => setActiveSkill('Reading')} onSaveResult={onSaveResult} />;
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+        <SATVocaPage testType="SAT" onBack={() => setActiveSkill('Reading')} onSaveResult={onSaveResult} />
+      </Suspense>
+    );
   }
 
   return (
