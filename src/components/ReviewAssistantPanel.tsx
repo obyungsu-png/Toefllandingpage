@@ -333,10 +333,14 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   }, [translationNote]);
   // 문장 시작 비율 — CMS 오디오 전체 재생 시 하이라이트 싱크 + 문장 클릭 seek 추정용
   // sentenceTimestamps(CMS 타임스탬프)가 있으면 정확히 사용, 없으면 글자 수 비율로 근사
+  // 주의: 타임스탬프 개수가 문장 수와 정확히 일치할 때만 사용 — 부분 입력 시 매칭 어긋남 방지
+  const effectiveTimestamps = (sentenceTimestamps && sentenceTimestamps.length > 0 && sentenceTimestamps.length === dictationSentences.length)
+    ? sentenceTimestamps
+    : null;
   const sentenceRatios = useMemo(() => {
-    if (sentenceTimestamps && sentenceTimestamps.length > 0) {
-      const totalDuration = sentenceTimestamps[sentenceTimestamps.length - 1]?.end || 1;
-      return sentenceTimestamps.map(t => (t.start || 0) / totalDuration);
+    if (effectiveTimestamps) {
+      const totalDuration = effectiveTimestamps[effectiveTimestamps.length - 1]?.end || 1;
+      return effectiveTimestamps.map(t => (t.start || 0) / totalDuration);
     }
     const total = dictationSentences.reduce((acc, s) => acc + s.length, 0);
     let acc = 0;
@@ -345,7 +349,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       acc += s.length;
       return start;
     });
-  }, [dictationSentences, sentenceTimestamps]);
+  }, [dictationSentences, effectiveTimestamps]);
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
   const activeTabMeta = activeTab ? getTabMeta(activeTab) : null;
 
