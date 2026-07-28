@@ -1484,12 +1484,15 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── 단어 드래그 팝업 — fixed 포지셔닝으로 viewport 기준 표시 ──
   const renderSelectionPopup = () => {
     if (!selectionPopup) return null;
+    if (typeof window === 'undefined') return null;
     const { x, y, text, translation, partOfSpeech, source } = selectionPopup;
     // 팝업이 화면 오른쪽/아래로 넘어가지 않도록 보정
     const popupWidth = 280;
     const popupHeight = 140;
-    const adjustedX = Math.min(Math.max(x - popupWidth / 2, 8), window.innerWidth - popupWidth - 8);
-    const adjustedY = y + popupHeight > window.innerHeight ? y - popupHeight - 24 : y;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const adjustedX = Math.min(Math.max(x - popupWidth / 2, 8), vw - popupWidth - 8);
+    const adjustedY = y + popupHeight > vh ? y - popupHeight - 24 : y;
 
     const sourceBadge = source === 'local'
       ? { label: '단어장', color: 'bg-teal-100 text-teal-700' }
@@ -1500,8 +1503,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     return (
       <div
         data-selection-popup
-        className="fixed z-[60] animate-in fade-in zoom-in-95 duration-150"
+        className="fixed z-[60]"
         style={{
+          animation: 'selectionPopupIn 0.15s ease-out',
+          ...({
+            '--popup-x': `${adjustedX}px`,
+          } as React.CSSProperties),
           left: `${adjustedX}px`,
           top: `${adjustedY}px`,
           width: `${popupWidth}px`,

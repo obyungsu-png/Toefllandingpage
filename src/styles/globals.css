@@ -381,6 +381,34 @@ html {
   to { transform: rotate(360deg) scale(1); }
 }
 
+/* ===== ReviewAssistantPanel animations =====
+   (Tailwind animate-in 플러그인 의존성 제거 — 순수 CSS keyframe) */
+
+/* 단어 드래그 → 한국어 번역 팝업 등장 */
+@keyframes selectionPopupIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 리뷰 패널 오버레이 배경 페이드인 */
+@keyframes reviewPanelFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 리뷰 패널 중앙 모달 팝업 (pinned) — 바운스 효과 */
+@keyframes reviewModalPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  60% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 리뷰 패널 오른쪽 슬라이드 인 drawer (미고정) */
+@keyframes reviewPanelSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
 /* Mobile: Make all scrollbars thin */
 @media (max-width: 639px) {
   * {
