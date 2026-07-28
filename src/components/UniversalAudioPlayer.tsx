@@ -19,6 +19,10 @@ interface UniversalAudioPlayerProps {
   label?: string;
   /** 색상 테마 (기본: #0d3b4a) */
   color?: string;
+  /** 재생 시간 업데이트 콜백 — 타임스탬프 기반 문장 하이라이트 싱크용 */
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  /** 재생 완료 콜백 */
+  onEnded?: () => void;
 }
 
 export function UniversalAudioPlayer({
@@ -26,6 +30,8 @@ export function UniversalAudioPlayer({
   qNum = 0,
   label,
   color = '#0d3b4a',
+  onTimeUpdate,
+  onEnded,
 }: UniversalAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -79,8 +85,13 @@ export function UniversalAudioPlayer({
   // ── 진행률 업데이트 ──
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     const el = e.currentTarget;
-    if (el.duration && isFinite(el.duration)) {
-      setProgress((el.currentTime / el.duration) * 100);
+    const dur = el.duration && isFinite(el.duration) ? el.duration : 0;
+    if (dur) {
+      setProgress((el.currentTime / dur) * 100);
+    }
+    // 외부 콜백 — 타임스탬프 기반 문장 하이라이트 싱크
+    if (onTimeUpdate) {
+      onTimeUpdate(el.currentTime, dur);
     }
   };
 
@@ -88,6 +99,7 @@ export function UniversalAudioPlayer({
   const handleEnded = () => {
     setIsPlaying(false);
     setProgress(0);
+    if (onEnded) onEnded();
   };
 
   return (

@@ -8,6 +8,7 @@ import { AdBanner } from './AdBanner';
 import { Advertisement } from './AdManagement';
 import { RestartConfirmModal } from './RestartConfirmModal';
 import { TestResult } from '../types/testResult';
+import { WrongNotesManager } from './WrongNotesManager';
 
 const ReportSection = lazy(() =>
   import('./ReportSection').then(module => ({ default: module.ReportSection }))
@@ -143,6 +144,8 @@ export function HistorySection({
   ) || [];
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  // 오답 노트 모달 — Report 탭 아래 카드에서 진입
+  const [showWrongNotes, setShowWrongNotes] = useState(false);
 
   const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report'];
 
@@ -579,16 +582,34 @@ export function HistorySection({
           {/* Mobile main content */}
           <div className="flex-1 overflow-y-auto p-3">
             {activeTab === 'Report' ? (
-              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
-                <ReportSection
-                  themeColor={themeColor}
-                  results={results}
-                  shareConfig={shareConfig}
-                  onShareConfigChange={onShareConfigChange}
-                  studentName={studentName}
-                  onOpenShareSettings={() => setShowShareSettings(true)}
-                />
-              </Suspense>
+              <div className="space-y-4">
+                <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
+                  <ReportSection
+                    themeColor={themeColor}
+                    results={results}
+                    shareConfig={shareConfig}
+                    onShareConfigChange={onShareConfigChange}
+                    studentName={studentName}
+                    onOpenShareSettings={() => setShowShareSettings(true)}
+                  />
+                </Suspense>
+                {/* 오답 노트 진입 카드 — Report 아래, ReportSection과 비슷한 형식 */}
+                <button
+                  onClick={() => setShowWrongNotes(true)}
+                  className="w-full text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0">
+                      <BookOpen size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-800">📒 오답 노트</p>
+                      <p className="text-xs text-gray-500">Dictation에서 틀린 단어를 모아 재학습</p>
+                    </div>
+                    <ChevronRight size={18} className="text-gray-400" />
+                  </div>
+                </button>
+              </div>
             ) : (
               <>
                 {/* Filters */}
@@ -697,16 +718,34 @@ export function HistorySection({
         {/* Desktop Main Content (hidden on mobile) */}
         <div className="hidden md:block flex-1 overflow-y-auto p-4 lg:p-6">
           {activeTab === 'Report' ? (
-            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
-              <ReportSection
-                themeColor={themeColor}
-                results={results}
-                shareConfig={shareConfig}
-                onShareConfigChange={onShareConfigChange}
-                studentName={studentName}
-                onOpenShareSettings={() => setShowShareSettings(true)}
-              />
-            </Suspense>
+            <div className="space-y-4">
+              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading report...</div>}>
+                <ReportSection
+                  themeColor={themeColor}
+                  results={results}
+                  shareConfig={shareConfig}
+                  onShareConfigChange={onShareConfigChange}
+                  studentName={studentName}
+                  onOpenShareSettings={() => setShowShareSettings(true)}
+                />
+              </Suspense>
+              {/* 오답 노트 진입 카드 — Report 아래, ReportSection과 비슷한 형식 */}
+              <button
+                onClick={() => setShowWrongNotes(true)}
+                className="w-full text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0">
+                    <BookOpen size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-800">📒 오답 노트</p>
+                    <p className="text-xs text-gray-500">Dictation에서 틀린 단어를 모아 재학습</p>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-400" />
+                </div>
+              </button>
+            </div>
           ) : (
             <>
               {/* Filters */}
@@ -1366,6 +1405,13 @@ export function HistorySection({
           </div>
         </div>
       )}
+
+      {/* 오답 노트 모달 — Report 탭의 카드에서 진입. 전체 화면 페이지 모드 */}
+      <WrongNotesManager
+        open={showWrongNotes}
+        onClose={() => setShowWrongNotes(false)}
+        fullScreen
+      />
     </div>
   );
 }

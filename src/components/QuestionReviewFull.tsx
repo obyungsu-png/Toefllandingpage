@@ -244,6 +244,9 @@ export function QuestionReviewFull({
     return (localStorage.getItem('wordLookupLanguage') as 'en' | 'ko') || 'en';
   });
   const [popupData, setPopupData] = useState<{ word: string; context?: string; x: number; y: number } | null>(null);
+  // Listening/Speaking — 오디오 재생 시간 (타임스탬프 기반 문장 하이라이트 싱크용)
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   // Reading review — 하이라이트 저장/로드 (Supabase)
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -1047,19 +1050,56 @@ export function QuestionReviewFull({
             </div>
           )}
 
-          {/* Listening / Writing / Speaking — DarkMode 토글만 (Tools 없음) */}
+          {/* Listening / Writing / Speaking — Tools(하이라이트/밑줄/사전) + DarkMode */}
           {activeSection !== 'Reading' && (
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                darkMode
-                  ? 'bg-gray-700 text-yellow-300'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-              }`}
-              title={darkMode ? '라이트 모드' : '다크 모드'}
-            >
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+            <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto max-w-full">
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                  toolsOpen
+                    ? 'bg-[#1e6b73] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Tools
+              </button>
+
+              {toolsOpen && (
+                <div className="shrink-0">
+                  <ReadingReviewToolbar
+                    activeTool={activeTool}
+                    activeColor={activeColor}
+                    onToolChange={handleToolChange}
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                    colorsOnly
+                  />
+                </div>
+              )}
+
+              {toolsOpen && (
+                <div className="shrink-0">
+                  <ReadingReviewActions
+                    onClearAll={handleClearAllHighlights}
+                    language={language}
+                    onLanguageChange={handleLanguageChange}
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                  darkMode
+                    ? 'bg-gray-700 text-yellow-300'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title={darkMode ? '라이트 모드' : '다크 모드'}
+              >
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            </div>
           )}
 
           {/* Stats — 자연스러운 flex flow */}
@@ -1287,6 +1327,8 @@ export function QuestionReviewFull({
                           qNum={currentQuestionIndex + 1}
                           label="Play Audio"
                           color="#0d3b4a"
+                          onTimeUpdate={(t, d) => { setAudioCurrentTime(t); if (d) setAudioDuration(d); }}
+                          onEnded={() => setAudioCurrentTime(0)}
                         />
                       </div>
                     ) : (
@@ -1294,6 +1336,42 @@ export function QuestionReviewFull({
                         CMS에 등록된 오디오가 없습니다.
                       </div>
                     )}
+
+                    {/* Script Sync — 타임스탬프 있을 때 문장 단위 하이라이트 (오디오 재생 싱크) */}
+                    {transcript && (currentQuestion as any)?.sentenceTimestamps && (() => {
+                      const ts: Array<{ start: number; end: number }> = (currentQuestion as any).sentenceTimestamps;
+                      if (!Array.isArray(ts) || ts.length === 0) return null;
+                      // Narrator 줄 제거 + 문장 분할 (ReviewAssistantPanel과 동일 규칙)
+                      const lines = transcript.split('\n').map(l => l.trim()).filter(l => l && !/^Narrator\s*:/i.test(l));
+                      const joined = lines.join(' ');
+                      const sentences = (joined.match(/[^.!?]+[.!?]+["']?\s*/g) || [joined]).map(s => s.trim()).filter(s => s.length > 1);
+                      // 타임스탬프 개수와 문장 수가 다르면 하이라이트 안 함 (매칭 어긋남 방지)
+                      if (sentences.length !== ts.length) return null;
+                      // 현재 재생 시간이 속한 문장 인덱스
+                      let activeIdx = -1;
+                      for (let i = 0; i < ts.length; i++) {
+                        if (audioCurrentTime >= ts[i].start) activeIdx = i; else break;
+                      }
+                      return (
+                        <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <p className="text-xs font-bold text-[#2d7a7c] uppercase tracking-wide mb-2">🎵 Script Sync</p>
+                          <div className="space-y-1.5">
+                            {sentences.map((s, i) => (
+                              <p
+                                key={i}
+                                className={`text-sm leading-relaxed rounded-lg px-2 py-1 transition-colors cursor-pointer ${
+                                  i === activeIdx
+                                    ? 'bg-[#2d7a7c]/15 text-[#0d3b4a] dark:text-[#5fbfc4] font-medium'
+                                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                }`}
+                              >
+                                {s}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Dictation — 리스닝 스크립트 빈칸 채우기 */}
                     {transcript && (() => {
