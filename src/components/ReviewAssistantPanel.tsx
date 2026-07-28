@@ -388,6 +388,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const effectiveTimestamps = (sentenceTimestamps && sentenceTimestamps.length > 0 && sentenceTimestamps.length === dictationSentences.length)
     ? sentenceTimestamps
     : null;
+  // ref로도 유지 — audio.ontimeupdate 클로저가 한 번 설정된 후에도 항상 최신 타임스탬프를 참조
+  const effectiveTimestampsRef = useRef(effectiveTimestamps);
+  effectiveTimestampsRef.current = effectiveTimestamps;
   const sentenceRatios = useMemo(() => {
     if (effectiveTimestamps) {
       const totalDuration = effectiveTimestamps[effectiveTimestamps.length - 1]?.end || 1;
@@ -534,8 +537,32 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       setIsDictationPlaying(true);
       setShowSentences(true); // 전체 듣기 시 문장 목록 자동 표시 (하이라이트 싱크 확인용)
       audio.play().catch(() => setIsDictationPlaying(false));
-      // 재생 위치 → 현재 문장 하이라이트 싱크 (글자 수 비율 근사)
+      // 재생 위치 → 현재 문장 하이라이트 싱크
       audio.ontimeupdate = () => {
+        // CMS 타임스탬프가 있으면 절대 시간으로 정확 매칭 (글자 수 비율 fallback 미사용)
+        const ts = effectiveTimestampsRef.current;
+        if (ts && ts.length > 0) {
+          const t = audio.currentTime;
+          // 구간 반복 활성 시 해당 문장 구간만 반복 (타임스탬프 직접 사용)
+          const loopIdx = loopSentenceIdxRef.current;
+          if (loopIdx !== null && ts[loopIdx]) {
+            const loopStart = ts[loopIdx].start;
+            const loopEnd = ts[loopIdx].end;
+            if (t >= loopEnd || t < loopStart) {
+              audio.currentTime = loopStart;
+            }
+            setActiveSentenceIdx(loopIdx);
+            return;
+          }
+          // 현재 시간이 어느 문장 구간에 속하는지 찾기 (start ≤ t)
+          let idx = 0;
+          for (let i = 0; i < ts.length; i++) {
+            if (t >= ts[i].start) idx = i; else break;
+          }
+          setActiveSentenceIdx(idx);
+          return;
+        }
+        // fallback: 글자 수 비율 근사 (CMS 타임스탬프 없을 때 — 기존 동작 유지)
         const duration = audio.duration || 0;
         if (!duration) return;
         const ratio = audio.currentTime / duration;
