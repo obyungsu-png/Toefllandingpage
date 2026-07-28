@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
+import { translateWord } from '../utils/wordTranslate';
 import { WrongNotesManager } from './WrongNotesManager';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
@@ -175,6 +176,35 @@ function buildFallbackDictation(variant: ReviewVariant): DictationExercise {
   };
 }
 
+/** vocabularyNote에서 단어/구문의 한국어 뜻을 로컬 조회.
+ *  형식: "word=meaning" 또는 "phrase=meaning" 한 줄씩.
+ *  대소문자 구분 없이 정확 매칭. 없으면 null. */
+function lookupVocabularyNote(vocabularyNote: string | undefined, query: string): string | null {
+  if (!vocabularyNote || !query) return null;
+  const q = query.trim().toLowerCase();
+  if (!q) return null;
+  const lines = vocabularyNote.split('\n');
+  for (const line of lines) {
+    const [word, ...rest] = line.split('=');
+    if (word && rest.length > 0) {
+      if (word.trim().toLowerCase() === q) {
+        return rest.join('=').trim();
+      }
+    }
+  }
+  // 부분 매칭 — "renewable energy" → "renewable" 항목이 있으면 반환
+  for (const line of lines) {
+    const [word, ...rest] = line.split('=');
+    if (word && rest.length > 0) {
+      const w = word.trim().toLowerCase();
+      if (w.includes(q) || q.includes(w)) {
+        return rest.join('=').trim();
+      }
+    }
+  }
+  return null;
+}
+
 /** 스크립트를 문장 단위로 분할 — 마침표/물음표/느낌표 + 줄바꿈 기준.
  *  문장별 TTS 재생·반복·클릭 이동에 사용 */
 function splitIntoSentences(script: string): string[] {
@@ -319,6 +349,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [scriptBlur, setScriptBlur] = useState(false);
   // 복습 모드 Key Words 사이드바 토글 — 스크립트 옆에 핵심 어휘를 나란히 표시
   const [showKeyWordsSidebar, setShowKeyWordsSidebar] = useState(false);
+  // 단어 드래그 → 한국어 팝업 — 하이브리드: 로컬 vocabularyNote 우선, 없으면 Google Translate (무료)
+  const [selectionPopup, setSelectionPopup] = useState<{
+    x: number; y: number; text: string; translation: string | null; partOfSpeech: string | null; source: 'local' | 'api' | 'loading' | 'error';
+  } | null>(null);
   // 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 (1·2단계 집중 훈련)
   const [autoStopMode, setAutoStopMode] = useState(false);
   const [autoStopIdx, setAutoStopIdx] = useState<number | null>(null); // 자동 정지된 문장 인덱스
@@ -394,6 +428,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setAutoStopIdx(null);
     setScriptBlur(false);
     setShowKeyWordsSidebar(false);
+    setSelectionPopup(null);
     // 녹음 중이면 정리
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
@@ -794,6 +829,87 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     });
   };
 
+  // ── 단어 드래그 → 한국어 팝업 (하이브리드) ──
+  // 1차: vocabularyNote 로컬 조회 (즉시 표시)
+  // 2차: Google Translate gtx API (무료) — 로딩 상태 표시 후 결과 반영
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      setSelectionPopup(null);
+      return;
+    }
+    const text = selection.toString().trim();
+    if (!text || text.length > 80) { // 너무 긴 선택은 무시 (문장 단위 드래그가 아닌 경우 방지)
+      setSelectionPopup(null);
+      return;
+    }
+    // 영어/한글 단어·구문만 처리 (숫자만 있는 경우 제외)
+    if (!/[a-zA-Z가-힣]/.test(text)) {
+      setSelectionPopup(null);
+      return;
+    }
+    // 선택 영역 위치 계산 — 팝업을 선택 영역 바로 아래에 표시
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const popupX = rect.left + rect.width / 2;
+    const popupY = rect.bottom + 8; // 선택 영역 아래 8px 여백
+
+    // 1차: 로컬 vocabularyNote lookup (즉시)
+    const localMeaning = lookupVocabularyNote(vocabularyNote, text);
+    if (localMeaning) {
+      setSelectionPopup({
+        x: popupX, y: popupY, text,
+        translation: localMeaning,
+        partOfSpeech: null,
+        source: 'local',
+      });
+      return;
+    }
+    // 2차: Google Translate API (비동기)
+    setSelectionPopup({
+      x: popupX, y: popupY, text,
+      translation: null,
+      partOfSpeech: null,
+      source: 'loading',
+    });
+    translateWord(text)
+      .then(result => {
+        if (result) {
+          setSelectionPopup(prev => prev && prev.text === text ? {
+            ...prev,
+            translation: result.koreanMeaning,
+            partOfSpeech: result.partOfSpeech,
+            source: 'api',
+          } : prev);
+        } else {
+          setSelectionPopup(prev => prev && prev.text === text ? { ...prev, source: 'error' } : prev);
+        }
+      })
+      .catch(() => {
+        setSelectionPopup(prev => prev && prev.text === text ? { ...prev, source: 'error' } : prev);
+      });
+  };
+
+  // 팝업 외부 클릭 / ESC / 새 선택 시 닫기
+  useEffect(() => {
+    if (!selectionPopup) return;
+    const handleDocumentMouseDown = (e: MouseEvent) => {
+      // 팝업 자체를 클릭한 경우는 닫지 않음 (이벤트 버블링으로 처리)
+      const target = e.target as HTMLElement;
+      if (target?.closest('[data-selection-popup]')) return;
+      setSelectionPopup(null);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectionPopup(null);
+    };
+    document.addEventListener('mousedown', handleDocumentMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectionPopup]);
+
   // 현재 학습 단계 계산 — 4단계 프레임워크 인디케이터용
   // 1: 무자막 정취 (훈련+입력없음) / 2: 받아쓰기 (훈련+입력시작) / 3: 갭분석 (훈련+정답확인) / 4: 쉐도잉 (복습)
   const currentStep = dictationMode === 'review' ? 4
@@ -928,9 +1044,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         </button>
       )}
 
-      {/* 문장별 듣기 목록 — 클릭하면 해당 문장으로 이동(전체 재생 중 점프/seek), 반복 버튼으로 무한 루프 */}
+      {/* 문장별 듣기 목록 — 클릭하면 해당 문장으로 이동(전체 재생 중 점프/seek), 반복 버튼으로 무한 루프.
+          단어 드래그 시 한국어 팝업 표시. */}
       {showSentences && dictationSentences.length > 1 && (
-        <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3 space-y-1.5 max-h-56 overflow-y-auto">
+        <div ref={sentenceListRef} onMouseUp={handleTextSelection} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3 space-y-1.5 max-h-56 overflow-y-auto">
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">스크립트 — 문장 클릭 시 해당 부분부터 재생</p>
           {dictationSentences.map((sentence, idx) => {
             const isActive = activeSentenceIdx === idx;
@@ -1163,9 +1280,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       {/* 풀 스크립트 + 단어장 사이드바 — flex 레이아웃 (모바일에서는 자동 세로 스택) */}
       <div className="flex flex-col md:flex-row gap-3">
         {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤.
-            scriptBlur 시 블러 처리 (1단계 무자막 정취). 클릭/재생은 그대로 작동. */}
+            scriptBlur 시 블러 처리 (1단계 무자막 정취). 클릭/재생은 그대로 작동.
+            단어 드래그 시 한국어 팝업 표시 (vocabularyNote 우선 → Google Translate). */}
         <div
           ref={sentenceListRef}
+          onMouseUp={handleTextSelection}
           className={`rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto flex-1 min-w-0 transition-all ${scriptBlur ? 'blur-sm' : ''}`}
         >
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 sticky top-0 bg-white py-1">
@@ -1362,10 +1481,84 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     </>
   );
 
+  // ── 단어 드래그 팝업 — fixed 포지셔닝으로 viewport 기준 표시 ──
+  const renderSelectionPopup = () => {
+    if (!selectionPopup) return null;
+    const { x, y, text, translation, partOfSpeech, source } = selectionPopup;
+    // 팝업이 화면 오른쪽/아래로 넘어가지 않도록 보정
+    const popupWidth = 280;
+    const popupHeight = 140;
+    const adjustedX = Math.min(Math.max(x - popupWidth / 2, 8), window.innerWidth - popupWidth - 8);
+    const adjustedY = y + popupHeight > window.innerHeight ? y - popupHeight - 24 : y;
+
+    const sourceBadge = source === 'local'
+      ? { label: '단어장', color: 'bg-teal-100 text-teal-700' }
+      : source === 'api'
+      ? { label: 'Google 번역', color: 'bg-blue-100 text-blue-700' }
+      : null;
+
+    return (
+      <div
+        data-selection-popup
+        className="fixed z-[60] animate-in fade-in zoom-in-95 duration-150"
+        style={{
+          left: `${adjustedX}px`,
+          top: `${adjustedY}px`,
+          width: `${popupWidth}px`,
+        }}
+      >
+        <div className="rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
+          {/* 헤더 — 단어 + 출처 뱃지 + 닫기 */}
+          <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-r from-slate-50 to-white border-b border-gray-100">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-sm font-bold text-[#0f172a] truncate">{text}</span>
+              {partOfSpeech && (
+                <span className="text-[10px] font-medium text-gray-400 italic shrink-0">{partOfSpeech}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {sourceBadge && (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${sourceBadge.color}`}>
+                  {sourceBadge.label}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectionPopup(null)}
+                className="text-gray-300 hover:text-gray-500 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          {/* 본문 — 번역 결과 */}
+          <div className="px-3 py-3">
+            {source === 'loading' && (
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <span className="h-3 w-3 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin" />
+                번역 조회 중...
+              </div>
+            )}
+            {source === 'error' && (
+              <p className="text-xs text-gray-400">번역을 가져오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+            )}
+            {(source === 'local' || source === 'api') && translation && (
+              <p className="text-sm text-[#1f2937] leading-6">{translation}</p>
+            )}
+            {(source === 'local' || source === 'api') && !translation && (
+              <p className="text-xs text-gray-400">번역 결과가 없습니다.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderDictation = () => (
     <div className="space-y-3">
       {renderDictationHeader()}
       {dictationMode === 'training' ? renderTrainingMode() : renderReviewMode()}
+      {renderSelectionPopup()}
     </div>
   );
   const renderWords = () => {
