@@ -315,6 +315,10 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [wrongNotesVersion, setWrongNotesVersion] = useState(0); // 오답 노트 변경 시 재렌더링 트리거 (삭제 후 즉시 반영)
   const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
   const [showSentences, setShowSentences] = useState(false); // 훈련 모드에서 문장별 듣기 목록 표시
+  // 4단계 프레임워크 1단계(무자막 정취) 지원 — 스크립트 블러 토글
+  const [scriptBlur, setScriptBlur] = useState(false);
+  // 복습 모드 Key Words 사이드바 토글 — 스크립트 옆에 핵심 어휘를 나란히 표시
+  const [showKeyWordsSidebar, setShowKeyWordsSidebar] = useState(false);
   // 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 (1·2단계 집중 훈련)
   const [autoStopMode, setAutoStopMode] = useState(false);
   const [autoStopIdx, setAutoStopIdx] = useState<number | null>(null); // 자동 정지된 문장 인덱스
@@ -388,6 +392,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     setWrongNoteFilter('this');
     setAutoStopMode(false);
     setAutoStopIdx(null);
+    setScriptBlur(false);
+    setShowKeyWordsSidebar(false);
     // 녹음 중이면 정리
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
@@ -1058,9 +1064,22 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── 복습 모드 — 풀 스크립트 + 하이라이트 싱크 + 클릭 점프 + 구간 반복 (4단계) ──
   const renderReviewMode = () => (
     <>
-      {/* 풀 스크립트 컨트롤 — 번역 토글 + 쉐도잉 녹음 + 구간 반복 해제 */}
+      {/* 풀 스크립트 컨트롤 — 블러 토글 + 번역 토글 + 단어장 사이드바 + 쉐도잉 녹음 + 구간 반복 해제 */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {/* 블러 토글 — 4단계 프레임워크 1단계(무자막 정취) 지원.
+              스크립트를 블러 처리해 오디오에만 집중하게 함. 클릭/재생은 그대로 작동. */}
+          <button
+            type="button"
+            onClick={() => setScriptBlur(s => !s)}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
+              scriptBlur ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+            style={scriptBlur ? { backgroundColor: '#7c3aed' } : undefined}
+            title="스크립트 블러 — 1단계 무자막 정취용. 오디오에만 집중할 때 사용"
+          >
+            {scriptBlur ? '👁 블러 중' : '👁 블러'}
+          </button>
           {translationSentences.length > 0 && (
             <button
               type="button"
@@ -1071,6 +1090,20 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               style={showTranslation ? { backgroundColor: '#2563eb' } : undefined}
             >
               <Languages className="h-3 w-3" /> 번역 {showTranslation ? '숨기기' : '보기'}
+            </button>
+          )}
+          {/* 단어장 사이드바 토글 — 스크립트 옆에 핵심 어휘를 나란히 표시 (CMS vocabularyNote 또는 기본 wordList) */}
+          {(vocabularyNote || wordList.length > 0) && (
+            <button
+              type="button"
+              onClick={() => setShowKeyWordsSidebar(s => !s)}
+              className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
+                showKeyWordsSidebar ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+              style={showKeyWordsSidebar ? { backgroundColor: '#0d9488' } : undefined}
+              title="핵심 어휘 사이드바 — 이 지문의 Key Vocabulary & 숙어"
+            >
+              📚 단어장 {showKeyWordsSidebar ? '닫기' : '보기'}
             </button>
           )}
           {/* 쉐도잉 녹음 — 마이크로 내 음성 녹음 후 비교 */}
@@ -1127,52 +1160,92 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       {/* 숨겨진 녹음 재생용 audio 요소 */}
       {recordedUrl && <audio ref={recordedAudioRef} src={recordedUrl} className="hidden" />}
 
-      {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤 */}
-      <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto">
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 sticky top-0 bg-white py-1">
-          풀 스크립트 — 문장 클릭 시 해당 부분부터 재생
-        </p>
-        {dictationSentences.length > 0 ? dictationSentences.map((sentence, idx) => {
-          const isActive = activeSentenceIdx === idx;
-          const isLooping = loopSentenceIdx === idx;
-          const translation = showTranslation ? translationSentences[idx] : undefined;
-          return (
-            <div
-              key={idx}
-              data-sentence-idx={idx}
-              className={`flex items-start gap-2 rounded-lg px-3 py-2 transition-colors cursor-pointer ${
-                isActive
-                  ? 'bg-[#eef4ff] border-l-4 border-[#2563eb]'
-                  : 'hover:bg-gray-50 border-l-4 border-transparent'
-              }`}
-              onClick={() => handleSentenceClick(idx)}
-            >
-              <span className="text-[10px] font-bold text-gray-300 mt-0.5 shrink-0 w-5">{idx + 1}</span>
-              <div className="flex-1 min-w-0">
-                <span className={`text-sm leading-6 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
-                  {sentence}
-                </span>
-                {translation && (
-                  <span className="text-xs leading-5 text-gray-500 mt-0.5 block border-l-2 border-blue-100 pl-2">
-                    {translation}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); playSentence(idx, true); }}
-                title={isLooping ? '반복 정지' : '이 문장 무한 반복'}
-                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  isLooping ? 'text-white' : 'text-gray-300 hover:text-[#e67e22] hover:bg-orange-50'
+      {/* 풀 스크립트 + 단어장 사이드바 — flex 레이아웃 (모바일에서는 자동 세로 스택) */}
+      <div className="flex flex-col md:flex-row gap-3">
+        {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤.
+            scriptBlur 시 블러 처리 (1단계 무자막 정취). 클릭/재생은 그대로 작동. */}
+        <div
+          ref={sentenceListRef}
+          className={`rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto flex-1 min-w-0 transition-all ${scriptBlur ? 'blur-sm' : ''}`}
+        >
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 sticky top-0 bg-white py-1">
+            풀 스크립트 — 문장 클릭 시 해당 부분부터 재생
+          </p>
+          {dictationSentences.length > 0 ? dictationSentences.map((sentence, idx) => {
+            const isActive = activeSentenceIdx === idx;
+            const isLooping = loopSentenceIdx === idx;
+            const translation = showTranslation ? translationSentences[idx] : undefined;
+            return (
+              <div
+                key={idx}
+                data-sentence-idx={idx}
+                className={`flex items-start gap-2 rounded-lg px-3 py-2 transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-[#eef4ff] border-l-4 border-[#2563eb]'
+                    : 'hover:bg-gray-50 border-l-4 border-transparent'
                 }`}
-                style={isLooping ? { backgroundColor: '#e67e22' } : undefined}
+                onClick={() => handleSentenceClick(idx)}
               >
-                <Repeat className="h-3 w-3" />
-              </button>
-            </div>
-          );
-        }) : (
-          <p className="text-sm text-gray-400 text-center py-8">스크립트가 없습니다.</p>
+                <span className="text-[10px] font-bold text-gray-300 mt-0.5 shrink-0 w-5">{idx + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm leading-6 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
+                    {sentence}
+                  </span>
+                  {translation && (
+                    <span className="text-xs leading-5 text-gray-500 mt-0.5 block border-l-2 border-blue-100 pl-2">
+                      {translation}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); playSentence(idx, true); }}
+                  title={isLooping ? '반복 정지' : '이 문장 무한 반복'}
+                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    isLooping ? 'text-white' : 'text-gray-300 hover:text-[#e67e22] hover:bg-orange-50'
+                  }`}
+                  style={isLooping ? { backgroundColor: '#e67e22' } : undefined}
+                >
+                  <Repeat className="h-3 w-3" />
+                </button>
+              </div>
+            );
+          }) : (
+            <p className="text-sm text-gray-400 text-center py-8">스크립트가 없습니다.</p>
+          )}
+        </div>
+
+        {/* 단어장 사이드바 — showKeyWordsSidebar && (vocabularyNote 또는 wordList)가 있을 때 표시.
+            CMS vocabularyNote를 우선, 없으면 기본 wordList 사용. */}
+        {showKeyWordsSidebar && (vocabularyNote || wordList.length > 0) && (
+          <div className="md:w-56 shrink-0 rounded-xl border border-[#0d9488]/30 bg-gradient-to-b from-teal-50/40 to-white px-3 py-3 max-h-[420px] overflow-y-auto">
+            <p className="text-[11px] font-bold text-[#0d9488] uppercase tracking-wide mb-2 sticky top-0 bg-inherit py-1">
+              📚 Key Vocabulary
+            </p>
+            {vocabularyNote ? (
+              <div className="space-y-1.5">
+                {vocabularyNote.split('\n').filter(l => l.trim()).map((line, i) => {
+                  const [word, ...rest] = line.split('=');
+                  const meaning = rest.join('=').trim();
+                  return (
+                    <div key={i} className="border-b border-teal-100 last:border-0 pb-1.5">
+                      <p className="text-xs font-bold text-[#0f172a] leading-tight">{word.trim()}</p>
+                      {meaning && <p className="text-[11px] text-gray-600 leading-tight mt-0.5">{meaning}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {wordList.map((item) => (
+                  <div key={item.word} className="border-b border-teal-100 last:border-0 pb-1.5">
+                    <p className="text-xs font-bold text-[#0f172a] leading-tight">{item.word}</p>
+                    <p className="text-[11px] text-gray-600 leading-tight mt-0.5">{item.meaning}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
