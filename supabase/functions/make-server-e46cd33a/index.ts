@@ -759,7 +759,7 @@ app.post("/make-server-e46cd33a/vocabulary-bulk/:tabType", async (c) => {
 app.post("/make-server-e46cd33a/vocabulary-bulk-multi/:tabType", async (c) => {
   try {
     const tabType = c.req.param("tabType");
-    const { wordsByDay, replaceExisting } = await c.req.json(); // Format: { 1: [words], 2: [words], ... }
+    const { wordsByDay, replaceExisting } = (await c.req.json()) as { wordsByDay: Record<string, any[]>; replaceExisting?: boolean }; // Format: { 1: [words], 2: [words], ... }
     const key = `vocabulary_words_${tabType}`;
     
     let allWords = await kv.get(key) || [];
