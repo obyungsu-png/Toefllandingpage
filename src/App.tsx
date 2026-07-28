@@ -91,6 +91,7 @@ import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
+import { WrongNotesManager } from './components/WrongNotesManager';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
 import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
@@ -215,6 +216,7 @@ function AppContent() {
   const [isInTrainingMode, setIsInTrainingMode] = useState(false);
   
   const [activeTab, setActiveTabRaw] = useState<TabType>('TPO');
+  const [showWrongNotesPage, setShowWrongNotesPage] = useState(false);
   // 탭 전환 시 lazy 청크(LMSSection/HistorySection/TPOPage 등) 동기 마운트로 인한
   // Suspense 조기 발동(React #426)을 막기 위해 setActiveTab을 transition으로 감싼다.
   const setActiveTab = React.useCallback((tab: React.SetStateAction<TabType>) => {
@@ -7644,17 +7646,27 @@ function AppContent() {
           {/* Right side - Login, Join */}
           <div className="flex items-center gap-1.5 md:gap-4">
             {/* History Button - Visible on mobile */}
-            <button 
+            <button
               onClick={() => {
                 handleTabChange('History');
               }}
               className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
                 activeTab === 'History'
-                  ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg' 
+                  ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg'
                   : 'bg-white text-[#005f61] border border-[#005f61] hover:bg-[#005f61] hover:text-white'
               }`}
             >
               History
+            </button>
+
+            {/* 오답 노트 버튼 — 전용 페이지로 이동 (Dictation 오답 통합 관리) */}
+            <button
+              onClick={() => setShowWrongNotesPage(true)}
+              title="오답 노트 — Dictation에서 틀린 단어 모아보기"
+              className="flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-sm transition-all duration-300 transform hover:scale-105 shadow-sm bg-white text-red-500 border border-red-200 hover:bg-red-50"
+            >
+              <span className="text-base leading-none">📒</span>
+              <span className="hidden md:inline">오답 노트</span>
             </button>
 
             {/* Login Button or User Greeting */}
@@ -7747,6 +7759,13 @@ function AppContent() {
             setPendingPaidTest(null);
           }
         }}
+      />
+
+      {/* 오답 노트 전용 페이지 — 헤더의 📒 버튼으로 진입. 전체 화면 페이지 모드 */}
+      <WrongNotesManager
+        open={showWrongNotesPage}
+        onClose={() => setShowWrongNotesPage(false)}
+        fullScreen={true}
       />
 
       {/* Banner */}

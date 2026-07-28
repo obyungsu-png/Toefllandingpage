@@ -39,6 +39,34 @@ function isGroupedListeningType(type: string): boolean {
   return GROUPED_LISTENING_TYPES.includes(type);
 }
 
+/** 문장별 타임스탬프 텍스트 → 배열 파싱.
+ *  형식: 각 줄에 "start-end" (초 단위). 콤마나 줄바꿈으로 구분.
+ *  예: "0.0-2.5\n2.5-5.0\n5.0-8.3" → [{start:0,end:2.5},{start:2.5,end:5},{start:5,end:8.3}] */
+function parseSentenceTimestamps(text: string): Array<{ start: number; end: number }> | undefined {
+  if (!text || !text.trim()) return undefined;
+  const result: Array<{ start: number; end: number }> = [];
+  // 줄바꿈 또는 콤마로 항목 분리
+  const items = text.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  for (const item of items) {
+    // "0.0-2.5" 또는 "0.0~2.5" 또는 "0.0 2.5" 형식 지원
+    const match = item.match(/^(\d+(?:\.\d+)?)\s*[-~\s]\s*(\d+(?:\.\d+)?)$/);
+    if (match) {
+      const start = parseFloat(match[1]);
+      const end = parseFloat(match[2]);
+      if (!isNaN(start) && !isNaN(end) && end > start) {
+        result.push({ start, end });
+      }
+    }
+  }
+  return result.length > 0 ? result : undefined;
+}
+
+/** 문장별 타임스탬프 배열 → 텍스트 변환 (폼 표시용). */
+function formatSentenceTimestamps(timestamps?: Array<{ start: number; end: number }>): string {
+  if (!timestamps || timestamps.length === 0) return '';
+  return timestamps.map(t => `${t.start}-${t.end}`).join('\n');
+}
+
 function getDefaultPassageTitle(type: string): string {
   switch (type) {
     case 'Short Conversation': return 'Listen to a conversation.';
@@ -86,6 +114,7 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
     passageImageUrl: '',
     passageImageFile: null as File | null,
     passageTitle: '',
+    sentenceTimestampsText: '',
     subQuestions: [{ questionText: '', options: ['', '', '', ''], correctAnswer: '', explanation: '', imageUrl: '' }] as Array<{ questionText: string; options: string[]; correctAnswer: string; explanation: string; imageUrl: string }>
   });
 
@@ -146,7 +175,8 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
       difficulty: formData.difficulty,
       blanks: formData.blanks,
       avatar1ImageUrl: formData.avatar1ImageUrl || undefined,
-      avatar2ImageUrl: formData.avatar2ImageUrl || undefined
+      avatar2ImageUrl: formData.avatar2ImageUrl || undefined,
+      sentenceTimestamps: parseSentenceTimestamps(formData.sentenceTimestampsText)
     };
 
     // Handle URL inputs or file uploads (URL takes priority)
@@ -677,6 +707,26 @@ export function QuestionUploadForm({ testType, testNumber, section, questionType
         </div>
         )}
 
+        {/* 문장별 타임스탬프 — 리스닝/스피킹 오디오-텍스트 싱크 정확도 향상.
+            형식: 각 줄에 "시작-끝" (초 단위). translationNote 스크립트 문장 순서와 1:1 매칭. */}
+        {(section === 'Listening' || section === 'Speaking') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              문장별 타임스탬프 (선택) — 오디오-스크립트 정확한 싱크용
+            </label>
+            <textarea
+              value={formData.sentenceTimestampsText}
+              onChange={(e) => setFormData({ ...formData, sentenceTimestampsText: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+              rows={4}
+              placeholder={'각 줄에 "시작-끝" (초 단위)\n예:\n0.0-2.5\n2.5-5.0\n5.0-8.3\n\nTranslation/Script의 문장 순서와 1:1 매칭됩니다.'}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              입력하지 않으면 글자 수 비율로 근사 싱크 (현재 기본 동작). 입력 시 복습 모드에서 정확한 하이라이트 싱크.
+            </p>
+          </div>
+        )}
+
         {/* Difficulty Level */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
@@ -750,7 +800,8 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
     passageImageUrl: question.passageImageUrl || '',
     passageImageFile: null as File | null,
     passageTitle: question.passageTitle || '',
-    questionGroupId: question.questionGroupId || ''
+    questionGroupId: question.questionGroupId || '',
+    sentenceTimestampsText: formatSentenceTimestamps(question.sentenceTimestamps)
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -775,7 +826,8 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
       passageAudioUrl: formData.passageAudioUrl || undefined,
       passageImageUrl: formData.passageImageUrl || undefined,
       passageTitle: formData.passageTitle || undefined,
-      questionGroupId: formData.questionGroupId || undefined
+      questionGroupId: formData.questionGroupId || undefined,
+      sentenceTimestamps: parseSentenceTimestamps(formData.sentenceTimestampsText)
     };
 
     // Handle URL inputs or file uploads (URL takes priority)
@@ -1195,6 +1247,26 @@ export function QuestionEditForm({ testType, testNumber, section, questionTypes,
             />
           </div>
         </div>
+        )}
+
+        {/* 문장별 타임스탬프 — 리스닝/스피킹 오디오-텍스트 싱크 정확도 향상.
+            형식: 각 줄에 "시작-끝" (초 단위). translationNote 스크립트 문장 순서와 1:1 매칭. */}
+        {(section === 'Listening' || section === 'Speaking') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              문장별 타임스탬프 (선택) — 오디오-스크립트 정확한 싱크용
+            </label>
+            <textarea
+              value={formData.sentenceTimestampsText}
+              onChange={(e) => setFormData({ ...formData, sentenceTimestampsText: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent font-mono text-sm"
+              rows={4}
+              placeholder={'각 줄에 "시작-끝" (초 단위)\n예:\n0.0-2.5\n2.5-5.0\n5.0-8.3\n\nTranslation/Script의 문장 순서와 1:1 매칭됩니다.'}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              입력하지 않으면 글자 수 비율로 근사 싱크 (현재 기본 동작). 입력 시 복습 모드에서 정확한 하이라이트 싱크.
+            </p>
+          </div>
         )}
 
         {/* Difficulty Level */}
