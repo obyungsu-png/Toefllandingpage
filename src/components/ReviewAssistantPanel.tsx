@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
 import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
 import { translateWord } from '../utils/wordTranslate';
@@ -1599,7 +1599,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   );
   };
 
-  const renderBullets = (title: string, lines: string[], icon: JSX.Element) => (
+  const renderBullets = (title: string, lines: string[], icon: ReactElement) => (
     <div className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-4">
       <div className="flex items-center gap-2 text-sm font-bold text-[#111827]">
         {icon}

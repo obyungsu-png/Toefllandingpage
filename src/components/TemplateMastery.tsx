@@ -17,7 +17,10 @@ interface Template {
   body: string;        // full template with {{blank}} markers
   blanks: string[];    // answers for blanks
   tips: string;
-  exampleFilled: string;
+  exampleFilled?: string;
+  exampleNotice?: string;
+  exampleEmail?: string;
+  exampleScenario?: string;
 }
 
 const TEMPLATES: Template[] = [
@@ -492,7 +495,7 @@ interface ProgressData {
 // ============== Main Component ==============
 export function TemplateMastery({ onBack }: { onBack: () => void }) {
   const [categoryTab, setCategoryTab] = useState<CategoryTab>('writing');
-  const [subCategory, setSubCategory] = useState<SubCategory>('writing-integrated');
+  const [subCategory, setSubCategory] = useState<SubCategory>('writing-email');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [practiceMode, setPracticeMode] = useState<PracticeMode>('read');
   const [progress, setProgress] = useState<ProgressData>(() => {

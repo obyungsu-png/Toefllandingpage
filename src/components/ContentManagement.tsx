@@ -1450,6 +1450,7 @@ interface QuestionUploadFormProps {
 }
 
 function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSubmit, onCancel }: QuestionUploadFormProps) {
+  const timestampAudioRef = useRef<HTMLAudioElement | null>(null);
   const [formData, setFormData] = useState({
     questionNumber: 1 as number | string,
     questionText: '',
@@ -3189,6 +3190,7 @@ interface QuestionEditFormProps {
 }
 
 function QuestionEditForm({ testType, testNumber, section, questionTypes, question, onSubmit, onCancel }: QuestionEditFormProps) {
+  const timestampAudioRef = useRef<HTMLAudioElement | null>(null);
   const [formData, setFormData] = useState({
     questionNumber: question.questionNumber,
     questionText: question.questionText,

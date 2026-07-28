@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight, Loader2 } from 'lucide-react';
+import { BookOpen, Headphones, MessageSquare, FileText, Mic, Target, BarChart3, X, Volume2, Pause, Play, Check, ChevronRight, Loader2, Lock as LockIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Advertisement } from './AdManagement';
@@ -115,7 +115,7 @@ function QuestionTypeCard({
         {/* Lock Icon */}
         {isLocked && (
           <div className="absolute top-2 right-2">
-            <Lock className="w-5 h-5 text-gray-500" />
+            <LockIcon className="w-5 h-5 text-gray-500" />
           </div>
         )}
         
@@ -124,7 +124,7 @@ function QuestionTypeCard({
           <Button
             onClick={onUnlockClick}
             className="absolute top-2 right-2 py-1 px-2 rounded bg-gray-200 text-gray-500 hover:bg-gray-300"
-            size="xs"
+            size="sm"
           >
             잠금 해제
           </Button>
@@ -343,7 +343,6 @@ export function QuestionTypesSection({
             {activeSkill === 'Listening' && '강의와 대화를 듣고 이해하는 능력을 평가합니다.'}
             {activeSkill === 'Speaking' && '영어로 효과적으로 말하는 능력을 평가합니다.'}
             {activeSkill === 'Writing' && '학술적 주제에 대해 영어로 글을 쓰는 능력을 평가합니다.'}
-            {activeSkill === 'Vocabulary' && '다양한 문제 유형을 통해 어휘 능력을 향상시킵니다.'}
           </p>
         </div>
 
@@ -355,7 +354,7 @@ export function QuestionTypesSection({
               type={type}
               index={index}
               onStartTraining={() => handleStartTraining(type.name)}
-              onSelectLevel={type.hasLevels ? (level) => handleLevelSelect(type.name, level) : undefined}
+              onSelectLevel={undefined}
             />
           ))}
         </div>

@@ -15,10 +15,13 @@ export interface Advertisement {
   id: string;
   title: string;
   content: string; // Main description text (used in banner)
+  description?: string; // Alias for content (used in banner/detail popup)
   imageUrl?: string;
   videoUrl?: string;
   buttonText?: string; // Button text
+  ctaText?: string; // Alias for buttonText (call-to-action text)
   buttonAction?: string; // Button URL or action
+  ctaUrl?: string; // Alias for buttonAction (call-to-action URL)
   locations?: string[]; // Array of locations: ['TPO', 'Test', 'QuestionTypes', 'Training', 'History']
   isActive: boolean;
   createdAt: string;

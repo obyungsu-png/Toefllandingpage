@@ -995,5 +995,3 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
     </>
   );
 }
-
-export type { M1Screen };

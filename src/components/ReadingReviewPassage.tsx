@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WordPopup } from './WordPopup';
 import { SelectionActionPopover } from './SelectionActionPopover';
-import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
+import { saveHighlight, loadHighlights, deleteAllHighlights, deleteHighlight, Highlight } from '../utils/readingHighlights';
 
 /** 선택 팝오버가 뜨기 위한 최소 선택 길이 (공백 제외 글자 수) */
 const MIN_SELECTION_LENGTH = 2;

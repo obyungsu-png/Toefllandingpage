@@ -3,6 +3,7 @@ export interface SATWord {
   korean: string;
   definition: string;
   synonyms: string;
+  example?: string; // Example sentence
   isSynonym?: boolean; // Flag to indicate if this is a synonym question
   parentWord?: string; // Original word if this is a synonym
 }

@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface VolumeControlProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
-  buttonRef: React.RefObject<HTMLButtonElement | null>;
+  buttonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function VolumeControl({ isOpen, onClose, buttonRef }: VolumeControlProps) {
+export function VolumeControl({ isOpen = true, onClose, buttonRef }: VolumeControlProps) {
   const [volume, setVolume] = useState(75);
   const [position, setPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);

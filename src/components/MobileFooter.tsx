@@ -5,6 +5,7 @@ interface MobileFooterProps {
   onBack?: () => void;
   onHome?: () => void;
   onNext?: () => void;
+  onVolumeClick?: () => void;
   showBack?: boolean;
   showHome?: boolean;
   showNext?: boolean;

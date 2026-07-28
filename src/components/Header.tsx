@@ -1,5 +1,4 @@
 import { Button } from "./ui/button";
-import { QuestionUploader } from "./QuestionUploader";
 
 export function Header() {
   return (
@@ -15,7 +14,7 @@ export function Header() {
               <div className="text-sm text-gray-500">Online Practice Platform</div>
             </div>
           </div>
-          
+
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#tpo" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
               TPO Practice
@@ -30,9 +29,8 @@ export function Header() {
               About Us
             </a>
           </nav>
-          
+
           <div className="flex items-center space-x-4">
-            <QuestionUploader />
             <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
               Login / Register
             </Button>

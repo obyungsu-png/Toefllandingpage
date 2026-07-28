@@ -18,6 +18,7 @@ interface SpeakingQ8RecordProps {
   questionText?: string;
   responseDelay?: number;
   stopDuration?: number;
+  duration?: number; // seconds for recording countdown (currently hardcoded to 45)
   isReviewMode?: boolean;
 }
 

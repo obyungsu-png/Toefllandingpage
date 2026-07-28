@@ -41,7 +41,7 @@ function shuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-function filterByLevel(vocab: ExtractedVocab[], level: VocabPdfOptions['level']): ExtractedVocab[] {
+function filterByLevel(vocab: ExtractedVocab[], level: PdfOptions['level']): ExtractedVocab[] {
   if (!level || level === 'ALL') return vocab;
   return vocab.filter(v => v.level === level);
 }

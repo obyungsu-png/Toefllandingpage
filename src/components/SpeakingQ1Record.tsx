@@ -16,6 +16,7 @@ interface SpeakingQ1RecordProps {
   questionText?: string;  // text shown above the image
   responseDelay?: number; // seconds before recording starts (default 3)
   stopDuration?: number;  // seconds for stop overlay (default 2.5)
+  duration?: number; // seconds for recording countdown
   audioUrl?: string;
   isReviewMode?: boolean;
 }

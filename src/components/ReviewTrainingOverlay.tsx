@@ -25,10 +25,11 @@ function normalizeAnswer(value: string) {
 
 function getCorrectOptionIndex(question: TPOQuestion): number {
   if (!question.options || question.options.length === 0) return -1;
-  if (typeof question.correctAnswer === 'string') {
-    const numericIndex = Number(question.correctAnswer);
+  const correctAnswer = question.correctAnswer;
+  if (typeof correctAnswer === 'string') {
+    const numericIndex = Number(correctAnswer);
     if (!Number.isNaN(numericIndex) && question.options[numericIndex] !== undefined) return numericIndex;
-    return question.options.findIndex((o) => normalizeAnswer(o) === normalizeAnswer(question.correctAnswer || ''));
+    return question.options.findIndex((o) => normalizeAnswer(o) === normalizeAnswer(correctAnswer || ''));
   }
   if (Array.isArray(question.correctAnswer) && question.correctAnswer.length > 0) {
     return question.options.findIndex((o) => normalizeAnswer(o) === normalizeAnswer(question.correctAnswer?.[0] || ''));

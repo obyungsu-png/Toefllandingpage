@@ -250,7 +250,7 @@ function AppContent() {
     if (!showToelfTest || !isLoggedIn) { setNeedsSecureMode(false); return; }
     supabase.auth.getUser().then(({ data, error }) => {
       if (error || !data?.user) { setNeedsSecureMode(false); return; }
-      supabase.from('users_profile').select('user_type').single().then(({ data: profile }) => {
+      Promise.resolve(supabase.from('users_profile').select('user_type').single()).then(({ data: profile }) => {
         setNeedsSecureMode(profile?.user_type === '외부구매자');
       }).catch(() => setNeedsSecureMode(false));
     }).catch(() => setNeedsSecureMode(false));

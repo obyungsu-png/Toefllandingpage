@@ -150,7 +150,7 @@ export function IntonationMatcher({
   };
 
   // Play native audio
-  const playNative = () => {
+  const playNative = async () => {
     setIsPlayingNative(true);
     setNativePitchData([]);
     

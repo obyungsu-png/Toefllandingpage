@@ -12,9 +12,11 @@ interface ListeningM2Q8Props {
   onVolumeClick: () => void;
   imageUrl?: string;
   audioUrl?: string;
+  options?: string[];
+  questionText?: string;
 }
 
-export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl }: ListeningM2Q8Props) {
+export function ListeningM2Q8({ onBack, onNext, onHome, onVolumeClick, imageUrl, audioUrl, options, questionText }: ListeningM2Q8Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   // Audio: auto-play 1s after mount, replay via button
   const audioRef = useRef<HTMLAudioElement | null>(null);
