@@ -572,6 +572,9 @@ export function QuestionReviewFull({
     testId: string,
     passageKey: string
   ) => {
+    // Tools 버튼이 눌려(도구 영역 열림) 있을 때만 드래그 동작 — 밑줄/하이라이트/사전
+    if (!toolsOpen) return;
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
