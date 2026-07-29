@@ -39,7 +39,7 @@ interface HistorySectionProps {
   onClearPendingReview?: () => void;
 }
 
-type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report';
+type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | '오답 노트';
 type NavType = 'records';
 type TimeFilter = 'all' | 'today' | '7days' | '1month' | '3months';
 type StatusFilter = 'all' | 'completed' | 'incomplete';
@@ -144,10 +144,8 @@ export function HistorySection({
   ) || [];
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
-  // 오답 노트 모달 — Report 탭 아래 카드에서 진입
-  const [showWrongNotes, setShowWrongNotes] = useState(false);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', '오답 노트'];
 
   const timeFilters: { key: TimeFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -182,6 +180,9 @@ export function HistorySection({
       case 'Report':
         filtered = effectiveResults;
         break;
+      case '오답 노트':
+        // 오답 노트 탭은 별도 전체화면 UI(WrongNotesManager)로 렌더링 — records 리스트 미사용
+        return [];
       default:
         filtered = effectiveResults;
     }
@@ -328,6 +329,7 @@ export function HistorySection({
       case 'Training': return effectiveResults.filter(r => r.type === 'Training').length;
       case 'Wrong Answers': return effectiveResults.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0).length;
       case 'Report': return 0;
+      case '오답 노트': return 0;
       default: return 0;
     }
   };
@@ -593,23 +595,13 @@ export function HistorySection({
                     onOpenShareSettings={() => setShowShareSettings(true)}
                   />
                 </Suspense>
-                {/* 오답 노트 진입 카드 — Report 아래, ReportSection과 비슷한 형식 */}
-                <button
-                  onClick={() => setShowWrongNotes(true)}
-                  className="w-full text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0">
-                      <BookOpen size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-800">📒 오답 노트</p>
-                      <p className="text-xs text-gray-500">Dictation에서 틀린 단어를 모아 재학습</p>
-                    </div>
-                    <ChevronRight size={18} className="text-gray-400" />
-                  </div>
-                </button>
               </div>
+            ) : activeTab === '오답 노트' ? (
+              <WrongNotesManager
+                open={true}
+                onClose={() => setActiveTab('Report')}
+                fullScreen={true}
+              />
             ) : (
               <>
                 {/* Filters */}
@@ -729,23 +721,13 @@ export function HistorySection({
                   onOpenShareSettings={() => setShowShareSettings(true)}
                 />
               </Suspense>
-              {/* 오답 노트 진입 카드 — Report 아래, ReportSection과 비슷한 형식 */}
-              <button
-                onClick={() => setShowWrongNotes(true)}
-                className="w-full text-left rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0">
-                    <BookOpen size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-800">📒 오답 노트</p>
-                    <p className="text-xs text-gray-500">Dictation에서 틀린 단어를 모아 재학습</p>
-                  </div>
-                  <ChevronRight size={18} className="text-gray-400" />
-                </div>
-              </button>
             </div>
+          ) : activeTab === '오답 노트' ? (
+            <WrongNotesManager
+              open={true}
+              onClose={() => setActiveTab('Report')}
+              fullScreen={true}
+            />
           ) : (
             <>
               {/* Filters */}
@@ -1405,13 +1387,6 @@ export function HistorySection({
           </div>
         </div>
       )}
-
-      {/* 오답 노트 모달 — Report 탭의 카드에서 진입. 전체 화면 페이지 모드 */}
-      <WrongNotesManager
-        open={showWrongNotes}
-        onClose={() => setShowWrongNotes(false)}
-        fullScreen
-      />
     </div>
   );
 }
