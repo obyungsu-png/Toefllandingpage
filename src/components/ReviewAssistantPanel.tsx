@@ -351,6 +351,8 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const [selectionPopup, setSelectionPopup] = useState<{
     x: number; y: number; text: string; translation: string | null; partOfSpeech: string | null; source: 'local' | 'api' | 'loading' | 'error';
   } | null>(null);
+  // 드래그 도구(사전/번역 팝업) 활성화 — 기본 false, Tools 버튼 눌러야만 드래그 팝업 동작
+  const [selectionToolsEnabled, setSelectionToolsEnabled] = useState(false);
   // 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 (1·2단계 집중 훈련)
   const [autoStopMode, setAutoStopMode] = useState(false);
   const [autoStopIdx, setAutoStopIdx] = useState<number | null>(null); // 자동 정지된 문장 인덱스
@@ -857,7 +859,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── 단어 드래그 → 한국어 팝업 (하이브리드) ──
   // 1차: vocabularyNote 로컬 조회 (즉시 표시)
   // 2차: Google Translate gtx API (무료) — 로딩 상태 표시 후 결과 반영
+  // Tools 버튼이 활성화되어 있을 때만 동작 — 기본은 꺼져 있음
   const handleTextSelection = () => {
+    if (!selectionToolsEnabled) {
+      setSelectionPopup(null);
+      return;
+    }
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) {
       setSelectionPopup(null);
@@ -1301,6 +1308,25 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       </div>
       {/* 숨겨진 녹음 재생용 audio 요소 */}
       {recordedUrl && <audio ref={recordedAudioRef} src={recordedUrl} className="hidden" />}
+
+      {/* Tools 토글 — 드래그 시 사전/번역 팝업 활성화. 기본은 꺼져 있어 드래그해도 팝업이 뜨지 않음 */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSelectionToolsEnabled(prev => !prev)}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm transition-colors ${
+            selectionToolsEnabled ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          }`}
+          style={selectionToolsEnabled ? { backgroundColor: theme.accent } : undefined}
+          title="단어를 드래그했을 때 사전/번역 팝업을 띄웁니다"
+        >
+          <Sparkles className="h-3 w-3" />
+          {selectionToolsEnabled ? 'Tools 켜짐' : 'Tools'}
+        </button>
+        <span className="text-[11px] text-gray-400">
+          {selectionToolsEnabled ? '단어 드래그 시 사전 팝업이 표시됩니다' : '단어 드래그 팝업이 꺼져 있습니다'}
+        </span>
+      </div>
 
       {/* 풀 스크립트 + 단어장 사이드바 — flex 레이아웃 (모바일에서는 자동 세로 스택) */}
       <div className="flex flex-col md:flex-row gap-3">
