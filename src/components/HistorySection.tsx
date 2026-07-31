@@ -221,6 +221,22 @@ export function HistorySection({
     result: TestResult;
   }
 
+  // 표시용 테스트 이름 — PDF와 동일하게 year/month가 있으면 "TPO 2026년 7월" 형태로 표시.
+  // tpoTests에서 result와 매칭하여 year/month를 가져옴. 없으면 기존 testName 그대로 사용 (이전 데이터 호환).
+  const getDisplayTestName = (r: TestResult): string => {
+    if (!tpoTests || tpoTests.length === 0) return r.testName;
+    const matched = tpoTests.find(t =>
+      t.testNumber === r.testNumber &&
+      t.testType === r.type
+    );
+    if (matched?.year && matched?.month && r.testNumber != null) {
+      const examLabel = `${matched.year}년 ${matched.month}월`;
+      // "TPO 1 - Reading" → "TPO 2026년 7월 - Reading" (testNumber를 examLabel로 교체)
+      return r.testName.replace(String(r.testNumber), examLabel);
+    }
+    return r.testName;
+  };
+
   const displayRecords: DisplayRecord[] = useMemo(() => {
     return tabFiltered.map(r => {
       const date = new Date(r.date);
@@ -266,7 +282,7 @@ export function HistorySection({
 
       return {
         id: r.id,
-        testName: r.testName,
+        testName: getDisplayTestName(r),
         date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         timestamp: `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
         category: r.category,
@@ -277,7 +293,7 @@ export function HistorySection({
         result: r,
       };
     });
-  }, [tabFiltered]);
+  }, [tabFiltered, tpoTests]);
 
   // Apply time filter
   const timeFilteredRecords = useMemo(() => {
@@ -1101,16 +1117,25 @@ export function HistorySection({
         }, 0);
 
         // Always use result.totalQuestions (20) as the source of truth
-        const totalQ = curResult?.totalQuestions || 20;
+        // 단, CMS에 문제가 더 많으면 CMS 기반으로 확장 (TPO 실제 문제 수와 일치)
+        const totalQ = Math.max(curResult?.totalQuestions || 20, cmsQuestionCount);
 
         // Helper: is this wrongAnswer a FillBlanks entry?
         const isFillBlanksWrong = (w: any) =>
           w.questionId?.startsWith('blank-') ||
           (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
 
-        // Separate FillBlanks and MCQ wrongs
-        const fillBlanksWrongs = curResult?.wrongAnswers.filter(isFillBlanksWrong) || [];
-        const mcqWrongs = curResult?.wrongAnswers.filter((w: any) => !isFillBlanksWrong(w)) || [];
+        // 정답 미등록(unscored) 문제 분리 — CMS에 correctAnswer가 없어 채점 불가
+        const isUnscoredWrong = (w: any) =>
+          w.correctAnswer === '(정답 미등록)' ||
+          (typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'));
+
+        // Separate FillBlanks and MCQ wrongs (unscored 제외)
+        const allWrongs = curResult?.wrongAnswers || [];
+        const unscoredWrongs = allWrongs.filter(isUnscoredWrong);
+        const scoredWrongs = allWrongs.filter((w: any) => !isUnscoredWrong(w));
+        const fillBlanksWrongs = scoredWrongs.filter(isFillBlanksWrong);
+        const mcqWrongs = scoredWrongs.filter((w: any) => !isFillBlanksWrong(w));
 
         // Accurate correct count: 실제 결과에 기록된 correctAnswers를 우선 사용
         // (미답변 문제가 정답으로 계산되지 않도록)
@@ -1119,30 +1144,43 @@ export function HistorySection({
         const correctQ = typeof curResult?.correctAnswers === 'number'
           ? curResult.correctAnswers
           : Math.max(0, mcqTotal - mcqWrongs.length) + Math.max(0, fillBlanksTotal - fillBlanksWrongs.length);
-        const wrongQ = Math.max(0, totalQ - correctQ);
+        // 실제 오답 수 = scoredWrongs (unscored 제외)
+        const wrongQ = scoredWrongs.length;
+        // 미답변 수 = 전체 - (정답 + 실제 오답 + unscored)
+        const unansweredQ = Math.max(0, totalQ - correctQ - wrongQ - unscoredWrongs.length);
         const color = sectionColors[scoreModalSection];
 
         // Build a set of wrong question numbers for fast lookup
         // questionId 형식: "15"(MCQ), "blank-3"(Reading 빈칸), "writing-bs-2"(Writing Build a Sentence)
         // → 모든 형식에서 끝의 숫자를 추출해 문제 번호로 매칭 (섹션이 달라 번호 충돌 없음)
+        // unscored(정답 미등록) 문제는 wrongQNums에서 제외 — 별도 색상 표시
         const wrongQNums = new Set<number>();
+        const unscoredQNums = new Set<number>();
         (curResult?.wrongAnswers || []).forEach((w: any) => {
           const id = String(w.questionId ?? '');
           const m = id.match(/(\d+)\s*$/);
-          if (m) wrongQNums.add(parseInt(m[1], 10));
+          if (!m) return;
+          const num = parseInt(m[1], 10);
+          if (isUnscoredWrong(w)) {
+            unscoredQNums.add(num);
+          } else {
+            wrongQNums.add(num);
+          }
         });
 
-        // 미답변 문제 수 = 전체 - (맞은 수 + 오답 기록 수)
+        // 미답변 문제 수 = 전체 - (맞은 수 + 실제 오답 수 + unscored 수)
         // 시험은 순차 진행이므로 뒤쪽 unansweredCount개를 미답변으로 표시
-        const attemptedCount = (curResult?.correctAnswers || 0) + (curResult?.wrongAnswers?.length || 0);
+        const attemptedCount = (curResult?.correctAnswers || 0) + scoredWrongs.length + unscoredWrongs.length;
         const unansweredCount = Math.max(0, totalQ - attemptedCount);
 
         // Build per-question correctness — 실제 오답 기록 기준 (섹션 무관 공통 로직)
+        // isUnscored: 정답 미등록 (주황색), isWrong: 실제 오답 (빨강), isUnanswered: 미답변 (회색), 그 외: 정답 (초록)
         const qList = Array.from({ length: totalQ }, (_, i) => {
           const qNum = i + 1;
-          const isWrong = wrongQNums.has(qNum);
-          const isUnanswered = !isWrong && qNum > totalQ - unansweredCount;
-          return { qNum, globalQNum: qNum, isWrong, isUnanswered };
+          const isUnscored = unscoredQNums.has(qNum);
+          const isWrong = !isUnscored && wrongQNums.has(qNum);
+          const isUnanswered = !isUnscored && !isWrong && qNum > totalQ - unansweredCount;
+          return { qNum, globalQNum: qNum, isWrong, isUnanswered, isUnscored };
         });
 
         return (
@@ -1206,11 +1244,12 @@ export function HistorySection({
                 ) : (
                   <>
                     {/* Score Summary */}
-                    <div className="grid grid-cols-3 gap-3 px-5 md:px-6 pt-5 pb-4">
+                    <div className="grid grid-cols-4 gap-3 px-5 md:px-6 pt-5 pb-4">
                       {[
                         { label: 'Total', value: totalQ, color: 'text-gray-800', bg: 'bg-gray-50' },
                         { label: 'Correct', value: correctQ, color: 'text-green-600', bg: 'bg-green-50' },
                         { label: 'Wrong', value: wrongQ, color: 'text-red-500', bg: 'bg-red-50' },
+                        { label: '안 푼 것', value: unansweredQ, color: 'text-gray-400', bg: 'bg-gray-100' },
                       ].map(({ label, value, color: c, bg }) => (
                         <div key={label} className={`${bg} rounded-xl py-4 text-center`}>
                           <p className={`text-3xl font-bold ${c}`}>{value}</p>
@@ -1218,6 +1257,17 @@ export function HistorySection({
                         </div>
                       ))}
                     </div>
+                    {/* 정답 미등록(unscored) 문제가 있으면 별도 표시 */}
+                    {unscoredWrongs.length > 0 && (
+                      <div className="mx-5 md:mx-6 mb-3 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
+                        <p className="text-sm text-amber-800 font-semibold">
+                          ⚠ 채점 불가 (정답 미등록): {unscoredWrongs.length}문제
+                        </p>
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          CMS 관리 화면에서 정답을 등록하면 채점됩니다.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Q-number grid — click to jump to that question in QuestionReviewFull */}
                     <div className="px-5 md:px-6 pb-2">
@@ -1248,18 +1298,20 @@ export function HistorySection({
                         문제를 클릭하면 해당 문제로 바로 이동해요
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {qList.map(({ qNum, globalQNum, isWrong, isUnanswered }) => (
+                        {qList.map(({ qNum, globalQNum, isWrong, isUnanswered, isUnscored }) => (
                           <button
                             key={qNum}
                             onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
                             className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
-                              isWrong
-                                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                : isUnanswered
-                                  ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              isUnscored
+                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 border border-amber-300'
+                                : isWrong
+                                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                  : isUnanswered
+                                    ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
-                            title={`Q${qNum} (전체 ${globalQNum}번) — ${isWrong ? 'Wrong' : isUnanswered ? '미답변' : 'Correct'} · Click to review`}
+                            title={`Q${qNum} — ${isUnscored ? '정답 미등록' : isWrong ? '오답' : isUnanswered ? '미답변' : '정답'} · 클릭하여 리뷰`}
                           >
                             {qNum}
                           </button>

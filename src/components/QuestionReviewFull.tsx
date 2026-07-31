@@ -159,6 +159,8 @@ interface ReviewQuestion {
   analysis?: string;
   /** CMS에 정답이 등록되지 않아 채점 불가 — 사용자가 CMS에서 정답 등록 필요 */
   unscored?: boolean;
+  /** 시도하지 않은 섹션의 문제 — 미답변 (회색 pill로 표시) */
+  isUnanswered?: boolean;
 }
 
 interface WritingBuildSentenceReviewQuestion {
@@ -369,7 +371,9 @@ export function QuestionReviewFull({
       const qNum = i + 1;
       const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
       const isWrong = !!wrong;
-      // 시도하지 않은 섹션의 문제는 정답이 아님 (안 푼 것 = 틀린 것)
+      // 미답변 = 오답 기록이 없고 시도하지 않은 섹션의 문제 (회색 pill로 표시)
+      // 정답 = 오답 기록이 없고 시도한 섹션의 문제
+      const isUnanswered = !isWrong && !attemptedSection;
       const isCorrect = !isWrong && attemptedSection;
 
       if (realQ) {
@@ -398,6 +402,7 @@ export function QuestionReviewFull({
           keyWords: realQ.keyWords || realQ.vocabulary,
           analysis: realQ.analysis || realQ.explanation,
           unscored: isUnscored,
+          isUnanswered,
         });
       } else {
         // No CMS data — minimal placeholder. Wrong answers still show their detail below.
@@ -415,6 +420,7 @@ export function QuestionReviewFull({
           audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
           passageText: passageText,
           unscored: isUnscored2,
+          isUnanswered,
         });
       }
     }
@@ -489,9 +495,19 @@ export function QuestionReviewFull({
     : questions.length;
 
   const currentQuestion = questions[currentQuestionIndex] || questions[0];
-  const correctCount = activeSection === 'Writing' || activeSection === 'Speaking' 
-    ? result.correctAnswers 
+  const correctCount = activeSection === 'Writing' || activeSection === 'Speaking'
+    ? result.correctAnswers
     : questions.filter(q => q.isCorrect).length;
+  // 정답/오답/미답변/unscored 개수 — Reading/Listening에서만 의미 있음
+  const wrongCount = activeSection === 'Writing' || activeSection === 'Speaking'
+    ? 0
+    : questions.filter(q => !q.isCorrect && !q.unscored && !q.isUnanswered).length;
+  const unansweredCount = activeSection === 'Writing' || activeSection === 'Speaking'
+    ? 0
+    : questions.filter(q => q.isUnanswered).length;
+  const unscoredCount = activeSection === 'Writing' || activeSection === 'Speaking'
+    ? 0
+    : questions.filter(q => q.unscored).length;
 
   // Calculate time display
   const timeMinutes = result.timeSpent ? Math.floor(result.timeSpent / 60) : 0;
@@ -994,14 +1010,19 @@ export function QuestionReviewFull({
                   className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
+                      : q.unscored
+                      ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
                       : isCorrect
                       ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+                      : q.isUnanswered
+                      ? 'bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-200'
                       : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
                   }`}
                   style={{
                     backgroundColor: isCurrent ? themeColor : undefined,
                     borderColor: isCurrent ? themeColor : undefined
                   }}
+                  title={`Q${q.number} — ${q.unscored ? '정답 미등록' : isCorrect ? '정답' : q.isUnanswered ? '미답변' : '오답'}`}
                 >
                   Q{q.number}
                 </button>
@@ -1116,14 +1137,25 @@ export function QuestionReviewFull({
           {/* Stats — 자연스러운 flex flow */}
           <div className="hidden md:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300 shrink-0 ml-auto">
             {activeSection !== 'Speaking' && activeSection !== 'Writing' && (
-              <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <span className="text-gray-500 dark:text-gray-400 text-sm">Score</span>
-                <strong className="text-gray-900 dark:text-gray-100 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
-                  correctCount/totalQuestions >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700'
-                }`}>{Math.round(correctCount/totalQuestions*100)}%</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">Score</span>
+                  <strong className="text-gray-900 dark:text-gray-100 text-sm">{correctCount}<span className="text-gray-400 font-normal">/{totalQuestions}</span></strong>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    correctCount/totalQuestions >= 0.8 ? 'bg-green-100 text-green-700' :
+                    correctCount/totalQuestions >= 0.6 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>{Math.round(correctCount/totalQuestions*100)}%</span>
+                </div>
+                {/* 정답/오답/미답변/unscored 개수 배지 — 사용자가 한눈에 파악 가능 */}
+                <div className="flex items-center gap-1 text-[10px] font-bold">
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">맞은 {correctCount}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700">틀린 {wrongCount}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">안 푼 {unansweredCount}</span>
+                  {unscoredCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">미채점 {unscoredCount}</span>
+                  )}
+                </div>
               </div>
             )}
             <span>

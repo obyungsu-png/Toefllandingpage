@@ -446,18 +446,27 @@ export function generateTestPdf(
   const today = new Date();
   const dateText = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
 
+  // 표시 라벨 — year/month가 있으면 "2026년 7월" 형태 (실전문제처럼 연도/월로 자동 기입),
+  // 없으면 내부 testNumber로 fallback (이전 데이터 호환)
+  const hasExamDate = !!(testData.year && testData.month);
+  const examLabel = hasExamDate
+    ? `${testData.year}년 ${testData.month}월`
+    : `No. ${testData.testNumber}`;
+  const fileLabel = hasExamDate
+    ? `${testData.year}-${String(testData.month).padStart(2, '0')}`
+    : `${testData.testNumber}`;
+
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(18);
   const titleSection = sectionType ? `${sectionType} — ` : '';
-  pdf.text(`${titleSection}${testData.testType} ${testData.testNumber}`, 14, 20);
+  pdf.text(`${titleSection}${testData.testType} ${examLabel}`, 14, 20);
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
   pdf.text(`Generated: ${dateText}`, 14, 28);
-  if (testData.year || testData.month) pdf.text(`Exam Date: ${testData.year || '-'} / ${testData.month || '-'}`, 14, 34);
-  if (testData.dateMemo) pdf.text(`Memo: ${testData.dateMemo}`, 14, 40);
+  if (testData.dateMemo) pdf.text(`Memo: ${testData.dateMemo}`, 14, 34);
 
-  let y = 50;
+  let y = 44;
   const orderedSections = [...testData.sections]
     .sort((a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType))
     .filter(s => !sectionType || s.sectionType === sectionType);
@@ -468,5 +477,5 @@ export function generateTestPdf(
 
   const suffix = mode === 'annotated' ? 'annotated' : 'standard';
   const sectionTag = sectionType ? `-${sectionType.toLowerCase()}` : '';
-  pdf.save(`${testData.testType}-${testData.testNumber}${sectionTag}-${suffix}-${dateText}.pdf`);
+  pdf.save(`${testData.testType}-${fileLabel}${sectionTag}-${suffix}-${dateText}.pdf`);
 }

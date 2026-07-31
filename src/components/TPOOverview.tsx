@@ -21,14 +21,14 @@ interface TPOOverviewProps {
   allTests: { [key: string]: TPOSection[] };
   tests: TPOTest[];
   onSelectTest: (testType: string, testNumber: number) => void;
-  onCreateTest: (testType: 'TPO' | 'Test' | 'Training', testNumber: number) => void;
+  /** 새 테스트 생성 — testType만 전달. testNumber/연도/월/일은 CMS에서 자동 기입 */
+  onCreateTest: (testType: 'TPO' | 'Test' | 'Training') => void;
   onDeleteTest: (testType: string, testNumber: number) => void;
 }
 
 export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDeleteTest }: TPOOverviewProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newTestType, setNewTestType] = useState<'TPO' | 'Test' | 'Training'>('TPO');
-  const [newTestNumber, setNewTestNumber] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: string; number: number } | null>(null);
   // 정렬 방향 — 기본 내림차순(최신 year가 먼저). 사용자가 year/month를 CMS에 넣으면 자동으로 정렬됨.
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -123,13 +123,10 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
     return Math.min(100, Math.round(((s.reading + s.listening + s.writing + s.speaking) / total) * 100));
   };
 
+  // 새 테스트 생성 — testType만 전달. 번호/연도/월/일은 ContentManagement에서 자동 기입.
   const handleCreateTest = () => {
-    const num = parseInt(newTestNumber);
-    if (!num || num < 1 || num > 999) { alert('1-999 사이의 숫자를 입력해주세요.'); return; }
-    if (allTests[`${newTestType}${num}`]) { alert('이미 존재하는 테스트입니다.'); return; }
-    onCreateTest(newTestType, num);
+    onCreateTest(newTestType);
     setShowCreateDialog(false);
-    setNewTestNumber('');
   };
 
   const groupedTests: { [key: string]: TPOSet[] } = {};
@@ -197,15 +194,14 @@ export function TPOOverview({ allTests, tests, onSelectTest, onCreateTest, onDel
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">번호</label>
-                <input type="number" min="1" max="999" value={newTestNumber}
-                  onChange={e => setNewTestNumber(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
-                  placeholder="예: 21" />
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800"><strong>{newTestType} {newTestNumber || '___'}</strong> 세트가 생성됩니다.</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
+                <p className="text-sm text-blue-800">
+                  <strong>{newTestType}</strong> 세트가 생성됩니다.
+                </p>
+                <p className="text-xs text-blue-600 leading-relaxed">
+                  번호·연도·월·일은 자동으로 기입됩니다 (현재 날짜 기준).
+                  {' '}저장 후 Classic 편집 탭에서 연도/월/일을 수정해 날짜순으로 정렬할 수 있습니다.
+                </p>
               </div>
             </div>
             <div className="flex gap-3 mt-6">

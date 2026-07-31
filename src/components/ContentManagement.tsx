@@ -367,19 +367,25 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     return organized;
   };
 
-  // Helper: Create new test — 날짜순 자동 넘버링 (사용자 입력 번호 무시)
-  // 같은 testType 내에서 가장 큰 testNumber + 1 을 자동 할당
-  const handleCreateTest = (testType: 'TPO' | 'Test' | 'Training', _testNumber?: number) => {
+  // Helper: Create new test — 연도/월/일 자동 기입 (사용자 입력 번호 무시)
+  // testNumber는 내부 고유 식별자로만 사용 (같은 testType 내 max+1 자동 할당)
+  // year/month/day는 현재 날짜 기준으로 자동 설정 → 실전문제처럼 연도/월로 자동 정리
+  const handleCreateTest = (testType: 'TPO' | 'Test' | 'Training') => {
     const existingNumbers = tests
       .filter(t => t.testType === testType)
       .map(t => t.testNumber)
       .filter((n): n is number => typeof n === 'number' && !Number.isNaN(n));
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
 
+    // 현재 날짜 기준 year/month/day 자동 기입 — TPOOverview에서 날짜순 자동 정렬에 사용
+    const now = new Date();
     const newTest: TPOTest = {
       id: `${testType.toLowerCase()}-${nextNumber}`,
       testType: testType,
       testNumber: nextNumber,
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,   // 1-12
+      day: now.getDate(),
       sections: [
         { id: `${testType}-${nextNumber}-reading`, sectionType: 'Reading', questions: [] },
         { id: `${testType}-${nextNumber}-listening`, sectionType: 'Listening', questions: [] },

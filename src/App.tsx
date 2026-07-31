@@ -1478,6 +1478,16 @@ function AppContent() {
     if (!currentTest?.tpoNumber) {
       return currentType;
     }
+    // year/month가 있으면 "TPO 2026년 7월" 형태로 표시 (실전문제처럼 연도/월로 자동 기입)
+    // PDF·History와 동일하게 연도/월 기반 라벨 사용 — testNumber는 내부 고유 식별자로만 사용
+    const bank = testBankType === 'tpo' ? tpoTests
+      : testBankType === 'training' ? trainingTests
+      : testTests;
+    const test = bank?.find(t => t.testNumber === currentTest.tpoNumber);
+    if (test?.year && test?.month) {
+      return `${currentType} ${test.year}년 ${test.month}월`;
+    }
+    // fallback: 내부 testNumber (이전 데이터 — year/month 미설정)
     return `${currentType} ${currentTest.tpoNumber}`;
   };
 
@@ -2636,15 +2646,7 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 13)
   const ReadSocialMediaTestScreen = () => {
-    const hardcodedAnswer3 = "To describe the variety of products available at the farmer's market";
-    const hardcodedOptions3 = [
-      "To explain the benefits of organic farming",
-      "To describe the variety of products available at the farmer's market",
-      "To compare different farmer's markets in the area",
-      "To offer advice on starting a stall at the farmer's market"
-    ];
-
-    // CMS PRIORITY: 번호(13)로 먼저 찾기
+    // CMS PRIORITY: 번호(13)로 먼저 찾기 — 하드코어 fallback 제거, CMS 데이터만 사용
     const sectionData13 = getCurrentSectionData('Reading');
     const cmsQ13 = sectionData13?.questions.find(q =>
       String(q.questionNumber) === '13' || q.questionNumber === 13
@@ -2655,7 +2657,7 @@ function AppContent() {
     const cmsQuestion13  = cmsQ13?.questionText   || null;
     const cmsOptions13   = (cmsQ13?.options && cmsQ13.options.length > 0) ? cmsQ13.options : null;
 
-    const answerOptions3 = cmsOptions13 || hardcodedOptions3;
+    const answerOptions3 = cmsOptions13 || [];
 
     const handleAnswerSelect3 = (answer: string) => {
       setSelectedAnswer3(answer);
@@ -2834,16 +2836,7 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 14)
   const ReadSocialMediaTest2Screen = () => {
-    const correctAnswer4_hardcoded = "They provide friendly service and excellent products.";
-    const answerOptions4_hardcoded = [
-      "They offer cooking tips and recipes.",
-      "They offer the lowest prices at the market.",
-      "They provide friendly service and excellent products.",
-      "They have a beautiful and well-decorated stall."
-    ];
-
-
-    // CMS PRIORITY: 번호(14)로 먼저 찾기
+    // CMS PRIORITY: 번호(14)로 먼저 찾기 — 하드코어 fallback 제거, CMS 데이터만 사용
     const sectionDataQ14 = getCurrentSectionData('Reading');
     const cmsQ14 = sectionDataQ14?.questions.find(q =>
       String(q.questionNumber) === '14' || q.questionNumber === 14
@@ -2852,7 +2845,7 @@ function AppContent() {
     const cmsTitle14     = cmsQ14?.passageTitle   || null;
     const cmsQuestion14  = cmsQ14?.questionText   || null;
     const answerOptions4 = (cmsQ14?.options && cmsQ14!.options!.length > 0)
-      ? cmsQ14!.options! : answerOptions4_hardcoded;
+      ? cmsQ14!.options! : [];
 
     const handleAnswerSelect4 = (answer: string) => {
       setSelectedAnswer4(answer);
@@ -3029,16 +3022,7 @@ function AppContent() {
 
   // Read Social Media Test Screen Component (Question 15 - duplicate of Q14)
   const ReadSocialMediaTest3Screen = () => {
-    const correctAnswer5_hardcoded = "To get freshly baked bread and pastries before they are gone";
-    const answerOptions5_hardcoded = [
-      "To get the free samples given in mornings",
-      "To get freshly baked bread and pastries before they are gone",
-      "To meet the famous baker",
-      "To take advantage of early morning discounts"
-    ];
-
-
-    // CMS PRIORITY: 번호(15)로 먼저 찾기
+    // CMS PRIORITY: 번호(15)로 먼저 찾기 — 하드코어 fallback 제거, CMS 데이터만 사용
     const sectionDataQ15 = getCurrentSectionData('Reading');
     const cmsQ15 = sectionDataQ15?.questions.find(q =>
       String(q.questionNumber) === '15' || q.questionNumber === 15
@@ -3047,7 +3031,7 @@ function AppContent() {
     const cmsTitle15     = cmsQ15?.passageTitle   || null;
     const cmsQuestion15  = cmsQ15?.questionText   || null;
     const answerOptions5 = (cmsQ15?.options && cmsQ15!.options!.length > 0)
-      ? cmsQ15!.options! : answerOptions5_hardcoded;
+      ? cmsQ15!.options! : [];
 
     const handleAnswerSelect5 = (answer: string) => {
       setSelectedAnswer5(answer);
