@@ -367,21 +367,30 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     return organized;
   };
 
-  // Helper: Create new test
-  const handleCreateTest = (testType: 'TPO' | 'Test' | 'Training', testNumber: number) => {
+  // Helper: Create new test — 날짜순 자동 넘버링 (사용자 입력 번호 무시)
+  // 같은 testType 내에서 가장 큰 testNumber + 1 을 자동 할당
+  const handleCreateTest = (testType: 'TPO' | 'Test' | 'Training', _testNumber?: number) => {
+    const existingNumbers = tests
+      .filter(t => t.testType === testType)
+      .map(t => t.testNumber)
+      .filter((n): n is number => typeof n === 'number' && !Number.isNaN(n));
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
     const newTest: TPOTest = {
-      id: `${testType.toLowerCase()}-${testNumber}`,
+      id: `${testType.toLowerCase()}-${nextNumber}`,
       testType: testType,
-      testNumber: testNumber,
+      testNumber: nextNumber,
       sections: [
-        { id: `${testType}-${testNumber}-reading`, sectionType: 'Reading', questions: [] },
-        { id: `${testType}-${testNumber}-listening`, sectionType: 'Listening', questions: [] },
-        { id: `${testType}-${testNumber}-writing`, sectionType: 'Writing', questions: [] },
-        { id: `${testType}-${testNumber}-speaking`, sectionType: 'Speaking', questions: [] },
+        { id: `${testType}-${nextNumber}-reading`, sectionType: 'Reading', questions: [] },
+        { id: `${testType}-${nextNumber}-listening`, sectionType: 'Listening', questions: [] },
+        { id: `${testType}-${nextNumber}-writing`, sectionType: 'Writing', questions: [] },
+        { id: `${testType}-${nextNumber}-speaking`, sectionType: 'Speaking', questions: [] },
       ],
     } as any;
-    
+
     onAddTest(newTest);
+    // 새로 만든 번호를 바로 선택 (상세 화면으로 이동)
+    setSelectedTestNumber(nextNumber);
   };
 
   // Helper: Delete test
