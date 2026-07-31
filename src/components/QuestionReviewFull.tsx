@@ -157,6 +157,8 @@ interface ReviewQuestion {
   translation?: string;
   keyWords?: string[];
   analysis?: string;
+  /** CMS에 정답이 등록되지 않아 채점 불가 — 사용자가 CMS에서 정답 등록 필요 */
+  unscored?: boolean;
 }
 
 interface WritingBuildSentenceReviewQuestion {
@@ -372,13 +374,15 @@ export function QuestionReviewFull({
 
       if (realQ) {
         // Use real CMS question data
+        const ca = isWrong ? (wrong?.correctAnswer || realQ.correctAnswer || 'A') : (realQ.correctAnswer || 'A');
+        const isUnscored = ca === '(정답 미등록)';
         qs.push({
           id: realQ.id || `q-${i}`,
           number: qNum,
           text: realQ.questionText || realQ.text || `Question ${qNum}`,
-          options: realQ.options || (wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D']),
+          options: isUnscored ? [] : (realQ.options || (wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D'])),
           userAnswer: isWrong ? (wrong?.userAnswer || '') : (realQ.correctAnswer || 'A'),
-          correctAnswer: isWrong ? (wrong?.correctAnswer || realQ.correctAnswer || 'A') : (realQ.correctAnswer || 'A'),
+          correctAnswer: ca,
           explanation: wrong?.explanation,
           isCorrect,
           hasAudio: activeSection === 'Listening',
@@ -393,20 +397,24 @@ export function QuestionReviewFull({
           translation: realQ.translation || realQ.koreanTranslation,
           keyWords: realQ.keyWords || realQ.vocabulary,
           analysis: realQ.analysis || realQ.explanation,
+          unscored: isUnscored,
         });
       } else {
         // No CMS data — minimal placeholder. Wrong answers still show their detail below.
+        const ca2 = wrong?.correctAnswer || 'A';
+        const isUnscored2 = ca2 === '(정답 미등록)';
         qs.push({
           id: `correct-${i}`,
           number: i + 1,
           text: wrong?.questionText || `Question ${i + 1}`,
-          options: wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D'],
+          options: isUnscored2 ? [] : (wrong ? generateOptions(wrong.correctAnswer, wrong.userAnswer) : ['Option A', 'Option B', 'Option C', 'Option D']),
           userAnswer: wrong?.userAnswer || 'A',
-          correctAnswer: wrong?.correctAnswer || 'A',
+          correctAnswer: ca2,
           isCorrect,
           hasAudio: activeSection === 'Listening',
           audioText: activeSection === 'Listening' ? 'Audio transcript for this question.' : undefined,
           passageText: passageText,
+          unscored: isUnscored2,
         });
       }
     }
@@ -1535,7 +1543,36 @@ export function QuestionReviewFull({
                   </p>
 
                   <div className="space-y-2 mb-4 md:mb-5">
-                    {currentQuestion?.options.map((option, idx) => {
+                    {currentQuestion?.unscored ? (
+                      // 정답 미등록 — 채점 불가 안내 배너
+                      <div className="rounded-lg border-2 border-dashed border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/30 p-4 md:p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-800 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                              <line x1="12" y1="9" x2="12" y2="13"/>
+                              <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm md:text-base font-bold text-amber-800 dark:text-amber-200 mb-1">
+                              채점 불가 — CMS에 정답 미등록
+                            </p>
+                            <p className="text-xs md:text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
+                              이 문제는 CMS에 정답(correctAnswer)이 등록되어 있지 않아 자동 채점에서 제외되었습니다.
+                              <br />
+                              CMS 관리 화면에서 해당 문제의 정답을 등록해 주세요. 정답 등록 후 다시 풀면 정상적으로 채점됩니다.
+                            </p>
+                            {currentQuestion?.userAnswer && currentQuestion.userAnswer !== '(미답변)' && (
+                              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                                제출한 답: <strong>{currentQuestion.userAnswer}</strong>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                    currentQuestion?.options.map((option, idx) => {
                       // 옵션에서 A./B./C./D. 접두사 제거 (실제 시험 형식)
                       const cleanOption = option.replace(/^[A-D]\.\s*/, '');
                       const optionLetter = String.fromCharCode(65 + idx);
@@ -1570,7 +1607,8 @@ export function QuestionReviewFull({
                           )}
                         </div>
                       );
-                    })}
+                    })
+                    )}
                   </div>
 
                   {currentQuestion?.explanation && (
@@ -1582,6 +1620,21 @@ export function QuestionReviewFull({
 
                   <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
                     {(() => {
+                      // 정답 미등록(unscored)인 경우 — 채점 불가 표시
+                      if (currentQuestion?.unscored) {
+                        return (
+                          <div className="flex flex-col gap-1 text-xs md:text-sm">
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                              ⚠️ 미채점 (CMS 정답 미등록)
+                            </span>
+                            {currentQuestion?.userAnswer && currentQuestion.userAnswer !== '(미답변)' && (
+                              <span className="text-gray-500">
+                                제출한 답: <strong>{currentQuestion.userAnswer}</strong>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
                       // Convert full-text answer to letter (A/B/C/D) using option index
                       const toLetter = (ans: string | undefined) => {
                         if (!ans) return '-';

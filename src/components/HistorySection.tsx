@@ -215,6 +215,8 @@ export function HistorySection({
       status: 'completed' | 'in-progress' | 'not-started';
       correct?: number;
       total?: number;
+      /** CMS 정답 미등록으로 채점 제외된 문제 수 */
+      unscored?: number;
     }[];
     result: TestResult;
   }
@@ -226,22 +228,37 @@ export function HistorySection({
       const allSections = ['Reading', 'Listening', 'Writing', 'Speaking'];
       allSections.forEach(s => {
         if (r.category === s) {
-          // Calculate correct accurately: total - non-blank wrong answers
-          const mcqWrongs = r.wrongAnswers.filter(w =>
+          // 정답 미등록(unscored) 문제 분리 — 채점 불가 항목
+          const unscoredWrongs = r.wrongAnswers.filter(w =>
+            w.correctAnswer === '(정답 미등록)' ||
+            (typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
+          );
+          // 채점 대상 오답만 카운트 (unscored 제외)
+          const scoredWrongs = r.wrongAnswers.filter(w =>
+            w.correctAnswer !== '(정답 미등록)' &&
+            !(typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
+          );
+          const mcqWrongs = scoredWrongs.filter(w =>
             !w.questionId?.startsWith('blank-') &&
             !(typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
           ).length;
-          const blankWrongs = r.wrongAnswers.filter(w =>
+          const blankWrongs = scoredWrongs.filter(w =>
             w.questionId?.startsWith('blank-') ||
             (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
           ).length;
           // For Reading: Q1-10 = FillBlanks (10 total), Q11-20 = MCQ (10 total)
           const fillBlanksTotal = (s === 'Reading') ? 10 : 0;
-          const mcqTotal = r.totalQuestions - fillBlanksTotal;
+          const mcqTotal = Math.max(0, r.totalQuestions - fillBlanksTotal - unscoredWrongs.length);
           const correctMcq = Math.max(0, mcqTotal - mcqWrongs);
           const correctBlanks = Math.max(0, fillBlanksTotal - blankWrongs);
           const accurate = correctMcq + correctBlanks;
-          sections.push({ name: s, status: 'completed', correct: accurate, total: r.totalQuestions });
+          sections.push({
+            name: s,
+            status: 'completed',
+            correct: accurate,
+            total: r.totalQuestions,
+            unscored: unscoredWrongs.length,
+          });
         } else {
           sections.push({ name: s, status: 'not-started' });
         }
@@ -664,7 +681,14 @@ export function HistorySection({
                                   <div key={section.name} className="text-center">
                                     <p className="text-xs text-gray-600 mb-0.5">{section.name}</p>
                                     {section.status === 'completed' ? (
-                                      <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                      <>
+                                        <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                        {section.unscored && section.unscored > 0 ? (
+                                          <p className="text-[10px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
+                                            ⚠ 미채점 {section.unscored}
+                                          </p>
+                                        ) : null}
+                                      </>
                                     ) : (
                                       <p className="text-xs text-gray-400">--</p>
                                     )}
@@ -802,9 +826,16 @@ export function HistorySection({
                                       <div key={section.name} className="text-center">
                                         <p className="text-sm font-medium text-gray-800 mb-1">{section.name}</p>
                                         {section.status === 'completed' ? (
-                                          <p className="text-sm font-bold" style={{ color: themeColor }}>
-                                            {section.correct} / {section.total}
-                                          </p>
+                                          <>
+                                            <p className="text-sm font-bold" style={{ color: themeColor }}>
+                                              {section.correct} / {section.total}
+                                            </p>
+                                            {section.unscored && section.unscored > 0 ? (
+                                              <p className="text-[11px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
+                                                ⚠ 미채점 {section.unscored}
+                                              </p>
+                                            ) : null}
+                                          </>
                                         ) : section.status === 'in-progress' ? (
                                           <p className="text-sm font-bold text-orange-500">In Progress</p>
                                         ) : (
