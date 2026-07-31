@@ -1801,14 +1801,32 @@ function AppContent() {
     const completeWordsQuestions = category === 'Reading'
       ? cmsQuestions.filter((q: any) => isCompleteWordsType(q?.questionType))
       : [];
-    const isCompleteWordsSlot = (questionNumber: number) => completeWordsQuestions.some((q: any) => {
-      const range = parseQuestionRange(q?.questionNumber);
-      return range ? questionNumber >= range.start && questionNumber <= range.end : false;
-    });
-    const findCmsQuestionForNumber = (questionNumber: number) => cmsQuestions.find((q: any) => {
-      const range = parseQuestionRange(q?.questionNumber);
-      return range ? questionNumber >= range.start && questionNumber <= range.end : false;
-    });
+    // Complete Words slot 판정:
+    // 동일 questionNumber를 가진 MC 단일 문제(options ≥ 1)가 있으면
+    // Complete Words slot이 아니라 MC 문제로 취급 → 채점 skip 제외
+    const isCompleteWordsSlot = (questionNumber: number) => {
+      const hasIndividualMC = cmsQuestions.some((q: any) =>
+        String(q?.questionNumber) === String(questionNumber) &&
+        Array.isArray(q?.options) && q.options.length > 0
+      );
+      if (hasIndividualMC) return false;
+      return completeWordsQuestions.some((q: any) => {
+        const range = parseQuestionRange(q?.questionNumber);
+        return range ? questionNumber >= range.start && questionNumber <= range.end : false;
+      });
+    };
+    // MC 단일 문제(questionNumber 정확 일치)를 우선 매칭하고,
+    // 없으면 Complete Words range 기반으로 매칭
+    const findCmsQuestionForNumber = (questionNumber: number) => {
+      const exact = cmsQuestions.find((q: any) =>
+        String(q?.questionNumber) === String(questionNumber)
+      );
+      if (exact) return exact;
+      return cmsQuestions.find((q: any) => {
+        const range = parseQuestionRange(q?.questionNumber);
+        return range ? questionNumber >= range.start && questionNumber <= range.end : false;
+      });
+    };
 
     let correctCount = 0;
     let scoredCount = 0; // 정답이 등록된 문제 수 (CMS에 correctAnswer가 있는 문제만)
@@ -2082,15 +2100,15 @@ function AppContent() {
     }
   };
 
-  // TPO/Test 중간 이탈 시 incomplete 저장 (30% 이상 진행 시)
+  // TPO/Test 중간 이탈 시 incomplete 저장 (영역별 50% 이상 진행 시)
   const saveIncompleteIfNeeded = () => {
     try {
       const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
       const fillBlanksAnswers = (typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {};
       const answeredCount = Object.keys(sharedAnswers).length + Object.keys(fillBlanksAnswers).length;
       const totalQuestions = 20; // TPO/Test 기본 20문제 기준
-      
-      if (answeredCount >= totalQuestions * 0.3) {
+
+      if (answeredCount >= totalQuestions * 0.5) {
         const section = currentTest?.section || 'Reading';
         handleAddTestResult({
           type: currentTest?.tpoNumber ? 'TPO' : 'Test',
