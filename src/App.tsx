@@ -104,6 +104,7 @@ import {
   normalizeCompleteWordsPassage,
   parseQuestionRange,
 } from './utils/readingQuestionUtils';
+import { checkGradingTrigger } from './utils/gradingTrigger';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
@@ -1790,6 +1791,30 @@ function AppContent() {
       ? Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null)
       : Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null);
 
+    // ── 채점 트리거 검사용 응답 문항 수 (Reading/Listening 50% 임계) ──
+    // fillBlanks/Complete Words 응답은 아래 clearing 전에 미리 집계.
+    const mcAnsweredCount = allAnswers.filter(
+      a => a !== null && a !== undefined && String(a).trim() !== '',
+    ).length;
+    let fillAnsweredCount = 0;
+    if (category === 'Reading') {
+      const fbAnswers: Record<string, any> =
+        (typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {};
+      const cwAnswers: Record<string, any> =
+        (typeof window !== 'undefined' && (window as any).__completeWordsAnswers) || {};
+      // Fill Blanks 응답 수
+      for (const v of Object.values(fbAnswers)) {
+        if (v && String(v).trim()) fillAnsweredCount++;
+      }
+      // Complete Words 응답 수 (각 문항별 빈칸 맵)
+      for (const blankMap of Object.values(cwAnswers)) {
+        for (const v of Object.values(blankMap || {})) {
+          if (v && String(v).trim()) fillAnsweredCount++;
+        }
+      }
+    }
+    const totalAnsweredCount = mcAnsweredCount + fillAnsweredCount;
+
     // Pick the correct CMS bank based on testBankType
     const tpoNum = currentTest?.tpoNumber;
     let cmsBank: any[] = [];
@@ -1959,6 +1984,24 @@ function AppContent() {
     // Clear shared answers after saving
     if (typeof window !== 'undefined') {
       (window as any).__moduleAnswers = {};
+    }
+
+    // ── Reading/Listening 50% 채점 트리거 검사 ──────────────────────────
+    // 응답률 50% 미만 → 채점 신뢰도 경고를 wrongAnswers 최상단에 추가.
+    // (Speaking/Writing 은 End 화면에서 100% 트리거로 AI 채점 자체가 차단됨)
+    if (category === 'Reading' || category === 'Listening') {
+      const trigger = checkGradingTrigger(category, {
+        totalQuestions: effectiveTotalQuestions,
+        answeredQuestions: totalAnsweredCount,
+      });
+      if (!trigger.canGrade) {
+        wrongAnswers.unshift({
+          questionId: 'grading-trigger-warning',
+          questionText: '⚠️ 채점 신뢰도 안내 (응답률 부족)',
+          userAnswer: `응답 ${totalAnsweredCount}/${effectiveTotalQuestions}문항 (${Math.round(trigger.completionRatio * 100)}%)`,
+          correctAnswer: trigger.message,
+        });
+      }
     }
 
     // 점수: 정답이 등록된 문제(scoredCount)만 기준으로 계산

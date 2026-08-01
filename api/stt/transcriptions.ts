@@ -10,18 +10,38 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  *   - file:       오디오 Blob (webm/mp4/wav/m4a)
  *   - model:      'whisper-1' (기본)
  *   - language:   'en' (기본 — 영어 STT)
- *   - response_format: 'json' | 'verbose_json' (기본 verbose_json → segments/words 포함)
+ *   - response_format: 'verbose_json' (words/duration 포함)
  *
  * 응답: { text, duration?, words?, segments? } 또는 { error }
+ *
+ * ⚠️ multipart/form-data 를 그대로 업스트림으로 전달하기 위해
+ *    Vercel 기본 body parser 를 비활성화 (config.api.bodyParser = false).
  */
 const STT_API_URL = 'https://apiclaude.cc/v1/audio/transcriptions';
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+
+// multipart 요청은 body parser 비활성화 — raw stream 으로 수집 후 전달
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+/** 요청 스트림을 Buffer 로 수집 */
+function collectRawBody(req: VercelRequest): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS preflight
@@ -46,9 +66,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // 클라이언트가 보낸 multipart/form-data 그대로 apiclaude.cc 로 전달
-    // Vercel Node 런타임은 req.body 에 Buffer/stream 으로 원본 multipart 를 노출.
-    // multipart 처리를 위해 원본 body 를 그대로 forwarding 하는 방식 사용.
     const contentType = req.headers['content-type'] || '';
     if (!contentType.includes('multipart/form-data')) {
       res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
@@ -56,22 +73,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    // raw body 를 그대로 업스트림으로 전달 (Vercel 은 버퍼링된 body 제공)
-    const rawBody: Buffer = req.body instanceof Buffer
-      ? req.body
-      : Buffer.isBuffer(req.body)
-        ? req.body
-        : typeof req.body === 'string'
-          ? Buffer.from(req.body, 'binary')
-          : Buffer.from(JSON.stringify(req.body));
+    // raw multipart body 수집 (bodyParser 비활성화 상태)
+    const rawBody = await collectRawBody(req);
+    if (rawBody.length === 0) {
+      res.writeHead(400, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '빈 요청 본문입니다.' }));
+      return;
+    }
+
+    // content-length 동기화 — 업스트림이 정확한 길이 필요
+    const upstreamHeaders: Record<string, string> = {
+      'Authorization': `Bearer ${CLAUDE_API_KEY}`,
+      'User-Agent': 'OBS',
+      'Content-Type': contentType,
+    };
+    if (rawBody.length) upstreamHeaders['Content-Length'] = String(rawBody.length);
 
     const response = await fetch(STT_API_URL, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CLAUDE_API_KEY}`,
-        'User-Agent': 'OBS',
-        'Content-Type': contentType,
-      },
+      headers: upstreamHeaders,
       body: rawBody,
     });
 
@@ -86,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    // 응답이 JSON 인지 확인 후 전달
+    // 응답 그대로 전달 (JSON 또는 text)
     const contentTypeResp = response.headers.get('content-type') || 'application/json';
     res.writeHead(200, { ...CORS_HEADERS, 'Content-Type': contentTypeResp });
     res.end(respText);
