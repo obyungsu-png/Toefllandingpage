@@ -3,12 +3,15 @@
  * -----------------------------------------------------------------------------
  * 2026 개편 TOEFL Speaking 채점 파이프라인 1단계.
  *
- * 전략 (무료/기존 API 우선):
- *   1) Whisper 프록시(/api/stt/transcriptions) 우선 시도 — apiclaude.cc OpenAI 호환
- *   2) 실패 시 브라우저 내장 Web Speech API (SpeechRecognition) 폴백
+ * 폴백 체인 (사용자 제공 비교표 기반 우선순위):
+ *   1) Deepgram Nova-3 (클라우드, 200~300ms, 단어 단위 타임스탬프) — 1순위
+ *      → /api/stt/deepgram 프록시 (DEEPGRAM_API_KEY)
+ *   2) 로컬 Whisper (오프라인, 무료, large-v3/base) — 2순위 폴백
+ *      → http://localhost:8787/transcribe (scripts/local-whisper-server.cjs)
+ *   3) Web Speech API (브라우저 내장) — 최후 폴백 (Blob 기반 한계)
  *
  * 응답 형식 정규화:
- *   { text, duration?, words?(timestamp 배열), source: 'whisper' | 'webspeech' }
+ *   { text, duration?, words?(timestamp 배열), source: 'deepgram' | 'local-whisper' | 'webspeech' }
  */
 import { useState, useCallback, useRef } from 'react';
 
@@ -21,12 +24,12 @@ export interface SttWord {
 export interface SttResult {
   /** 인식된 전체 텍스트 */
   text: string;
-  /** 오디오 길이(초) — Whisper verbose_json 에서 제공 */
+  /** 오디오 길이(초) — Deepgram/Whisper 에서 제공 */
   duration?: number;
   /** 단어별 타임스탬프 — WPM/무음 구간 계산용 */
   words?: SttWord[];
   /** 사용된 STT 소스 */
-  source: 'whisper' | 'webspeech';
+  source: 'deepgram' | 'local-whisper' | 'webspeech';
   /** 경고 메시지(폴백 발생 등) */
   warning?: string;
 }
@@ -44,46 +47,68 @@ export interface SttState {
 const isElectron =
   typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
 
-// 프로덕션 Vercel 앱 절대 URL (Electron 용)
-const STT_PROXY_ENDPOINT = isElectron
+// Deepgram 프록시 엔드포인트
+const DEEPGRAM_PROXY_ENDPOINT = isElectron
   ? (import.meta.env.VITE_CLAUDE_PROXY_URL as string | undefined)?.replace(
       '/api/claude/chat/completions',
-      '/api/stt/transcriptions',
-    ) || 'https://toefl-allmyexam.vercel.app/api/stt/transcriptions'
-  : '/api/stt/transcriptions';
+      '/api/stt/deepgram',
+    ) || 'https://toefl-allmyexam.vercel.app/api/stt/deepgram'
+  : '/api/stt/deepgram';
+
+// 로컬 Whisper dev 서버 엔드포인트 (scripts/local-whisper-server.cjs)
+const LOCAL_WHISPER_ENDPOINT =
+  (import.meta.env.VITE_LOCAL_WHISPER_URL as string | undefined) ||
+  'http://localhost:8787/transcribe';
 
 /**
- * 1차: Whisper 프록시로 오디오 Blob 전송
- * multipart/form-data — file 필드에 Blob, verbose_json 으로 words/duration 요청.
+ * 오디오 Blob 의 MIME 타입에서 파일 확장자 결정
  */
-async function transcribeWithWhisper(blob: Blob): Promise<SttResult> {
-  const formData = new FormData();
+function audioBlobToExt(blob: Blob): string {
+  const t = blob.type.toLowerCase();
+  if (t.includes('mp4') || t.includes('m4a')) return 'm4a';
+  if (t.includes('webm')) return 'webm';
+  if (t.includes('wav')) return 'wav';
+  if (t.includes('mpeg') || t.includes('mp3')) return 'mp3';
+  if (t.includes('ogg')) return 'ogg';
+  return 'webm';
+}
 
-  // 파일 확장자 결정 — webm/mp4
-  const ext = blob.type.includes('mp4') ? 'm4a'
-    : blob.type.includes('webm') ? 'webm'
-    : blob.type.includes('wav') ? 'wav'
-    : 'webm';
-  const filename = `recording.${ext}`;
-  formData.append('file', blob, filename);
-  formData.append('model', 'whisper-1');
-  formData.append('language', 'en');
-  formData.append('response_format', 'verbose_json');
+/**
+ * 1순위: Deepgram Nova-3 프록시로 오디오 전송
+ * raw 오디오 바이너리 (multipart 아님) — Content-Type 으로 포맷 명시.
+ * 단어 단위 타임스탬프 자동 제공 → WPM/무음 구간 정밀 측정.
+ */
+async function transcribeWithDeepgram(blob: Blob): Promise<SttResult> {
+  const ext = audioBlobToExt(blob);
+  // Deepgram 이 이해하는 audio Content-Type
+  const contentType =
+    ext === 'm4a' ? 'audio/mp4'
+    : ext === 'webm' ? 'audio/webm'
+    : ext === 'wav' ? 'audio/wav'
+    : ext === 'mp3' ? 'audio/mpeg'
+    : ext === 'ogg' ? 'audio/ogg'
+    : 'audio/webm';
 
-  const response = await fetch(STT_PROXY_ENDPOINT, {
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const response = await fetch(DEEPGRAM_PROXY_ENDPOINT, {
     method: 'POST',
-    body: formData,
-    // Content-Type 을 직접 설정하지 않음 — FormData 가 boundary 자동 생성
+    headers: {
+      'Content-Type': contentType,
+      'X-Audio-Filename': `recording.${ext}`,
+    },
+    body: arrayBuffer,
   });
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
-    throw new Error(`Whisper STT 오류 (${response.status}): ${errText.slice(0, 150)}`);
+    let detail = errText;
+    try { detail = JSON.parse(errText)?.error || errText; } catch {}
+    throw new Error(`Deepgram STT 오류 (${response.status}): ${String(detail).slice(0, 150)}`);
   }
 
   const data = await response.json();
 
-  // words 배열이 있으면 타임스탬프 추출 (WPM 계산용)
   const words: SttWord[] | undefined = Array.isArray(data.words)
     ? data.words.map((w: any) => ({
         word: String(w.word || w.text || ''),
@@ -96,18 +121,56 @@ async function transcribeWithWhisper(blob: Blob): Promise<SttResult> {
     text: String(data.text || '').trim(),
     duration: typeof data.duration === 'number' ? data.duration : undefined,
     words,
-    source: 'whisper',
+    source: 'deepgram',
+  };
+}
+
+/**
+ * 2순위: 로컬 Whisper dev 서버 (Transformers.js / whisper.cpp)
+ * 오프라인 + 무료. DEEPGRAM_API_KEY 미설정 또는 네트워크 실패 시 폴백.
+ * 로컬 dev 서버(scripts/local-whisper-server.cjs)가 실행 중일 때만 동작.
+ */
+async function transcribeWithLocalWhisper(blob: Blob): Promise<SttResult> {
+  const ext = audioBlobToExt(blob);
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const response = await fetch(LOCAL_WHISPER_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': blob.type || 'audio/webm',
+      'X-Audio-Filename': `recording.${ext}`,
+    },
+    body: arrayBuffer,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`로컬 Whisper 오류 (${response.status}): ${errText.slice(0, 150)}`);
+  }
+
+  const data = await response.json();
+
+  const words: SttWord[] | undefined = Array.isArray(data.words)
+    ? data.words.map((w: any) => ({
+        word: String(w.word || w.text || ''),
+        start: Number(w.start ?? 0),
+        end: Number(w.end ?? 0),
+      })).filter((w: SttWord) => w.word)
+    : undefined;
+
+  return {
+    text: String(data.text || '').trim(),
+    duration: typeof data.duration === 'number' ? data.duration : undefined,
+    words,
+    source: 'local-whisper',
   };
 }
 
 // ── Web Speech API 폴백 (브라우저 내장 SpeechRecognition) ──
-// Whisper 가 지원되지 않거나 네트워크 실패 시 즉시 대체.
+// Blob 기반 후처리 변환은 지원하지 않아 빈 결과 + 안내 반환.
+// 실사용 시에는 Deepgram 또는 로컬 Whisper 사용 권장.
 function transcribeWithWebSpeech(blob: Blob): Promise<SttResult> {
   return new Promise((resolve, reject) => {
-    // Web Speech API 는 실시간 인식만 지원 — Blob 재생이 아닌,
-    // 마이크 입력을 바로 인식하는 방식. 여기서는 Blob 기반 즉시 폴백이 어려우므로
-    // SpeechRecognition 으로 재녹음 유도 대신, 한계 안내와 함께 빈 결과 반환.
-    // 실제 사용처에서는 useStt 훅이 녹음 중에 Web Speech 를 동시 실행하는 방식 권장.
     const SpeechRecognitionClass =
       (typeof window !== 'undefined' &&
         ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)) ||
@@ -118,19 +181,19 @@ function transcribeWithWebSpeech(blob: Blob): Promise<SttResult> {
       return;
     }
 
-    // Blob 재생 → 마이크 라우팅은 불가하므로, 폴백 시 안내만 반환.
-    // (학생은 Whisper 프록시 설정을 확인해야 함)
+    // Blob 재생 → 마이크 라우팅은 불가하므로 폴백 시 안내만 반환.
     resolve({
       text: '',
       source: 'webspeech',
       warning:
-        'Whisper 프록시 실패. Web Speech API 는 Blob 기반 폴백을 지원하지 않아 빈 결과를 반환합니다. CLAUDE_API_KEY 또는 네트워크를 확인하세요.',
+        'Deepgram/로컬 Whisper 모두 사용 불가. Web Speech API 는 Blob 기반 폴백을 지원하지 않아 빈 결과를 반환합니다. DEEPGRAM_API_KEY 등록 또는 로컬 Whisper 서버 실행이 필요합니다.',
     });
   });
 }
 
 /**
  * STT 훅 — 오디오 Blob 을 텍스트로 변환.
+ * 폴백 순서: Deepgram(1순위) → 로컬 Whisper(2순위) → Web Speech(최후)
  * @returns { transcribe, isLoading, result, error, reset }
  */
 export function useStt() {
@@ -149,29 +212,53 @@ export function useStt() {
     abortRef.current = false;
     setState({ isLoading: true, result: null, error: null });
 
-    // 1차: Whisper 프록시
+    const warnings: string[] = [];
+
+    // 1순위: Deepgram Nova-3
     try {
-      const whisperResult = await transcribeWithWhisper(blob);
+      const deepgramResult = await transcribeWithDeepgram(blob);
       if (abortRef.current) return null;
-      // 텍스트가 비어도 경고로 기록 — WER 은 0점 처리
-      const warning = whisperResult.text ? undefined
-        : 'Whisper 가 음성을 인식하지 못했습니다. (무음/잡음일 수 있음)';
-      const finalResult: SttResult = { ...whisperResult, warning };
+      const warning = deepgramResult.text ? undefined
+        : 'Deepgram 이 음성을 인식하지 못했습니다. (무음/잡음일 수 있음)';
+      const finalResult: SttResult = { ...deepgramResult, warning };
       setState({ isLoading: false, result: finalResult, error: null });
       return finalResult;
-    } catch (whisperErr: any) {
-      console.warn('[useStt] Whisper 실패, Web Speech 폴백 시도:', whisperErr?.message);
-      // 2차: Web Speech API 폴백
-      try {
-        const fallback = await transcribeWithWebSpeech(blob);
-        if (abortRef.current) return null;
-        setState({ isLoading: false, result: fallback, error: null });
-        return fallback;
-      } catch (fbErr: any) {
-        const msg = `STT 실패: Whisper(${whisperErr?.message || '오류'}) / WebSpeech(${fbErr?.message || '오류'})`;
-        setState({ isLoading: false, result: null, error: msg });
-        return null;
-      }
+    } catch (deepgramErr: any) {
+      console.warn('[useStt] Deepgram 실패, 로컬 Whisper 폴백 시도:', deepgramErr?.message);
+      warnings.push(`Deepgram 실패: ${deepgramErr?.message || '오류'}`);
+    }
+
+    // 2순위: 로컬 Whisper dev 서버
+    try {
+      const localResult = await transcribeWithLocalWhisper(blob);
+      if (abortRef.current) return null;
+      const warning = localResult.text ? undefined
+        : '로컬 Whisper 가 음성을 인식하지 못했습니다. (무음/잡음일 수 있음)';
+      const finalResult: SttResult = {
+        ...localResult,
+        warning: warning || (warnings.length ? `폴백 발생 — ${warnings.join(' | ')}` : undefined),
+      };
+      setState({ isLoading: false, result: finalResult, error: null });
+      return finalResult;
+    } catch (localErr: any) {
+      console.warn('[useStt] 로컬 Whisper 실패, Web Speech 폴백 시도:', localErr?.message);
+      warnings.push(`로컬 Whisper 실패: ${localErr?.message || '오류'}`);
+    }
+
+    // 3순위: Web Speech API (최후 — 빈 결과)
+    try {
+      const fallback = await transcribeWithWebSpeech(blob);
+      if (abortRef.current) return null;
+      const finalResult: SttResult = {
+        ...fallback,
+        warning: fallback.warning || `모든 STT 폴백 실패 — ${warnings.join(' | ')}`,
+      };
+      setState({ isLoading: false, result: finalResult, error: null });
+      return finalResult;
+    } catch (fbErr: any) {
+      const msg = `STT 실패: Deepgram/로컬Whisper/WebSpeech 모두 실패. ${warnings.join(' | ')} / WebSpeech(${fbErr?.message || '오류'})`;
+      setState({ isLoading: false, result: null, error: msg });
+      return null;
     }
   }, []);
 

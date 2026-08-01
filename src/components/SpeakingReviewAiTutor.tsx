@@ -87,7 +87,7 @@ export function SpeakingReviewAiTutor({
               </div>
               <p className="text-gray-700 font-semibold mb-1">2026 Speaking 자동 채점</p>
               <p className="text-sm text-gray-500 mb-1">
-                Listen &amp; Repeat (Q1~Q7) — Whisper STT + WER 정확도
+                Listen &amp; Repeat (Q1~Q7) — STT(Deepgram/Whisper) + WER 정확도
               </p>
               <p className="text-sm text-gray-500 mb-6">
                 Take an Interview (Q8~Q11) — STT + Delivery/Fluency/Topic 루브릭
@@ -146,6 +146,22 @@ export function SpeakingReviewAiTutor({
 }
 
 // ── 결과 표시 ──────────────────────────────────────────────────────────────
+// STT 소스 배지 — 어떤 음성인식 엔진으로 채점했는지 표시
+function SttSourceBadge({ source }: { source: string }) {
+  const config: Record<string, { label: string; cls: string }> = {
+    'deepgram': { label: '🎙️ Deepgram Nova-3', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    'local-whisper': { label: '🔊 로컬 Whisper', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+    'webspeech': { label: '⚠️ Web Speech (폴백)', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+    'mixed': { label: '🔀 혼합 STT', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
+  };
+  const c = config[source] || config['mixed'];
+  return (
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${c.cls}`}>
+      {c.label}
+    </span>
+  );
+}
+
 function SpeakingResultView({
   result,
   onRegrade,
@@ -162,11 +178,16 @@ function SpeakingResultView({
       <div className="bg-gradient-to-r from-[#f0fafa] to-[#e8f4f8] rounded-xl p-5 border border-[#d1e8e8]/50">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-[#1e6b73] uppercase tracking-wider">종합 Band</span>
-          {result.unavailableCount > 0 && (
-            <span className="text-[11px] text-amber-600 font-semibold">
-              ⚠️ 채점 불가 {result.unavailableCount}문항
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {result.sttSource && result.sttSource !== 'none' && (
+              <SttSourceBadge source={result.sttSource} />
+            )}
+            {result.unavailableCount > 0 && (
+              <span className="text-[11px] text-amber-600 font-semibold">
+                ⚠️ 채점 불가 {result.unavailableCount}문항
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-end gap-2 mb-2">
           <span className={`text-4xl font-extrabold ${

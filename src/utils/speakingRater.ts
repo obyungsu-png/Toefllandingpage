@@ -82,7 +82,7 @@ export interface SpeakingRaterResult {
   /** 요약 피드백 (History 표시용) */
   summaryFeedback: string;
   /** 채점에 사용된 STT 소스 */
-  sttSource: 'whisper' | 'webspeech' | 'mixed' | 'none';
+  sttSource: 'deepgram' | 'local-whisper' | 'webspeech' | 'mixed' | 'none';
   /** 채점 불가 문항 수 */
   unavailableCount: number;
 }

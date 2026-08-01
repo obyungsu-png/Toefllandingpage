@@ -1,12 +1,18 @@
 
-  import { defineConfig } from 'vite';
+  import { defineConfig, loadEnv } from 'vite';
   import react from '@vitejs/plugin-react';
   import tailwindcss from '@tailwindcss/vite';
   import path from 'path';
+  import { sttDevProxyPlugin } from './vite-plugins/stt-dev-proxy';
 
-  export default defineConfig({
+  // 함수형 config — loadEnv 로 .env.local 의 DEEPGRAM_API_KEY 를 dev 미들웨어에 주입.
+  // (VITE_ 접두사 없는 서버 전용 키도 로드하려면 loadEnv 의 prefix 인자를 '' 로 설정)
+  export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd(), '');
+    const deepgramApiKey = env.DEEPGRAM_API_KEY || '';
+    return {
     base: './',  // Electron file:// 로딩을 위한 상대 경로
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), sttDevProxyPlugin(deepgramApiKey)],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
@@ -159,18 +165,19 @@
             Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
           },
         },
-        // ── STT(Whisper) 프록시 — apiclaude.cc /v1/audio/transcriptions ──
-        // 보안: Claude 와 동일한 CLAUDE_API_KEY 재사용 (apiclaude.cc OpenAI 호환 엔드포인트).
-        // multipart/form-data 그대로 업스트림 전달 — body rewrite 없음.
-        // (프로덕션에서는 Vercel 서버리스 함수 api/stt/transcriptions.ts 가 처리)
-        '/api/stt': {
+        // ── 레거시 STT(Whisper) 프록시 — apiclaude.cc /v1/audio/transcriptions ──
+        // ⚠️ /api/stt/deepgram 은 sttDevProxyPlugin 미들웨어가 먼저 가로채어
+        //    Deepgram API 로 직접 라우팅 (아래 프록시는 /api/stt/transcriptions 만 처리).
+        // ⚠️ apiclaude.cc Whisper 엔드포인트는 404 로 확인되어 레거시 폴백 전용.
+        '/api/stt/transcriptions': {
           target: 'https://apiclaude.cc',
           changeOrigin: true,
-          rewrite: (path) => '/v1/audio/transcriptions',
+          rewrite: () => '/v1/audio/transcriptions',
           headers: {
             Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
           },
         },
       },
     },
+    };
   });
