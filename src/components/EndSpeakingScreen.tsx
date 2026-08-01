@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
+import { SpeakingReviewAiTutor } from './SpeakingReviewAiTutor';
+import { checkGradingTrigger } from '../utils/gradingTrigger';
+import { countAnswered } from '../utils/speakingRater';
+import type { SpeakingRaterResult } from '../utils/speakingRater';
+import type { TPOQuestion } from './ContentManagement';
 
 interface ScoreData {
   correct?: number;
@@ -31,6 +36,8 @@ interface EndSpeakingScreenProps {
   speakingScore?: ScoreData | null;
   onAllSectionsComplete?: (scores: SectionScores) => void;
   onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;
+  /** CMS Speaking 문항 배열 — AI 채점용 (scriptText 원본 + Interview 프롬프트) */
+  speakingQuestions?: TPOQuestion[];
 }
 
 export interface SectionScores {
@@ -47,33 +54,54 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
   setActiveTab,
   speakingScore,
   onAllSectionsComplete,
-  onAiScore
+  onAiScore,
+  speakingQuestions
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
+  const [showAiTutor, setShowAiTutor] = useState(false);
+  const [gradeWarning, setGradeWarning] = useState<string | null>(null);
 
   const score = speakingScore || null;
   const rawDisplayScore = aiResult ? aiResult.score : (score?.aiScore || score?.correct || 0);
   const bandScore = convertToBand(rawDisplayScore);
   const displayFeedback = aiResult?.feedback || score?.feedback;
 
+  // ── 실제 AI 채점 (SpeakingReviewAiTutor 모달 사용) ──
+  // 트리거: Speaking은 전체 문항 100% 완료 시에만 채점 허용.
   const handleAiGrade = async () => {
-    setIsAiGrading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const aiRawScore = Math.floor(Math.random() * 12) + 15;
-    const aiBand = convertToBand(aiRawScore);
-    const aiFeedback = `🎤 2026 New TOEFL Speaking Feedback (Band Score)\n\n` +
-        `[Fluency & Clarity] ${Math.random() > 0.5 ? '✓' : '△'} Smooth delivery with natural pacing\n` +
-        `[Pronunciation] ${Math.random() > 0.5 ? '✓' : '△'} Clear articulation of key sounds\n` +
-        `[Content] ${Math.random() > 0.5 ? '✓' : '△'} Direct response with specific examples\n\n` +
-        `💡 Pro Tips:\n` +
-        `• Interview (45s): One deep story > two shallow reasons (WHO/WHEN/WHERE)\n` +
-        `• Listen & Repeat: Shadowing for ear-mouth sync, clarity is key\n` +
-        `• Timer drill: Complete answer by 40s, use last 5s for wrap-up`;
+    setGradeWarning(null);
 
-    setAiResult({ score: aiRawScore, feedback: aiFeedback });
-    setIsAiGrading(false);
-    onAiScore?.(aiRawScore, aiFeedback, aiBand);
+    // sessionStorage 에서 녹음 로드
+    let recordings: Record<string, string> = {};
+    try {
+      recordings = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+    } catch {}
+
+    // 트리거 검사 — 100% 완료
+    const totalQuestions = (speakingQuestions || []).length;
+    const answeredCount = countAnswered(recordings, speakingQuestions || []);
+    const trigger = checkGradingTrigger('Speaking', {
+      totalQuestions,
+      answeredQuestions: answeredCount,
+    });
+
+    if (!trigger.canGrade) {
+      setGradeWarning(trigger.message);
+      return;
+    }
+
+    // 모달 열기 — 실제 채점은 SpeakingReviewAiTutor 내부에서 실행
+    setShowAiTutor(true);
+  };
+
+  // SpeakingReviewAiTutor 채점 완료 콜백
+  const handleSpeakingScore = (result: SpeakingRaterResult) => {
+    setAiResult({
+      score: result.rawScore,
+      feedback: result.summaryFeedback,
+    });
+    onAiScore?.(result.rawScore, result.summaryFeedback, result.overallBand);
   };
 
   return (
@@ -178,12 +206,12 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
                   </svg>
                 </div>
                 <p className="text-gray-500 font-medium mb-5">Get AI-powered speaking evaluation</p>
-                <button 
+                <button
                   onClick={handleAiGrade}
                   disabled={isAiGrading}
                   className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-white transition-all ${
-                    isAiGrading 
-                      ? 'bg-[#a8c8c9] cursor-not-allowed' 
+                    isAiGrading
+                      ? 'bg-[#a8c8c9] cursor-not-allowed'
                       : 'bg-gradient-to-r from-[#1e6b73] to-[#2d7a7c] hover:shadow-lg hover:scale-[1.02] active:scale-95'
                   }`}
                 >
@@ -204,6 +232,12 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
                     </>
                   )}
                 </button>
+                {/* 채점 트리거 거부 안내 */}
+                {gradeWarning && (
+                  <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                    <p className="text-xs text-amber-700 leading-relaxed">⚠️ {gradeWarning}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -245,7 +279,7 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
         </div>
       </div>
       
-      <MobileQuestionNav 
+      <MobileQuestionNav
         onBack={() => setShowEndSpeaking(false)}
         onHome={() => {
           setShowEndSpeaking(false);
@@ -256,6 +290,20 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
           setActiveTab('History');
         }}
       />
+
+      {/* Speaking AI 채점 모달 — SpeakingReviewAiTutor */}
+      {showAiTutor && speakingQuestions && speakingQuestions.length > 0 && (() => {
+        let recordings: Record<string, string> = {};
+        try { recordings = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}'); } catch {}
+        return (
+          <SpeakingReviewAiTutor
+            questions={speakingQuestions}
+            recordings={recordings}
+            onScore={handleSpeakingScore}
+            onClose={() => setShowAiTutor(false)}
+          />
+        );
+      })()}
     </div>
   );
 };

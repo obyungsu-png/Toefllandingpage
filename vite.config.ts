@@ -159,6 +159,18 @@
             Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
           },
         },
+        // ── STT(Whisper) 프록시 — apiclaude.cc /v1/audio/transcriptions ──
+        // 보안: Claude 와 동일한 CLAUDE_API_KEY 재사용 (apiclaude.cc OpenAI 호환 엔드포인트).
+        // multipart/form-data 그대로 업스트림 전달 — body rewrite 없음.
+        // (프로덕션에서는 Vercel 서버리스 함수 api/stt/transcriptions.ts 가 처리)
+        '/api/stt': {
+          target: 'https://apiclaude.cc',
+          changeOrigin: true,
+          rewrite: (path) => '/v1/audio/transcriptions',
+          headers: {
+            Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
+          },
+        },
       },
     },
   });

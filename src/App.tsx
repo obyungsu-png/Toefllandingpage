@@ -7383,6 +7383,17 @@ function AppContent() {
           setActiveSpeakingScreen={setActiveSpeakingScreen}
           writingScore={sectionScores.writing}
           onAiScore={handleSaveAiScore}
+          writingQuestions={(() => {
+            // CMS Writing 뱅크에서 문항 배열 전달 (AI 채점용 — modelAnswer + 문제 컨텍스트)
+            const tpoNum = currentTest?.tpoNumber;
+            let bank: any[] = [];
+            if (testBankType === 'tpo') bank = tpoTests;
+            else if (testBankType === 'test') bank = testTests;
+            else if (testBankType === 'training') bank = trainingTests;
+            const t = bank.find((b: any) => b.testNumber === tpoNum);
+            const sec = t?.sections?.find((s: any) => s.sectionType === 'Writing');
+            return (sec?.questions || []) as any[];
+          })()}
           modelAnswers={(() => {
             // CMS Writing 뱅크에서 modelAnswer가 있는 문항만 추출
             const tpoNum = currentTest?.tpoNumber;
@@ -7415,6 +7426,17 @@ function AppContent() {
           setActiveTab={setActiveTab}
           speakingScore={{ ...sectionScores.speaking, total: 30 } as any}
           onAiScore={handleSaveAiScore}
+          speakingQuestions={(() => {
+            // CMS Speaking 뱅크에서 문항 배열 전달 (AI 채점용 — scriptText 원본 + Interview 프롬프트)
+            const tpoNum = currentTest?.tpoNumber;
+            let bank: any[] = [];
+            if (testBankType === 'tpo') bank = tpoTests;
+            else if (testBankType === 'test') bank = testTests;
+            else if (testBankType === 'training') bank = trainingTests;
+            const t = bank.find((b: any) => b.testNumber === tpoNum);
+            const sec = t?.sections?.find((s: any) => s.sectionType === 'Speaking');
+            return (sec?.questions || []) as any[];
+          })()}
           onAllSectionsComplete={(scores) => {
             setSectionScores(prev => ({ ...prev, ...scores }));
             setShowFinalResult(true);

@@ -70,6 +70,15 @@ export function WritingAcademicDiscussionQ2({
     setWordCount(response.trim() === '' ? 0 : words.length);
   }, [response]);
 
+  // ── Writing 응답 sessionStorage 저장 — EndWritingScreen AI 채점용 ──
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('writingResponses') || '{}');
+      stored['2'] = { questionNumber: 2, questionType: 'Academic Discussion', response };
+      sessionStorage.setItem('writingResponses', JSON.stringify(stored));
+    } catch {}
+  }, [response]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();

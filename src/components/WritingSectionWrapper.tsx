@@ -353,6 +353,12 @@ export function WritingSectionWrapper({
     }
   }, []);
 
+  // 새 세션 시작 시 이전 Writing 응답 초기화 (EndWritingScreen AI 채점 데이터)
+  useEffect(() => {
+    sessionStorage.removeItem('writingResponses');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-save when screen changes
   useEffect(() => {
     if (screen !== 'end') {

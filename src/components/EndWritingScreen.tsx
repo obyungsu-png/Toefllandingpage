@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
+import { gradeWritingSession, type WritingRaterResult } from '../utils/writingRater';
+import { checkGradingTrigger } from '../utils/gradingTrigger';
+import type { TPOQuestion } from './ContentManagement';
 
 interface ScoreData {
   correct?: number;
@@ -40,6 +43,8 @@ interface EndWritingScreenProps {
   onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;
   /** CMS에 입력된 모범답안 목록 (있을 경우 학생이 자신의 답안과 비교 가능) */
   modelAnswers?: WritingModelAnswerItem[];
+  /** CMS Writing 문항 배열 — AI 채점용 (문제 컨텍스트 + modelAnswer) */
+  writingQuestions?: TPOQuestion[];
 }
 
 const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
@@ -50,11 +55,13 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   setActiveSpeakingScreen,
   writingScore,
   onAiScore,
-  modelAnswers
+  modelAnswers,
+  writingQuestions
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
   const [showModelAnswers, setShowModelAnswers] = useState(false);
+  const [gradeWarning, setGradeWarning] = useState<string | null>(null);
 
   const validModelAnswers = (modelAnswers || []).filter(m => m.modelAnswer && m.modelAnswer.trim());
 
@@ -63,23 +70,64 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   const bandScore = convertToBand(rawDisplayScore);
   const displayFeedback = aiResult?.feedback || score?.feedback;
 
+  // ── 실제 AI 채점 (writingRater 사용) — 가짜 Math.random 제거 ──
+  // 트리거: Writing은 전체 문항 100% 완료 시에만 채점 허용.
   const handleAiGrade = async () => {
+    setGradeWarning(null);
     setIsAiGrading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const aiRawScore = Math.floor(Math.random() * 12) + 15;
-    const aiBand = convertToBand(aiRawScore);
-    const aiFeedback = `📝 2026 New TOEFL Writing Feedback (Band Score)\n\n` +
-        `[Organization & Structure] ${Math.random() > 0.5 ? '✓' : '△'} Clear paragraph structure with logical flow\n` +
-        `[Content & Development] ${Math.random() > 0.5 ? '✓' : '△'} Addresses all required points from the prompt\n` +
-        `[Language Use] ${Math.random() > 0.5 ? '✓' : '△'} Varied vocabulary and sentence structure\n\n` +
-        `💡 Pro Tips:\n` +
-        `• Email Writing: Cover all 3 required elements (purpose/Point1/Point2)\n` +
-        `• Discussion: Paraphrase other's opinion, then develop your own with examples\n` +
-        `• Sentence Building: Check SVO order and subject-verb agreement`;
 
-    setAiResult({ score: aiRawScore, feedback: aiFeedback });
-    setIsAiGrading(false);
-    onAiScore?.(aiRawScore, aiFeedback, aiBand);
+    try {
+      // 1) sessionStorage 에서 학생 응답 로드
+      let responses: Record<string, string> = {};
+      try {
+        const stored = JSON.parse(sessionStorage.getItem('writingResponses') || '{}');
+        Object.keys(stored).forEach(k => {
+          responses[k] = stored[k]?.response || '';
+        });
+      } catch {}
+
+      // 2) 채점 대상 문항 (Write an Email / Academic Discussion)
+      const gradeableQuestions = (writingQuestions || []).filter(
+        q => q.questionType === 'Write an Email' || q.questionType === 'Academic Discussion',
+      );
+
+      // 3) 트리거 검사 — 100% 완료 여부
+      const answeredCount = gradeableQuestions.filter(q => {
+        const num = typeof q.questionNumber === 'number'
+          ? q.questionNumber
+          : Number(String(q.questionNumber).replace(/\D/g, ''));
+        return responses[String(num)] && responses[String(num)].trim();
+      }).length;
+
+      const trigger = checkGradingTrigger('Writing', {
+        totalQuestions: gradeableQuestions.length,
+        answeredQuestions: answeredCount,
+      });
+
+      if (!trigger.canGrade) {
+        setGradeWarning(trigger.message);
+        setIsAiGrading(false);
+        return;
+      }
+
+      // 4) AI 채점 실행
+      const result: WritingRaterResult = await gradeWritingSession({
+        questions: gradeableQuestions,
+        responses,
+        provider: 'claude',
+      });
+
+      const aiRawScore = result.rawScore;
+      const aiBand = result.overallBand;
+      const aiFeedback = result.summaryFeedback;
+
+      setAiResult({ score: aiRawScore, feedback: aiFeedback });
+      setIsAiGrading(false);
+      onAiScore?.(aiRawScore, aiFeedback, aiBand);
+    } catch (err: any) {
+      setGradeWarning(`AI 채점 오류: ${err?.message || '알 수 없는 오류'}`);
+      setIsAiGrading(false);
+    }
   };
 
   return (
@@ -200,12 +248,12 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
                   </svg>
                 </div>
                 <p className="text-gray-500 font-medium mb-5">Get AI-powered writing evaluation</p>
-                <button 
+                <button
                   onClick={handleAiGrade}
                   disabled={isAiGrading}
                   className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-white transition-all ${
-                    isAiGrading 
-                      ? 'bg-[#a8c8c9] cursor-not-allowed' 
+                    isAiGrading
+                      ? 'bg-[#a8c8c9] cursor-not-allowed'
                       : 'bg-gradient-to-r from-[#1e6b73] to-[#2d7a7c] hover:shadow-lg hover:scale-[1.02] active:scale-95'
                   }`}
                 >
@@ -226,6 +274,12 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
                     </>
                   )}
                 </button>
+                {/* 채점 트리거 거부/오류 안내 */}
+                {gradeWarning && (
+                  <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                    <p className="text-xs text-amber-700 leading-relaxed">⚠️ {gradeWarning}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

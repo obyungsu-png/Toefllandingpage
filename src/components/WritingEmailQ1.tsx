@@ -57,6 +57,16 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
     setWordCount(words.length);
   }, [emailBody]);
 
+  // ── Writing 응답 sessionStorage 저장 — EndWritingScreen AI 채점용 ──
+  // { questionNumber, questionType, response } 형태로 저장.
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('writingResponses') || '{}');
+      stored['1'] = { questionNumber: 1, questionType: 'Write an Email', response: emailBody };
+      sessionStorage.setItem('writingResponses', JSON.stringify(stored));
+    } catch {}
+  }, [emailBody]);
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
