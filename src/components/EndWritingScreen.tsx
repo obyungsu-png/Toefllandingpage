@@ -9,6 +9,13 @@ interface ScoreData {
   score?: number;
 }
 
+/** End 화면에 표시할 모범답안 항목 (CMS modelAnswer에서 추출) */
+export interface WritingModelAnswerItem {
+  questionNumber: number;
+  questionType: string;
+  modelAnswer: string;
+}
+
 const convertToBand = (rawScore: number): number => {
   if (rawScore >= 29) return 6.0;
   if (rawScore >= 25) return 5.5;
@@ -31,6 +38,8 @@ interface EndWritingScreenProps {
   setActiveSpeakingScreen: React.Dispatch<React.SetStateAction<any>>;
   writingScore?: ScoreData | null;
   onAiScore?: (aiScore: number, feedback: string, bandScore: number) => void;
+  /** CMS에 입력된 모범답안 목록 (있을 경우 학생이 자신의 답안과 비교 가능) */
+  modelAnswers?: WritingModelAnswerItem[];
 }
 
 const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
@@ -40,10 +49,14 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   setActiveTab,
   setActiveSpeakingScreen,
   writingScore,
-  onAiScore
+  onAiScore,
+  modelAnswers
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
+  const [showModelAnswers, setShowModelAnswers] = useState(false);
+
+  const validModelAnswers = (modelAnswers || []).filter(m => m.modelAnswer && m.modelAnswer.trim());
 
   const score = writingScore || null;
   const rawDisplayScore = aiResult ? aiResult.score : (score?.aiScore || score?.correct || 0);
@@ -217,9 +230,50 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
             )}
           </div>
 
+          {/* ── 모범답안 보기 (CMS modelAnswer) ── */}
+          {validModelAnswers.length > 0 && (
+            <div className="bg-white rounded-2xl p-5 mb-6 shadow-md border border-emerald-100">
+              <button
+                onClick={() => setShowModelAnswers(s => !s)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <span className="flex items-center gap-2 text-sm font-bold text-emerald-700">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  모범답안 보기 (Model Answer)
+                  <span className="text-[11px] font-normal text-gray-400">· {validModelAnswers.length}문항</span>
+                </span>
+                <svg
+                  className={`w-4 h-4 text-gray-400 transition-transform ${showModelAnswers ? 'rotate-180' : ''}`}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                >
+                  <path d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              {showModelAnswers && (
+                <div className="mt-4 space-y-4">
+                  {validModelAnswers.map((m, idx) => (
+                    <div key={idx} className="bg-emerald-50/60 rounded-xl p-3 border border-emerald-100">
+                      <p className="text-[11px] font-bold text-emerald-700 mb-1.5">
+                        Q{m.questionNumber} · {m.questionType}
+                      </p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-mono">
+                        {m.modelAnswer}
+                      </p>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    💡 모범답안은 참고용입니다. 본인의 답안과 구조·어휘·전개를 비교해 보세요.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button 
+            <button
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#1e6b73] to-[#2d7a7c] text-white rounded-xl px-6 py-3.5 hover:shadow-lg transition-all font-['Inter',_sans-serif] font-semibold active:scale-95"
               onClick={() => {
                 setShowEndWriting(false);
@@ -231,7 +285,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
               </svg>
               Continue to Speaking
             </button>
-            <button 
+            <button
               className="flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-600 rounded-xl px-6 py-3.5 hover:bg-gray-50 hover:border-gray-300 transition-colors font-['Inter',_sans-serif] font-semibold"
               onClick={() => {
                 setShowEndWriting(false);

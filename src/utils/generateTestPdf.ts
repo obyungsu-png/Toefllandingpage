@@ -310,6 +310,16 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
   }
 
   if (mode === 'annotated') {
+    // Writing 자유응답(Write an Email / Academic Discussion) 모범답안 — 별도 강조 블록
+    if ((question as any).modelAnswer && String((question as any).modelAnswer).trim()) {
+      lines.push({ text: 'Model Answer:', bold: true });
+      String((question as any).modelAnswer)
+        .split(/\r?\n/)
+        .forEach(para => {
+          const t = para.trim();
+          if (t) lines.push({ text: t, indent: true });
+        });
+    }
     if (question.correctAnswer) lines.push({ text: `Sample Answer: ${stringifyAnswer(question.correctAnswer)}` });
     if (question.explanation)   lines.push({ text: `Notes: ${question.explanation}` });
     if (question.translationNote) lines.push({ text: `Translation: ${question.translationNote}` });

@@ -171,6 +171,9 @@ export interface TPOQuestion {
   emailBullets?: string[];     // 세 가지 지시 사항 (bullet list)
   emailSubject?: string;       // Subject 줄
   emailTo?: string;            // To 줄
+  /** Writing 자유응답(Write an Email / Academic Discussion) 모범답안.
+   *  CMS에서 입력 시 End 화면과 Annotated PDF에서 표시. AI 채점 시 참고용으로도 사용. */
+  modelAnswer?: string;
   questionGroupId?: string;
   translationNote?: string;
   scriptText?: string; // Listening dictation/transcript script (shown in Review Script tab)
@@ -1521,6 +1524,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     student2ImageFile: null as File | null,
     student2ImageUrl: '',
     student2Message: '',
+    // Writing 자유응답 모범답안 (Write an Email / Academic Discussion)
+    modelAnswer: '' as string,
   });
 
   // 업로드된 갤러리 이미지 (listening_images 테이블에서 로드)
@@ -1598,6 +1603,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       emailBullets: (formData as any).emailBullets?.filter((b: string) => b.trim()) || undefined,
       emailSubject: (formData as any).emailSubject || undefined,
       emailTo: (formData as any).emailTo || undefined,
+      // Writing 모범답안 (Write an Email / Academic Discussion) — End 화면·Annotated PDF 표시용
+      modelAnswer: ((formData as any).modelAnswer || '').trim() || undefined,
       translationNote: (formData as any).translationNote || undefined,
       scriptText: (formData as any).scriptText || undefined,
       dictationBlanks: (formData as any).dictationBlanks || undefined,
@@ -2920,6 +2927,26 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
           </div>
         )}
 
+        {/* ── Writing 모범답안 (Model Answer) — Write an Email / Academic Discussion ── */}
+        {section === 'Writing' && (formData.questionType === 'Write an Email' || formData.questionType === 'Academic Discussion') && (
+          <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 bg-emerald-50/40">
+            <p className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-1.5">
+              📝 모범답안 (Model Answer)
+              <span className="text-xs font-normal text-gray-500">— End 화면·Annotated PDF·AI 채점 참고용</span>
+            </p>
+            <textarea
+              rows={6}
+              value={(formData as any).modelAnswer || ''}
+              onChange={(e) => setFormData({ ...formData, modelAnswer: e.target.value } as any)}
+              placeholder="이 문제의 모범답안(샘플 에세이)을 입력하세요. 줄바꿈으로 문단 구분."
+              className="w-full px-3 py-2 border border-emerald-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent resize-none font-mono"
+            />
+            <p className="text-[11px] text-gray-400 mt-1.5">
+              💡 비워두면 표시되지 않습니다. 학생 응답과 직접 비교할 때 활용됩니다.
+            </p>
+          </div>
+        )}
+
         {/* Explanation */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
@@ -3275,6 +3302,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     student2Message: (question as any).student2Message || '',
     student2ImageUrl: (question as any).student2ImageUrl || '',
     student2ImageFile: null,
+    // Writing 자유응답 모범답안 (Write an Email / Academic Discussion)
+    modelAnswer: (question as any).modelAnswer || '',
   });
 
   // 업로드된 갤러리 이미지 (listening_images 테이블에서 로드 — Add 모드와 동일)
@@ -3351,6 +3380,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       emailBullets: (formData as any).emailBullets?.filter((b: string) => b.trim()) || undefined,
       emailSubject: (formData as any).emailSubject || undefined,
       emailTo: (formData as any).emailTo || undefined,
+      // Writing 모범답안 (Write an Email / Academic Discussion) — End 화면·Annotated PDF 표시용
+      modelAnswer: ((formData as any).modelAnswer || '').trim() || undefined,
       professorName: (formData as any).professorName || undefined,
       professorMessage: (formData as any).professorMessage || undefined,
       professorImageUrl: (formData as any).professorImageUrl || undefined,
@@ -4454,6 +4485,26 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
               placeholder="e.g., 45, 60, 300"
             />
+          </div>
+        )}
+
+        {/* ── Writing 모범답안 (Model Answer) — Write an Email / Academic Discussion ── */}
+        {section === 'Writing' && (formData.questionType === 'Write an Email' || formData.questionType === 'Academic Discussion') && (
+          <div className="border-2 border-dashed border-emerald-300 rounded-xl p-4 bg-emerald-50/40">
+            <p className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-1.5">
+              📝 모범답안 (Model Answer)
+              <span className="text-xs font-normal text-gray-500">— End 화면·Annotated PDF·AI 채점 참고용</span>
+            </p>
+            <textarea
+              rows={6}
+              value={(formData as any).modelAnswer || ''}
+              onChange={(e) => setFormData({ ...formData, modelAnswer: e.target.value } as any)}
+              placeholder="이 문제의 모범답안(샘플 에세이)을 입력하세요. 줄바꿈으로 문단 구분."
+              className="w-full px-3 py-2 border border-emerald-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-400 focus:border-transparent resize-none font-mono"
+            />
+            <p className="text-[11px] text-gray-400 mt-1.5">
+              💡 비워두면 표시되지 않습니다. 학생 응답과 직접 비교할 때 활용됩니다.
+            </p>
           </div>
         )}
 

@@ -61,6 +61,7 @@ const EndListeningScreen = lazy(() => importEndListening());
 const EndWritingScreen = lazy(() => importEndWriting());
 const EndSpeakingScreen = lazy(() => importEndSpeaking());
 import type { SectionScores } from './components/EndSpeakingScreen';
+import type { WritingModelAnswerItem } from './components/EndWritingScreen';
 const FinalResultScreen = lazy(() => importFinalResult());
 import ReadingIntroScreen from './components/ReadingIntroScreen';
 import Module1IntroScreen from './components/Module1IntroScreen';
@@ -7382,6 +7383,24 @@ function AppContent() {
           setActiveSpeakingScreen={setActiveSpeakingScreen}
           writingScore={sectionScores.writing}
           onAiScore={handleSaveAiScore}
+          modelAnswers={(() => {
+            // CMS Writing 뱅크에서 modelAnswer가 있는 문항만 추출
+            const tpoNum = currentTest?.tpoNumber;
+            let bank: any[] = [];
+            if (testBankType === 'tpo') bank = tpoTests;
+            else if (testBankType === 'test') bank = testTests;
+            else if (testBankType === 'training') bank = trainingTests;
+            const t = bank.find((b: any) => b.testNumber === tpoNum);
+            const sec = t?.sections?.find((s: any) => s.sectionType === 'Writing');
+            const qs: any[] = sec?.questions || [];
+            return qs
+              .filter(q => q && typeof q.modelAnswer === 'string' && q.modelAnswer.trim())
+              .map(q => ({
+                questionNumber: q.questionNumber ?? 0,
+                questionType: q.questionType ?? 'Writing',
+                modelAnswer: String(q.modelAnswer).trim(),
+              } satisfies WritingModelAnswerItem));
+          })()}
         />
         </Suspense>
       )}
