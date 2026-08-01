@@ -31,7 +31,8 @@ const AI_TUTOR_ACTIONS: { key: AiTutorAction; label: string }[] = [
 ];
 
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
+// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드 — GitHub 노출/도용 방지.
+const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
 const GLM_MODEL = 'glm-4-flash';
 
 /** AI 튜터 API 호출 — 선택 텍스트에 대해 액션별 응답 생성 */

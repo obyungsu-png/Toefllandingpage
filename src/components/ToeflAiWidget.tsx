@@ -6,13 +6,15 @@ import { Input } from './ui/input';
 
 // ───────────────────────────────────────────────────────────────────────────
 //  API 설정 — GLM + Claude 듀블 모델 지원
-//  - GLM: 직접 호출 (CORS 허용)
+//  - GLM: 직접 호출 (CORS 허용). API 키는 .env.local의 VITE_GLM_API_KEY에서 읽음 (보안)
 //  - Claude: 항상 Vercel 서버리스 프록시 경유 — 클라이언트에 API 키 노출 없음 (보안)
 //    - 웹: /api/claude/chat/completions (상대 경로)
 //    - Electron: 배포된 Vercel 절대 URL (VITE_CLAUDE_PROXY_URL 환경변수)
 // ───────────────────────────────────────────────────────────────────────────
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
+// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드.
+// 코드에 하드코딩하지 않음 — GitHub 노출/도용 방지.
+const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
 const GLM_MODEL = 'glm-4-flash';
 
 // Electron 여부 확인

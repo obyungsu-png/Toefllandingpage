@@ -25,8 +25,9 @@ import html2canvas from 'html2canvas';
 
 // ── API 설정 (ToeflAiWidget와 동일) ────────────────────────────────────────
 // 보안: Claude API 키는 클라이언트에 노출하지 않고 Vercel 서버리스 프록시에서만 관리.
+// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드 — GitHub 노출/도용 방지.
 const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
+const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
 const GLM_MODEL = 'glm-4-flash';
 
 const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
