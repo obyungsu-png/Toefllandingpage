@@ -79,6 +79,9 @@
     "vite": "6.3.5",
     "wait-on": "^8.0.1"
   },
+  "overrides": {
+    "sharp": "file:./stub-sharp"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

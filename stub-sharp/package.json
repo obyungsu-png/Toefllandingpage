@@ -1,0 +1,6 @@
+{
+  "name": "sharp",
+  "version": "0.32.0",
+  "description": "Stub sharp package — @xenova/transformers 오디오(Whisper) 전용. 이미지 비전 모델 사용 시 실제 sharp 설치 필요.",
+  "main": "index.js"
+}

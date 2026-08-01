@@ -73,6 +73,78 @@ function audioBlobToExt(blob: Blob): string {
   return 'webm';
 }
 
+// ── 브라우저 WAV 인코딩 헬퍼 ──────────────────────────────────────────────
+// 로컬 Whisper 서버(scripts/local-whisper-server.cjs)는 ffmpeg 없이 WAV만
+// 디코딩 가능. MediaRecorder 의 webm/mp4 출력을 브라우저에서 WAV(16kHz mono
+// 16-bit PCM — Whisper 표준 입력)로 변환하여 ffmpeg 의존성 제거.
+function writeStringToDataView(view: DataView, offset: number, str: string) {
+  for (let i = 0; i < str.length; i++) {
+    view.setUint8(offset + i, str.charCodeAt(i));
+  }
+}
+
+function encodeWav(samples: Float32Array, sampleRate: number): ArrayBuffer {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  // RIFF 헤더
+  writeStringToDataView(view, 0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeStringToDataView(view, 8, 'WAVE');
+  // fmt 청크
+  writeStringToDataView(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true); // 16-bit
+  // data 청크
+  writeStringToDataView(view, 36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    offset += 2;
+  }
+  return buffer;
+}
+
+/**
+ * 오디오 Blob → WAV Blob 변환 (브라우저 Web Audio API)
+ * decodeAudioData 로 디코딩 → OfflineAudioContext 로 16kHz mono 리샘플 → WAV 인코딩.
+ * 로컬 Whisper 서버 전용 (Deepgram 은 webm/mp4 를 그대로 전송).
+ */
+async function audioBlobToWavBlob(blob: Blob): Promise<Blob> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const AudioContextClass =
+    (window as any).AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContextClass) {
+    throw new Error('AudioContext 미지원 — WAV 변환 불가');
+  }
+  const audioContext = new AudioContextClass();
+  try {
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+    const targetSampleRate = 16000;
+    const numChannels = 1;
+    const offlineCtx = new OfflineAudioContext(
+      numChannels,
+      Math.ceil(audioBuffer.duration * targetSampleRate),
+      targetSampleRate,
+    );
+    const source = offlineCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(offlineCtx.destination);
+    source.start();
+    const rendered = await offlineCtx.startRendering();
+    const wavBuffer = encodeWav(rendered.getChannelData(0), targetSampleRate);
+    return new Blob([wavBuffer], { type: 'audio/wav' });
+  } finally {
+    audioContext.close();
+  }
+}
+
 /**
  * 1순위: Deepgram Nova-3 프록시로 오디오 전송
  * raw 오디오 바이너리 (multipart 아님) — Content-Type 으로 포맷 명시.
@@ -129,16 +201,27 @@ async function transcribeWithDeepgram(blob: Blob): Promise<SttResult> {
  * 2순위: 로컬 Whisper dev 서버 (Transformers.js / whisper.cpp)
  * 오프라인 + 무료. DEEPGRAM_API_KEY 미설정 또는 네트워크 실패 시 폴백.
  * 로컬 dev 서버(scripts/local-whisper-server.cjs)가 실행 중일 때만 동작.
+ *
+ * webm/mp4(MediaRecorder 출력)은 브라우저에서 WAV(16kHz mono)로 변환 후 전송
+ * — 로컬 서버가 ffmpeg 없이 WAV만 디코딩 가능하므로 ffmpeg 의존성 제거.
  */
 async function transcribeWithLocalWhisper(blob: Blob): Promise<SttResult> {
   const ext = audioBlobToExt(blob);
-  const arrayBuffer = await blob.arrayBuffer();
+  // webm/mp4 → WAV 변환 (WAV 는 그대로 전송)
+  let sendBlob = blob;
+  let sendContentType = 'audio/wav';
+  let sendFilename = 'recording.wav';
+  if (ext !== 'wav') {
+    sendBlob = await audioBlobToWavBlob(blob);
+  }
+
+  const arrayBuffer = await sendBlob.arrayBuffer();
 
   const response = await fetch(LOCAL_WHISPER_ENDPOINT, {
     method: 'POST',
     headers: {
-      'Content-Type': blob.type || 'audio/webm',
-      'X-Audio-Filename': `recording.${ext}`,
+      'Content-Type': sendContentType,
+      'X-Audio-Filename': sendFilename,
     },
     body: arrayBuffer,
   });
