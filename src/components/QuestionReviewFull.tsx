@@ -255,6 +255,8 @@ export function QuestionReviewFull({
   // Reading review — 하이라이트 저장/로드 (Supabase)
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const passageRef = useRef<HTMLDivElement | null>(null);
+  // Writing review — 드래그 하이라이트/밑줄/사전 적용 대상 컨테이너 (Reading passageRef와 별개)
+  const writingReviewRef = useRef<HTMLDivElement | null>(null);
 
   // Speaking-specific state
   // Real recordings — load from DB (10-day retention) with sessionStorage fallback
@@ -565,12 +567,13 @@ export function QuestionReviewFull({
     if (color) setActiveColor(color);
   };
 
-  // Reading review — 하이라이트/밑줄 모두 지우기
+  // Reading/Writing review — 하이라이트/밑줄 모두 지우기
   const handleClearAllHighlights = async () => {
     setActiveTool(null);
-    // DOM에서 <mark>, <u> 제거 (원래 텍스트로 복원)
-    if (passageRef.current) {
-      const marks = passageRef.current.querySelectorAll('mark, u');
+    // DOM에서 <mark>, <u> 제거 (원래 텍스트로 복원) — Reading passageRef + Writing writingReviewRef 모두 정리
+    [passageRef.current, writingReviewRef.current].forEach(container => {
+      if (!container) return;
+      const marks = container.querySelectorAll('mark, u');
       marks.forEach(m => {
         const parent = m.parentNode;
         if (parent) {
@@ -581,10 +584,13 @@ export function QuestionReviewFull({
           parent.normalize();
         }
       });
-    }
-    // Supabase에서 삭제
-    if (currentTestId && currentPassageKey) {
-      await deleteAllHighlights(currentTestId, currentPassageKey);
+    });
+    // Supabase에서 삭제 — Reading passage 키 + Writing 키 모두
+    if (currentTestId) {
+      await Promise.all([
+        currentPassageKey ? deleteAllHighlights(currentTestId, currentPassageKey) : Promise.resolve(),
+        deleteAllHighlights(currentTestId, 'writing-review'),
+      ]);
     }
     setHighlights([]);
   };
@@ -1732,7 +1738,11 @@ export function QuestionReviewFull({
 
         {/* ===== WRITING CONTENT ===== */}
         {activeSection === 'Writing' && (
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto">
+          <div
+            ref={writingReviewRef}
+            onMouseUp={(e) => handlePassageMouseUp(e, e.currentTarget.textContent || '', currentTestId, 'writing-review')}
+            className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6 flex flex-col md:flex-row gap-6 overflow-auto"
+          >
             {/* ---- Writing 1: Build a Sentence (Q1-Q10) ---- */}
             {activeModule === 1 && currentWritingBuildSentence && (
               <div className="w-full max-w-4xl mx-auto p-3 md:p-5">

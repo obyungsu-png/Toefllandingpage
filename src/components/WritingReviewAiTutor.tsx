@@ -14,12 +14,14 @@
  *
  * 점수 체계: 2026년 개편 토플 국제표준 6점 만점 (0.0 ~ 6.0)
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import {
   Sparkles, X, Loader2, FileText, Download,
   CheckCircle2, AlertCircle, BookOpen, Wand2, GraduationCap,
-  ArrowRight, Copy, RotateCcw, Gauge,
+  ArrowRight, Copy, RotateCcw, Gauge, Palette,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // ── API 설정 (ToeflAiWidget와 동일) ────────────────────────────────────────
 // 보안: Claude API 키는 클라이언트에 노출하지 않고 Vercel 서버리스 프록시에서만 관리.
@@ -144,8 +146,104 @@ function getDimensionsFor(type: WritingType): DimensionKey[] {
   return ['peerEngagement', 'elaboration', 'syntacticComplexity', 'grammarAccuracy'];
 }
 
+// ── 수신자 유형 추론 — emailTo/emailScenario/emailInstruction에서 수신자 관계 파악 ──
+// 문제마다 수신자가 다름 (교수, 고객상담사, 식당, 동료 등) — 격식 기준을 동적 적용하기 위함.
+// 2026 토플 Write an Email: 수신자 관계에 따라 요구되는 톤이 다름 (격식 vs 반격식)
+type RecipientType = 'professor' | 'business' | 'service' | 'peer' | 'formal';
+
+function inferRecipientType(questionData: any): RecipientType {
+  if (!questionData) return 'formal';
+  // emailTo, emailScenario, emailInstruction, questionText를 모두 검사하여 수신자 단서 추출
+  const haystack = [
+    questionData.emailTo,
+    questionData.emailScenario,
+    questionData.emailInstruction,
+    questionData.questionText,
+    questionData.passageText,
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  if (!haystack) return 'formal';
+
+  // 교수/박사 — 가장 격식 높은 톤
+  if (/\b(professor|prof\.|dr\.|doctor|instructor|lecturer|faculty|advisor|ta\b|teaching assistant)\b/.test(haystack)) {
+    return 'professor';
+  }
+  // 동료 학생/친구 — 반격식 톤
+  if (/\b(classmate|peer|friend|roommate|colleague|fellow student|student)\b/.test(haystack)) {
+    return 'peer';
+  }
+  // 서비스업 (식당, 카페, 호텔, 상점) — 비즈니스 격식
+  if (/\b(restaurant|cafe|coffee ?shop|hotel|store|shop|bakery|gym|fitness|library|bookstore)\b/.test(haystack)) {
+    return 'service';
+  }
+  // 비즈니스/관리자/부서/고객상담 — 비즈니스 격식
+  if (/\b(customer service|support|manager|department|office|administrator|staff|team|company|business|landlord|housing)\b/.test(haystack)) {
+    return 'business';
+  }
+  // 기본 — 격식 톤 (TOEFL은 일반적으로 격식이 안전)
+  return 'formal';
+}
+
+// 수신자 유형별 라벨 (UI/프롬프트에 표시)
+function recipientLabel(type: RecipientType): string {
+  switch (type) {
+    case 'professor': return '교수/교직원';
+    case 'peer': return '동료 학생';
+    case 'service': return '서비스업 (식당/카페/호텔 등)';
+    case 'business': return '고객상담사/관리자/부서';
+    case 'formal': return '격식 (일반 비즈니스)';
+  }
+}
+
+// 이메일 수신자 유형별 격식 기준 — registerAndTone 차원 채점 상세 기준을 동적 생성
+// 문제마다 수신자가 다르므로(교수/동료/고객상담사/식당 등) 격식 요건도 달라야 함
+function getEmailRegisterToneSection(recipient: RecipientType): string {
+  const label = recipientLabel(recipient);
+  const header = `① 사회언어학적 격식 (Register & Tone) — 최우선 차원
+이 문제의 수신자는 「${label}」이다. 수신자와의 관계에 맞는 올바른 톤앤매너를 구사했는가?`;
+
+  const profiles: Record<RecipientType, string> = {
+    professor: `- 수신자: ${label} (가장 격식 높은 톤 요구)
+  * 격식 인사: "Dear Professor [Name]", "Dear Dr. [Name]", "Dear Mr./Ms. [Name]"
+  * 완곡한 부탁 조동사: "I would highly appreciate it if...", "I was wondering if you could...", "Could you please..."
+  * 격식 맺음말: "Sincerely", "Respectfully yours", "Best regards"
+  * 금지 표현 감지 시 registerAndTone 점수를 3.0 이하로 제한: "Hey", "Hi", "Thanks", "I want", "Can you", "ASAP", "gotta"`,
+    peer: `- 수신자: ${label} (반격식 톤 요구 — 너무 딱딱하면 부자연스러움)
+  * 반격식 인사: "Hi [Name]", "Hey [Name]"
+  * 자연스러운 부탁: "Could you let me know...", "Can you...", "Would you mind..."
+  * 반격식 맺음말: "Thanks", "Best", "See you"
+  * 주의: "Dear Professor", "Sincerely", "Respectfully yours" 등은 동료에게 너무 딱딱함 → registerAndTone 점수에서 감점`,
+    service: `- 수신자: ${label} — 비즈니스 격식 톤 요구
+  * 격식 인사: "Dear Restaurant Manager", "Dear [Business] Team", "To Whom It May Concern"
+  * 정중한 요청: "I would like to inquire about...", "Could you please let me know...", "I would appreciate it if..."
+  * 격식 맺음말: "Best regards", "Sincerely", "Best"
+  * 금지 표현 감지 시 감점: "Hey", "Hi there", "Thanks", "I want", "Can you", "ASAP"`,
+    business: `- 수신자: ${label} — 비즈니스 격식 톤 요구
+  * 격식 인사: "Dear Customer Service Team", "Dear [Department] Team", "Dear Mr./Ms. [Name]"
+  * 완곡한 부탁: "I would appreciate it if you could...", "I was wondering if you could...", "Could you please..."
+  * 격식 맺음말: "Sincerely", "Best regards", "Respectfully yours"
+  * 금지 표현 감지 시 registerAndTone 점수를 3.0 이하로 제한: "Hey", "Hi", "Thanks", "I want", "Can you", "ASAP"`,
+    formal: `- 수신자: ${label} — 격식 톤 요구 (일반 비즈니스/관리자)
+  * 격식 인사: "Dear [Name]", "Dear Mr./Ms. [Name]", "Dear Sir or Madam"
+  * 완곡한 부탁: "I would appreciate it if you could...", "I was wondering if you could..."
+  * 격식 맺음말: "Sincerely", "Best regards", "Respectfully yours"
+  * 금지 표현 감지 시 registerAndTone 점수를 3.0 이하로 제한: "Hey", "Hi", "Thanks", "I want", "Can you", "ASAP"`,
+  };
+
+  const footer = `- 점수 보정 규칙 (중요 — registerAndTone이 다른 차원보다 후하게 채점되지 않도록):
+  * 격식이 '적절한 것'은 기본 요건일 뿐 만점 사유가 아니다. 톤이 대체로 적절할 뿐 특별히 세련되지 않으면 4.0 전후로 부여
+  * 5.0 이상은 인사/부탁/맺음말 전반이 수신자(${label}) 관계에 완벽히 최적화되고 완곡 표현(would appreciate, I was wondering if)을 정확히 구사한 경우에만 부여
+  * 본문 어디든 톤이 흔들리는 표현(갑작스러운 반말, 지나친 딱딱함, 어색한 경어)이 1건이라도 있으면 0.5점씩 감점
+  * 다른 차원(taskCompletion, grammarAccuracy 등)의 평균보다 registerAndTone이 1.0점 이상 높게 나오면 재검토하여 근거 없는 고득점이면 하향 조정`;
+
+  return `${header}
+${profiles[recipient]}
+${footer}`;
+}
+
 // ── 채점 프롬프트 빌더 (2026 토플 공식 채점 기준 상세 반영) ────────────────────
-function buildRubricPrompt(writingType: WritingType): string {
+// questionData를 받아 수신자 유형을 추론하고, 격식 기준을 동적으로 적용
+function buildRubricPrompt(writingType: WritingType, questionData?: any): string {
   const dims = getDimensionsFor(writingType);
   const wordRule = WORD_COUNT_RULE[writingType];
   const wordRange = wordRule.max ? `${wordRule.min}~${wordRule.max}단어` : `${wordRule.min}단어 이상`;
@@ -163,25 +261,13 @@ ${wordRule.desc}
 ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
 
   if (writingType === 'email') {
+    // 문제별 수신자(교수/동료/고객상담사/식당 등)를 추론하여 격식 기준을 동적으로 적용
+    const recipient = inferRecipientType(questionData);
     return `${base}
 
 [Email 채점 상세 기준 — 2026 토플 공식]
 
-① 사회언어학적 격식 (Register & Tone) — 최우선 차원
-수신자와의 '관계'에 맞는 올바른 톤앤매너를 구사했는가?
-- 수신자가 교수(Professor)나 대학 행정 직원(Administrator)인 경우:
-  * 격식 있는 인사: "Dear Professor [Name]", "Dear Dr. [Name]"
-  * 완곡한 부탁 조동사: "I would highly appreciate it if...", "I was wondering if you could..."
-  * 격식 있는 맺음말: "Sincerely", "Best regards", "Respectfully yours"
-  * 금지 표현 감지 시 registerAndTone 점수를 3.0 이하로 제한: "Hey", "Thanks", "I want", "Can you", "ASAP"
-- 수신자가 동료 학생(Classmate/Peer)인 경우:
-  * 반격식 톤: "Hi [Name]", "Can you let me know...", "Thanks", "Best"
-  * 너무 딱딱하면(Dear Professor 등) 오히려 부자연스러움 → 적절한 캐주얼 톤 필요
-- 점수 보정 규칙 (중요 — registerAndTone이 다른 차원보다 후하게 채점되지 않도록):
-  * 격식이 '적절한 것'은 기본 요건일 뿐 만점 사유가 아니다. 톤이 대체로 적절필 뿐 특별히 세련되지 않으면 4.0 전후로 부여
-  * 5.0 이상은 인사/부탁/맺음말 전반이 수신자 관계에 완벽히 최적화되고 완곡 표현(would appreciate, I was wondering if)을 정확히 구사한 경우에만 부여
-  * 본문 어디든 톤이 흔들리는 표현(갑작스러운 반말, 지나친 딱딱함, 어색한 경어)이 1건이라도 있으면 0.5점씩 감점
-  * 다른 차원(taskCompletion, grammarAccuracy 등)의 평균보다 registerAndTone이 1.0점 이상 높게 나오면 재검토하여 근거 없는 고득점이면 하향 조정
+${getEmailRegisterToneSection(recipient)}
 
 ② 과제 완수도 (Task Completion) — 핵심 차원
 문제에서 요구한 구체적 조건(보통 3가지 불렛포인트)을 빠짐없이 충족했는가?
@@ -436,6 +522,11 @@ export function WritingReviewAiTutor({
   const [mobileView, setMobileView] = useState<'original' | 'rewrite' | 'score'>('original');
   const [showModelEssay, setShowModelEssay] = useState(false);
   const [exportText, setExportText] = useState<string | null>(null);
+  // PDF 다운로드용 스타일 — 글 두께(두께) / 글자 색(색깔) 사용자 선택
+  const [pdfFontWeight, setPdfFontWeight] = useState<number>(400);
+  const [pdfTextColor, setPdfTextColor] = useState<string>('#1f2937');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const pdfExportRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [liveScore, setLiveScore] = useState<number | null>(null);
 
@@ -471,7 +562,9 @@ export function WritingReviewAiTutor({
 
     try {
       const taskContext = buildTaskContext(writingType, questionData);
-      const rubricPrompt = buildRubricPrompt(writingType);
+      // 문제별 수신자(교수/동료/고객상담사/식당 등)를 추론하여 격식 기준을 동적으로 적용
+      const recipientType = inferRecipientType(questionData);
+      const rubricPrompt = buildRubricPrompt(writingType, questionData);
       const dims = getDimensionsFor(writingType);
 
       // 1차 정량 분석 (로컬 휴리스틱 — 즉시, 2026 토플 공식 기준)
@@ -516,8 +609,9 @@ ${taskContext}
 [1차 정량 분석 결과 — 참고용]
 - 단어 수: ${wordCount} (기준: ${rule.max ? `${rule.min}~${rule.max}` : `${rule.min}+`}단어) → ${wordCountStatus}
 ${writingType === 'email'
-  ? `- Casual 표현: ${casualHits}회 (hey, thanks, gonna, wanna, ok, asap... — Professor 수신 시 감점 대상)
-- Formal 표현: ${formalHits}회 (dear, sincerely, would appreciate, i was wondering if...)`
+  ? `- 수신자 유형(추론): ${recipientLabel(recipientType)}
+- Casual 표현: ${casualHits}회 (hey, thanks, gonna, wanna, ok, asap...${recipientType === 'peer' ? ' — 동료 학생 수신 시 반격식 톤으로 허용 가능' : ' — 격식 수신 시 감점 대상'})
+- Formal 표현: ${formalHits}회 (dear, sincerely, would appreciate, i was wondering if...${recipientType === 'peer' ? ' — 동료에게 과도하게 딱딱할 수 있음' : ''})`
   : `- 동료 인용 패턴: ${peerQuoteHits}회 (While I agree with... / I disagree with [Name] that...)
 - 단독 에세이 패턴: ${aloneEssayHits}회 (I think / In my opinion... — 동료 언급 없으면 감점)`}
 - 연결어: ${transitionHits}회 (however, furthermore, consequently, therefore...)
@@ -683,6 +777,71 @@ ${analysis.upgradedText}
 ─────────────────────────────────────────
 `;
     setExportText(text);
+  };
+
+  // ── 첨삭 리포트 PDF 내보내기 ──
+  // html2canvas로 스타일 적용된 HTML을 캡처 → jsPDF로 페이지 분할하여 PDF 생성
+  // 브라우저 폰트로 렌더링하므로 한국어 + 글 두께(font-weight) + 색깔(color) 모두 자연스럽게 표현
+  const handleExportPdf = async () => {
+    if (!analysis || !pdfExportRef.current) return;
+    setIsExportingPdf(true);
+    try {
+      const node = pdfExportRef.current as HTMLElement;
+      // 오프스크린에 렌더링된 노드를 캡처 — 한국어 텍스트와 스타일이 그대로 반영됨
+      const canvas = await html2canvas(node, {
+        scale: 2,                // 고해상도 (레티나)
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const usableW = pageW - margin * 2;
+      // 캔버스 비율 유지하며 너비 맞춤
+      const imgH = (canvas.height * usableW) / canvas.width;
+
+      if (imgH <= pageH - margin * 2) {
+        // 1페이지면 그대로 삽입
+        pdf.addImage(imgData, 'PNG', margin, margin, usableW, imgH);
+      } else {
+        // 여러 페이지 분할 — 캔버스를 페이지 높이 단위로 잘라 삽입
+        const pageContentH = pageH - margin * 2;
+        const pxPerMm = canvas.width / usableW;
+        const pageContentPx = pageContentH * pxPerMm;
+        let renderedPx = 0;
+        while (renderedPx < canvas.height) {
+          const sliceH = Math.min(pageContentPx, canvas.height - renderedPx);
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = Math.ceil(sliceH);
+          const ctx = pageCanvas.getContext('2d');
+          if (!ctx) break;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(
+            canvas,
+            0, renderedPx, canvas.width, sliceH,
+            0, 0, pageCanvas.width, pageCanvas.height,
+          );
+          const sliceData = pageCanvas.toDataURL('image/png');
+          pdf.addImage(sliceData, 'PNG', margin, margin, usableW, (sliceH / pxPerMm));
+          renderedPx += sliceH;
+          if (renderedPx < canvas.height) pdf.addPage();
+        }
+      }
+
+      const date = new Date().toISOString().slice(0, 10);
+      const taskName = writingType === 'email' ? 'Email' : 'Discussion';
+      pdf.save(`TOEFL-Writing-Review-${taskName}-${date}.pdf`);
+    } catch (err: any) {
+      setError('PDF 생성 중 오류가 발생했어요: ' + (err?.message || ''));
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   // ── Tone Meter (이메일 전용 실시간 격식 게이지) ──
@@ -1134,9 +1293,9 @@ ${analysis.upgradedText}
       </div>
 
       {/* ── 첨삭 리포트 내보내기 모달 ── */}
-      {exportText && (
+      {exportText && analysis && (
         <div className="fixed inset-0 z-[90] bg-black/50 flex items-center justify-center p-4" onClick={() => setExportText(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
                 <FileText className="w-4 h-4" /> 첨삭 리포트
@@ -1151,15 +1310,203 @@ ${analysis.upgradedText}
                 >
                   <Copy className="w-3 h-3" /> 복사
                 </button>
+                <button
+                  onClick={handleExportPdf}
+                  disabled={isExportingPdf}
+                  className="flex items-center gap-1 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors disabled:opacity-60"
+                >
+                  {isExportingPdf ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                  PDF 다운로드
+                </button>
                 <button onClick={() => setExportText(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
+
+            {/* ── PDF 스타일 컨트롤 (글 두께 / 글자 색) ── */}
+            <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-2 bg-gray-50 dark:bg-gray-900/40">
+              <div className="flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-gray-500" />
+                <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">글 두께</span>
+                {([['얇게', 300], ['보통', 400], ['굵게', 700]] as const).map(([lbl, w]) => (
+                  <button
+                    key={w}
+                    onClick={() => setPdfFontWeight(w)}
+                    className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                      pdfFontWeight === w
+                        ? 'bg-[#1e6b73] text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    }`}
+                    style={{ fontWeight: w }}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">글자 색</span>
+                {['#1f2937', '#1e6b73', '#1e3a8a', '#7c2d12', '#be185d', '#4b5563'].map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setPdfTextColor(c)}
+                    className={`w-5 h-5 rounded-full border-2 transition-all ${pdfTextColor === c ? 'border-gray-400 scale-110' : 'border-transparent'}`}
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  />
+                ))}
+              </div>
+            </div>
+
             <pre className="flex-1 overflow-auto p-4 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono">{exportText}</pre>
           </div>
         </div>
       )}
+
+      {/* ── PDF 캡처용 숨김 영역 (오프스크린) ──
+          html2canvas가 이 노드를 캡처 → jsPDF로 변환. 브라우저 폰트로 한국어 렌더링.
+          사용자가 선택한 글 두께/색깔이 본문 텍스트에 그대로 반영됨. */}
+      {exportText && analysis && (
+        <div
+          ref={pdfExportRef}
+          style={{ position: 'absolute', left: '-99999px', top: 0, width: 800, background: '#ffffff' }}
+          aria-hidden
+        >
+          <PdfReportContent
+            analysis={analysis}
+            writingType={writingType}
+            rewrittenText={rewrittenText}
+            upgradeSuggestions={upgradeSuggestions}
+            recipientType={inferRecipientType(questionData)}
+            fontWeight={pdfFontWeight}
+            textColor={pdfTextColor}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── PDF 본문 콘텐츠 컴포넌트 (html2canvas 캡처 대상) ──────────────────────────
+// 인라인 스타일로 렌더링 — Tailwind 클래스가 html2canvas에서 누락되는 것을 방지
+function PdfReportContent({
+  analysis,
+  writingType,
+  rewrittenText,
+  upgradeSuggestions,
+  recipientType,
+  fontWeight,
+  textColor,
+}: {
+  analysis: AnalysisResult;
+  writingType: WritingType;
+  rewrittenText: string;
+  upgradeSuggestions: UpgradeSuggestion[];
+  recipientType: RecipientType;
+  fontWeight: number;
+  textColor: string;
+}) {
+  const dims = getDimensionsFor(writingType);
+  const taskName = writingType === 'email' ? 'Write an Email' : 'Academic Discussion';
+  const date = new Date().toLocaleDateString('ko-KR');
+  const accent = '#1e6b73';
+
+  const sectionTitle: CSSProperties = {
+    fontSize: 16, fontWeight: 700, color: accent,
+    borderBottom: `2px solid ${accent}`, paddingBottom: 4, marginBottom: 8, marginTop: 18,
+  };
+  const body: CSSProperties = {
+    fontWeight, color: textColor, fontSize: 12, lineHeight: 1.7, whiteSpace: 'pre-wrap',
+  };
+
+  return (
+    <div style={{ padding: 32, fontFamily: "'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif", background: '#fff' }}>
+      {/* 헤더 */}
+      <div style={{ textAlign: 'center', borderBottom: `3px solid ${accent}`, paddingBottom: 12, marginBottom: 16 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: accent }}>TOEFL Writing Review Report</div>
+        <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{taskName} · 발행일 {date}</div>
+        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>(2026년 개편 토플 국제표준 6점 만점)</div>
+      </div>
+
+      {/* 종합 점수 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>종합 점수</span>
+        <span style={{ fontSize: 28, fontWeight: 700, color: accent }}>{analysis.rubric.overall}</span>
+        <span style={{ fontSize: 16, color: '#9ca3af' }}>/ 6.0</span>
+      </div>
+      <div style={body}>{analysis.rubric.overallFeedback}</div>
+
+      {/* 차원별 점수 */}
+      <div style={sectionTitle}>차원별 점수 (Explainable AI)</div>
+      {dims.map(d => {
+        const score = analysis.rubric.dimensions[d];
+        const meta = DIMENSION_META[d];
+        const s = score?.score;
+        return (
+          <div key={d} style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#374151' }}>{meta.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: s != null && s >= 4.5 ? '#059669' : s != null && s < 3 ? '#dc2626' : accent }}>
+                {s != null ? `${s} / 6` : '-'}
+              </span>
+            </div>
+            <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 2 }}>{meta.desc} · [{meta.priority}]</div>
+            <div style={body}>{score?.feedback || '(피드백 없음)'}</div>
+          </div>
+        );
+      })}
+
+      {/* 수신자 정보 (Email만) */}
+      {writingType === 'email' && (
+        <>
+          <div style={sectionTitle}>수신자 정보 (이 문제 기준)</div>
+          <div style={body}>추론된 수신자: {recipientLabel(recipientType)} — 이 관계에 맞는 격식(register)으로 평가됨.</div>
+        </>
+      )}
+
+      {/* 문법 교정 */}
+      <div style={sectionTitle}>문법 교정 ({analysis.grammarCorrections.length}건)</div>
+      {analysis.grammarCorrections.length === 0 ? (
+        <div style={body}>감지된 문법 오류 없음</div>
+      ) : (
+        analysis.grammarCorrections.map((c, i) => (
+          <div key={i} style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: '#dc2626' }}>{i + 1}. 원본: {c.original}</div>
+            <div style={{ fontSize: 12, color: '#059669' }}>　 교정: {c.corrected}</div>
+            <div style={body}>　 규칙: {c.rule}</div>
+          </div>
+        ))
+      )}
+
+      {/* 문장 업그레이드 */}
+      {upgradeSuggestions.length > 0 && (
+        <>
+          <div style={sectionTitle}>AI 문장 업그레이드 제안 ({upgradeSuggestions.length}건)</div>
+          {upgradeSuggestions.map((u, i) => (
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: '#9ca3af' }}>{i + 1}. 원본: {u.original}</div>
+              <div style={{ fontSize: 12, color: accent }}>　 업그레이드: {u.upgraded}</div>
+              <div style={body}>　 이유: {u.reason}</div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* 모범 에세이 */}
+      {analysis.modelEssay.content && (
+        <>
+          <div style={sectionTitle}>AI 모범 에세이 (6점 만점 기준)</div>
+          <div style={{ ...body, borderLeft: `3px solid ${accent}`, paddingLeft: 10 }}>{analysis.modelEssay.content}</div>
+        </>
+      )}
+
+      {/* 학생 원본 */}
+      <div style={sectionTitle}>학생 원본</div>
+      <div style={{ ...body, borderLeft: '3px solid #d1d5db', paddingLeft: 10 }}>{rewrittenText}</div>
+
+      {/* 업그레이드 버전 */}
+      <div style={sectionTitle}>업그레이드 버전</div>
+      <div style={{ ...body, borderLeft: `3px solid ${accent}`, paddingLeft: 10 }}>{analysis.upgradedText}</div>
     </div>
   );
 }
