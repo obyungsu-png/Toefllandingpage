@@ -247,7 +247,10 @@ export function ReadingReviewPassage({
   }, []);
 
   // 드래그 종료(mouseup/touchend) 시에만 팝오버 표시 — 2글자 미만은 무시
+  // Tools 버튼이 눌러져 있을 때만 팝오버 표시
   const handleSelectionEnd = () => {
+    if (!toolsOpen) return; // Tools가 활성화되지 않으면 선택 팝오버 표시 안 함
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       closeSelectionPopover();

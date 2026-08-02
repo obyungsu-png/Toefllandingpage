@@ -98,7 +98,7 @@ async function translateWithGoogle(text: string, sourceLang: string, targetLang:
 async function translateWithMyMemory(text: string, sourceLang: string, targetLang: string): Promise<string | null> {
   try {
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
-    const response = await fetch(url, { headers: { 'User-Agent': 'OBS' } });
+    const response = await fetch(url);
     if (!response.ok) return null;
 
     const data = await response.json();

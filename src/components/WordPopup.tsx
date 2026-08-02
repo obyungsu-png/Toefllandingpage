@@ -35,8 +35,15 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
       if (language === 'en' && !isPhrase) {
         const defs = await getWordDefinitions(word);
         if (cancelled) return;
-        if (defs.length === 0) setError(true);
-        else setDefinitions(defs);
+        if (defs.length === 0) {
+          // 영어사전에 없는 단어 → Google 번역으로 폴백 (한글 뜻이라도 제공)
+          const trans = await translateWord(word, context);
+          if (cancelled) return;
+          if (!trans) setError(true);
+          else setTranslation(trans);
+        } else {
+          setDefinitions(defs);
+        }
       } else {
         const trans = await translateWord(word, context);
         if (cancelled) return;
