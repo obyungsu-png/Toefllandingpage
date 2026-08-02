@@ -2268,7 +2268,7 @@ function AppContent() {
     bankType: 'tpo' | 'test',
     mode: 'start' | 'review' = 'start'
   ) => {
-    // 유료 콘텐츠 접근 체크 (TPO 1-3, Test 1-3은 무료)
+    // 유료 콘텐츠 접근 체크 (TPO 1-2, Test 1-2은 무료, 3과부터 로그인+수강권 필요)
     if (!isFreeContent(bankType, testNumber)) {
       // 1단계: 로그인 여부 — localStorage 기반 즉시 판단 (Supabase 호출 최소화)
       if (!isLoggedIn) {

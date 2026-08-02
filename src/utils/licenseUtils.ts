@@ -251,9 +251,9 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
 
 /**
  * 현재 사용자의 콘텐츠 접근 권한을 검증합니다.
- * TPO 1 / Test 1 은 항상 허용 (무료 체험).
+ * TPO 1-2 / Test 1-2 은 항상 허용 (무료 체험). 3과부터 로그인+수강권 필요.
  *
- * @param checkPaidOnly true 이면 무료 콘텐츠(TPO 1, Test 1)도 차단합니다.
+ * @param checkPaidOnly true 이면 무료 콘텐츠(TPO 1-2, Test 1-2)도 차단합니다.
  */
 export async function checkUserAccess(checkPaidOnly = false): Promise<AccessCheckResult> {
   try {
@@ -343,13 +343,14 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
 // ───────────────────── 무료 콘텐츠 여부 ─────────────────────
 
 /**
- * TPO 1, Test 1은 무료 체험 가능 (로그인 불필요).
+ * TPO 1-2, Test 1-2은 무료 체험 가능 (로그인 불필요).
+ * 3과부터 로그인 + 수강권(활성화 코드) 필요.
  */
 export function isFreeContent(testType: string, testNumber: number): boolean {
   const type = String(testType).toLowerCase();
   const num = Number(testNumber);
-  // TPO 1-3, Test 1-3은 무료
-  if ((type === 'tpo' || type === 'test') && num <= 3) return true;
+  // TPO 1-2, Test 1-2은 무료 (3과부터 유료)
+  if ((type === 'tpo' || type === 'test') && num <= 2) return true;
   // 그 외 유료
   return false;
 }
