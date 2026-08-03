@@ -7,7 +7,7 @@ import { loadRecordings } from '../utils/uploadRecording';
 import { ToeflAiWidget } from './ToeflAiWidget';
 import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
-import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
+import { getQuestionRangeLabel, buildGlobalSlots, getModuleSlots } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
@@ -134,6 +134,8 @@ interface QuestionReviewFullProps {
   themeColor?: string;
   initialSection?: 'Reading' | 'Listening' | 'Writing' | 'Speaking';
   initialIndex?: number;
+  /** Reading/Listening 모듈 (모달에서 넘어온 모듈 유지용) */
+  initialModule?: 1 | 2;
 }
 
 interface ReviewQuestion {
@@ -200,21 +202,17 @@ interface SpeakingQuestion {
   transcript?: string;
 }
 
-function includesQuestionType(value: string | undefined, candidates: string[]) {
-  const normalized = String(value || '').toLowerCase();
-  return candidates.some(candidate => normalized.includes(candidate.toLowerCase()));
-}
-
 export function QuestionReviewFull({
   result,
   tpoTests = [],
   onBack,
   themeColor = '#005f61',
   initialSection,
-  initialIndex = 0
+  initialIndex = 0,
+  initialModule = 1
 }: QuestionReviewFullProps) {
   const [activeSection, setActiveSection] = useState<SectionTab>(initialSection || (result.category as SectionTab) || 'Reading');
-  const [activeModule, setActiveModule] = useState(1);
+  const [activeModule, setActiveModule] = useState<number>(initialModule);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(initialIndex);
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<Set<string>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
@@ -284,8 +282,12 @@ export function QuestionReviewFull({
     return match ? parseInt(match[1]) : null;
   })();
   
-  // Find the matching test: by testNumber, or by exact testName match (covers Test/Training)
+  // Find the matching test: testType + testNumber 동시 매칭 우선 (Test 1 결과가 TPO 1을 잘못 집는 것 방지)
+  const resultType = String(result.type || result.bankType || '').toLowerCase();
   const currentTPOTest = tpoTests.find((test: any) =>
+    test.testNumber === tpoNumber &&
+    String(test.testType || '').toLowerCase() === resultType
+  ) || tpoTests.find((test: any) =>
     test.testNumber === tpoNumber ||
     test.testName === result.testName ||
     `${test.testType} ${test.testNumber}` === result.testName
@@ -313,13 +315,40 @@ export function QuestionReviewFull({
         catch {}
       });
   }, [activeSection, currentTPOTest]);
-  const currentSection = currentTPOTest?.sections?.find((s: any) => s.sectionType === activeSection);
+
+  // sectionType 정확 일치 우선 → 없으면 대소문자 무시 (CMS에 'reading'/'Reading' 혼재)
+  const currentSection = currentTPOTest?.sections?.find((s: any) => s.sectionType === activeSection)
+    || currentTPOTest?.sections?.find((s: any) => String(s.sectionType || '').toLowerCase() === activeSection.toLowerCase());
   const passageText = currentSection?.passages?.[0]?.content || null;
-  const readingCompleteWordsQuestions = (currentSection?.questions || []).filter((question: any) =>
-    includesQuestionType(question?.questionType, ['Complete Words', 'Fill in the Blanks', 'Cloze Test'])
-  );
+
+  // 섹션 전체 슬롯 (엔진 표시 순서 + CW 빈칸 확장) — 모듈별 문제 수/번호 매핑의 기준
+  const allSlots = buildGlobalSlots(currentSection?.questions || []);
+  const moduleSlots = (activeSection === 'Reading' || activeSection === 'Listening')
+    ? getModuleSlots(allSlots, activeModule === 2 ? 2 : 1)
+    : allSlots;
+  const moduleGlobalStart = moduleSlots.length > 0 ? moduleSlots[0].start : 1;
+
+  // Complete Words review — 전역 슬롯 기반 범위 판정
+  // TPO3/5/6 Reading M1처럼 CW 지문이 2개(로컬 1-10, 11-20)인 경우도 올바르게 처리:
+  // 현재 로컬 번호가 어느 CW 슬롯 범위에 속하는지로 지문/blank-N 매핑을 결정한다.
+  const cwSlots = moduleSlots.filter(s => s.isCompleteWords);
+  const mcqSlots = moduleSlots.filter(s => !s.isCompleteWords);
+  const cwRanges = cwSlots.map(s => ({
+    question: s.question,
+    localStart: s.start - moduleGlobalStart + 1,
+    localEnd: s.start - moduleGlobalStart + 1 + s.count - 1,
+    globalStart: s.start,
+  }));
+  const currentLocalNum = currentQuestionIndex + 1;
+  const activeCwRange = cwRanges.find(r => currentLocalNum >= r.localStart && currentLocalNum <= r.localEnd) || null;
+  // MC 문제의 슬롯 조회 (passageTitle 등 CMS 데이터 매핑용)
+  const mcqSlotForLocal = (localNum: number) => {
+    const global = moduleGlobalStart + localNum - 1;
+    return mcqSlots.find(s => global >= s.start && global < s.start + s.count) || null;
+  };
+
   const readingCompleteWordsQuestion = activeSection === 'Reading'
-    ? readingCompleteWordsQuestions[activeModule - 1] || readingCompleteWordsQuestions[0]
+    ? (activeCwRange?.question || cwRanges[0]?.question || null)
     : null;
   const readingCompleteWordsConfig: FillBlankReviewConfig | null = activeSection === 'Reading' && readingCompleteWordsQuestion
     ? {
@@ -334,44 +363,36 @@ export function QuestionReviewFull({
     if (activeSection === 'Writing' || activeSection === 'Speaking') return [];
     const qs: ReviewQuestion[] = [];
     const wrongQs = result.wrongAnswers;
-    const wrongIds = new Set(wrongQs.map(w => w.questionId));
 
-    // Try to get real questions from CMS data — filtered by active module
-    const isModule2Q = (q: any) => (q?.questionType || '').toLowerCase().includes('module 2');
-    const isFillBlanksQ = (q: any) => {
-      const t = (q?.questionType || '').toLowerCase();
-      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
-    };
-    const allRealQuestions = currentSection?.questions || [];
-    const realQuestions = activeSection === 'Reading' || activeSection === 'Listening'
-      ? (activeModule === 2
-          ? allRealQuestions.filter(isModule2Q)
-          // Module 1 Reading: exclude FillBlanks (Q1-10) — they are shown separately in Complete Words review
-          : allRealQuestions.filter((q: any) => !isModule2Q(q) && (activeSection !== 'Reading' || !isFillBlanksQ(q))))
-      : allRealQuestions;
-    
-    // For Reading Module 1, realQuestions are Q11-Q20 (FillBlanks excluded above)
-    const readingM1Offset = (activeSection === 'Reading' && activeModule === 1) ? 10 : 0;
+    // 모듈 슬롯 기반 — 리뷰 문제 수 = 실제 TPO 모듈 문제 수와 정확히 일치
+    // (CW 빈칸 확장 포함, 오답 매칭은 전역 연속 번호 기준)
+    // cwRanges/mcqSlotForLocal은 컴포넌트 스코프에 정의됨
+    const isCwLocalNum = (localNum: number) =>
+      cwRanges.some(r => localNum >= r.localStart && localNum <= r.localEnd);
 
-    // Total = max(result total, CMS question count for this module) so all CMS questions show
-    const cmsCount = realQuestions.length + readingM1Offset;
-    const totalQ = Math.max(result.totalQuestions || 0, cmsCount);
+    // Total = 모듈 슬롯 수 (CMS 기준). 없으면 결과값 fallback
+    const cmsCount = moduleSlots.reduce((sum, s) => sum + s.count, 0);
+    const totalQ = cmsCount > 0 ? cmsCount : (result.totalQuestions || 0);
 
-    // 섹션 시도 여부: 이 섹션의 문제 범위에 wrongAnswer가 하나라도 있으면 시도한 것으로 간주.
-    // 시도하지 않은 섹션의 문제는 "안 푼 문제" → 틀린 것으로 표시.
-    const attemptedSection = (() => {
-      const startQ = readingM1Offset + 1;
-      const endQ = totalQ;
-      return wrongQs.some(w => {
-        const num = parseInt(w.questionId);
-        return !isNaN(num) && num >= startQ && num <= endQ;
-      });
-    })();
+    // 모듈 시도 여부: 이 모듈의 전역 번호 범위에 wrongAnswer가 하나라도 있으면 시도한 것으로 간주.
+    // 시도하지 않은 모듈의 문제는 "안 푼 문제" (회색 pill로 표시).
+    const moduleGlobalEnd = moduleGlobalStart + totalQ - 1;
+    const attemptedSection = wrongQs.some(w => {
+      const num = parseInt(String(w.questionId).replace(/^blank-/i, ''));
+      return !isNaN(num) && num >= moduleGlobalStart && num <= moduleGlobalEnd;
+    });
 
     for (let i = 0; i < totalQ; i++) {
-      const realQ = realQuestions[i - readingM1Offset];
-      const qNum = i + 1;
-      const wrong = wrongQs.find(w => w.questionId === String(qNum) || parseInt(w.questionId) === qNum);
+      const qNum = i + 1; // 모듈 로컬 번호
+      const globalQNum = moduleGlobalStart + i;
+      const inCwRange = isCwLocalNum(qNum);
+      const slot = inCwRange ? null : mcqSlotForLocal(qNum);
+      const realQ = slot?.question;
+      const wrong = wrongQs.find(w =>
+        w.questionId === String(globalQNum) ||
+        parseInt(w.questionId) === globalQNum ||
+        (inCwRange && w.questionId === `blank-${globalQNum}`)
+      );
       const isWrong = !!wrong;
       // 미답변 = 오답 기록이 없고 시도하지 않은 섹션의 문제 (회색 pill로 표시)
       // 정답 = 오답 기록이 없고 시도한 섹션의 문제
@@ -485,7 +506,7 @@ export function QuestionReviewFull({
     ? (activeModule === 1 ? allSpeakingQuestions.slice(0, 7) : allSpeakingQuestions.slice(7, 11))
     : [];
   const speakingQuestionCount = speakingQs.length;
-  const showReadingCompleteWordsReview = activeSection === 'Reading' && currentQuestionIndex < 10 && !!readingCompleteWordsConfig;
+  const showReadingCompleteWordsReview = activeSection === 'Reading' && !!activeCwRange && !!readingCompleteWordsConfig;
 
   // Determine total questions based on section/module
   const totalQuestions = activeSection === 'Writing'
@@ -1181,7 +1202,9 @@ export function QuestionReviewFull({
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-3 md:p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {activeCwRange ? `Q${activeCwRange.localStart}-Q${activeCwRange.localEnd}` : (readingCompleteWordsQuestion ? getQuestionRangeLabel(readingCompleteWordsQuestion, 1) : 'Q1-Q10')}
+                      </p>
                       <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-0.5">Complete Words</h3>
                     </div>
                     <button
@@ -1239,7 +1262,7 @@ export function QuestionReviewFull({
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
                   <h4 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-3">Review Note</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                    Reading Module {activeModule}의 1-10번은 TPO 기준 Complete Words 유형입니다. Review에서도 객관식이 아니라 빈칸 본문 형태로 표시되도록 맞췄습니다.
+                    Reading Module {activeModule}의 {activeCwRange ? `Q${activeCwRange.localStart}-Q${activeCwRange.localEnd}` : 'Q1-Q10'}은 TPO 기준 Complete Words 유형입니다. 빈칸별로 내 답 / 정답 / 미답변을 구분해 표시합니다.
                   </p>
                   <div className="space-y-2">
                     {(() => {
@@ -1254,27 +1277,56 @@ export function QuestionReviewFull({
                         });
                         if (parsed.length > 0) displayBlanks = parsed;
                       }
+                      // blank-N ID는 전역 슬롯 번호 기준 (CW2 지문이면 11부터 시작)
+                      const globalBlankStart = activeCwRange?.globalStart ?? 1;
                       return displayBlanks.map((blank, index) => {
+                        const globalBlankNum = globalBlankStart + index;
                         const wrongEntry = result.wrongAnswers.find(w =>
-                          w.questionId === `blank-${index+1}`
+                          w.questionId === `blank-${globalBlankNum}`
                         );
                         const isCorrect = !wrongEntry;
+                        // 미답변: 채점 시 '(빈칸)'으로 기록됨 — 오답과 구분해 회색 표시
+                        const isOmitted = !!wrongEntry && (
+                          wrongEntry.userAnswer === '(빈칸)' ||
+                          wrongEntry.userAnswer === '(미답변)' ||
+                          !wrongEntry.userAnswer
+                        );
+                        const isUnscoredBlank = !!wrongEntry && wrongEntry.correctAnswer === '(정답 미등록)';
                         const userAns = wrongEntry?.userAnswer || null;
+                        const stateCls = isUnscoredBlank
+                          ? 'border-amber-200 bg-amber-50'
+                          : isCorrect
+                            ? 'border-green-200 bg-green-50'
+                            : isOmitted
+                              ? 'border-gray-200 bg-gray-50'
+                              : 'border-red-200 bg-red-50';
+                        const stateTextCls = isUnscoredBlank
+                          ? 'text-amber-700'
+                          : isCorrect
+                            ? 'text-green-700'
+                            : isOmitted
+                              ? 'text-gray-500'
+                              : 'text-red-700';
                         return (
-                          <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
-                            isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
-                          }`}>
-                            <span className="text-gray-500">Blank {index + 1}</span>
+                          <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${stateCls}`}>
+                            <span className="text-gray-500">Q{globalBlankNum}</span>
                             <div className="flex items-center gap-2">
-                              {!isCorrect && userAns && (
+                              {!isCorrect && !isOmitted && userAns && (
                                 <span className="text-xs text-red-400 line-through">{userAns}</span>
                               )}
-                              <span className={`font-semibold ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                                {blank.answer}
+                              {isOmitted && (
+                                <span className="text-xs text-gray-400">미답변</span>
+                              )}
+                              <span className={`font-semibold ${stateTextCls}`}>
+                                {blank.answer || '(정답 미등록)'}
                               </span>
-                              {isCorrect
-                                ? <Check className="w-3.5 h-3.5 text-green-500" />
-                                : <X className="w-3.5 h-3.5 text-red-500" />
+                              {isUnscoredBlank
+                                ? <span className="text-xs text-amber-500">채점불가</span>
+                                : isCorrect
+                                  ? <Check className="w-3.5 h-3.5 text-green-500" />
+                                  : isOmitted
+                                    ? <span className="w-3.5 h-3.5 rounded-full bg-gray-300 inline-block" />
+                                    : <X className="w-3.5 h-3.5 text-red-500" />
                               }
                             </div>
                           </div>
@@ -1302,13 +1354,8 @@ export function QuestionReviewFull({
                     const rawPassage = currentQuestion?.passageText || null;
 
                     // Also try to get passageTitle from the mapped CMS question
-                    const readingM1Offset = activeModule === 1 ? 10 : 0;
-                    const isFBQ = (q: any) => {
-                      const t = (q?.questionType || '').toLowerCase();
-                      return t.includes('complete words') || t.includes('fill in the blank') || t.includes('cloze');
-                    };
-                    const filteredCmsQuestions = (currentSection?.questions || []).filter((q: any) => !isFBQ(q));
-                    const mappedCmsQ = filteredCmsQuestions[currentQuestionIndex - readingM1Offset];
+                    // 전역 슬롯으로 현재 로컬 번호의 CMS 문제를 조회 (CW 빈칸 수/지문 개수와 무관하게 정확)
+                    const mappedCmsQ = mcqSlotForLocal(currentLocalNum)?.question || null;
                     const passageTitle = mappedCmsQ?.passageTitle || null;
 
                     // Parse JSON template if needed

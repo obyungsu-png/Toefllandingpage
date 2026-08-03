@@ -9,6 +9,7 @@ import { Advertisement } from './AdManagement';
 import { RestartConfirmModal } from './RestartConfirmModal';
 import { TestResult } from '../types/testResult';
 import { WrongNotesManager } from './WrongNotesManager';
+import { buildGlobalSlots, getModuleSlots, getModuleQuestionCount } from '../utils/readingQuestionUtils';
 
 const ReportSection = lazy(() =>
   import('./ReportSection').then(module => ({ default: module.ReportSection }))
@@ -82,6 +83,7 @@ export function HistorySection({
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [reviewInitialSection, setReviewInitialSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
   const [reviewInitialIndex, setReviewInitialIndex] = useState(0);
+  const [reviewInitialModule, setReviewInitialModule] = useState<1 | 2>(1);
   // Score modal section nav state
   const [scoreModalSection, setScoreModalSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
   const [scoreModalModule, setScoreModalModule] = useState<1 | 2>(1);
@@ -406,6 +408,7 @@ export function HistorySection({
   const handleJumpToQuestion = (section: 'Reading' | 'Listening' | 'Writing' | 'Speaking', index: number) => {
     setReviewInitialSection(section);
     setReviewInitialIndex(index);
+    setReviewInitialModule(scoreModalModule);
     setShowScoreModal(false);
     setShowQuestionReview(true);
   };
@@ -492,6 +495,7 @@ export function HistorySection({
           themeColor={themeColor}
           initialSection={reviewInitialSection}
           initialIndex={reviewInitialIndex}
+          initialModule={reviewInitialModule}
         />
       </Suspense>
     );
@@ -1090,36 +1094,41 @@ export function HistorySection({
         // Default counts per section if CMS data unavailable
         const defaultCounts: Record<string, number> = { Reading: 20, Listening: 28, Writing: 2, Speaking: 4 };
 
-        // Pick CMS bank based on test type
+        // CMS bank 매칭 — testType(TPO/Test/Training) + testNumber 모두 일치해야 함
+        // (testNumber만 매칭하면 Test 1 결과가 TPO 1 문제를 잘못 가져옴)
         const cmsBanks = [...(tpoTests || [])];
-        const cmsTpo = cmsBanks?.find((t: any) => t.testNumber === selectedResult.testNumber);
-        const cmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === scoreModalSection);
+        const resultType = String(selectedResult.type || selectedResult.bankType || '').toLowerCase();
+        const cmsTpo = cmsBanks?.find((t: any) =>
+          t.testNumber === selectedResult.testNumber &&
+          String(t.testType || '').toLowerCase() === resultType
+        ) || cmsBanks?.find((t: any) => t.testNumber === selectedResult.testNumber);
+
+        // sectionType 정확 일치 우선 → 없으면 대소문자 무시 (CMS에 'reading'/'Reading' 혼재)
+        const findSection = (test: any, sec: string) =>
+          test?.sections?.find((s: any) => s.sectionType === sec) ||
+          test?.sections?.find((s: any) => String(s.sectionType || '').toLowerCase() === sec.toLowerCase()) ||
+          null;
+        const cmsSection = findSection(cmsTpo, scoreModalSection);
         const allCmsQuestions = cmsSection?.questions || [];
 
+        // 전역 슬롯 (엔진 표시 순서 M1→M2 + Complete Words 빈칸 확장)
+        // → 원형 개수 = 실제 TPO 문제 수와 정확히 일치
+        const allSlots = buildGlobalSlots(allCmsQuestions);
         // Reading and Listening have Module 1 / Module 2 split
         const hasModules = scoreModalSection === 'Reading' || scoreModalSection === 'Listening';
+        const moduleSlots = hasModules ? getModuleSlots(allSlots, scoreModalModule) : allSlots;
+        const cmsQuestionCount = moduleSlots.reduce((sum, s) => sum + s.count, 0);
 
-        // Filter by module if applicable (CMS uses 'Module 2' string in questionType to mark Module 2)
-        const moduleFilteredCmsQuestions = hasModules
-          ? allCmsQuestions.filter((q: any) => {
-              const isM2 = (q.questionType || '').includes('Module 2');
-              return scoreModalModule === 2 ? isM2 : !isM2;
-            })
-          : allCmsQuestions;
+        // 현재 모듈의 전역 번호 범위 (오답/미답변 매핑용)
+        const moduleGlobalStart = moduleSlots.length > 0 ? moduleSlots[0].start : 1;
+        const moduleGlobalEnd = moduleSlots.length > 0
+          ? moduleSlots[moduleSlots.length - 1].start + moduleSlots[moduleSlots.length - 1].count - 1
+          : 0;
 
-        // Calculate true question count: FillBlanks/Complete Words count as their blank count
-        const cmsQuestionCount = moduleFilteredCmsQuestions.reduce((sum: number, q: any) => {
-          const qt = (q.questionType || '').toLowerCase();
-          const isFillBlanks = qt.includes('complete words') || qt.includes('fill in the blank') || qt.includes('cloze');
-          if (isFillBlanks && Array.isArray(q.blanks) && q.blanks.length > 0) {
-            return sum + q.blanks.length;
-          }
-          return sum + 1;
-        }, 0);
-
-        // Always use result.totalQuestions (20) as the source of truth
-        // 단, CMS에 문제가 더 많으면 CMS 기반으로 확장 (TPO 실제 문제 수와 일치)
-        const totalQ = Math.max(curResult?.totalQuestions || 20, cmsQuestionCount);
+        // CMS가 있으면 모듈 슬롯 수가 정답. 없으면 결과/기본값 fallback
+        const totalQ = cmsQuestionCount > 0
+          ? cmsQuestionCount
+          : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0);
 
         // Helper: is this wrongAnswer a FillBlanks entry?
         const isFillBlanksWrong = (w: any) =>
@@ -1135,53 +1144,69 @@ export function HistorySection({
         const allWrongs = curResult?.wrongAnswers || [];
         const unscoredWrongs = allWrongs.filter(isUnscoredWrong);
         const scoredWrongs = allWrongs.filter((w: any) => !isUnscoredWrong(w));
-        const fillBlanksWrongs = scoredWrongs.filter(isFillBlanksWrong);
-        const mcqWrongs = scoredWrongs.filter((w: any) => !isFillBlanksWrong(w));
 
-        // Accurate correct count: 실제 결과에 기록된 correctAnswers를 우선 사용
-        // (미답변 문제가 정답으로 계산되지 않도록)
-        const fillBlanksTotal = (scoreModalSection === 'Reading') ? 10 : 0;
-        const mcqTotal = totalQ - fillBlanksTotal;
-        const correctQ = typeof curResult?.correctAnswers === 'number'
-          ? curResult.correctAnswers
-          : Math.max(0, mcqTotal - mcqWrongs.length) + Math.max(0, fillBlanksTotal - fillBlanksWrongs.length);
-        // 실제 오답 수 = scoredWrongs (unscored 제외)
-        const wrongQ = scoredWrongs.length;
-        // 미답변 수 = 전체 - (정답 + 실제 오답 + unscored)
-        const unansweredQ = Math.max(0, totalQ - correctQ - wrongQ - unscoredWrongs.length);
-        const color = sectionColors[scoreModalSection];
+        // 전역 번호 → 현재 모듈 로컬 번호 변환 (원형은 모듈 로컬 1..N으로 표시)
+        const toLocalNum = (globalNum: number): number | null =>
+          globalNum >= moduleGlobalStart && globalNum <= moduleGlobalEnd
+            ? globalNum - moduleGlobalStart + 1
+            : null;
 
-        // Build a set of wrong question numbers for fast lookup
-        // questionId 형식: "15"(MCQ), "blank-3"(Reading 빈칸), "writing-bs-2"(Writing Build a Sentence)
-        // → 모든 형식에서 끝의 숫자를 추출해 문제 번호로 매칭 (섹션이 달라 번호 충돌 없음)
-        // unscored(정답 미등록) 문제는 wrongQNums에서 제외 — 별도 색상 표시
+        // wrongAnswers의 questionId에서 끝 숫자를 추출해 전역 번호로 해석 → 모듈 로컬로 변환
+        // unscored(정답 미등록) 문제는 별도 색상 표시
         const wrongQNums = new Set<number>();
         const unscoredQNums = new Set<number>();
-        (curResult?.wrongAnswers || []).forEach((w: any) => {
+        allWrongs.forEach((w: any) => {
           const id = String(w.questionId ?? '');
           const m = id.match(/(\d+)\s*$/);
           if (!m) return;
-          const num = parseInt(m[1], 10);
+          const local = toLocalNum(parseInt(m[1], 10));
+          if (local == null) return; // 다른 모듈의 오답
           if (isUnscoredWrong(w)) {
-            unscoredQNums.add(num);
+            unscoredQNums.add(local);
           } else {
-            wrongQNums.add(num);
+            wrongQNums.add(local);
           }
         });
 
-        // 미답변 문제 수 = 전체 - (맞은 수 + 실제 오답 수 + unscored 수)
-        // 시험은 순차 진행이므로 뒤쪽 unansweredCount개를 미답변으로 표시
+        // 미답변 산출 — answeredQuestions(신규 결과)가 있으면 정확한 응답 여부 사용
+        const answeredLocal = new Set<number>();
+        if (Array.isArray(curResult?.answeredQuestions)) {
+          curResult.answeredQuestions.forEach(n => {
+            const local = toLocalNum(n);
+            if (local != null) answeredLocal.add(local);
+          });
+        }
+        const hasAnsweredInfo = answeredLocal.size > 0;
+        // legacy fallback (answeredQuestions 없는 이전 결과): 시험은 순차 진행이므로
+        // 섹션 전체 기준 뒤쪽 unansweredCount개 중 현재 모듈 범위에 해당하는 개수를 미답변으로 추정
         const attemptedCount = (curResult?.correctAnswers || 0) + scoredWrongs.length + unscoredWrongs.length;
-        const unansweredCount = Math.max(0, totalQ - attemptedCount);
+        const totalAll = curResult?.totalQuestions || totalQ;
+        const legacyUnansweredInModule = (() => {
+          if (hasAnsweredInfo || moduleGlobalEnd === 0) return 0;
+          const unansweredStart = totalAll - Math.max(0, totalAll - attemptedCount) + 1;
+          return Math.max(0, moduleGlobalEnd - Math.max(moduleGlobalStart, unansweredStart) + 1);
+        })();
+
+        // 요약 박스 (현재 모듈 기준) — Total/Correct/Wrong/안 푼 것이 항상 합산 일치하도록 유도
+        const wrongQ = wrongQNums.size;
+        const unscoredQ = unscoredQNums.size;
+        const unansweredQ = hasAnsweredInfo
+          ? Math.max(0, totalQ - answeredLocal.size)
+          : legacyUnansweredInModule;
+        const correctQ = Math.max(0, totalQ - wrongQ - unscoredQ - unansweredQ);
+        const color = sectionColors[scoreModalSection];
 
         // Build per-question correctness — 실제 오답 기록 기준 (섹션 무관 공통 로직)
-        // isUnscored: 정답 미등록 (주황색), isWrong: 실제 오답 (빨강), isUnanswered: 미답변 (회색), 그 외: 정답 (초록)
+        // isUnscored: 정답 미등록 (주황), isWrong: 실제 오답 (빨강), isUnanswered: 미답변 (회색), 그 외: 정답 (초록)
         const qList = Array.from({ length: totalQ }, (_, i) => {
-          const qNum = i + 1;
+          const qNum = i + 1; // 모듈 로컬 번호
+          const globalQNum = moduleGlobalStart + i;
           const isUnscored = unscoredQNums.has(qNum);
           const isWrong = !isUnscored && wrongQNums.has(qNum);
-          const isUnanswered = !isUnscored && !isWrong && qNum > totalQ - unansweredCount;
-          return { qNum, globalQNum: qNum, isWrong, isUnanswered, isUnscored };
+          const isUnanswered = !isUnscored && !isWrong && (
+            hasAnsweredInfo ? !answeredLocal.has(qNum) : (qNum > totalQ - legacyUnansweredInModule)
+          );
+          return { qNum, globalQNum, isWrong, isUnanswered, isUnscored };
         });
 
         return (
@@ -1207,9 +1232,11 @@ export function HistorySection({
                   const isActive = scoreModalSection === sec;
                   const secRes = relatedResults[sec];
                   const sc = sectionColors[sec];
-                  // CMS-based question count for this section
-                  const secCmsSection = cmsTpo?.sections?.find((s: any) => s.sectionType === sec);
-                  const secCmsCount = secCmsSection?.questions?.length || 0;
+                  // CMS-based question count for this section (빈칸 확장 포함, 모듈 합산)
+                  const secCmsSection = findSection(cmsTpo, sec);
+                  const secCmsCount = secCmsSection
+                    ? buildGlobalSlots(secCmsSection.questions || []).reduce((sum, s) => sum + s.count, 0)
+                    : 0;
                   const secTotal = secCmsCount > 0 ? secCmsCount : (secRes?.totalQuestions || defaultCounts[sec] || 0);
                   return (
                     <button key={sec}
@@ -1398,7 +1425,7 @@ export function HistorySection({
                 <p className="text-xs text-gray-400">문제 번호를 클릭하면 실전 리뷰 화면으로 이동해요</p>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => { setShowScoreModal(false); setReviewInitialSection(scoreModalSection); setReviewInitialIndex(0); setShowQuestionReview(true); }}
+                    onClick={() => { setShowScoreModal(false); setReviewInitialSection(scoreModalSection); setReviewInitialIndex(0); setReviewInitialModule(scoreModalModule); setShowQuestionReview(true); }}
                     className="px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:opacity-80"
                     style={{ borderColor: color, color }}>
                     전체 리뷰

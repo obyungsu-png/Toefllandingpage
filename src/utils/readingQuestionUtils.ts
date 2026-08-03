@@ -191,3 +191,48 @@ export function getTotalQuestionCount(questions: any[]): number {
   if (!Array.isArray(questions)) return 0;
   return questions.reduce((sum, q) => sum + getQuestionCount(q), 0);
 }
+
+/**
+ * 전역 연속 번호 슬롯 — 엔진 표시 순서(Module 1 → Module 2, questionNumber 오름차순)로
+ * CMS 질문을 전개하고, Complete Words는 빈칸 수만큼 번호를 확장한다.
+ * 예) TPO1 Reading: [CW(1-10), CW(11-20), DL 21~28, AC 29~33 | CW-M2(34-43), AC-M2 44~48]
+ * → History 모달 원형 개수/오답 매핑과 엔진 채점이 모두 이 슬롯을 기준으로 삼는다.
+ */
+export interface GlobalSlot {
+  question: any;
+  /** 전역 시작 번호 (1-based, 섹션 전체 기준) */
+  start: number;
+  /** 이 질문이 차지하는 문제 수 (CW는 빈칸 수, 그 외 1) */
+  count: number;
+  isCompleteWords: boolean;
+  isModule2: boolean;
+}
+
+export function buildGlobalSlots(questions: any[]): GlobalSlot[] {
+  if (!Array.isArray(questions)) return [];
+  const sorted = [...questions].sort((a, b) => {
+    const am = isModule2Question(a) ? 1 : 0;
+    const bm = isModule2Question(b) ? 1 : 0;
+    if (am !== bm) return am - bm;
+    return (parseQuestionRange(a?.questionNumber)?.start ?? 0) - (parseQuestionRange(b?.questionNumber)?.start ?? 0);
+  });
+  const slots: GlobalSlot[] = [];
+  let cursor = 1;
+  for (const q of sorted) {
+    const isCW = isCompleteWordsType(q?.questionType);
+    const count = isCW ? Math.max(1, getCompleteWordsBlankCount(q)) : 1;
+    slots.push({ question: q, start: cursor, count, isCompleteWords: isCW, isModule2: isModule2Question(q) });
+    cursor += count;
+  }
+  return slots;
+}
+
+/** 특정 모듈의 슬롯만 필터 (Module 1 = isModule2 false) */
+export function getModuleSlots(slots: GlobalSlot[], module: 1 | 2): GlobalSlot[] {
+  return slots.filter(s => (module === 2 ? s.isModule2 : !s.isModule2));
+}
+
+/** 모듈의 문제 수 (CW 빈칸 확장 포함) */
+export function getModuleQuestionCount(slots: GlobalSlot[], module: 1 | 2): number {
+  return getModuleSlots(slots, module).reduce((sum, s) => sum + s.count, 0);
+}
