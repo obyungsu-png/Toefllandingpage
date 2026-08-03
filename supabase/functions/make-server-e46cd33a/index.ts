@@ -14,20 +14,31 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 // Storage bucket name
 const STORAGE_BUCKET = 'make-e46cd33a-lms-files';
 
+// ContentManagement에서 사용하는 모든 버킷 — 시작 시 자동 생성
+const REQUIRED_BUCKETS = [
+  { name: 'make-e46cd33a-lms-files', public: false, sizeLimit: 52428800 },
+  { name: 'writing-avatars', public: true, sizeLimit: 10485760 },
+  { name: 'listening-images', public: true, sizeLimit: 10485760 },
+  { name: 'listening-audio', public: true, sizeLimit: 52428800 },
+  { name: 'listening-video', public: true, sizeLimit: 104857600 },
+];
+
 // Initialize storage bucket on startup
 async function initializeStorage() {
   try {
     const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === STORAGE_BUCKET);
-    
-    if (!bucketExists) {
-      await supabase.storage.createBucket(STORAGE_BUCKET, {
-        public: false,
-        fileSizeLimit: 52428800 // 50MB
-      });
-      console.log(`✅ Created storage bucket: ${STORAGE_BUCKET}`);
-    } else {
-      console.log(`✅ Storage bucket already exists: ${STORAGE_BUCKET}`);
+    const existingNames = new Set((buckets || []).map(b => b.name));
+
+    for (const bucket of REQUIRED_BUCKETS) {
+      if (!existingNames.has(bucket.name)) {
+        await supabase.storage.createBucket(bucket.name, {
+          public: bucket.public,
+          fileSizeLimit: bucket.sizeLimit,
+        });
+        console.log(`✅ Created storage bucket: ${bucket.name} (public: ${bucket.public})`);
+      } else {
+        console.log(`✅ Storage bucket already exists: ${bucket.name}`);
+      }
     }
   } catch (error) {
     console.error('❌ Error initializing storage:', error);
@@ -327,6 +338,70 @@ app.use(
 // Health check endpoint
 app.get("/make-server-e46cd33a/health", (c) => {
   return c.json({ status: "ok" });
+});
+
+// ============ Storage Bucket Init & Image Upload ============
+// 버킷 수동 초기화 엔드포인트 — 호출 시 모든 필수 버킷 생성
+app.post("/make-server-e46cd33a/init-buckets", async (c) => {
+  try {
+    await initializeStorage();
+    const { data: buckets } = await supabase.storage.listBuckets();
+    return c.json({
+      success: true,
+      buckets: (buckets || []).map(b => ({ name: b.name, public: b.public })),
+    });
+  } catch (error) {
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
+// 이미지 업로드 엔드포인트 — base64 이미지를 받아 storage에 업로드 후 public URL 반환
+app.post("/make-server-e46cd33a/upload-image", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { fileData, fileName, bucket, contentType } = body;
+
+    if (!fileData || !fileName) {
+      return c.json({ success: false, error: "fileData와 fileName이 필요합니다" }, 400);
+    }
+
+    const targetBucket = bucket || 'writing-avatars';
+
+    // 버킷 존재 확인/생성
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const exists = (buckets || []).some((b: any) => b.name === targetBucket);
+    if (!exists) {
+      await supabase.storage.createBucket(targetBucket, { public: true });
+      console.log(`[STORAGE] Bucket '${targetBucket}' created`);
+    }
+
+    // base64 → binary
+    const base64Raw = fileData.includes(",") ? fileData.split(",")[1] : fileData;
+    const binaryStr = atob(base64Raw);
+    const uint8 = Uint8Array.from(binaryStr, (ch) => ch.charCodeAt(0));
+    const mime = contentType || (fileData.startsWith("data:image/png") ? "image/png" : "image/jpeg");
+
+    const safeName = fileName.replace(/[^\w.\-]/g, "_");
+    const filePath = `${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(targetBucket)
+      .upload(filePath, uint8, { contentType: mime, upsert: false });
+
+    if (uploadError) {
+      return c.json({ success: false, error: uploadError.message }, 500);
+    }
+
+    const { data: urlData } = supabase.storage.from(targetBucket).getPublicUrl(filePath);
+    if (!urlData?.publicUrl) {
+      return c.json({ success: false, error: "Public URL 생성 실패" }, 500);
+    }
+
+    return c.json({ success: true, imageUrl: urlData.publicUrl, path: filePath });
+  } catch (error) {
+    console.error("upload-image error:", error);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
 });
 
 // ===========================================

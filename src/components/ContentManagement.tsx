@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
 import { extractVocabFromTest, vocabToCSV, type ExtractedVocab } from '../utils/extractVocab';
 import { generateVocabPdf } from '../utils/generateVocabPdf';
@@ -49,6 +50,33 @@ async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Prom
           /not found|policy|permission|denied|too large|unsupported/i.test(error.message);
         console.error(`[uploadToStorage] 업로드 실패 (시도 ${attempt + 1}/${maxRetries + 1}) — bucket: ${bucket}, path: ${path}`, error);
         if (isClientError || attempt === maxRetries) {
+          // 직접 업로드 실패 시 Edge Function을 통해 업로드 시도 (service_role 키로 RLS 우회)
+          try {
+            const base64 = await fileToBase64(file);
+            const edgeResponse = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-e46cd33a/upload-image`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${publicAnonKey}`,
+                },
+                body: JSON.stringify({
+                  fileData: base64,
+                  fileName: file.name,
+                  bucket,
+                  contentType: file.type,
+                }),
+              }
+            );
+            const edgeData = await edgeResponse.json();
+            if (edgeData.success && edgeData.imageUrl) {
+              console.log(`[uploadToStorage] Edge Function 업로드 성공 — ${bucket}`);
+              return edgeData.imageUrl;
+            }
+          } catch (edgeErr) {
+            console.error('[uploadToStorage] Edge Function fallback 실패:', edgeErr);
+          }
           throw new Error(`Storage 업로드 실패 (${bucket}): ${error.message}`);
         }
         lastError = new Error(`Storage 업로드 실패 (${bucket}): ${error.message}`);
@@ -72,6 +100,16 @@ async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Prom
     await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
   }
   throw lastError || new Error(`Storage 업로드 실패 (${bucket})`);
+}
+
+// File을 base64 데이터 URL로 변환 (Edge Function 업로드용)
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 // Compress image before uploading to Supabase — resize to max 1200px, JPEG 80% quality
