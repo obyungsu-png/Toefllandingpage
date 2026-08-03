@@ -18,6 +18,73 @@ const DEFAULT_AVATARS = [
   { url: '/avatars/avatar-female-brown.png', label: '여성 4' },
 ];
 
+// ── 커스텀 아바타 갤러리 (writing-avatars 버킷) ──
+// CMS에서 업로드한 아바타 이미지를 갤러리에 저장 → 다른 문제에서 재사용 가능
+const CUSTOM_AVATAR_GALLERY_KEY = 'custom_avatar_gallery';
+
+/** 커스텀 아바타 갤러리 로드 (localStorage 캐시 + kv_store) */
+function loadCustomAvatarGallery(): Array<{ url: string; label: string }> {
+  try {
+    const cached = localStorage.getItem(CUSTOM_AVATAR_GALLERY_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch { /* ignore */ }
+  return [];
+}
+
+/** 커스텀 아바타 갤러리에 새 이미지 추가 */
+function addToCustomAvatarGallery(url: string, label?: string) {
+  try {
+    const gallery = loadCustomAvatarGallery();
+    // 중복 방지
+    if (gallery.some(a => a.url === url)) return;
+    gallery.push({ url, label: label || `커스텀 ${gallery.length + 1}` });
+    localStorage.setItem(CUSTOM_AVATAR_GALLERY_KEY, JSON.stringify(gallery));
+  } catch { /* ignore */ }
+}
+
+/** 커스텀 아바타 갤러리에서 이미지 제거 */
+function removeFromCustomAvatarGallery(url: string) {
+  try {
+    const gallery = loadCustomAvatarGallery().filter(a => a.url !== url);
+    localStorage.setItem(CUSTOM_AVATAR_GALLERY_KEY, JSON.stringify(gallery));
+  } catch { /* ignore */ }
+}
+
+/** 아바타 선택 갤러리 — 기본 아바타 + 업로드된 커스텀 아바타 (hover 시 × 로 갤러리에서 삭제 가능) */
+function AvatarGallery({ selectedUrl, onSelect, sizeClass = 'w-9 h-9' }: {
+  selectedUrl: string;
+  onSelect: (url: string) => void;
+  sizeClass?: string;
+}) {
+  const [customAvatars, setCustomAvatars] = useState<Array<{ url: string; label: string }>>(() => loadCustomAvatarGallery());
+  const baseCls = `${sizeClass} rounded-full overflow-hidden border-2 transition-all`;
+  return (
+    <>
+      {DEFAULT_AVATARS.map((av) => (
+        <button key={av.url} type="button" title={av.label}
+          onClick={() => onSelect(av.url)}
+          className={`${baseCls} ${selectedUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
+          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+        </button>
+      ))}
+      {customAvatars.map((av) => (
+        <div key={av.url} className="relative group">
+          <button type="button" title={`${av.label} (업로드됨)`}
+            onClick={() => onSelect(av.url)}
+            className={`${baseCls} ${selectedUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-amber-300 hover:border-[#1e6b73]'}`}>
+            <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+          </button>
+          <button type="button" title="갤러리에서 삭제"
+            onClick={() => { removeFromCustomAvatarGallery(av.url); setCustomAvatars(loadCustomAvatarGallery()); }}
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] leading-none hidden group-hover:flex items-center justify-center shadow">
+            ×
+          </button>
+        </div>
+      ))}
+    </>
+  );
+}
+
 // 스피킹 Take an Interview 기본 사진 (public/listening-images/ 에서 서빙)
 // — 사용자가 이미지를 업로드하지 않으면 이 기본 이미지가 자동 적용됨
 const DEFAULT_INTERVIEW_IMAGE = '/listening-images/interview-default.png';
@@ -1744,6 +1811,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.avatar1ImageFile) {
       try {
         question.avatar1ImageUrl = await uploadToStorage(await compressImage(formData.avatar1ImageFile), 'writing-avatars');
+        addToCustomAvatarGallery(question.avatar1ImageUrl, '아바타1');
       } catch (err) {
         console.error('[handleSubmit] avatar1ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타1: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -1755,6 +1823,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.avatar2ImageFile) {
       try {
         question.avatar2ImageUrl = await uploadToStorage(await compressImage(formData.avatar2ImageFile), 'writing-avatars');
+        addToCustomAvatarGallery(question.avatar2ImageUrl, '아바타2');
       } catch (err) {
         console.error('[handleSubmit] avatar2ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타2: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -1774,6 +1843,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.professorImageFile) {
       try {
         question.professorImageUrl = await uploadToStorage(await compressImage(formData.professorImageFile), 'writing-avatars');
+        addToCustomAvatarGallery(question.professorImageUrl, '교수');
       } catch (err) {
         console.error('[handleSubmit] professorImageFile 업로드 실패:', err);
         uploadErrors.push(`교수 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -1785,6 +1855,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.student1ImageFile) {
       try {
         question.student1ImageUrl = await uploadToStorage(await compressImage(formData.student1ImageFile), 'writing-avatars');
+        addToCustomAvatarGallery(question.student1ImageUrl, '학생1');
       } catch (err) {
         console.error('[handleSubmit] student1ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생1 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -1796,6 +1867,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     } else if (formData.student2ImageFile) {
       try {
         question.student2ImageUrl = await uploadToStorage(await compressImage(formData.student2ImageFile), 'writing-avatars');
+        addToCustomAvatarGallery(question.student2ImageUrl, '학생2');
       } catch (err) {
         console.error('[handleSubmit] student2ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생2 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -2574,19 +2646,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    {/* 기본 아바타 갤러리 */}
+                    {/* 기본 + 커스텀 아바타 갤러리 */}
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button
-                          key={av.url}
-                          type="button"
-                          title={av.label}
-                          onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
-                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}
-                        >
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.avatar1ImageUrl} onSelect={(url) => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: url })} />
                     </div>
                     <input
                       type="file"
@@ -2626,19 +2688,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    {/* 기본 아바타 갤러리 */}
+                    {/* 기본 + 커스텀 아바타 갤러리 */}
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button
-                          key={av.url}
-                          type="button"
-                          title={av.label}
-                          onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: av.url })}
-                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar2ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}
-                        >
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.avatar2ImageUrl} onSelect={(url) => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: url })} />
                     </div>
                     <input
                       type="file"
@@ -2813,15 +2865,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                     )}
                   </div>
-                  {/* 기본 아바타 갤러리 */}
+                  {/* 기본 + 커스텀 아바타 갤러리 */}
                   <div className="flex flex-wrap gap-1 mt-1 mb-1">
-                    {DEFAULT_AVATARS.map((av) => (
-                      <button key={av.url} type="button" title={av.label}
-                        onClick={() => setFormData({ ...formData, professorImageFile: null, professorImageUrl: av.url })}
-                        className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${formData.professorImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
+                    <AvatarGallery selectedUrl={formData.professorImageUrl} sizeClass="w-7 h-7" onSelect={(url) => setFormData({ ...formData, professorImageFile: null, professorImageUrl: url })} />
                   </div>
                                     <input
                     type="file"
@@ -2868,15 +2914,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                       )}
                     </div>
-                    {/* 기본 아바타 갤러리 */}
+                    {/* 기본 + 커스텀 아바타 갤러리 */}
                     <div className="flex flex-wrap gap-1 mt-1 mb-1">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: av.url })}
-                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student1ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.student1ImageUrl} sizeClass="w-6 h-6" onSelect={(url) => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: url })} />
                     </div>
                                         <input
                       type="file"
@@ -2921,15 +2961,9 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>
                       )}
                     </div>
-                    {/* 기본 아바타 갤러리 */}
+                    {/* 기본 + 커스텀 아바타 갤러리 */}
                     <div className="flex flex-wrap gap-1 mt-1 mb-1">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: av.url })}
-                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student2ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.student2ImageUrl} sizeClass="w-6 h-6" onSelect={(url) => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: url })} />
                     </div>
                                         <input
                       type="file"
@@ -3525,7 +3559,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).avatar1ImageUrl?.trim() && !(formData as any).avatar1ImageUrl.startsWith('blob:')) {
       updatedQuestion.avatar1ImageUrl = (formData as any).avatar1ImageUrl.trim();
     } else if ((formData as any).avatar1ImageFile) {
-      try { updatedQuestion.avatar1ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar1ImageFile), 'writing-avatars'); }
+      try { updatedQuestion.avatar1ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar1ImageFile), 'writing-avatars'); addToCustomAvatarGallery(updatedQuestion.avatar1ImageUrl, '아바타1'); }
       catch (err) {
         console.error('[handleSubmit] avatar1ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타1: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -3537,7 +3571,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).avatar2ImageUrl?.trim() && !(formData as any).avatar2ImageUrl.startsWith('blob:')) {
       updatedQuestion.avatar2ImageUrl = (formData as any).avatar2ImageUrl.trim();
     } else if ((formData as any).avatar2ImageFile) {
-      try { updatedQuestion.avatar2ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar2ImageFile), 'writing-avatars'); }
+      try { updatedQuestion.avatar2ImageUrl = await uploadToStorage(await compressImage((formData as any).avatar2ImageFile), 'writing-avatars'); addToCustomAvatarGallery(updatedQuestion.avatar2ImageUrl, '아바타2'); }
       catch (err) {
         console.error('[handleSubmit] avatar2ImageFile 업로드 실패:', err);
         uploadErrors.push(`아바타2: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -3550,7 +3584,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).professorImageUrl?.trim() && !(formData as any).professorImageUrl.startsWith('blob:')) {
       updatedQuestion.professorImageUrl = (formData as any).professorImageUrl.trim();
     } else if ((formData as any).professorImageFile) {
-      try { updatedQuestion.professorImageUrl = await uploadToStorage(await compressImage((formData as any).professorImageFile), 'writing-avatars'); }
+      try { updatedQuestion.professorImageUrl = await uploadToStorage(await compressImage((formData as any).professorImageFile), 'writing-avatars'); addToCustomAvatarGallery(updatedQuestion.professorImageUrl, '교수'); }
       catch (err) {
         console.error('[handleSubmit] professorImageFile 업로드 실패:', err);
         uploadErrors.push(`교수 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -3562,7 +3596,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).student1ImageUrl?.trim() && !(formData as any).student1ImageUrl.startsWith('blob:')) {
       updatedQuestion.student1ImageUrl = (formData as any).student1ImageUrl.trim();
     } else if ((formData as any).student1ImageFile) {
-      try { updatedQuestion.student1ImageUrl = await uploadToStorage(await compressImage((formData as any).student1ImageFile), 'writing-avatars'); }
+      try { updatedQuestion.student1ImageUrl = await uploadToStorage(await compressImage((formData as any).student1ImageFile), 'writing-avatars'); addToCustomAvatarGallery(updatedQuestion.student1ImageUrl, '학생1'); }
       catch (err) {
         console.error('[handleSubmit] student1ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생1 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -3574,7 +3608,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     if ((formData as any).student2ImageUrl?.trim() && !(formData as any).student2ImageUrl.startsWith('blob:')) {
       updatedQuestion.student2ImageUrl = (formData as any).student2ImageUrl.trim();
     } else if ((formData as any).student2ImageFile) {
-      try { updatedQuestion.student2ImageUrl = await uploadToStorage(await compressImage((formData as any).student2ImageFile), 'writing-avatars'); }
+      try { updatedQuestion.student2ImageUrl = await uploadToStorage(await compressImage((formData as any).student2ImageFile), 'writing-avatars'); addToCustomAvatarGallery(updatedQuestion.student2ImageUrl, '학생2'); }
       catch (err) {
         console.error('[handleSubmit] student2ImageFile 업로드 실패:', err);
         uploadErrors.push(`학생2 이미지: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
@@ -4202,13 +4236,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
-                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.avatar1ImageUrl} onSelect={(url) => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: url })} />
                     </div>
                     <input type="file" accept="image/*" className="text-xs w-full"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar1ImageFile: f, avatar1ImageUrl: URL.createObjectURL(f) }); }}
@@ -4232,13 +4260,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: av.url })}
-                          className={`w-9 h-9 rounded-full overflow-hidden border-2 transition-all ${formData.avatar2ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.avatar2ImageUrl} onSelect={(url) => setFormData({ ...formData, avatar2ImageFile: null, avatar2ImageUrl: url })} />
                     </div>
                     <input type="file" accept="image/*" className="text-xs w-full"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar2ImageFile: f, avatar2ImageUrl: URL.createObjectURL(f) }); }}
@@ -4308,13 +4330,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap gap-1.5 mb-2">
-                    {DEFAULT_AVATARS.map((av) => (
-                      <button key={av.url} type="button" title={av.label}
-                        onClick={() => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: av.url })}
-                        className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all ${formData.avatar1ImageUrl === av.url ? 'border-[#1e6b73] ring-2 ring-[#1e6b73]/30' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
+                    <AvatarGallery selectedUrl={formData.avatar1ImageUrl} sizeClass="w-8 h-8" onSelect={(url) => setFormData({ ...formData, avatar1ImageFile: null, avatar1ImageUrl: url })} />
                   </div>
                   <input type="file" accept="image/*" className="text-xs w-full"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, avatar1ImageFile: f, avatar1ImageUrl: URL.createObjectURL(f) }); }}
@@ -4397,13 +4413,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                       : <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">없음</div>}
                   </div>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {DEFAULT_AVATARS.map((av) => (
-                      <button key={av.url} type="button" title={av.label}
-                        onClick={() => setFormData({ ...formData, professorImageFile: null, professorImageUrl: av.url })}
-                        className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${formData.professorImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                        <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
+                    <AvatarGallery selectedUrl={formData.professorImageUrl} sizeClass="w-7 h-7" onSelect={(url) => setFormData({ ...formData, professorImageFile: null, professorImageUrl: url })} />
                   </div>
                   <input type="file" accept="image/*" className="text-[10px] w-16"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, professorImageFile: f as any, professorImageUrl: URL.createObjectURL(f) }); }}
@@ -4439,13 +4449,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                         : <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">없음</div>}
                     </div>
                     <div className="flex flex-wrap gap-0.5 mt-1">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: av.url })}
-                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student1ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.student1ImageUrl} sizeClass="w-6 h-6" onSelect={(url) => setFormData({ ...formData, student1ImageFile: null, student1ImageUrl: url })} />
                     </div>
                     <input type="file" accept="image/*" className="text-[10px] w-12"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student1ImageFile: f as any, student1ImageUrl: URL.createObjectURL(f) }); }}
@@ -4479,13 +4483,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                         : <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">없음</div>}
                     </div>
                     <div className="flex flex-wrap gap-0.5 mt-1">
-                      {DEFAULT_AVATARS.map((av) => (
-                        <button key={av.url} type="button" title={av.label}
-                          onClick={() => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: av.url })}
-                          className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${formData.student2ImageUrl === av.url ? 'border-[#1e6b73]' : 'border-gray-200 hover:border-[#1e6b73]'}`}>
-                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                      <AvatarGallery selectedUrl={formData.student2ImageUrl} sizeClass="w-6 h-6" onSelect={(url) => setFormData({ ...formData, student2ImageFile: null, student2ImageUrl: url })} />
                     </div>
                     <input type="file" accept="image/*" className="text-[10px] w-12"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, student2ImageFile: f as any, student2ImageUrl: URL.createObjectURL(f) }); }}
