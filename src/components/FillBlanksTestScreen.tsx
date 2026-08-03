@@ -131,9 +131,11 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
     }
   }, [inputValues, fillBlanksQuestion]);
 
-  // 문제가 변경되면 입력값 초기화 (이전 정답이 다음 문제에 남지 않도록)
+  // 문제가 변경되면 입력값 갱신 — 이전에 입력한 답이 있으면 복원 (앞으로 갔다가 돌아와도 답 유지)
   React.useEffect(() => {
-    setInputValues({});
+    const questionKey = String(fillBlanksQuestion?.id || fillBlanksQuestion?.questionNumber || '');
+    const saved = questionKey ? (window as any).__completeWordsAnswers?.[questionKey] : null;
+    setInputValues(saved ? { ...saved } : {});
     setFilledInputs({});
   }, [fillBlanksQuestion?.id, fillBlanksQuestion?.questionNumber]);
 

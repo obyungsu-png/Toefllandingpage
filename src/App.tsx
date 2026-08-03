@@ -1867,14 +1867,18 @@ function AppContent() {
     let correctCount = 0;
     let scoredCount = 0; // 정답이 등록된 문제 수 (CMS에 correctAnswer가 있는 문제만)
     const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
+    const answeredQuestions: number[] = []; // 실제로 응답한 문제 번호 (미답변 표시용)
 
     for (let i = 0; i < Math.min(effectiveTotalQuestions, allAnswers.length); i++) {
       const questionNumber = i + 1;
-      const userAns = allAnswers[i];
       const cmsQ = findCmsQuestionForNumber(questionNumber) || cmsQuestions[i];
+      // CMS 문제 번호로 직접 매칭 우선 (엔진이 questionNumber 키로 저장) → 없으면 순차 슬롯 fallback
+      const userAns = sharedAnswers[String(cmsQ?.questionNumber ?? '')] ?? allAnswers[i];
       const correctAns = cmsQ?.correctAnswer;
 
       if (category === 'Reading' && isCompleteWordsSlot(questionNumber)) continue;
+
+      if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
 
       // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
       if (!correctAns || correctAns === '') {
@@ -1916,6 +1920,7 @@ function AppContent() {
         const userAns = userAnswers[blank.id] || userAnswers[i] || '';
         const correctAns = blank.answer;
         const questionNumber = range ? range.start + i : i + 1;
+        if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
         if (!correctAns || correctAns === '') {
           wrongAnswers.push({
             questionId: `blank-${questionNumber}`,
@@ -1954,6 +1959,7 @@ function AppContent() {
         const qNum = i + 1;
         const userAns = bsAnswers[qNum] || '';
         const correctAns = q.correctAnswer as string || '';
+        if (userAns && String(userAns).trim() !== '') answeredQuestions.push(qNum);
         // CMS 정답 없으면 채점 불가
         if (!correctAns || correctAns === '') {
           wrongAnswers.push({
@@ -2020,6 +2026,8 @@ function AppContent() {
       totalQuestions: effectiveTotalQuestions,
       correctAnswers: correctCount,
       wrongAnswers,
+      answeredQuestions,
+      answeredCount: answeredQuestions.length,
       timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000), // 실제 소요시간(초)
     });
 

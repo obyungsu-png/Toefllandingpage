@@ -52,7 +52,12 @@ export function AcademicPassageScreen({
   testId,
   passageKey,
 }: AcademicPassageScreenProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  // 이전에 선택한 답이 있으면 복원 (앞으로 갔다가 돌아와도 답 유지)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const qNum = question?.questionNumber ?? '';
+    return (window as any).__moduleAnswers?.[qNum] ?? null;
+  });
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);

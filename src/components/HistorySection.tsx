@@ -122,7 +122,8 @@ export function HistorySection({
   // Effective results (fallback to samples)
   // Don't show sample results to logged-out users
   // Show only this student's own results (matched by ownerName)
-  // 실전문제(Test)는 절반 이상 풀린 경우만 view results에 표시
+  // 실전문제(Test)는 50문항 이상 응답한 경우만 history에 표시
+  // answeredCount(실제 응답 수) 우선 사용, 없으면 기존 방식(correct + wrong) fallback
   const myResults = isLoggedIn
     ? results.filter(r => r.ownerName === studentName)
     : [];
@@ -130,8 +131,8 @@ export function HistorySection({
     ? (myResults.length > 0
         ? myResults.filter(r => {
             if (r.type === 'Test') {
-              const attempted = r.correctAnswers + (r.wrongAnswers?.length || 0);
-              return attempted >= Math.ceil(r.totalQuestions / 2);
+              const attempted = r.answeredCount ?? (r.correctAnswers + (r.wrongAnswers?.length || 0));
+              return attempted >= 50 && attempted >= Math.ceil(r.totalQuestions / 2);
             }
             return true;
           })

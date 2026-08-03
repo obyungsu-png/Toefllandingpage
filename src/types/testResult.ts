@@ -24,4 +24,8 @@ export interface TestResult {
   timeSpent?: number;
   vocabularyDay?: number;
   vocabularyVolume?: number;
+  /** 실제로 응답한 문제 번호 목록 (미답변 정확 표시용) */
+  answeredQuestions?: number[];
+  /** 응답한 문제 수 (History 50문항 필터용) */
+  answeredCount?: number;
 }
