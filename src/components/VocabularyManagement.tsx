@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Plus, Edit, Trash2, Search, BookOpen, Save, X, Check, Pencil, Upload, Download, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 // motion removed - using CSS animations
-import { SATWord, seededShuffle } from './vocaWordSets';
+import { SATWord } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 export interface VocabularyDay {
@@ -258,7 +258,8 @@ export function VocabularyManagement({
     }
   };
 
-  // Group words by day - dayNumber 기반 그룹화 + 알파벳 순서 방지를 위한 seeded shuffle
+  // Group words by day - dayNumber 기반 그룹화
+  // 단어 셔플은 데이터베이스 수준에서 이미 처리됨 (unit 간 알파벳 편중 방지)
   const wordsByDay = useMemo(() => {
     const grouped: { [key: number]: SATWord[] } = {};
 
@@ -274,15 +275,6 @@ export function VocabularyManagement({
         grouped[dayNum] = [];
       }
       grouped[dayNum].push(word);
-    });
-
-    // 각 day 내에서 알파벳 순서가 아닌 무작위(일관된) 순서로 셔플
-    // day 번호를 seed로 사용하여 세션/기기 간 동일한 순서 보장
-    Object.keys(grouped).forEach((dayKey) => {
-      const dayNum = Number(dayKey);
-      if (grouped[dayNum].length > 1) {
-        grouped[dayNum] = seededShuffle(grouped[dayNum], dayNum * 1000 + 7);
-      }
     });
 
     return grouped;
