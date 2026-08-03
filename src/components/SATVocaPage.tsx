@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 // motion replaced with CSS animations
 import { BookOpen, Download, FileText, Play, ChevronRight, Check, ArrowLeft, X, ArrowRightLeft, Loader2, Languages } from 'lucide-react';
 import { Button } from './ui/button';
-import { SATWord } from './vocaWordSets';
+import { SATWord, seededShuffle } from './vocaWordSets';
 import { SATVocaTest } from './SATVocaTest';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak } from 'docx';
@@ -223,50 +223,34 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
   }, [activeTab]);
 
   // Calculate available words based on selected days
+  // 모든 탭에서 dayNumber 기반으로 단어 필터링 + 알파벳 순서 방지를 위한 seeded shuffle
   const availableWords = useMemo(() => {
     const words: SATWord[] = [];
-    
-    if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
-      // For dayNumber-based tabs, filter by dayNumber field
-      selectedDays.forEach(dayId => {
-        const dayWords = wordsFromDB.filter((word: any) => word.dayNumber === dayId);
+
+    // 모든 탭(custom, etymology, toefl-easy, toefl-hard)에서 dayNumber 필드 기반 필터링
+    selectedDays.forEach(dayId => {
+      const dayWords = wordsFromDB.filter((word: any) => word.dayNumber === dayId);
+      // 각 day 내에서 알파벳 순서가 아닌 무작위(일관된) 순서로 셔플
+      if (dayWords.length > 1) {
+        words.push(...seededShuffle(dayWords, dayId * 1000 + 7));
+      } else {
         words.push(...dayWords);
-      });
-    } else {
-      // For index-based tabs (toefl-hard), use index-based slicing
-      const wordsPerDay = 60;
-      selectedDays.forEach(dayId => {
-        const startIndex = (dayId - 1) * wordsPerDay;
-        const endIndex = startIndex + wordsPerDay;
-        const dayWords = wordsFromDB.slice(startIndex, endIndex);
-        words.push(...dayWords);
-      });
-    }
-    
+      }
+    });
+
     return words;
   }, [selectedDays, wordsFromDB, activeTab]);
   
   // Calculate word count for each day
+  // 모든 탭에서 dayNumber 필드 기반으로 단어 수 계산
   const getWordCountForDay = useMemo(() => {
     const wordCountMap: { [dayId: number]: number } = {};
-    
-    if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
-      // For dayNumber-based tabs, count by dayNumber field
-      daysFromDB.forEach(day => {
-        const dayWords = wordsFromDB.filter((word: any) => word.dayNumber === day.id);
-        wordCountMap[day.id] = dayWords.length;
-      });
-    } else {
-      // For index-based tabs (toefl-hard), use index-based counting
-      const wordsPerDay = 60;
-      daysFromDB.forEach(day => {
-        const startIndex = (day.id - 1) * wordsPerDay;
-        const endIndex = startIndex + wordsPerDay;
-        const dayWords = wordsFromDB.slice(startIndex, endIndex);
-        wordCountMap[day.id] = dayWords.length;
-      });
-    }
-    
+
+    daysFromDB.forEach(day => {
+      const dayWords = wordsFromDB.filter((word: any) => word.dayNumber === day.id);
+      wordCountMap[day.id] = dayWords.length;
+    });
+
     return wordCountMap;
   }, [wordsFromDB, daysFromDB, activeTab]);
 

@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Plus, Edit, Trash2, Search, BookOpen, Save, X, Check, Pencil, Upload, Download, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 // motion removed - using CSS animations
-import { SATWord } from './vocaWordSets';
+import { SATWord, seededShuffle } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 export interface VocabularyDay {
@@ -258,37 +258,33 @@ export function VocabularyManagement({
     }
   };
 
-  // Group words by day - Use stored order without shuffling
+  // Group words by day - dayNumber 기반 그룹화 + 알파벳 순서 방지를 위한 seeded shuffle
   const wordsByDay = useMemo(() => {
     const grouped: { [key: number]: SATWord[] } = {};
-    
-    // For custom, etymology, and toefl-easy tabs, use dayNumber field (unlimited words per day)
-    if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
-      // Initialize all days with empty arrays
-      for (let day = 1; day <= days.length; day++) {
-        grouped[day] = [];
-      }
-      
-      // Group words by their dayNumber field
-      words.forEach(word => {
-        const dayNum = (word as any).dayNumber || 1; // Default to DAY 1 if no dayNumber
-        if (!grouped[dayNum]) {
-          grouped[dayNum] = [];
-        }
-        grouped[dayNum].push(word);
-      });
-    } else {
-      // For toefl-hard tab, use index-based grouping (60 words per day)
-      const wordsPerDay = 60;
-      const totalDays = Math.ceil(words.length / wordsPerDay);
-      
-      for (let day = 1; day <= Math.max(totalDays, days.length); day++) {
-        const startIndex = (day - 1) * wordsPerDay;
-        const endIndex = startIndex + wordsPerDay;
-        grouped[day] = words.slice(startIndex, endIndex);
-      }
+
+    // Initialize all days with empty arrays
+    for (let day = 1; day <= days.length; day++) {
+      grouped[day] = [];
     }
-    
+
+    // 모든 탭(custom, etymology, toefl-easy, toefl-hard)에서 dayNumber 필드 기반 그룹화
+    words.forEach(word => {
+      const dayNum = (word as any).dayNumber || 1; // Default to DAY 1 if no dayNumber
+      if (!grouped[dayNum]) {
+        grouped[dayNum] = [];
+      }
+      grouped[dayNum].push(word);
+    });
+
+    // 각 day 내에서 알파벳 순서가 아닌 무작위(일관된) 순서로 셔플
+    // day 번호를 seed로 사용하여 세션/기기 간 동일한 순서 보장
+    Object.keys(grouped).forEach((dayKey) => {
+      const dayNum = Number(dayKey);
+      if (grouped[dayNum].length > 1) {
+        grouped[dayNum] = seededShuffle(grouped[dayNum], dayNum * 1000 + 7);
+      }
+    });
+
     return grouped;
   }, [words, days, activeTab]);
 

@@ -268,38 +268,45 @@ const getWordsPerDay = (tabType: string): number => {
     return 999999; // Effectively unlimited - no restriction on words per day
   }
   if (tabType === 'toefl-hard') {
-    return 60; // vol.2 uses 60 words per day
+    return 50; // vol.2 uses 50 words per day (30 units × 50 words)
   }
   return 40; // toefl-easy default (only used for legacy index-based fallback)
 };
 
 // Helper function to check if a tab uses dayNumber-based storage (unlimited words per day)
+// 모든 어휘 탭이 dayNumber 기반 저장을 사용하도록 통일
 const isDayNumberTab = (tabType: string): boolean => {
-  return tabType === 'custom' || tabType === 'etymology' || tabType === 'toefl-easy';
+  return tabType === 'custom' || tabType === 'etymology' || tabType === 'toefl-easy' || tabType === 'toefl-hard';
 };
 
-// Auto-migrate toefl-easy words from index-based to dayNumber-based storage
-const migrateToeflEasyWords = async (words: any[]): Promise<any[]> => {
+// Auto-migrate words from index-based to dayNumber-based storage (generic)
+// toefl-easy: 40 words/day legacy, toefl-hard: 50 words/day
+const migrateWordsToDayNumber = async (words: any[], tabType: string): Promise<any[]> => {
   if (words.length === 0) return words;
-  
+
   // Check if migration is needed (words without dayNumber)
   const needsMigration = words.some(w => !w.dayNumber);
   if (!needsMigration) return words;
-  
-  console.log(`[MIGRATION] Migrating ${words.length} toefl-easy words to dayNumber-based storage`);
-  
-  const LEGACY_WORDS_PER_DAY = 40;
+
+  const LEGACY_WORDS_PER_DAY = tabType === 'toefl-hard' ? 50 : 40;
+  console.log(`[MIGRATION] Migrating ${words.length} ${tabType} words to dayNumber-based storage`);
+
   const migratedWords = words.map((word, index) => {
     if (word.dayNumber) return word; // Already has dayNumber
     const dayNum = Math.floor(index / LEGACY_WORDS_PER_DAY) + 1;
     return { ...word, dayNumber: dayNum };
   });
-  
+
   // Save migrated words
-  await kv.set('vocabulary_words_toefl-easy', migratedWords);
+  await kv.set(`vocabulary_words_${tabType}`, migratedWords);
   console.log(`[MIGRATION] Migration complete. Words distributed across ${Math.ceil(words.length / LEGACY_WORDS_PER_DAY)} days`);
-  
+
   return migratedWords;
+};
+
+// Backward-compatible alias for toefl-easy migration
+const migrateToeflEasyWords = async (words: any[]): Promise<any[]> => {
+  return migrateWordsToDayNumber(words, 'toefl-easy');
 };
 
 // Enable logger
@@ -342,9 +349,9 @@ app.get("/make-server-e46cd33a/vocabulary/:tabType", async (c) => {
       words = null;
     }
     
-    // Auto-migrate toefl-easy if needed
-    if (tabType === 'toefl-easy' && words && words.length > 0) {
-      words = await migrateToeflEasyWords(words);
+    // Auto-migrate toefl-easy and toefl-hard if needed (dayNumber 기반으로 통일)
+    if ((tabType === 'toefl-easy' || tabType === 'toefl-hard') && words && words.length > 0) {
+      words = await migrateWordsToDayNumber(words, tabType);
     }
     
     console.log(`[GET VOCABULARY] Tab: ${tabType}, Total words: ${words ? words.length : 0}`);
@@ -363,9 +370,9 @@ app.get("/make-server-e46cd33a/vocabulary/:tabType/:day", async (c) => {
     const key = `vocabulary_words_${tabType}`;
     let allWords = await withRetry(() => kv.get(key)) || [];
     
-    // Auto-migrate toefl-easy if needed
-    if (tabType === 'toefl-easy') {
-      allWords = await migrateToeflEasyWords(allWords);
+    // Auto-migrate toefl-easy and toefl-hard if needed (dayNumber 기반으로 통일)
+    if (tabType === 'toefl-easy' || tabType === 'toefl-hard') {
+      allWords = await migrateWordsToDayNumber(allWords, tabType);
     }
     
     if (isDayNumberTab(tabType)) {

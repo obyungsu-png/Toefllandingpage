@@ -19,7 +19,8 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 // Seeded shuffle for consistent randomization per day
-function seededShuffle<T>(array: T[], seed: number): T[] {
+// 동일한 seed에 대해 항상 동일한 순서를 반환하여 학습 일관성 유지
+export function seededShuffle<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
   let currentSeed = seed;
   
