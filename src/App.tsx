@@ -7809,6 +7809,16 @@ function AppContent() {
                   localStorage.setItem('amx_isLoggedIn', 'true');
                   localStorage.setItem('amx_userName', username);
                 } catch {}
+                // 로그인 전에 유료 테스트(TPO 3+, Test 3+) 클릭이 대기 중이었다면
+                // 로그인 완료 직후 자동으로 수강증(활성화 코드) 모달로 진행
+                const pending = pendingPaidTest;
+                if (pending) {
+                  setPendingPaidTest(null);
+                  // 다음 틱에서 launchSection 재호출 — isLoggedIn 상태가 true로 확정된 후
+                  setTimeout(() => {
+                    launchSection(pending.testNumber, pending.section, pending.bankType, pending.mode);
+                  }, 0);
+                }
               }}
             />
           </div>
