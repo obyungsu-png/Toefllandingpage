@@ -113,7 +113,6 @@ function clearAllProgress(result: TestResult) {
   const keys = getProgressKeys(result);
   for (const { key } of keys) {
     localStorage.removeItem(key);
-    console.log(`[RestartConfirmModal] 🗑️ Cleared progress: ${key}`);
   }
 }
 

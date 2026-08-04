@@ -58,7 +58,6 @@ export function useTraining(
           }
         );
         if (!res.ok) console.error(`❌ Error saving Training Config: ${res.status}`);
-        else console.log('💾 Saved Training Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Training Config:', error);
       }
@@ -82,7 +81,6 @@ export function useTraining(
         }
       );
       if (!res.ok) console.error(`❌ Error saving Training Result: ${res.status}`);
-      else console.log('💾 Saved Training Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Training Result:', error);
     }

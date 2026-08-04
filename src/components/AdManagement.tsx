@@ -101,7 +101,6 @@ export function AdManagement({ themeColor = '#005f61' }: AdManagementProps) {
         updatedAt: new Date().toISOString()
       };
 
-      console.log('💾 Saving advertisement:', adData);
 
       const response = await fetch(
         `${SERVER_BASE_URL}/advertisements`,

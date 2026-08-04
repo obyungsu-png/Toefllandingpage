@@ -302,7 +302,6 @@ export function QuestionReviewFull({
   const currentPassageKey = `reading-m${activeModule}`;
 
   if (typeof window !== 'undefined') {
-    console.log('[Review] testName:', result.testName, '→ matched test:', currentTPOTest?.testName || currentTPOTest?.testNumber || 'NONE', '| tests available:', tpoTests.length);
   }
 
   // Load speaking recordings once currentTPOTest is available

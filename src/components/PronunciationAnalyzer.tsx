@@ -176,7 +176,6 @@ export function PronunciationAnalyzer({
   // Start recording user's voice
   const startRecording = async () => {
     try {
-      console.log('🎙️ Requesting microphone access...');
       
       // Check if mediaDevices is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -192,7 +191,6 @@ export function PronunciationAnalyzer({
       // Check current permission state
       try {
         const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        console.log('🔐 Current microphone permission:', permissionStatus.state);
         
         if (permissionStatus.state === 'denied') {
           const currentUrl = window.location.origin;
@@ -212,12 +210,9 @@ export function PronunciationAnalyzer({
         }
       } catch (e) {
         // Permissions API not supported in some browsers (e.g., Safari)
-        console.log('⚠️ Permissions API not supported, will request directly');
       }
 
-      console.log('✅ MediaDevices API available, requesting permission...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone permission granted!');
       
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -235,7 +230,6 @@ export function PronunciationAnalyzer({
         
         // Upload to Supabase Storage
         try {
-          console.log('📤 Uploading audio to Supabase...');
           
           // Convert blob to base64
           const reader = new FileReader();
@@ -262,7 +256,6 @@ export function PronunciationAnalyzer({
             }
             
             const result = await response.json();
-            console.log('✅ Audio uploaded successfully:', result.fileName);
             
             // Use signed URL for playback
             userAudioRef.current = createCachedAudioSync(result.fileUrl);

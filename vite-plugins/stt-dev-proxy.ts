@@ -78,7 +78,7 @@ export function sttDevProxyPlugin(deepgramApiKey: string): Plugin {
     name: 'stt-dev-proxy',
     configureServer(server: ViteDevServer) {
       // 미들웨어를 proxy 보다 먼저 등록 → /api/stt/deepgram 가로채기
-      server.middlewares.use('/api/stt/deepgram', async (req, res, next) => {
+      server.middlewares.use('/api/stt/deepgram', async (req, res) => {
         // CORS preflight
         if (req.method === 'OPTIONS') {
           res.writeHead(200, CORS_HEADERS);
@@ -127,7 +127,7 @@ export function sttDevProxyPlugin(deepgramApiKey: string): Plugin {
               'Content-Type': audioContentType,
               'Content-Length': String(rawBody.length),
             },
-            body: rawBody,
+            body: new Uint8Array(rawBody),
           });
 
           const respText = await response.text();

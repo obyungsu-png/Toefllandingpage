@@ -46,7 +46,6 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         return null;
       }
       
-      console.log(`[SATVocaPage] ✅ Loaded from cache: ${type} (${data.words?.length || 0} words, ${data.days?.length || 0} days)`);
       return data;
     } catch (err) {
       console.warn('[SATVocaPage] Cache load failed:', err);
@@ -68,7 +67,6 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         return;
       }
       localStorage.setItem(getCacheKey(type), jsonStr);
-      console.log(`[SATVocaPage] 💾 Saved to cache: ${type}`);
     } catch (err) {
       console.warn('[SATVocaPage] Cache save failed:', err);
     }
@@ -130,13 +128,11 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
   useEffect(() => {
     const checkServerHealth = async () => {
       try {
-        console.log('[Health Check] Checking server at:', `${serverUrl}/health`);
         const response = await fetch(`${serverUrl}/health`, {
           method: 'GET',
           headers: getServerHeaders()
         });
         const data = await response.json();
-        console.log('[Health Check] Server response:', data);
       } catch (error) {
         console.error('[Health Check] Server not responding:', error);
       }
@@ -151,7 +147,6 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
       // Step 1: Try to load from cache first for instant display
       const cachedData = loadFromCache(activeTab);
       if (cachedData) {
-        console.log(`[SATVocaPage] 🚀 Using cached data for instant display: ${activeTab}`);
         setWordsFromDB(cachedData.words || []);
         setDaysFromDB(cachedData.days || []);
         setLoadingWords(false);
@@ -163,7 +158,6 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
 
       // Step 2: Fetch fresh data from server in background
       try {
-        console.log(`[SATVocaPage] 🔄 Fetching fresh data from server: ${activeTab}`);
         
         const headers = {
           ...getServerHeaders(),
@@ -193,7 +187,6 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         const freshWords = wordsData.words || [];
         const freshDays = daysData.days || [];
         
-        console.log(`[SATVocaPage] ✅ Fetched fresh data: ${freshWords.length} words, ${freshDays.length} days for ${activeTab}`);
         
         // Step 3: Update UI with fresh data
         setWordsFromDB(freshWords);

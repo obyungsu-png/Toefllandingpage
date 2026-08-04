@@ -72,7 +72,6 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         savedAt: Date.now()
       };
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(progressData));
-      console.log('[SATVocaTest] 💾 Progress auto-saved');
     } catch (err) {
       console.warn('[SATVocaTest] Failed to save progress:', err);
     }
@@ -89,15 +88,9 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
       
       if (isExpired) {
         localStorage.removeItem(PROGRESS_KEY);
-        console.log('[SATVocaTest] ⏰ Saved progress expired (7 days old)');
         return null;
       }
       
-      console.log('[SATVocaTest] ✅ Found saved progress:', {
-        questionIndex: data.currentQuestionIndex,
-        totalQuestions: data.questions?.length,
-        answersCount: Object.keys(data.userAnswers || {}).length
-      });
       
       return data;
     } catch (err) {
@@ -109,14 +102,12 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   // Helper: Clear progress from localStorage
   const clearProgress = () => {
     localStorage.removeItem(PROGRESS_KEY);
-    console.log('[SATVocaTest] 🗑️ Progress cleared');
   };
   
   // Helper: Restore progress
   const restoreProgress = () => {
     if (!savedProgress) return;
     
-    console.log('[SATVocaTest] 🔄 Restoring progress...');
     setQuestions(savedProgress.questions);
     setOriginalQuestions(savedProgress.questions);
     setCurrentQuestionIndex(savedProgress.currentQuestionIndex);
@@ -128,7 +119,6 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
   
   // Helper: Start fresh (ignore saved progress)
   const startFresh = () => {
-    console.log('[SATVocaTest] 🆕 Starting fresh test');
     clearProgress();
     setShowRestoreModal(false);
     setSavedProgress(null);
@@ -220,7 +210,6 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
     if (!progressLoaded) {
       const saved = loadProgress();
       if (saved) {
-        console.log('[SATVocaTest] Found saved progress, showing restore modal');
         setSavedProgress(saved);
         setShowRestoreModal(true);
       }

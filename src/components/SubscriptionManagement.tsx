@@ -39,7 +39,6 @@ export function SubscriptionManagement() {
           const data = await response.json();
           if (Array.isArray(data)) {
             setSubscriptions(data);
-            console.log('✅ Loaded subscriptions from Supabase:', data.length);
           }
         }
       } catch (error) {
@@ -61,7 +60,6 @@ export function SubscriptionManagement() {
         body: JSON.stringify(subs)
       });
       if (!res.ok) console.error(`❌ Error saving subscriptions: ${res.status}`);
-      else console.log('💾 Saved subscriptions to Supabase');
     } catch (error) {
       console.error('❌ Error saving subscriptions:', error);
     }

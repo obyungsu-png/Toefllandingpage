@@ -88,7 +88,6 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
       };
       
       localStorage.setItem(storageKey, JSON.stringify(progressData));
-      console.log(`[useTestProgress] 💾 Progress auto-saved for ${testType}${testId ? ` (${testId})` : ''}`);
     } catch (err) {
       console.warn('[useTestProgress] Failed to save progress:', err);
     }
@@ -107,15 +106,9 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
 
       if (isExpired) {
         localStorage.removeItem(storageKey);
-        console.log(`[useTestProgress] ⏰ Saved progress expired (${Math.round(ttlMs / (24 * 60 * 60 * 1000))} days old)`);
         return null;
       }
 
-      console.log(`[useTestProgress] ✅ Found saved progress for ${testType}:`, {
-        currentScreen: data.currentScreen,
-        questionIndex: data.currentQuestionIndex,
-        savedAt: new Date(data.savedAt).toLocaleString()
-      });
 
       return data;
     } catch (err) {
@@ -129,7 +122,6 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
    */
   const clearProgress = useCallback(() => {
     localStorage.removeItem(storageKey);
-    console.log(`[useTestProgress] 🗑️ Progress cleared for ${testType}${testId ? ` (${testId})` : ''}`);
   }, [storageKey, testType, testId]);
 
   /**
@@ -138,7 +130,6 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
   const restoreProgress = useCallback(() => {
     if (!savedProgress) return;
 
-    console.log(`[useTestProgress] 🔄 Restoring progress for ${testType}...`);
     setRestoredData(savedProgress);
     setShowRestoreModal(false);
     setSavedProgress(null);
@@ -148,7 +139,6 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
    * Start fresh (ignore saved progress)
    */
   const startFresh = useCallback(() => {
-    console.log(`[useTestProgress] 🆕 Starting fresh test for ${testType}`);
     clearProgress();
     setShowRestoreModal(false);
     setSavedProgress(null);
@@ -172,7 +162,6 @@ export function useTestProgress(options: UseTestProgressOptions): UseTestProgres
 
     const saved = loadProgress();
     if (saved) {
-      console.log(`[useTestProgress] Found saved progress, showing restore modal for ${testType}`);
       setSavedProgress(saved);
       setShowRestoreModal(true);
     }

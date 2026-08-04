@@ -58,7 +58,6 @@ export function useQuestionTypes(
           }
         );
         if (!res.ok) console.error(`❌ Error saving Question Types Config: ${res.status}`);
-        else console.log('💾 Saved Question Types Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Question Types Config:', error);
       }
@@ -82,7 +81,6 @@ export function useQuestionTypes(
         }
       );
       if (!res.ok) console.error(`❌ Error saving Question Types Result: ${res.status}`);
-      else console.log('💾 Saved Question Types Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Question Types Result:', error);
     }

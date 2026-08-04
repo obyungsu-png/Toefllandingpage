@@ -161,7 +161,9 @@ function setupGoogleTtsInterceptor() {
 
 // ─────────────────────────────────────────────────────────────────
 //  수동 업데이트 (GitHub Releases)
-//  자동 다운로드 비활성화 — 사용자가 명시적으로 확인·다운로드·설치
+//  ⚠️ 완전 수동 승인 방식 — 사용자가 명시적으로 요청하기 전까지
+//  확인/다운로드/설치 어느 것도 자동으로 실행되지 않습니다.
+//  (자동 체크 없음, 자동 다운로드 없음, 종료 시 자동 설치 없음)
 // ─────────────────────────────────────────────────────────────────
 function setupAutoUpdater() {
   let autoUpdater;
@@ -172,25 +174,51 @@ function setupAutoUpdater() {
     return;
   }
 
-  // 자동 다운로드 비활성화 — 사용자가 수동으로 다운로드 버튼을 누를 때만 다운로드
+  // ── 완전 수동 모드 ──
+  // autoDownload: false → 업데이트 발견 시에도 다운로드하지 않음
+  // autoInstallOnAppQuit: false → 다운로드되어 있어도 종료 시 자동 설치하지 않음
+  //   (사용자가 'install-update' IPC를 명시적으로 호출할 때만 설치)
   autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoInstallOnAppQuit = false;
+  // 이전 버전으로의 다운그레이드 차단 (실수로 구버전 설치 방지)
+  autoUpdater.allowDowngrade = false;
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('🔍 업데이트 확인 중... (사용자 요청)');
+    mainWindow?.webContents.send('update-checking');
+  });
 
   autoUpdater.on('update-available', (info) => {
-    console.log('📦 업데이트 발견:', info.version, '— 다운로드 대기 (사용자 확인 필요)');
+    console.log('📦 업데이트 발견:', info.version, '— 다운로드 대기 (사용자 승인 필요)');
     mainWindow?.webContents.send('update-available', info.version);
   });
 
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('✅ 최신 버전입니다:', info?.version);
+    mainWindow?.webContents.send('update-not-available', info?.version ?? null);
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    // 진행률(%)을 렌더러로 전달 — UI에서 프로그레스 바 표시 가능
+    mainWindow?.webContents.send('update-progress', {
+      percent: Math.round(progress.percent ?? 0),
+      transferred: progress.transferred ?? 0,
+      total: progress.total ?? 0,
+      bytesPerSecond: progress.bytesPerSecond ?? 0,
+    });
+  });
+
   autoUpdater.on('update-downloaded', (info) => {
-    console.log('✅ 업데이트 다운로드 완료:', info.version, '— 설치 대기 (사용자 확인 필요)');
+    console.log('✅ 업데이트 다운로드 완료:', info.version, '— 설치 대기 (사용자 승인 필요, 자동 설치 안 함)');
     mainWindow?.webContents.send('update-downloaded', info.version);
   });
 
   autoUpdater.on('error', (err) => {
     console.error('❌ 업데이트 오류:', err.message);
+    mainWindow?.webContents.send('update-error', err.message);
   });
 
-  // IPC: 수동 업데이트 확인 (사용자가 버튼 클릭 시)
+  // IPC: 수동 업데이트 확인 (사용자가 버튼 클릭 시에만 호출됨)
   ipcMain.handle('check-update', async () => {
     try {
       const result = await autoUpdater.checkForUpdates();
@@ -201,7 +229,7 @@ function setupAutoUpdater() {
     }
   });
 
-  // IPC: 업데이트 다운로드 (사용자가 다운로드 버튼 클릭 시)
+  // IPC: 업데이트 다운로드 (사용자가 다운로드 버튼 클릭 시에만)
   ipcMain.handle('download-update', async () => {
     try {
       await autoUpdater.downloadUpdate();
@@ -212,12 +240,15 @@ function setupAutoUpdater() {
     }
   });
 
-  // IPC: 업데이트 설치 (앱 재시작)
+  // IPC: 업데이트 설치 (사용자가 설치 버튼 클릭 시에만 — 앱 재시작)
   ipcMain.on('install-update', () => {
     autoUpdater.quitAndInstall();
   });
 
-  // 앱 시작 시 자동 확인 제거 — 사용자가 명시적으로 확인 버튼을 누를 때만 작동
+  // IPC: 현재 앱 버전 조회 (업데이트 UI에서 표시용)
+  ipcMain.handle('get-app-version', () => app.getVersion());
+
+  // 앱 시작 시 자동 확인 없음 — 오직 사용자의 명시적 요청(check-update)만 동작
 }
 
 // ─────────────────────────────────────────────────────────────────

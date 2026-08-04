@@ -224,11 +224,9 @@ export async function preloadAllMedia(
   const urls = Array.from(urlSet);
 
   if (urls.length === 0) {
-    console.log('[mediaCache] No media URLs found to cache');
     return;
   }
 
-  console.log(`[mediaCache] Preloading ${urls.length} media files...`);
 
   let cached = 0;
   const CONCURRENCY = 5; // 동시 다운로드 수 제한
@@ -245,7 +243,6 @@ export async function preloadAllMedia(
     );
   }
 
-  console.log(`[mediaCache] ✅ Preloaded ${cached}/${urls.length} media files`);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -362,7 +359,6 @@ export async function clearMediaCache(): Promise<void> {
     }
     blobUrlMap.clear();
 
-    console.log('[mediaCache] Cache cleared');
   } catch (err) {
     console.warn('[mediaCache] Error clearing cache:', err);
   }

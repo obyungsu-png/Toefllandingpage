@@ -33,7 +33,6 @@ export async function uploadRecording(
     const ts   = Date.now();
     const path = `${testType}-${testNumber}/q${questionNumber}-${ts}.${ext}`;
 
-    console.log(`[uploadRecording] 📤 Q${questionNumber} 업로드 시작 — ${(blob.size/1024).toFixed(1)}KB`);
 
     // 1. Upload file to Storage
     const { error: storageErr } = await supabase.storage
@@ -80,7 +79,6 @@ export async function uploadRecording(
     // 3. Also cache in sessionStorage for immediate review
     cacheToSession(questionNumber, url);
 
-    console.log(`[uploadRecording] ✅ Q${questionNumber} 완료: ${url}`);
     return url;
 
   } catch (e) {
@@ -126,7 +124,6 @@ export async function loadRecordings(
 
     if (!error && data && data.length > 0) {
       data.forEach(r => { dbRecs[String(r.question_number)] = r.recording_url; });
-      console.log(`[loadRecordings] ✅ DB에서 ${data.length}개 로드`);
     }
   } catch {}
 

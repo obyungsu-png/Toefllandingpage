@@ -226,7 +226,6 @@ async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Prom
             );
             const edgeData = await edgeResponse.json();
             if (edgeData.success && edgeData.imageUrl) {
-              console.log(`[uploadToStorage] Edge Function 업로드 성공 — ${bucket}`);
               return edgeData.imageUrl;
             }
           } catch (edgeErr) {
@@ -237,7 +236,6 @@ async function uploadToStorage(file: File, bucket: string, maxRetries = 2): Prom
         lastError = new Error(`Storage 업로드 실패 (${bucket}): ${error.message}`);
       } else {
         const { data: urlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
-        console.log(`[uploadToStorage] 업로드 성공 — ${bucket}/${path}`);
         return urlData.publicUrl;
       }
     } catch (err: any) {
@@ -3425,6 +3423,8 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
 interface QuestionEditFormProps {
   testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
+  /** 화면 표시용 자동배열 번호 (날짜순). 없으면 testNumber 표시 */
+  displayNumber?: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypes: string[];
   question: TPOQuestion;
@@ -3432,7 +3432,7 @@ interface QuestionEditFormProps {
   onCancel: () => void;
 }
 
-function QuestionEditForm({ testType, testNumber, section, questionTypes, question, onSubmit, onCancel }: QuestionEditFormProps) {
+function QuestionEditForm({ testType, testNumber, displayNumber, section, questionTypes, question, onSubmit, onCancel }: QuestionEditFormProps) {
   const timestampAudioRef = useRef<HTMLAudioElement | null>(null);
   const [formData, setFormData] = useState({
     questionNumber: question.questionNumber,
@@ -6617,15 +6617,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     reader.onload = () => {
       try {
         const text = reader.result as string;
-        console.log('📋 CSV 원본 (처음 500자):', text.substring(0, 500));
-        console.log('📋 CSV 전체 길이:', text.length, '줄바꿈 수:', (text.match(/\n/g) || []).length);
         const rows = parseCsv(text);
-        console.log('📋 parseCsv 결과: 행 수 =', rows.length);
-        console.log('📋 첫 3행:', rows.slice(0, 3));
         if (rows.length < 2) throw new Error('데이터 행이 없습니다. 헤더 아래에 문제를 입력했는지 확인하세요.');
 
         const header = rows[0].map(h => h.trim());
-        console.log('📋 헤더:', header);
         const idx = (name: string) => header.findIndex(h => h.toLowerCase() === name.toLowerCase());
 
         const iNum = idx('questionNumber'), iType = idx('questionType'), iDiff = idx('difficulty'), iMod = idx('module');
@@ -6894,9 +6889,6 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
           setError(`${errors.length}개 행에서 오류 발생:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? `\n... 외 ${errors.length - 5}개` : ''}`);
         }
 
-        console.log('📋 파싱된 문제 수:', questions.length, '/ 입력 행 수:', rows.length - 1);
-        console.log('📋 파싱된 문제 (첫 3개):', questions.slice(0, 3));
-        console.log('📋 오류:', errors);
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
         // questionNumber 기준 오름차순 정렬 — Q1-Q10이 맨 앞에 오도록 (TXT 모드와 동일)

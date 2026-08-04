@@ -83,19 +83,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
     // Fallback: any fill-blanks question (backward compat)
     isCompleteWordsType(q.questionType)
   ));
-  
-  // Debug logging
-  React.useEffect(() => {
-    console.log('🔍 FillBlanksTest Debug:', {
-      currentTest,
-      testBankType,
-      sectionData,
-      fillBlanksQuestion,
-      hasPassageText: !!fillBlanksQuestion?.passageText,
-      hasBlanks: !!fillBlanksQuestion?.blanks
-    });
-  }, []);
-  
+
   // Determine inputs and passage: supports word[answer], word[answer:N], and word[0] + blanks.
   let inputs:{id:number;maxLength:number;answer:string}[];
   let normalizedPassage: string = '';

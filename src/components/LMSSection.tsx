@@ -216,7 +216,6 @@ export function LMSSection({
         
         const data = await response.json();
         fileUrl = data.fileUrl;
-        console.log('✅ Audio file uploaded to Supabase Storage:', fileUrl);
       }
       
       const cleanedOptions = formData.isMultipleChoice

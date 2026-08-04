@@ -426,7 +426,6 @@ export function HistorySection({
     toast.success(`Result sent via ${shareMethod.join(' and ')}!`, {
       description: `Sent to ${shareConfig.wechatEnabled ? shareConfig.wechatId || 'WeChat ID' : ''}${shareConfig.wechatEnabled && shareConfig.smsEnabled ? ', ' : ''}${shareConfig.smsEnabled ? shareConfig.parentPhone || 'Parent Phone' : ''}.`
     });
-    console.log('Sharing result:', message);
   };
 
   const handleViewResults = (result: TestResult) => {

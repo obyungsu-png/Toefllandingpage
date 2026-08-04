@@ -775,7 +775,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Students: ${res.status}`);
-        else console.log('💾 Saved Students to Supabase');
       } catch (error) {
         console.error('❌ Error saving Students:', error);
       }
@@ -802,7 +801,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Test Results: ${res.status}`);
-        else console.log('💾 Saved Test Results to Supabase');
       } catch (error) {
         console.error('❌ Error saving Test Results:', error);
       }
@@ -982,7 +980,6 @@ function AppContent() {
         const res = await fetch(`${baseUrl}/health`, { headers, signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
-          console.log('Edge Function ready');
           await new Promise(r => setTimeout(r, 300));
           return true;
         }
@@ -990,7 +987,6 @@ function AppContent() {
         // Warm-up 실패는 조용히 무시 — 실제 API 호출 시 재시도됨
       }
     }
-    console.log('Edge Function warm-up skipped, proceeding');
     return false;
   };
 
@@ -1009,12 +1005,10 @@ function AppContent() {
         let hasCachedData = false;
         if (Array.isArray(cachedTpoTests)) {
           setTpoTests(cachedTpoTests);
-          console.log('⚡ Loaded cached TPO tests:', cachedTpoTests.length);
           hasCachedData = true;
         }
         if (Array.isArray(cachedTestTests)) {
           setTestTests(cachedTestTests);
-          console.log('⚡ Loaded cached Test tests:', cachedTestTests.length);
           hasCachedData = true;
         }
         if (Array.isArray(cachedTrainingTests)) {
@@ -1041,9 +1035,9 @@ function AppContent() {
           fetchSupabaseJson('advertisements'),
         ]);
 
-        if (batch1a[0].status === 'fulfilled') { const d = batch1a[0].value; if (Array.isArray(d)) { setTpoTests(d); saveCachedData('tpo-tests', d); anySuccess = true; console.log('✅ Loaded TPO tests:', d.length); } }
-        if (batch1a[1].status === 'fulfilled') { const d = batch1a[1].value; if (Array.isArray(d)) { setTestTests(d); saveCachedData('test-tests', d); anySuccess = true; console.log('✅ Loaded Test tests:', d.length); } }
-        if (batch1a[2].status === 'fulfilled') { const d = batch1a[2].value; if (Array.isArray(d)) { setAdvertisements(d); saveCachedData('advertisements', d); anySuccess = true; console.log('✅ Loaded Advertisements:', d.length); } }
+        if (batch1a[0].status === 'fulfilled') { const d = batch1a[0].value; if (Array.isArray(d)) { setTpoTests(d); saveCachedData('tpo-tests', d); anySuccess = true;} }
+        if (batch1a[1].status === 'fulfilled') { const d = batch1a[1].value; if (Array.isArray(d)) { setTestTests(d); saveCachedData('test-tests', d); anySuccess = true;} }
+        if (batch1a[2].status === 'fulfilled') { const d = batch1a[2].value; if (Array.isArray(d)) { setAdvertisements(d); saveCachedData('advertisements', d); anySuccess = true;} }
 
         // Batch 1b: Remaining public content after the main lists are available.
         const batch1b = await Promise.allSettled([
@@ -1051,15 +1045,14 @@ function AppContent() {
           fetchSupabaseJson('training-tests'),
         ]);
         
-        if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
-        if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
+        if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true;} }
+        if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true;} }
 
         // 🔄 Training 데이터 자동 복원 — 서버가 비어있고 로컬 캐시에 데이터가 남아있으면 서버로 복원
         // (kv 유실 사고 대응. 캐시까지 빈 배열로 덮어쓰기된 경우에는 CMS 재등록 필요)
         if (batch1b[1].status === 'fulfilled' && Array.isArray(batch1b[1].value) && batch1b[1].value.length === 0) {
           const cachedTraining = loadCachedData<TPOTest[]>('training-tests', true);
           if (Array.isArray(cachedTraining) && cachedTraining.length > 0) {
-            console.log(`🔄 Training tests 서버 유실 감지 — 로컬 캐시 ${cachedTraining.length}개 복원 시작`);
             let restored = 0;
             for (const test of cachedTraining) {
               try {
@@ -1073,7 +1066,6 @@ function AppContent() {
                 console.warn('⚠️ Training 복원 실패:', test.testNumber, e);
               }
             }
-            console.log(`✅ Training tests 서버 복원 완료: ${restored}/${cachedTraining.length}개`);
             if (restored > 0) {
               setTrainingTests(cachedTraining);
               saveCachedData('training-tests', cachedTraining);
@@ -1090,7 +1082,6 @@ function AppContent() {
             // Mark history as already loaded so the deferred loader doesn't refetch unnecessarily
             setDeferredLoadStatus(prev => ({ ...prev, history: 'loaded' }));
             anySuccess = true;
-            console.log('✅ Preloaded Test Results on app start:', resultsRes.length);
           }
         } catch (e) {
           console.error('⚠️ Failed to preload test-results:', e);
@@ -1101,13 +1092,12 @@ function AppContent() {
         } else {
           console.error('❌ All data fetches failed - save effects will be suppressed to prevent data loss');
           // 오프라인 폴백: 만료된 캐시라도 로드해서 앱 사용 가능하게 함
-          console.log('📴 오프라인 모드 — 만료된 캐시 데이터 로드');
           const expiredTpo = loadCachedData<TPOTest[]>('tpo-tests', true);
           const expiredTest = loadCachedData<TPOTest[]>('test-tests', true);
           const expiredTraining = loadCachedData<TPOTest[]>('training-tests', true);
           const expiredAds = loadCachedData<Advertisement[]>('advertisements', true);
-          if (Array.isArray(expiredTpo)) { setTpoTests(expiredTpo); console.log('📦 오프라인 캐시 TPO:', expiredTpo.length); }
-          if (Array.isArray(expiredTest)) { setTestTests(expiredTest); console.log('📦 오프라인 캐시 Test:', expiredTest.length); }
+          if (Array.isArray(expiredTpo)) { setTpoTests(expiredTpo);}
+          if (Array.isArray(expiredTest)) { setTestTests(expiredTest);}
           if (Array.isArray(expiredTraining)) { setTrainingTests(expiredTraining); }
           if (Array.isArray(expiredAds)) { setAdvertisements(expiredAds); }
         }
@@ -1124,14 +1114,11 @@ function AppContent() {
           ...(batch1b[1].status === 'fulfilled' && Array.isArray(batch1b[1].value) ? batch1b[1].value : []),
         ];
         if (allTestData.length > 0) {
-          console.log(`[mediaCache] Starting media preload for ${allTestData.length} tests...`);
           preloadAllMedia(allTestData, (cached, total) => {
             if (cached % 5 === 0 || cached === total) {
-              console.log(`[mediaCache] Progress: ${cached}/${total}`);
             }
           }).then(async () => {
             const stats = await getCacheStats();
-            console.log(`[mediaCache] ✅ Cache ready: ${stats.count} files, ${(stats.sizeBytes / 1024 / 1024).toFixed(1)} MB`);
           }).catch(err => {
             console.warn('[mediaCache] Preload error:', err);
           });
@@ -1151,12 +1138,10 @@ function AppContent() {
   // 온라인/오프라인 이벤트 리스너 — 온라인 복귀 시 자동으로 데이터 재갱신
   useEffect(() => {
     const handleOnline = () => {
-      console.log('🌐 온라인 복귀 — 데이터 자동 재갱신');
       setIsOnline(true);
       reloadDataRef.current?.();
     };
     const handleOffline = () => {
-      console.log('📴 오프라인 전환 — 캐시 데이터 사용');
       setIsOnline(false);
     };
     window.addEventListener('online', handleOnline);
@@ -1173,11 +1158,9 @@ function AppContent() {
     if (!electronAPI?.isElectron) return;
     electronAPI.onUpdateAvailable?.((version: string) => {
       setUpdateVersion(version);
-      console.log('📦 업데이트 발견:', version);
     });
     electronAPI.onUpdateDownloaded?.((version: string) => {
       setUpdateDownloaded(version);
-      console.log('✅ 업데이트 다운로드 완료:', version);
     });
   }, []);
 
@@ -1214,14 +1197,12 @@ function AppContent() {
             skipTestResultsSaveRef.current = true;
             setTestResults(resultsRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Test Results:', resultsRes.value.length);
           }
 
           if (reportsRes.status === 'fulfilled' && Array.isArray(reportsRes.value)) {
             skipReportsSaveRef.current = true;
             setReports(reportsRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Reports:', reportsRes.value.length);
           }
         }
 
@@ -1235,13 +1216,11 @@ function AppContent() {
             skipQuestionTypesConfigSaveRef.current = true;
             setQuestionTypesConfig(configRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Question Types Config');
           }
 
           if (resultsRes.status === 'fulfilled' && Array.isArray(resultsRes.value)) {
             setQuestionTypesResults(resultsRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Question Types Results:', resultsRes.value.length);
           }
         }
 
@@ -1255,13 +1234,11 @@ function AppContent() {
             skipTrainingConfigSaveRef.current = true;
             setTrainingConfig(configRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Training Config');
           }
 
           if (resultsRes.status === 'fulfilled' && Array.isArray(resultsRes.value)) {
             setTrainingResults(resultsRes.value);
             loadedAnything = true;
-            console.log('✅ Loaded Training Results:', resultsRes.value.length);
           }
         }
 
@@ -1272,7 +1249,6 @@ function AppContent() {
             skipStudentsSaveRef.current = true;
             setStudents(studentsRes);
             loadedAnything = true;
-            console.log('✅ Loaded Students:', studentsRes.length);
           }
         }
 
@@ -1307,7 +1283,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving LMS contents: ${res.status}`);
-        else console.log('💾 Saved LMS contents to Supabase');
       } catch (error) {
         console.error('❌ Error saving LMS contents:', error);
       }
@@ -1337,7 +1312,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Reports: ${res.status}`);
-        else console.log('💾 Saved Reports to Supabase');
       } catch (error) {
         console.error('❌ Error saving Reports:', error);
       }
@@ -1364,7 +1338,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Question Types Config: ${res.status}`);
-        else console.log('💾 Saved Question Types Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Question Types Config:', error);
       }
@@ -1391,7 +1364,6 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Training Config: ${res.status}`);
-        else console.log('💾 Saved Training Config to Supabase');
       } catch (error) {
         console.error('❌ Error saving Training Config:', error);
       }
@@ -1415,7 +1387,6 @@ function AppContent() {
         }
       );
       if (!res.ok) console.error(`❌ Error saving Training Result: ${res.status}`);
-      else console.log('💾 Saved Training Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Training Result:', error);
     }
@@ -1436,7 +1407,6 @@ function AppContent() {
         }
       );
       if (!res.ok) console.error(`❌ Error saving Question Types Result: ${res.status}`);
-      else console.log('💾 Saved Question Types Result to Supabase');
     } catch (error) {
       console.error('❌ Error saving Question Types Result:', error);
     }
@@ -1545,7 +1515,6 @@ function AppContent() {
       // Update local state after successful server save
       upsertLocalTestState(test);
       
-      console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
       console.error('❌ Error saving test:', error);
       alert('테스트 저장 중 오류가 발생했습니다.');
@@ -1574,7 +1543,6 @@ function AppContent() {
       // Update local state after successful server save
       upsertLocalTestState(updatedTest);
       
-      console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
       console.error('❌ Error updating test:', error);
       alert('테스트 업데이트 중 오류가 발생했습니다.');
@@ -1608,7 +1576,6 @@ function AppContent() {
       // Update local state after successful server deletion
       removeLocalTestState(testToDelete);
       
-      console.log(`✅ Deleted ${testToDelete.testType} ${testToDelete.testNumber} from server`);
     } catch (error) {
       console.error('❌ Error deleting test:', error);
       alert('테스트 삭제 중 오류가 발생했습니다.');
@@ -1623,7 +1590,6 @@ function AppContent() {
       const cleanedTests = tpoTests.filter(t => t.testType !== 'Test');
       if (cleanedTests.length !== tpoTests.length) {
         setTpoTests(cleanedTests);
-        console.log('Cleaned up old Test type data from TPO tests');
       }
     }
   }, []); // Run only once on mount
@@ -1743,7 +1709,6 @@ function AppContent() {
     // Cascade delete: remove all test results owned by this student
     if (studentToDelete?.name) {
       setTestResults(prev => prev.filter(r => r.ownerName !== studentToDelete.name));
-      console.log(`🗑️ Deleted student "${studentToDelete.name}" and their history records.`);
     }
   };
 
@@ -2153,7 +2118,6 @@ function AppContent() {
 
   const handleViewResultDetail = (result: TestResult) => {
     // TODO: Implement detailed result view
-    console.log('View detail for:', result);
     alert(`상세 결과 보기 기능은 곧 구현될 예정입니다.`);
   };
 
@@ -8395,8 +8359,7 @@ function AppContent() {
 
               toast.success(startFresh ? '처음부터 새로 시작합니다!' : '저장된 위치에서 계속 진행합니다!');
             }}
-            onViewDetail={(result) => {
-              console.log('Viewing detail:', result);
+            onViewDetail={() => {
               // Logic to view detail
             }}
             shareConfig={shareConfig}

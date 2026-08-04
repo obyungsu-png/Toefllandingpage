@@ -97,7 +97,6 @@ export function useTestHandlers({
       // Update local state after successful server save
       upsertLocalTestState(test);
       
-      console.log(`✅ Saved ${test.testType} ${test.testNumber} to server`);
     } catch (error) {
       console.error('❌ Error saving test:', error);
       alert(error instanceof Error ? error.message : '테스트 저장 중 오류가 발생했습니다.');
@@ -122,7 +121,6 @@ export function useTestHandlers({
       // Update local state after successful server save
       upsertLocalTestState(updatedTest);
       
-      console.log(`✅ Updated ${updatedTest.testType} ${updatedTest.testNumber} on server`);
     } catch (error) {
       console.error('❌ Error updating test:', error);
       alert(error instanceof Error ? error.message : '테스트 업데이트 중 오류가 발생했습니다.');
@@ -153,7 +151,6 @@ export function useTestHandlers({
       // Update local state after successful server deletion
       removeLocalTestState(testToDelete);
       
-      console.log(`✅ Deleted ${testToDelete.testType} ${testToDelete.testNumber} from server`);
     } catch (error) {
       console.error('❌ Error deleting test:', error);
       alert(error instanceof Error ? error.message : '테스트 삭제 중 오류가 발생했습니다.');

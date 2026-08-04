@@ -112,7 +112,6 @@ export function VocabularyManagement({
         return null;
       }
       
-      console.log(`[VocabularyManagement] ✅ Loaded from cache: ${type} (${data.words?.length || 0} words, ${data.days?.length || 0} days)`);
       return data;
     } catch (err) {
       console.warn('[VocabularyManagement] Cache load failed:', err);
@@ -128,7 +127,6 @@ export function VocabularyManagement({
         timestamp: Date.now()
       };
       localStorage.setItem(getCacheKey(type), JSON.stringify(data));
-      console.log(`[VocabularyManagement] 💾 Saved to cache: ${type}`);
     } catch (err) {
       console.warn('[VocabularyManagement] Cache save failed:', err);
     }
@@ -192,7 +190,6 @@ export function VocabularyManagement({
       // Step 1: Try to load from cache first for instant display
       const cachedData = loadFromCache(activeTab);
       if (cachedData) {
-        console.log(`[VocabularyManagement] 🚀 Using cached data for instant display: ${activeTab}`);
         setWords(cachedData.words || []);
         setDays(cachedData.days || []);
         setLoading(false); // Show cached data immediately
@@ -201,8 +198,6 @@ export function VocabularyManagement({
       }
 
       // Step 2: Fetch fresh data from server in background
-      console.log(`[VocabularyManagement] 🔄 Fetching fresh data from server: ${activeTab}`);
-      console.log(`[VocabularyManagement] Server URL: ${serverUrl}/vocabulary/${activeTab}`);
 
       const headers = {
         ...getServerHeaders(),
@@ -233,7 +228,6 @@ export function VocabularyManagement({
       const freshWords = wordsData.words || [];
       const freshDays = daysData.days || [];
       
-      console.log(`[VocabularyManagement] ✅ Fetched fresh data: ${freshWords.length} words, ${freshDays.length} days for ${activeTab}`);
       
       // Step 3: Update UI with fresh data
       setWords(freshWords);
@@ -368,8 +362,6 @@ export function VocabularyManagement({
 
     try {
       const normalizedWord = normalizeWord(word);
-      console.log('[CLIENT] Deleting word:', normalizedWord);
-      console.log('[CLIENT] Selected day:', selectedDay);
       
       const response = await fetch(`${serverUrl}/vocabulary/${activeTab}`, {
         method: 'DELETE',
@@ -791,7 +783,6 @@ export function VocabularyManagement({
             }
           }
           
-          console.log(`DAY range mode: ${startDay}-${endDay}, Total words: ${allWords.length}, Distributed across ${Object.keys(wordsByDay).length} days`);
           
         } else {
           // Original mode: DAY markers in text
@@ -812,7 +803,6 @@ export function VocabularyManagement({
               if (!wordsByDay[currentDay]) {
                 wordsByDay[currentDay] = []; // Empty array indicates skip
               }
-              console.log(`DAY ${currentDay} marked for skipping`);
             } else if (dayMatch) {
               currentDay = parseInt(dayMatch[1]);
               if (!wordsByDay[currentDay]) {
@@ -1513,10 +1503,8 @@ export function VocabularyManagement({
               onClick={async () => {
                 try {
                   const healthUrl = `${serverUrl}/health`;
-                  console.log('Testing server health:', healthUrl);
                   const response = await fetch(healthUrl);
                   const data = await response.json();
-                  console.log('Server health response:', data);
                   alert(`서버 상태: ${data.status === 'ok' ? '정상 ✅' : '오류 ❌'}`);
                 } catch (error) {
                   console.error('Server health check failed:', error);
