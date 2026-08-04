@@ -100,8 +100,7 @@ export function WritingBuildSentenceBase({
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const capitalizeFirst = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-
+  // 예시/답안 모두 소문자 유지 (첫 슬롯 대문자화 제거)
   const normalizeWord = (word: string | null) => (word || '').trim().toLowerCase();
 
   const getUsedCount = (word: string) => {
@@ -123,6 +122,16 @@ export function WritingBuildSentenceBase({
 
     const newSlots = [...sentenceSlots];
     newSlots[index] = null;
+    setSentenceSlots(newSlots);
+  };
+
+  // 모바일 터치 지원 — 단어 탭 시 첫 번째 빈 슬롯에 배치 (HTML5 드래그는 터치 불가)
+  const handleWordTap = (word: string) => {
+    if (!canUseWord(word)) return;
+    const firstEmpty = sentenceSlots.findIndex(s => s === null);
+    if (firstEmpty === -1) return;
+    const newSlots = [...sentenceSlots];
+    newSlots[firstEmpty] = word;
     setSentenceSlots(newSlots);
   };
 
@@ -169,7 +178,7 @@ export function WritingBuildSentenceBase({
     }
 
     const newSlots = [...sentenceSlots];
-    newSlots[index] = index === 0 ? capitalizeFirst(droppedWord) : droppedWord;
+    newSlots[index] = droppedWord;
     setSentenceSlots(newSlots);
     draggedWordRef.current = null;
     setDraggedWord(null);
@@ -362,6 +371,7 @@ export function WritingBuildSentenceBase({
                       draggable={!isSelected}
                       onDragStart={(e) => handleDragStart(e, word)}
                       onDragEnd={handleDragEnd}
+                      onClick={() => { if (!isSelected) handleWordTap(word); }}
                       className={`px-3 py-1 text-left transition-colors md:px-4 md:py-1.5 ${
                         isSelected
                           ? 'bg-[#e5e7eb] text-[#6b7280] cursor-default'
