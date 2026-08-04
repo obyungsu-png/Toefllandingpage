@@ -113,7 +113,11 @@ export function LoginForm({ onClose, onLoginSuccess }: LoginFormProps) {
         options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/#/auth/callback` },
       });
       if (error) {
-        alert('인증번호 발송 실패: ' + error.message);
+        // 발송 제한(429/rate limit)은 사용자가 이해할 수 있는 안내로 변환
+        const msg = /rate limit|too many|security purposes|429/i.test(error.message)
+          ? '인증번호 발송이 너무 잦습니다. 1분 후에 다시 시도해 주세요.\n(계속 안 되면 아이디+비밀번호 방식으로 가입해 주세요.)'
+          : '인증번호 발송 실패: ' + error.message;
+        alert(msg);
         return;
       }
       setOtpSent(true);

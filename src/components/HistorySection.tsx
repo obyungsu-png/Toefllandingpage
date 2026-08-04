@@ -49,6 +49,31 @@ type StatusFilter = 'all' | 'completed' | 'incomplete';
 // Sample data shown when no real results exist
 const SAMPLE_RESULTS: TestResult[] = [];
 
+/** AI 채점 정보 추출 — 구조화 필드 우선, 없으면 legacy 'ai-feedback' wrongAnswer 파싱 */
+function getAiScoreInfo(r: TestResult | null | undefined): { band: number | null; raw: number | null; feedback: string } | null {
+  if (!r) return null;
+  if (typeof r.aiBandScore === 'number') {
+    return { band: r.aiBandScore, raw: typeof r.aiScore === 'number' ? r.aiScore : null, feedback: r.aiFeedback || '' };
+  }
+  const entry = r.wrongAnswers?.find(w => w.questionId === 'ai-feedback');
+  if (!entry) return null;
+  const bandMatch = String(entry.userAnswer ?? '').match(/([\d.]+)/);
+  const rawMatch = String(entry.correctAnswer ?? '').match(/([\d.]+)\s*\/\s*30/);
+  return {
+    band: bandMatch ? parseFloat(bandMatch[1]) : null,
+    raw: rawMatch ? parseFloat(rawMatch[1]) : null,
+    feedback: entry.explanation || '',
+  };
+}
+
+/** 밴드 점수 → CEFR 레이블 (EndSpeaking/EndWriting 화면과 동일 기준) */
+function getBandCefrLabel(band: number): { cefr: string; label: string; color: string } {
+  if (band >= 5) return { cefr: 'C1-C2', label: 'Expert', color: '#10b981' };
+  if (band >= 4) return { cefr: 'B2', label: 'Upper-Int', color: '#3b82f6' };
+  if (band >= 3) return { cefr: 'B1', label: 'Intermediate', color: '#e67e22' };
+  return { cefr: 'A1-A2', label: 'Developing', color: '#ef4444' };
+}
+
 export function HistorySection({ 
   themeColor = '#005f61',
   results = [],
@@ -221,6 +246,10 @@ export function HistorySection({
       total?: number;
       /** CMS 정답 미등록으로 채점 제외된 문제 수 */
       unscored?: number;
+      /** Speaking/Writing AI 밴드 점수 (0-6) — 있으면 correct/total 대신 표시 */
+      bandScore?: number;
+      /** Speaking/Writing AI Raw 점수 (0-30) */
+      rawScore?: number;
     }[];
     result: TestResult;
   }
@@ -276,12 +305,16 @@ export function HistorySection({
           const correctMcq = Math.max(0, mcqTotal - mcqWrongs);
           const correctBlanks = Math.max(0, fillBlanksTotal - blankWrongs);
           const accurate = correctMcq + correctBlanks;
+          // Speaking/Writing은 AI 밴드 점수가 핵심 지표 (정답 개수는 의미 없음)
+          const aiInfo = (s === 'Speaking' || s === 'Writing') ? getAiScoreInfo(r) : null;
           sections.push({
             name: s,
             status: 'completed',
             correct: accurate,
             total: r.totalQuestions,
             unscored: unscoredWrongs.length,
+            bandScore: aiInfo?.band ?? undefined,
+            rawScore: aiInfo?.raw ?? undefined,
           });
         } else {
           sections.push({ name: s, status: 'not-started' });
@@ -709,7 +742,18 @@ export function HistorySection({
                                     <p className="text-xs text-gray-600 mb-0.5">{section.name}</p>
                                     {section.status === 'completed' ? (
                                       <>
-                                        <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                        {section.bandScore != null ? (
+                                          <>
+                                            <p className="text-xs font-bold" style={{ color: getBandCefrLabel(section.bandScore).color }}>
+                                              Band {section.bandScore}
+                                            </p>
+                                            {section.rawScore != null && (
+                                              <p className="text-[10px] text-gray-400 mt-0.5">{section.rawScore}/30</p>
+                                            )}
+                                          </>
+                                        ) : (
+                                          <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                        )}
                                         {section.unscored && section.unscored > 0 ? (
                                           <p className="text-[10px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
                                             ⚠ 미채점 {section.unscored}
@@ -854,9 +898,20 @@ export function HistorySection({
                                         <p className="text-sm font-medium text-gray-800 mb-1">{section.name}</p>
                                         {section.status === 'completed' ? (
                                           <>
-                                            <p className="text-sm font-bold" style={{ color: themeColor }}>
-                                              {section.correct} / {section.total}
-                                            </p>
+                                            {section.bandScore != null ? (
+                                              <>
+                                                <p className="text-sm font-bold" style={{ color: getBandCefrLabel(section.bandScore).color }}>
+                                                  Band {section.bandScore}
+                                                </p>
+                                                {section.rawScore != null && (
+                                                  <p className="text-[11px] text-gray-400 mt-0.5">{section.rawScore}/30</p>
+                                                )}
+                                              </>
+                                            ) : (
+                                              <p className="text-sm font-bold" style={{ color: themeColor }}>
+                                                {section.correct} / {section.total}
+                                              </p>
+                                            )}
                                             {section.unscored && section.unscored > 0 ? (
                                               <p className="text-[11px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
                                                 ⚠ 미채점 {section.unscored}
@@ -1244,6 +1299,8 @@ export function HistorySection({
                     ? buildGlobalSlots(secCmsSection.questions || []).reduce((sum, s) => sum + s.count, 0)
                     : 0;
                   const secTotal = secCmsCount > 0 ? secCmsCount : (secRes?.totalQuestions || defaultCounts[sec] || 0);
+                  // Speaking/Writing은 AI 밴드 점수 표시
+                  const secAi = (sec === 'Speaking' || sec === 'Writing') ? getAiScoreInfo(secRes) : null;
                   return (
                     <button key={sec}
                       onClick={() => { setScoreModalSection(sec); setScoreModalModule(1); }}
@@ -1253,7 +1310,11 @@ export function HistorySection({
                       style={isActive ? { color: sc, borderBottomColor: sc } : {}}>
                       <span className="text-base">{sectionIcons[sec]}</span>
                       <span>{sec}</span>
-                      {secRes ? (
+                      {secAi?.band != null ? (
+                        <span className="text-[10px] font-bold ml-1" style={{ color: getBandCefrLabel(secAi.band).color }}>
+                          Band {secAi.band}
+                        </span>
+                      ) : secRes ? (
                         <span className="text-[10px] font-normal ml-1 opacity-70">
                           {secRes.correctAnswers}/{secTotal}
                         </span>
@@ -1277,6 +1338,51 @@ export function HistorySection({
                   </div>
                 ) : (
                   <>
+                    {/* AI 채점 점수 카드 — Speaking/Writing 전용 (TOEFL 성적표 스타일) */}
+                    {(() => {
+                      if (scoreModalSection !== 'Speaking' && scoreModalSection !== 'Writing') return null;
+                      const aiInfo = getAiScoreInfo(curResult);
+                      if (!aiInfo || aiInfo.band == null) return null;
+                      const cefr = getBandCefrLabel(aiInfo.band);
+                      const secColor = sectionColors[scoreModalSection];
+                      return (
+                        <div className="mx-5 md:mx-6 mt-5 mb-1 rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-4 shadow-sm">
+                          <div className="flex items-center gap-4">
+                            {/* 밴드 점수 원형 */}
+                            <div className="relative w-20 h-20 shrink-0">
+                              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="34" fill="none" stroke="#e5e7eb" strokeWidth="7" />
+                                <circle cx="40" cy="40" r="34" fill="none" stroke={cefr.color} strokeWidth="7"
+                                  strokeLinecap="round"
+                                  strokeDasharray={`${Math.min((aiInfo.band / 6) * 213.6, 213.6)} 213.6`} />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-extrabold" style={{ color: cefr.color }}>{aiInfo.band}</span>
+                                <span className="text-[9px] text-gray-400 font-semibold">/ 6.0</span>
+                              </div>
+                            </div>
+                            {/* 점수 상세 */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: secColor }}>
+                                {scoreModalSection === 'Speaking' ? '🎤 Speaking' : '✍️ Writing'} AI 채점
+                              </p>
+                              <div className="flex items-baseline gap-2 mt-0.5">
+                                {aiInfo.raw != null && (
+                                  <p className="text-lg font-extrabold text-gray-800">{aiInfo.raw}<span className="text-xs text-gray-400 font-semibold">/30</span></p>
+                                )}
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: cefr.color }}>
+                                  {cefr.cefr} · {cefr.label}
+                                </span>
+                              </div>
+                              {aiInfo.feedback && (
+                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed line-clamp-3 whitespace-pre-line">{aiInfo.feedback}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Score Summary */}
                     <div className="grid grid-cols-4 gap-3 px-5 md:px-6 pt-5 pb-4">
                       {[

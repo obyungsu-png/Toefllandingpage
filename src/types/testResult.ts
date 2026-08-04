@@ -28,4 +28,10 @@ export interface TestResult {
   answeredQuestions?: number[];
   /** 응답한 문제 수 (History 50문항 필터용) */
   answeredCount?: number;
+  /** AI 채점 Raw 점수 (Speaking/Writing, 0-30) */
+  aiScore?: number;
+  /** AI 채점 밴드 점수 (Speaking/Writing, 0-6) */
+  aiBandScore?: number;
+  /** AI 채점 피드백 요약 (Speaking/Writing) */
+  aiFeedback?: string;
 }

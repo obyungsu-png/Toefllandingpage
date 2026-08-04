@@ -1758,6 +1758,10 @@ function AppContent() {
       const updated = [...prev];
       updated[0] = {
         ...updated[0],
+        // 구조화된 AI 점수 필드 (History 점수 카드에서 바로 표시)
+        aiScore,
+        aiBandScore: bandScore,
+        aiFeedback: feedback,
         wrongAnswers: [
           ...(updated[0].wrongAnswers || []),
           {

@@ -19,11 +19,13 @@ const DEFAULT_AVATARS = [
   { url: '/avatars/avatar-female-brown.png', label: '여성 4' },
 ];
 
-// ── 커스텀 아바타 갤러리 (writing-avatars 버킷) ──
+// ── 커스텀 아바타 갤러리 (writing-avatars 버킷 + Supabase kv_store) ──
 // CMS에서 업로드한 아바타 이미지를 갤러리에 저장 → 다른 문제에서 재사용 가능
+// Supabase kv_store에 저장되어 기기/브라우저 간 동기화됨 (localStorage는 캐시)
 const CUSTOM_AVATAR_GALLERY_KEY = 'custom_avatar_gallery';
+const CUSTOM_AVATAR_GALLERY_KV_KEY = 'custom-avatar-gallery';
 
-/** 커스텀 아바타 갤러리 로드 (localStorage 캐시 + kv_store) */
+/** 커스텀 아바타 갤러리 로드 (localStorage 캐시 — 동기) */
 function loadCustomAvatarGallery(): Array<{ url: string; label: string }> {
   try {
     const cached = localStorage.getItem(CUSTOM_AVATAR_GALLERY_KEY);
@@ -32,7 +34,42 @@ function loadCustomAvatarGallery(): Array<{ url: string; label: string }> {
   return [];
 }
 
-/** 커스텀 아바타 갤러리에 새 이미지 추가 */
+/** 갤러리 전체를 Supabase kv_store에 저장 (원격 = 최종 소스) */
+async function saveCustomAvatarGalleryRemote(gallery: Array<{ url: string; label: string }>) {
+  try {
+    const { error } = await supabaseClient
+      .from('kv_store_e46cd33a')
+      .upsert({ key: CUSTOM_AVATAR_GALLERY_KV_KEY, value: gallery }, { onConflict: 'key' });
+    if (error) console.warn('[avatar-gallery] Supabase 저장 실패:', error.message);
+  } catch (e) {
+    console.warn('[avatar-gallery] Supabase 저장 실패:', e);
+  }
+}
+
+/** Supabase kv_store에서 갤러리 동기화 → localStorage 캐시 갱신 */
+async function syncCustomAvatarGalleryFromRemote(): Promise<Array<{ url: string; label: string }>> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('kv_store_e46cd33a')
+      .select('value')
+      .eq('key', CUSTOM_AVATAR_GALLERY_KV_KEY)
+      .maybeSingle();
+    if (!error && Array.isArray(data?.value)) {
+      // 로컬에만 있는 항목 병합 (오프라인 업로드 보존)
+      const remote = data.value as Array<{ url: string; label: string }>;
+      const merged = [...remote];
+      for (const l of loadCustomAvatarGallery()) {
+        if (!merged.some(r => r.url === l.url)) merged.push(l);
+      }
+      localStorage.setItem(CUSTOM_AVATAR_GALLERY_KEY, JSON.stringify(merged));
+      if (merged.length !== remote.length) saveCustomAvatarGalleryRemote(merged);
+      return merged;
+    }
+  } catch { /* ignore */ }
+  return loadCustomAvatarGallery();
+}
+
+/** 커스텀 아바타 갤러리에 새 이미지 추가 (로컬 + Supabase) */
 function addToCustomAvatarGallery(url: string, label?: string) {
   try {
     const gallery = loadCustomAvatarGallery();
@@ -40,24 +77,54 @@ function addToCustomAvatarGallery(url: string, label?: string) {
     if (gallery.some(a => a.url === url)) return;
     gallery.push({ url, label: label || `커스텀 ${gallery.length + 1}` });
     localStorage.setItem(CUSTOM_AVATAR_GALLERY_KEY, JSON.stringify(gallery));
+    saveCustomAvatarGalleryRemote(gallery);
   } catch { /* ignore */ }
 }
 
-/** 커스텀 아바타 갤러리에서 이미지 제거 */
+/** 커스텀 아바타 갤러리에서 이미지 제거 (로컬 + Supabase) */
 function removeFromCustomAvatarGallery(url: string) {
   try {
     const gallery = loadCustomAvatarGallery().filter(a => a.url !== url);
     localStorage.setItem(CUSTOM_AVATAR_GALLERY_KEY, JSON.stringify(gallery));
+    saveCustomAvatarGalleryRemote(gallery);
   } catch { /* ignore */ }
 }
 
-/** 아바타 선택 갤러리 — 기본 아바타 + 업로드된 커스텀 아바타 (hover 시 × 로 갤러리에서 삭제 가능) */
+/** 아바타 선택 갤러리 — 기본 아바타 + 업로드된 커스텀 아바타
+ *  + 버튼으로 새 아바타를 바로 갤러리에 추가 가능 (writing-avatars 버킷 + Supabase kv 저장)
+ *  hover 시 × 로 갤러리에서 삭제 가능 */
 function AvatarGallery({ selectedUrl, onSelect, sizeClass = 'w-9 h-9' }: {
   selectedUrl: string;
   onSelect: (url: string) => void;
   sizeClass?: string;
 }) {
   const [customAvatars, setCustomAvatars] = useState<Array<{ url: string; label: string }>>(() => loadCustomAvatarGallery());
+  const [uploading, setUploading] = useState(false);
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  // 마운트 시 Supabase에서 최신 갤러리 동기화 (기기 간 공유)
+  useEffect(() => {
+    let cancelled = false;
+    syncCustomAvatarGalleryFromRemote().then((g) => { if (!cancelled) setCustomAvatars(g); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleAddAvatar = async (file: File) => {
+    setUploading(true);
+    try {
+      const url = await uploadToStorage(await compressImage(file), 'writing-avatars');
+      addToCustomAvatarGallery(url, '커스텀');
+      setCustomAvatars(loadCustomAvatarGallery());
+      onSelect(url); // 방금 추가한 아바타를 바로 선택
+    } catch (e) {
+      console.error('[AvatarGallery] 아바타 추가 실패:', e);
+      alert('아바타 업로드에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setUploading(false);
+      if (addInputRef.current) addInputRef.current.value = '';
+    }
+  };
+
   const baseCls = `${sizeClass} rounded-full overflow-hidden border-2 transition-all`;
   return (
     <>
@@ -82,6 +149,26 @@ function AvatarGallery({ selectedUrl, onSelect, sizeClass = 'w-9 h-9' }: {
           </button>
         </div>
       ))}
+      {/* 갤러리에 새 아바타 추가 (+ 버튼) */}
+      <button
+        type="button"
+        title="갤러리에 새 아바타 추가 (모든 문제에서 재사용 가능)"
+        disabled={uploading}
+        onClick={() => addInputRef.current?.click()}
+        className={`${baseCls} border-dashed border-gray-300 text-gray-400 hover:border-[#1e6b73] hover:text-[#1e6b73] flex items-center justify-center text-lg font-bold disabled:opacity-50`}
+      >
+        {uploading ? '…' : '+'}
+      </button>
+      <input
+        ref={addInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleAddAvatar(file);
+        }}
+      />
     </>
   );
 }
