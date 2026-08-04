@@ -237,6 +237,7 @@ export interface TPOQuestion {
   imageUrl?: string;
   introImageUrl?: string; // Speaking intro screen image (Q1 Listen&Repeat intro, Q8 Interview intro)
   introAudioUrl?: string;  // Speaking intro screen audio (replaces TTS on intro screens)
+  introText?: string;      // Speaking intro screen text (shown above intro image)
   passageText?: string;
   duration?: number; // for speaking/writing
   // Speaking phase timing (seconds). Defaults when not set: audioPlayDuration=5, responseDelay=3, stopDuration=2.5
@@ -1604,6 +1605,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
     introImageUrl: '',
     introAudioFile: null as File | null,
     introAudioUrl: '',
+    introText: '',
     duration: 0,
     audioPlayDuration: 0,
     responseDelay: 0,
@@ -1792,6 +1794,8 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (question as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
     }
+    // Handle introText (Speaking 인트로 화면 텍스트 — 인트로 이미지 위에 표시)
+    (question as any).introText = ((formData as any).introText || '').trim();
 
     if (formData.videoUrl.trim()) {
       question.videoUrl = formData.videoUrl.trim();
@@ -2244,6 +2248,18 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
                 )}
                 <input type="file" accept="audio/*" className="text-sm w-full"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
+                />
+              </div>
+            )}
+            {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">📝 그룹 인트로 텍스트 (선택)</label>
+                <textarea
+                  value={(formData as any).introText || ''}
+                  onChange={(e) => setFormData({ ...formData, introText: e.target.value } as any)}
+                  placeholder="인트로 이미지 위에 표시될 안내 문구 (비우면 기본 문구/질문 텍스트 사용)"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-rose-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400 bg-white"
                 />
               </div>
             )}
@@ -3347,6 +3363,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
     introImageUrl: (question as any).introImageUrl || '',
     introAudioFile: null as File | null,
     introAudioUrl: (question as any).introAudioUrl || '',
+    introText: (question as any).introText || '',
     audioUrl: question.audioUrl || '',
     duration: question.duration || 0,
     audioPlayDuration: (question as any).audioPlayDuration || 0,
@@ -3535,6 +3552,8 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (updatedQuestion as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
     }
+    // introText (Speaking 인트로 화면 텍스트 — 인트로 이미지 위에 표시)
+    (updatedQuestion as any).introText = ((formData as any).introText || '').trim();
     if (formData.videoFile) {
       try {
         updatedQuestion.videoUrl = await uploadToStorage(formData.videoFile, 'listening-video');
@@ -3943,6 +3962,18 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
                 )}
                 <input type="file" accept="audio/*" className="text-sm w-full"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introAudioFile: f, introAudioUrl: URL.createObjectURL(f) } as any); }}
+                />
+              </div>
+            )}
+            {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">📝 그룹 인트로 텍스트 (선택)</label>
+                <textarea
+                  value={(formData as any).introText || ''}
+                  onChange={(e) => setFormData({ ...formData, introText: e.target.value } as any)}
+                  placeholder="인트로 이미지 위에 표시될 안내 문구 (비우면 기본 문구/질문 텍스트 사용)"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-rose-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400 bg-white"
                 />
               </div>
             )}

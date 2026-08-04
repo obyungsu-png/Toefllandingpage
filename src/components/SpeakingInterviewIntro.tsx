@@ -10,6 +10,7 @@ interface SpeakingInterviewIntroProps {
   onVolumeClick?: () => void;
   imageUrl?: string;      // CMS intro image (overrides hardcoded researcher)
   introAudioUrl?: string; // CMS intro audio (replaces TTS)
+  introText?: string;     // CMS intro text (shown above image; falls back to questionText)
   questionText?: string;  // CMS heading text
   isReviewMode?: boolean;
 }
@@ -19,6 +20,7 @@ export function SpeakingInterviewIntro({
   onHome,
   imageUrl,
   introAudioUrl,
+  introText,
   questionText,
   isReviewMode = false,
 }: SpeakingInterviewIntroProps) {
@@ -49,7 +51,7 @@ export function SpeakingInterviewIntro({
     }
 
     // ── TTS fallback ─────────────────────────────────────────────────────────
-    const textToRead = questionText ||
+    const textToRead = introText || questionText ||
       `You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.`;
 
     const stop = speakWithBritishFemaleVoice({
@@ -64,7 +66,7 @@ export function SpeakingInterviewIntro({
     return stop;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- play once on mount
 
-  const displayText = questionText ||
+  const displayText = introText || questionText ||
     'You have volunteered for a research study at your university about exercise programs. You will have a short online interview with a researcher. The researcher will ask you some questions.';
 
   return (
@@ -127,7 +129,7 @@ export function SpeakingInterviewIntro({
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-start bg-white p-4 md:p-12 pt-4 md:pt-16 overflow-auto">
         <div className="max-w-4xl w-full">
-          <p className="text-sm md:text-2xl text-gray-900 mb-4 md:mb-12 leading-snug md:leading-relaxed text-center">
+          <p className="text-sm md:text-2xl text-gray-900 mb-4 md:mb-12 leading-snug md:leading-relaxed text-center whitespace-pre-wrap">
             {displayText}
           </p>
 

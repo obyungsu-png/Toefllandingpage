@@ -10,11 +10,12 @@ interface SpeakingQ1Props {
   onHome?: () => void;
   imageUrl?: string;
   introAudioUrl?: string; // CMS-managed intro audio (replaces TTS)
+  introText?: string;     // CMS-managed intro text (shown above image; falls back to questionText)
   questionText?: string;  // CMS-managed heading text
   isReviewMode?: boolean;
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionText, isReviewMode = false }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText, questionText, isReviewMode = false }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -45,18 +46,19 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
     }
 
     // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
-    if (!questionText) return;
+    const textToRead = introText || questionText;
+    if (!textToRead) return;
 
     setIsAudioPlaying(true);
     return speakWithBritishFemaleVoice({
-      text: questionText,
+      text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
         if (!isReviewMode) setTimeout(() => onNext?.(), 500);
       },
     });
-  }, [introAudioUrl, onNext, questionText]);
+  }, [introAudioUrl, onNext, introText, questionText]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -119,8 +121,8 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, questionTe
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-4 md:p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center">
-            {questionText}
+          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center whitespace-pre-wrap">
+            {introText || questionText}
           </h1>
 
           <div className="flex justify-center my-6 md:my-8">

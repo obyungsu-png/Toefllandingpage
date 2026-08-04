@@ -233,6 +233,9 @@ export function SpeakingSectionWrapper({
   const getIntroAudioUrl = (questionIndex: number) => {
     return (sortedQuestions[questionIndex] as any)?.introAudioUrl;
   };
+  const getIntroText = (questionIndex: number) => {
+    return (sortedQuestions[questionIndex] as any)?.introText;
+  };
   const getTiming = (questionIndex: number) => ({
     audioPlayDuration: (sortedQuestions[questionIndex] as any)?.audioPlayDuration,
     responseDelay:     (sortedQuestions[questionIndex] as any)?.responseDelay,
@@ -257,7 +260,7 @@ export function SpeakingSectionWrapper({
       {screen === 'listen-repeat-intro' && (
         <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />
       )}
-      {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(0)} introAudioUrl={getIntroAudioUrl(0)} questionText={getQuestionText(0)} />}
+      {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(0)} introAudioUrl={getIntroAudioUrl(0)} introText={getIntroText(0)} questionText={getQuestionText(0)} />}
       {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} questionText={getQuestionText(0)} responseDelay={getTiming(0).responseDelay} stopDuration={getTiming(0).stopDuration} duration={getDuration(0)} />}
       {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(1)} audioUrl={getAudioUrl(1)} questionText={getQuestionText(1)} audioPlayDuration={getTiming(1).audioPlayDuration} />}
       {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} responseDelay={getTiming(1).responseDelay} stopDuration={getTiming(1).stopDuration} duration={getDuration(1)} />}
@@ -272,7 +275,7 @@ export function SpeakingSectionWrapper({
       {screen === 'q7-prep' && <SpeakingQ7Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} audioUrl={getAudioUrl(6)} questionText={getQuestionText(6)} audioPlayDuration={getTiming(6).audioPlayDuration} />}
       {screen === 'q7-record' && <SpeakingQ7Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} responseDelay={getTiming(6).responseDelay} stopDuration={getTiming(6).stopDuration} duration={getDuration(6)} />}
       {screen === 'take-interview-intro' && <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />}
-      {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(7)} introAudioUrl={getIntroAudioUrl(7)} questionText={getQuestionText(7)} />}
+      {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(7)} introAudioUrl={getIntroAudioUrl(7)} introText={getIntroText(7)} questionText={getQuestionText(7)} />}
       {screen === 'q8-prep' && <SpeakingQ8Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} audioUrl={getAudioUrl(7)} videoUrl={getVideoUrl(7)} questionText={getQuestionText(7)} audioPlayDuration={getTiming(7).audioPlayDuration} />}
       {screen === 'q8-record' && <SpeakingQ8Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} responseDelay={getTiming(7).responseDelay} stopDuration={getTiming(7).stopDuration} duration={getDuration(7)} />}
       {screen === 'q9-prep' && <SpeakingQ9Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(8) || getImageUrl(7)} audioUrl={getAudioUrl(8)} videoUrl={getVideoUrl(8)} questionText={getQuestionText(8)} audioPlayDuration={getTiming(8).audioPlayDuration} />}
