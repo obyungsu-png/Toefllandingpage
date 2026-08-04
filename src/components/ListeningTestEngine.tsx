@@ -195,6 +195,11 @@ export function ListeningTestEngine({
     if (segments[i].kind === 'question') displayQNum++;
   }
 
+  // 답변 저장 키 — 섹션 전체 기준 전역 번호 (M2는 M1 문제 수만큼 오프셋)
+  // module 로컬 번호를 쓰면 M2 답변이 M1 답변(1~15)을 덮어써 채점이 깨짐
+  const m1QuestionCount = allQuestions.filter(q => !isModule2Question(q)).length;
+  const globalAnswerKey = (module === 2 ? m1QuestionCount : 0) + displayQNum;
+
   // Section Intro 페이지 (리스닝 섹션 소개)
   if (current.kind === 'section-intro') {
     return (
@@ -239,6 +244,7 @@ export function ListeningTestEngine({
       key={current.legacyKey}
       question={question}
       qNum={displayQNum}
+      answerKey={globalAnswerKey}
       totalQuestions={totalQuestions}
       onHome={onHome}
       onBack={goBack}
@@ -612,6 +618,8 @@ function ModuleIntroScreen({
 interface ListeningQuestionScreenProps {
   question: any;
   qNum: number;
+  /** 답변 저장 키 (섹션 전체 전역 번호) — 생략 시 qNum 사용 */
+  answerKey?: number;
   totalQuestions: number;
   onHome: () => void;
   onBack: () => void;
@@ -621,6 +629,7 @@ interface ListeningQuestionScreenProps {
 function ListeningQuestionScreen({
   question,
   qNum,
+  answerKey,
   totalQuestions,
   onHome,
   onBack,
@@ -720,7 +729,7 @@ function ListeningQuestionScreen({
     if (typeof window !== 'undefined') {
       (window as any).__moduleAnswers = {
         ...((window as any).__moduleAnswers || {}),
-        [qNum]: option,
+        [answerKey ?? qNum]: option,
       };
     }
   };

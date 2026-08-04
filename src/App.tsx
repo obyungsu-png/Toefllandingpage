@@ -96,6 +96,7 @@ import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './ut
 import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
 import {
+  buildGlobalSlots,
   findCompleteWordsQuestionForNumber,
   getQuestionRangeLabel,
   getReadingQuestionTotal,
@@ -1786,7 +1787,7 @@ function AppContent() {
     const readingTotalQuestions = category === 'Reading'
       ? getReadingQuestionTotal(getCurrentSectionData('Reading'))
       : totalQuestions;
-    const effectiveTotalQuestions = category === 'Reading' ? readingTotalQuestions : totalQuestions;
+    let effectiveTotalQuestions = category === 'Reading' ? readingTotalQuestions : totalQuestions;
     const allAnswers: (string | null)[] = category === 'Reading'
       ? Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null)
       : Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null);
@@ -1837,72 +1838,100 @@ function AppContent() {
     const completeWordsQuestions = category === 'Reading'
       ? cmsQuestions.filter((q: any) => isCompleteWordsType(q?.questionType))
       : [];
-    // Complete Words slot 판정:
-    // 동일 questionNumber를 가진 MC 단일 문제(options ≥ 1)가 있으면
-    // Complete Words slot이 아니라 MC 문제로 취급 → 채점 skip 제외
-    const isCompleteWordsSlot = (questionNumber: number) => {
-      const hasIndividualMC = cmsQuestions.some((q: any) =>
-        String(q?.questionNumber) === String(questionNumber) &&
-        Array.isArray(q?.options) && q.options.length > 0
-      );
-      if (hasIndividualMC) return false;
-      return completeWordsQuestions.some((q: any) => {
-        const range = parseQuestionRange(q?.questionNumber);
-        return range ? questionNumber >= range.start && questionNumber <= range.end : false;
-      });
-    };
-    // MC 단일 문제(questionNumber 정확 일치)를 우선 매칭하고,
-    // 없으면 Complete Words range 기반으로 매칭
-    const findCmsQuestionForNumber = (questionNumber: number) => {
-      const exact = cmsQuestions.find((q: any) =>
-        String(q?.questionNumber) === String(questionNumber)
-      );
-      if (exact) return exact;
-      return cmsQuestions.find((q: any) => {
-        const range = parseQuestionRange(q?.questionNumber);
-        return range ? questionNumber >= range.start && questionNumber <= range.end : false;
-      });
-    };
+
+    // 전역 슬롯 — 엔진 표시 순서(M1→M2, questionNumber 오름차순)와 동일한 연속 번호.
+    // History 모달/리뷰의 슬롯과 같은 기준이므로 오답·미답변 매핑이 정확히 일치한다.
+    // (기존 questionNumber 직접 매칭 방식은 CW 빈칸 수가 10이 아니거나 CMS 번호가
+    //  표시 위치와 어긋나는 경우(TPO2/3) 채점이 깨졌음)
+    const scoringSlots = (category === 'Reading' || category === 'Listening')
+      ? buildGlobalSlots(allCmsQuestions)
+      : [];
+    const cwSlotStartByQuestion = new Map<any, number>();
+    scoringSlots.forEach(s => { if (s.isCompleteWords) cwSlotStartByQuestion.set(s.question, s.start); });
+    if (category === 'Listening' && scoringSlots.length > 0) {
+      // Listening은 M1+M2 전체를 한 번에 채점 — 슬롯 수가 실제 문제 수
+      effectiveTotalQuestions = scoringSlots.length;
+    }
 
     let correctCount = 0;
     let scoredCount = 0; // 정답이 등록된 문제 수 (CMS에 correctAnswer가 있는 문제만)
     const wrongAnswers: { questionId: string; questionText: string; userAnswer: string; correctAnswer: string; explanation?: string }[] = [];
     const answeredQuestions: number[] = []; // 실제로 응답한 문제 번호 (미답변 표시용)
 
-    for (let i = 0; i < Math.min(effectiveTotalQuestions, allAnswers.length); i++) {
-      const questionNumber = i + 1;
-      const cmsQ = findCmsQuestionForNumber(questionNumber) || cmsQuestions[i];
-      // CMS 문제 번호로 직접 매칭 우선 (엔진이 questionNumber 키로 저장) → 없으면 순차 슬롯 fallback
-      const userAns = sharedAnswers[String(cmsQ?.questionNumber ?? '')] ?? allAnswers[i];
-      const correctAns = cmsQ?.correctAnswer;
+    if (category === 'Reading' || category === 'Listening') {
+      // 슬롯 기반 채점 — CW 슬롯은 걄뛰고(아래 빈칸 루프에서 처리), MC만 슬롯 순서대로 채점.
+      // 답변 조회: Listening은 전역 번호 키, Reading은 CMS questionNumber 키로 저장되므로 둘 다 시도.
+      for (const slot of scoringSlots) {
+        if (slot.isCompleteWords) continue;
+        const questionNumber = slot.start;
+        const cmsQ = slot.question;
+        const userAns = sharedAnswers[questionNumber]
+          ?? sharedAnswers[String(cmsQ?.questionNumber ?? '')]
+          ?? allAnswers[questionNumber - 1];
+        const correctAns = cmsQ?.correctAnswer;
 
-      if (category === 'Reading' && isCompleteWordsSlot(questionNumber)) continue;
+        if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
 
-      if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
+        // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
+        if (!correctAns || correctAns === '') {
+          wrongAnswers.push({
+            questionId: String(questionNumber),
+            questionText: cmsQ?.questionText || cmsQ?.text || `Question ${questionNumber}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: '(정답 미등록)',
+            explanation: cmsQ?.explanation,
+          });
+          continue; // 오답/정답 카운트 증가 안 함
+        }
 
-      // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
-      if (!correctAns || correctAns === '') {
-        wrongAnswers.push({
-          questionId: String(i + 1),
-          questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
-          userAnswer: userAns || '(미답변)',
-          correctAnswer: '(정답 미등록)',
-          explanation: cmsQ?.explanation,
-        });
-        continue; // 오답/정답 카운트 증가 안 함
+        scoredCount++;
+        if (userAns && userAns === correctAns) {
+          correctCount++;
+        } else {
+          wrongAnswers.push({
+            questionId: String(questionNumber),
+            questionText: cmsQ?.questionText || cmsQ?.text || `Question ${questionNumber}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: correctAns,
+            explanation: cmsQ?.explanation,
+          });
+        }
       }
+    } else {
+      // Writing / Speaking — 기존 순차 루프 유지
+      for (let i = 0; i < Math.min(effectiveTotalQuestions, allAnswers.length); i++) {
+        const questionNumber = i + 1;
+        const cmsQ = cmsQuestions.find((q: any) => String(q?.questionNumber) === String(questionNumber)) || cmsQuestions[i];
+        // CMS 문제 번호로 직접 매칭 우선 (엔진이 questionNumber 키로 저장) → 없으면 순차 슬롯 fallback
+        const userAns = sharedAnswers[String(cmsQ?.questionNumber ?? '')] ?? allAnswers[i];
+        const correctAns = cmsQ?.correctAnswer;
 
-      scoredCount++;
-      if (userAns && userAns === correctAns) {
-        correctCount++;
-      } else {
-        wrongAnswers.push({
-          questionId: String(i + 1),
-          questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
-          userAnswer: userAns || '(미답변)',
-          correctAnswer: correctAns,
-          explanation: cmsQ?.explanation,
-        });
+        if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
+
+        // CMS에 정답이 없으면 → 채점 불가, 오답 집계에서 제외
+        if (!correctAns || correctAns === '') {
+          wrongAnswers.push({
+            questionId: String(i + 1),
+            questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: '(정답 미등록)',
+            explanation: cmsQ?.explanation,
+          });
+          continue; // 오답/정답 카운트 증가 안 함
+        }
+
+        scoredCount++;
+        if (userAns && userAns === correctAns) {
+          correctCount++;
+        } else {
+          wrongAnswers.push({
+            questionId: String(i + 1),
+            questionText: cmsQ?.questionText || cmsQ?.text || `Question ${i + 1}`,
+            userAnswer: userAns || '(미답변)',
+            correctAnswer: correctAns,
+            explanation: cmsQ?.explanation,
+          });
+        }
       }
     }
 
@@ -1915,11 +1944,15 @@ function AppContent() {
         ? ((typeof window !== 'undefined' && (window as any).__fillBlanksAnswers) || {})
         : {};
       const userAnswers = completeWordsAnswers[questionKey] || fallbackAnswers;
+      // blank-N 번호는 전역 슬롯 시작 번호 기준 (엔진 표시 위치와 일치)
+      // — CW 지문이 2개이거나 빈칸 수가 10이 아니어도 History 매핑이 정확함
+      const slotStart = cwSlotStartByQuestion.get(completeWordsQuestion)
+        ?? (range ? range.start : 1);
 
       parsedCompleteWords.blanks.forEach((blank, i) => {
         const userAns = userAnswers[blank.id] || userAnswers[i] || '';
         const correctAns = blank.answer;
-        const questionNumber = range ? range.start + i : i + 1;
+        const questionNumber = slotStart + i;
         if (userAns && String(userAns).trim() !== '') answeredQuestions.push(questionNumber);
         if (!correctAns || correctAns === '') {
           wrongAnswers.push({
