@@ -559,6 +559,14 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
     [tests, activeTestType]
   );
   const selectedDisplayNumber = chronoDisplayNumbers.get(selectedTestNumber) ?? selectedTestNumber;
+  // 자동번호에서 날짜순 표시 번호로의 역방향 매핑 (Test Number 입력을 자동번호 기준으로 받기 위함)
+  const chronoReverseNumbers = useMemo(() => {
+    const m = new Map<number, number>();
+    chronoDisplayNumbers.forEach((disp, internal) => {
+      if (!m.has(disp)) m.set(disp, internal);
+    });
+    return m;
+  }, [chronoDisplayNumbers]);
 
   // Helper: Get all tests organized by type
   const getAllTestsOrganized = () => {
@@ -917,18 +925,19 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             </div>
           </div>
 
-          {/* Test Number */}
+          {/* Test Number — 자동배열 번호 기준으로 표시/입력 (날짜순 학생 화면 번호와 동일) */}
           <div>
-            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Test Number</label>
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Test Number (자동배열)</label>
             <input
               type="number"
               min="1"
               max={activeTestType === 'TPO' ? 200 : 100}
-              value={selectedTestNumber}
+              value={selectedDisplayNumber}
               onChange={(e) => {
                 const num = parseInt(e.target.value);
                 if (!isNaN(num) && num > 0) {
-                  setSelectedTestNumber(num);
+                  // 입력한 자동번호 → 저장 번호 역조회 (맵에 없으면 입력값을 그대로 저장 번호로 사용)
+                  setSelectedTestNumber(chronoReverseNumbers.get(num) ?? num);
                 }
               }}
               placeholder={`Enter ${activeTestType} number`}
@@ -936,10 +945,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             />
             {getExistingTest() && (
               <p className="mt-1.5 text-xs font-semibold text-[#1e6b73]">
-                학생 화면 표시 번호: {activeTestType} {selectedDisplayNumber}
-                {getExistingTest()?.year && getExistingTest()?.month
-                  ? ` (${getExistingTest()!.year}년 ${getExistingTest()!.month}월${getExistingTest()!.day ? ` ${getExistingTest()!.day}일` : ''})`
-                  : ''}
+                {getExistingTest()!.year}년 {getExistingTest()!.month}월{getExistingTest()!.day ? ` ${getExistingTest()!.day}일` : ''} 시행 — 학생 화면에도 {activeTestType} {selectedDisplayNumber}번으로 표시됩니다
               </p>
             )}
             {getExistingTest() && (
@@ -948,13 +954,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                 onClick={() => { setShowRenumberForm(!showRenumberForm); setRenumberError(null); }}
                 className="mt-2 text-xs text-[#1e6b73] underline font-semibold"
               >
-                🔀 이 {activeTestType} {selectedTestNumber}번을 다른 번호로 옮기기
+                🔀 이 {activeTestType} {selectedDisplayNumber}번을 다른 번호로 옮기기
               </button>
             )}
             {showRenumberForm && (
               <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-xs text-gray-600 mb-2">
-                  {activeTestType} {selectedTestNumber} → 새 번호로 이동 (기존 문제/설정 전부 그대로 옮겨감)
+                  {activeTestType} {selectedDisplayNumber} → 새 번호로 이동 (기존 문제/설정 전부 그대로 옮겨감)
                 </p>
                 <div className="flex gap-2 items-center">
                   <input
@@ -1129,7 +1135,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         {getExistingTest() && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800 mb-2">
-              <strong>{activeTestType} {selectedTestNumber}</strong> exists with the following content:
+              <strong>{activeTestType} {selectedDisplayNumber}</strong> exists with the following content:
             </p>
             <div className="flex gap-4 text-sm">
               {Object.entries(getTestStats(getExistingTest()!)).map(([section, count]) => (
@@ -1202,7 +1208,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22] shadow-lg"
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add {selectedSection} Question to {activeTestType} {selectedTestNumber}
+          Add {selectedSection} Question to {activeTestType} {selectedDisplayNumber}
         </Button>
         <Button
           onClick={() => setShowBulkUploadForm(!showBulkUploadForm)}
@@ -1534,7 +1540,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                 </button>
               </div>
               <p className="text-sm text-amber-800">
-                먼저 {activeTestType} {selectedTestNumber}번 TPO/Test를 선택하거나 생성해주세요.
+                먼저 {activeTestType} {selectedDisplayNumber}번 TPO/Test를 선택하거나 생성해주세요.
                 Vocab Extractor는 선택된 TPO의 모든 섹션(Reading/Listening/Speaking/Writing)에서 단어를 추출합니다.
               </p>
             </div>
