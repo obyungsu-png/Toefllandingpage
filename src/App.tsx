@@ -8,7 +8,7 @@ import imgImage1 from "figma:asset/e17945b43c2743639bcbfa961f9b9c7b697fb93e.png"
 import imgImage2 from "figma:asset/7615d3db1985346bf3765462a56a60209586cceb.png";
 import searchIcon from 'figma:asset/ab6582843d6eb491acced5759e69c588ae59039e.png';
 import zooMapImage from 'figma:asset/68cfb904670a085b88221992ab3b674e458ae5d2.png';
-import { BookOpen, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, BookMarked, ClipboardCheck, LayoutGrid, GraduationCap, Clock, Zap, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Toaster, toast } from './components/ui/sonner';
 import type { LMSContent } from './components/LMSSection';
 import type { TPOQuestion, TPOTest } from './components/ContentManagement';
@@ -8425,7 +8425,7 @@ function AppContent() {
       {/* Bottom Navigation - Mobile */}
       {isMobile && !isInQuestionMode && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-          <div className="grid grid-cols-5 h-16">
+          <div className="grid grid-cols-6 h-16">
             <button
               onClick={() => handleTabChange('TPO')}
               className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
@@ -8465,13 +8465,28 @@ function AppContent() {
             <button
               onClick={() => handleTabChange('Training')}
               className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
-                activeTab === 'Training' 
-                  ? 'text-[#005f61]' 
+                activeTab === 'Training' && !location.pathname.includes('/vocabulary')
+                  ? 'text-[#005f61]'
                   : 'text-gray-500'
               }`}
             >
-              <GraduationCap className={`w-5 h-5 ${activeTab === 'Training' ? 'text-[#005f61]' : 'text-gray-500'}`} />
+              <GraduationCap className={`w-5 h-5 ${activeTab === 'Training' && !location.pathname.includes('/vocabulary') ? 'text-[#005f61]' : 'text-gray-500'}`} />
               <span className="text-[10px] font-medium">Train</span>
+            </button>
+
+            <button
+              onClick={() => {
+                handleTabChange('Training');
+                navigate('/specialized-training/vocabulary');
+              }}
+              className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
+                activeTab === 'Training' && location.pathname.includes('/vocabulary')
+                  ? 'text-[#005f61]'
+                  : 'text-gray-500'
+              }`}
+            >
+              <BookMarked className={`w-5 h-5 ${activeTab === 'Training' && location.pathname.includes('/vocabulary') ? 'text-[#005f61]' : 'text-gray-500'}`} />
+              <span className="text-[10px] font-medium">Vocab</span>
             </button>
 
             <button
