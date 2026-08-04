@@ -6,6 +6,7 @@ import {
   isCompleteWordsType,
   isModule2Question,
   getCompleteWordsBlankCount,
+  buildGlobalSlots,
 } from '../utils/readingQuestionUtils';
 
 interface ReadingTestEngineProps {
@@ -195,6 +196,16 @@ export function ReadingTestEngine({
 
   const current = segments[segmentIndex];
 
+  // 답변 저장 키 — 섹션 전체 기준 전역 슬롯 번호 (M2는 M1 슬롯 수만큼 오프셋됨).
+  // CMS questionNumber를 키로 쓰면 M1/M2에 같은 번호가 있을 때 M2 답변이
+  // M1 답변을 덮어써 채점이 깨짐 (Listening M2와 동일한 문제).
+  // 채점기(App.tsx)는 sharedAnswers[슬롯번호]를 최우선으로 조회하므로 정확히 매칭됨.
+  const slotStartByQuestion = new Map<any, number>();
+  for (const s of buildGlobalSlots(allQuestions)) {
+    slotStartByQuestion.set(s.question, s.start);
+  }
+  const currentAnswerKey = slotStartByQuestion.get(current.question);
+
   if (current.kind === 'cw') {
     return (
       <FillBlanksTestScreen
@@ -228,6 +239,7 @@ export function ReadingTestEngine({
         passageTitle={passageTitle}
         questionIndex={displayIndexBeforeCurrent}
         totalQuestions={totalDisplayCount}
+        answerKey={currentAnswerKey}
         onHome={onHome}
         onBack={goBack}
         onNext={goNext}
@@ -254,6 +266,7 @@ export function ReadingTestEngine({
       passageText={passageText}
       questionIndex={displayIndexBeforeCurrent}
       totalQuestions={totalDisplayCount}
+      answerKey={currentAnswerKey}
       onHome={onHome}
       onBack={goBack}
       onNext={goNext}

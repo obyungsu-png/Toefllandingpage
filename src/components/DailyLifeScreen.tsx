@@ -16,8 +16,10 @@ interface DailyLifeScreenProps {
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
-  /** 리뷰 모드 — 하이라이트/밑줄/단어 해석 툴바 활성화 */
+  /** 리뷰 모드 — 하이라이트/밑줄/단어 해석 툴ir바 활성화 */
   isReviewMode?: boolean;
+  /** 답변 저장 키 (섹션 전체 전역 슬롯 번호) — 생략 시 CMS questionNumber 사용 */
+  answerKey?: number | string;
   /** Supabase 하이라이트 저장용 테스트 ID */
   testId?: string;
   /** Supabase 하이라이트 저장용 지문 키 */
@@ -42,14 +44,16 @@ export function DailyLifeScreen({
   onBack,
   onNext,
   isReviewMode = false,
+  answerKey,
   testId,
   passageKey,
 }: DailyLifeScreenProps) {
+  // 답변 저장/복원 키 — 전역 슬롯 번호 우선 (M1/M2 번호 충돌 방지)
+  const storageKey = answerKey ?? question?.questionNumber ?? '';
   // 이전에 선택한 답이 있으면 복원 (앞으로 갔다가 돌아와도 답 유지)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    const qNum = question?.questionNumber ?? '';
-    return (window as any).__moduleAnswers?.[qNum] ?? null;
+    return (window as any).__moduleAnswers?.[storageKey] ?? null;
   });
   const [zoom, setZoom] = useState(1);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -218,7 +222,7 @@ export function DailyLifeScreen({
                         onChange={() => {
                           setSelectedAnswer(option);
                           if (typeof window !== 'undefined') {
-                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [storageKey]: option };
                           }
                         }}
                         label={option.replace(/^[A-D]\.\s*/, '')}
@@ -241,7 +245,7 @@ export function DailyLifeScreen({
                         onChange={() => {
                           setSelectedAnswer(option);
                           if (typeof window !== 'undefined') {
-                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [questionNumber]: option };
+                            (window as any).__moduleAnswers = { ...((window as any).__moduleAnswers || {}), [storageKey]: option };
                           }
                         }}
                         label={option.replace(/^[A-D]\.\s*/, '')}
