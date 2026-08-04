@@ -618,7 +618,7 @@ export function TrainingSection({
             {/* Row 1: Year */}
             <div className="flex items-center gap-4 md:gap-5">
               <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-14">Year</span>
-              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide min-w-0 flex-1">
                 {yearOptions.map(opt => (
                   <FilterPill
                     key={opt.value}
@@ -633,7 +633,7 @@ export function TrainingSection({
             {/* Row 2: Month */}
             <div className="flex items-center gap-4 md:gap-5">
               <span className="text-sm md:text-base font-bold text-gray-400 shrink-0 w-14">Month</span>
-              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide min-w-0 flex-1">
                 {monthOptions.map(opt => (
                   <FilterPill
                     key={opt.value}

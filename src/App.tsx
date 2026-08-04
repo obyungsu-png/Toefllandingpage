@@ -7035,7 +7035,8 @@ function AppContent() {
 
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
+    // 모바일 하단 네비(h-16, fixed)가 콘텐츠를 가리지 않도록 패딩 확보 (문제 풀이 중엔 네비 숨김 → 패딩 불필요)
+    <div className={`min-h-screen bg-[#f5f5f5] ${isMobile && !isInQuestionMode ? 'pb-16' : ''}`}>
       <Toaster position="top-right" richColors />
       {/* 오프라인 모드 표시 */}
       {!isOnline && (

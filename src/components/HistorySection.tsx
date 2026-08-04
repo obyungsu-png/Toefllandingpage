@@ -639,8 +639,8 @@ export function HistorySection({
 
         {/* Mobile Tab Bar (horizontal, shown only on small screens) */}
         <div className="md:hidden flex flex-col w-full">
-          {/* Mobile horizontal category tabs */}
-          <div className="bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide shrink-0">
+          {/* Mobile horizontal category tabs — min-w-0으로 flex 부모 내 가로 스크롤 보장 */}
+          <div className="bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide shrink-0 min-w-0 max-w-full">
             {tabs.map(tab => {
               const isActive = activeTab === tab;
               return (
