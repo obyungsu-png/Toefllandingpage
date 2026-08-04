@@ -10,6 +10,7 @@ import { RestartConfirmModal } from './RestartConfirmModal';
 import { TestResult } from '../types/testResult';
 import { WrongNotesManager } from './WrongNotesManager';
 import { buildGlobalSlots, getModuleSlots, getModuleQuestionCount } from '../utils/readingQuestionUtils';
+import { computeChronoDisplayNumbers } from '../utils/testLabel';
 
 const ReportSection = lazy(() =>
   import('./ReportSection').then(module => ({ default: module.ReportSection }))
@@ -224,20 +225,24 @@ export function HistorySection({
     result: TestResult;
   }
 
-  // 표시용 테스트 이름 — PDF와 동일하게 year/month가 있으면 "TPO 2026년 7월" 형태로 표시.
-  // tpoTests에서 result와 매칭하여 year/month를 가져옴. 없으면 기존 testName 그대로 사용 (이전 데이터 호환).
+  // 표시용 테스트 이름 — 자동배열 번호(연·월·일 시행 순서)를 카드/PDF와 동일하게 표시.
+  // 이전 데이터(year/month 라벨, 낸부 번호)도 자동배열 번호로 변환해 일치시킨다.
+  const chronoMaps = useMemo(() => {
+    const maps = new Map<string, Map<number, number>>();
+    (['TPO', 'Test', 'Training'] as const).forEach(type => {
+      maps.set(type, computeChronoDisplayNumbers(tpoTests ?? [], type));
+    });
+    return maps;
+  }, [tpoTests]);
+
   const getDisplayTestName = (r: TestResult): string => {
-    if (!tpoTests || tpoTests.length === 0) return r.testName;
-    const matched = tpoTests.find(t =>
-      t.testNumber === r.testNumber &&
-      t.testType === r.type
-    );
-    if (matched?.year && matched?.month && r.testNumber != null) {
-      const examLabel = `${matched.year}년 ${matched.month}월`;
-      // "TPO 1 - Reading" → "TPO 2026년 7월 - Reading" (testNumber를 examLabel로 교체)
-      return r.testName.replace(String(r.testNumber), examLabel);
-    }
-    return r.testName;
+    if (!tpoTests || tpoTests.length === 0 || r.testNumber == null) return r.testName;
+    const type = r.type || 'TPO';
+    const displayNum = chronoMaps.get(type)?.get(r.testNumber);
+    if (!displayNum) return r.testName;
+    // 섹션 접미사 유지: "TPO ... - Reading" → "TPO {displayNum} - Reading"
+    const sectionMatch = r.testName.match(/(\s*-\s*(Reading|Listening|Writing|Speaking))\s*$/i);
+    return `${type} ${displayNum}${sectionMatch ? sectionMatch[1] : ''}`;
   };
 
   const displayRecords: DisplayRecord[] = useMemo(() => {
@@ -392,7 +397,8 @@ export function HistorySection({
   };
 
   const handleViewResults = (result: TestResult) => {
-    setSelectedResult(result);
+    // 모달 헤더도 자동배열 번호 라벨로 통일 (이전에 저장된 year/month 이름도 변환)
+    setSelectedResult({ ...result, testName: getDisplayTestName(result) });
     const sec = (result.category as any) ||
       (result.testName.includes('Reading') ? 'Reading'
       : result.testName.includes('Listening') ? 'Listening'

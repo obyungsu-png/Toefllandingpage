@@ -7,6 +7,8 @@ import { getQuestionRangeLabel } from '../utils/readingQuestionUtils';
 interface TPODetailViewProps {
   testType: string;
   testNumber: number;
+  /** 자동배열 표시 번호 — 생략 시 testNumber 표시 */
+  displayNumber?: number;
   sections: TPOSection[];
   onBack: () => void;
   onAddQuestion: (section: 'Reading' | 'Listening' | 'Speaking' | 'Writing') => void;
@@ -18,6 +20,7 @@ interface TPODetailViewProps {
 export function TPODetailView({
   testType,
   testNumber,
+  displayNumber,
   sections,
   onBack,
   onAddQuestion,
@@ -110,7 +113,7 @@ export function TPODetailView({
             </button>
             <div>
               <h1 className="text-2xl font-bold text-white">
-                {testType} {testNumber}
+                {testType} {displayNumber ?? testNumber}
               </h1>
               <p className="text-white/80 text-sm">
                 총 {questions.length}개 문제

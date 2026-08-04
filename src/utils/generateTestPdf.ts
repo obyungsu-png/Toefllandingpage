@@ -456,13 +456,18 @@ export function generateTestPdf(
   const today = new Date();
   const dateText = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
 
-  // 표시 라벨 — year/month가 있으면 "2026년 7월" 형태 (실전문제처럼 연도/월로 자동 기입),
-  // 없으면 내부 testNumber로 fallback (이전 데이터 호환)
-  const hasExamDate = !!(testData.year && testData.month);
-  const examLabel = hasExamDate
+  // 표시 라벨 — 자동배열 번호(displayNumber)가 있으면 최우선 사용 (카드/History와 동일 번호).
+  // 없으면 year/month ("2026년 7월"), 그것도 없으면 낸부 testNumber로 fallback
+  const hasDisplayNum = !!testData.displayNumber;
+  const hasExamDate = !hasDisplayNum && !!(testData.year && testData.month);
+  const examLabel = hasDisplayNum
+    ? `${testData.displayNumber}`
+    : hasExamDate
     ? `${testData.year}년 ${testData.month}월`
     : `No. ${testData.testNumber}`;
-  const fileLabel = hasExamDate
+  const fileLabel = hasDisplayNum
+    ? `${testData.displayNumber}`
+    : hasExamDate
     ? `${testData.year}-${String(testData.month).padStart(2, '0')}`
     : `${testData.testNumber}`;
 

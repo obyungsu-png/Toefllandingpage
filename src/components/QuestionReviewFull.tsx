@@ -276,8 +276,10 @@ export function QuestionReviewFull({
   // Writing review — AI 채점(WritingReviewAiTutor) 팝업 표시
   const [showWritingAiGrader, setShowWritingAiGrader] = useState<'email' | 'discussion' | null>(null);
 
-  // Extract TPO number from test name and find test data
+  // TPO 번호 — 결과 레코드에 저장된 낸부 testNumber를 최우선 사용.
+  // (testName 정규식 파싱은 "TPO 2026년 1월" 형식에서 2026을 번호로 오인하는 버그가 있었음)
   const tpoNumber = (() => {
+    if (result.testNumber != null) return result.testNumber;
     const match = result.testName.match(/TPO\s+(\d+)/i);
     return match ? parseInt(match[1]) : null;
   })();

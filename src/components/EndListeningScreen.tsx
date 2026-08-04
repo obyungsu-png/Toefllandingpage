@@ -65,7 +65,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
       return;
     }
     generateVocabPdf(vocab, mode, {
-      testData: { testType: testData.testType, testNumber: testData.testNumber },
+      testData: { testType: testData.testType, testNumber: testData.displayNumber ?? testData.testNumber },
       level: vocabLevel,
     });
     setVocabMenuOpen(false);

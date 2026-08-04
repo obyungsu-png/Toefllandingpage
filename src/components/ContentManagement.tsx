@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
+import { computeChronoDisplayNumbers } from '../utils/testLabel';
 import { extractVocabFromTest, vocabToCSV, type ExtractedVocab } from '../utils/extractVocab';
 import { generateVocabPdf } from '../utils/generateVocabPdf';
 
@@ -362,6 +363,8 @@ export interface TPOTest {
   day?: number;
   isOfficial?: boolean;
   dateMemo?: string;
+  /** 자동배열 표시 번호 (연·월·일 시행 순서) — 화면/PDF 표시 전용, 데이터 저장 안 함 */
+  displayNumber?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -463,6 +466,14 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       setDateMemo('');
     }
   }, [activeTestType, selectedTestNumber, tests]);
+
+  // 자동배열 번호 — 학생 화면(카드/History/PDF)과 같은 번호를 CMS에도 표시하기 위한 매핑.
+  // 데이터 작업(testNumber)은 그대로 두고, 화면 라벨만 이 번호를 사용한다.
+  const chronoDisplayNumbers = useMemo(
+    () => computeChronoDisplayNumbers(tests ?? [], activeTestType),
+    [tests, activeTestType]
+  );
+  const selectedDisplayNumber = chronoDisplayNumbers.get(selectedTestNumber) ?? selectedTestNumber;
 
   // Helper: Get all tests organized by type
   const getAllTestsOrganized = () => {
@@ -741,6 +752,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
         <TPODetailView
           testType={activeTestType}
           testNumber={selectedTestNumber}
+          displayNumber={selectedDisplayNumber}
           sections={tests.find(t => t.testType === activeTestType && t.testNumber === selectedTestNumber)?.sections || []}
           onBack={() => setViewMode('overview')}
           onAddQuestion={(section) => {
@@ -837,6 +849,14 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
               placeholder={`Enter ${activeTestType} number`}
               className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent text-sm md:text-base"
             />
+            {getExistingTest() && (
+              <p className="mt-1.5 text-xs font-semibold text-[#1e6b73]">
+                학생 화면 표시 번호: {activeTestType} {selectedDisplayNumber}
+                {getExistingTest()?.year && getExistingTest()?.month
+                  ? ` (${getExistingTest()!.year}년 ${getExistingTest()!.month}월${getExistingTest()!.day ? ` ${getExistingTest()!.day}일` : ''})`
+                  : ''}
+              </p>
+            )}
             {getExistingTest() && (
               <button
                 type="button"
@@ -1204,6 +1224,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           <QuestionUploadForm
             testType={activeTestType}
             testNumber={selectedTestNumber}
+            displayNumber={selectedDisplayNumber}
             section={selectedSection}
             questionTypes={questionTypes[selectedSection]}
             onSubmit={(question) => {
@@ -1261,6 +1282,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
             key={editingQuestion.id}
             testType={activeTestType}
             testNumber={selectedTestNumber}
+            displayNumber={selectedDisplayNumber}
             section={selectedSection}
             questionTypes={questionTypes[selectedSection]}
             question={editingQuestion}
@@ -1327,6 +1349,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           <BulkUploadForm
             testType={activeTestType}
             testNumber={selectedTestNumber}
+            displayNumber={selectedDisplayNumber}
             section={selectedSection}
             questionTypeOptions={questionTypes[selectedSection]}
             onSubmit={(questions) => {
@@ -1403,6 +1426,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
           <MediaMatcherPanel
             test={t}
             section={s}
+            displayNumber={selectedDisplayNumber}
             onUpdateTest={onUpdateTest}
             onClose={() => setShowMediaMatcher(false)}
           />
@@ -1443,7 +1467,7 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
       {getExistingTest() && (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
           <h3 className="font-medium text-gray-800 mb-4">
-            {selectedSection} Questions for {activeTestType} {selectedTestNumber}
+            {selectedSection} Questions for {activeTestType} {selectedDisplayNumber}
           </h3>
           
           {(() => {
@@ -1567,13 +1591,15 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 interface QuestionUploadFormProps {
   testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
+  /** 자동배열 표시 번호 — 생략 시 testNumber 표시 */
+  displayNumber?: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypes: string[];
   onSubmit: (question: TPOQuestion) => void;
   onCancel: () => void;
 }
 
-function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSubmit, onCancel }: QuestionUploadFormProps) {
+function QuestionUploadForm({ testType, testNumber, displayNumber, section, questionTypes, onSubmit, onCancel }: QuestionUploadFormProps) {
   const timestampAudioRef = useRef<HTMLAudioElement | null>(null);
   const [formData, setFormData] = useState({
     questionNumber: 1 as number | string,
@@ -1907,7 +1933,7 @@ function QuestionUploadForm({ testType, testNumber, section, questionTypes, onSu
       className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
     >
       <h3 className="text-xl font-medium text-gray-800 mb-4">
-        Add {section} Question - {testType} {testNumber}
+        Add {section} Question - {testType} {displayNumber ?? testNumber}
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -3661,7 +3687,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
       className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]"
     >
       <h3 className="text-xl font-medium text-gray-800 mb-4">
-        Edit {section} Question - {testType} {testNumber}
+        Edit {section} Question - {testType} {displayNumber ?? testNumber}
       </h3>
 
       {/* Info banner: number change creates new question */}
@@ -4853,13 +4879,15 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
 interface BulkUploadFormProps {
   testType: 'TPO' | 'Test' | 'Training';
   testNumber: number;
+  /** 자동배열 표시 번호 — 생략 시 testNumber 표시 */
+  displayNumber?: number;
   section: 'Reading' | 'Listening' | 'Speaking' | 'Writing';
   questionTypeOptions?: string[];
   onSubmit: (questions: TPOQuestion[]) => void;
   onCancel: () => void;
 }
 
-function BulkUploadForm({ testType, testNumber, section, questionTypeOptions, onSubmit, onCancel }: BulkUploadFormProps) {
+function BulkUploadForm({ testType, testNumber, displayNumber, section, questionTypeOptions, onSubmit, onCancel }: BulkUploadFormProps) {
   const [mode, setMode] = useState<'text' | 'csv'>('text');
   const [rawText, setRawText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -6832,7 +6860,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
         <h3 className="text-xl font-medium text-gray-800 mb-4">
-          {getTotalQuestionCount(parsed)}개 문제 파싱 완료 — {testType} {testNumber} {section}
+          {getTotalQuestionCount(parsed)}개 문제 파싱 완료 — {testType} {displayNumber ?? testNumber} {section}
         </h3>
         <div className="max-h-[32rem] overflow-y-auto space-y-2 mb-4">
           {parsed.map((q, i) => {
@@ -6889,7 +6917,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   return (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
       <h3 className="text-xl font-medium text-gray-800 mb-4">
-        Bulk Upload {section} Questions — {testType} {testNumber}
+        Bulk Upload {section} Questions — {testType} {displayNumber ?? testNumber}
       </h3>
 
       {/* Mode tabs */}
@@ -7033,11 +7061,14 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 function MediaMatcherPanel({
   test,
   section,
+  displayNumber,
   onUpdateTest,
   onClose,
 }: {
   test: TPOTest;
   section: TPOSection;
+  /** 자동배열 표시 번호 — 생략 시 testNumber 표시 */
+  displayNumber?: number;
   onUpdateTest: (t: TPOTest) => void;
   onClose: () => void;
 }) {
@@ -7163,7 +7194,7 @@ function MediaMatcherPanel({
     <div className="bg-white rounded-lg shadow-lg border border-indigo-200 p-6 animate-[fadeSlideUp_0.3s_ease-out] mb-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-gray-800">
-          미디어 일괄 매칭 — {test.testType} {test.testNumber} {section.sectionType}
+          미디어 일괄 매칭 — {test.testType} {displayNumber ?? test.testNumber} {section.sectionType}
         </h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
       </div>
@@ -7542,8 +7573,10 @@ function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
 }
 
 // ─── Vocab Extractor Panel (TPO별 단어 추출/시험지 생성) ────────────────────────
-function VocabExtractorPanel({ test, onClose }: {
+function VocabExtractorPanel({ test, displayNumber, onClose }: {
   test: TPOTest;
+  /** 자동배열 표시 번호 — 생략 시 testNumber 표시 */
+  displayNumber?: number;
   onClose: () => void;
 }) {
   const [maxWords, setMaxWords] = useState(60);
@@ -7590,7 +7623,7 @@ function VocabExtractorPanel({ test, onClose }: {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-emerald-900 flex items-center gap-2">
           <BookOpen className="w-5 h-5" />
-          Vocab Extractor — {test.testType} {test.testNumber}
+          Vocab Extractor — {test.testType} {displayNumber ?? test.testNumber}
         </h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />

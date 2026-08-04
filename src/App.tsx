@@ -105,6 +105,7 @@ import {
   normalizeCompleteWordsPassage,
   parseQuestionRange,
 } from './utils/readingQuestionUtils';
+import { computeChronoDisplayNumbers } from './utils/testLabel';
 import { checkGradingTrigger } from './utils/gradingTrigger';
 
 type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
@@ -1481,14 +1482,14 @@ function AppContent() {
     if (!currentTest?.tpoNumber) {
       return currentType;
     }
-    // year/month가 있으면 "TPO 2026년 7월" 형태로 표시 (실전문제처럼 연도/월로 자동 기입)
-    // PDF·History와 동일하게 연도/월 기반 라벨 사용 — testNumber는 내부 고유 식별자로만 사용
+    // 자동배열 번호(연·월·일 시행 순서)를 모든 화면에서 동일하게 표시 — 카드/History/PDF가 같은 번호 사용
     const bank = testBankType === 'tpo' ? tpoTests
       : testBankType === 'training' ? trainingTests
       : testTests;
     const test = bank?.find(t => t.testNumber === currentTest.tpoNumber);
-    if (test?.year && test?.month) {
-      return `${currentType} ${test.year}년 ${test.month}월`;
+    if (test) {
+      const displayNum = computeChronoDisplayNumbers(bank ?? [], test.testType).get(test.testNumber);
+      if (displayNum) return `${currentType} ${displayNum}`;
     }
     // fallback: 내부 testNumber (이전 데이터 — year/month 미설정)
     return `${currentType} ${currentTest.tpoNumber}`;
@@ -2131,13 +2132,17 @@ function AppContent() {
   // Helper function to get current test data
   const getCurrentTestData = (): TPOTest | null => {
     if (!currentTest) return null;
-    
+
     const tests = testBankType === 'tpo'
       ? tpoTests
       : testBankType === 'training'
       ? trainingTests
       : testTests;
-    return tests.find(t => t.testNumber === currentTest.tpoNumber) || null;
+    const found = tests.find(t => t.testNumber === currentTest.tpoNumber) || null;
+    if (!found) return null;
+    // 자동배열 표시 번호 첨부 — PDF/카드/History가 같은 번호를 쓰도록 함 (데이터 자체는 변경 안 함)
+    const displayNum = computeChronoDisplayNumbers(tests ?? [], found.testType).get(found.testNumber);
+    return displayNum ? { ...found, displayNumber: displayNum } : found;
   };
 
   // Helper function to get current section data
