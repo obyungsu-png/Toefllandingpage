@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Underline, Highlighter, BookOpen, Bot, X } from 'lucide-react';
+import { prefetchWordDefinitions } from '../utils/dictionaryApi';
 
 /** 밑줄 색상 3종 */
 export const UNDERLINE_COLORS = [
@@ -194,6 +195,12 @@ export function SelectionActionPopover({
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
   }, []);
+
+  // 사전 prefetch — 선택 직후(팝오버 표시 시점) 미리 조회 시작.
+  // 사용자가 '사전' 버튼을 누를 때쯤이면 완료/진행 중이라 팝업이 거의 즉시 뜸
+  useEffect(() => {
+    prefetchWordDefinitions(selectedText);
+  }, [selectedText]);
 
   // 색상/AI 서브패널 fade-in 트리거 — 닫혀있을 때는 DOM에서 완전히 제거해야 하므로
   // (maxHeight:0 방식은 폭이 레이아웃에 남아 툴바 우측에 빈 공간이 생기는 버그가 있었음)
