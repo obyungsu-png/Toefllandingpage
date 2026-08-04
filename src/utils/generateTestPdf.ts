@@ -483,6 +483,8 @@ export function generateTestPdf(
 
   let y = 44;
   const orderedSections = [...testData.sections]
+    // 레거시 소문자 섹션('reading' 등) 제외 — 정규 섹션명만 PDF에 포함 (중복 출력 방지)
+    .filter(s => SECTION_ORDER.includes(s.sectionType))
     .sort((a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType))
     .filter(s => !sectionType || s.sectionType === sectionType);
 

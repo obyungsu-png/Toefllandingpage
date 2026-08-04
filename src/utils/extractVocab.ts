@@ -130,7 +130,10 @@ export function extractVocabFromTest(
     }
   };
 
+  const VALID_SECTIONS = ['Reading', 'Listening', 'Speaking', 'Writing'];
   for (const section of testData.sections) {
+    // 레거시 소문자 섹션('reading' 등) 제외 — 정규 섹션만 어휘 추출 대상
+    if (!VALID_SECTIONS.includes(section.sectionType)) continue;
     if (includeSections && !includeSections.includes(section.sectionType)) continue;
     for (const q of section.questions) {
       const question = q as TPOQuestion & Record<string, unknown>;
