@@ -302,7 +302,7 @@ function ListeningSectionIntro({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
-            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
           <button
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
@@ -467,7 +467,7 @@ function GroupIntroScreen({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
             </svg>
-            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
           <button
             className={`flex items-center gap-2 border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 transition-colors ${canGoNext ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
@@ -564,7 +564,7 @@ function ModuleIntroScreen({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
-            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
           <button
             className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
@@ -772,7 +772,7 @@ function ListeningQuestionScreen({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
             </svg>
-            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
 
           {/* Next Button */}

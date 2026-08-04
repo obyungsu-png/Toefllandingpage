@@ -36,13 +36,13 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div className="flex items-center">
           <div
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={onLogoClick}
           >
             *toefl ibt
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           {/* Volume Button */}
           <button
             ref={buttonRef}
@@ -63,10 +63,10 @@ export function SpeakingIntro({ onNext, onLogoClick }: SpeakingIntroProps) {
 
           {/* Begin Button */}
           <button
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
             onClick={onNext}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Begin</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Begin</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>

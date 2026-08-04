@@ -176,7 +176,7 @@ export function SubscriptionManagement() {
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           <Settings className="w-8 h-8 text-[#2d5a5d]" />
           <h2 className="text-3xl font-bold text-[#2d5a5d]">Subscription Management</h2>
         </div>

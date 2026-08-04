@@ -163,7 +163,7 @@ export function RestartConfirmModal({
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3">
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{ backgroundColor: `${themeColor}15` }}

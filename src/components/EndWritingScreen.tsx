@@ -136,7 +136,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
       <div className="bg-gradient-to-r from-[#1e6b73] via-[#2d7a7c] to-[#3d8a8c] h-16 flex items-center justify-between px-8 shadow-md">
         <div className="flex items-center">
           <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
               setShowEndWriting(false);
               if (testBankType === 'tpo') handleTabChange('TPO');
@@ -146,7 +146,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
             *toefl ibt
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           <button 
             className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl px-5 py-2.5 hover:bg-white/30 transition-all text-white font-semibold"
             onClick={() => {
@@ -164,7 +164,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
 
       {/* Section indicator */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-[#d1e8e8]">
-        <div className="px-8 py-3 flex items-center gap-3">
+        <div className="px-8 py-3 flex items-center gap-1.5 md:gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1e6b73] to-[#2d7a7c] flex items-center justify-center shadow-sm">
             <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 19l7-7 3 3-7 7-3-3z"/>

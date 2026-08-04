@@ -16,7 +16,7 @@ export const ToeflTestScreen: React.FC<ToeflTestScreenProps> = ({
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#2d7a7c] h-16 flex items-center justify-between px-8 shadow-lg">
+      <div className="bg-[#2d7a7c] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
         <div className="flex items-center">
           <div 
             className="text-white text-2xl font-bold tracking-wider cursor-pointer hover:opacity-80 transition-opacity"
@@ -27,14 +27,14 @@ export const ToeflTestScreen: React.FC<ToeflTestScreenProps> = ({
         </div>
         {/* Continue Button */}
         <button 
-          className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
           onClick={() => {
             if (currentTest?.section === 'Reading') {
               onContinue();
             }
           }}
         >
-          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Continue</span>
+          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Continue</span>
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
             <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
           </svg>

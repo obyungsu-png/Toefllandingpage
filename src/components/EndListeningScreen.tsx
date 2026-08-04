@@ -88,10 +88,10 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#2d5f8a] h-16 flex items-center justify-between px-8 shadow-lg">
+      <div className="bg-[#2d5f8a] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
         <div className="flex items-center">
           <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
               setShowEndListening(false);
               if (testBankType === 'tpo') {
@@ -104,7 +104,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
             *toefl ibt
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           {/* Continue to Writing Button */}
           <button 
             className="flex items-center gap-2 bg-white border-2 border-[#2d5f8a] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"

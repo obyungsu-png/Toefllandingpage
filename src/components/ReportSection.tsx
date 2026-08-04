@@ -298,7 +298,7 @@ ${messageToParent.trim() ? `\n━━━━━━━━━━━━━━━━\n
       {/* ===== Header Card ===== */}
       <div className="bg-white rounded-2xl shadow-md p-5 md:p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 md:gap-3">
             {/* Avatar Icon */}
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#00cfe8] to-[#005f61] flex items-center justify-center shadow-md">
               <Zap className="w-6 h-6 text-white" />

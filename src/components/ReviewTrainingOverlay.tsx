@@ -538,13 +538,13 @@ export function ReviewTrainingOverlay({
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3">
           <button
-            className="hidden sm:flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+            className="hidden sm:flex items-center gap-1 md:gap-2 bg-[#0A6068] border border-white rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-[#084d52] transition-colors"
             onClick={goPrev}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
-            <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
+            <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
           <button
             className="flex items-center gap-1 sm:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-gray-100 transition-colors"

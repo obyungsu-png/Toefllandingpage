@@ -65,10 +65,10 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+      <div className="bg-[#1e6b73] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
         <div className="flex items-center">
           <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
               setShowEndModule2(false);
               if (testBankType === 'tpo') {
@@ -81,10 +81,10 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
             *toefl ibt
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           {/* View Results Button */}
           <button 
-            className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors"
+            className="flex items-center gap-1 md:gap-2 bg-[#0A6068] border border-white rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-[#084d52] transition-colors"
             onClick={() => {
               setShowEndModule2(false);
               setActiveTab('History');
@@ -93,17 +93,17 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zM5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0 1.1.9-2 2-2z"/>
             </svg>
-            <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">View Results</span>
+            <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">View Results</span>
           </button>
           {/* Continue to Listening Button */}
           <button 
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
             onClick={() => {
               setShowEndModule2(false);
               setActiveListeningM1Screen('intro');
             }}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Continue to Listening</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Continue to Listening</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>

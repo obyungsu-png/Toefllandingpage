@@ -224,7 +224,7 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({
                   <td colSpan={3} className="pt-3">
                     <div className="bg-gradient-to-r from-[#f0fafa] to-[#e8f4f8] rounded-xl px-5 py-3.5 flex items-center justify-between border border-[#d1e8e8]/50">
                       <span className="text-sm font-bold text-[#1e6b73]">OVERALL</span>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 md:gap-3">
                         <span className="text-xs text-gray-400">{overallLevel.cefr} · {overallLevel.label}</span>
                         <span className="text-2xl font-extrabold text-[#1e6b73]">{totalBand}<span className="text-xs text-gray-400 font-normal"> /6.0</span></span>
                       </div>

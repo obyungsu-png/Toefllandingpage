@@ -1850,7 +1850,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 borderBottom: '1px solid #f1f5f9',
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 <div
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm"
                   style={panelPinned

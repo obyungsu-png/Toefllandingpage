@@ -44,7 +44,7 @@ export function ShareSettings({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3">
               <div className="p-3 rounded-xl" style={{ backgroundColor: `${themeColor}20` }}>
                 <Settings className="w-6 h-6" style={{ color: themeColor }} />
               </div>
@@ -105,7 +105,7 @@ export function ShareSettings({
                   Only send when the score is above the set threshold. If not set, all results will be sent.
                 </p>
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 <input
                   type="number"
                   min="0"
@@ -126,7 +126,7 @@ export function ShareSettings({
           {/* WeChat Settings */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 <div className="p-2 rounded-lg bg-green-100">
                   <MessageCircle className="w-6 h-6 text-green-600" />
                 </div>
@@ -173,7 +173,7 @@ export function ShareSettings({
           {/* SMS Settings */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 <div className="p-2 rounded-lg bg-purple-100">
                   <Mail className="w-6 h-6 text-purple-600" />
                 </div>

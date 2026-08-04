@@ -25,10 +25,10 @@ const Module1DetailsScreen: React.FC<Module1DetailsScreenProps> = ({
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
+      <div className="bg-[#1e6b73] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
         <div className="flex items-center">
           <div 
-            className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
               setShowModule1Details(false);
               setShowModule1Intro(false);

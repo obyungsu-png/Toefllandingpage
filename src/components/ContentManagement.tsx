@@ -2088,7 +2088,7 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
 
         {/* Module Selector — Reading, Listening */}
         {(section === 'Reading' || section === 'Listening') && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
             {(['Module 1', 'Module 2'] as const).map((mod) => (
@@ -2305,7 +2305,7 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
               />
               {/* Take an Interview 기본 이미지 미리보기 (업로드된 이미지가 없을 때만 표시) */}
               {formData.questionType === 'Take an Interview' && !formData.imageUrl && (
-                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3">
+                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5 md:gap-3">
                   <img src={DEFAULT_INTERVIEW_IMAGE} alt="기본 인터뷰 이미지" className="w-16 h-16 object-cover rounded border border-rose-200" />
                   <div className="flex-1 text-xs text-rose-700">
                     <strong>기본 인터뷰 이미지</strong>가 자동 적용됩니다.
@@ -2766,7 +2766,7 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
                 <label className="block text-xs font-semibold text-gray-600 mb-2">
                   👤 질문자 (Avatar 1) — 위쪽 원
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 md:gap-3">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
                     {formData.avatar1ImageUrl ? (
                       <img src={formData.avatar1ImageUrl} alt="avatar1 preview" className="w-full h-full object-cover" />
@@ -2808,7 +2808,7 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
                 <label className="block text-xs font-semibold text-gray-600 mb-2">
                   👤 답변자 (Avatar 2) — 아래쪽 원
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 md:gap-3">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
                     {formData.avatar2ImageUrl ? (
                       <img src={formData.avatar2ImageUrl} alt="avatar2 preview" className="w-full h-full object-cover" />
@@ -3851,7 +3851,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
 
         {/* Module Selector — Reading, Listening */}
         {(section === 'Reading' || section === 'Listening') && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           <span className="text-sm font-medium text-gray-700">Module:</span>
           <div className="flex gap-2">
             {(['Module 1', 'Module 2'] as const).map((mod) => (
@@ -4019,7 +4019,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               />
               {/* Take an Interview 기본 이미지 미리보기 (업로드된 이미지가 없을 때만 표시) */}
               {formData.questionType === 'Take an Interview' && !(formData as any).imageUrl && (
-                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3">
+                <div className="mt-2 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-1.5 md:gap-3">
                   <img src={DEFAULT_INTERVIEW_IMAGE} alt="기본 인터뷰 이미지" className="w-14 h-14 object-cover rounded border border-rose-200" />
                   <div className="flex-1 text-xs text-rose-700">
                     <strong>기본 인터뷰 이미지</strong>가 자동 적용됩니다.
@@ -4371,7 +4371,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               {/* Avatar 1 */}
               <div className="bg-white rounded-lg p-3 border border-gray-200">
                 <label className="block text-xs font-semibold text-gray-600 mb-2">👤 질문자 (Avatar 1) — 위쪽 원</label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 md:gap-3">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
                     {formData.avatar1ImageUrl
                       ? <img src={formData.avatar1ImageUrl} alt="avatar1" className="w-full h-full object-cover" />
@@ -4395,7 +4395,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
               {/* Avatar 2 */}
               <div className="bg-white rounded-lg p-3 border border-gray-200">
                 <label className="block text-xs font-semibold text-gray-600 mb-2">👤 답변자 (Avatar 2) — 아래쪽 원</label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 md:gap-3">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
                     {formData.avatar2ImageUrl
                       ? <img src={formData.avatar2ImageUrl} alt="avatar2" className="w-full h-full object-cover" />
@@ -4466,7 +4466,7 @@ function QuestionEditForm({ testType, testNumber, section, questionTypes, questi
             {/* Avatar */}
             <div className="bg-white rounded-lg p-3 border border-blue-200">
               <label className="block text-xs font-semibold text-gray-600 mb-2">👤 아바타 (선택)</label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 md:gap-3">
                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#1e6b73] flex-shrink-0 bg-gray-100">
                   {formData.avatar1ImageUrl
                     ? <img src={formData.avatar1ImageUrl} alt="avatar" className="w-full h-full object-cover" />

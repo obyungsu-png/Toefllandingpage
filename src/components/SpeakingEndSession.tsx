@@ -82,16 +82,16 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
       <div className="bg-[#1e6b73] h-14 flex items-center justify-between px-8 shadow-lg">
         <div
-          className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+          className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
           onClick={onHome}
         >
           *toefl ibt
         </div>
         <button
           onClick={onFinish}
-          className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
         >
-          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Finish</span>
+          <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Finish</span>
         </button>
       </div>
 

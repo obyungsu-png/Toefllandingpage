@@ -1054,6 +1054,33 @@ function AppContent() {
         if (batch1b[0].status === 'fulfilled') { const d = batch1b[0].value; if (Array.isArray(d)) { setLmsContents(d); anySuccess = true; console.log('✅ Loaded LMS contents:', d.length); } }
         if (batch1b[1].status === 'fulfilled') { const d = batch1b[1].value; if (Array.isArray(d)) { setTrainingTests(d); saveCachedData('training-tests', d); anySuccess = true; console.log('✅ Loaded Training tests:', d.length); } }
 
+        // 🔄 Training 데이터 자동 복원 — 서버가 비어있고 로컬 캐시에 데이터가 남아있으면 서버로 복원
+        // (kv 유실 사고 대응. 캐시까지 빈 배열로 덮어쓰기된 경우에는 CMS 재등록 필요)
+        if (batch1b[1].status === 'fulfilled' && Array.isArray(batch1b[1].value) && batch1b[1].value.length === 0) {
+          const cachedTraining = loadCachedData<TPOTest[]>('training-tests', true);
+          if (Array.isArray(cachedTraining) && cachedTraining.length > 0) {
+            console.log(`🔄 Training tests 서버 유실 감지 — 로컬 캐시 ${cachedTraining.length}개 복원 시작`);
+            let restored = 0;
+            for (const test of cachedTraining) {
+              try {
+                const res = await fetch(`${SERVER_BASE_URL}/training-tests`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...getServerHeaders() },
+                  body: JSON.stringify(test),
+                });
+                if (res.ok) restored++;
+              } catch (e) {
+                console.warn('⚠️ Training 복원 실패:', test.testNumber, e);
+              }
+            }
+            console.log(`✅ Training tests 서버 복원 완료: ${restored}/${cachedTraining.length}개`);
+            if (restored > 0) {
+              setTrainingTests(cachedTraining);
+              saveCachedData('training-tests', cachedTraining);
+            }
+          }
+        }
+
         // Batch 1c: ALWAYS preload test-results on app start (prevent History overwrite by empty state)
         try {
           const resultsRes = await fetchSupabaseJson('test-results');
