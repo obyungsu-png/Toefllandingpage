@@ -173,7 +173,8 @@
           changeOrigin: true,
           rewrite: () => '/api/paas/v4/chat/completions',
           headers: {
-            Authorization: `Bearer ${process.env.GLM_API_KEY || process.env.VITE_GLM_API_KEY || ''}`,
+            // 기본 하드코딩 키를 fallback 으로 유지 — 로컬 dev 도 env 설정 없이 바로 작동.
+            Authorization: `Bearer ${process.env.GLM_API_KEY || process.env.VITE_GLM_API_KEY || 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff'}`,
           },
         },
         // ── 레거시 STT(Whisper) 프록시 — apiclaude.cc /v1/audio/transcriptions ──

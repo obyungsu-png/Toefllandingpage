@@ -12,7 +12,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  */
 
 const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = process.env.GLM_API_KEY || process.env.VITE_GLM_API_KEY || '';
+// 기본 GLM 키(레거시 하드코딩) — 환경변수 미설정 배포에서도 즉시 작동.
+// 새 키로 교체하려면 Vercel env GLM_API_KEY 로 등록하면 우선순위가 더 높습니다.
+const DEFAULT_GLM_API_KEY = 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff';
+const GLM_API_KEY = process.env.GLM_API_KEY || process.env.VITE_GLM_API_KEY || DEFAULT_GLM_API_KEY;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -30,14 +33,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.writeHead(405, CORS_HEADERS);
     res.end('Method Not Allowed');
-    return;
-  }
-
-  if (!GLM_API_KEY) {
-    res.writeHead(500, { ...CORS_HEADERS, 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      error: 'GLM_API_KEY 환경변수가 설정되지 않았습니다. Vercel Project Settings → Environment Variables 에서 GLM_API_KEY 를 추가해주세요.'
-    }));
     return;
   }
 
