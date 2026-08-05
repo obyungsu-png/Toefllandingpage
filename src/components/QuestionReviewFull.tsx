@@ -820,13 +820,26 @@ export function QuestionReviewFull({
       let match: RegExpExecArray | null;
       let key = 0;
 
-      // Complete Words 시도 여부: wrongAnswers 중 하나라도 Q1-10 범위에 매칭되면 시도한 것
+      // 현재 CW 지문의 전역 blank 범위 (M1은 1-10, M2는 11-20 등).
+      // 모듈 전환 시 이전 모듈 답변이 남아 보이지 않도록 반드시 이 범위만으로 판단해야 함.
+      const rangeStart = activeCwRange?.globalStart ?? 1;
+      const rangeEnd = rangeStart + extractedBlanks.length - 1;
+
+      // Complete Words 시도 여부: 이 CW 범위의 전역 번호에 해당하는 wrongAnswer 가 하나라도 있어야 시도한 것.
       const attemptedCompleteWords = result.wrongAnswers.some(w => {
-        const id = w.questionId || '';
-        const num = parseInt(id);
-        return !isNaN(num) && num >= 1 && num <= 10
-          || id === '1-10' || id.startsWith('blank-')
-          || id.toLowerCase().includes('complete') || id.toLowerCase().includes('fill');
+        const id = (w.questionId || '').toLowerCase();
+        const numMatch = id.match(/^(?:blank-|q|reading-|complete-words-)?(\d+)$/);
+        if (numMatch) {
+          const num = parseInt(numMatch[1]);
+          return num >= rangeStart && num <= rangeEnd;
+        }
+        const rangeMatch = id.match(/^(\d+)\s*-\s*(\d+)$/);
+        if (rangeMatch) {
+          const s = parseInt(rangeMatch[1]);
+          const e = parseInt(rangeMatch[2]);
+          return !(e < rangeStart || s > rangeEnd);
+        }
+        return false;
       });
 
       while ((match = regex.exec(normalizedPassage)) !== null) {
@@ -836,15 +849,31 @@ export function QuestionReviewFull({
 
         if (beforeText) parts.push(<span key={`text-${key++}`}>{beforeText}</span>);
         if (blank) {
-          // Find if user got this blank wrong — 다양한 questionId 포맷 매칭
-          const blankNum = blankIndex + 1;
+          // 전역 blank 번호(예: M2 첫 blank = 11)로 wrongAnswers 검색
+          const globalBlankNum = rangeStart + blankIndex;
           const wrongEntry = result.wrongAnswers.find(w => {
             const id = (w.questionId || '').toLowerCase();
-            return id === String(blankNum) || id === `blank-${blankNum}` || id === `q${blankNum}`
-              || id === `reading-${blankNum}` || id === `complete-words-${blankNum}`
-              || (id === '1-10' && w.userAnswer?.split(',')[blankIndex]);
+            if (id === String(globalBlankNum) || id === `blank-${globalBlankNum}` || id === `q${globalBlankNum}`
+              || id === `reading-${globalBlankNum}` || id === `complete-words-${globalBlankNum}`) return true;
+            // 범위 questionId ("11-20") + userAnswer 콤마 분리 지원
+            const rangeMatch = id.match(/^(\d+)\s*-\s*(\d+)$/);
+            if (rangeMatch) {
+              const s = parseInt(rangeMatch[1]);
+              const e = parseInt(rangeMatch[2]);
+              return globalBlankNum >= s && globalBlankNum <= e && !!w.userAnswer?.split(',')[globalBlankNum - s];
+            }
+            return false;
           });
-          const userAnswerForBlank = wrongEntry?.userAnswer?.split(',')?.[blankIndex]?.trim() || null;
+          const userAnswerForBlank = (() => {
+            if (!wrongEntry) return null;
+            const wid = (wrongEntry.questionId || '').toLowerCase();
+            const rangeMatch = wid.match(/^(\d+)\s*-\s*(\d+)$/);
+            if (rangeMatch) {
+              const s = parseInt(rangeMatch[1]);
+              return wrongEntry.userAnswer?.split(',')?.[globalBlankNum - s]?.trim() || null;
+            }
+            return wrongEntry.userAnswer?.trim() || null;
+          })();
 
           // 3가지 상태: 정답(초록), 오답(빨강+취소선), 안 풼(회색)
           const isBlankWrong = !!wrongEntry && userAnswerForBlank !== blank.answer;
@@ -1280,12 +1309,34 @@ export function QuestionReviewFull({
                       }
                       // blank-N ID는 전역 슬롯 번호 기준 (CW2 지문이면 11부터 시작)
                       const globalBlankStart = activeCwRange?.globalStart ?? 1;
+                      const rangeEndForSidebar = globalBlankStart + displayBlanks.length - 1;
+                      // 이 CW 범위 내에서 시도된 흔적이 있어야 "시도한 모듈".
+                      // 이전 모듈만 풀고 현재 모듈은 안 푼 경우 → 이 범위 wrongAnswer 가 없으므로 false
+                      // → 미답변(회색) 로 표시되도록 함 (초록 정답 오표시 방지)
+                      const attemptedRange = result.wrongAnswers.some(w => {
+                        const id = (w.questionId || '').toLowerCase();
+                        const numMatch = id.match(/^(?:blank-|q|reading-|complete-words-)?(\d+)$/);
+                        if (numMatch) {
+                          const num = parseInt(numMatch[1]);
+                          return num >= globalBlankStart && num <= rangeEndForSidebar;
+                        }
+                        const rangeMatch = id.match(/^(\d+)\s*-\s*(\d+)$/);
+                        if (rangeMatch) {
+                          const s = parseInt(rangeMatch[1]);
+                          const e = parseInt(rangeMatch[2]);
+                          return !(e < globalBlankStart || s > rangeEndForSidebar);
+                        }
+                        return false;
+                      });
                       return displayBlanks.map((blank, index) => {
                         const globalBlankNum = globalBlankStart + index;
                         const wrongEntry = result.wrongAnswers.find(w =>
-                          w.questionId === `blank-${globalBlankNum}`
+                          w.questionId === `blank-${globalBlankNum}` || w.questionId === String(globalBlankNum)
                         );
-                        const isCorrect = !wrongEntry;
+                        // 정답: wrongEntry 없음 + 이 범위를 시도한 상태여야 함
+                        const isCorrect = !wrongEntry && attemptedRange;
+                        // 미답변: 이 범위를 아예 시도 안 함, 또는 채점 시 '(빈칸)' 기록
+                        const isUnattempted = !wrongEntry && !attemptedRange;
                         // 미답변: 채점 시 '(빈칸)'으로 기록됨 — 오답과 구분해 회색 표시
                         const isOmitted = !!wrongEntry && (
                           wrongEntry.userAnswer === '(빈칸)' ||
@@ -1298,24 +1349,24 @@ export function QuestionReviewFull({
                           ? 'border-amber-200 bg-amber-50'
                           : isCorrect
                             ? 'border-green-200 bg-green-50'
-                            : isOmitted
+                            : (isOmitted || isUnattempted)
                               ? 'border-gray-200 bg-gray-50'
                               : 'border-red-200 bg-red-50';
                         const stateTextCls = isUnscoredBlank
                           ? 'text-amber-700'
                           : isCorrect
                             ? 'text-green-700'
-                            : isOmitted
+                            : (isOmitted || isUnattempted)
                               ? 'text-gray-500'
                               : 'text-red-700';
                         return (
                           <div key={`answer-key-${index}`} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${stateCls}`}>
                             <span className="text-gray-500">Q{globalBlankNum}</span>
                             <div className="flex items-center gap-2">
-                              {!isCorrect && !isOmitted && userAns && (
+                              {!isCorrect && !isOmitted && !isUnattempted && userAns && (
                                 <span className="text-xs text-red-400 line-through">{userAns}</span>
                               )}
-                              {isOmitted && (
+                              {(isOmitted || isUnattempted) && (
                                 <span className="text-xs text-gray-400">미답변</span>
                               )}
                               <span className={`font-semibold ${stateTextCls}`}>
@@ -1325,7 +1376,7 @@ export function QuestionReviewFull({
                                 ? <span className="text-xs text-amber-500">채점불가</span>
                                 : isCorrect
                                   ? <Check className="w-3.5 h-3.5 text-green-500" />
-                                  : isOmitted
+                                  : (isOmitted || isUnattempted)
                                     ? <span className="w-3.5 h-3.5 rounded-full bg-gray-300 inline-block" />
                                     : <X className="w-3.5 h-3.5 text-red-500" />
                               }
