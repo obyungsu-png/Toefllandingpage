@@ -254,11 +254,11 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   // ── Pinned (고정) 모드: 화면 중앙 트렌디 모달 팝업으로 AI 튜터를 띄워놓고 글 작성 ──
   // 모바일 대응: 화면 폭에 따라 기본 사이즈 자동 조정
   const getDefaultPanelSize = useCallback(() => {
-    if (typeof window === 'undefined') return { w: 760, h: 600 };
+    if (typeof window === 'undefined') return { w: 880, h: 700 };
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    if (vw < 640) return { w: Math.min(760, vw * 0.92), h: Math.min(600, vh * 0.85) };
-    return { w: 760, h: 600 };
+    if (vw < 640) return { w: Math.min(880, vw * 0.94), h: Math.min(700, vh * 0.88) };
+    return { w: 880, h: 700 };
   }, []);
   const [pinned, setPinned] = useState(false);
   // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치/크기 초기화
@@ -615,7 +615,14 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           border: 1px solid rgba(13, 148, 136, 0.18);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
+          /* 고정 모달의 기본 글씨 크기 소폭 상향 — 채팅/버튼 폰트가 자동으로 커짐 */
+          font-size: 16px;
+          line-height: 1.55;
         }
+        .toefl-ai-pinned-panel .toefl-ai-panel-title { font-size: 1.15rem; }
+        .toefl-ai-pinned-panel button { font-size: inherit; }
+        .toefl-ai-pinned-panel input,
+        .toefl-ai-pinned-panel textarea { font-size: 1rem; }
         .toefl-ai-pinned-header {
           cursor: grab;
           user-select: none;

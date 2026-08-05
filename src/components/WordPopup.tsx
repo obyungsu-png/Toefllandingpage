@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { getWordDefinitions, WordDefinition } from '../utils/dictionaryApi';
 import { translateWord, WordTranslation } from '../utils/wordTranslate';
@@ -15,6 +15,21 @@ interface WordPopupProps {
   onLanguageChange?: (language: 'en' | 'ko') => void;
 }
 
+/**
+ * 사전 검색용 정규화 — 대소문자·구두점·문장 부호 무시.
+ * "Running," "RUNNING." "running" 모두 동일 키로 취급되어야 함.
+ * NFKC 로 유니코드 호환 문자 정규화 후 소문자화 + 구두점/따옴표 제거.
+ */
+function normalizeLookupWord(raw: string): string {
+  if (!raw) return '';
+  let s = raw.trim();
+  try { s = s.normalize('NFKC'); } catch { /* ignore */ }
+  s = s.toLowerCase();
+  // 문장 끝 구두점, 스마트 따옴표, 따옴표, 괄호 등 제거 — 알파벳/공백/'/− 만 유지
+  s = s.replace(/[^a-z0-9가-힣\s'\-]/g, '').trim();
+  return s;
+}
+
 export function WordPopup({ word, context, language, x, y, onClose, onLanguageChange }: WordPopupProps) {
   const [loading, setLoading] = useState(true);
   const [definitions, setDefinitions] = useState<WordDefinition[]>([]);
@@ -23,56 +38,62 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
   const popupRef = useRef<HTMLDivElement>(null);
   const [adjustedPos, setAdjustedPos] = useState({ x, y });
 
+  // 조회용 정규화된 단어 — 대소문자 무관 매칭 보장 (특히 EN 영영 사전).
+  const normalized = useMemo(() => normalizeLookupWord(word), [word]);
+  const displayWord = normalized || word.trim();
+
   useEffect(() => {
     let cancelled = false;
-    let handled = false;
     setLoading(true);
     setError(false);
     setDefinitions([]);
     setTranslation(null);
 
-    const isPhrase = word.trim().includes(' ');
-    // 번역과 사전을 병렬 조회 — 먼저 도착한 유효 결과로 즉시 UI 반영.
-    // Google 번역은 보통 200~500ms 로 매우 빨라 사용자 체감 지연이 거의 없음.
-    const transPromise = translateWord(word, context);
+    if (!normalized) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    const isPhrase = normalized.includes(' ');
+    // 정규화된 단어로 사전 + 번역을 병렬 조회.
+    // - EN 모드: 사전(영영 정의) + 번역(한글 뜻) 둘 다 표시 → 사용자에게 더 유용.
+    // - KO 모드: 번역만 표시.
+    const transPromise = translateWord(normalized, context);
     const dictPromise = (language === 'en' && !isPhrase)
-      ? getWordDefinitions(word)
+      ? getWordDefinitions(normalized)
       : Promise.resolve<WordDefinition[]>([]);
 
-    // 번역 결과 도착 시 — 아직 사전 결과가 확정되지 않았으면 즉시 표시.
+    // 번역 도착 시 즉시 표시 (Google 번역은 보통 200~500ms).
     transPromise.then((trans) => {
-      if (cancelled || handled) return;
+      if (cancelled) return;
       if (trans) {
-        // 사전 결과가 오면 그때 대체 (dictPromise then에서 처리)
         setTranslation(trans);
         setLoading(false);
       }
     });
 
-    // 사전 결과 도착 시 — 정의가 있으면 번역보다 우선 표시.
+    // 사전 정의 도착 시 표시 (번역과 함께 노출).
     dictPromise.then((defs) => {
       if (cancelled) return;
       if (defs.length > 0) {
-        handled = true;
         setDefinitions(defs);
-        setTranslation(null);
         setLoading(false);
       }
     });
 
-    // 둘 다 끝나면 아무것도 없으면 에러.
     Promise.allSettled([transPromise, dictPromise]).then(([tr, dr]) => {
       if (cancelled) return;
       const trans = tr.status === 'fulfilled' ? tr.value : null;
       const defs = dr.status === 'fulfilled' ? dr.value : [];
       if (!trans && defs.length === 0) {
         setError(true);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => { cancelled = true; };
-  }, [word, language, context]);
+  }, [normalized, language, context]);
 
   // 팝업 위치 조정 (화면 경계 + AI 튜터 위젯 영역 회피)
   useEffect(() => {
@@ -80,41 +101,34 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
       const rect = popupRef.current.getBoundingClientRect();
       let newX = x;
       let newY = y;
-      // 오른쪽 경계 — 팝업이 오른쪽을 넘어가면 왼쪽으로 밀되, 단어 위치 근처 유지
       if (x + rect.width > window.innerWidth - 20) {
         newX = Math.max(20, window.innerWidth - rect.width - 20);
       }
-      // 아래쪽 경계 — 위로 표시 (단어 위에 표시)
       if (y + rect.height > window.innerHeight - 20) {
         newY = Math.max(20, y - rect.height - 40);
       }
-      // AI 튜터 FAB 위젯 영역 (우측 하단)과 겹치지 않도록 위로 밀어올림
-      // FAB: right-6 (24px from right), bottom-16 mobile / bottom-6 desktop, 56x56px
       const isMobile = window.innerWidth < 768;
       const fabSize = 56;
       const fabRight = 24;
-      const fabBottom = isMobile ? 64 : 24; // bottom-16 = 64px, bottom-6 = 24px
+      const fabBottom = isMobile ? 64 : 24;
       const fabLeft = window.innerWidth - fabRight - fabSize;
       const fabTop = window.innerHeight - fabBottom - fabSize;
       const pad = 8;
       const overlapX = newX + rect.width > fabLeft - pad;
       const overlapY = newY + rect.height > fabTop - pad;
       if (overlapX && overlapY) {
-        // 위로 밀어올림 — AI 튜터 FAB 위쪽에 표시
         newY = Math.max(20, fabTop - rect.height - pad);
       }
       setAdjustedPos({ x: Math.max(20, newX), y: Math.max(20, newY) });
     }
   }, [x, y, loading]);
 
-  // 팝업 바깥 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
-    // mouseup 이벤트 직후 바로 닫히는 것 방지 — 약간 지연
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
     }, 100);
@@ -124,16 +138,19 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
     };
   }, [onClose]);
 
+  const hasDefs = definitions.length > 0;
+  const hasTrans = !!translation;
+
   return createPortal(
     <div
       ref={popupRef}
       className="fixed z-[100] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 max-w-md"
-      style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 300 }}
+      style={{ left: adjustedPos.x, top: adjustedPos.y, minWidth: 320 }}
     >
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{word}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{displayWord}</span>
           {language === 'en' && definitions[0]?.phonetic && (
             <span className="text-sm text-gray-500 dark:text-gray-400">{definitions[0].phonetic}</span>
           )}
@@ -175,35 +192,50 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
         </div>
       </div>
 
-      {/* 내용 */}
-      {loading ? (
+      {/* 내용 — EN 모드에서는 한글 뜻 + 영영 정의 함께 노출, KO 모드에서는 한글 뜻만 */}
+      {loading && !hasDefs && !hasTrans ? (
         <div className="flex items-center justify-center py-4">
           <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 border-t-[#1e6b73] rounded-full animate-spin"></div>
           <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">검색 중...</span>
         </div>
-      ) : error ? (
+      ) : error && !hasDefs && !hasTrans ? (
         <p className="text-sm text-gray-500 dark:text-gray-400 py-2">이 단어의 정의를 찾을 수 없습니다.</p>
-      ) : translation ? (
-        <div className="space-y-2">
-          <div>
-            <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">뜻:</span>
-            <span className="text-base font-semibold text-[#1e6b73] dark:text-[#4fd1c5]">{translation?.koreanMeaning}</span>
-          </div>
-          {translation?.englishExplanation && (
-            <p className="text-xs text-gray-600 dark:text-gray-300 italic">{translation.englishExplanation}</p>
-          )}
-        </div>
       ) : (
-        <div className="space-y-2">
-          {definitions.map((def, i) => (
-            <div key={i} className="text-sm">
-              <span className="text-xs text-gray-400 dark:text-gray-500 italic mr-1">{def.partOfSpeech}</span>
-              <span className="text-gray-800 dark:text-gray-100">{def.definition}</span>
-              {def.example && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">"{def.example}"</p>
+        <div className="space-y-3">
+          {/* 한글 뜻 (있으면 항상 상단 노출) */}
+          {hasTrans && (
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-[10px] font-bold text-[#1e6b73] dark:text-[#4fd1c5] uppercase tracking-wide">뜻</span>
+                <span className="text-base font-semibold text-[#1e6b73] dark:text-[#4fd1c5]">
+                  {translation?.koreanMeaning}
+                </span>
+              </div>
+              {translation?.englishExplanation && translation.englishExplanation !== displayWord && (
+                <p className="text-xs text-gray-600 dark:text-gray-300 italic pl-6">
+                  {translation.englishExplanation}
+                </p>
               )}
             </div>
-          ))}
+          )}
+
+          {/* 영영 사전 정의 (EN 모드) — 한글 뜻 아래에 함께 표시 */}
+          {hasDefs && (
+            <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                English Definitions
+              </div>
+              {definitions.map((def, i) => (
+                <div key={i} className="text-sm">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 italic mr-1">{def.partOfSpeech}</span>
+                  <span className="text-gray-800 dark:text-gray-100">{def.definition}</span>
+                  {def.example && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-0.5">"{def.example}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>,

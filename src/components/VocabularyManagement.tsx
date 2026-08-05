@@ -666,8 +666,8 @@ export function VocabularyManagement({
           setBulkUploadText('');
           setShowBulkUpload(false);
         } else {
-          // For TOEFL tabs: vol.2 (toefl-hard) uses 60 words per day, others use 40
-          const wordsPerDay = activeTab === 'toefl-hard' ? 60 : 40;
+          // For TOEFL tabs: vol.2 (toefl-hard) uses 50 words per day, others use 40
+          const wordsPerDay = activeTab === 'toefl-hard' ? 50 : 40;
 
           // Check if more than wordsPerDay - if so, split into multiple days
           if (normalizedWords.length > wordsPerDay) {
@@ -768,10 +768,10 @@ export function VocabularyManagement({
             return;
           }
           
-          // No limit for custom, etymology, toefl-easy; 60 for vol.2
-          const wordsPerDay = 
+          // No limit for custom, etymology, toefl-easy; 50 for vol.2
+          const wordsPerDay =
             activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' ? 10000 :
-            60;
+            50;
           
           // Distribute words
           let wordIndex = 0;
@@ -1257,7 +1257,7 @@ export function VocabularyManagement({
               {selectedDayName} 단어 목록
               <span className="ml-2 text-xs sm:text-sm text-gray-600">
                 {activeTab === 'toefl-hard'
-                  ? `(${currentDayWords.length}/60개)`
+                  ? `(${currentDayWords.length}/50개)`
                   : `(${currentDayWords.length}개)`
                 }
               </span>
@@ -1850,18 +1850,18 @@ advocate	옹호하다	to support	support, promote</pre>
                     <p className="text-sm text-blue-700 font-bold mb-2">🚀 3. DAY 범위 자동 분배 (NEW!):</p>
                     <p className="text-xs text-blue-600 mb-2">
                       DAY 10-DAY 20 형식으로 범위를 지정하면 자동 분배
-                      {activeTab === 'toefl-hard' ? ' (vol.2: 60개씩)' : activeTab === 'toefl-easy' ? ' (제한 없음)' : ' (제한 없음)'}
+                      {activeTab === 'toefl-hard' ? ' (vol.2: 50개씩)' : activeTab === 'toefl-easy' ? ' (제한 없음)' : ' (제한 없음)'}
                     </p>
                     <pre className="text-xs font-mono text-gray-700 bg-gray-50 p-2 rounded">DAY 10-DAY 20
 accomplish\t성취하다\tto succeed in doing\tachieve, complete
 accurate\t정확한\tcorrect in all details\tprecise, exact
 adapt\t적응하다\tto adjust\tadjust, modify
-(... {activeTab === 'toefl-hard' ? '600' : '500'}개 단어 ...)</pre>
+(... {activeTab === 'toefl-hard' ? '500' : '500'}개 단어 ...)</pre>
                     <p className="text-xs text-blue-600 mt-2">
-                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '600개 단어를 자동으로 DAY 10부터 DAY 20까지 60개씩 분배합니다.' : '단어를 자동으로 DAY 10부터 DAY 20까지 분배합니다.'}
+                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '500개 단어를 자동으로 DAY 10부터 DAY 20까지 50개씩 분배합니다.' : '단어를 자동으로 DAY 10부터 DAY 20까지 분배합니다.'}
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      💡 {activeTab === 'toefl-hard' ? '단어가 60개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.' : 'DAY당 단어 수 제한 없이 자유롭게 입력할 수 있습니다.'}
+                      💡 {activeTab === 'toefl-hard' ? '단어가 50개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.' : 'DAY당 단어 수 제한 없이 자유롭게 입력할 수 있습니다.'}
                     </p>
                   </div>
                   
@@ -1885,7 +1885,7 @@ advocate\t옹호하다\tto support\tsupport, promote</pre>
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
                     💡 <strong>팁 2:</strong> 대량의 단어를 연속된 DAY에 한번에 넣으려면 "DAY 10-DAY 20" 형식을 사용하세요. 
-                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 60개씩 분배됩니다!' : ' DAY당 제한 없이 자유롭게 분배됩니다!'}
+                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 50개씩 분배됩니다!' : ' DAY당 제한 없이 자유롭게 분배됩니다!'}
                   </p>
                 </div>
               </div>
