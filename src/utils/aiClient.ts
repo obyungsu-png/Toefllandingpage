@@ -1,37 +1,41 @@
 /**
  * aiClient.ts — 공용 AI 호출 클라이언트 (GLM / Claude)
  * -----------------------------------------------------------------------------
- * WritingReviewAiTutor 의 callAi 패턴을 추출하여 Speaking 채점에서도 재사용.
+ * 두 모델 모두 Vercel 서버리스 프록시 경유 — 클라이언트에 API 키 노출 없음.
+ *   • GLM   → /api/glm/chat/completions   (서버 env GLM_API_KEY 사용)
+ *   • Claude → /api/claude/chat/completions (서버 env CLAUDE_API_KEY 사용)
  *
- * 보안:
- *   - Claude 는 Vercel 서버리스 프록시 경유 (서버 env CLAUDE_API_KEY 사용) — 클라이언트 키 노출 없음.
- *   - GLM 만 클라이언트에서 직접 호출 (CORS 허용, VITE_GLM_API_KEY 환경변수).
+ * Electron 환경에서는 상대 경로가 작동하지 않으므로
+ * VITE_CLAUDE_PROXY_URL / VITE_GLM_PROXY_URL 로 절대 URL 지정.
  */
 
-// ── GLM 설정 ─────────────────────────────────────────────────────────────
-const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
-const GLM_MODEL = 'glm-4-flash';
-
-// ── Claude 설정 (Vercel 프록시 경유) ──────────────────────────────────────
 const isElectron =
   typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
+
+// ── GLM 설정 ─────────────────────────────────────────────────────────────
+const GLM_PROXY_ENDPOINT = isElectron
+  ? (import.meta.env.VITE_GLM_PROXY_URL as string | undefined) ||
+    'https://toefl-allmyexam.vercel.app/api/glm/chat/completions'
+  : '/api/glm/chat/completions';
+const GLM_MODEL = 'glm-4-flash';
+
+// ── Claude 설정 ──────────────────────────────────────────────────────────
 const CLAUDE_PROXY_ENDPOINT = isElectron
   ? (import.meta.env.VITE_CLAUDE_PROXY_URL as string | undefined) ||
     'https://toefl-allmyexam.vercel.app/api/claude/chat/completions'
   : '/api/claude/chat/completions';
 const CLAUDE_MODEL = 'claude-sonnet-5';
 
+export const AI_ENDPOINTS = {
+  GLM: GLM_PROXY_ENDPOINT,
+  CLAUDE: CLAUDE_PROXY_ENDPOINT,
+};
+export const AI_MODELS = { GLM: GLM_MODEL, CLAUDE: CLAUDE_MODEL };
+
 export type AiProvider = 'glm' | 'claude';
 
 /**
- * 공용 AI 호출 (GLM/Claude 공통 인터페이스)
- * @param systemPrompt 시스템 프롬프트
- * @param userPrompt 사용자 프롬프트
- * @param provider 'glm'(기본, 빠름) | 'claude'(고품질)
- * @param maxTokens 최대 토큰
- * @param temperature 온도
- * @returns AI 응답 텍스트
+ * 공용 AI 호출 (GLM/Claude 공통 인터페이스, 둘 다 프록시 경유)
  */
 export async function callAi(
   systemPrompt: string,
@@ -41,18 +45,14 @@ export async function callAi(
   temperature: number = 0.4,
 ): Promise<string> {
   const useClaude = provider === 'claude';
-  const endpoint = useClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
+  const endpoint = useClaude ? CLAUDE_PROXY_ENDPOINT : GLM_PROXY_ENDPOINT;
   const modelId = useClaude ? CLAUDE_MODEL : GLM_MODEL;
 
+  // 두 프록시 모두 서버에서 키 주입 — 클라이언트 헤더 없음.
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'User-Agent': 'OBS',
   };
-  // Claude 는 서버 프록시가 키를 주입하므로 클라이언트 헤더 없음.
-  // GLM 만 클라이언트에서 직접 호출.
-  if (!useClaude) {
-    headers['Authorization'] = `Bearer ${GLM_API_KEY}`;
-  }
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -71,7 +71,7 @@ export async function callAi(
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
-    throw new Error(`AI 분석 오류 (${response.status}): ${errText.slice(0, 150)}`);
+    throw new Error(`AI 분석 오류 (${response.status}): ${errText.slice(0, 200)}`);
   }
 
   const data = await response.json();
@@ -80,7 +80,6 @@ export async function callAi(
 
 /**
  * JSON 안전 파싱 — 코드펜스/잡음 제거 후 parse.
- * AI 응답이 마크다운 코드블록에 싸여 있을 때 대응.
  */
 export function safeJsonParse(text: string): any | null {
   if (!text) return null;
@@ -96,4 +95,22 @@ export function safeJsonParse(text: string): any | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * 사용자가 선택한 AI 모델 저장/불러오기 — 우측 AI 튜터 + 드래그 AI 공통.
+ */
+const AI_MODEL_STORAGE_KEY = 'toefl_ai_model_pref';
+export function readPreferredAiModel(): AiProvider {
+  try {
+    const v = localStorage.getItem(AI_MODEL_STORAGE_KEY);
+    return v === 'claude' ? 'claude' : 'glm';
+  } catch {
+    return 'glm';
+  }
+}
+export function writePreferredAiModel(model: AiProvider): void {
+  try {
+    localStorage.setItem(AI_MODEL_STORAGE_KEY, model);
+  } catch { /* noop */ }
 }

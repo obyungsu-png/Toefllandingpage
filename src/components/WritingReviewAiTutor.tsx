@@ -23,20 +23,12 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-// ── API 설정 (ToeflAiWidget와 동일) ────────────────────────────────────────
-// 보안: Claude API 키는 클라이언트에 노출하지 않고 Vercel 서버리스 프록시에서만 관리.
-// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드 — GitHub 노출/도용 방지.
-const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
-const GLM_MODEL = 'glm-4-flash';
-
-const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
-// Claude는 항상 Vercel 프록시 경유 — 웹은 상대 경로, Electron은 절대 URL (VITE_CLAUDE_PROXY_URL)
-const CLAUDE_PROXY_ENDPOINT = isElectron
-  ? (import.meta.env.VITE_CLAUDE_PROXY_URL as string | undefined)
-    || 'https://toefl-allmyexam.vercel.app/api/claude/chat/completions'
-  : '/api/claude/chat/completions';
-const CLAUDE_MODEL = 'claude-sonnet-5';
+// ── API 설정 — GLM/Claude 모두 Vercel 서버리스 프록시 경유 (서버 env 키 사용) ──
+import { AI_ENDPOINTS, AI_MODELS } from '../utils/aiClient';
+const GLM_API_ENDPOINT = AI_ENDPOINTS.GLM;
+const GLM_MODEL = AI_MODELS.GLM;
+const CLAUDE_PROXY_ENDPOINT = AI_ENDPOINTS.CLAUDE;
+const CLAUDE_MODEL = AI_MODELS.CLAUDE;
 
 // ── 타입 정의 ──────────────────────────────────────────────────────────────
 type WritingType = 'email' | 'discussion';
@@ -353,16 +345,11 @@ async function callAi(
   const endpoint = useClaude ? CLAUDE_PROXY_ENDPOINT : GLM_API_ENDPOINT;
   const modelId = useClaude ? CLAUDE_MODEL : GLM_MODEL;
 
+  // 두 프록시 모두 서버에서 키 주입 → 클라이언트 Authorization 헤더 불필요.
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'User-Agent': 'OBS',
   };
-  // Claude는 Vercel 프록시가 서버 환경변수에서 키를 주입하므로
-  // 클라이언트에서 Authorization 헤더를 보내지 않음.
-  // GLM만 클라이언트에서 직접 호출 (CORS 허용됨).
-  if (!useClaude) {
-    headers['Authorization'] = `Bearer ${GLM_API_KEY}`;
-  }
 
   const response = await fetch(endpoint, {
     method: 'POST',
