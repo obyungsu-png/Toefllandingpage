@@ -2431,13 +2431,17 @@ function AppContent() {
     });
 
     if (targetNumber !== undefined) {
+      // 1순위 — 타입 필터 + 번호 정확 매칭
       const numberedMatch = typedQuestions.find((question) => questionNumberMatches(question.questionNumber, targetNumber));
       if (numberedMatch) return numberedMatch;
+      // 2순위 — 타입 매칭이 어긋난 경우 (예: Q9가 실제로는 Campus Conversation인데
+      // 매핑 표는 Listen and Response로 알고 있는 경우) 섹션 전체에서 번호로 재검색.
+      // 이 fallback 이 없으면 typedQuestions[0] (엉뚱한 첫 문항)이 반환되어 dictation 스크립트가 뒤섞임.
+      const numberedAny = sectionData.questions.find((question) => questionNumberMatches(question.questionNumber, targetNumber));
+      if (numberedAny) return numberedAny;
     }
 
-    return typedQuestions[0] || (targetNumber !== undefined
-      ? sectionData.questions.find((question) => questionNumberMatches(question.questionNumber, targetNumber)) || null
-      : null);
+    return typedQuestions[0] || null;
   };
 
   let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; sentenceTimestamps?: Array<{ start: number; end: number }>; questionData?: any } | null = null;
