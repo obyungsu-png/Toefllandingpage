@@ -195,6 +195,7 @@ export function ReadingTestEngine({
   if (current.kind === 'cw') {
     return (
       <FillBlanksTestScreen
+        key={`cw-${current.question.id ?? current.question.questionNumber ?? String(current.question.passageText || '').slice(0, 40)}`}
         questionOverride={current.question}
         module={module}
         onNext={goNext}
