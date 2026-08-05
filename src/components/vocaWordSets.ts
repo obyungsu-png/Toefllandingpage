@@ -3,6 +3,7 @@ export interface SATWord {
   korean: string;
   definition: string;
   synonyms: string;
+  chinese?: string; // 중국어 뜻 (병음 포함) — vol.5 기초 영단어 등 3개 국어 책에서 사용
   example?: string; // Example sentence
   isSynonym?: boolean; // Flag to indicate if this is a synonym question
   parentWord?: string; // Original word if this is a synonym

@@ -26,6 +26,7 @@ function normalizeWord(word: SATWord): SATWord {
     korean: normalizeText(word.korean || ""),
     synonyms: normalizeText(word.synonyms || ""),
     definition: normalizeText(word.definition || ""),
+    chinese: word.chinese ? normalizeText(word.chinese) : undefined,
     example: word.example ? normalizeText(word.example) : undefined
   };
 }
@@ -53,7 +54,7 @@ export function VocabularyManagement({
   onUpdateDay: propsOnUpdateDay,
   onDeleteDay: propsOnDeleteDay
 }: VocabularyManagementProps) {
-  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'etymology' | 'custom'>('toefl-easy');
+  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'etymology' | 'custom' | 'junior'>('toefl-easy');
   const [selectedDay, setSelectedDay] = useState<number>(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -67,6 +68,7 @@ export function VocabularyManagement({
   const [formData, setFormData] = useState<SATWord>({
     english: '',
     korean: '',
+    chinese: '',
     definition: '',
     synonyms: ''
   });
@@ -401,6 +403,7 @@ export function VocabularyManagement({
     setFormData({
       english: '',
       korean: '',
+      chinese: '',
       definition: '',
       synonyms: ''
     });
@@ -554,8 +557,8 @@ export function VocabularyManagement({
             parsedWords = lines.map(line => {
               // Use regex to split by one or more tabs OR two or more spaces
               const parts = line.split(/\t+|\s{2,}/);
-              const [english, korean, definition = '', synonyms = ''] = parts;
-              return { english: english || '', korean: korean || '', definition, synonyms };
+              const [english, korean, chinese = '', definition = '', synonyms = ''] = parts;
+              return { english: english || '', korean: korean || '', chinese, definition, synonyms };
             }).filter(word => word.english && word.korean);
           }
           
@@ -598,6 +601,7 @@ export function VocabularyManagement({
     const wordsToDownload = currentDayWords.map(word => ({
       english: word.english,
       korean: word.korean,
+      chinese: word.chinese,
       definition: word.definition,
       synonyms: word.synonyms
     }));
@@ -628,8 +632,8 @@ export function VocabularyManagement({
         const parsedWords: SATWord[] = lines.map(line => {
           // Use regex to split by one or more tabs OR two or more spaces
           const parts = line.split(/\t+|\s{2,}/);
-          const [english, korean, definition = '', synonyms = ''] = parts;
-          return { english: english?.trim() || '', korean: korean?.trim() || '', definition: definition?.trim() || '', synonyms: synonyms?.trim() || '' };
+          const [english, korean, chinese = '', definition = '', synonyms = ''] = parts;
+          return { english: english?.trim() || '', korean: korean?.trim() || '', chinese: chinese?.trim() || '', definition: definition?.trim() || '', synonyms: synonyms?.trim() || '' };
         }).filter(word => word.english && word.korean);
 
         if (parsedWords.length === 0) {
@@ -640,8 +644,8 @@ export function VocabularyManagement({
         // Normalize all words before uploading
         const normalizedWords = parsedWords.map(word => normalizeWord(word));
 
-        // For custom, etymology, and toefl-easy tabs, upload all words to the selected day without splitting
-        if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy') {
+        // For custom, etymology, toefl-easy, junior tabs, upload all words to the selected day without splitting
+        if (activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' || activeTab === 'junior') {
           // No limit - upload all words to the target day
           const response = await fetch(`${serverUrl}/vocabulary-bulk/${activeTab}`, {
             method: 'POST',
@@ -751,11 +755,12 @@ export function VocabularyManagement({
           for (let i = 1; i < lines.length; i++) {
             const line = lines[i];
             const parts = line.split(/\t+|\s{2,}/);
-            const [english, korean, definition = '', synonyms = ''] = parts;
+            const [english, korean, chinese = '', definition = '', synonyms = ''] = parts;
             if (english?.trim() && korean?.trim()) {
               const word = {
                 english: english.trim(),
                 korean: korean.trim(),
+                chinese: chinese.trim(),
                 definition: definition.trim(),
                 synonyms: synonyms.trim()
               };
@@ -768,9 +773,9 @@ export function VocabularyManagement({
             return;
           }
           
-          // No limit for custom, etymology, toefl-easy; 60 for vol.2
+          // No limit for custom, etymology, toefl-easy, junior; 60 for vol.2
           const wordsPerDay = 
-            activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' ? 10000 :
+            activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' || activeTab === 'junior' ? 10000 :
             60;
           
           // Distribute words
@@ -811,11 +816,12 @@ export function VocabularyManagement({
             } else if (currentDay !== null) {
               // Parse word line - Use regex to split by one or more tabs OR two or more spaces
               const parts = line.split(/\t+|\s{2,}/);
-              const [english, korean, definition = '', synonyms = ''] = parts;
+              const [english, korean, chinese = '', definition = '', synonyms = ''] = parts;
               if (english?.trim() && korean?.trim()) {
                 const word = {
                   english: english.trim(),
                   korean: korean.trim(),
+                  chinese: chinese.trim(),
                   definition: definition.trim(),
                   synonyms: synonyms.trim()
                 };
@@ -966,6 +972,20 @@ export function VocabularyManagement({
             <span className="hidden sm:inline">참고서 영단어</span>
             <span className="sm:hidden">참고서</span>
           </button>
+          <button
+            onClick={() => setActiveTab('junior')}
+            className={`px-4 py-2 font-bold transition-all whitespace-nowrap ${
+              activeTab === 'junior'
+                ? 'border-b-4 -mb-0.5 text-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            style={{
+              borderColor: activeTab === 'junior' ? '#3B82F6' : 'transparent',
+            }}
+          >
+            <span className="hidden sm:inline">기초 영단어 vol.5</span>
+            <span className="sm:hidden">기초 vol.5</span>
+          </button>
         </div>
         
         {/* Tab Description */}
@@ -976,6 +996,8 @@ export function VocabularyManagement({
             ? 'TOEFL 고급 어휘 50일 과정을 관리합니다. (vol.2)'
             : activeTab === 'custom'
             ? '사용자 정의 참고서 영단어를 관리합니다.'
+            : activeTab === 'junior'
+            ? '중3+고1 초급 어휘 30일 과정을 관리합니다. (vol.5, 영/한/중)'
             : '단어의 기출 어휘를 관리합니다.'}
         </p>
       </div>
@@ -1136,6 +1158,19 @@ export function VocabularyManagement({
                   placeholder="예: 성취하다"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  중국어 뜻 (병음 포함)
+                </label>
+                <input
+                  type="text"
+                  value={formData.chinese}
+                  onChange={(e) => setFormData({ ...formData, chinese: e.target.value })}
+                  placeholder="예: 接受 (jiēshòu)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                 />
               </div>
 
@@ -1332,6 +1367,12 @@ export function VocabularyManagement({
                         </p>
                       )}
                       
+                      {word.chinese && (
+                        <p className="text-xs sm:text-sm text-gray-700 mb-2 pl-0 sm:pl-16">
+                          <span className="font-medium">중국어:</span> {word.chinese}
+                        </p>
+                      )}
+                      
                       {word.synonyms && (
                         <p className="text-xs sm:text-sm text-gray-600 pl-0 sm:pl-16">
                           <span className="font-medium">동의어:</span>{' '}
@@ -1403,6 +1444,19 @@ export function VocabularyManagement({
                               placeholder="예: 성취하다"
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                               required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              중국어 뜻 (병음 포함)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.chinese}
+                              onChange={(e) => setFormData({ ...formData, chinese: e.target.value })}
+                              placeholder="예: 接受 (jiēshòu)"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                             />
                           </div>
 

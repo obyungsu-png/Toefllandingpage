@@ -259,6 +259,7 @@ function normalizeWord(word: any) {
     korean: normalizeText(word.korean || ""),
     synonyms: word.synonyms ? normalizeText(word.synonyms) : "",
     definition: word.definition ? normalizeText(word.definition) : "",
+    chinese: word.chinese ? normalizeText(word.chinese) : undefined,
     example: word.example ? normalizeText(word.example) : undefined
   };
 }
@@ -281,13 +282,16 @@ const getWordsPerDay = (tabType: string): number => {
   if (tabType === 'toefl-hard') {
     return 50; // vol.2 uses 50 words per day (30 units × 50 words)
   }
+  if (tabType === 'junior') {
+    return 40; // vol.5 junior: 40 words per day (30 days × 40 words)
+  }
   return 40; // toefl-easy default (only used for legacy index-based fallback)
 };
 
 // Helper function to check if a tab uses dayNumber-based storage (unlimited words per day)
 // 모든 어휘 탭이 dayNumber 기반 저장을 사용하도록 통일
 const isDayNumberTab = (tabType: string): boolean => {
-  return tabType === 'custom' || tabType === 'etymology' || tabType === 'toefl-easy' || tabType === 'toefl-hard';
+  return tabType === 'custom' || tabType === 'etymology' || tabType === 'toefl-easy' || tabType === 'toefl-hard' || tabType === 'junior';
 };
 
 // Auto-migrate words from index-based to dayNumber-based storage (generic)

@@ -94,7 +94,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     throw new Error('fetchWithRetry: unreachable');
   };
   
-  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'custom' | 'etymology'>('toefl-easy');
+  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'custom' | 'etymology' | 'junior'>('toefl-easy');
   const [step, setStep] = useState(1);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedWords, setSelectedWords] = useState<SATWord[]>([]);
@@ -1265,6 +1265,11 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
                           <span className="text-gray-700">
                             {word.korean}
                           </span>
+                          {word.chinese && (
+                            <span className="text-gray-500">
+                              {word.chinese}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 leading-relaxed">
                           {word.definition}
