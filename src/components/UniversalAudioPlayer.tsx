@@ -2,32 +2,26 @@ import { useState, useRef, useEffect } from 'react';
 import { Play, Pause } from 'lucide-react';
 
 /**
- * UniversalAudioPlayer — 모든 리스닝/스피킹 Review에서 사용하는 공용 오디오 플레이어
+ * UniversalAudioPlayer — 리스닝/스피킹 Review 공용 오디오 플레이어
  *
- * 특징:
- * 1. audioUrl이 바뀌면 자동으로 pause → src 갱신 → load() → 초기화
- * 2. Play/Pause 토글: 중간에 pause하면 그 위치에서 이어서 재생
- * 3. Progress 바 표시
- * 4. 컴포넌트가 unmount되면 자동 정리
+ * 지연 없이 즉시 재생되도록 아래 항목을 반영:
+ * 1. <audio src={audioUrl} preload="auto"> — 첫 렌더부터 버퍼링 시작
+ * 2. togglePlay는 낙관적 UI 업데이트 — 버튼 상태가 즉시 반영
+ * 3. audioUrl 변경 시 자동 pause + 상태 초기화
+ * 4. pause 위치는 유지 (다시 눌러도 이어서 재생)
  */
 interface UniversalAudioPlayerProps {
-  /** 재생할 오디오 URL */
   audioUrl: string;
-  /** 문제 번호 (로그용, key 생성용) */
   qNum?: number;
-  /** 버튼 라벨 커스터마이즈 (기본: 'Play Audio' / 'Pause Audio') */
   label?: string;
-  /** 색상 테마 (기본: #0d3b4a) */
   color?: string;
-  /** 재생 시간 업데이트 콜백 — 타임스탬프 기반 문장 하이라이트 싱크용 */
   onTimeUpdate?: (currentTime: number, duration: number) => void;
-  /** 재생 완료 콜백 */
   onEnded?: () => void;
 }
 
 export function UniversalAudioPlayer({
   audioUrl,
-  qNum = 0,
+  qNum: _qNum = 0,
   label,
   color = '#0d3b4a',
   onTimeUpdate,
@@ -37,65 +31,49 @@ export function UniversalAudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // ── 핵심: audioUrl이 바뀌면 무조건 새 오디오 로드 ──
+  // audioUrl이 바뀌면 상태만 초기화 (src는 JSX에서 이미 반영됨)
   useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-
-    // 현재 재생 중이면 정지
-    el.pause();
-    el.currentTime = 0;
-
-    if (audioUrl) {
-      el.src = audioUrl;
-      el.load(); // 브라우저에게 명시적으로 새 리소스 로드 요청
-    }
-
-    // 상태 초기화
     setIsPlaying(false);
     setProgress(0);
-  }, [audioUrl]); // audioUrl이 변경될 때만 실행
+    const el = audioRef.current;
+    if (!el) return;
+    try { el.pause(); el.currentTime = 0; } catch { /* ignore */ }
+  }, [audioUrl]);
 
-  // ── cleanup: 컴포넌트 언마운트 시 오디오 정리 ──
   useEffect(() => {
     return () => {
-      audioRef.current?.pause();
+      try { audioRef.current?.pause(); } catch { /* ignore */ }
       audioRef.current = null;
     };
   }, []);
 
-  // ── Play / Pause 토글 ──
   const togglePlay = () => {
     const el = audioRef.current;
-    if (!el || !audioUrl || !el.src || el.src === window.location.href) return;
+    if (!el || !audioUrl) return;
 
-    if (isPlaying) {
-      // 일시정지 → 위치 유지 (currentTime 변경 없음)
+    if (el.paused) {
+      // 낙관적 업데이트 — 버튼이 즉시 Pause 상태로 변경
+      setIsPlaying(true);
+      const p = el.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch((err) => {
+          console.warn('[AudioPlayer] play failed:', err?.message || err);
+          setIsPlaying(false);
+        });
+      }
+    } else {
       el.pause();
       setIsPlaying(false);
-    } else {
-      // 재생 → paused 위치에서 이어서 재생
-      el.play().then(() => setIsPlaying(true)).catch((err) => {
-        console.warn('[AudioPlayer] play failed:', err.message);
-        setIsPlaying(false);
-      });
     }
   };
 
-  // ── 진행률 업데이트 ──
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLAudioElement>) => {
     const el = e.currentTarget;
     const dur = el.duration && isFinite(el.duration) ? el.duration : 0;
-    if (dur) {
-      setProgress((el.currentTime / dur) * 100);
-    }
-    // 외부 콜백 — 타임스탬프 기반 문장 하이라이트 싱크
-    if (onTimeUpdate) {
-      onTimeUpdate(el.currentTime, dur);
-    }
+    if (dur) setProgress((el.currentTime / dur) * 100);
+    if (onTimeUpdate) onTimeUpdate(el.currentTime, dur);
   };
 
-  // ── 재생 완료 ──
   const handleEnded = () => {
     setIsPlaying(false);
     setProgress(0);
@@ -104,24 +82,25 @@ export function UniversalAudioPlayer({
 
   return (
     <div className="max-w-xl mx-auto">
-      {/* 숨겨진 <audio> 요소 */}
       <audio
         ref={audioRef}
+        src={audioUrl || undefined}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
         preload="auto"
         className="hidden"
       />
 
-      {/* Play / Pause 버튼 + 프로그레스 바 */}
       <button
         onClick={togglePlay}
         className="w-full flex items-center gap-3 px-5 py-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
       >
         {isPlaying ? (
-          <Pause className={`w-4 h-4 ${color} fill-${color} flex-shrink-0`} style={{ color }} />
+          <Pause className="w-4 h-4 flex-shrink-0" style={{ color, fill: color }} />
         ) : (
-          <Play className={`w-4 h-4 ${color} fill-${color} flex-shrink-0`} style={{ color }} />
+          <Play className="w-4 h-4 flex-shrink-0" style={{ color, fill: color }} />
         )}
         <span className="font-bold" style={{ color }}>
           {isPlaying ? (label ? `${label} 중지` : 'Pause Audio') : (label || 'Play Audio')}
