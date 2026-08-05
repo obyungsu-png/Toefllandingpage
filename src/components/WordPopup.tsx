@@ -25,33 +25,51 @@ export function WordPopup({ word, context, language, x, y, onClose, onLanguageCh
 
   useEffect(() => {
     let cancelled = false;
+    let handled = false;
     setLoading(true);
     setError(false);
     setDefinitions([]);
     setTranslation(null);
 
-    (async () => {
-      const isPhrase = word.trim().includes(' ');
-      if (language === 'en' && !isPhrase) {
-        const defs = await getWordDefinitions(word);
-        if (cancelled) return;
-        if (defs.length === 0) {
-          // 영어사전에 없는 단어 → Google 번역으로 폴백 (한글 뜻이라도 제공)
-          const trans = await translateWord(word, context);
-          if (cancelled) return;
-          if (!trans) setError(true);
-          else setTranslation(trans);
-        } else {
-          setDefinitions(defs);
-        }
-      } else {
-        const trans = await translateWord(word, context);
-        if (cancelled) return;
-        if (!trans) setError(true);
-        else setTranslation(trans);
+    const isPhrase = word.trim().includes(' ');
+    // 번역과 사전을 병렬 조회 — 먼저 도착한 유효 결과로 즉시 UI 반영.
+    // Google 번역은 보통 200~500ms 로 매우 빨라 사용자 체감 지연이 거의 없음.
+    const transPromise = translateWord(word, context);
+    const dictPromise = (language === 'en' && !isPhrase)
+      ? getWordDefinitions(word)
+      : Promise.resolve<WordDefinition[]>([]);
+
+    // 번역 결과 도착 시 — 아직 사전 결과가 확정되지 않았으면 즉시 표시.
+    transPromise.then((trans) => {
+      if (cancelled || handled) return;
+      if (trans) {
+        // 사전 결과가 오면 그때 대체 (dictPromise then에서 처리)
+        setTranslation(trans);
+        setLoading(false);
       }
-      if (!cancelled) setLoading(false);
-    })();
+    });
+
+    // 사전 결과 도착 시 — 정의가 있으면 번역보다 우선 표시.
+    dictPromise.then((defs) => {
+      if (cancelled) return;
+      if (defs.length > 0) {
+        handled = true;
+        setDefinitions(defs);
+        setTranslation(null);
+        setLoading(false);
+      }
+    });
+
+    // 둘 다 끝나면 아무것도 없으면 에러.
+    Promise.allSettled([transPromise, dictPromise]).then(([tr, dr]) => {
+      if (cancelled) return;
+      const trans = tr.status === 'fulfilled' ? tr.value : null;
+      const defs = dr.status === 'fulfilled' ? dr.value : [];
+      if (!trans && defs.length === 0) {
+        setError(true);
+        setLoading(false);
+      }
+    });
 
     return () => { cancelled = true; };
   }, [word, language, context]);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Underline, Highlighter, BookOpen, Bot, X } from 'lucide-react';
 import { prefetchWordDefinitions } from '../utils/dictionaryApi';
+import { prefetchWordTranslation } from '../utils/wordTranslate';
 
 /** 밑줄 색상 3종 */
 export const UNDERLINE_COLORS = [
@@ -196,10 +197,12 @@ export function SelectionActionPopover({
     return () => cancelAnimationFrame(t);
   }, []);
 
-  // 사전 prefetch — 선택 직후(팝오버 표시 시점) 미리 조회 시작.
-  // 사용자가 '사전' 버튼을 누를 때쯤이면 완료/진행 중이라 팝업이 거의 즉시 뜸
+  // 사전 + 번역 prefetch — 선택 직후(팝오버 표시 시점) 미리 조회 시작.
+  // 사용자가 '사전' 버튼을 누를 때쯤이면 완료/진행 중이라 팝업이 거의 즉시 뜸.
+  // 번역까지 prefetch 하면 EN/KO 어느 쪽이든 초기 응답이 <100ms 로 체감됨.
   useEffect(() => {
     prefetchWordDefinitions(selectedText);
+    prefetchWordTranslation(selectedText);
   }, [selectedText]);
 
   // 색상/AI 서브패널 fade-in 트리거 — 닫혀있을 때는 DOM에서 완전히 제거해야 하므로
