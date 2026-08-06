@@ -745,9 +745,9 @@ function FillBlanksScreen({ onHome, onBack, onNext }: { onHome: () => void; onBa
           margin: 0 1px;
           outline: none;
           text-align: left;
-          /* 타이핑 중에는 실제 TPO 시험처럼 주변 지문보다 살짝 크고 굵게.
+          /* 타이핑 중에는 실제 TPO 시험처럼 주변 지문보다 살짝 크고 아주 살짝만 굵게.
              빈칸이 채워지면 .filled 규칙이 inherit 로 되돌려 지문과 동일해짐. */
-          font-weight: 600;
+          font-weight: 500;
           font-size: 1.08em;
           letter-spacing: 2px;
           height: 1.6em;
