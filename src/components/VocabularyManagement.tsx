@@ -279,6 +279,17 @@ export function VocabularyManagement({
   // Helper to get the display name for the selected day
   const selectedDayName = days.find(d => d.id === selectedDay)?.name || `DAY ${selectedDay}`;
 
+  // DAY 목록을 번호 순으로 정렬 — 새로 추가된 DAY 도 맨 뒤가 아니라
+  // 이름에 포함된 숫자(예: "DAY 5") 기준으로 제자리에 삽입되어 보이도록.
+  // 숫자가 없는 이름은 id 로 fallback.
+  const sortedDays = useMemo(() => {
+    const getSortKey = (d: VocabularyDay) => {
+      const m = String(d.name || '').match(/\d+/);
+      return m ? parseInt(m[0], 10) : d.id;
+    };
+    return [...days].sort((a, b) => getSortKey(a) - getSortKey(b));
+  }, [days]);
+
   // Filter words by search query
   const filteredWords = useMemo(() => {
     if (!searchQuery.trim()) return currentDayWords;
@@ -1026,7 +1037,7 @@ export function VocabularyManagement({
           </Button>
         </div>
         <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-2">
-          {days.map((day) => {
+          {sortedDays.map((day) => {
             const dayWordCount = wordsByDay[day.id]?.length || 0;
             return (
               <div key={day.id} className="relative group">
@@ -1605,7 +1616,7 @@ export function VocabularyManagement({
                       onChange={(e) => setBulkUploadTargetDay(parseInt(e.target.value))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                     >
-                      {days.map((day) => (
+                      {sortedDays.map((day) => (
                         <option key={day.id} value={day.id}>
                           {day.name}
                         </option>
