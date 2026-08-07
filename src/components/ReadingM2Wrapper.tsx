@@ -569,7 +569,7 @@ function FillBlanksScreen({ onHome, onBack, onNext }: { onHome: () => void; onBa
   const [m2FilledInputs, setM2FilledInputs] = React.useState<Record<number, boolean>>({});
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
-  const CHAR_UNIT_WIDTH = 20;
+  const CHAR_UNIT_WIDTH = 16; // fill-blanks.css 의 background-size(16px) 와 일치
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   const m2Inputs = [
@@ -735,8 +735,8 @@ function FillBlanksScreen({ onHome, onBack, onNext }: { onHome: () => void; onBa
           background-color: #d8d8d8;
           border: none;
           border-radius: 3px;
-          background-image: linear-gradient(to right, #333 0%, #333 60%, transparent 60%, transparent 100%);
-          background-size: 20px 2px;
+          background-image: linear-gradient(to right, #333 0%, #333 65%, transparent 65%, transparent 100%);
+          background-size: 16px 2px;
           background-position: left bottom 3px;
           background-repeat: repeat-x;
           font-family: inherit;
@@ -745,15 +745,17 @@ function FillBlanksScreen({ onHome, onBack, onNext }: { onHome: () => void; onBa
           margin: 0 1px;
           outline: none;
           text-align: left;
-          font-weight: inherit;
-          font-size: inherit;
-          letter-spacing: 4px;
+          /* 타이핑 중에는 실제 TPO 시험처럼 주변 지문보다 살짝 크고 아주 살짝만 굵게.
+             빈칸이 채워지면 .filled 규칙이 inherit 로 되돌려 지문과 동일해짐. */
+          font-weight: 500;
+          font-size: 1.08em;
+          letter-spacing: 2px;
           height: 1.6em;
           vertical-align: baseline;
           transition: width 0.2s ease, background-color 0.2s;
           box-sizing: border-box;
           line-height: inherit;
-          min-width: 20px;
+          min-width: 16px;
         }
 
         .m2-gap-input.filled {

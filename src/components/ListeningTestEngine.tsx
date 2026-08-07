@@ -649,7 +649,13 @@ function ListeningQuestionScreen({
   const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
   const audioUrl: string = question?.audioUrl || '';
   const imageUrl: string = question?.imageUrl || '';
-  const questionText: string = question?.questionText || 'Choose the best response.';
+  // Q1-8 (Listen and Response 유형)은 녹음 스크립트를 노출하지 않고
+  // 헤더에 "Choose the best response." 만 표시.
+  const rawQuestionType: string = (question?.questionType || '').toString();
+  const isListenAndResponse = /listen\s*and\s*response/i.test(rawQuestionType);
+  const questionText: string = isListenAndResponse
+    ? 'Choose the best response.'
+    : (question?.questionText || 'Choose the best response.');
 
   // 옵션에서 A./B./C./D. 접두사 제거 (실제 시험 형식 - 접두사 없이 옵션 내용만 표시)
   const formatOptionLabel = (option: string, _index: number): string => {
@@ -857,7 +863,7 @@ function ListeningQuestionScreen({
             </div>
           </div>
 
-          {/* Desktop: TPO 2 side-by-side layout (이미지 크기, 간격 등 동일) */}
+          {/* Desktop: 이미지 왼쪽 + 질문(오른쪽 상단) + 옵션(오른쪽) */}
           <div className="hidden md:block">
             {/* Play Audio Button - Desktop */}
             {audioUrl && (
@@ -876,11 +882,8 @@ function ListeningQuestionScreen({
                 </button>
               </div>
             )}
-            <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-10 text-center">
-              {questionText}
-            </h2>
 
-            {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 옵션 오른쪽) */}
+            {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 질문+옵션 오른쪽) */}
             {/* Conversation 그룹(Short/Campus Conversation)은 TPO 2처럼 더 큰 이미지 사용 */}
             {(() => {
               const isConversation = ['Short Conversation', 'Campus Conversation'].includes(question?.questionType || '');
@@ -890,34 +893,35 @@ function ListeningQuestionScreen({
               const optLeft = imageUrl ? (isConversation ? '56%' : '51%') : '10%';
               const optWidth = imageUrl ? (isConversation ? '38%' : '42%') : '80%';
               return (
-                <>
-                  <div className="relative" style={{minHeight: '420px'}}>
-                    {imageUrl && (
-                      <div style={{position: 'absolute', left: imgLeft, top: 0, width: imgWidth}}>
-                        <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: imgMaxHeight}} />
-                      </div>
-                    )}
-                    <div style={{position: 'absolute', left: optLeft, top: '8px', width: optWidth}}>
-                <div className="space-y-7">
-                  {options.map((option, index) => (
-                    <RadioOption
-                      key={index}
-                      id={`lq-${qNum}-opt-${index}`}
-                      name={`lq-${qNum}`}
-                      value={option}
-                      checked={selectedAnswer === option}
-                      onChange={() => recordListeningAnswer(option)}
-                      label={formatOptionLabel(option, index)}
-                      labelClassName="text-xl font-['Inter',_sans-serif] text-gray-900"
-                    />
-                  ))}
-                  {options.length === 0 && (
-                    <p className="text-sm text-gray-400 italic">옵션이 없습니다. CMS에서 옵션을 추가해주세요.</p>
+                <div className="relative" style={{minHeight: '420px'}}>
+                  {imageUrl && (
+                    <div style={{position: 'absolute', left: imgLeft, top: 0, width: imgWidth}}>
+                      <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: imgMaxHeight}} />
+                    </div>
                   )}
-                </div>
+                  <div style={{position: 'absolute', left: optLeft, top: '8px', width: optWidth}}>
+                    <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 leading-snug">
+                      {questionText}
+                    </h2>
+                    <div className="space-y-5">
+                      {options.map((option, index) => (
+                        <RadioOption
+                          key={index}
+                          id={`lq-${qNum}-opt-${index}`}
+                          name={`lq-${qNum}`}
+                          value={option}
+                          checked={selectedAnswer === option}
+                          onChange={() => recordListeningAnswer(option)}
+                          label={formatOptionLabel(option, index)}
+                          labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
+                        />
+                      ))}
+                      {options.length === 0 && (
+                        <p className="text-sm text-gray-400 italic">옵션이 없습니다. CMS에서 옵션을 추가해주세요.</p>
+                      )}
                     </div>
                   </div>
-                </>
+                </div>
               );
             })()}
           </div>

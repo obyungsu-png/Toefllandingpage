@@ -165,6 +165,18 @@
             Authorization: `Bearer ${process.env.VITE_DEV_CLAUDE_API_KEY || ''}`,
           },
         },
+        // 개발 환경에서 /api/glm/* 를 open.bigmodel.cn 로 프록시.
+        // 서버 env GLM_API_KEY (또는 VITE_GLM_API_KEY) 사용 — 클라이언트에 노출 안 됨.
+        // 프로덕션은 Vercel 서버리스 api/glm/chat/completions.ts 가 처리.
+        '/api/glm': {
+          target: 'https://open.bigmodel.cn',
+          changeOrigin: true,
+          rewrite: () => '/api/paas/v4/chat/completions',
+          headers: {
+            // 기본 하드코딩 키를 fallback 으로 유지 — 로컬 dev 도 env 설정 없이 바로 작동.
+            Authorization: `Bearer ${process.env.GLM_API_KEY || process.env.VITE_GLM_API_KEY || 'dc2213720f4b4a88ae06ddbd434ab1dd.qDGcLtBM9gGqp6ff'}`,
+          },
+        },
         // ── 레거시 STT(Whisper) 프록시 — apiclaude.cc /v1/audio/transcriptions ──
         // ⚠️ /api/stt/deepgram 은 sttDevProxyPlugin 미들웨어가 먼저 가로채어
         //    Deepgram API 로 직접 라우팅 (아래 프록시는 /api/stt/transcriptions 만 처리).

@@ -3,8 +3,11 @@
   background-color: #d8d8d8;
   border: none;
   border-radius: 3px;
-  background-image: linear-gradient(to right, #333 0%, #333 60%, transparent 60%, transparent 100%);
-  background-size: 20px 2px;
+  background-image: linear-gradient(to right, #333 0%, #333 65%, transparent 65%, transparent 100%);
+  /* 밑줄 슬롯 폭 — FillBlanksTestScreen 의 CHAR_UNIT_WIDTH(16) 와 반드시 일치.
+     이 값이 실제 타이핑되는 글자 폭(font-size×0.55 + letter-spacing)과
+     비슷해야 타자할 때 밑줄이 글자보다 길어 보이지 않는다. */
+  background-size: 16px 2px;
   background-position: left bottom 3px;
   background-repeat: repeat-x;
   font-family: inherit;
@@ -13,15 +16,21 @@
   margin: 0 1px;
   outline: none;
   text-align: left;
-  font-weight: inherit;
-  font-size: inherit;
-  letter-spacing: 4px;
+  /* 타이핑 중(빈칸이 아직 다 안 채워진 상태)에는 실제 TPO 시험처럼
+     주변 지문 글자보다 살짝 크고 아주 살짝만 굵게 보이도록 함.
+     빈칸이 다 채워지면 .filled 규칙이 이 값을 inherit 로 되돌려서
+     주변 글자와 동일한 크기/두께로 자연스럽게 이어짐. */
+  font-weight: 500;
+  font-size: 1.08em;
+  /* 글자 간격을 밑줄 슬롯(16px)에 맞춰 축소 — 4px 였을 때 슬롯(20px)보다 좁아서
+     타이핑한 글자와 그 아래 밑줄이 어긋나 보였음. */
+  letter-spacing: 2px;
   height: 1.6em;
   vertical-align: baseline;
   transition: width 0.2s ease, background-color 0.2s;
   box-sizing: border-box;
   line-height: inherit;
-  min-width: 20px;
+  min-width: 16px;
 }
 
 .gap-input.filled, .m2-gap-input.filled {

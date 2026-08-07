@@ -3,35 +3,18 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, Sparkles, Send, Bot, User, Pin, PinOff, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { AI_ENDPOINTS, AI_MODELS, readPreferredAiModel, writePreferredAiModel, type AiProvider } from '../utils/aiClient';
 
 // ───────────────────────────────────────────────────────────────────────────
-//  API 설정 — GLM + Claude 듀블 모델 지원
-//  - GLM: 직접 호출 (CORS 허용). API 키는 .env.local의 VITE_GLM_API_KEY에서 읽음 (보안)
-//  - Claude: 항상 Vercel 서버리스 프록시 경유 — 클라이언트에 API 키 노출 없음 (보안)
-//    - 웹: /api/claude/chat/completions (상대 경로)
-//    - Electron: 배포된 Vercel 절대 URL (VITE_CLAUDE_PROXY_URL 환경변수)
+//  API 설정 — GLM + Claude 모두 Vercel 서버리스 프록시 경유.
+//  키는 서버 환경변수(GLM_API_KEY / CLAUDE_API_KEY)로만 관리 — 클라이언트 노출 없음.
 // ───────────────────────────────────────────────────────────────────────────
-const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드.
-// 코드에 하드코딩하지 않음 — GitHub 노출/도용 방지.
-const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
-const GLM_MODEL = 'glm-4-flash';
+const GLM_MODEL = AI_MODELS.GLM;
+const CLAUDE_MODEL = AI_MODELS.CLAUDE;
+const GLM_API_ENDPOINT = AI_ENDPOINTS.GLM;
+const CLAUDE_PROXY_ENDPOINT = AI_ENDPOINTS.CLAUDE;
 
-// Electron 여부 확인
-const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron === true;
-
-// Claude 프록시 엔드포인트:
-// - 웹에서는 상대 경로(/api/claude/chat/completions) 사용 → Vercel가 자동 라우팅
-// - Electron에서는 절대 URL 필요 → VITE_CLAUDE_PROXY_URL 환경변수에서 읽음
-//   예: .env.local에 VITE_CLAUDE_PROXY_URL=https://your-app.vercel.app/api/claude/chat/completions
-//   환경변수 미설정 시 fallback으로 패키지명 기반 추정 URL 사용
-const CLAUDE_PROXY_ENDPOINT = isElectron
-  ? (import.meta.env.VITE_CLAUDE_PROXY_URL as string | undefined)
-    || 'https://toefl-allmyexam.vercel.app/api/claude/chat/completions'
-  : '/api/claude/chat/completions';
-const CLAUDE_MODEL = 'claude-sonnet-5';
-
-type AiModel = 'glm' | 'claude';
+type AiModel = AiProvider;
 
 const MODEL_OPTIONS: { key: AiModel; label: string; modelId: string }[] = [
   { key: 'glm', label: 'GLM Flash (빠름)', modelId: GLM_MODEL },
@@ -260,18 +243,22 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
-  const [selectedModel, setSelectedModel] = useState<AiModel>('glm');
+  const [selectedModel, setSelectedModelRaw] = useState<AiModel>(() => readPreferredAiModel());
+  const setSelectedModel = useCallback((model: AiModel) => {
+    setSelectedModelRaw(model);
+    writePreferredAiModel(model); // 드래그 AI 도 같은 모델 사용
+  }, []);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const activeQuestions = propQuestions ?? defaultSuggestedQuestions;
 
   // ── Pinned (고정) 모드: 화면 중앙 트렌디 모달 팝업으로 AI 튜터를 띄워놓고 글 작성 ──
   // 모바일 대응: 화면 폭에 따라 기본 사이즈 자동 조정
   const getDefaultPanelSize = useCallback(() => {
-    if (typeof window === 'undefined') return { w: 760, h: 600 };
+    if (typeof window === 'undefined') return { w: 880, h: 700 };
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    if (vw < 640) return { w: Math.min(760, vw * 0.92), h: Math.min(600, vh * 0.85) };
-    return { w: 760, h: 600 };
+    if (vw < 640) return { w: Math.min(880, vw * 0.94), h: Math.min(700, vh * 0.88) };
+    return { w: 880, h: 700 };
   }, []);
   const [pinned, setPinned] = useState(false);
   // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치/크기 초기화
@@ -404,12 +391,8 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         'Content-Type': 'application/json',
         'User-Agent': 'OBS',
       };
-      // Claude는 Vercel 프록시가 서버 환경변수에서 키를 주입하므로
-      // 클라이언트에서 Authorization 헤더를 보내지 않음.
-      // GLM만 클라이언트에서 직접 호출 (CORS 허용됨).
-      if (!isClaude) {
-        headers['Authorization'] = `Bearer ${GLM_API_KEY}`;
-      }
+      // GLM/Claude 모두 Vercel 프록시가 서버 환경변수에서 키를 주입 →
+      // 클라이언트에서 Authorization 헤더 불필요.
 
       const requestBody: Record<string, any> = {
         model: modelId,
@@ -632,7 +615,14 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           border: 1px solid rgba(13, 148, 136, 0.18);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
+          /* 고정 모달의 기본 글씨 크기 소폭 상향 — 채팅/버튼 폰트가 자동으로 커짐 */
+          font-size: 16px;
+          line-height: 1.55;
         }
+        .toefl-ai-pinned-panel .toefl-ai-panel-title { font-size: 1.15rem; }
+        .toefl-ai-pinned-panel button { font-size: inherit; }
+        .toefl-ai-pinned-panel input,
+        .toefl-ai-pinned-panel textarea { font-size: 1rem; }
         .toefl-ai-pinned-header {
           cursor: grab;
           user-select: none;

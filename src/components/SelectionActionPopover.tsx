@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Underline, Highlighter, BookOpen, Bot, X } from 'lucide-react';
 import { prefetchWordDefinitions } from '../utils/dictionaryApi';
+import { prefetchWordTranslation } from '../utils/wordTranslate';
+import { callAi, readPreferredAiModel } from '../utils/aiClient';
 
 /** 밑줄 색상 3종 */
 export const UNDERLINE_COLORS = [
@@ -31,12 +33,11 @@ const AI_TUTOR_ACTIONS: { key: AiTutorAction; label: string }[] = [
   { key: 'rewrite', label: 'Rewrite' },
 ];
 
-const GLM_API_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-// 보안: GLM API 키는 환경변수(.env.local → VITE_GLM_API_KEY)에서만 로드 — GitHub 노출/도용 방지.
-const GLM_API_KEY = import.meta.env.VITE_GLM_API_KEY || '';
-const GLM_MODEL = 'glm-4-flash';
-
-/** AI 튜터 API 호출 — 선택 텍스트에 대해 액션별 응답 생성 */
+/**
+ * 드래그 AI 튜터 API 호출 — 우측 ToeflAiWidget 과 동일한 공용 클라이언트(callAi) 사용.
+ * 모델(GLM/Claude)은 사용자가 우측 위젯에서 선택한 것을 그대로 이어받음 (localStorage 저장).
+ * GLM 이든 Claude 든 모두 Vercel 서버리스 프록시 경유 → 클라이언트 키 노출 없음.
+ */
 async function callAiTutor(action: AiTutorAction, selectedText: string): Promise<string> {
   const prompts: Record<AiTutorAction, string> = {
     explain: `다음 TOEFL 지문의 선택된 텍스트를 간결하게 설명해줘 (3~5줄, 한국어): "${selectedText}"`,
@@ -44,22 +45,15 @@ async function callAiTutor(action: AiTutorAction, selectedText: string): Promise
     analyze: `다음 TOEFL 텍스트의 문법 구조와 핵심 포인트를 분석해줘 (3~5줄, 한국어): "${selectedText}"`,
     rewrite: `다음 텍스트를 더 쉬운 영어로 paraphrase해줘. 한국어 설명도 한 줄 추가: "${selectedText}"`,
   };
-  const resp = await fetch(GLM_API_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GLM_API_KEY}` },
-    body: JSON.stringify({
-      model: GLM_MODEL,
-      messages: [
-        { role: 'system', content: 'TOEFL 튜터. 핵심만 간결하게 답변. 마크다운 금지. 줄바꿈으로 구조화.' },
-        { role: 'user', content: prompts[action] },
-      ],
-      max_tokens: 400,
-      temperature: 0.5,
-    }),
-  });
-  if (!resp.ok) throw new Error(`API error ${resp.status}`);
-  const json = await resp.json();
-  return json.choices?.[0]?.message?.content?.replace(/<think>[\s\S]*?<\/think>/gi, '').trim() || '응답을 받지 못했습니다.';
+  const provider = readPreferredAiModel();
+  const raw = await callAi(
+    'TOEFL 튜터. 핵심만 간결하게 답변. 마크다운 금지. 줄바꿈으로 구조화.',
+    prompts[action],
+    provider,
+    400,
+    0.5,
+  );
+  return raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim() || '응답을 받지 못했습니다.';
 }
 
 /** localStorage에 저장된 '기본 색상' 읽기 — 없으면 팔레트의 첫 색상 */
@@ -196,10 +190,12 @@ export function SelectionActionPopover({
     return () => cancelAnimationFrame(t);
   }, []);
 
-  // 사전 prefetch — 선택 직후(팝오버 표시 시점) 미리 조회 시작.
-  // 사용자가 '사전' 버튼을 누를 때쯤이면 완료/진행 중이라 팝업이 거의 즉시 뜸
+  // 사전 + 번역 prefetch — 선택 직후(팝오버 표시 시점) 미리 조회 시작.
+  // 사용자가 '사전' 버튼을 누를 때쯤이면 완료/진행 중이라 팝업이 거의 즉시 뜸.
+  // 번역까지 prefetch 하면 EN/KO 어느 쪽이든 초기 응답이 <100ms 로 체감됨.
   useEffect(() => {
     prefetchWordDefinitions(selectedText);
+    prefetchWordTranslation(selectedText);
   }, [selectedText]);
 
   // 색상/AI 서브패널 fade-in 트리거 — 닫혀있을 때는 DOM에서 완전히 제거해야 하므로

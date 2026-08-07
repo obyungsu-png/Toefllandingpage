@@ -3,6 +3,7 @@
   "outputDirectory": "build",
   "rewrites": [
     { "source": "/api/claude/(.*)", "destination": "/api/claude/chat/completions" },
+    { "source": "/api/glm/(.*)", "destination": "/api/glm/chat/completions" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

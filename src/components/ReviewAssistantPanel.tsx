@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
-import { BookOpen, Bot, ClipboardList, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import { createCachedAudioSync } from '../utils/mediaCache';
 import { translateWord } from '../utils/wordTranslate';
 
@@ -493,7 +493,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, [panelPinned]);
 
-  // Play/Pause Audio — Listening/Speaking 섹션의 오디오 재생/일시정지 (토글)
+  // Play/Pause Audio — 낙관적 UI 업데이트로 즉시 반응. Pause 위치는 유지.
   const handlePlayAudio = () => {
     if (!audioUrl) return;
 
@@ -503,15 +503,16 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       return;
     }
 
+    // 즉시 재생 상태로 전환 (버튼 UI가 지연 없이 변경)
+    setIsPlayingAudio(true);
     if (audioRef.current) {
-      // Resume from wherever it was paused — do NOT reset currentTime
-      audioRef.current.play().then(() => setIsPlayingAudio(true)).catch(() => {});
+      audioRef.current.play().catch(() => setIsPlayingAudio(false));
     } else {
       const audio = createCachedAudioSync(audioUrl);
       audioRef.current = audio;
-      audio.play().then(() => setIsPlayingAudio(true)).catch(() => {});
       audio.onended = () => setIsPlayingAudio(false);
       audio.onpause = () => setIsPlayingAudio(false);
+      audio.play().catch(() => setIsPlayingAudio(false));
     }
   };
 
@@ -1227,7 +1228,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             style={scriptBlur ? { backgroundColor: '#7c3aed' } : undefined}
             title="스크립트 블러 — 1단계 무자막 정취용. 오디오에만 집중할 때 사용"
           >
-            {scriptBlur ? '👁 블러 중' : '👁 블러'}
+            {scriptBlur ? (<><EyeOff className="h-3 w-3" /> 블러 중</>) : (<><Eye className="h-3 w-3" /> 블러</>)}
           </button>
           {translationSentences.length > 0 && (
             <button
@@ -1252,7 +1253,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               style={showKeyWordsSidebar ? { backgroundColor: '#0d9488' } : undefined}
               title="핵심 어휘 사이드바 — 이 지문의 Key Vocabulary & 숙어"
             >
-              📚 단어장 {showKeyWordsSidebar ? '닫기' : '보기'}
+              <BookOpen className="h-3 w-3" /> 단어장 {showKeyWordsSidebar ? '닫기' : '보기'}
             </button>
           )}
           {/* 쉐도잉 녹음 — 마이크로 내 음성 녹음 후 비교 */}

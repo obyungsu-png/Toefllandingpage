@@ -69,7 +69,10 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
 
   const { isOpen: isFBVolumeOpen, buttonRef: fbVolumeButtonRef, toggleVolume: toggleFBVolume, closeVolume: closeFBVolume } = useVolumeControl();
   
-  const CHAR_UNIT_WIDTH = 20; // CSS background-size의 가로 폭과 일치
+  // CSS background-size(=밑줄 슬롯 폭)와 반드시 일치 —
+  // 폭이 실제 글자(font-size 1.25rem 기준) 폭 + letter-spacing 과 맞춰야
+  // 타이핑한 글자 위 밑줄이 어긋나 보이지 않음.
+  const CHAR_UNIT_WIDTH = 16;
   const isMobileFB = typeof window !== 'undefined' && window.innerWidth < 640;
   
   // Get dynamic question data from CMS
@@ -105,27 +108,43 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
 
   const passageText = normalizedPassage;
 
-  // FillBlanks 답을 window.__fillBlanksAnswers에 저장 (리뷰용)
+  // 문제별로 고유한 키 — id/questionNumber 가 둘 다 없거나 겹쳐도 지문 첫 40자
+  // 를 조합해 유일성 보장 (Q1-10 과 Q11-20 이 같은 키를 공유하지 않도록).
+  const effectiveQuestionKey = React.useMemo(() => {
+    const q = fillBlanksQuestion;
+    if (!q) return '';
+    const passageFingerprint = String(q.passageText || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    return `cw::${q.id ?? ''}::${q.questionNumber ?? ''}::${passageFingerprint}`;
+  }, [fillBlanksQuestion]);
+
+  // 문제가 변경되면 이전 답을 복원(있으면), 없으면 무조건 초기화.
+  // 이전엔 [id, questionNumber] 만 dep 였는데 둘 다 undefined 인 경우
+  // 새 문제로 넘어가도 effect 가 발동하지 않아 이전 답(Q1-10)이
+  // Q11-20 화면에 그대로 남는 버그가 있었음.
+  React.useEffect(() => {
+    if (!effectiveQuestionKey) {
+      setInputValues({});
+      setFilledInputs({});
+      return;
+    }
+    const saved = (window as any).__completeWordsAnswers?.[effectiveQuestionKey];
+    setInputValues(saved ? { ...saved } : {});
+    setFilledInputs({});
+  }, [effectiveQuestionKey]);
+
+  // FillBlanks 답을 window.__completeWordsAnswers 에 문제별로 저장 (리뷰용).
+  // __fillBlanksAnswers 는 채점 트리거 계산용으로 현재 문제 답만 유지.
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).__fillBlanksAnswers = inputValues;
-      if (fillBlanksQuestion) {
-        const questionKey = String(fillBlanksQuestion.id || fillBlanksQuestion.questionNumber || 'module1-complete-words');
+      if (effectiveQuestionKey) {
         (window as any).__completeWordsAnswers = {
           ...((window as any).__completeWordsAnswers || {}),
-          [questionKey]: inputValues,
+          [effectiveQuestionKey]: inputValues,
         };
       }
     }
-  }, [inputValues, fillBlanksQuestion]);
-
-  // 문제가 변경되면 입력값 갱신 — 이전에 입력한 답이 있으면 복원 (앞으로 갔다가 돌아와도 답 유지)
-  React.useEffect(() => {
-    const questionKey = String(fillBlanksQuestion?.id || fillBlanksQuestion?.questionNumber || '');
-    const saved = questionKey ? (window as any).__completeWordsAnswers?.[questionKey] : null;
-    setInputValues(saved ? { ...saved } : {});
-    setFilledInputs({});
-  }, [fillBlanksQuestion?.id, fillBlanksQuestion?.questionNumber]);
+  }, [inputValues, effectiveQuestionKey]);
 
   const renderPassageWithInputs = () => {
     if (!passageText) return null;

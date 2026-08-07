@@ -609,14 +609,33 @@ app.post("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
     const tabType = c.req.param("tabType");
     const { dayName } = await c.req.json();
     const key = `vocabulary_days_${tabType}`;
-    
+
     const days = await kv.get(key) || [];
-    const newId = days.length > 0 ? Math.max(...days.map(d => d.id)) + 1 : 1;
+    const existingIds = new Set(days.map((d: any) => d.id));
+
+    // id 를 이름에 포함된 숫자로부터 우선 도출 — 그래야 나중에 다중 DAY
+    // 업로드에서 사용자가 텍스트에 쓰는 "DAY N" 마커(→ word.dayNumber = N)
+    // 와 이 DAY 엔트리의 id 가 일치해서 새로 만든 DAY 에 단어가 제대로
+    // 붙는다. 이름에서 숫자를 추출할 수 없거나 이미 사용 중이면
+    // 기존처럼 max(id)+1 로 폴백.
+    const nameMatch = String(dayName || '').match(/\d+/);
+    let newId: number;
+    if (nameMatch) {
+      const nameNum = parseInt(nameMatch[0], 10);
+      if (nameNum > 0 && !existingIds.has(nameNum)) {
+        newId = nameNum;
+      } else {
+        newId = days.length > 0 ? Math.max(...days.map((d: any) => d.id)) + 1 : 1;
+      }
+    } else {
+      newId = days.length > 0 ? Math.max(...days.map((d: any) => d.id)) + 1 : 1;
+    }
+
     const newDay = { id: newId, name: dayName };
-    
+
     days.push(newDay);
     await kv.set(key, days);
-    
+
     return c.json({ success: true, days });
   } catch (error) {
     console.error("Error adding vocabulary day:", error);
@@ -679,6 +698,66 @@ app.delete("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
   } catch (error) {
     console.error("Error deleting vocabulary day:", error);
     return c.json({ error: "Failed to delete vocabulary day", details: error.message }, 500);
+  }
+});
+
+// Full reset: 특정 탭의 모든 단어를 지우고 DAY 목록을 DAY 1..N (기본 50) 로
+// 완전히 초기화. 완전히 비어있는 상태에서 처음부터 다시 채워넣고 싶을 때 사용.
+// 되돌릴 수 없으므로 UI 에서 확인 후 호출할 것.
+app.post("/make-server-e46cd33a/vocabulary-reset/:tabType", async (c) => {
+  try {
+    const tabType = c.req.param("tabType");
+    const body = (await c.req.json().catch(() => ({}))) as { upTo?: number };
+    const target = Math.max(1, Math.min(200, Number(body.upTo) || 50));
+
+    const wordsKey = `vocabulary_words_${tabType}`;
+    const daysKey = `vocabulary_days_${tabType}`;
+
+    const defaultDays = Array.from({ length: target }, (_, i) => ({
+      id: i + 1,
+      name: `DAY ${i + 1}`,
+    }));
+
+    await kv.set(wordsKey, []);
+    await kv.set(daysKey, defaultDays);
+
+    return c.json({ success: true, words: [], days: defaultDays });
+  } catch (error) {
+    console.error("Error resetting vocabulary:", error);
+    return c.json({ error: "Failed to reset vocabulary", details: error.message }, 500);
+  }
+});
+
+// Restore DAY 1 ~ DAY N (default 50). Ensures each id 1..N exists with
+// name "DAY <id>". Existing days (including any with the same id but a
+// custom name) are preserved as-is. Extra days beyond N are also kept.
+// Used to recover from accidental deletions in the DAY 선택 grid.
+app.post("/make-server-e46cd33a/vocabulary-days/:tabType/restore", async (c) => {
+  try {
+    const tabType = c.req.param("tabType");
+    const { upTo } = (await c.req.json().catch(() => ({}))) as { upTo?: number };
+    const target = Math.max(1, Math.min(200, Number(upTo) || 50));
+    const key = `vocabulary_days_${tabType}`;
+
+    const days = (await kv.get(key)) || [];
+    const existingIds = new Set(days.map((d: any) => d.id));
+
+    let added = 0;
+    for (let i = 1; i <= target; i++) {
+      if (!existingIds.has(i)) {
+        days.push({ id: i, name: `DAY ${i}` });
+        added++;
+      }
+    }
+
+    if (added > 0) {
+      await kv.set(key, days);
+    }
+
+    return c.json({ success: true, days, added });
+  } catch (error) {
+    console.error("Error restoring vocabulary days:", error);
+    return c.json({ error: "Failed to restore vocabulary days", details: error.message }, 500);
   }
 });
 

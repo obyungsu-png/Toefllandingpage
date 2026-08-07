@@ -6096,6 +6096,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     'emailTo', 'emailSubject',
     // Build a Sentence / Writing: 회색 상황 박스 (질문 위 추가 컨텍스트)
     'context',
+    // Review dictation 의 "복습 → 단어장 보기" 데이터.
+    // 한 줄에 "word=한글 뜻" 형식으로 여러 줄 입력. 컬럼 순서 변경 시 기존
+    // 예시 배열이 밀리지 않도록 CSV_COLUMNS 마지막에 배치.
+    'vocabularyNote',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -6128,6 +6132,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '여자가 도서관 위치를 설명해주며, A가 위치를 정확히 반영함.',
       'q1_audio.mp3',
       'q1_image.png',
+      // Write an Email 필드(8개) + context 자리 채움
+      '', '', '', '', '', '', '', '', '',
+      // vocabularyNote — Review dictation "단어장 보기" 데이터 (word=한글 뜻, 줄바꿈으로 구분)
+      'library=도서관\nquad=사각 마당(대학교 정문 앞 잔디 공간)\nscience building=과학관',
     ].map(csvEscape).join(',') : [
       '1',
       (questionTypeOptions?.[0] || 'Detail Questions'),
@@ -6632,6 +6640,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iNum = idx('questionNumber'), iType = idx('questionType'), iDiff = idx('difficulty'), iMod = idx('module');
         const iPTitle = idx('passageTitle'), iPText = idx('passageText'), iScript = idx('scriptText');
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
+        const iVocab = idx('vocabularyNote');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
         const iContext = idx('context'); // Build a Sentence / Writing 상황 박스 (회색 박스)
@@ -6873,6 +6882,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 dictationBlanks: get(iDictBlanks) || undefined,
                 organization: get(iOrg) || undefined,
                 organizationBlanks: get(iOrgBlanks) || undefined,
+                vocabularyNote: get(iVocab) || undefined,
                 difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
                 context: isBuildSentence

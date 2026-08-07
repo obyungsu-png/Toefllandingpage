@@ -598,6 +598,10 @@ function AppContent() {
   const skipReportsSaveRef = React.useRef(false);
   const skipStudentsSaveRef = React.useRef(false);
   const skipTestResultsSaveRef = React.useRef(false);
+  // 서버에서 로드된 test-results 의 초기 개수 — 이후 저장 시 급격한 축소가 발생하면
+  // 데이터 유실 신호로 경고 및 localStorage 백업으로 복구 가능.
+  const loadedTestResultsCountRef = React.useRef<number>(-1);
+  const TEST_RESULTS_BACKUP_KEY = 'amx_test_results_backup_v1';
   const skipQuestionTypesConfigSaveRef = React.useRef(false);
   const skipTrainingConfigSaveRef = React.useRef(false);
   const testStartTimeRef = useRef<number>(Date.now()); // 테스트 시작 시간 추적
@@ -786,7 +790,19 @@ function AppContent() {
   // Save test results to Supabase whenever they change
   useEffect(() => {
     if (isLoadingData || !dataLoadedSuccessfully || consumeInitialSyncSkip(skipTestResultsSaveRef)) return;
-    
+
+    // 안전장치 — 갑작스러운 대량 축소(≥30% 감소 + 5개 이상 유실)는 잠재적 데이터 유실 신호.
+    // 초기 로드 수(loadedTestResultsCountRef) 대비 지금 상태가 급감했으면 저장을 건너뛰고
+    // localStorage 백업을 참조해 복구 안내.
+    const loaded = loadedTestResultsCountRef.current;
+    if (loaded > 5 && testResults.length < loaded && (loaded - testResults.length) / loaded >= 0.3) {
+      console.error(
+        `⚠️ [history] test-results 급감 감지 (loaded=${loaded} → now=${testResults.length}). 저장 건너뜀 — 유실 방지.`,
+        `복구가 필요하면 localStorage["${TEST_RESULTS_BACKUP_KEY}"] 확인.`
+      );
+      return;
+    }
+
     const saveTestResults = async () => {
       try {
         const res = await fetch(
@@ -801,11 +817,16 @@ function AppContent() {
           }
         );
         if (!res.ok) console.error(`❌ Error saving Test Results: ${res.status}`);
+        else {
+          // 성공 시 baseline + localStorage 백업 갱신 (다음 앱 로드 시 서버 오류에 대비)
+          loadedTestResultsCountRef.current = testResults.length;
+          try { localStorage.setItem(TEST_RESULTS_BACKUP_KEY, JSON.stringify(testResults)); } catch { /* quota */ }
+        }
       } catch (error) {
         console.error('❌ Error saving Test Results:', error);
       }
     };
-    
+
     scheduleDebouncedSave('testresults', saveTestResults);
   }, [testResults, isLoadingData, dataLoadedSuccessfully]);
 
@@ -1079,9 +1100,23 @@ function AppContent() {
           if (Array.isArray(resultsRes)) {
             skipTestResultsSaveRef.current = true;
             setTestResults(resultsRes);
-            // Mark history as already loaded so the deferred loader doesn't refetch unnecessarily
+            loadedTestResultsCountRef.current = resultsRes.length;
+            // 로컬 백업 저장 — 서버 유실 시 콘솔에서 수동 복구 가능
+            try { localStorage.setItem(TEST_RESULTS_BACKUP_KEY, JSON.stringify(resultsRes)); } catch { /* quota */ }
             setDeferredLoadStatus(prev => ({ ...prev, history: 'loaded' }));
             anySuccess = true;
+          } else {
+            // 서버 응답이 배열이 아니면 (오류/캐시 폴백) → localStorage 백업으로 복구 시도
+            try {
+              const backup = JSON.parse(localStorage.getItem(TEST_RESULTS_BACKUP_KEY) || '[]');
+              if (Array.isArray(backup) && backup.length > 0) {
+                console.warn(`[history] 서버 응답 오류 → localStorage 백업 ${backup.length}개로 복구`);
+                skipTestResultsSaveRef.current = true;
+                setTestResults(backup);
+                loadedTestResultsCountRef.current = backup.length;
+                anySuccess = true;
+              }
+            } catch { /* corrupt backup */ }
           }
         } catch (e) {
           console.error('⚠️ Failed to preload test-results:', e);
@@ -2431,13 +2466,17 @@ function AppContent() {
     });
 
     if (targetNumber !== undefined) {
+      // 1순위 — 타입 필터 + 번호 정확 매칭
       const numberedMatch = typedQuestions.find((question) => questionNumberMatches(question.questionNumber, targetNumber));
       if (numberedMatch) return numberedMatch;
+      // 2순위 — 타입 매칭이 어긋난 경우 (예: Q9가 실제로는 Campus Conversation인데
+      // 매핑 표는 Listen and Response로 알고 있는 경우) 섹션 전체에서 번호로 재검색.
+      // 이 fallback 이 없으면 typedQuestions[0] (엉뚱한 첫 문항)이 반환되어 dictation 스크립트가 뒤섞임.
+      const numberedAny = sectionData.questions.find((question) => questionNumberMatches(question.questionNumber, targetNumber));
+      if (numberedAny) return numberedAny;
     }
 
-    return typedQuestions[0] || (targetNumber !== undefined
-      ? sectionData.questions.find((question) => questionNumberMatches(question.questionNumber, targetNumber)) || null
-      : null);
+    return typedQuestions[0] || null;
   };
 
   let activeReviewPanel: { section: ReviewSection; variant: ReviewVariant; contentKey: string; questionType?: string; difficulty?: ReviewDifficulty; translationNote?: string; analysisNote?: string; vocabularyNote?: string; audioUrl?: string; scriptText?: string; sentenceTimestamps?: Array<{ start: number; end: number }>; questionData?: any } | null = null;

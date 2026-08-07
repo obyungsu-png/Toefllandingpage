@@ -281,6 +281,17 @@ export function VocabularyManagement({
   // Helper to get the display name for the selected day
   const selectedDayName = days.find(d => d.id === selectedDay)?.name || `DAY ${selectedDay}`;
 
+  // DAY 목록을 번호 순으로 정렬 — 새로 추가된 DAY 도 맨 뒤가 아니라
+  // 이름에 포함된 숫자(예: "DAY 5") 기준으로 제자리에 삽입되어 보이도록.
+  // 숫자가 없는 이름은 id 로 fallback.
+  const sortedDays = useMemo(() => {
+    const getSortKey = (d: VocabularyDay) => {
+      const m = String(d.name || '').match(/\d+/);
+      return m ? parseInt(m[0], 10) : d.id;
+    };
+    return [...days].sort((a, b) => getSortKey(a) - getSortKey(b));
+  }, [days]);
+
   // Filter words by search query
   const filteredWords = useMemo(() => {
     if (!searchQuery.trim()) return currentDayWords;
@@ -440,6 +451,77 @@ export function VocabularyManagement({
     } catch (error) {
       console.error('Error adding day:', error);
       alert('날짜 추가 중 오류가 발생했습니다.');
+    }
+  };
+
+  // ⚠️ 완전 초기화 — 이 탭의 모든 단어를 지우고 DAY 1~50 만 남긴다.
+  // 백지에서 다시 채우고 싶을 때만 사용.
+  const handleFullReset = async () => {
+    const tabLabel =
+      activeTab === 'custom' ? '기출단어'
+      : activeTab === 'etymology' ? '어원'
+      : activeTab === 'toefl-easy' ? 'TOEFL 어휘 vol.1'
+      : activeTab === 'toefl-hard' ? 'TOEFL 어휘 vol.2'
+      : activeTab;
+
+    if (!confirm(`⚠️ [${tabLabel}] 탭의 모든 단어를 삭제하고 DAY 1 ~ DAY 50 만 남깁니다.\n\n이 작업은 되돌릴 수 없습니다. 정말 진행할까요?`)) {
+      return;
+    }
+    if (!confirm('마지막 확인: 정말 이 탭의 단어를 모두 삭제하시겠어요?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${serverUrl}/vocabulary-reset/${activeTab}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': getServerHeaders().Authorization,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ upTo: 50 })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset vocabulary');
+      }
+
+      const data = await response.json();
+      setWords(data.words || []);
+      setDays(data.days || []);
+      setSelectedDay(1);
+      alert('완전 초기화 완료. DAY 1 ~ DAY 50 이 비어있는 상태로 준비되었습니다.');
+    } catch (error) {
+      console.error('Error resetting vocabulary:', error);
+      alert('초기화 중 오류가 발생했습니다. Edge Function 이 최신 버전으로 배포되었는지 확인해주세요.');
+    }
+  };
+
+  // 실수로 삭제된 DAY 1~50 을 한번에 복원. 기존에 남아있는 DAY 는 그대로,
+  // 비어있는 id 만 새로 생성해서 단어(dayNumber) 연결도 유지됨.
+  const handleRestoreDays = async () => {
+    if (!confirm('DAY 1부터 DAY 50까지 비어있는 DAY 를 모두 복원할까요? (기존 DAY 는 그대로 유지됩니다)')) {
+      return;
+    }
+    try {
+      const response = await fetch(`${serverUrl}/vocabulary-days/${activeTab}/restore`, {
+        method: 'POST',
+        headers: {
+          'Authorization': getServerHeaders().Authorization,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ upTo: 50 })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to restore days');
+      }
+
+      const data = await response.json();
+      setDays(data.days);
+      alert(`${data.added ?? 0}개의 DAY 가 복원되었습니다.`);
+    } catch (error) {
+      console.error('Error restoring days:', error);
+      alert('DAY 복원 중 오류가 발생했습니다.');
     }
   };
 
@@ -670,8 +752,8 @@ export function VocabularyManagement({
           setBulkUploadText('');
           setShowBulkUpload(false);
         } else {
-          // For TOEFL tabs: vol.2 (toefl-hard) uses 60 words per day, others use 40
-          const wordsPerDay = activeTab === 'toefl-hard' ? 60 : 40;
+          // For TOEFL tabs: vol.2 (toefl-hard) uses 50 words per day, others use 40
+          const wordsPerDay = activeTab === 'toefl-hard' ? 50 : 40;
 
           // Check if more than wordsPerDay - if so, split into multiple days
           if (normalizedWords.length > wordsPerDay) {
@@ -773,10 +855,10 @@ export function VocabularyManagement({
             return;
           }
           
-          // No limit for custom, etymology, toefl-easy, junior; 60 for vol.2
-          const wordsPerDay = 
+          // No limit for custom, etymology, toefl-easy, junior; 50 for vol.2
+          const wordsPerDay =
             activeTab === 'custom' || activeTab === 'etymology' || activeTab === 'toefl-easy' || activeTab === 'junior' ? 10000 :
-            60;
+            50;
           
           // Distribute words
           let wordIndex = 0;
@@ -842,7 +924,7 @@ export function VocabularyManagement({
             'Authorization': getServerHeaders().Authorization,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ wordsByDay })
+          body: JSON.stringify({ wordsByDay, replaceExisting })
         });
 
         if (!response.ok) {
@@ -1033,22 +1115,42 @@ export function VocabularyManagement({
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-800">DAY 선택</h3>
-          <Button
-            onClick={() => {
-              setEditingDayId(null);
-              setEditingDayName('');
-              setNewDayName('');
-              setShowAddDayForm(true);
-            }}
-            size="sm"
-            className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            DAY 추가
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleFullReset}
+              size="sm"
+              variant="outline"
+              className="border-red-500 text-red-600 hover:bg-red-50"
+              title="이 탭의 모든 단어를 삭제하고 DAY 1~50 만 남깁니다 (되돌릴 수 없음)"
+            >
+              완전 초기화
+            </Button>
+            <Button
+              onClick={handleRestoreDays}
+              size="sm"
+              variant="outline"
+              className="border-[#2d7a7c] text-[#2d7a7c] hover:bg-[#2d7a7c]/10"
+              title="삭제된 DAY 1~50 을 복원합니다 (기존 DAY 는 유지)"
+            >
+              DAY 1~50 복원
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingDayId(null);
+                setEditingDayName('');
+                setNewDayName('');
+                setShowAddDayForm(true);
+              }}
+              size="sm"
+              className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              DAY 추가
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-2">
-          {days.map((day) => {
+          {sortedDays.map((day) => {
             const dayWordCount = wordsByDay[day.id]?.length || 0;
             return (
               <div key={day.id} className="relative group">
@@ -1242,10 +1344,17 @@ export function VocabularyManagement({
                   type="text"
                   value={editingDayId ? editingDayName : newDayName}
                   onChange={(e) => editingDayId ? setEditingDayName(e.target.value) : setNewDayName(e.target.value)}
-                  placeholder="예: DAY 1"
+                  placeholder="예: DAY 51"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                   required
                 />
+                {!editingDayId && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 "DAY 51" 처럼 <strong>숫자를 포함</strong>해서 지어주세요. 다중 DAY 업로드에서
+                    <code className="mx-1 px-1 bg-gray-100 rounded text-gray-700">DAY 51</code>
+                    마커로 이 DAY 에 단어를 넣을 수 있습니다.
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t">
@@ -1292,7 +1401,7 @@ export function VocabularyManagement({
               {selectedDayName} 단어 목록
               <span className="ml-2 text-xs sm:text-sm text-gray-600">
                 {activeTab === 'toefl-hard'
-                  ? `(${currentDayWords.length}/60개)`
+                  ? `(${currentDayWords.length}/50개)`
                   : `(${currentDayWords.length}개)`
                 }
               </span>
@@ -1647,9 +1756,9 @@ export function VocabularyManagement({
                 </div>
               </div>
 
-              {/* Single Day Options */}
-              {bulkUploadMode === 'single-day' && (
-                <div className="grid grid-cols-2 gap-4">
+              {/* Target DAY + Upload Options */}
+              <div className={`grid ${bulkUploadMode === 'single-day' ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                {bulkUploadMode === 'single-day' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       업로드 대상 DAY
@@ -1659,40 +1768,45 @@ export function VocabularyManagement({
                       onChange={(e) => setBulkUploadTargetDay(parseInt(e.target.value))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                     >
-                      {days.map((day) => (
+                      {sortedDays.map((day) => (
                         <option key={day.id} value={day.id}>
                           {day.name}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      업로드 옵션
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    업로드 옵션
+                  </label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={replaceExisting}
+                        onChange={() => setReplaceExisting(true)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">
+                        기존 단어 교체
+                        {bulkUploadMode === 'multi-day' && (
+                          <span className="ml-1 text-xs text-gray-500">(마커에 포함된 DAY만)</span>
+                        )}
+                      </span>
                     </label>
-                    <div className="flex items-center gap-4 mt-2">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={replaceExisting}
-                          onChange={() => setReplaceExisting(true)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">기존 단어 교체</span>
-                      </label>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={!replaceExisting}
-                          onChange={() => setReplaceExisting(false)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">기존 단어 유지 + 추가</span>
-                      </label>
-                    </div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={!replaceExisting}
+                        onChange={() => setReplaceExisting(false)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">기존 단어 유지 + 추가</span>
+                    </label>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Text Input Area */}
               <div>
@@ -1904,18 +2018,18 @@ advocate	옹호하다	to support	support, promote</pre>
                     <p className="text-sm text-blue-700 font-bold mb-2">🚀 3. DAY 범위 자동 분배 (NEW!):</p>
                     <p className="text-xs text-blue-600 mb-2">
                       DAY 10-DAY 20 형식으로 범위를 지정하면 자동 분배
-                      {activeTab === 'toefl-hard' ? ' (vol.2: 60개씩)' : activeTab === 'toefl-easy' ? ' (제한 없음)' : ' (제한 없음)'}
+                      {activeTab === 'toefl-hard' ? ' (vol.2: 50개씩)' : activeTab === 'toefl-easy' ? ' (제한 없음)' : ' (제한 없음)'}
                     </p>
                     <pre className="text-xs font-mono text-gray-700 bg-gray-50 p-2 rounded">DAY 10-DAY 20
 accomplish\t성취하다\tto succeed in doing\tachieve, complete
 accurate\t정확한\tcorrect in all details\tprecise, exact
 adapt\t적응하다\tto adjust\tadjust, modify
-(... {activeTab === 'toefl-hard' ? '600' : '500'}개 단어 ...)</pre>
+(... {activeTab === 'toefl-hard' ? '500' : '500'}개 단어 ...)</pre>
                     <p className="text-xs text-blue-600 mt-2">
-                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '600개 단어를 자동으로 DAY 10부터 DAY 20까지 60개씩 분배합니다.' : '단어를 자동으로 DAY 10부터 DAY 20까지 분배합니다.'}
+                      ※ 첫 번째 줄에 "DAY 10-DAY 20" 또는 "DAY 10 - 20" 형식으로 입력하면 {activeTab === 'toefl-hard' ? '500개 단어를 자동으로 DAY 10부터 DAY 20까지 50개씩 분배합니다.' : '단어를 자동으로 DAY 10부터 DAY 20까지 분배합니다.'}
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      💡 {activeTab === 'toefl-hard' ? '단어가 60개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.' : 'DAY당 단어 수 제한 없이 자유롭게 입력할 수 있습니다.'}
+                      💡 {activeTab === 'toefl-hard' ? '단어가 50개 미만이면 해당 DAY까지만 채워지고, 넘으면 다음 DAY로 자동 이동합니다.' : 'DAY당 단어 수 제한 없이 자유롭게 입력할 수 있습니다.'}
                     </p>
                   </div>
                   
@@ -1939,7 +2053,7 @@ advocate\t옹호하다\tto support\tsupport, promote</pre>
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
                     💡 <strong>팁 2:</strong> 대량의 단어를 연속된 DAY에 한번에 넣으려면 "DAY 10-DAY 20" 형식을 사용하세요. 
-                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 60개씩 분배됩니다!' : ' DAY당 제한 없이 자유롭게 분배됩니다!'}
+                    {activeTab === 'toefl-hard' ? ' vol.2는 자동으로 50개씩 분배됩니다!' : ' DAY당 제한 없이 자유롭게 분배됩니다!'}
                   </p>
                 </div>
               </div>
