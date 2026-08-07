@@ -847,7 +847,7 @@ export function VocabularyManagement({
             'Authorization': getServerHeaders().Authorization,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ wordsByDay })
+          body: JSON.stringify({ wordsByDay, replaceExisting })
         });
 
         if (!response.ok) {
@@ -1604,9 +1604,9 @@ export function VocabularyManagement({
                 </div>
               </div>
 
-              {/* Single Day Options */}
-              {bulkUploadMode === 'single-day' && (
-                <div className="grid grid-cols-2 gap-4">
+              {/* Target DAY + Upload Options */}
+              <div className={`grid ${bulkUploadMode === 'single-day' ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                {bulkUploadMode === 'single-day' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       업로드 대상 DAY
@@ -1623,33 +1623,38 @@ export function VocabularyManagement({
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      업로드 옵션
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    업로드 옵션
+                  </label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={replaceExisting}
+                        onChange={() => setReplaceExisting(true)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">
+                        기존 단어 교체
+                        {bulkUploadMode === 'multi-day' && (
+                          <span className="ml-1 text-xs text-gray-500">(마커에 포함된 DAY만)</span>
+                        )}
+                      </span>
                     </label>
-                    <div className="flex items-center gap-4 mt-2">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={replaceExisting}
-                          onChange={() => setReplaceExisting(true)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">기존 단어 교체</span>
-                      </label>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={!replaceExisting}
-                          onChange={() => setReplaceExisting(false)}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">기존 단어 유지 + 추가</span>
-                      </label>
-                    </div>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={!replaceExisting}
+                        onChange={() => setReplaceExisting(false)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">기존 단어 유지 + 추가</span>
+                    </label>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Text Input Area */}
               <div>
