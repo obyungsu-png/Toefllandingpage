@@ -697,6 +697,33 @@ app.delete("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
   }
 });
 
+// Full reset: 특정 탭의 모든 단어를 지우고 DAY 목록을 DAY 1..N (기본 50) 로
+// 완전히 초기화. 완전히 비어있는 상태에서 처음부터 다시 채워넣고 싶을 때 사용.
+// 되돌릴 수 없으므로 UI 에서 확인 후 호출할 것.
+app.post("/make-server-e46cd33a/vocabulary-reset/:tabType", async (c) => {
+  try {
+    const tabType = c.req.param("tabType");
+    const body = (await c.req.json().catch(() => ({}))) as { upTo?: number };
+    const target = Math.max(1, Math.min(200, Number(body.upTo) || 50));
+
+    const wordsKey = `vocabulary_words_${tabType}`;
+    const daysKey = `vocabulary_days_${tabType}`;
+
+    const defaultDays = Array.from({ length: target }, (_, i) => ({
+      id: i + 1,
+      name: `DAY ${i + 1}`,
+    }));
+
+    await kv.set(wordsKey, []);
+    await kv.set(daysKey, defaultDays);
+
+    return c.json({ success: true, words: [], days: defaultDays });
+  } catch (error) {
+    console.error("Error resetting vocabulary:", error);
+    return c.json({ error: "Failed to reset vocabulary", details: error.message }, 500);
+  }
+});
+
 // Restore DAY 1 ~ DAY N (default 50). Ensures each id 1..N exists with
 // name "DAY <id>". Existing days (including any with the same id but a
 // custom name) are preserved as-is. Extra days beyond N are also kept.

@@ -41,6 +41,7 @@ const targetTabs = args.tab ? [args.tab] : TABS;
 const doDump = args.dump === 'true';
 const regroupSize = args.regroup ? parseInt(args.regroup, 10) : null;
 const doApply = args.apply === 'true';
+const doReset = args.reset === 'true';
 
 // ---------------------------------------------------------------
 // API helpers (via the app's own edge function)
@@ -91,6 +92,16 @@ async function restoreDaysUpTo(tabType, upTo) {
     // restore endpoint may not be deployed yet — that's OK, ignore silently
     return null;
   }
+  return await res.json();
+}
+
+async function fullReset(tabType, upTo) {
+  const res = await fetch(`${SERVER}/vocabulary-reset/${tabType}`, {
+    method: 'POST',
+    headers: HEADERS,
+    body: JSON.stringify({ upTo }),
+  });
+  if (!res.ok) throw new Error(`POST reset → HTTP ${res.status}: ${await res.text()}`);
   return await res.json();
 }
 
@@ -189,12 +200,21 @@ async function main() {
   console.log('단어장 KV 진단 스크립트\n');
   console.log(`대상 탭: ${targetTabs.join(', ')}`);
   if (regroupSize) console.log(`regroup 모드: ${regroupSize}개씩 재할당 ${doApply ? '(APPLY!)' : '(dry-run)'}`);
+  if (doReset) console.log(`⚠️  RESET 모드: 이 탭의 모든 단어를 지우고 DAY 1~50 만 남깁니다 (되돌릴 수 없음)`);
 
   for (const tab of targetTabs) {
     try {
-      await diagnose(tab);
+      if (doReset) {
+        console.log(`\n═══════════════════════════════════════════════════`);
+        console.log(`  탭: ${tab} — 완전 초기화 진행`);
+        console.log(`═══════════════════════════════════════════════════`);
+        const result = await fullReset(tab, 50);
+        console.log(`  ✅ 완료. days=${result.days.length}개, words=${result.words.length}개.`);
+      } else {
+        await diagnose(tab);
+      }
     } catch (e) {
-      console.error(`\n  ⚠️  ${tab} 진단 실패: ${e.message}`);
+      console.error(`\n  ⚠️  ${tab} 처리 실패: ${e.message}`);
     }
   }
 

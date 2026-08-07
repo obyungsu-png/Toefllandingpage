@@ -451,6 +451,48 @@ export function VocabularyManagement({
     }
   };
 
+  // ⚠️ 완전 초기화 — 이 탭의 모든 단어를 지우고 DAY 1~50 만 남긴다.
+  // 백지에서 다시 채우고 싶을 때만 사용.
+  const handleFullReset = async () => {
+    const tabLabel =
+      activeTab === 'custom' ? '기출단어'
+      : activeTab === 'etymology' ? '어원'
+      : activeTab === 'toefl-easy' ? 'TOEFL 어휘 vol.1'
+      : activeTab === 'toefl-hard' ? 'TOEFL 어휘 vol.2'
+      : activeTab;
+
+    if (!confirm(`⚠️ [${tabLabel}] 탭의 모든 단어를 삭제하고 DAY 1 ~ DAY 50 만 남깁니다.\n\n이 작업은 되돌릴 수 없습니다. 정말 진행할까요?`)) {
+      return;
+    }
+    if (!confirm('마지막 확인: 정말 이 탭의 단어를 모두 삭제하시겠어요?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${serverUrl}/vocabulary-reset/${activeTab}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': getServerHeaders().Authorization,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ upTo: 50 })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reset vocabulary');
+      }
+
+      const data = await response.json();
+      setWords(data.words || []);
+      setDays(data.days || []);
+      setSelectedDay(1);
+      alert('완전 초기화 완료. DAY 1 ~ DAY 50 이 비어있는 상태로 준비되었습니다.');
+    } catch (error) {
+      console.error('Error resetting vocabulary:', error);
+      alert('초기화 중 오류가 발생했습니다. Edge Function 이 최신 버전으로 배포되었는지 확인해주세요.');
+    }
+  };
+
   // 실수로 삭제된 DAY 1~50 을 한번에 복원. 기존에 남아있는 DAY 는 그대로,
   // 비어있는 id 만 새로 생성해서 단어(dayNumber) 연결도 유지됨.
   const handleRestoreDays = async () => {
@@ -1052,6 +1094,15 @@ export function VocabularyManagement({
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-800">DAY 선택</h3>
           <div className="flex gap-2">
+            <Button
+              onClick={handleFullReset}
+              size="sm"
+              variant="outline"
+              className="border-red-500 text-red-600 hover:bg-red-50"
+              title="이 탭의 모든 단어를 삭제하고 DAY 1~50 만 남깁니다 (되돌릴 수 없음)"
+            >
+              완전 초기화
+            </Button>
             <Button
               onClick={handleRestoreDays}
               size="sm"
