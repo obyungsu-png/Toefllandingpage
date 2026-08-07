@@ -1258,10 +1258,17 @@ export function VocabularyManagement({
                   type="text"
                   value={editingDayId ? editingDayName : newDayName}
                   onChange={(e) => editingDayId ? setEditingDayName(e.target.value) : setNewDayName(e.target.value)}
-                  placeholder="예: DAY 1"
+                  placeholder="예: DAY 51"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2d7a7c] focus:border-transparent"
                   required
                 />
+                {!editingDayId && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 "DAY 51" 처럼 <strong>숫자를 포함</strong>해서 지어주세요. 다중 DAY 업로드에서
+                    <code className="mx-1 px-1 bg-gray-100 rounded text-gray-700">DAY 51</code>
+                    마커로 이 DAY 에 단어를 넣을 수 있습니다.
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t">

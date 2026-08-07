@@ -605,14 +605,33 @@ app.post("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
     const tabType = c.req.param("tabType");
     const { dayName } = await c.req.json();
     const key = `vocabulary_days_${tabType}`;
-    
+
     const days = await kv.get(key) || [];
-    const newId = days.length > 0 ? Math.max(...days.map(d => d.id)) + 1 : 1;
+    const existingIds = new Set(days.map((d: any) => d.id));
+
+    // id 를 이름에 포함된 숫자로부터 우선 도출 — 그래야 나중에 다중 DAY
+    // 업로드에서 사용자가 텍스트에 쓰는 "DAY N" 마커(→ word.dayNumber = N)
+    // 와 이 DAY 엔트리의 id 가 일치해서 새로 만든 DAY 에 단어가 제대로
+    // 붙는다. 이름에서 숫자를 추출할 수 없거나 이미 사용 중이면
+    // 기존처럼 max(id)+1 로 폴백.
+    const nameMatch = String(dayName || '').match(/\d+/);
+    let newId: number;
+    if (nameMatch) {
+      const nameNum = parseInt(nameMatch[0], 10);
+      if (nameNum > 0 && !existingIds.has(nameNum)) {
+        newId = nameNum;
+      } else {
+        newId = days.length > 0 ? Math.max(...days.map((d: any) => d.id)) + 1 : 1;
+      }
+    } else {
+      newId = days.length > 0 ? Math.max(...days.map((d: any) => d.id)) + 1 : 1;
+    }
+
     const newDay = { id: newId, name: dayName };
-    
+
     days.push(newDay);
     await kv.set(key, days);
-    
+
     return c.json({ success: true, days });
   } catch (error) {
     console.error("Error adding vocabulary day:", error);
