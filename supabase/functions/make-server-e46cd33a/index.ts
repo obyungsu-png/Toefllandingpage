@@ -678,6 +678,39 @@ app.delete("/make-server-e46cd33a/vocabulary-days/:tabType", async (c) => {
   }
 });
 
+// Restore DAY 1 ~ DAY N (default 50). Ensures each id 1..N exists with
+// name "DAY <id>". Existing days (including any with the same id but a
+// custom name) are preserved as-is. Extra days beyond N are also kept.
+// Used to recover from accidental deletions in the DAY 선택 grid.
+app.post("/make-server-e46cd33a/vocabulary-days/:tabType/restore", async (c) => {
+  try {
+    const tabType = c.req.param("tabType");
+    const { upTo } = (await c.req.json().catch(() => ({}))) as { upTo?: number };
+    const target = Math.max(1, Math.min(200, Number(upTo) || 50));
+    const key = `vocabulary_days_${tabType}`;
+
+    const days = (await kv.get(key)) || [];
+    const existingIds = new Set(days.map((d: any) => d.id));
+
+    let added = 0;
+    for (let i = 1; i <= target; i++) {
+      if (!existingIds.has(i)) {
+        days.push({ id: i, name: `DAY ${i}` });
+        added++;
+      }
+    }
+
+    if (added > 0) {
+      await kv.set(key, days);
+    }
+
+    return c.json({ success: true, days, added });
+  } catch (error) {
+    console.error("Error restoring vocabulary days:", error);
+    return c.json({ error: "Failed to restore vocabulary days", details: error.message }, 500);
+  }
+});
+
 // Delete all words in a specific day (without deleting the day itself)
 app.delete("/make-server-e46cd33a/vocabulary-clear-day/:tabType", async (c) => {
   try {

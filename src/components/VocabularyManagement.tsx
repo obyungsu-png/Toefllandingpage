@@ -451,6 +451,35 @@ export function VocabularyManagement({
     }
   };
 
+  // 실수로 삭제된 DAY 1~50 을 한번에 복원. 기존에 남아있는 DAY 는 그대로,
+  // 비어있는 id 만 새로 생성해서 단어(dayNumber) 연결도 유지됨.
+  const handleRestoreDays = async () => {
+    if (!confirm('DAY 1부터 DAY 50까지 비어있는 DAY 를 모두 복원할까요? (기존 DAY 는 그대로 유지됩니다)')) {
+      return;
+    }
+    try {
+      const response = await fetch(`${serverUrl}/vocabulary-days/${activeTab}/restore`, {
+        method: 'POST',
+        headers: {
+          'Authorization': getServerHeaders().Authorization,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ upTo: 50 })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to restore days');
+      }
+
+      const data = await response.json();
+      setDays(data.days);
+      alert(`${data.added ?? 0}개의 DAY 가 복원되었습니다.`);
+    } catch (error) {
+      console.error('Error restoring days:', error);
+      alert('DAY 복원 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleUpdateDay = async () => {
     if (!editingDayId || !editingDayName.trim()) {
       alert('날짜 이름은 필수입니다.');
@@ -1022,19 +1051,30 @@ export function VocabularyManagement({
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-800">DAY 선택</h3>
-          <Button
-            onClick={() => {
-              setEditingDayId(null);
-              setEditingDayName('');
-              setNewDayName('');
-              setShowAddDayForm(true);
-            }}
-            size="sm"
-            className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            DAY 추가
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleRestoreDays}
+              size="sm"
+              variant="outline"
+              className="border-[#2d7a7c] text-[#2d7a7c] hover:bg-[#2d7a7c]/10"
+              title="삭제된 DAY 1~50 을 복원합니다 (기존 DAY 는 유지)"
+            >
+              DAY 1~50 복원
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingDayId(null);
+                setEditingDayName('');
+                setNewDayName('');
+                setShowAddDayForm(true);
+              }}
+              size="sm"
+              className="bg-gradient-to-r from-[#e67e22] to-[#f39c12] text-white hover:from-[#d35400] hover:to-[#e67e22]"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              DAY 추가
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-2">
           {sortedDays.map((day) => {
