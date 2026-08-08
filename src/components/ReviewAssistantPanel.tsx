@@ -323,11 +323,17 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // 핀 클릭 시 화면 중앙에 트렌디한 모달창으로 팝업, 드래그 이동 + 우하단 핸들로 크기 조절 가능
   // 모바일 대응: 화면 폭에 따라 기본 사이즈 자동 조정 (작은 화면에서는 거의 풀스크린)
   const getDefaultPanelSize = () => {
-    if (typeof window === 'undefined') return { width: 760, height: 600 };
+    // 기본 크기를 살짝 키움 (760×600 → 900×720) — 사용자가 받아쓰기
+    // 빈칸/스크립트를 한눈에 편하게 보도록. 뷰포트 크기에 맞춰
+    // 최대 92% 는 그대로 유지되므로 화면을 넘지 않음.
+    if (typeof window === 'undefined') return { width: 900, height: 720 };
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    if (vw < 640) return { width: Math.min(760, vw * 0.92), height: Math.min(600, vh * 0.85) };
-    return { width: 760, height: 600 };
+    if (vw < 640) return { width: Math.min(900, vw * 0.94), height: Math.min(720, vh * 0.88) };
+    // 태블릿/작은 노트북에서 900 이 너무 크지 않도록 뷰포트 90% 로 캡
+    const width = Math.min(900, Math.round(vw * 0.9));
+    const height = Math.min(720, Math.round(vh * 0.88));
+    return { width, height };
   };
   const [panelPinned, setPanelPinned] = useState(false);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
