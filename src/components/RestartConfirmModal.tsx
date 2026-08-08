@@ -22,96 +22,146 @@ interface RestartConfirmModalProps {
 }
 
 /**
- * Maps a TestResult to possible localStorage progress keys
+ * Maps a TestResult to prefix patterns that its saved-progress localStorage
+ * keys should start with. Real keys are `test_progress_<type>[_<extra>]` —
+ * e.g. `test_progress_reading_tpo_1`, `test_progress_listening_m1` — so we
+ * match by prefix instead of exact key lookup, otherwise per-test keys with
+ * a suffix are missed and "이어풀기" never appears.
  */
-function getProgressKeys(result: TestResult): { key: string; label: string }[] {
-  const keys: { key: string; label: string }[] = [];
+function getProgressKeyPrefixes(result: TestResult): { prefix: string; label: string }[] {
+  const prefixes: { prefix: string; label: string }[] = [];
   const category = result.category?.toLowerCase();
 
-  if (result.type === 'TPO') {
+  const readingPrefix = { prefix: 'test_progress_reading', label: 'Reading' };
+  const m1Prefix = { prefix: 'test_progress_listening_m1', label: 'Listening M1' };
+  const m2Prefix = { prefix: 'test_progress_listening_m2', label: 'Listening M2' };
+  const writingPrefix = { prefix: 'test_progress_writing', label: 'Writing' };
+  const speakingPrefix = { prefix: 'test_progress_speaking', label: 'Speaking' };
+
+  if (result.type === 'TPO' || result.type === 'Test') {
     if (category === 'reading') {
-      keys.push({ key: 'test_progress_reading', label: 'Reading' });
+      prefixes.push(readingPrefix);
     } else if (category === 'listening') {
-      keys.push({ key: 'test_progress_listening_m1', label: 'Listening M1' });
-      keys.push({ key: 'test_progress_listening_m2', label: 'Listening M2' });
+      prefixes.push(m1Prefix, m2Prefix);
     } else if (category === 'writing') {
-      keys.push({ key: 'test_progress_writing', label: 'Writing' });
+      prefixes.push(writingPrefix);
     } else if (category === 'speaking') {
-      keys.push({ key: 'test_progress_speaking', label: 'Speaking' });
+      prefixes.push(speakingPrefix);
     } else {
-      // Full TPO - check all sections
-      keys.push({ key: 'test_progress_reading', label: 'Reading' });
-      keys.push({ key: 'test_progress_listening_m1', label: 'Listening M1' });
-      keys.push({ key: 'test_progress_listening_m2', label: 'Listening M2' });
-      keys.push({ key: 'test_progress_writing', label: 'Writing' });
-      keys.push({ key: 'test_progress_speaking', label: 'Speaking' });
+      prefixes.push(readingPrefix, m1Prefix, m2Prefix, writingPrefix, speakingPrefix);
     }
-  } else if (result.type === 'Test') {
-    keys.push({ key: 'test_progress_reading', label: 'Reading' });
-    keys.push({ key: 'test_progress_listening_m1', label: 'Listening M1' });
-    keys.push({ key: 'test_progress_listening_m2', label: 'Listening M2' });
-    keys.push({ key: 'test_progress_writing', label: 'Writing' });
-    keys.push({ key: 'test_progress_speaking', label: 'Speaking' });
   } else if (result.type === 'Training') {
     const name = result.testName.toLowerCase();
     if (name.includes('listening')) {
-      keys.push({ key: 'test_progress_listening_m1', label: 'Listening M1' });
-      keys.push({ key: 'test_progress_listening_m2', label: 'Listening M2' });
+      prefixes.push(m1Prefix, m2Prefix);
     } else if (name.includes('reading')) {
-      keys.push({ key: 'test_progress_reading', label: 'Reading' });
+      prefixes.push(readingPrefix);
     } else if (name.includes('writing')) {
-      keys.push({ key: 'test_progress_writing', label: 'Writing' });
+      prefixes.push(writingPrefix);
     } else if (name.includes('speaking')) {
-      keys.push({ key: 'test_progress_speaking', label: 'Speaking' });
+      prefixes.push(speakingPrefix);
     }
   }
 
-  return keys;
+  return prefixes;
 }
 
 /**
- * Check localStorage for saved progress matching this test
+ * Enumerate localStorage keys that begin with any of the given prefixes.
+ * Also filters out ones whose next character (if any) is not '_' — so
+ * `test_progress_listening_m1` doesn't accidentally match a hypothetical
+ * `test_progress_reading_something`. Exact-match keys always pass.
  */
-function findSavedProgress(result: TestResult): SavedProgressInfo[] {
-  const keys = getProgressKeys(result);
-  const found: SavedProgressInfo[] = [];
-
-  for (const { key, label } of keys) {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const data = JSON.parse(saved);
-        // Check if not expired (7 days)
-        const isExpired = Date.now() - data.savedAt > 7 * 24 * 60 * 60 * 1000;
-        if (!isExpired) {
-          const answersCount = data.selectedAnswers
-            ? Object.keys(data.selectedAnswers).length
-            : 0;
-          found.push({
-            key,
-            testType: label,
-            currentScreen: data.currentScreen,
-            currentQuestionIndex: data.currentQuestionIndex,
-            totalQuestions: data.totalQuestions,
-            answersCount,
-            savedAt: data.savedAt,
-          });
+function matchingLocalStorageKeys(prefixes: string[]): string[] {
+  const matched: string[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      for (const p of prefixes) {
+        if (k === p || k.startsWith(p + '_')) {
+          matched.push(k);
+          break;
         }
       }
-    } catch (e) {
+    }
+  } catch {
+    // localStorage 접근 불가 환경 무시
+  }
+  return matched;
+}
+
+/**
+ * Check localStorage for saved progress matching this test.
+ * Scans every key that starts with each relevant prefix, so per-test
+ * variants (e.g. `test_progress_reading_tpo_1`) are picked up too.
+ */
+function findSavedProgress(result: TestResult): SavedProgressInfo[] {
+  const prefixEntries = getProgressKeyPrefixes(result);
+  const prefixToLabel = new Map(prefixEntries.map((e) => [e.prefix, e.label]));
+  const keys = matchingLocalStorageKeys(prefixEntries.map((e) => e.prefix));
+  const found: SavedProgressInfo[] = [];
+
+  for (const key of keys) {
+    // Resolve label — longest matching prefix wins.
+    let label = 'Progress';
+    let bestLen = -1;
+    for (const [p, l] of prefixToLabel.entries()) {
+      if ((key === p || key.startsWith(p + '_')) && p.length > bestLen) {
+        label = l;
+        bestLen = p.length;
+      }
+    }
+
+    try {
+      const saved = localStorage.getItem(key);
+      if (!saved) continue;
+      const data = JSON.parse(saved);
+      // Skip if expired (7 days)
+      const isExpired = Date.now() - data.savedAt > 7 * 24 * 60 * 60 * 1000;
+      if (isExpired) continue;
+
+      const answersCount = data.selectedAnswers ? Object.keys(data.selectedAnswers).length : 0;
+      const writingCount = data.writingContent
+        ? Object.keys(data.writingContent).filter((k: string) => data.writingContent[k]?.trim()).length
+        : 0;
+      const recordingCount = data.recordings ? Object.keys(data.recordings).length : 0;
+
+      // Ignore truly empty saves so a blank auto-save doesn't fake progress
+      const hasProgress =
+        (typeof data.currentQuestionIndex === 'number' && data.currentQuestionIndex > 0) ||
+        !!data.currentScreen ||
+        answersCount > 0 ||
+        writingCount > 0 ||
+        recordingCount > 0;
+      if (!hasProgress) continue;
+
+      found.push({
+        key,
+        testType: label,
+        currentScreen: data.currentScreen,
+        currentQuestionIndex: data.currentQuestionIndex,
+        totalQuestions: data.totalQuestions,
+        answersCount: answersCount + writingCount + recordingCount,
+        savedAt: data.savedAt,
+      });
+    } catch {
       // ignore parse errors
     }
   }
 
+  // Sort newest first
+  found.sort((a, b) => b.savedAt - a.savedAt);
   return found;
 }
 
 /**
- * Clear all saved progress for a given test result
+ * Clear all saved progress for a given test result — same prefix scan.
  */
 function clearAllProgress(result: TestResult) {
-  const keys = getProgressKeys(result);
-  for (const { key } of keys) {
+  const prefixes = getProgressKeyPrefixes(result).map((e) => e.prefix);
+  const keys = matchingLocalStorageKeys(prefixes);
+  for (const key of keys) {
     localStorage.removeItem(key);
   }
 }

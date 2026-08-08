@@ -2230,7 +2230,10 @@ function AppContent() {
     }
   };
 
-  // TPO/Test 중간 이탈 시 incomplete 저장 (영역별 50% 이상 진행 시)
+  // TPO/Test 중간 이탈 시 incomplete 저장 (영역별 10% 이상 진행 시)
+  // 이전엔 50% 였는데, 너무 많이 풀어야 기록에 남아서 조금만 풀어보고
+  // 나간 것들이 다 유실됐음. 사용자가 자기 시도 흔적을 확인할 수 있도록
+  // 10% 로 낮춤.
   const saveIncompleteIfNeeded = () => {
     try {
       const sharedAnswers = (typeof window !== 'undefined' && (window as any).__moduleAnswers) || {};
@@ -2238,7 +2241,7 @@ function AppContent() {
       const answeredCount = Object.keys(sharedAnswers).length + Object.keys(fillBlanksAnswers).length;
       const totalQuestions = 20; // TPO/Test 기본 20문제 기준
 
-      if (answeredCount >= totalQuestions * 0.5) {
+      if (answeredCount >= Math.max(1, Math.ceil(totalQuestions * 0.1))) {
         const section = currentTest?.section || 'Reading';
         handleAddTestResult({
           type: currentTest?.tpoNumber ? 'TPO' : 'Test',
@@ -2250,6 +2253,7 @@ function AppContent() {
           date: new Date().toISOString(),
           score: 0,
           totalQuestions,
+          answeredCount,
           correctAnswers: 0,
           wrongAnswers: [],
           timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000),
@@ -8336,11 +8340,25 @@ function AppContent() {
                 const subject = result.category || 'Reading';
 
                 if (startFresh) {
-                  localStorage.removeItem('test_progress_reading');
-                  localStorage.removeItem('test_progress_listening_m1');
-                  localStorage.removeItem('test_progress_listening_m2');
-                  localStorage.removeItem('test_progress_writing');
-                  localStorage.removeItem('test_progress_speaking');
+                  // Reading 은 TPO 번호를 붙인 test_progress_reading_tpo_1 형태로
+                  // 저장되므로 prefix 로 스캔해서 지운다. 정확 매치만 지우면
+                  // "처음부터" 후에도 옛 진행상태가 남아 저장 위치로 복원됨.
+                  const prefixes = [
+                    'test_progress_reading',
+                    'test_progress_listening_m1',
+                    'test_progress_listening_m2',
+                    'test_progress_writing',
+                    'test_progress_speaking',
+                  ];
+                  const toRemove: string[] = [];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k) continue;
+                    if (prefixes.some((p) => k === p || k.startsWith(p + '_'))) {
+                      toRemove.push(k);
+                    }
+                  }
+                  toRemove.forEach((k) => localStorage.removeItem(k));
                 }
 
                 handleTabChange('Training');
