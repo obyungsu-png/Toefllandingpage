@@ -908,9 +908,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
                         <span className="text-gray-400 text-lg w-6 group-hover:text-teal-600 transition-colors">{dayListIndex + 1}</span>
                         <span className="font-bold text-lg group-hover:text-teal-700 transition-colors">{day.name}</span>
                         <span className="text-gray-400 group-hover:text-teal-500 transition-colors">
-                          {activeTab === 'toefl-hard'
-                            ? '(60개)'
-                            : `(${getWordCountForDay[day.id] || 0}개)`}
+                          ({getWordCountForDay[day.id] || 0}개)
                         </span>
                         <div className="ml-auto flex items-center gap-2">
                           <div 
