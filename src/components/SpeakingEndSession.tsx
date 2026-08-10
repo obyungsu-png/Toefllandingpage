@@ -24,13 +24,15 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
     } catch {}
   }, []);
 
-  const handleDownload = (
+  const handleDownload = async (
     mode: 'standard' | 'annotated',
     section?: 'Reading' | 'Listening' | 'Speaking' | 'Writing'
   ) => {
     if (!testData) { alert('Test data was not found.'); return; }
-    generateTestPdf(testData, mode, section);
     setPdfMenuOpen(false);
+    try {
+      await generateTestPdf(testData, mode, section);
+    } catch { /* 오류는 generateTestPdf 내부에서 alert 처리 */ }
   };
 
   const handleVocabDownload = (

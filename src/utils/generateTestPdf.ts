@@ -405,39 +405,43 @@ function buildHtml(testData: TPOTest, mode: PdfMode, sectionType: TPOSection['se
 
   const body = orderedSections.map(s => sectionHtml(s, mode)).join('');
 
-  // A4 @ 96dpi ≒ 794px wide, but we render at 800px for comfort and scale down to A4 in PDF
-  return `
+  // .pdf-root 하나가 host의 유일한 최상위 자식이 되도록 style을 root 내부에 둔다.
+  // (host.firstElementChild가 <style>을 가리키는 버그 방지)
+  return `<div class="pdf-root">
     <style>
       .pdf-root {
-        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', 'Helvetica', 'Arial', sans-serif;
-        color: #000;
-        background: #fff;
+        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', 'Helvetica', 'Arial', sans-serif !important;
+        color: #000000 !important;
+        background: #ffffff !important;
         padding: 40px 34px 32px 34px;
         width: 800px;
         box-sizing: border-box;
         line-height: 1.5;
         font-size: 14px;
       }
+      .pdf-root * {
+        color: inherit;
+        background: transparent;
+        border-color: currentColor;
+      }
       .pdf-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
-      .pdf-meta { font-size: 12px; color: #333; margin-bottom: 4px; }
-      .pdf-memo { font-size: 12px; color: #333; margin-bottom: 12px; }
+      .pdf-meta { font-size: 12px; color: #333333 !important; margin-bottom: 4px; }
+      .pdf-memo { font-size: 12px; color: #333333 !important; margin-bottom: 12px; }
       .pdf-section { margin-top: 18px; }
       .pdf-section-title { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; }
-      .pdf-section-instructions { font-style: italic; font-size: 13px; margin-bottom: 10px; color: #222; }
-      .pdf-module-header { font-size: 15px; font-weight: 700; color: #148b8f; margin: 14px 0 6px 0; }
+      .pdf-section-instructions { font-style: italic; font-size: 13px; margin-bottom: 10px; color: #222222 !important; }
+      .pdf-module-header { font-size: 15px; font-weight: 700; color: #148b8f !important; margin: 14px 0 6px 0; }
       .pdf-question { margin-bottom: 14px; page-break-inside: avoid; }
       .pdf-line { margin: 0 0 4px 0; font-size: 14px; word-wrap: break-word; white-space: pre-wrap; }
       .pdf-heading { font-size: 15px; font-weight: 700; margin: 6px 0 4px 0; }
       .pdf-bold { font-weight: 700; }
-      .pdf-link a { color: #2563eb; text-decoration: underline; }
+      .pdf-link a { color: #2563eb !important; text-decoration: underline; }
     </style>
-    <div class="pdf-root">
-      <div class="pdf-title">${titleSection}${escapeHtml(testData.testType)} ${escapeHtml(examLabel)}</div>
-      <div class="pdf-meta">Generated: ${escapeHtml(dateText)}</div>
-      ${memoLine}
-      ${body}
-    </div>
-  `;
+    <div class="pdf-title">${titleSection}${escapeHtml(testData.testType)} ${escapeHtml(examLabel)}</div>
+    <div class="pdf-meta">Generated: ${escapeHtml(dateText)}</div>
+    ${memoLine}
+    ${body}
+  </div>`;
 }
 
 // ── Public entry point ───────────────────────────────────────────────────────
@@ -472,9 +476,11 @@ export async function generateTestPdf(
 
   const html = buildHtml(testData, mode, sectionType, examLabel, dateText);
 
-  // 오프스크린 컨테이너에 렌더 후 html2canvas로 캡처
+  // 오프스크린 컨테이너에 렌더 후 html2canvas로 캡처.
+  // left:-10000px + top:0 로 화면 밖에 두되 실제 레이아웃/치수는 잡히도록 유지.
   const host = document.createElement('div');
-  host.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:-1;pointer-events:none;';
+  host.setAttribute('data-pdf-host', '1');
+  host.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;background:#ffffff;color:#000000;pointer-events:none;z-index:-1;';
   host.innerHTML = html;
   document.body.appendChild(host);
 
@@ -484,14 +490,23 @@ export async function generateTestPdf(
       try { await (document as any).fonts.ready; } catch { /* ignore */ }
     }
 
-    const target = host.firstElementChild as HTMLElement;
+    // .pdf-root를 명시적으로 타깃 — <style>이 firstElementChild가 되는 경우 방지
+    const target = (host.querySelector('.pdf-root') as HTMLElement | null) ?? host;
+    // 실제 렌더 폭/높이 확정 대기 (다음 프레임까지)
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
+    const renderWidth = Math.max(target.scrollWidth, 800);
+    const renderHeight = Math.max(target.scrollHeight, target.clientHeight, 1);
+
     const canvas = await html2canvas(target, {
       scale: 2,
       backgroundColor: '#ffffff',
       useCORS: true,
       logging: false,
-      windowWidth: target.scrollWidth,
-      windowHeight: target.scrollHeight,
+      width: renderWidth,
+      height: renderHeight,
+      windowWidth: renderWidth,
+      windowHeight: renderHeight,
     });
 
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -517,7 +532,12 @@ export async function generateTestPdf(
     const suffix = mode === 'annotated' ? 'annotated' : 'standard';
     const sectionTag = sectionType ? `-${sectionType.toLowerCase()}` : '';
     pdf.save(`${testData.testType}-${fileLabel}${sectionTag}-${suffix}-${dateText}.pdf`);
+  } catch (err) {
+    console.error('[generateTestPdf] 실패:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    alert(`PDF 생성에 실패했습니다.\n${msg}`);
+    throw err;
   } finally {
-    document.body.removeChild(host);
+    if (host.parentNode) host.parentNode.removeChild(host);
   }
 }
