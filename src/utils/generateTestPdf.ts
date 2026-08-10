@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { TPOQuestion, TPOSection, TPOTest } from '../components/ContentManagement';
+import { buildEmailWritingQuestion, buildAcademicDiscussionProps } from '../components/WritingSectionWrapper';
 
 type PdfMode = 'standard' | 'annotated';
 
@@ -252,33 +253,56 @@ function writingLines(question: TPOQuestion, mode: PdfMode, _skipPassage: boolea
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // ── Write an Email ──────────────────────────────────────────────────────
+  // 실제 화면(WritingEmailQ1)과 동일한 순서로 표시:
+  //   scenario 문단 → instruction(bold) → bullets → "Write as much as..." → To/Subject.
+  // Email 데이터는 CMS 필드 외에 passageText/context/questionText에 흩어져 있을 수 있으므로
+  // WritingSectionWrapper의 파서를 그대로 사용해 화면과 정확히 같은 문구를 얻는다.
   if (question.questionType === 'Write an Email') {
-    // 지시문(questionText)이 있으면 먼저 표시 — 상황 필드가 비어 있어도 문제 프롬프트는 반드시 노출
-    if (question.questionText) lines.push({ text: question.questionText });
-    if (q.emailScenario)     lines.push({ text: q.emailScenario as string });
-    if (q.emailInstruction)  lines.push({ text: q.emailInstruction as string, bold: true });
-    if (Array.isArray(q.emailBullets) && (q.emailBullets as string[]).length) {
-      (q.emailBullets as string[]).forEach(b => lines.push({ text: `• ${b}`, indent: true }));
+    const email = buildEmailWritingQuestion(question) ?? {
+      emailScenario: '', emailInstruction: '', emailBullets: [],
+      emailTo: '', emailSubject: '',
+    };
+    if (email.emailScenario)    lines.push({ text: email.emailScenario });
+    if (email.emailInstruction) lines.push({ text: email.emailInstruction, bold: true });
+    if (email.emailBullets && email.emailBullets.length) {
+      email.emailBullets.filter(b => b && b.trim()).forEach(b => lines.push({ text: `• ${b}`, indent: true }));
     }
-    if (q.emailTo)      lines.push({ text: `To: ${q.emailTo}` });
-    if (q.emailSubject) lines.push({ text: `Subject: ${q.emailSubject}` });
-    // 세부 필드가 하나도 없으면 응시자에게 안내
-    const hasAny = !!(question.questionText || q.emailScenario || q.emailInstruction
-      || (Array.isArray(q.emailBullets) && (q.emailBullets as string[]).some(b => b.trim()))
-      || q.emailTo || q.emailSubject);
+    // 화면에 하드코딩된 안내 문구 — PDF에도 동일하게 노출
+    lines.push({ text: 'Write as much as you can and in complete sentences.' });
+    if (email.emailTo)      lines.push({ text: `To: ${email.emailTo}`, bold: true });
+    if (email.emailSubject) lines.push({ text: `Subject: ${email.emailSubject}`, bold: true });
+    const hasAny = !!(email.emailScenario || email.emailInstruction
+      || (email.emailBullets && email.emailBullets.some(b => b && b.trim()))
+      || email.emailTo || email.emailSubject || question.questionText);
     if (!hasAny) lines.push({ text: '(No prompt provided for this question.)' });
 
   // ── Academic Discussion ─────────────────────────────────────────────────
+  // 실제 화면(WritingAcademicDiscussionQ2)과 동일한 순서로 표시:
+  //   Instructions 헤더 + promptTitle → 하드코딩된 2개 bullet → 100 words 안내
+  //   → (있으면) promptInstructions 큰 제목 → 교수 이름 + 메시지 → 학생1 → 학생2.
   } else if (question.questionType === 'Academic Discussion') {
-    if (question.questionText) lines.push({ text: question.questionText });
-    if (q.professorName)    lines.push({ text: `Professor: ${q.professorName}`, bold: true });
-    if (q.professorMessage) lines.push({ text: q.professorMessage as string, indent: true });
-    if (q.student1Name)     lines.push({ text: `${q.student1Name}:`, bold: true });
-    if (q.student1Message)  lines.push({ text: q.student1Message as string, indent: true });
-    if (q.student2Name)     lines.push({ text: `${q.student2Name}:`, bold: true });
-    if (q.student2Message)  lines.push({ text: q.student2Message as string, indent: true });
-    const hasAny = !!(question.questionText || q.professorMessage || q.student1Message || q.student2Message);
-    if (!hasAny) lines.push({ text: '(No prompt provided for this question.)' });
+    const ad = buildAcademicDiscussionProps(question);
+    // 명시적 필드가 있으면 우선 사용 (파서보다 우선)
+    const professorName    = (q.professorName as string)    || ad.professorName;
+    const professorMessage = (q.professorMessage as string) || ad.professorMessage;
+    const student1Name     = (q.student1Name as string)     || ad.student1Name;
+    const student1Message  = (q.student1Message as string)  || ad.student1Message;
+    const student2Name     = (q.student2Name as string)     || ad.student2Name;
+    const student2Message  = (q.student2Message as string)  || ad.student2Message;
+    const promptTitle       = ad.promptTitle       || question.questionText || '';
+    const promptInstructions = ad.promptInstructions || '';
+
+    if (promptTitle) lines.push({ text: `Instructions: ${promptTitle}`, bold: true });
+    lines.push({ text: '• express and support your personal opinion', indent: true });
+    lines.push({ text: '• make a contribution to the discussion', indent: true });
+    lines.push({ text: 'An effective response will contain at least 100 words.' });
+    if (promptInstructions) lines.push({ text: promptInstructions, bold: true });
+    if (professorName)    lines.push({ text: `Professor: ${professorName}`, bold: true });
+    if (professorMessage) lines.push({ text: professorMessage, indent: true });
+    if (student1Name)     lines.push({ text: `${student1Name}:`, bold: true });
+    if (student1Message)  lines.push({ text: student1Message, indent: true });
+    if (student2Name)     lines.push({ text: `${student2Name}:`, bold: true });
+    if (student2Message)  lines.push({ text: student2Message, indent: true });
 
   // ── Build a Sentence / other ────────────────────────────────────────────
   } else {
