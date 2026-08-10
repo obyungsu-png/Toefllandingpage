@@ -405,43 +405,36 @@ function buildHtml(testData: TPOTest, mode: PdfMode, sectionType: TPOSection['se
 
   const body = orderedSections.map(s => sectionHtml(s, mode)).join('');
 
-  // .pdf-root 하나가 host의 유일한 최상위 자식이 되도록 style을 root 내부에 둔다.
-  // (host.firstElementChild가 <style>을 가리키는 버그 방지)
-  return `<div class="pdf-root">
-    <style>
-      .pdf-root {
-        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', 'Helvetica', 'Arial', sans-serif !important;
-        color: #000000 !important;
-        background: #ffffff !important;
-        padding: 40px 34px 32px 34px;
+  // iframe 안에 통째로 들어가는 독립 문서 — Tailwind v4의 oklch() 색이 상속되지 않아
+  // html2canvas 1.4.1이 색 파싱에서 던지지 않는다.
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+      html, body { margin: 0; padding: 0; background: #ffffff; color: #000000; }
+      body {
+        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', 'Helvetica', 'Arial', sans-serif;
         width: 800px;
+        padding: 40px 34px 32px 34px;
         box-sizing: border-box;
         line-height: 1.5;
         font-size: 14px;
       }
-      .pdf-root * {
-        color: inherit;
-        background: transparent;
-        border-color: currentColor;
-      }
       .pdf-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
-      .pdf-meta { font-size: 12px; color: #333333 !important; margin-bottom: 4px; }
-      .pdf-memo { font-size: 12px; color: #333333 !important; margin-bottom: 12px; }
+      .pdf-meta { font-size: 12px; color: #333333; margin-bottom: 4px; }
+      .pdf-memo { font-size: 12px; color: #333333; margin-bottom: 12px; }
       .pdf-section { margin-top: 18px; }
       .pdf-section-title { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; }
-      .pdf-section-instructions { font-style: italic; font-size: 13px; margin-bottom: 10px; color: #222222 !important; }
-      .pdf-module-header { font-size: 15px; font-weight: 700; color: #148b8f !important; margin: 14px 0 6px 0; }
+      .pdf-section-instructions { font-style: italic; font-size: 13px; margin-bottom: 10px; color: #222222; }
+      .pdf-module-header { font-size: 15px; font-weight: 700; color: #148b8f; margin: 14px 0 6px 0; }
       .pdf-question { margin-bottom: 14px; page-break-inside: avoid; }
       .pdf-line { margin: 0 0 4px 0; font-size: 14px; word-wrap: break-word; white-space: pre-wrap; }
       .pdf-heading { font-size: 15px; font-weight: 700; margin: 6px 0 4px 0; }
       .pdf-bold { font-weight: 700; }
-      .pdf-link a { color: #2563eb !important; text-decoration: underline; }
-    </style>
+      .pdf-link a { color: #2563eb; text-decoration: underline; }
+    </style></head><body>
     <div class="pdf-title">${titleSection}${escapeHtml(testData.testType)} ${escapeHtml(examLabel)}</div>
     <div class="pdf-meta">Generated: ${escapeHtml(dateText)}</div>
     ${memoLine}
     ${body}
-  </div>`;
+  </body></html>`;
 }
 
 // ── Public entry point ───────────────────────────────────────────────────────
@@ -476,27 +469,31 @@ export async function generateTestPdf(
 
   const html = buildHtml(testData, mode, sectionType, examLabel, dateText);
 
-  // 오프스크린 컨테이너에 렌더 후 html2canvas로 캡처.
-  // left:-10000px + top:0 로 화면 밖에 두되 실제 레이아웃/치수는 잡히도록 유지.
-  const host = document.createElement('div');
-  host.setAttribute('data-pdf-host', '1');
-  host.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;background:#ffffff;color:#000000;pointer-events:none;z-index:-1;';
-  host.innerHTML = html;
-  document.body.appendChild(host);
+  // 부모 문서(Tailwind v4의 oklch() 색)로부터 완전히 격리된 iframe에 렌더.
+  // → html2canvas 1.4.1이 색 파싱에서 던지지 않고, 브라우저 시스템 폰트로 한글이 정상 출력됨.
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('data-pdf-iframe', '1');
+  iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:600px;border:0;pointer-events:none;z-index:-1;';
+  document.body.appendChild(iframe);
 
   try {
-    // 폰트 로드 대기 — 시스템 폰트가 아직 준비 안 됐을 때 캡처가 sans-serif fallback으로 나가는 문제 방지
-    if ((document as any).fonts?.ready) {
-      try { await (document as any).fonts.ready; } catch { /* ignore */ }
-    }
+    const idoc = iframe.contentDocument;
+    if (!idoc) throw new Error('iframe document 접근 실패');
+    idoc.open();
+    idoc.write(html);
+    idoc.close();
 
-    // .pdf-root를 명시적으로 타깃 — <style>이 firstElementChild가 되는 경우 방지
-    const target = (host.querySelector('.pdf-root') as HTMLElement | null) ?? host;
-    // 실제 렌더 폭/높이 확정 대기 (다음 프레임까지)
+    // 폰트 및 레이아웃 확정 대기
+    if ((idoc as any).fonts?.ready) {
+      try { await (idoc as any).fonts.ready; } catch { /* ignore */ }
+    }
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 
+    const target = idoc.body;
     const renderWidth = Math.max(target.scrollWidth, 800);
-    const renderHeight = Math.max(target.scrollHeight, target.clientHeight, 1);
+    const renderHeight = Math.max(target.scrollHeight, 1);
+    // iframe 높이를 실제 콘텐츠 높이에 맞춰 — html2canvas가 windowHeight 기준으로 클리핑하는 것 방지
+    iframe.style.height = renderHeight + 'px';
 
     const canvas = await html2canvas(target, {
       scale: 2,
@@ -538,6 +535,6 @@ export async function generateTestPdf(
     alert(`PDF 생성에 실패했습니다.\n${msg}`);
     throw err;
   } finally {
-    if (host.parentNode) host.parentNode.removeChild(host);
+    if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
   }
 }
