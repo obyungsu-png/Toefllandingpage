@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import type { TPOQuestion, TPOSection, TPOTest } from '../components/ContentManagement';
 
 type PdfMode = 'standard' | 'annotated';
@@ -43,13 +44,11 @@ function countFillBlanks(text?: string) {
 // 문자열 해시를 시드로 사용 → 같은 문제는 항상 같은 순서로 셔플됨 (재생성 시에도 일관).
 function seededShuffleWords(words: string[]): string[] {
   const arr = [...words];
-  // 간단한 문자열 해시 (djb2)
   let seed = 5381;
   const key = words.join('|');
   for (let i = 0; i < key.length; i++) {
     seed = ((seed << 5) + seed + key.charCodeAt(i)) >>> 0;
   }
-  // 시드 기반 Fisher-Yates
   const rand = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 0xffffffff;
@@ -131,19 +130,15 @@ function readingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
   const lines: PdfLine[] = [];
   const blankCount = Math.max(countFillBlanks(question.questionText), countFillBlanks(question.passageText));
   const isCompleteWords = /complete\s*words|fill\s*in\s*the\s*blank|cloze/i.test(question.questionType || '');
-  // Complete Words 유형이면 문제 번호와 무관하게 빈칸(____) 형태로 출력
   const isFillBlankSet = isCompleteWords || blankCount >= 10;
-  // Complete Words 세트는 10개 빈칸 → 실제 문제 번호 기준 범위 표기 (예: Q1-Q10)
   const blankSetLabel = `Q${question.questionNumber}-Q${Number(question.questionNumber) + 9}`;
   lines.push({ text: isFillBlankSet ? `${blankSetLabel}  [${question.questionType}]` : `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
-  // Module 2: passage stored as JSON {title, passage, questions:[]}
   if (!skipPassage && question.passageText) {
     const m2 = parseReadingM2(question.passageText);
     if (m2) {
       if (m2.title) lines.push({ text: m2.title, bold: true });
       lines.push({ text: m2.passage });
-      // The individual question text comes from the embedded questions array (already in question.questionText)
     } else {
       const tpl = formatTemplatePassage(question.passageText);
       if (tpl) {
@@ -210,14 +205,12 @@ function listeningLines(question: TPOQuestion, mode: PdfMode, skipPassage: boole
   return lines;
 }
 
-function speakingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
+function speakingLines(question: TPOQuestion, mode: PdfMode, _skipPassage: boolean = false): PdfLine[] {
   const lines: PdfLine[] = [];
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
-  // Question / instruction text
   if (question.questionText) lines.push({ text: question.questionText });
 
-  // Passage (reading passage for integrated tasks)
   if (question.passageText) {
     const tpl = formatTemplatePassage(question.passageText);
     if (tpl) {
@@ -229,22 +222,17 @@ function speakingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolea
     }
   }
 
-  // Passage title (e.g. academic reading)
   if (question.passageTitle) lines.push({ text: question.passageTitle, bold: true });
 
-  // Words (listen-and-repeat word list)
   if (question.words?.length) lines.push({ text: `Words: ${question.words.join(' / ')}` });
 
-  // Answer options (independent task choices etc.)
   if (question.options?.length) {
     question.options.forEach((opt, i) =>
       lines.push({ text: `${String.fromCharCode(65 + i)}. ${opt.replace(/^[A-D]\.\s*/, '')}`, indent: true }));
   }
 
-  // Audio / video — short clickable link
   if (question.audioUrl) lines.push({ text: 'Audio (click to listen)', link: question.audioUrl });
   if (question.videoUrl) lines.push({ text: 'Video (click to watch)', link: question.videoUrl });
-  // Image — only real http URLs (internal asset paths are meaningless on paper)
   if (question.imageUrl && /^https?:\/\//i.test(question.imageUrl)) {
     lines.push({ text: 'Image (click to view)', link: question.imageUrl });
   }
@@ -258,13 +246,15 @@ function speakingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolea
   return lines;
 }
 
-function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean = false): PdfLine[] {
+function writingLines(question: TPOQuestion, mode: PdfMode, _skipPassage: boolean = false): PdfLine[] {
   const q = question as TPOQuestion & Record<string, string | string[] | undefined>;
   const lines: PdfLine[] = [];
   lines.push({ text: `Q${question.questionNumber}  [${question.questionType}]`, heading: true });
 
   // ── Write an Email ──────────────────────────────────────────────────────
   if (question.questionType === 'Write an Email') {
+    // 지시문(questionText)이 있으면 먼저 표시 — 상황 필드가 비어 있어도 문제 프롬프트는 반드시 노출
+    if (question.questionText) lines.push({ text: question.questionText });
     if (q.emailScenario)     lines.push({ text: q.emailScenario as string });
     if (q.emailInstruction)  lines.push({ text: q.emailInstruction as string, bold: true });
     if (Array.isArray(q.emailBullets) && (q.emailBullets as string[]).length) {
@@ -272,6 +262,11 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
     }
     if (q.emailTo)      lines.push({ text: `To: ${q.emailTo}` });
     if (q.emailSubject) lines.push({ text: `Subject: ${q.emailSubject}` });
+    // 세부 필드가 하나도 없으면 응시자에게 안내
+    const hasAny = !!(question.questionText || q.emailScenario || q.emailInstruction
+      || (Array.isArray(q.emailBullets) && (q.emailBullets as string[]).some(b => b.trim()))
+      || q.emailTo || q.emailSubject);
+    if (!hasAny) lines.push({ text: '(No prompt provided for this question.)' });
 
   // ── Academic Discussion ─────────────────────────────────────────────────
   } else if (question.questionType === 'Academic Discussion') {
@@ -282,6 +277,8 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
     if (q.student1Message)  lines.push({ text: q.student1Message as string, indent: true });
     if (q.student2Name)     lines.push({ text: `${q.student2Name}:`, bold: true });
     if (q.student2Message)  lines.push({ text: q.student2Message as string, indent: true });
+    const hasAny = !!(question.questionText || q.professorMessage || q.student1Message || q.student2Message);
+    if (!hasAny) lines.push({ text: '(No prompt provided for this question.)' });
 
   // ── Build a Sentence / other ────────────────────────────────────────────
   } else {
@@ -293,7 +290,6 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
       else lines.push({ text: cleanFillBlanks(question.passageText) });
     }
     if (question.words?.length) {
-      // Full Test PDF(standard): 정답 문장 순서 그대로 노출되지 않도록 셔플
       const isBuildSentence = (question.questionType || '').toLowerCase().includes('build a sentence');
       const displayWords = mode === 'standard' && isBuildSentence
         ? seededShuffleWords(question.words)
@@ -310,7 +306,6 @@ function writingLines(question: TPOQuestion, mode: PdfMode, skipPassage: boolean
   }
 
   if (mode === 'annotated') {
-    // Writing 자유응답(Write an Email / Academic Discussion) 모범답안 — 별도 강조 블록
     if ((question as any).modelAnswer && String((question as any).modelAnswer).trim()) {
       lines.push({ text: 'Model Answer:', bold: true });
       String((question as any).modelAnswer)
@@ -334,44 +329,38 @@ function questionLines(question: TPOQuestion, section: TPOSection, mode: PdfMode
     case 'Listening': return listeningLines(question, mode, skipPassage);
     case 'Speaking': return speakingLines(question, mode, skipPassage);
     case 'Writing':  return writingLines(question, mode, skipPassage);
-    default:         return speakingLines(question, mode, skipPassage); // fallback
+    default:         return speakingLines(question, mode, skipPassage);
   }
 }
 
-// ── PDF rendering helpers ────────────────────────────────────────────────────
+// ── HTML rendering ──────────────────────────────────────────────────────────
+// 브라우저 폰트(Malgun/Apple SD/Noto)로 렌더링해 한글/CJK 문자가 깨지지 않도록 함
 
-function addWrappedText(pdf: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 5.5) {
-  if (!text?.trim()) return y;
-  const lines = pdf.splitTextToSize(text, maxWidth) as string[];
-  for (const line of lines) {
-    y = ensureSpace(pdf, y, lineHeight);
-    pdf.text(line, x, y);
-    y += lineHeight;
-  }
-  return y;
+function escapeHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function ensureSpace(pdf: jsPDF, y: number, required: number) {
-  if (y + required <= 285) return y;
-  pdf.addPage();
-  return 18;
+function lineToHtml(line: PdfLine): string {
+  const indentStyle = line.indent ? 'margin-left:20px;' : '';
+  const textHtml = escapeHtml(line.text).replace(/\n/g, '<br>');
+  if (line.link) {
+    return `<div class="pdf-line pdf-link" style="${indentStyle}"><a href="${escapeHtml(line.link)}" style="color:#2563eb;text-decoration:underline;">${textHtml}</a></div>`;
+  }
+  if (line.heading) {
+    return `<div class="pdf-line pdf-heading" style="${indentStyle}">${textHtml}</div>`;
+  }
+  if (line.bold) {
+    return `<div class="pdf-line pdf-bold" style="${indentStyle}">${textHtml}</div>`;
+  }
+  return `<div class="pdf-line" style="${indentStyle}">${textHtml}</div>`;
 }
 
-function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: number) {
-  let y = ensureSpace(pdf, startY, 16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(17);
-  pdf.text(section.sectionType, 14, y);
-  y += 9;
-
-  if (section.instructions) {
-    pdf.setFont('helvetica', 'italic');
-    pdf.setFontSize(11);
-    y = addWrappedText(pdf, section.instructions, 14, y, 182, 6);
-    y += 3;
-  }
-
-  // Sort questions: Module 1 first, then Module 2
+function sectionHtml(section: TPOSection, mode: PdfMode): string {
   const isModule2 = (q: TPOQuestion) => (q.questionType || '').toLowerCase().includes('module 2');
   const sortedQuestions = [...section.questions].sort((a, b) => {
     const am = isModule2(a) ? 1 : 0;
@@ -379,85 +368,95 @@ function renderSection(pdf: jsPDF, section: TPOSection, mode: PdfMode, startY: n
     return am - bm;
   });
 
+  let html = `<div class="pdf-section"><h2 class="pdf-section-title">${escapeHtml(section.sectionType)}</h2>`;
+  if (section.instructions) {
+    html += `<div class="pdf-section-instructions">${escapeHtml(section.instructions).replace(/\n/g, '<br>')}</div>`;
+  }
+
   let lastModule = -1;
   let lastPassageText: string | undefined = undefined;
   for (const question of sortedQuestions) {
-    // Print module header when it changes
     const mod = isModule2(question) ? 2 : 1;
     if (mod !== lastModule) {
-      y = ensureSpace(pdf, y, 12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(13);
-      pdf.setTextColor(20, 139, 143);
-      pdf.text(`Module ${mod}`, 14, y);
-      pdf.setTextColor(0, 0, 0);
-      y += 8;
+      html += `<div class="pdf-module-header">Module ${mod}</div>`;
       lastModule = mod;
     }
 
-    // 같은 지문을 공유하는 경우 지문 중복 출력 방지
     const currentPassageText = question.passageText;
     const skipPassage = !!(currentPassageText && lastPassageText === currentPassageText);
-
     const lines = questionLines(question, section, mode, skipPassage);
+    if (currentPassageText) lastPassageText = currentPassageText;
 
-    // 현재 지문 텍스트 저장
-    if (currentPassageText) {
-      lastPassageText = currentPassageText;
-    }
-
-    y = ensureSpace(pdf, y, Math.min(120, Math.max(24, lines.length * 7)));
-    for (const line of lines) {
-      y = ensureSpace(pdf, y, 11);
-      const x = line.indent ? 18 : 14;
-      const maxW = line.indent ? 178 : 182;
-
-      if (line.link) {
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(12);
-        pdf.setTextColor(37, 99, 235);
-        pdf.textWithLink(line.text, x, y, { url: line.link });
-        pdf.setTextColor(0, 0, 0);
-        y += 6.5;
-      } else if (line.heading) {
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(13);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 7);
-      } else if (line.bold) {
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 6.5);
-      } else {
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(12);
-        y = addWrappedText(pdf, line.text, x, y, maxW, 6.5);
-      }
-    }
-    y += 5; // gap between questions
+    html += `<div class="pdf-question">${lines.map(lineToHtml).join('')}</div>`;
   }
 
-  return y + 4;
+  html += `</div>`;
+  return html;
+}
+
+function buildHtml(testData: TPOTest, mode: PdfMode, sectionType: TPOSection['sectionType'] | undefined, examLabel: string, dateText: string): string {
+  const titleSection = sectionType ? `${escapeHtml(sectionType)} — ` : '';
+  const memoLine = testData.dateMemo ? `<div class="pdf-memo">Memo: ${escapeHtml(testData.dateMemo)}</div>` : '';
+
+  const orderedSections = [...testData.sections]
+    .filter(s => SECTION_ORDER.includes(s.sectionType))
+    .sort((a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType))
+    .filter(s => !sectionType || s.sectionType === sectionType);
+
+  const body = orderedSections.map(s => sectionHtml(s, mode)).join('');
+
+  // A4 @ 96dpi ≒ 794px wide, but we render at 800px for comfort and scale down to A4 in PDF
+  return `
+    <style>
+      .pdf-root {
+        font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Nanum Gothic', 'Helvetica', 'Arial', sans-serif;
+        color: #000;
+        background: #fff;
+        padding: 40px 34px 32px 34px;
+        width: 800px;
+        box-sizing: border-box;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+      .pdf-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
+      .pdf-meta { font-size: 12px; color: #333; margin-bottom: 4px; }
+      .pdf-memo { font-size: 12px; color: #333; margin-bottom: 12px; }
+      .pdf-section { margin-top: 18px; }
+      .pdf-section-title { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; }
+      .pdf-section-instructions { font-style: italic; font-size: 13px; margin-bottom: 10px; color: #222; }
+      .pdf-module-header { font-size: 15px; font-weight: 700; color: #148b8f; margin: 14px 0 6px 0; }
+      .pdf-question { margin-bottom: 14px; page-break-inside: avoid; }
+      .pdf-line { margin: 0 0 4px 0; font-size: 14px; word-wrap: break-word; white-space: pre-wrap; }
+      .pdf-heading { font-size: 15px; font-weight: 700; margin: 6px 0 4px 0; }
+      .pdf-bold { font-weight: 700; }
+      .pdf-link a { color: #2563eb; text-decoration: underline; }
+    </style>
+    <div class="pdf-root">
+      <div class="pdf-title">${titleSection}${escapeHtml(testData.testType)} ${escapeHtml(examLabel)}</div>
+      <div class="pdf-meta">Generated: ${escapeHtml(dateText)}</div>
+      ${memoLine}
+      ${body}
+    </div>
+  `;
 }
 
 // ── Public entry point ───────────────────────────────────────────────────────
 
 /**
- * 테스트 PDF 생성
+ * 테스트 PDF 생성 — HTML→canvas→PDF 파이프라인.
+ * 브라우저 폰트로 렌더링되어 한글/CJK 문자가 깨지지 않음.
  * @param testData  전체 TPOTest 데이터
  * @param mode      'standard' (문제만) | 'annotated' (정답/해설 포함)
  * @param sectionType  지정하면 해당 영역만 PDF에 포함 (예: 'Listening'). 생략 시 전체 영역.
  */
-export function generateTestPdf(
+export async function generateTestPdf(
   testData: TPOTest,
   mode: PdfMode,
   sectionType?: TPOSection['sectionType']
 ) {
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const today = new Date();
   const dateText = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
 
-  // 표시 라벨 — 자동배열 번호(displayNumber)가 있으면 최우선 사용 (카드/History와 동일 번호).
-  // 없으면 year/month ("2026년 7월"), 그것도 없으면 낸부 testNumber로 fallback
   const hasDisplayNum = !!testData.displayNumber;
   const hasExamDate = !hasDisplayNum && !!(testData.year && testData.month);
   const examLabel = hasDisplayNum
@@ -471,28 +470,54 @@ export function generateTestPdf(
     ? `${testData.year}-${String(testData.month).padStart(2, '0')}`
     : `${testData.testNumber}`;
 
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(18);
-  const titleSection = sectionType ? `${sectionType} — ` : '';
-  pdf.text(`${titleSection}${testData.testType} ${examLabel}`, 14, 20);
+  const html = buildHtml(testData, mode, sectionType, examLabel, dateText);
 
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  pdf.text(`Generated: ${dateText}`, 14, 28);
-  if (testData.dateMemo) pdf.text(`Memo: ${testData.dateMemo}`, 14, 34);
+  // 오프스크린 컨테이너에 렌더 후 html2canvas로 캡처
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;left:-10000px;top:0;z-index:-1;pointer-events:none;';
+  host.innerHTML = html;
+  document.body.appendChild(host);
 
-  let y = 44;
-  const orderedSections = [...testData.sections]
-    // 레거시 소문자 섹션('reading' 등) 제외 — 정규 섹션명만 PDF에 포함 (중복 출력 방지)
-    .filter(s => SECTION_ORDER.includes(s.sectionType))
-    .sort((a, b) => SECTION_ORDER.indexOf(a.sectionType) - SECTION_ORDER.indexOf(b.sectionType))
-    .filter(s => !sectionType || s.sectionType === sectionType);
+  try {
+    // 폰트 로드 대기 — 시스템 폰트가 아직 준비 안 됐을 때 캡처가 sans-serif fallback으로 나가는 문제 방지
+    if ((document as any).fonts?.ready) {
+      try { await (document as any).fonts.ready; } catch { /* ignore */ }
+    }
 
-  for (const section of orderedSections) {
-    y = renderSection(pdf, section, mode, y);
+    const target = host.firstElementChild as HTMLElement;
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false,
+      windowWidth: target.scrollWidth,
+      windowHeight: target.scrollHeight,
+    });
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidthMm = 210;
+    const pageHeightMm = 297;
+    const imgWidthMm = pageWidthMm;
+    const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+    if (imgHeightMm <= pageHeightMm) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidthMm, imgHeightMm);
+    } else {
+      // 한 캔버스를 여러 페이지에 걸쳐 얹기 — offset을 음수로 이동
+      let position = 0;
+      while (position < imgHeightMm) {
+        pdf.addImage(imgData, 'JPEG', 0, -position, imgWidthMm, imgHeightMm);
+        position += pageHeightMm;
+        if (position < imgHeightMm) pdf.addPage();
+      }
+    }
+
+    const suffix = mode === 'annotated' ? 'annotated' : 'standard';
+    const sectionTag = sectionType ? `-${sectionType.toLowerCase()}` : '';
+    pdf.save(`${testData.testType}-${fileLabel}${sectionTag}-${suffix}-${dateText}.pdf`);
+  } finally {
+    document.body.removeChild(host);
   }
-
-  const suffix = mode === 'annotated' ? 'annotated' : 'standard';
-  const sectionTag = sectionType ? `-${sectionType.toLowerCase()}` : '';
-  pdf.save(`${testData.testType}-${fileLabel}${sectionTag}-${suffix}-${dateText}.pdf`);
 }
