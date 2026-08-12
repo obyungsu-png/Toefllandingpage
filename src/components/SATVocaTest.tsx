@@ -15,6 +15,7 @@ interface SATVocaTestProps {
     themeColor?: string;
     selectedDays?: number[];
     wordsFromDB?: SATWord[];
+    dayLabel?: string;
   };
   onExit: () => void;
   onSaveResult?: (result: any) => void;
@@ -498,6 +499,7 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
         onFinish={onExit}
         autoPlay={true}
         themeColor={themeColor}
+        dayLabel={testInfo.dayLabel}
       />
     );
   }
@@ -832,9 +834,19 @@ export function SATVocaTest({ testInfo, onExit, onSaveResult }: SATVocaTestProps
       <div className="max-w-3xl mx-auto p-3 sm:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-3 sm:mb-6">
-          <h1 className="text-2xl font-bold" style={{ color: themeColor }}>
-            TOEFL 어휘 테스트
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold" style={{ color: themeColor }}>
+              TOEFL 어휘 테스트
+            </h1>
+            {testInfo.dayLabel && (
+              <span
+                className="mt-1 inline-flex items-center self-start px-2 py-0.5 rounded-full text-xs font-semibold"
+                style={{ backgroundColor: `${themeColor}15`, color: themeColor }}
+              >
+                {testInfo.dayLabel}
+              </span>
+            )}
+          </div>
           <button onClick={onExit} className="text-gray-500 hover:text-gray-700">
             <X className="w-6 h-6" />
           </button>
