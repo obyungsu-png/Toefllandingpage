@@ -14,13 +14,15 @@ interface WordFlashcardProps {
   onFinish: () => void;
   autoPlay?: boolean;
   themeColor?: string;
+  dayLabel?: string;
 }
 
-export function WordFlashcard({ 
-  words, 
-  onFinish, 
+export function WordFlashcard({
+  words,
+  onFinish,
   autoPlay = false,
-  themeColor = '#3D5AA1' 
+  themeColor = '#3D5AA1',
+  dayLabel
 }: WordFlashcardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -136,9 +138,19 @@ export function WordFlashcard({
 
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-6 flex-shrink-0">
-          <h2 className="text-xl md:text-3xl font-bold" style={{ color: themeColor }}>
-            단어 카드
-          </h2>
+          <div className="flex flex-col">
+            <h2 className="text-xl md:text-3xl font-bold" style={{ color: themeColor }}>
+              단어 카드
+            </h2>
+            {dayLabel && (
+              <span
+                className="mt-1 inline-flex items-center self-start px-2 py-0.5 rounded-full text-[11px] md:text-xs font-semibold"
+                style={{ backgroundColor: `${themeColor}15`, color: themeColor }}
+              >
+                {dayLabel}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => speakWord(currentWord.english)}

@@ -705,6 +705,18 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
   };
 
   if (showTest) {
+    const selectedDayNames = daysFromDB
+      .filter(d => selectedDays.includes(d.id))
+      .map(d => d.name);
+    let dayLabel: string | undefined;
+    if (selectedDayNames.length === 1) {
+      dayLabel = selectedDayNames[0];
+    } else if (selectedDayNames.length > 1 && selectedDayNames.length <= 3) {
+      dayLabel = selectedDayNames.join(', ');
+    } else if (selectedDayNames.length > 3) {
+      dayLabel = `${selectedDayNames[0]} 외 ${selectedDayNames.length - 1}일`;
+    }
+
     return (
       <SATVocaTest
         testInfo={{
@@ -716,7 +728,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
           totalQuestions: selectedWords.length,
           themeColor,
           selectedDays: testTypeSelection === 'mixed' ? selectedDays : undefined,
-          wordsFromDB: testTypeSelection === 'mixed' ? wordsFromDB : undefined
+          wordsFromDB: testTypeSelection === 'mixed' ? wordsFromDB : undefined,
+          dayLabel
         }}
         onExit={() => setShowTest(false)}
         onSaveResult={onSaveResult}
