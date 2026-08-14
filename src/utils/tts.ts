@@ -15,6 +15,8 @@
  *   6. Any en-GB voice
  */
 
+import { getGlobalAudioVolume } from './mediaCache';
+
 export interface SpeakOptions {
   text: string;
   rate?: number;       // default 1.0
@@ -189,7 +191,9 @@ export function speakWithBritishFemaleVoice(options: SpeakOptions): () => void {
   utterance.lang = 'en-GB';
   utterance.rate = rate;
   utterance.pitch = pitch;
-  utterance.volume = volume;
+  // 전역 볼륨 슬라이더와 요청 볼륨(volume) 중 낮은 쪽 사용 —
+  // 슬라이더로 음소거하면 tts 도 함께 무음.
+  utterance.volume = Math.min(volume, getGlobalAudioVolume());
 
   // Apply voice now if available, or wait for voices to load
   const applyVoice = () => {
