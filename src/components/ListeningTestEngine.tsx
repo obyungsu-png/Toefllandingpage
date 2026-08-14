@@ -439,7 +439,9 @@ function GroupIntroScreen({
     };
   }, [audioUrl, isReviewMode]);
 
-  const canGoNext = !audioUrl || audioEnded;
+  // Review 모드에서는 인트로 오디오 재생 여부와 무관하게 Next 허용 —
+  // 학생이 Play를 눌러 다시 듣는 도중에도 즉시 다음 문제로 건너뛸 수 있어야 함.
+  const canGoNext = isReviewMode || !audioUrl || audioEnded;
   const handleNext = canGoNext ? () => {
     // Next 눌러서 다음 세그먼트로 넘어갈 때 이전 인트로 오디오 즉시 정리 — 잔여 재생 방지
     cleanupAudio(audioRef.current);
