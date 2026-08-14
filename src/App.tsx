@@ -7479,12 +7479,12 @@ function AppContent() {
           onModuleEnd={() => {
             setActiveListeningM2Screen(null);
             clearReviewContext();
-            // 리뷰 모드에서는 중복 저장 방지 — M1과 동일하게 isReviewMode 가드 적용
-            if (!isReviewMode) {
-              const result = saveSectionResultToHistory('Listening', 0, 2);
-              setSectionScores(prev => ({ ...prev, listening: result }));
-            }
             setIsReviewMode(false);
+            // start·review 모두 저장 — review 도 History 에 노출되도록.
+            // 여러 번 시행해 중복이 생기더라도 HistorySection 이 M1·M2 슬롯을
+            // 각각 최신본으로 병합해 카드는 항상 한 장만 보인다.
+            const result = saveSectionResultToHistory('Listening', 0, 2);
+            setSectionScores(prev => ({ ...prev, listening: result }));
             setShowEndListening(true);
           }}
           onExitBack={() => {
