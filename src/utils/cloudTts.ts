@@ -7,12 +7,27 @@
  * where CORS is bypassed via session interceptor.
  */
 
+import { getGlobalAudioVolume, subscribeGlobalAudioVolume } from './mediaCache';
+
 const GOOGLE_TTS_BASE = 'https://translate.google.com/translate_tts';
 const MAX_CHUNK_LEN = 190; // Google TTS limit is ~200 chars
 
 // ── Global speech state — allows synchronous stop even mid-async ──
 let globalCurrentAudio: HTMLAudioElement | null = null;
+let globalCurrentUtterance: SpeechSynthesisUtterance | null = null;
 let globalCancelled = false;
+
+// 볼륨 슬라이더가 바뀌면 현재 재생 중인 TTS 오디오/utterance 볼륨도 즉시 반영.
+// (SpeechSynthesisUtterance.volume 변경은 대부분 브라우저에서 재생 중에는
+//  반영되지 않으므로 다음 speak 부터 적용된다.)
+subscribeGlobalAudioVolume((v) => {
+  if (globalCurrentAudio) {
+    try { globalCurrentAudio.volume = v; } catch { /* ignore */ }
+  }
+  if (globalCurrentUtterance) {
+    try { globalCurrentUtterance.volume = v; } catch { /* ignore */ }
+  }
+});
 
 /**
  * Stop ALL ongoing TTS playback immediately (synchronous).
@@ -24,6 +39,7 @@ export function stopAllSpeech(): void {
     try { globalCurrentAudio.pause(); } catch {}
     globalCurrentAudio = null;
   }
+  globalCurrentUtterance = null;
   if ('speechSynthesis' in window) {
     try { window.speechSynthesis.cancel(); } catch {}
   }
@@ -110,6 +126,10 @@ function speakWithSpeechSynthesis(text: string): void {
     utterance.voice = chosen || voices[0];
     utterance.lang = 'en-GB';
     utterance.rate = 0.9;
+    utterance.volume = getGlobalAudioVolume();
+    globalCurrentUtterance = utterance;
+    utterance.onend = () => { if (globalCurrentUtterance === utterance) globalCurrentUtterance = null; };
+    utterance.onerror = () => { if (globalCurrentUtterance === utterance) globalCurrentUtterance = null; };
     window.speechSynthesis.speak(utterance);
   };
 
@@ -161,6 +181,7 @@ export async function speakHighQuality(text: string): Promise<() => void> {
       await new Promise<void>((resolve) => {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
+        audio.volume = getGlobalAudioVolume();
         globalCurrentAudio = audio;
         audio.onended = () => {
           URL.revokeObjectURL(url);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { getGlobalAudioVolume, setGlobalAudioVolume } from '../utils/mediaCache';
 
 interface VolumeControlProps {
   isOpen?: boolean;
@@ -8,17 +9,10 @@ interface VolumeControlProps {
 }
 
 export function VolumeControl({ isOpen = true, onClose, buttonRef }: VolumeControlProps) {
-  const [volume, setVolume] = useState(75);
+  // 초기값은 전역 볼륨(0~1) → 슬라이더 스케일(0~100)로 변환
+  const [volume, setVolume] = useState(() => Math.round(getGlobalAudioVolume() * 100));
   const [position, setPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Set initial volume for all audio elements
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach(audio => {
-      audio.volume = volume / 100;
-    });
-  }, [volume]);
 
   useEffect(() => {
     if (isOpen && buttonRef && buttonRef.current) {
@@ -57,31 +51,12 @@ export function VolumeControl({ isOpen = true, onClose, buttonRef }: VolumeContr
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = Number(e.target.value);
     setVolume(newVolume);
-
-    // Update all audio elements
-    const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach(audio => {
-      audio.volume = newVolume / 100;
-    });
-
-    // Store volume preference
-    localStorage.setItem('toefl-volume', newVolume.toString());
+    // 전역 오디오 볼륨 갱신 — mediaCache가 활성 오디오 전체에 즉시 반영 +
+    // localStorage에 저장 + cloudTts 구독자에게 통보(현재 재생 중인 TTS도 적용).
+    // 앞서 DOM의 <audio> 요소만 훑던 방식은 new Audio()로 만든 요소가
+    // DOM 밖에 있어 실제로는 아무것도 조정하지 못했다.
+    setGlobalAudioVolume(newVolume);
   };
-
-  // Load saved volume on mount
-  useEffect(() => {
-    const savedVolume = localStorage.getItem('toefl-volume');
-    if (savedVolume) {
-      const vol = Number(savedVolume);
-      setVolume(vol);
-      
-      // Apply to all audio elements
-      const audioElements = document.querySelectorAll('audio');
-      audioElements.forEach(audio => {
-        audio.volume = vol / 100;
-      });
-    }
-  }, []);
 
   // Calculate the filled bars based on volume (0-100)
   const totalBars = 20;

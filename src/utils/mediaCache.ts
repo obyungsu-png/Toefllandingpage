@@ -256,6 +256,47 @@ const activeAudios = new Set<HTMLAudioElement>();
 // 오디오 생성 세대 — stopAllAudio 호출 후 생성 진행 중이던 오디오의 재생을 차단
 let audioGeneration = 0;
 
+// ─────────────────────────────────────────────────────────────────
+//  전역 볼륨 (0.0 ~ 1.0) — VolumeControl 슬라이더가 조정.
+//  new Audio()로 만든 요소는 DOM 밖에 있어 document.querySelectorAll('audio')로
+//  잡히지 않으므로, 생성 시점에 여기 값을 적용하고 슬라이더 변경 시 활성 오디오
+//  전체에 재전파한다.
+// ─────────────────────────────────────────────────────────────────
+const VOLUME_STORAGE_KEY = 'toefl-volume';
+let currentVolume: number = (() => {
+  try {
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(VOLUME_STORAGE_KEY) : null;
+    if (saved != null) {
+      const parsed = Number(saved);
+      if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) return parsed / 100;
+    }
+  } catch { /* ignore */ }
+  return 0.75;
+})();
+const volumeListeners = new Set<(v: number) => void>();
+
+export function getGlobalAudioVolume(): number {
+  return currentVolume;
+}
+
+/** 슬라이더 값(0~100) 또는 비율(0~1)로 전역 볼륨 갱신 → 활성 오디오 즉시 반영 */
+export function setGlobalAudioVolume(next: number): void {
+  const normalized = next > 1 ? next / 100 : next;
+  const clamped = Math.max(0, Math.min(1, normalized));
+  currentVolume = clamped;
+  try { localStorage.setItem(VOLUME_STORAGE_KEY, String(Math.round(clamped * 100))); } catch { /* ignore */ }
+  activeAudios.forEach(a => {
+    try { a.volume = clamped; } catch { /* ignore */ }
+  });
+  volumeListeners.forEach(fn => { try { fn(clamped); } catch { /* ignore */ } });
+}
+
+/** 볼륨 변경 구독 — cloudTts 등 다른 모듈에서 현재 재생 중인 TTS에 반영 */
+export function subscribeGlobalAudioVolume(fn: (volume: number) => void): () => void {
+  volumeListeners.add(fn);
+  return () => { volumeListeners.delete(fn); };
+}
+
 /** 재생 중인 모든 오디오를 즉시 정지 (화면 전환 시 호출) */
 export function stopAllAudio(): void {
   audioGeneration++;
@@ -267,6 +308,8 @@ export function stopAllAudio(): void {
 
 function registerAudio(audio: HTMLAudioElement, generation: number): HTMLAudioElement {
   activeAudios.add(audio);
+  // 생성 시점에 현재 전역 볼륨을 반영 — 이후 setGlobalAudioVolume 호출로 갱신됨
+  try { audio.volume = currentVolume; } catch { /* ignore */ }
   audio.addEventListener('ended', () => activeAudios.delete(audio));
   audio.addEventListener('error', () => activeAudios.delete(audio));
   // 비동기 로딩 중 화면 전환이 발생한 경우 → 재생 자체를 차단

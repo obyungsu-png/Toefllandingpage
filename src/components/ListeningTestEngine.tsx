@@ -20,6 +20,9 @@ interface ListeningTestEngineProps {
   initialLegacyKey?: string;
   /** Called when visible segment changes, with a legacy-compatible key. */
   onSegmentChange?: (legacyKey: any) => void;
+  /** Review 모드에서는 인트로/문제 오디오·TTS 자동재생을 하지 않는다 —
+   *  dictation 패널 자막과 오디오가 어긋나는 문제 해결(사용자가 수동 재생). */
+  isReviewMode?: boolean;
 }
 
 const sortByNumber = (a: any, b: any) => {
@@ -68,6 +71,7 @@ export function ListeningTestEngine({
   currentTest,
   initialLegacyKey,
   onSegmentChange,
+  isReviewMode = false,
 }: ListeningTestEngineProps) {
   const allQuestions: any[] = sectionData?.questions || [];
   const moduleQuestions = allQuestions
@@ -207,6 +211,7 @@ export function ListeningTestEngine({
         onHome={onHome}
         onBack={onExitBack}
         onNext={goNext}
+        isReviewMode={isReviewMode}
       />
     );
   }
@@ -233,6 +238,7 @@ export function ListeningTestEngine({
         onHome={onHome}
         onBack={goBack}
         onNext={goNext}
+        isReviewMode={isReviewMode}
       />
     );
   }
@@ -249,6 +255,7 @@ export function ListeningTestEngine({
       onHome={onHome}
       onBack={goBack}
       onNext={goNext}
+      isReviewMode={isReviewMode}
     />
   );
 }
@@ -256,13 +263,14 @@ export function ListeningTestEngine({
 // ============================================================================
 // useSpeechEffect — TTS 안내 음성 재생 (ListeningM1Screens와 동일)
 // ============================================================================
-function useSpeechEffect(text: string) {
+function useSpeechEffect(text: string, skip: boolean = false) {
   useEffect(() => {
+    if (skip) { stopAllSpeech(); return; }
     if (!text || !text.trim()) return;
     stopAllSpeech();
     speakHighQuality(text);
     return () => { stopAllSpeech(); };
-  }, [text]);
+  }, [text, skip]);
 }
 
 // ============================================================================
@@ -273,13 +281,16 @@ function ListeningSectionIntro({
   onHome,
   onBack,
   onNext,
+  isReviewMode = false,
 }: {
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  isReviewMode?: boolean;
 }) {
   useSpeechEffect(
-    'Listening. In the listening section, you will answer questions to demonstrate how well you understand spoken English. There are three types of tasks: Listen and Choose a Response, Conversations, and Lectures. You will not be able to return to previous questions.'
+    'Listening. In the listening section, you will answer questions to demonstrate how well you understand spoken English. There are three types of tasks: Listen and Choose a Response, Conversations, and Lectures. You will not be able to return to previous questions.',
+    isReviewMode,
   );
 
   return (
@@ -360,6 +371,7 @@ function GroupIntroScreen({
   onHome,
   onBack,
   onNext,
+  isReviewMode = false,
 }: {
   title: string;
   imageUrl: string;
@@ -367,12 +379,15 @@ function GroupIntroScreen({
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  isReviewMode?: boolean;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioEnded, setAudioEnded] = useState(!audioUrl);
+  // Review 모드에서는 오디오를 자동 재생하지 않으므로 처음부터 Next 허용
+  // (dictation 패널 스크립트와 배경 오디오가 겹치는 것을 방지)
+  const [audioEnded, setAudioEnded] = useState(isReviewMode || !audioUrl);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // React ref로 오디오 종료 상태 추적 (audio.ended 속성은 브라우저마다 정확하지 않음)
-  const audioEndedRef = useRef(!audioUrl);
+  const audioEndedRef = useRef(isReviewMode || !audioUrl);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
   const cleanupAudio = (audio: HTMLAudioElement | null) => {
@@ -394,6 +409,13 @@ function GroupIntroScreen({
   };
 
   useEffect(() => {
+    // Review 모드에서는 인트로 오디오를 자동 재생하지 않음 —
+    // dictation 자막과 배경 인트로 오디오가 어긋나는 문제 방지.
+    // 학생이 필요하면 Replay 버튼으로 수동 재생.
+    if (isReviewMode) {
+      audioEndedRef.current = true;
+      return;
+    }
     audioEndedRef.current = !audioUrl;
     if (!audioUrl) return;
     const timer = setTimeout(async () => {
@@ -415,7 +437,7 @@ function GroupIntroScreen({
       cleanupAudio(audioRef.current);
       audioRef.current = null;
     };
-  }, [audioUrl]);
+  }, [audioUrl, isReviewMode]);
 
   const canGoNext = !audioUrl || audioEnded;
   const handleNext = canGoNext ? () => {
@@ -624,6 +646,8 @@ interface ListeningQuestionScreenProps {
   onHome: () => void;
   onBack: () => void;
   onNext: () => void;
+  /** Review 모드에서는 문제 오디오 자동 재생 안 함 (dictation 자막 정확도 우선) */
+  isReviewMode?: boolean;
 }
 
 function ListeningQuestionScreen({
@@ -634,6 +658,7 @@ function ListeningQuestionScreen({
   onHome,
   onBack,
   onNext,
+  isReviewMode = false,
 }: ListeningQuestionScreenProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showMustAnswer, setShowMustAnswer] = useState(false);
@@ -691,6 +716,9 @@ function ListeningQuestionScreen({
   useEffect(() => {
     audioPlayedRef.current = false;
     audioEndedRef.current = false;  // 새 오디오 시작 시 리셋
+    // Review 모드에서는 문제 오디오 자동 재생 스킵 —
+    // dictation 패널의 자막/재생 컨트롤과 겹치지 않도록.
+    if (isReviewMode) return;
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
       const timer = setTimeout(async () => {
@@ -713,7 +741,7 @@ function ListeningQuestionScreen({
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, qNum]);
+  }, [audioUrl, qNum, isReviewMode]);
 
   const handlePlayAudio = async () => {
     if (!audioUrl || isPlaying) return;
