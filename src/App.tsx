@@ -7373,6 +7373,7 @@ function AppContent() {
           currentTest={currentTest}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
+          isReviewMode={isReviewMode}
           onModuleEnd={() => {
             setActiveListeningM1Screen(null);
             setActiveListeningM2Screen('q1');
@@ -7407,6 +7408,7 @@ function AppContent() {
           initialLegacyKey={(activeListeningM2Screen as string) !== 'intro' ? activeListeningM2Screen : undefined}
           onSegmentChange={setCurrentListeningReviewScreen}
           currentTest={currentTest}
+          isReviewMode={isReviewMode}
           testBankType={testBankType}
           handleTabChange={handleTabChange}
           onModuleEnd={() => {

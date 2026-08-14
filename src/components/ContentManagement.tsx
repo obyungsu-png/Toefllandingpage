@@ -6907,6 +6907,45 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
+
+        // ── 정답 필수 검증 ────────────────────────────────────────────────
+        // 채점 가능한 유형만 correctAnswer 필수 (자유응답/AI채점 유형은 예외).
+        // 예외: Write an Email, Academic Discussion, Take an Interview,
+        //       Speaking Read Aloud/Listen and Respond/Give an Opinion 등 자유응답,
+        //       blanks(Complete Words)가 이미 파싱되어 correctAnswer가 자동 구성된 경우.
+        const isFreeResponseType = (qt: string): boolean => {
+          const t = (qt || '').toLowerCase();
+          return (
+            t.includes('write an email') ||
+            t.includes('academic discussion') ||
+            t.includes('take an interview') ||
+            t.includes('read aloud') ||
+            t.includes('listen and respond') ||
+            t.includes('give an opinion') ||
+            t.includes('speaking') ||
+            t.includes('interview')
+          );
+        };
+        const missingAnswerRows: string[] = [];
+        questions.forEach((q) => {
+          if (isFreeResponseType(q.questionType || '')) return;
+          if (q.blanks && q.blanks.length > 0) return; // Complete Words — blanks가 정답
+          const ans = Array.isArray(q.correctAnswer)
+            ? q.correctAnswer.join('').trim()
+            : String(q.correctAnswer ?? '').trim();
+          if (!ans) {
+            const label = getQuestionRangeLabel(q) || `Q${q.questionNumber ?? '?'}`;
+            missingAnswerRows.push(`${label} (${q.questionType || '유형 미지정'})`);
+          }
+        });
+        if (missingAnswerRows.length > 0) {
+          throw new Error(
+            `정답(correctAnswer)이 누락된 문제가 ${missingAnswerRows.length}개 있어 등록할 수 없습니다:\n` +
+            `${missingAnswerRows.slice(0, 8).join(', ')}${missingAnswerRows.length > 8 ? ` … 외 ${missingAnswerRows.length - 8}개` : ''}\n` +
+            `CSV의 correctAnswer 열을 모두 채운 후 다시 업로드하세요. (자유응답/AI채점 유형은 예외)`
+          );
+        }
+
         // questionNumber 기준 오름차순 정렬 — Q1-Q10이 맨 앞에 오도록 (TXT 모드와 동일)
         questions.sort((a, b) => {
           const rangeA = parseQuestionRange(a.questionNumber);
