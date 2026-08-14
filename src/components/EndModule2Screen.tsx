@@ -6,6 +6,8 @@ interface ScoreData {
   total: number;
   module1Correct?: number;
   module1Total?: number;
+  module2Correct?: number;
+  module2Total?: number;
 }
 
 // 2026 New TOEFL: Raw score (0-30) → Band Score (1-6) conversion
@@ -145,64 +147,68 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
           </div>
 
           {/* Detailed Score Card - 2026 Band Score Format */}
-          {score && (
+          {score && (() => {
+            const m1c = score.module1Correct ?? 0;
+            const m1t = score.module1Total ?? 0;
+            const m2c = score.module2Correct ?? Math.max(0, score.correct - m1c);
+            const m2t = score.module2Total ?? Math.max(0, score.total - m1t);
+            const m1pct = m1t > 0 ? Math.round((m1c / m1t) * 100) : 0;
+            const m2pct = m2t > 0 ? Math.round((m2c / m2t) * 100) : 0;
+            const hasM1 = m1t > 0;
+            return (
             <div className="bg-white rounded-2xl p-6 mb-8 shadow-lg border border-gray-100">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">2026 TOEFL Score Breakdown</h3>
-              
-              {/* Main Score Row - Band Score First */}
-              <div className="grid grid-cols-5 gap-3 mb-4 pb-4 border-b border-gray-100">
-                <div className="text-center bg-gradient-to-br from-[#1e6b73] to-teal-600 rounded-xl p-3 text-white col-span-1">
-                  <p className="text-[10px] uppercase tracking-wider opacity-80 mb-1">Band Score</p>
-                  <p className="text-2xl font-bold">{bandScore}</p>
-                  <p className="text-xs opacity-70">/ 6.0</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Correct</p>
-                  <p className="text-xl font-bold text-gray-800">{score.correct}</p>
-                  <p className="text-xs text-gray-400">/ {score.total}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Accuracy</p>
-                  <p className={`text-xl font-bold ${percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {percentage}%
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Legacy Est.</p>
-                  <p className="text-xl font-bold text-[#1e6b73]">{toeflEstimate}</p>
-                  <p className="text-xs text-gray-400">/ 30</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Wrong</p>
-                  <p className="text-xl font-bold text-red-500">{score.total - score.correct}</p>
-                  <p className="text-xs text-gray-400">questions</p>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">2026 TOEFL Reading — 전체 점수</h3>
+
+              {/* ── M1 / M2 / Total 나란히 카드 ── */}
+              <div className={`grid ${hasM1 ? 'grid-cols-3' : 'grid-cols-1'} gap-3 mb-5`}>
+                {hasM1 && (
+                  <div className="bg-blue-50 border-2 border-blue-100 rounded-xl p-4 text-center">
+                    <p className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-2">Module 1</p>
+                    <p className="text-3xl font-bold text-blue-700">{m1c}<span className="text-base text-blue-400"> / {m1t}</span></p>
+                    <p className="text-xs text-blue-500 mt-1 font-medium">{m1pct}%</p>
+                    <p className="text-[10px] text-blue-400 mt-1">Complete Words</p>
+                  </div>
+                )}
+                {hasM1 && (
+                  <div className="bg-purple-50 border-2 border-purple-100 rounded-xl p-4 text-center">
+                    <p className="text-[11px] font-bold text-purple-500 uppercase tracking-wider mb-2">Module 2</p>
+                    <p className="text-3xl font-bold text-purple-700">{m2c}<span className="text-base text-purple-400"> / {m2t}</span></p>
+                    <p className="text-xs text-purple-500 mt-1 font-medium">{m2pct}%</p>
+                    <p className="text-[10px] text-purple-400 mt-1">Passage</p>
+                  </div>
+                )}
+                <div className="bg-gradient-to-br from-[#1e6b73] to-teal-600 rounded-xl p-4 text-center text-white shadow-md">
+                  <p className="text-[11px] font-bold uppercase tracking-wider opacity-80 mb-2">Total</p>
+                  <p className="text-3xl font-bold">{score.correct}<span className="text-base opacity-70"> / {score.total}</span></p>
+                  <p className="text-xs opacity-80 mt-1 font-medium">{percentage}%</p>
+                  <p className="text-[10px] opacity-70 mt-1">Band {bandScore} / 6.0</p>
                 </div>
               </div>
 
-              {/* Module breakdown */}
-              {score.module1Correct !== undefined && (
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs text-blue-500 font-semibold mb-1">Module 1 (Complete Words)</p>
-                    <p className="text-lg font-bold text-blue-700">{score.module1Correct} / {score.module1Total || 10}</p>
-                  </div>
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <p className="text-xs text-purple-500 font-semibold mb-1">Module 2 (Passage)</p>
-                    <p className="text-lg font-bold text-purple-700">
-                      {(score.correct - (score.module1Correct || 0))} / {(score.total - (score.module1Total || 10))}
-                    </p>
-                  </div>
+              {/* Legacy / CEFR summary */}
+              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 uppercase mb-1">Accuracy</p>
+                  <p className={`text-lg font-bold ${percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>{percentage}%</p>
                 </div>
-              )}
+                <div className="text-center border-x border-gray-100">
+                  <p className="text-[10px] text-gray-400 uppercase mb-1">Legacy Est.</p>
+                  <p className="text-lg font-bold text-[#1e6b73]">{toeflEstimate}<span className="text-xs text-gray-400"> / 30</span></p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 uppercase mb-1">Wrong</p>
+                  <p className="text-lg font-bold text-red-500">{score.total - score.correct}</p>
+                </div>
+              </div>
 
-              {/* 2026 New TOEFL Note */}
-              <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
+              <div className="mt-4 bg-teal-50 rounded-lg p-3 border border-teal-100">
                 <p className="text-[11px] text-teal-700 font-medium text-center">
                   * 2026 신토플 Reading 영역: Band Score 기반 평가 | CEFR {cefrLevel.cefr} ({cefrLevel.label})
                 </p>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

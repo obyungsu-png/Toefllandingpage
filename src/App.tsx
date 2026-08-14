@@ -606,6 +606,9 @@ function AppContent() {
   const skipQuestionTypesConfigSaveRef = React.useRef(false);
   const skipTrainingConfigSaveRef = React.useRef(false);
   const testStartTimeRef = useRef<number>(Date.now()); // 테스트 시작 시간 추적
+  // Reading/Listening Module 1 채점 결과 임시 보관 — Module 2 종료 시 M1+M2 합산 표시용
+  const readingM1ResultRef = useRef<{ correct: number; total: number } | null>(null);
+  const listeningM1ResultRef = useRef<{ correct: number; total: number } | null>(null);
   
   // Mobile detection state
   const [isMobile, setIsMobile] = useState(false);
@@ -2127,8 +2130,32 @@ function AppContent() {
       module: isModuleScoped ? (module as 1 | 2) : undefined,
     });
 
-    // Return score data for UI display
-    return { correct: correctCount, total: totalQuestions };
+    // Return score data for UI display — use effectiveTotalQuestions so
+    // 모듈 단위 저장(Listening M1/M2 처럼 totalQuestions=0 전달) 시에도 실제 총 문항 수가 반환된다.
+    // Module 1 저장 시엔 결과를 ref에 보관해두었다가 Module 2 완료 시 M1+M2 합산 breakdown으로 반환한다.
+    if (isModuleScoped && module === 1) {
+      const m1 = { correct: correctCount, total: effectiveTotalQuestions };
+      if (category === 'Reading') readingM1ResultRef.current = m1;
+      else if (category === 'Listening') listeningM1ResultRef.current = m1;
+      return m1;
+    }
+    if (isModuleScoped && module === 2) {
+      const m1 = category === 'Reading' ? readingM1ResultRef.current : listeningM1ResultRef.current;
+      const m2Correct = correctCount;
+      const m2Total = effectiveTotalQuestions;
+      // ref 소비 후 초기화 (다음 응시를 위해)
+      if (category === 'Reading') readingM1ResultRef.current = null;
+      else if (category === 'Listening') listeningM1ResultRef.current = null;
+      return {
+        correct: (m1?.correct ?? 0) + m2Correct,
+        total: (m1?.total ?? 0) + m2Total,
+        module1Correct: m1?.correct,
+        module1Total: m1?.total,
+        module2Correct: m2Correct,
+        module2Total: m2Total,
+      } as any;
+    }
+    return { correct: correctCount, total: effectiveTotalQuestions };
   };
 
   // Training Result Handler - saves to both local state and Supabase
@@ -6436,7 +6463,7 @@ function AppContent() {
               onClick={() => {
                 setShowModule2Question20(false);
                 // Save reading result to history
-                saveSectionResultToHistory('Reading', 20, 2);
+                { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); }
                 clearReadingProgress();
                 setShowEndModule2(true);
               }}
@@ -6473,8 +6500,8 @@ function AppContent() {
               questionInfo="5/5"
               onBack={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
               onPrev={() => { setShowModule2Question20(false); setShowModule2Question19(true); }}
-              onNext={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20, 2); clearReadingProgress(); setShowEndModule2(true); }}
-              onSubmit={() => { setShowModule2Question20(false); saveSectionResultToHistory('Reading', 20, 2); clearReadingProgress(); setShowEndModule2(true); }}
+              onNext={() => { setShowModule2Question20(false); { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); } clearReadingProgress(); setShowEndModule2(true); }}
+              onSubmit={() => { setShowModule2Question20(false); { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); } clearReadingProgress(); setShowEndModule2(true); }}
               leftContent={
                 <>
                   <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
@@ -6530,7 +6557,7 @@ function AppContent() {
           }}
           onNext={() => {
             setShowModule2Question20(false);
-                saveSectionResultToHistory('Reading', 20, 2);
+                { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); }
             clearReadingProgress();
             setShowEndModule2(true);
           }}
@@ -7281,7 +7308,7 @@ function AppContent() {
           isReviewMode={isReviewMode}
           onModuleEnd={() => {
             setShowModule2ReadingEngine(false);
-            saveSectionResultToHistory('Reading', 20, 2);
+            { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); }
             clearReadingProgress();
             setShowEndModule2(true);
           }}
@@ -7376,6 +7403,7 @@ function AppContent() {
           setActiveTab={setActiveTab}
           setActiveListeningM1Screen={setActiveListeningM1Screen}
           setShowModule2Question20={setShowModule2Question20}
+          readingScore={sectionScores.reading as any}
         />
       )}
       

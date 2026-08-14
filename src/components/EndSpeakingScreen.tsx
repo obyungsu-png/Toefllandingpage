@@ -41,8 +41,22 @@ interface EndSpeakingScreenProps {
 }
 
 export interface SectionScores {
-  reading: { correct: number; total: number } | null;
-  listening: { correct: number; total: number } | null;
+  reading: {
+    correct: number;
+    total: number;
+    module1Correct?: number;
+    module1Total?: number;
+    module2Correct?: number;
+    module2Total?: number;
+  } | null;
+  listening: {
+    correct: number;
+    total: number;
+    module1Correct?: number;
+    module1Total?: number;
+    module2Correct?: number;
+    module2Total?: number;
+  } | null;
   writing: { score: number } | null;
   speaking: { score: number } | null;
 }

@@ -252,6 +252,11 @@ export function HistorySection({
       bandScore?: number;
       /** Speaking/Writing AI Raw 점수 (0-30) */
       rawScore?: number;
+      /** Reading/Listening 모듈 구분 저장 시 M1+M2 합산 표시용 breakdown */
+      moduleBreakdown?: {
+        m1?: { correct: number; total: number };
+        m2?: { correct: number; total: number };
+      };
     }[];
     result: TestResult;
   }
@@ -279,63 +284,110 @@ export function HistorySection({
   };
 
   const displayRecords: DisplayRecord[] = useMemo(() => {
-    return tabFiltered.map(r => {
-      const date = new Date(r.date);
-      const sections: DisplayRecord['sections'] = [];
-      const allSections = ['Reading', 'Listening', 'Writing', 'Speaking'];
-      allSections.forEach(s => {
-        if (r.category === s) {
-          // 정답 미등록(unscored) 문제 분리 — 채점 불가 항목
-          const unscoredWrongs = r.wrongAnswers.filter(w =>
-            w.correctAnswer === '(정답 미등록)' ||
-            (typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
-          );
-          // 채점 대상 오답만 카운트 (unscored 제외)
-          const scoredWrongs = r.wrongAnswers.filter(w =>
-            w.correctAnswer !== '(정답 미등록)' &&
-            !(typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
-          );
-          const mcqWrongs = scoredWrongs.filter(w =>
-            !w.questionId?.startsWith('blank-') &&
-            !(typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
-          ).length;
-          const blankWrongs = scoredWrongs.filter(w =>
-            w.questionId?.startsWith('blank-') ||
-            (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
-          ).length;
-          // For Reading: Q1-10 = FillBlanks (10 total), Q11-20 = MCQ (10 total)
-          const fillBlanksTotal = (s === 'Reading') ? 10 : 0;
-          const mcqTotal = Math.max(0, r.totalQuestions - fillBlanksTotal - unscoredWrongs.length);
-          const correctMcq = Math.max(0, mcqTotal - mcqWrongs);
-          const correctBlanks = Math.max(0, fillBlanksTotal - blankWrongs);
-          const accurate = correctMcq + correctBlanks;
-          // Speaking/Writing은 AI 밴드 점수가 핵심 지표 (정답 개수는 의미 없음)
-          const aiInfo = (s === 'Speaking' || s === 'Writing') ? getAiScoreInfo(r) : null;
-          sections.push({
-            name: s,
-            status: 'completed',
-            correct: accurate,
-            total: r.totalQuestions,
-            unscored: unscoredWrongs.length,
-            bandScore: aiInfo?.band ?? undefined,
-            rawScore: aiInfo?.raw ?? undefined,
-          });
-        } else {
-          sections.push({ name: s, status: 'not-started' });
-        }
+    const allSections = ['Reading', 'Listening', 'Writing', 'Speaking'];
+
+    // 단일 TestResult → 섹션별 스코어 계산 (기존 로직 유지, module 인지 반영)
+    const computeSectionForCategory = (r: TestResult, s: string): DisplayRecord['sections'][number] => {
+      if (r.category !== s) return { name: s, status: 'not-started' };
+      const unscoredWrongs = r.wrongAnswers.filter(w =>
+        w.correctAnswer === '(정답 미등록)' ||
+        (typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
+      );
+      const scoredWrongs = r.wrongAnswers.filter(w =>
+        w.correctAnswer !== '(정답 미등록)' &&
+        !(typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'))
+      );
+      const mcqWrongs = scoredWrongs.filter(w =>
+        !w.questionId?.startsWith('blank-') &&
+        !(typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
+      ).length;
+      const blankWrongs = scoredWrongs.filter(w =>
+        w.questionId?.startsWith('blank-') ||
+        (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'))
+      ).length;
+      // Reading Module 1(Complete Words) 만 빈칸 10문항 — 나머지(M2, 통합 저장)는 MCQ만
+      const fillBlanksTotal = (s === 'Reading' && (r.module === 1 || r.module === undefined)) ? 10 : 0;
+      const mcqTotal = Math.max(0, r.totalQuestions - fillBlanksTotal - unscoredWrongs.length);
+      const correctMcq = Math.max(0, mcqTotal - mcqWrongs);
+      const correctBlanks = Math.max(0, fillBlanksTotal - blankWrongs);
+      const accurate = correctMcq + correctBlanks;
+      const aiInfo = (s === 'Speaking' || s === 'Writing') ? getAiScoreInfo(r) : null;
+      return {
+        name: s,
+        status: 'completed',
+        correct: accurate,
+        total: r.totalQuestions,
+        unscored: unscoredWrongs.length,
+        bandScore: aiInfo?.band ?? undefined,
+        rawScore: aiInfo?.raw ?? undefined,
+      };
+    };
+
+    // Reading/Listening 의 M1·M2 결과를 같은 응시(type+bankType+testNumber+category) 단위로 묶는다.
+    // 두 모듈이 모두 있으면 한 장의 카드에 M1/M2/합산을 함께 보여준다.
+    type Bucket = { primary: TestResult; other?: TestResult };
+    const buckets = new Map<string, Bucket>();
+    const orderedKeys: string[] = [];
+    tabFiltered.forEach(r => {
+      const isModular = (r.category === 'Reading' || r.category === 'Listening') && (r.module === 1 || r.module === 2);
+      const key = isModular
+        ? `mod|${r.type}|${r.bankType || ''}|${r.testNumber ?? ''}|${r.category}`
+        : `single|${r.id}`;
+      const existing = buckets.get(key);
+      if (!existing) {
+        buckets.set(key, { primary: r });
+        orderedKeys.push(key);
+      } else {
+        // M2 를 primary 로 (더 나중 시행 · 최종 카드 대표), M1 을 other 로 보관
+        const primary = r.module === 2
+          ? r
+          : existing.primary.module === 2
+            ? existing.primary
+            : (new Date(r.date).getTime() > new Date(existing.primary.date).getTime() ? r : existing.primary);
+        const other = primary === r ? existing.primary : r;
+        buckets.set(key, { primary, other });
+      }
+    });
+
+    return orderedKeys.map(key => {
+      const { primary, other } = buckets.get(key)!;
+      const date = new Date(primary.date);
+      const sections: DisplayRecord['sections'] = allSections.map(s => {
+        const primarySec = computeSectionForCategory(primary, s);
+        if (!other || primarySec.status !== 'completed') return primarySec;
+        const otherSec = computeSectionForCategory(other, s);
+        if (otherSec.status !== 'completed') return primarySec;
+        const m1Sec = primary.module === 1 ? primarySec : otherSec;
+        const m2Sec = primary.module === 2 ? primarySec : otherSec;
+        return {
+          ...primarySec,
+          correct: (primarySec.correct || 0) + (otherSec.correct || 0),
+          total: (primarySec.total || 0) + (otherSec.total || 0),
+          unscored: (primarySec.unscored || 0) + (otherSec.unscored || 0),
+          moduleBreakdown: {
+            m1: { correct: m1Sec.correct || 0, total: m1Sec.total || 0 },
+            m2: { correct: m2Sec.correct || 0, total: m2Sec.total || 0 },
+          },
+        };
       });
 
+      // 병합 카드의 이름에서 " - Module N" 접미사 제거 → "TPO N - Reading" 형태
+      let testName = getDisplayTestName(primary);
+      if (other) {
+        testName = testName.replace(/\s*-\s*Module\s*[12]\s*$/i, '');
+      }
+
       return {
-        id: r.id,
-        testName: getDisplayTestName(r),
+        id: other ? `${primary.id}__${other.id}` : primary.id,
+        testName,
         date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         timestamp: `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
-        category: r.category,
-        score: r.score,
-        correctAnswers: r.correctAnswers,
-        totalQuestions: r.totalQuestions,
+        category: primary.category,
+        score: primary.score,
+        correctAnswers: primary.correctAnswers + (other?.correctAnswers ?? 0),
+        totalQuestions: primary.totalQuestions + (other?.totalQuestions ?? 0),
         sections,
-        result: r,
+        result: primary,
       };
     });
   }, [tabFiltered, tpoTests]);
@@ -474,17 +526,24 @@ export function HistorySection({
     onRetryWrongAnswers?.(result);
   };
 
-  const handleDeleteClick = (result: TestResult) => {
-    setDeleteTarget(result);
+  // 병합 카드(M1+M2) 는 record.id 가 `${primary.id}__${other.id}` 형태이므로
+  // 삭제 시 두 결과 ID 를 모두 넘겨 함께 지운다.
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const handleDeleteClick = (record: DisplayRecord) => {
+    setDeleteTarget(record.result);
+    setDeleteTargetIds(record.id.includes('__') ? record.id.split('__') : [record.result.id]);
     setShowDeleteModal(true);
   };
 
   const handleDeleteConfirm = () => {
-    if (deleteTarget) {
+    if (deleteTargetIds.length > 0) {
+      deleteTargetIds.forEach(id => onDeleteResult?.(id));
+    } else if (deleteTarget) {
       onDeleteResult?.(deleteTarget.id);
     }
     setShowDeleteModal(false);
     setDeleteTarget(null);
+    setDeleteTargetIds([]);
   };
 
   const handleDeleteCancel = () => {
@@ -755,7 +814,16 @@ export function HistorySection({
                                             )}
                                           </>
                                         ) : (
-                                          <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                          <>
+                                            <p className="text-xs font-bold" style={{ color: themeColor }}>{section.correct}/{section.total}</p>
+                                            {section.moduleBreakdown && (
+                                              <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">
+                                                M1 {section.moduleBreakdown.m1?.correct ?? 0}/{section.moduleBreakdown.m1?.total ?? 0}
+                                                <br/>
+                                                M2 {section.moduleBreakdown.m2?.correct ?? 0}/{section.moduleBreakdown.m2?.total ?? 0}
+                                              </p>
+                                            )}
+                                          </>
                                         )}
                                         {section.unscored && section.unscored > 0 ? (
                                           <p className="text-[10px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
@@ -785,7 +853,7 @@ export function HistorySection({
                                   View Results
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteClick(record.result)}
+                                  onClick={() => handleDeleteClick(record)}
                                   className="px-2 py-1.5 rounded-lg text-xs font-bold border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors"
                                   title="기록 삭제"
                                   aria-label="기록 삭제"
@@ -911,9 +979,17 @@ export function HistorySection({
                                                 )}
                                               </>
                                             ) : (
-                                              <p className="text-sm font-bold" style={{ color: themeColor }}>
-                                                {section.correct} / {section.total}
-                                              </p>
+                                              <>
+                                                <p className="text-base font-bold" style={{ color: themeColor }}>
+                                                  {section.correct} / {section.total}
+                                                </p>
+                                                {section.moduleBreakdown && (
+                                                  <div className="flex justify-center gap-2 mt-1 text-[10px] font-semibold">
+                                                    <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">M1 {section.moduleBreakdown.m1?.correct ?? 0}/{section.moduleBreakdown.m1?.total ?? 0}</span>
+                                                    <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">M2 {section.moduleBreakdown.m2?.correct ?? 0}/{section.moduleBreakdown.m2?.total ?? 0}</span>
+                                                  </div>
+                                                )}
+                                              </>
                                             )}
                                             {section.unscored && section.unscored > 0 ? (
                                               <p className="text-[11px] text-amber-600 font-semibold mt-0.5" title="CMS에 정답이 등록되지 않아 채점에서 제외된 문제 수">
@@ -956,7 +1032,7 @@ export function HistorySection({
                                       </span>
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteClick(record.result)}
+                                      onClick={() => handleDeleteClick(record)}
                                       className="px-3 py-2 rounded-lg text-xs font-bold border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-all"
                                       title="기록 삭제"
                                       aria-label="기록 삭제"
