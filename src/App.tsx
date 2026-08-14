@@ -7439,9 +7439,8 @@ function AppContent() {
             // Module 2로 넘어가기 전에 M1 답안이 __moduleAnswers에 남아있을 때
             // 저장해야 슬롯 매핑이 정확하다. totalQuestions는 saveSectionResultToHistory
             // 안에서 M1 슬롯 수로 재계산된다.
-            if (!isReviewMode) {
-              saveSectionResultToHistory('Listening', 0, 1);
-            }
+            // start·review 모두 저장 — review 도 History 에 노출되도록.
+            saveSectionResultToHistory('Listening', 0, 1);
             setActiveListeningM2Screen('q1');
           }}
           onExitBack={() => {

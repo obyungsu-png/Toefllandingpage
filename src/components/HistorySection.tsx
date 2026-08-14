@@ -332,48 +332,51 @@ export function HistorySection({
 
     // Reading/Listening 의 M1·M2 결과를 같은 응시(type+bankType+testNumber+category) 단위로 묶는다.
     // 두 모듈이 모두 있으면 한 장의 카드에 M1/M2/합산을 함께 보여준다.
-    type Bucket = { primary: TestResult; other?: TestResult };
+    // 같은 모듈을 여러 번 응시(review 반복 등)해도 M1·M2 슬롯을 독립 유지하고
+    // 각 슬롯은 가장 최근 결과로 갱신한다 (start → review 순서로도 두 모듈 모두 남음).
+    type Bucket = { m1?: TestResult; m2?: TestResult; single?: TestResult };
     const buckets = new Map<string, Bucket>();
     const orderedKeys: string[] = [];
+    const isNewer = (a: TestResult, b?: TestResult) => !b || new Date(a.date).getTime() >= new Date(b.date).getTime();
     tabFiltered.forEach(r => {
       const isModular = (r.category === 'Reading' || r.category === 'Listening') && (r.module === 1 || r.module === 2);
       const key = isModular
         ? `mod|${r.type}|${r.bankType || ''}|${r.testNumber ?? ''}|${r.category}`
         : `single|${r.id}`;
-      const existing = buckets.get(key);
-      if (!existing) {
-        buckets.set(key, { primary: r });
-        orderedKeys.push(key);
+      const existing = buckets.get(key) || {};
+      if (!buckets.has(key)) orderedKeys.push(key);
+      if (isModular) {
+        if (r.module === 1 && isNewer(r, existing.m1)) existing.m1 = r;
+        else if (r.module === 2 && isNewer(r, existing.m2)) existing.m2 = r;
       } else {
-        // M2 를 primary 로 (더 나중 시행 · 최종 카드 대표), M1 을 other 로 보관
-        const primary = r.module === 2
-          ? r
-          : existing.primary.module === 2
-            ? existing.primary
-            : (new Date(r.date).getTime() > new Date(existing.primary.date).getTime() ? r : existing.primary);
-        const other = primary === r ? existing.primary : r;
-        buckets.set(key, { primary, other });
+        existing.single = r;
       }
+      buckets.set(key, existing);
     });
 
     return orderedKeys.map(key => {
-      const { primary, other } = buckets.get(key)!;
+      const bucket = buckets.get(key)!;
+      // 대표 결과(primary): single 이면 그것, 모듈형이면 M2 우선, 없으면 M1
+      const primary = (bucket.single ?? bucket.m2 ?? bucket.m1)!;
+      const other = bucket.single ? undefined : (primary === bucket.m2 ? bucket.m1 : bucket.m2);
       const date = new Date(primary.date);
       const sections: DisplayRecord['sections'] = allSections.map(s => {
         const primarySec = computeSectionForCategory(primary, s);
         if (!other || primarySec.status !== 'completed') return primarySec;
         const otherSec = computeSectionForCategory(other, s);
         if (otherSec.status !== 'completed') return primarySec;
-        const m1Sec = primary.module === 1 ? primarySec : otherSec;
-        const m2Sec = primary.module === 2 ? primarySec : otherSec;
+        const m1Result = bucket.m1;
+        const m2Result = bucket.m2;
+        const m1Sec = m1Result === primary ? primarySec : (m1Result === other ? otherSec : null);
+        const m2Sec = m2Result === primary ? primarySec : (m2Result === other ? otherSec : null);
         return {
           ...primarySec,
           correct: (primarySec.correct || 0) + (otherSec.correct || 0),
           total: (primarySec.total || 0) + (otherSec.total || 0),
           unscored: (primarySec.unscored || 0) + (otherSec.unscored || 0),
           moduleBreakdown: {
-            m1: { correct: m1Sec.correct || 0, total: m1Sec.total || 0 },
-            m2: { correct: m2Sec.correct || 0, total: m2Sec.total || 0 },
+            m1: m1Sec ? { correct: m1Sec.correct || 0, total: m1Sec.total || 0 } : undefined,
+            m2: m2Sec ? { correct: m2Sec.correct || 0, total: m2Sec.total || 0 } : undefined,
           },
         };
       });
@@ -384,8 +387,9 @@ export function HistorySection({
         testName = testName.replace(/\s*-\s*Module\s*[12]\s*$/i, '');
       }
 
+      const mergedId = other ? `${primary.id}__${other.id}` : primary.id;
       return {
-        id: other ? `${primary.id}__${other.id}` : primary.id,
+        id: mergedId,
         testName,
         date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
         timestamp: `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
