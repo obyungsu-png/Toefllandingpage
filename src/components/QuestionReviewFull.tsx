@@ -1443,10 +1443,12 @@ export function QuestionReviewFull({
             {/* Left Panel: Audio Player (for Listening) - Equal width 50% */}
             {activeSection === 'Listening' && (() => {
               // currentQuestion에서 직접 데이터 사용 — 모듈 필터링 후에도 올바른 문제 데이터 보장
-              const transcript = currentQuestion?.scriptText || currentQuestion?.audioText;
-              const translation = currentQuestion?.translation;
-              const keyWords: string[] = currentQuestion?.keyWords || [];
-              const analysis = currentQuestion?.analysis || currentQuestion?.explanation;
+              // realQ(slot) 매핑이 실패한 경우 CMS 섹션에서 직접 조회하는 fallback 포함
+              const cmsFallbackQ = mcqSlotForLocal(currentQuestionIndex + 1)?.question || null;
+              const transcript = currentQuestion?.scriptText || currentQuestion?.audioText || cmsFallbackQ?.scriptText || cmsFallbackQ?.audioText;
+              const translation = currentQuestion?.translation || cmsFallbackQ?.translation;
+              const keyWords: string[] = currentQuestion?.keyWords || cmsFallbackQ?.keyWords || [];
+              const analysis = currentQuestion?.analysis || currentQuestion?.explanation || cmsFallbackQ?.analysis || cmsFallbackQ?.explanation;
               return (
                 <div className="w-full md:w-1/2 order-1 md:order-none">
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 md:p-5 h-full overflow-y-auto">
@@ -1467,11 +1469,11 @@ export function QuestionReviewFull({
                     )}
 
                     {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload */}
-                    {currentQuestion?.audioUrl ? (
+                    {(currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl) ? (
                       <div className="mb-3">
                         <UniversalAudioPlayer
                           key={`listen-audio-${currentQuestionIndex}`}
-                          audioUrl={currentQuestion.audioUrl}
+                          audioUrl={currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl}
                           qNum={currentQuestionIndex + 1}
                           label="Play Audio"
                           color="#0d3b4a"
@@ -1523,7 +1525,7 @@ export function QuestionReviewFull({
 
                     {/* Dictation — 리스닝 스크립트 빈칸 채우기 */}
                     {transcript && (() => {
-                      const blankList = (currentQuestion?.dictationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean);
+                      const blankList = ((currentQuestion?.dictationBlanks || cmsFallbackQ?.dictationBlanks || '').split(',').map((w: string) => w.trim()).filter(Boolean));
                       const blankSet = new Set(blankList.map((w: string) => w.toLowerCase()));
                       const tokens = transcript.split(/(\s+)/);
                       let blankIdx = 0;

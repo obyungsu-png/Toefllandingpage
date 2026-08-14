@@ -182,11 +182,13 @@ export function ListeningTestEngine({
   const totalQuestions = moduleQuestions.length;
   const goNext = () => {
     stopAllAudio(); // 이전 세그먼트 오디오 정지
+    stopAllSpeech(); // 이전 세그먼트 TTS 정지 (리뷰 모드 잔여 음성 방지)
     if (segmentIndex + 1 < segments.length) setSegmentIndex(segmentIndex + 1);
     else onModuleEnd();
   };
   const goBack = () => {
     stopAllAudio(); // 이전 세그먼트 오디오 정지
+    stopAllSpeech(); // 이전 세그먼트 TTS 정지
     if (segmentIndex > 0) setSegmentIndex(segmentIndex - 1);
     else onExitBack();
   };
@@ -409,11 +411,12 @@ function GroupIntroScreen({
   };
 
   useEffect(() => {
-    // Review 모드에서는 인트로 오디오를 자동 재생하지 않음 —
+    // Review 모드에서는 인트로 오디오·TTS를 자동 재생하지 않음 —
     // dictation 자막과 배경 인트로 오디오가 어긋나는 문제 방지.
     // 학생이 필요하면 Replay 버튼으로 수동 재생.
     if (isReviewMode) {
       audioEndedRef.current = true;
+      stopAllSpeech(); // 잔여 TTS 정지 (ListeningSectionIntro 등에서 넘어온 경우)
       return;
     }
     audioEndedRef.current = !audioUrl;
@@ -568,6 +571,9 @@ function ModuleIntroScreen({
   onNext: () => void;
 }) {
   const isM2 = module === 2;
+  // ModuleIntroScreen 자체는 TTS를 사용하지 않지만, 이전 세그먼트(SectionIntro 등)에서
+  // 재생 중인 TTS가 있을 수 있으므로 마운트 시 정지
+  useEffect(() => { stopAllSpeech(); }, []);
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
       {/* Header */}
@@ -718,9 +724,12 @@ function ListeningQuestionScreen({
   useEffect(() => {
     audioPlayedRef.current = false;
     audioEndedRef.current = false;  // 새 오디오 시작 시 리셋
-    // Review 모드에서는 문제 오디오 자동 재생 스킵 —
+    // Review 모드에서는 문제 오디오·TTS 자동 재생 스킵 —
     // dictation 패널의 자막/재생 컨트롤과 겹치지 않도록.
-    if (isReviewMode) return;
+    if (isReviewMode) {
+      stopAllSpeech(); // 잔여 TTS 정지 (이전 세그먼트에서 넘어온 경우)
+      return;
+    }
     if (audioUrl && !audioPlayedRef.current) {
       audioPlayedRef.current = true;
       const timer = setTimeout(async () => {

@@ -7480,10 +7480,12 @@ function AppContent() {
           onModuleEnd={() => {
             setActiveListeningM2Screen(null);
             clearReviewContext();
+            // 리뷰 모드에서는 중복 저장 방지 — M1과 동일하게 isReviewMode 가드 적용
+            if (!isReviewMode) {
+              const result = saveSectionResultToHistory('Listening', 0, 2);
+              setSectionScores(prev => ({ ...prev, listening: result }));
+            }
             setIsReviewMode(false);
-            // Listening Module 2만 개별 저장 — M1은 이미 M1→M2 전환 시점에 저장됨.
-            const result = saveSectionResultToHistory('Listening', 0, 2);
-            setSectionScores(prev => ({ ...prev, listening: result }));
             setShowEndListening(true);
           }}
           onExitBack={() => {
