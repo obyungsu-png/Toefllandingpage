@@ -1,25 +1,14 @@
 import React from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
+import { readingRawToBand, scaleRawScore } from '../utils/bandScore';
 
 interface ScoreData {
   correct: number;
   total: number;
 }
 
-// 2026 New TOEFL: Raw score (0-30) → Band Score (1-6) conversion
-const convertToBand = (rawScore30: number): number => {
-  if (rawScore30 >= 29) return 6.0;
-  if (rawScore30 >= 25) return 5.5;
-  if (rawScore30 >= 22) return 5.0;
-  if (rawScore30 >= 19) return 4.5;
-  if (rawScore30 >= 16) return 4.0;
-  if (rawScore30 >= 13) return 3.5;
-  if (rawScore30 >= 10) return 3.0;
-  if (rawScore30 >= 7) return 2.5;
-  if (rawScore30 >= 4) return 2.0;
-  if (rawScore30 >= 2) return 1.5;
-  return 1.0;
-};
+// 2026 Reading 밴드 — utils/bandScore 공식 표 (raw 0-22). M1 단독은 참고용 부분점수.
+const convertToBand = (rawScore: number): number => readingRawToBand(rawScore);
 
 // CEFR Level based on band score
 const getCEFRLevel = (band: number) => {
@@ -57,10 +46,8 @@ const EndModule1Screen: React.FC<EndModule1ScreenProps> = ({
   const score = initialScore || null;
   const percentage = score ? Math.round((score.correct / score.total) * 100) : 0;
 
-  // TOEFL Reading 환산 점수 (간략화)
-  const toeflEstimate = score ? Math.max(0, Math.min(30, Math.round((score.correct / score.total) * 28 + 1))) : 0;
-
-  // 2026 New TOEFL Band Score
+  // 2026 표: correct/total → Reading raw(0-22) 선형 스케일 → 밴드 (M1 단독은 참고용)
+  const toeflEstimate = score ? scaleRawScore('Reading', score.correct, score.total) : 0;
   const bandScore = convertToBand(toeflEstimate);
   const cefrLevel = getCEFRLevel(bandScore);
 
@@ -166,9 +153,9 @@ const EndModule1Screen: React.FC<EndModule1ScreenProps> = ({
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Legacy Est.</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Raw Score</p>
                   <p className="text-xl font-bold text-[#1e6b73]">{toeflEstimate}</p>
-                  <p className="text-[10px] text-gray-400">/ 30</p>
+                  <p className="text-[10px] text-gray-400">/ 22</p>
                 </div>
               </div>
 

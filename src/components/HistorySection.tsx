@@ -11,6 +11,13 @@ import { TestResult } from '../types/testResult';
 import { WrongNotesManager } from './WrongNotesManager';
 import { buildGlobalSlots, getModuleSlots, getModuleQuestionCount } from '../utils/readingQuestionUtils';
 import { computeChronoDisplayNumbers } from '../utils/testLabel';
+import {
+  readingRawToBand,
+  listeningRawToBand,
+  speakingWritingRawToBand,
+  scaleRawScore,
+  computeOverallBand,
+} from '../utils/bandScore';
 
 const ReportSection = lazy(() =>
   import('./ReportSection').then(module => ({ default: module.ReportSection }))
@@ -430,6 +437,52 @@ export function HistorySection({
     return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0]));
   }, [filteredRecords]);
 
+  // 같은 응시(type+bankType+testNumber)의 4영역이 모두 완료됐으면 Overall 밴드를 계산.
+  // 각 카드가 자신이 속한 응시의 Overall 뱃지를 보여줄 수 있도록 map 형태로 준비한다.
+  const overallByTestKey = useMemo(() => {
+    const map = new Map<string, { overall: number; bands: Record<string, number> }>();
+    const grouped = new Map<string, DisplayRecord[]>();
+    filteredRecords.forEach(rec => {
+      const r = rec.result;
+      const key = `${r.type}|${r.bankType || ''}|${r.testNumber ?? ''}`;
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(rec);
+    });
+    grouped.forEach((records, key) => {
+      const bandBySection: Record<string, number> = {};
+      records.forEach(rec => {
+        rec.sections.forEach(s => {
+          if (s.status !== 'completed') return;
+          if (s.name === 'Reading' && s.correct != null && s.total) {
+            bandBySection.Reading = readingRawToBand(scaleRawScore('Reading', s.correct, s.total));
+          } else if (s.name === 'Listening' && s.correct != null && s.total) {
+            bandBySection.Listening = listeningRawToBand(scaleRawScore('Listening', s.correct, s.total));
+          } else if (s.name === 'Speaking') {
+            if (s.bandScore != null) bandBySection.Speaking = s.bandScore;
+            else if (s.rawScore != null) bandBySection.Speaking = speakingWritingRawToBand(s.rawScore);
+          } else if (s.name === 'Writing') {
+            if (s.bandScore != null) bandBySection.Writing = s.bandScore;
+            else if (s.rawScore != null) bandBySection.Writing = speakingWritingRawToBand(s.rawScore);
+          }
+        });
+      });
+      const overall = computeOverallBand({
+        reading: bandBySection.Reading,
+        listening: bandBySection.Listening,
+        speaking: bandBySection.Speaking,
+        writing: bandBySection.Writing,
+      });
+      if (overall != null) map.set(key, { overall, bands: bandBySection });
+    });
+    return map;
+  }, [filteredRecords]);
+
+  const getOverallForRecord = (rec: DisplayRecord) => {
+    const r = rec.result;
+    const key = `${r.type}|${r.bankType || ''}|${r.testNumber ?? ''}`;
+    return overallByTestKey.get(key) ?? null;
+  };
+
   // Study stats
   const totalStudyDays = useMemo(() => {
     const dates = new Set(effectiveResults.map(r => {
@@ -792,10 +845,21 @@ export function HistorySection({
                           {date}
                         </h2>
                         <div className="space-y-2">
-                          {records.map(record => (
+                          {records.map(record => {
+                            const overallInfo = getOverallForRecord(record);
+                            return (
                             <div key={record.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-3">
-                              <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                                 <h3 className="text-sm font-bold text-gray-900 flex-1 mr-2">{record.testName}</h3>
+                                {overallInfo && (
+                                  <span
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
+                                    style={{ backgroundColor: themeColor }}
+                                    title="4영역 종합 밴드 (2026 New TOEFL)"
+                                  >
+                                    Overall {overallInfo.overall} / 6.0
+                                  </span>
+                                )}
                                 <span className="text-xs text-gray-500">{record.timestamp}</span>
                               </div>
                               <div className="grid grid-cols-4 gap-2 mb-3">
@@ -862,7 +926,8 @@ export function HistorySection({
                                 </button>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -950,7 +1015,9 @@ export function HistorySection({
                         {date}
                       </h2>
                       <div className="space-y-3">
-                        {records.map((record) => (
+                        {records.map((record) => {
+                          const overallInfo = getOverallForRecord(record);
+                          return (
                           <div
                             key={record.id}
                             className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-[fadeSlideUp_0.3s_ease-out]"
@@ -960,9 +1027,20 @@ export function HistorySection({
                               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                                 {/* Left: Test info */}
                                 <div className="flex-1">
-                                  <h3 className="text-base font-bold text-gray-900 mb-3">
-                                    {record.testName}
-                                  </h3>
+                                  <div className="flex items-center gap-2 flex-wrap mb-3">
+                                    <h3 className="text-base font-bold text-gray-900">
+                                      {record.testName}
+                                    </h3>
+                                    {overallInfo && (
+                                      <span
+                                        className="px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-sm"
+                                        style={{ backgroundColor: themeColor }}
+                                        title="4영역 종합 밴드 (2026 New TOEFL)"
+                                      >
+                                        Overall {overallInfo.overall} / 6.0
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
                                     {record.sections.map(section => (
                                       <div key={section.name} className="text-center">
@@ -1044,7 +1122,8 @@ export function HistorySection({
                               </div>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

@@ -1,5 +1,13 @@
 import React from 'react';
 import type { SectionScores } from './EndSpeakingScreen';
+import {
+  readingRawToBand,
+  listeningRawToBand,
+  speakingWritingRawToBand,
+  scaleRawScore,
+  computeOverallBand,
+  SECTION_RAW_MAX,
+} from '../utils/bandScore';
 
 interface FinalResultScreenProps {
   setShowFinalResult: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,37 +24,28 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({
   setActiveTab,
   sectionScores
 }) => {
-  const convertToBandScore = (rawScore30: number): number => {
-    if (rawScore30 >= 29) return 6.0;
-    if (rawScore30 >= 25) return 5.5;
-    if (rawScore30 >= 22) return 5.0;
-    if (rawScore30 >= 19) return 4.5;
-    if (rawScore30 >= 16) return 4.0;
-    if (rawScore30 >= 13) return 3.5;
-    if (rawScore30 >= 10) return 3.0;
-    if (rawScore30 >= 7) return 2.5;
-    if (rawScore30 >= 4) return 2.0;
-    if (rawScore30 >= 2) return 1.5;
-    return 1.0;
-  };
-
-  const readingRaw = sectionScores.reading 
-    ? Math.max(0, Math.min(30, Math.round((sectionScores.reading.correct / sectionScores.reading.total) * 28 + 1)))
+  // 2026 표: correct/total → 섹션별 raw max 로 스케일, Speaking/Writing 은 AI raw(0-30)
+  const readingRaw = sectionScores.reading
+    ? scaleRawScore('Reading', sectionScores.reading.correct, sectionScores.reading.total)
     : 0;
-  
   const listeningRaw = sectionScores.listening
-    ? Math.max(0, Math.min(30, Math.round((sectionScores.listening.correct / sectionScores.listening.total) * 28 + 1)))
+    ? scaleRawScore('Listening', sectionScores.listening.correct, sectionScores.listening.total)
     : 0;
-  
   const writingRaw = sectionScores.writing?.score || 0;
   const speakingRaw = sectionScores.speaking?.score || 0;
 
-  const readingBand = convertToBandScore(readingRaw);
-  const listeningBand = convertToBandScore(listeningRaw);
-  const writingBand = convertToBandScore(writingRaw);
-  const speakingBand = convertToBandScore(speakingRaw);
+  const readingBand = readingRawToBand(readingRaw);
+  const listeningBand = listeningRawToBand(listeningRaw);
+  const writingBand = speakingWritingRawToBand(writingRaw);
+  const speakingBand = speakingWritingRawToBand(speakingRaw);
 
-  const totalBand = Math.round((readingBand + listeningBand + writingBand + speakingBand) / 4 * 2) / 2;
+  // 4영역 평균 → 0.5 반올림 (섹션 하나라도 없으면 지금 화면 자체가 진입되지 않음)
+  const totalBand = computeOverallBand({
+    reading: readingBand,
+    listening: listeningBand,
+    speaking: speakingBand,
+    writing: writingBand,
+  }) ?? 1.0;
   const overallLevel = getCEFRLevel(totalBand);
   const legacyTotal = readingRaw + listeningRaw + writingRaw + speakingRaw;
 
@@ -62,13 +61,13 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({
   const sections = [
     {
       name: 'Reading', band: readingBand, raw: readingRaw,
-      rawTotal: sectionScores.reading ? sectionScores.reading.total : '-',
+      rawTotal: SECTION_RAW_MAX.Reading,
       icon: (<><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></>),
       color: '#1e6b73', bgClass: 'bg-[#f0fafa]', barColor: 'bg-[#1e6b73]', barBg: 'bg-[#d1e8e8]',
     },
     {
       name: 'Listening', band: listeningBand, raw: listeningRaw,
-      rawTotal: sectionScores.listening ? sectionScores.listening.total : '-',
+      rawTotal: SECTION_RAW_MAX.Listening,
       icon: (<><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></>),
       color: '#2563eb', bgClass: 'bg-blue-50', barColor: 'bg-blue-500', barBg: 'bg-blue-100',
     },
@@ -171,7 +170,7 @@ const FinalResultScreen: React.FC<FinalResultScreenProps> = ({
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-semibold text-gray-700 text-sm">{section.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-400">{section.raw}/{section.rawTotal !== '-' ? section.rawTotal : ''}</span>
+                        <span className="text-[10px] text-gray-400">{section.raw}/{section.rawTotal}</span>
                         <span className="font-extrabold text-lg" style={{ color: section.color }}>{section.band}</span>
                         <span className="text-[10px] text-gray-400">/6</span>
                       </div>

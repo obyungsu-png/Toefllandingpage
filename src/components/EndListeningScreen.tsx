@@ -3,6 +3,7 @@ import { MobileQuestionNav } from './MobileQuestionNav';
 import { generateTestPdf } from '../utils/generateTestPdf';
 import { extractVocabFromTest } from '../utils/extractVocab';
 import { generateVocabPdf } from '../utils/generateVocabPdf';
+import { listeningRawToBand, scaleRawScore } from '../utils/bandScore';
 import type { TPOTest } from './ContentManagement';
 
 interface ScoreData {
@@ -14,20 +15,8 @@ interface ScoreData {
   module2Total?: number;
 }
 
-// Convert 0-30 raw score to 2026 Band Score (1-6)
-const convertToBand = (rawScore: number): number => {
-  if (rawScore >= 29) return 6.0;
-  if (rawScore >= 25) return 5.5;
-  if (rawScore >= 22) return 5.0;
-  if (rawScore >= 19) return 4.5;
-  if (rawScore >= 16) return 4.0;
-  if (rawScore >= 13) return 3.5;
-  if (rawScore >= 10) return 3.0;
-  if (rawScore >= 7) return 2.5;
-  if (rawScore >= 4) return 2.0;
-  if (rawScore >= 2) return 1.5;
-  return 1.0;
-};
+// 2026 Listening 밴드 — utils/bandScore 의 공식 표 사용 (raw 0-30)
+const convertToBand = (rawScore: number): number => listeningRawToBand(rawScore);
 
 interface EndListeningScreenProps {
   setShowEndListening: React.Dispatch<React.SetStateAction<boolean>>;
@@ -77,8 +66,8 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
     setVocabMenuOpen(false);
   };
 
-  // TOEFL Listening 환산 점수 (0-30 raw) → convert to Band Score
-  const toeflEstimate = score ? Math.max(0, Math.min(30, Math.round((score.correct / score.total) * 28 + 1))) : 0;
+  // 2026 표: correct/total → Listening raw(0-30) 선형 스케일 → 밴드
+  const toeflEstimate = score ? scaleRawScore('Listening', score.correct, score.total) : 0;
   const bandScore = convertToBand(toeflEstimate);
 
   // CEFR Level badge
@@ -210,7 +199,7 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
                   <p className={`text-lg font-bold ${percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>{percentage}%</p>
                 </div>
                 <div className="text-center border-x border-gray-100">
-                  <p className="text-[10px] text-gray-400 uppercase mb-1">Legacy Est.</p>
+                  <p className="text-[10px] text-gray-400 uppercase mb-1">Raw Score</p>
                   <p className="text-lg font-bold text-[#2d5f8a]">{toeflEstimate}<span className="text-xs text-gray-400"> / 30</span></p>
                 </div>
                 <div className="text-center">
