@@ -97,6 +97,7 @@ import { useSecureMode } from './hooks/useSecureMode';
 import { supabase } from './utils/supabase/client';
 import {
   buildGlobalSlots,
+  getModuleSlots,
   findCompleteWordsQuestionForNumber,
   getQuestionRangeLabel,
   getReadingQuestionTotal,
@@ -1741,9 +1742,20 @@ function AppContent() {
     const studentToDelete = students.find(s => s.id === studentId);
     setStudents(students.filter(s => s.id !== studentId));
 
-    // Cascade delete: remove all test results owned by this student
+    // Cascade delete: remove all locally-stored data owned by this student
     if (studentToDelete?.name) {
-      setTestResults(prev => prev.filter(r => r.ownerName !== studentToDelete.name));
+      const name = studentToDelete.name;
+      setTestResults(prev => prev.filter(r => r.ownerName !== name));
+      // 단어 시험 점수도 학생과 함께 제거
+      setVocabularyScores(prev => prev.filter((v: any) => v.studentName !== name && v.ownerName !== name));
+      // 로컬 오답 노트·읽기 진행 등도 삭제 (학생 이름 스코프)
+      try {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith(`wrong_notes_${name}`) || key.startsWith(`reading_progress_${name}`)) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch { /* quota/private */ }
     }
   };
 
@@ -1819,10 +1831,19 @@ function AppContent() {
     const readingTotalQuestions = category === 'Reading'
       ? getReadingQuestionTotal(getCurrentSectionData('Reading'))
       : totalQuestions;
-    let effectiveTotalQuestions = category === 'Reading' ? readingTotalQuestions : totalQuestions;
-    const allAnswers: (string | null)[] = category === 'Reading'
-      ? Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null)
-      : Array.from({ length: effectiveTotalQuestions }, (_, i) => sharedAnswers[i + 1] || null);
+    // 모듈 단위 저장(Listening M1/M2)에서 호출자가 totalQuestions=0을 넘기더라도
+    // sharedAnswers 키만큼은 allAnswers를 확장해 응답 카운트가 0이 되지 않도록.
+    const sharedAnswerMaxKey = Object.keys(sharedAnswers)
+      .map(k => Number(k))
+      .filter(n => Number.isFinite(n))
+      .reduce((max, n) => Math.max(max, n), 0);
+    let effectiveTotalQuestions = category === 'Reading'
+      ? readingTotalQuestions
+      : Math.max(totalQuestions, sharedAnswerMaxKey);
+    const allAnswers: (string | null)[] = Array.from(
+      { length: effectiveTotalQuestions },
+      (_, i) => sharedAnswers[i + 1] || null,
+    );
 
     // ── 채점 트리거 검사용 응답 문항 수 (Reading/Listening 50% 임계) ──
     // fillBlanks/Complete Words 응답은 아래 clearing 전에 미리 집계.
@@ -1875,14 +1896,20 @@ function AppContent() {
     // History 모달/리뷰의 슬롯과 같은 기준이므로 오답·미답변 매핑이 정확히 일치한다.
     // (기존 questionNumber 직접 매칭 방식은 CW 빈칸 수가 10이 아니거나 CMS 번호가
     //  표시 위치와 어긋나는 경우(TPO2/3) 채점이 깨졌음)
-    const scoringSlots = (category === 'Reading' || category === 'Listening')
+    // Reading/Listening은 모듈별로 개별 저장 — 슬롯도 요청 모듈로 좁혀야
+    // 다른 모듈 문항이 채점 대상에 섞이지 않는다.
+    const isModuleScoped = (category === 'Reading' || category === 'Listening') && (module === 1 || module === 2);
+    const allSlots = (category === 'Reading' || category === 'Listening')
       ? buildGlobalSlots(allCmsQuestions)
       : [];
+    const scoringSlots = isModuleScoped
+      ? getModuleSlots(allSlots, module as 1 | 2)
+      : allSlots;
     const cwSlotStartByQuestion = new Map<any, number>();
     scoringSlots.forEach(s => { if (s.isCompleteWords) cwSlotStartByQuestion.set(s.question, s.start); });
-    if (category === 'Listening' && scoringSlots.length > 0) {
-      // Listening은 M1+M2 전체를 한 번에 채점 — 슬롯 수가 실제 문제 수
-      effectiveTotalQuestions = scoringSlots.length;
+    if ((category === 'Listening' || category === 'Reading') && scoringSlots.length > 0) {
+      // 모듈 단위 채점 — 해당 모듈 슬롯 수가 실제 문제 수
+      effectiveTotalQuestions = scoringSlots.reduce((sum, s) => sum + s.count, 0);
     }
 
     let correctCount = 0;
@@ -2079,10 +2106,13 @@ function AppContent() {
     // CMS에 정답이 하나도 없으면 0%로 표시 (채점 불가 상태)
     const score = scoredCount > 0 ? Math.round((correctCount / scoredCount) * 100) : 0;
 
+    // 모듈이 있는 섹션(Reading/Listening)은 testName에 " - Module N"을 붙여
+    // 모듈별 History 카드가 별개로 보이게 하고, module 필드도 함께 저장한다.
+    const moduleSuffix = isModuleScoped ? ` - Module ${module}` : '';
     handleAddTestResult({
       type: getCurrentResultType(),
       category,
-      testName: `${getCurrentTestLabel()} - ${category}`,
+      testName: `${getCurrentTestLabel()} - ${category}${moduleSuffix}`,
       testNumber: currentTest?.tpoNumber,
       bankType: testBankType,
       status: 'completed',
@@ -2094,6 +2124,7 @@ function AppContent() {
       answeredQuestions,
       answeredCount: answeredQuestions.length,
       timeSpent: Math.round((Date.now() - testStartTimeRef.current) / 1000), // 실제 소요시간(초)
+      module: isModuleScoped ? (module as 1 | 2) : undefined,
     });
 
     // Return score data for UI display
@@ -7376,6 +7407,13 @@ function AppContent() {
           isReviewMode={isReviewMode}
           onModuleEnd={() => {
             setActiveListeningM1Screen(null);
+            // Listening Module 1 채점 결과를 History에 개별 저장 —
+            // Module 2로 넘어가기 전에 M1 답안이 __moduleAnswers에 남아있을 때
+            // 저장해야 슬롯 매핑이 정확하다. totalQuestions는 saveSectionResultToHistory
+            // 안에서 M1 슬롯 수로 재계산된다.
+            if (!isReviewMode) {
+              saveSectionResultToHistory('Listening', 0, 1);
+            }
             setActiveListeningM2Screen('q1');
           }}
           onExitBack={() => {
@@ -7415,7 +7453,8 @@ function AppContent() {
             setActiveListeningM2Screen(null);
             clearReviewContext();
             setIsReviewMode(false);
-            const result = saveSectionResultToHistory('Listening', 34);
+            // Listening Module 2만 개별 저장 — M1은 이미 M1→M2 전환 시점에 저장됨.
+            const result = saveSectionResultToHistory('Listening', 0, 2);
             setSectionScores(prev => ({ ...prev, listening: result }));
             setShowEndListening(true);
           }}

@@ -226,6 +226,46 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
     URL.revokeObjectURL(url);
   };
 
+  // ── 만료 학생 선택 / 일괄 삭제 (관리 편의) ──
+  const selectAllExpired = () => {
+    const now = new Date();
+    const ids = enrichedStudents
+      .filter(s => s.expire_date && new Date(s.expire_date) < now)
+      .map(s => s.user_id);
+    setSelectedIds(new Set(ids));
+    setFilterType('expired');
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(
+      `선택된 ${selectedIds.size}명의 학생과 관련 데이터를 모두 삭제하시겠습니까?\n` +
+      `(시험 기록·리포트·리딩 하이라이트·수강권 배정 포함, 복구 불가)`,
+    )) return;
+    setActionLoading(true); setActionError('');
+    try {
+      for (const id of Array.from(selectedIds)) {
+        const s = enrichedStudents.find(x => x.user_id === id);
+        if (!s) continue;
+        await supabaseClient
+          .from('license_keys')
+          .update({ is_used: false, assigned_user_id: null, used_at: null })
+          .eq('assigned_user_id', s.user_id);
+        for (const t of ['reports', 'reading_highlights']) {
+          const { error: dErr } = await supabaseClient.from(t).delete().eq('user_id', s.user_id);
+          if (dErr && !/relation .* does not exist/i.test(dErr.message)) {
+            console.warn(`[batchDelete] ${t} 삭제 실패: ${dErr.message}`);
+          }
+        }
+        await supabaseClient.from('users_profile').delete().eq('user_id', s.user_id);
+        const m = students.find(x => x.email === s.email);
+        if (m) onDeleteStudent(m.id);
+      }
+      setSelectedIds(new Set());
+      loadStudentsData(); loadLicenseHistory();
+    } catch (e: any) { setActionError(e?.message || '일괄 삭제 실패'); } finally { setActionLoading(false); }
+  };
+
   // ── 일괄 연장 ──
   const handleBatchExtend = async () => {
     setActionLoading(true); setActionError('');
@@ -293,11 +333,34 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
   };
 
   const handleDeleteProfile = async (student: EnrichedStudent) => {
-    if (!confirm(`정말 ${student.email} 학생을 삭제하시겠습니까?`)) return;
+    if (!confirm(
+      `정말 ${student.email} 학생을 삭제하시겠습니까?\n\n` +
+      `이 학생의 시험 기록·리포트·리딩 하이라이트·수강권 배정 등 관련 데이터가 모두 삭제되고 복구할 수 없습니다.`,
+    )) return;
     try {
-      await supabaseClient.from('license_keys').update({ is_used: false, assigned_user_id: null, used_at: null }).eq('assigned_user_id', student.user_id);
+      // 1) 수강권 회수 — 코드 자체는 남기되 사용자 배정만 해제(재활용 가능하게)
+      await supabaseClient
+        .from('license_keys')
+        .update({ is_used: false, assigned_user_id: null, used_at: null })
+        .eq('assigned_user_id', student.user_id);
+
+      // 2) 학생 소유 데이터 캐스케이드 삭제 — user_id가 auth.users(id)를 참조하는 테이블들.
+      //    users_profile.delete()만으로는 이 테이블들이 남으므로 명시적으로 정리한다.
+      //    없는 테이블 오류는 무시(개발/스테이징 환경 대비).
+      const cascadeTables = ['reports', 'reading_highlights'];
+      for (const t of cascadeTables) {
+        const { error: delErr } = await supabaseClient.from(t).delete().eq('user_id', student.user_id);
+        if (delErr && !/relation .* does not exist/i.test(delErr.message)) {
+          console.warn(`[deleteProfile] ${t} 삭제 실패: ${delErr.message}`);
+        }
+      }
+
+      // 3) 프로필 삭제
       await supabaseClient.from('users_profile').delete().eq('user_id', student.user_id);
+
+      // 4) 로컬 스토어 캐스케이드 (App.tsx handleDeleteStudent) — test 결과·단어 점수 등 로컬 데이터 정리
       const m = students.find(x => x.email === student.email); if (m) onDeleteStudent(m.id);
+
       loadStudentsData(); loadLicenseHistory();
     } catch (e: any) { alert('실패: ' + (e?.message || '')); }
   };
@@ -392,7 +455,27 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
               <button onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')} className="px-2 py-2 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50">{sortDir === 'asc' ? '↑오름' : '↓내림'}</button>
             </div>
             <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"><Download className="w-3.5 h-3.5" />Excel</button>
+            {dashboardStats.expiredStudents > 0 && (
+              <button
+                onClick={selectAllExpired}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 rounded-lg text-xs text-red-600 hover:bg-red-50"
+                title="만료 학생 전체 선택 후 일괄 관리"
+              >
+                <Clock className="w-3.5 h-3.5" />만료 {dashboardStats.expiredStudents}명 선택
+              </button>
+            )}
             {selectedIds.size > 0 && <Button size="sm" onClick={() => setShowBatchModal(true)} className="bg-[#1e6b73] text-white hover:bg-[#185a61] text-xs">{selectedIds.size}명 일괄 연장</Button>}
+            {selectedIds.size > 0 && (
+              <Button
+                size="sm"
+                onClick={handleBatchDelete}
+                disabled={actionLoading}
+                className="bg-red-500 text-white hover:bg-red-600 text-xs"
+              >
+                {actionLoading && <RefreshCw className="w-3 h-3 animate-spin mr-1" />}
+                {selectedIds.size}명 일괄 삭제
+              </Button>
+            )}
           </div>
 
           {filteredStudents.length === 0 ? (

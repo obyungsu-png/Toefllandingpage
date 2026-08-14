@@ -34,4 +34,6 @@ export interface TestResult {
   aiBandScore?: number;
   /** AI 채점 피드백 요약 (Speaking/Writing) */
   aiFeedback?: string;
+  /** Reading/Listening 모듈 구분 (Module 1 / Module 2 별 개별 저장) */
+  module?: 1 | 2;
 }

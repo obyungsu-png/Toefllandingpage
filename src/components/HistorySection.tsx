@@ -271,8 +271,10 @@ export function HistorySection({
     const type = r.type || 'TPO';
     const displayNum = chronoMaps.get(type)?.get(r.testNumber);
     if (!displayNum) return r.testName;
-    // 섹션 접미사 유지: "TPO ... - Reading" → "TPO {displayNum} - Reading"
-    const sectionMatch = r.testName.match(/(\s*-\s*(Reading|Listening|Writing|Speaking))\s*$/i);
+    // 섹션 + 선택적 " - Module N" 접미사 유지:
+    //   "TPO ... - Reading"           → "TPO N - Reading"
+    //   "TPO ... - Reading - Module 1" → "TPO N - Reading - Module 1"
+    const sectionMatch = r.testName.match(/(\s*-\s*(Reading|Listening|Writing|Speaking)(?:\s*-\s*Module\s*[12])?)\s*$/i);
     return `${type} ${displayNum}${sectionMatch ? sectionMatch[1] : ''}`;
   };
 
