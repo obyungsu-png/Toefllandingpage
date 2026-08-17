@@ -9,7 +9,6 @@ import { Advertisement } from './AdManagement';
 import { RestartConfirmModal } from './RestartConfirmModal';
 import { TestResult } from '../types/testResult';
 import { WrongNotesManager } from './WrongNotesManager';
-import { buildGlobalSlots, getModuleSlots, getModuleQuestionCount } from '../utils/readingQuestionUtils';
 import { computeChronoDisplayNumbers } from '../utils/testLabel';
 import {
   readingRawToBand,
@@ -113,13 +112,9 @@ export function HistorySection({
   // Question review full screen
   const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
-  const [showScoreModal, setShowScoreModal] = useState(false);
   const [reviewInitialSection, setReviewInitialSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
   const [reviewInitialIndex, setReviewInitialIndex] = useState(0);
   const [reviewInitialModule, setReviewInitialModule] = useState<1 | 2>(1);
-  // Score modal section nav state
-  const [scoreModalSection, setScoreModalSection] = useState<'Reading' | 'Listening' | 'Writing' | 'Speaking'>('Reading');
-  const [scoreModalModule, setScoreModalModule] = useState<1 | 2>(1);
 
   // Restart confirm modal
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -133,9 +128,9 @@ export function HistorySection({
   useEffect(() => {
     if (pendingReviewResult) {
       setSelectedResult(pendingReviewResult);
-      setScoreModalSection((pendingReviewResult.category as any) || 'Reading');
-      setScoreModalModule(1);
-      setShowScoreModal(false);
+      setReviewInitialSection((pendingReviewResult.category as any) || 'Reading');
+      setReviewInitialIndex(0);
+      setReviewInitialModule(1);
       setShowQuestionReview(true);
       onClearPendingReview?.();
     }
@@ -542,7 +537,7 @@ export function HistorySection({
   };
 
   const handleViewResults = (result: TestResult) => {
-    // 모달 헤더도 자동배열 번호 라벨로 통일 (이전에 저장된 year/month 이름도 변환)
+    // 클릭 시 곧바로 전체 리뷰(QuestionReviewFull) 화면으로 이동
     setSelectedResult({ ...result, testName: getDisplayTestName(result) });
     const sec = (result.category as any) ||
       (result.testName.includes('Reading') ? 'Reading'
@@ -550,17 +545,9 @@ export function HistorySection({
       : result.testName.includes('Speaking') ? 'Speaking'
       : result.testName.includes('Writing') ? 'Writing'
       : 'Reading');
-    setScoreModalSection(sec);
-    setScoreModalModule(1);
-    setShowScoreModal(true);
-  };
-
-  // Jump to QuestionReviewFull at a specific section + question index
-  const handleJumpToQuestion = (section: 'Reading' | 'Listening' | 'Writing' | 'Speaking', index: number) => {
-    setReviewInitialSection(section);
-    setReviewInitialIndex(index);
-    setReviewInitialModule(scoreModalModule);
-    setShowScoreModal(false);
+    setReviewInitialSection(sec);
+    setReviewInitialIndex(0);
+    setReviewInitialModule(1);
     setShowQuestionReview(true);
   };
 
@@ -1283,439 +1270,6 @@ export function HistorySection({
         />
       )}
 
-      {/* Score Results Modal — Section Tabs + Q-number jump */}
-      {showScoreModal && selectedResult && (() => {
-        const sections: ('Reading' | 'Listening' | 'Writing' | 'Speaking')[] = ['Reading', 'Listening', 'Writing', 'Speaking'];
-        const sectionIcons: Record<string, string> = { Reading: '📖', Listening: '🎧', Writing: '✍️', Speaking: '🎤' };
-        const sectionColors: Record<string, string> = { Reading: '#3b82f6', Listening: '#8b5cf6', Writing: '#10b981', Speaking: '#f97316' };
-
-        // Find related results for the same TPO
-        const testNum = selectedResult.testNumber;
-        const testPrefix = selectedResult.testName.replace(/\s*-\s*(Reading|Listening|Writing|Speaking).*/i, '');
-        const relatedResults: Record<string, TestResult> = {};
-        results.forEach(r => {
-          if ((testNum && r.testNumber === testNum) || r.testName.startsWith(testPrefix)) {
-            const sec = r.category || (
-              r.testName.includes('Reading') ? 'Reading'
-              : r.testName.includes('Listening') ? 'Listening'
-              : r.testName.includes('Writing') ? 'Writing'
-              : r.testName.includes('Speaking') ? 'Speaking' : '');
-            if (sec) relatedResults[sec] = r;
-          }
-        });
-        // Also include the selected result itself
-        const selfSec = selectedResult.category || (
-          selectedResult.testName.includes('Reading') ? 'Reading'
-          : selectedResult.testName.includes('Listening') ? 'Listening'
-          : selectedResult.testName.includes('Writing') ? 'Writing'
-          : selectedResult.testName.includes('Speaking') ? 'Speaking' : 'Reading');
-        if (!relatedResults[selfSec]) relatedResults[selfSec] = selectedResult;
-
-        const curResult = relatedResults[scoreModalSection] || null;
-
-        // === Get question count from CMS (TPO data) for accurate question count ===
-        // Default counts per section if CMS data unavailable
-        const defaultCounts: Record<string, number> = { Reading: 20, Listening: 28, Writing: 2, Speaking: 4 };
-
-        // CMS bank 매칭 — testType(TPO/Test/Training) + testNumber 모두 일치해야 함
-        // (testNumber만 매칭하면 Test 1 결과가 TPO 1 문제를 잘못 가져옴)
-        const cmsBanks = [...(tpoTests || [])];
-        const resultType = String(selectedResult.type || selectedResult.bankType || '').toLowerCase();
-        const cmsTpo = cmsBanks?.find((t: any) =>
-          t.testNumber === selectedResult.testNumber &&
-          String(t.testType || '').toLowerCase() === resultType
-        ) || cmsBanks?.find((t: any) => t.testNumber === selectedResult.testNumber);
-
-        // sectionType 정확 일치 우선 → 없으면 대소문자 무시 (CMS에 'reading'/'Reading' 혼재)
-        const findSection = (test: any, sec: string) =>
-          test?.sections?.find((s: any) => s.sectionType === sec) ||
-          test?.sections?.find((s: any) => String(s.sectionType || '').toLowerCase() === sec.toLowerCase()) ||
-          null;
-        const cmsSection = findSection(cmsTpo, scoreModalSection);
-        const allCmsQuestions = cmsSection?.questions || [];
-
-        // 전역 슬롯 (엔진 표시 순서 M1→M2 + Complete Words 빈칸 확장)
-        // → 원형 개수 = 실제 TPO 문제 수와 정확히 일치
-        const allSlots = buildGlobalSlots(allCmsQuestions);
-        // Reading and Listening have Module 1 / Module 2 split
-        const hasModules = scoreModalSection === 'Reading' || scoreModalSection === 'Listening';
-        const moduleSlots = hasModules ? getModuleSlots(allSlots, scoreModalModule) : allSlots;
-        const cmsQuestionCount = moduleSlots.reduce((sum, s) => sum + s.count, 0);
-
-        // 현재 모듈의 전역 번호 범위 (오답/미답변 매핑용)
-        const moduleGlobalStart = moduleSlots.length > 0 ? moduleSlots[0].start : 1;
-        const moduleGlobalEnd = moduleSlots.length > 0
-          ? moduleSlots[moduleSlots.length - 1].start + moduleSlots[moduleSlots.length - 1].count - 1
-          : 0;
-
-        // CMS가 있으면 모듈 슬롯 수가 정답. 없으면 결과/기본값 fallback
-        const totalQ = cmsQuestionCount > 0
-          ? cmsQuestionCount
-          : (curResult?.totalQuestions || defaultCounts[scoreModalSection] || 0);
-
-        // Helper: is this wrongAnswer a FillBlanks entry?
-        const isFillBlanksWrong = (w: any) =>
-          w.questionId?.startsWith('blank-') ||
-          (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
-
-        // 정답 미등록(unscored) 문제 분리 — CMS에 correctAnswer가 없어 채점 불가
-        const isUnscoredWrong = (w: any) =>
-          w.correctAnswer === '(정답 미등록)' ||
-          (typeof w.correctAnswer === 'string' && w.correctAnswer.includes('미등록'));
-
-        // Separate FillBlanks and MCQ wrongs (unscored 제외)
-        const allWrongs = curResult?.wrongAnswers || [];
-        const unscoredWrongs = allWrongs.filter(isUnscoredWrong);
-        const scoredWrongs = allWrongs.filter((w: any) => !isUnscoredWrong(w));
-
-        // 전역 번호 → 현재 모듈 로컬 번호 변환 (원형은 모듈 로컬 1..N으로 표시)
-        const toLocalNum = (globalNum: number): number | null =>
-          globalNum >= moduleGlobalStart && globalNum <= moduleGlobalEnd
-            ? globalNum - moduleGlobalStart + 1
-            : null;
-
-        // wrongAnswers의 questionId에서 끝 숫자를 추출해 전역 번호로 해석 → 모듈 로컬로 변환
-        // unscored(정답 미등록) 문제는 별도 색상 표시
-        const wrongQNums = new Set<number>();
-        const unscoredQNums = new Set<number>();
-        allWrongs.forEach((w: any) => {
-          const id = String(w.questionId ?? '');
-          const m = id.match(/(\d+)\s*$/);
-          if (!m) return;
-          const local = toLocalNum(parseInt(m[1], 10));
-          if (local == null) return; // 다른 모듈의 오답
-          if (isUnscoredWrong(w)) {
-            unscoredQNums.add(local);
-          } else {
-            wrongQNums.add(local);
-          }
-        });
-
-        // 미답변 산출 — answeredQuestions(신규 결과)가 있으면 정확한 응답 여부 사용
-        const answeredLocal = new Set<number>();
-        if (Array.isArray(curResult?.answeredQuestions)) {
-          curResult.answeredQuestions.forEach(n => {
-            const local = toLocalNum(n);
-            if (local != null) answeredLocal.add(local);
-          });
-        }
-        const hasAnsweredInfo = answeredLocal.size > 0;
-        // legacy fallback (answeredQuestions 없는 이전 결과): 시험은 순차 진행이므로
-        // 섹션 전체 기준 뒤쪽 unansweredCount개 중 현재 모듈 범위에 해당하는 개수를 미답변으로 추정
-        const attemptedCount = (curResult?.correctAnswers || 0) + scoredWrongs.length + unscoredWrongs.length;
-        const totalAll = curResult?.totalQuestions || totalQ;
-        const legacyUnansweredInModule = (() => {
-          if (hasAnsweredInfo || moduleGlobalEnd === 0) return 0;
-          const unansweredStart = totalAll - Math.max(0, totalAll - attemptedCount) + 1;
-          return Math.max(0, moduleGlobalEnd - Math.max(moduleGlobalStart, unansweredStart) + 1);
-        })();
-
-        // 요약 박스 (현재 모듈 기준) — Total/Correct/Wrong/안 푼 것이 항상 합산 일치하도록 유도
-        const wrongQ = wrongQNums.size;
-        const unscoredQ = unscoredQNums.size;
-        const unansweredQ = hasAnsweredInfo
-          ? Math.max(0, totalQ - answeredLocal.size)
-          : legacyUnansweredInModule;
-        const correctQ = Math.max(0, totalQ - wrongQ - unscoredQ - unansweredQ);
-        const color = sectionColors[scoreModalSection];
-
-        // Build per-question correctness — 실제 오답 기록 기준 (섹션 무관 공통 로직)
-        // isUnscored: 정답 미등록 (주황), isWrong: 실제 오답 (빨강), isUnanswered: 미답변 (회색), 그 외: 정답 (초록)
-        const qList = Array.from({ length: totalQ }, (_, i) => {
-          const qNum = i + 1; // 모듈 로컬 번호
-          const globalQNum = moduleGlobalStart + i;
-          const isUnscored = unscoredQNums.has(qNum);
-          const isWrong = !isUnscored && wrongQNums.has(qNum);
-          const isUnanswered = !isUnscored && !isWrong && (
-            hasAnsweredInfo ? !answeredLocal.has(qNum) : (qNum > totalQ - legacyUnansweredInModule)
-          );
-          return { qNum, globalQNum, isWrong, isUnanswered, isUnscored };
-        });
-
-        return (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-6"
-            onClick={() => setShowScoreModal(false)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden"
-              onClick={e => e.stopPropagation()}>
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-gray-100">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">{selectedResult.testName}</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">{new Date(selectedResult.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
-                <button onClick={() => setShowScoreModal(false)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-
-              {/* Section Tabs */}
-              <div className="flex border-b border-gray-100 overflow-x-auto px-2 md:px-4">
-                {sections.map(sec => {
-                  const isActive = scoreModalSection === sec;
-                  const secRes = relatedResults[sec];
-                  const sc = sectionColors[sec];
-                  // CMS-based question count for this section (빈칸 확장 포함, 모듈 합산)
-                  const secCmsSection = findSection(cmsTpo, sec);
-                  const secCmsCount = secCmsSection
-                    ? buildGlobalSlots(secCmsSection.questions || []).reduce((sum, s) => sum + s.count, 0)
-                    : 0;
-                  const secTotal = secCmsCount > 0 ? secCmsCount : (secRes?.totalQuestions || defaultCounts[sec] || 0);
-                  // Speaking/Writing은 AI 밴드 점수 표시
-                  const secAi = (sec === 'Speaking' || sec === 'Writing') ? getAiScoreInfo(secRes) : null;
-                  return (
-                    <button key={sec}
-                      onClick={() => { setScoreModalSection(sec); setScoreModalModule(1); }}
-                      className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 ${
-                        isActive ? '' : 'border-transparent text-gray-400 hover:text-gray-600'
-                      }`}
-                      style={isActive ? { color: sc, borderBottomColor: sc } : {}}>
-                      <span className="text-base">{sectionIcons[sec]}</span>
-                      <span>{sec}</span>
-                      {secAi?.band != null ? (
-                        <span className="text-[10px] font-bold ml-1" style={{ color: getBandCefrLabel(secAi.band).color }}>
-                          Band {secAi.band}
-                        </span>
-                      ) : secRes ? (
-                        <span className="text-[10px] font-normal ml-1 opacity-70">
-                          {secRes.correctAnswers}/{secTotal}
-                        </span>
-                      ) : secCmsCount > 0 && (
-                        <span className="text-[10px] font-normal ml-1 opacity-50">
-                          —/{secTotal}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto">
-                {!curResult && cmsQuestionCount === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                    <span className="text-4xl mb-3">{sectionIcons[scoreModalSection]}</span>
-                    <p className="text-sm font-medium">No {scoreModalSection} data</p>
-                    <p className="text-xs mt-1">This section has not been completed yet</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* AI 채점 점수 카드 — Speaking/Writing 전용 (TOEFL 성적표 스타일) */}
-                    {(() => {
-                      if (scoreModalSection !== 'Speaking' && scoreModalSection !== 'Writing') return null;
-                      const aiInfo = getAiScoreInfo(curResult);
-                      if (!aiInfo || aiInfo.band == null) return null;
-                      const cefr = getBandCefrLabel(aiInfo.band);
-                      const secColor = sectionColors[scoreModalSection];
-                      return (
-                        <div className="mx-5 md:mx-6 mt-5 mb-1 rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-4 shadow-sm">
-                          <div className="flex items-center gap-4">
-                            {/* 밴드 점수 원형 */}
-                            <div className="relative w-20 h-20 shrink-0">
-                              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                                <circle cx="40" cy="40" r="34" fill="none" stroke="#e5e7eb" strokeWidth="7" />
-                                <circle cx="40" cy="40" r="34" fill="none" stroke={cefr.color} strokeWidth="7"
-                                  strokeLinecap="round"
-                                  strokeDasharray={`${Math.min((aiInfo.band / 6) * 213.6, 213.6)} 213.6`} />
-                              </svg>
-                              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-2xl font-extrabold" style={{ color: cefr.color }}>{aiInfo.band}</span>
-                                <span className="text-[9px] text-gray-400 font-semibold">/ 6.0</span>
-                              </div>
-                            </div>
-                            {/* 점수 상세 */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: secColor }}>
-                                {scoreModalSection === 'Speaking' ? '🎤 Speaking' : '✍️ Writing'} AI 채점
-                              </p>
-                              <div className="flex items-baseline gap-2 mt-0.5">
-                                {aiInfo.raw != null && (
-                                  <p className="text-lg font-extrabold text-gray-800">{aiInfo.raw}<span className="text-xs text-gray-400 font-semibold">/30</span></p>
-                                )}
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: cefr.color }}>
-                                  {cefr.cefr} · {cefr.label}
-                                </span>
-                              </div>
-                              {aiInfo.feedback && (
-                                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed line-clamp-3 whitespace-pre-line">{aiInfo.feedback}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Score Summary */}
-                    <div className="grid grid-cols-4 gap-3 px-5 md:px-6 pt-5 pb-4">
-                      {[
-                        { label: 'Total', value: totalQ, color: 'text-gray-800', bg: 'bg-gray-50' },
-                        { label: 'Correct', value: correctQ, color: 'text-green-600', bg: 'bg-green-50' },
-                        { label: 'Wrong', value: wrongQ, color: 'text-red-500', bg: 'bg-red-50' },
-                        { label: '안 푼 것', value: unansweredQ, color: 'text-gray-400', bg: 'bg-gray-100' },
-                      ].map(({ label, value, color: c, bg }) => (
-                        <div key={label} className={`${bg} rounded-xl py-4 text-center`}>
-                          <p className={`text-3xl font-bold ${c}`}>{value}</p>
-                          <p className="text-xs text-gray-500 mt-1">{label}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {/* 정답 미등록(unscored) 문제가 있으면 별도 표시 */}
-                    {unscoredWrongs.length > 0 && (
-                      <div className="mx-5 md:mx-6 mb-3 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 p-3">
-                        <p className="text-sm text-amber-800 font-semibold">
-                          ⚠ 채점 불가 (정답 미등록): {unscoredWrongs.length}문제
-                        </p>
-                        <p className="text-xs text-amber-700 mt-0.5">
-                          CMS 관리 화면에서 정답을 등록하면 채점됩니다.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Q-number grid — click to jump to that question in QuestionReviewFull */}
-                    <div className="px-5 md:px-6 pb-2">
-                      {/* Module toggle for Reading/Listening */}
-                      {hasModules && (
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-1">Module</span>
-                          {[1, 2].map(mod => {
-                            const isActive = scoreModalModule === mod;
-                            return (
-                              <button
-                                key={mod}
-                                onClick={() => setScoreModalModule(mod as 1 | 2)}
-                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                                  isActive
-                                    ? 'text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                }`}
-                                style={isActive ? { backgroundColor: color } : {}}
-                              >
-                                Module {mod}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                        문제를 클릭하면 해당 문제로 바로 이동해요
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {qList.map(({ qNum, globalQNum, isWrong, isUnanswered, isUnscored }) => (
-                          <button
-                            key={qNum}
-                            onClick={() => handleJumpToQuestion(scoreModalSection, qNum - 1)}
-                            className={`w-9 h-9 rounded-full text-xs font-bold flex items-center justify-center transition-all hover:scale-110 shadow-sm ${
-                              isUnscored
-                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 border border-amber-300'
-                                : isWrong
-                                  ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                                  : isUnanswered
-                                    ? 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                            title={`Q${qNum} — ${isUnscored ? '정답 미등록' : isWrong ? '오답' : isUnanswered ? '미답변' : '정답'} · 클릭하여 리뷰`}
-                          >
-                            {qNum}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Wrong answers list */}
-                    {false && curResult && curResult.wrongAnswers.length > 0 && (
-                      <div className="px-5 md:px-6 py-4">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">오답 목록</p>
-                        <div className="space-y-2">
-                          {(() => {
-                            const isFillBlanks = (w: any) =>
-                              w.questionId?.startsWith('blank-') ||
-                              (typeof w.questionText === 'string' && w.questionText.toLowerCase().includes('fill in'));
-
-                            const blankWrongs = curResult.wrongAnswers.filter(isFillBlanks);
-                            const mcqWrongs = curResult.wrongAnswers.filter(w => !isFillBlanks(w));
-
-                            const items: React.ReactNode[] = [];
-
-                            // Group all FillBlanks wrongs into a single Q1-10 Complete Words entry
-                            if (blankWrongs.length > 0) {
-                              const blankNums = blankWrongs.map(w =>
-                                w.questionId?.startsWith('blank-')
-                                  ? w.questionId.replace('blank-', '')
-                                  : w.questionId
-                              ).join(', ');
-                              items.push(
-                                <button key="complete-words"
-                                  onClick={() => handleJumpToQuestion(scoreModalSection, 0)}
-                                  className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
-                                  <span className="w-9 h-7 rounded-full bg-red-200 text-red-700 text-[10px] font-bold flex items-center justify-center shrink-0">
-                                    1-10
-                                  </span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-700 truncate">Complete Words (Fill in the blanks)</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                      {blankWrongs.length}개 오답 — Blank {blankNums}
-                                    </p>
-                                  </div>
-                                  <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
-                                </button>
-                              );
-                            }
-
-                            // MCQ wrongs — show actual question number
-                            mcqWrongs.forEach((w) => {
-                              const displayNum = parseInt(w.questionId) || 0;
-                              if (!displayNum) return;
-                              const idx = displayNum - 1;
-                              items.push(
-                                <button key={w.questionId}
-                                  onClick={() => handleJumpToQuestion(scoreModalSection, idx)}
-                                  className="w-full flex items-center gap-3 bg-red-50 hover:bg-red-100 rounded-xl px-4 py-3 text-left transition-all group">
-                                  <span className="w-7 h-7 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
-                                    {displayNum}
-                                  </span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-700 truncate">{w.questionText || `Question ${displayNum}`}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">
-                                      내 답: <span className="text-red-500">{w.userAnswer || 'Omitted'}</span>
-                                      {' → '}정답: <span className="text-green-600">{w.correctAnswer}</span>
-                                    </p>
-                                  </div>
-                                  <span className="text-xs text-gray-400 group-hover:text-gray-600 shrink-0">리뷰 →</span>
-                                </button>
-                              );
-                            });
-
-                            return items;
-                          })()}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between px-5 md:px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                <p className="text-xs text-gray-400">문제 번호를 클릭하면 실전 리뷰 화면으로 이동해요</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { setShowScoreModal(false); setReviewInitialSection(scoreModalSection); setReviewInitialIndex(0); setReviewInitialModule(scoreModalModule); setShowQuestionReview(true); }}
-                    className="px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all hover:opacity-80"
-                    style={{ borderColor: color, color }}>
-                    전체 리뷰
-                  </button>
-                  <button
-                    onClick={() => setShowScoreModal(false)}
-                    className="px-4 py-2 rounded-xl text-white text-sm font-bold transition-all hover:opacity-90"
-                    style={{ backgroundColor: themeColor }}>
-                    닫기
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Restart Confirm Modal */}
       {showRestartModal && restartTarget && (
