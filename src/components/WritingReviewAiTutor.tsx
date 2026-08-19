@@ -781,6 +781,51 @@ ${analysis.upgradedText}
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
+        // globals.css 의 :root / .dark 변수(--foreground, --card, --sidebar 등)가
+        // oklch() 로 정의돼 있어 html2canvas 1.x 가 색상 파싱에서 예외를 던진다.
+        // (에러: "Attempting to parse an unsupported color function 'oklch'")
+        // 오프스크린 div 는 부모 문서 스타일을 그대로 상속하므로, 클론 문서에
+        // hex 값으로 같은 변수를 재정의해서 계산 색상이 oklch 로 남지 않게 한다.
+        onclone: (clonedDoc: Document) => {
+          const style = clonedDoc.createElement('style');
+          style.setAttribute('data-pdf-oklch-shim', '1');
+          style.textContent = `
+            :root, .dark {
+              --foreground: #252525;
+              --card: #ffffff;
+              --card-foreground: #252525;
+              --popover: #ffffff;
+              --popover-foreground: #252525;
+              --primary: #030213;
+              --primary-foreground: #ffffff;
+              --secondary: #f1f2f5;
+              --secondary-foreground: #030213;
+              --muted: #ececf0;
+              --muted-foreground: #717182;
+              --accent: #e9ebef;
+              --accent-foreground: #030213;
+              --destructive: #d4183d;
+              --destructive-foreground: #ffffff;
+              --border: rgba(0,0,0,0.1);
+              --input: transparent;
+              --ring: #b5b5b5;
+              --chart-1: #cf5f2c;
+              --chart-2: #4d8098;
+              --chart-3: #2b4459;
+              --chart-4: #dcaf3f;
+              --chart-5: #c99e46;
+              --sidebar: #fafafa;
+              --sidebar-foreground: #252525;
+              --sidebar-primary: #030213;
+              --sidebar-primary-foreground: #fafafa;
+              --sidebar-accent: #f5f5f5;
+              --sidebar-accent-foreground: #2f2f2f;
+              --sidebar-border: #ebebeb;
+              --sidebar-ring: #b5b5b5;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+        },
       });
 
       const imgData = canvas.toDataURL('image/png');
