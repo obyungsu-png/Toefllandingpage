@@ -24,7 +24,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 // ── API 설정 — GLM/Claude 모두 Vercel 서버리스 프록시 경유 (서버 env 키 사용) ──
-import { AI_ENDPOINTS, AI_MODELS } from '../utils/aiClient';
+import { AI_ENDPOINTS, AI_MODELS, readPreferredAiModel, writePreferredAiModel, type AiProvider } from '../utils/aiClient';
 const GLM_API_ENDPOINT = AI_ENDPOINTS.GLM;
 const GLM_MODEL = AI_MODELS.GLM;
 const CLAUDE_PROXY_ENDPOINT = AI_ENDPOINTS.CLAUDE;
@@ -507,6 +507,13 @@ export function WritingReviewAiTutor({
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingModel, setIsGeneratingModel] = useState(false);
+  // AI 분석·모범 에세이 생성에 사용할 모델 — 우측 AI 튜터 위젯과 동일한
+  // localStorage 키(toefl_ai_model_pref)를 공유해서 한 곳에서 바꾸면 어디서든 반영됨.
+  const [selectedAi, setSelectedAiRaw] = useState<AiProvider>(() => readPreferredAiModel());
+  const setSelectedAi = (m: AiProvider) => {
+    setSelectedAiRaw(m);
+    writePreferredAiModel(m);
+  };
   const [mobileView, setMobileView] = useState<'original' | 'rewrite' | 'score'>('original');
   const [showModelEssay, setShowModelEssay] = useState(false);
   const [exportText, setExportText] = useState<string | null>(null);
@@ -641,7 +648,7 @@ ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 �
 
       const userPrompt = `[학생 답안]\n${rewrittenText}`;
 
-      const raw = await callAi(systemPrompt, userPrompt, false, 3000, 0.3);
+      const raw = await callAi(systemPrompt, userPrompt, selectedAi === 'claude', 3000, 0.3);
       const parsed = safeJsonParse(raw);
 
       if (parsed && parsed.rubric) {
@@ -681,7 +688,7 @@ ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 �
 
       const userPrompt = `[문제 컨텍스트]\n${taskContext}\n\n[학생 원본]\n${rewrittenText}\n\n[요청] 학생의 주장을 유지하되 6점 만점 기준 모범 답안을 작성해줘.`;
 
-      const content = await callAi(systemPrompt, userPrompt, false, 1500, 0.5);
+      const content = await callAi(systemPrompt, userPrompt, selectedAi === 'claude', 1500, 0.5);
       setAnalysis(prev => prev ? {
         ...prev,
         modelEssay: { content, rationale: '학생 원본의 논리를 유지하되 어휘/문법/구조를 승급시킨 모범 답안입니다.' },
@@ -1154,7 +1161,37 @@ ${analysis.upgradedText}
           </div>
 
           {/* 액션 버튼 */}
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {/* AI 모델 선택 — 분석·모범 에세이 모두 이 모델로 호출됨 */}
+            <div
+              role="radiogroup"
+              aria-label="AI 모델 선택"
+              className="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5 text-xs font-medium"
+            >
+              {([
+                { key: 'glm', label: 'GLM' },
+                { key: 'claude', label: 'Claude' },
+              ] as { key: AiProvider; label: string }[]).map((opt) => {
+                const active = selectedAi === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setSelectedAi(opt.key)}
+                    disabled={isAnalyzing || isGeneratingModel}
+                    className={`px-2.5 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      active
+                        ? 'bg-[#1e6b73] text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
             <button
               onClick={handleAnalyze}
               disabled={isAnalyzing || !rewrittenText.trim()}
