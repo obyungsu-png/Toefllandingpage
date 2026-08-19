@@ -394,22 +394,41 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
     }
 
     if (!registeredIds.includes(currentDeviceId)) {
-      // 서버에 등록된 기기 ID와 현재 기기 ID가 어긋난 경우에도, 이 기기의
-      // 로컬 스냅샷이 같은 계정을 증명하면 통과시켜 재로그인 재입력을 막는다.
-      // (localStorage가 지워졌거나 다른 브라우저면 자연스럽게 스냅샷도 없어 거절됨)
-      const local = readLocalActivation();
-      if (
-        local &&
-        local.user_id === session.user.id &&
-        local.device_id === currentDeviceId &&
-        local.expire_date >= todayStr()
-      ) {
-        return { allowed: true, profile };
+      // 이 계정은 이미 유효한 수강권을 가지고 있고(위의 만료 체크 통과),
+      // 로그인 신원(user_id/email)이 확실하다. 브라우저 localStorage가
+      // 지워지거나 다른 브라우저로 접속해 amx_device_id 가 바뀌면 여기에
+      // 오는데, 이때 사용자에게 코드 재입력을 요구하는 대신 현재 기기 ID로
+      // 슬롯을 조용히 갱신한다. 계정이 곧 신원이므로 재입력이 필요 없다.
+      // (같은 기기 유형 슬롯 하나만 최신값으로 덮어쓰므로 "가장 최근에
+      //  접속한 기기 유형별 1대"만 남는 형태로 유지된다.)
+      const { error: rebindError } = await supabase
+        .from('users_profile')
+        .update({ [currentDeviceColumn]: currentDeviceId })
+        .eq('user_id', session.user.id);
+
+      if (rebindError) {
+        // 재바인딩 실패 시에만 기존과 동일한 안내 노출 (네트워크/RLS 문제 등)
+        return {
+          allowed: false,
+          reason: `등록된 ${getDeviceName(currentDevice)} 1대에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
+          profile,
+        };
       }
+
+      writeLocalActivation({
+        user_id: session.user.id,
+        email: session.user.email || '',
+        expire_date: profile.expire_date,
+        device_id: currentDeviceId,
+        saved_at: Date.now(),
+      });
+      invalidateUserProfileCache(session.user.id);
       return {
-        allowed: false,
-        reason: `등록된 ${getDeviceName(currentDevice)} 1대에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
-        profile,
+        allowed: true,
+        profile: {
+          ...profile,
+          [currentDeviceColumn]: currentDeviceId,
+        } as UserProfile,
       };
     }
 
