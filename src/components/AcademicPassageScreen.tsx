@@ -166,6 +166,7 @@ export function AcademicPassageScreen({
                     onClearAll={() => setClearTrigger(c => c + 1)}
                     language={language}
                     onLanguageChange={setLanguage}
+                    resetKey={passageKey ?? storageKey}
                   />
                 )}
               </>

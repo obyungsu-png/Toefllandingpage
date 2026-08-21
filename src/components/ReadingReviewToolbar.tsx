@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Highlighter, Underline, Eraser, Globe, PenLine } from 'lucide-react';
 import { DrawingOverlay } from './DrawingOverlay';
 
@@ -171,12 +171,22 @@ export function ReadingReviewActions({
   onClearAll,
   language,
   onLanguageChange,
+  resetKey,
 }: {
   onClearAll: () => void;
   language: 'en' | 'ko';
   onLanguageChange: (lang: 'en' | 'ko') => void;
+  /** 값이 바뀌면 필기 스냅샷을 초기화 (예: 다른 문제로 이동 시) */
+  resetKey?: string | number;
 }) {
   const [penOpen, setPenOpen] = useState(false);
+  // 필기 오버레이가 닫혀도 다음 문제로 넘어가기 전까지는 캔버스 스냅샷을 유지
+  const drawingSnapshotRef = useRef<string | null>(null);
+
+  // resetKey (문제 식별자)가 바뀌면 스냅샷 초기화 → 다음 문제에서 이전 필기가 남지 않음
+  useEffect(() => {
+    drawingSnapshotRef.current = null;
+  }, [resetKey]);
 
   return (
     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 shadow-sm">
@@ -215,7 +225,15 @@ export function ReadingReviewActions({
       </button>
 
       {/* 필기 오버레이 — portal로 전체 화면에 렌더링 */}
-      {penOpen && <DrawingOverlay onClose={() => setPenOpen(false)} />}
+      {penOpen && (
+        <DrawingOverlay
+          onClose={() => setPenOpen(false)}
+          initialSnapshot={drawingSnapshotRef.current}
+          onSnapshotChange={(snap) => {
+            drawingSnapshotRef.current = snap;
+          }}
+        />
+      )}
     </div>
   );
 }

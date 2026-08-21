@@ -365,6 +365,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
                       onClearAll={() => setClearTrigger(c => c + 1)}
                       language={language}
                       onLanguageChange={setLanguage}
+                      resetKey={passageKey}
                     />
                   )}
                 </>

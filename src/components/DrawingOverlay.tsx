@@ -25,15 +25,19 @@ type Tool = 'pen' | 'eraser';
 
 interface DrawingOverlayProps {
   onClose: () => void;
+  /** 이전에 저장된 캔버스 스냅샷(dataURL). 있으면 열자마자 복원 */
+  initialSnapshot?: string | null;
+  /** 닫기/지우기 시 부모가 스냅샷을 보관하도록 통지 */
+  onSnapshotChange?: (snapshot: string | null) => void;
 }
 
 /**
  * 전체 화면 필기(펜) 오버레이.
  * - 순수 Canvas API 사용 (외부 라이브러리 없음, 용량 가벼움)
  * - 색 5종 + 두께 하이브리드(대표 버튼 + 슬라이더) + 지우개 모드 + 전체 지우기 + 닫기
- * - 그린 내용은 닫으면 사라짐 (임시 메모용)
+ * - 닫아도 부모가 스냅샷을 보관 → 재오픈 시 이어서 필기 가능 (전체 지우기 시에만 초기화)
  */
-export function DrawingOverlay({ onClose }: DrawingOverlayProps) {
+export function DrawingOverlay({ onClose, initialSnapshot, onSnapshotChange }: DrawingOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const lastPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -48,7 +52,7 @@ export function DrawingOverlay({ onClose }: DrawingOverlayProps) {
   widthRef.current = width;
   toolRef.current = tool;
 
-  // 캔버스 초기화 (DPR 대응)
+  // 캔버스 초기화 (DPR 대응) + 이전 스냅샷 복원
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -60,6 +64,15 @@ export function DrawingOverlay({ onClose }: DrawingOverlayProps) {
     ctx.scale(dpr, dpr);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    // 이전 필기 스냅샷이 있으면 화면 크기에 맞게 복원
+    if (initialSnapshot) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, window.innerWidth, window.innerHeight);
+      };
+      img.src = initialSnapshot;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 포인터 이벤트로 그리기
@@ -137,6 +150,20 @@ export function DrawingOverlay({ onClose }: DrawingOverlayProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    onSnapshotChange?.(null);
+  };
+
+  // 닫을 때 캔버스 스냅샷을 부모에 저장 → 재오픈 시 이어서 이용
+  const handleClose = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      try {
+        onSnapshotChange?.(canvas.toDataURL('image/png'));
+      } catch {
+        // toDataURL 실패 시 스냅샷을 갱신하지 않음 (이전 값 유지)
+      }
+    }
+    onClose();
   };
 
   // 대표 두께 버튼에 표시할 선 미리보기 컴포넌트
@@ -263,7 +290,7 @@ export function DrawingOverlay({ onClose }: DrawingOverlayProps) {
 
         {/* 닫기 */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="flex items-center justify-center w-7 h-7 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           title="필기 닫기"
         >
