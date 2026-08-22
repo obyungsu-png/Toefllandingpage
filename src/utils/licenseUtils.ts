@@ -164,6 +164,45 @@ export function invalidateUserProfileCache(userId?: string) {
   else _profileCache.clear();
 }
 
+// ───────────────────── 로컬 활성화 스냅샷 ─────────────────────
+// 서버 프로필 조회가 순간적으로 실패해도 "이 기기에서 같은 계정이
+// 이미 활성화되었음" 을 로컬에서 증명해 모달 재요구를 막는 fallback.
+// 로그아웃해도 삭제하지 않음 — 같은 계정·같은 기기 재로그인 시 즉시 통과.
+
+const LOCAL_ACTIVATION_KEY = 'amx_local_activation_v1';
+
+interface LocalActivation {
+  user_id: string;
+  email: string;
+  expire_date: string; // YYYY-MM-DD
+  device_id: string;
+  saved_at: number;
+}
+
+function readLocalActivation(): LocalActivation | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_ACTIVATION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof parsed.user_id === 'string' &&
+      typeof parsed.expire_date === 'string' &&
+      typeof parsed.device_id === 'string'
+    ) {
+      return parsed as LocalActivation;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function writeLocalActivation(entry: LocalActivation) {
+  try {
+    localStorage.setItem(LOCAL_ACTIVATION_KEY, JSON.stringify(entry));
+  } catch { /* ignore */ }
+}
+
 // ───────────────────── 활성화 코드 등록 ─────────────────────
 
 export interface ActivateResult {
@@ -236,6 +275,15 @@ export async function activateLicenseKey(inputKeyCode: string): Promise<Activate
     // 프로필 캐시 무효화 (활성화로 프로필이 변경되었으므로)
     invalidateUserProfileCache(authData.user.id);
 
+    // 로컬 활성화 스냅샷 저장 — 재로그인 시 서버 조회 실패해도 통과시키기 위함
+    writeLocalActivation({
+      user_id: authData.user.id,
+      email: authData.user.email || '',
+      expire_date: expireDate,
+      device_id: deviceId,
+      saved_at: Date.now(),
+    });
+
     const userTypeLabel = keyData.user_type === '내학생' ? '내 학생' : '외부 구매자';
     return {
       success: true,
@@ -274,6 +322,19 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
     ]);
 
     if (!profile) {
+      // 서버 프로필 조회 실패/부재 — 이 기기에 남아 있는 활성화 스냅샷으로 fallback.
+      // 같은 계정(user_id) + 같은 기기(device_id) + 미만료면 통과시켜
+      // 로그아웃 후 재로그인 시 재입력을 요구하지 않는다.
+      const local = readLocalActivation();
+      if (
+        local &&
+        local.user_id === session.user.id &&
+        currentDeviceId &&
+        local.device_id === currentDeviceId &&
+        local.expire_date >= todayStr()
+      ) {
+        return { allowed: true };
+      }
       return {
         allowed: checkPaidOnly ? false : true,
         reason: checkPaidOnly ? '등록된 프로필이 없습니다. 활성화 코드를 입력해주세요.' : undefined,
@@ -316,6 +377,13 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
         };
       }
 
+      writeLocalActivation({
+        user_id: session.user.id,
+        email: session.user.email || '',
+        expire_date: profile.expire_date,
+        device_id: currentDeviceId,
+        saved_at: Date.now(),
+      });
       return {
         allowed: true,
         profile: {
@@ -326,13 +394,52 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
     }
 
     if (!registeredIds.includes(currentDeviceId)) {
+      // 이 계정은 이미 유효한 수강권을 가지고 있고(위의 만료 체크 통과),
+      // 로그인 신원(user_id/email)이 확실하다. 브라우저 localStorage가
+      // 지워지거나 다른 브라우저로 접속해 amx_device_id 가 바뀌면 여기에
+      // 오는데, 이때 사용자에게 코드 재입력을 요구하는 대신 현재 기기 ID로
+      // 슬롯을 조용히 갱신한다. 계정이 곧 신원이므로 재입력이 필요 없다.
+      // (같은 기기 유형 슬롯 하나만 최신값으로 덮어쓰므로 "가장 최근에
+      //  접속한 기기 유형별 1대"만 남는 형태로 유지된다.)
+      const { error: rebindError } = await supabase
+        .from('users_profile')
+        .update({ [currentDeviceColumn]: currentDeviceId })
+        .eq('user_id', session.user.id);
+
+      if (rebindError) {
+        // 재바인딩 실패 시에만 기존과 동일한 안내 노출 (네트워크/RLS 문제 등)
+        return {
+          allowed: false,
+          reason: `등록된 ${getDeviceName(currentDevice)} 1대에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
+          profile,
+        };
+      }
+
+      writeLocalActivation({
+        user_id: session.user.id,
+        email: session.user.email || '',
+        expire_date: profile.expire_date,
+        device_id: currentDeviceId,
+        saved_at: Date.now(),
+      });
+      invalidateUserProfileCache(session.user.id);
       return {
-        allowed: false,
-        reason: `등록된 ${getDeviceName(currentDevice)} 1대에서만 실행할 수 있습니다.\n기기 변경은 선생님께 문의하세요.`,
-        profile,
+        allowed: true,
+        profile: {
+          ...profile,
+          [currentDeviceColumn]: currentDeviceId,
+        } as UserProfile,
       };
     }
 
+    // 성공 시 로컬 스냅샷도 최신화 — 만료일 연장·기기 교체가 서버에서 이뤄져도 반영
+    writeLocalActivation({
+      user_id: session.user.id,
+      email: session.user.email || '',
+      expire_date: profile.expire_date,
+      device_id: currentDeviceId,
+      saved_at: Date.now(),
+    });
     return { allowed: true, profile };
   } catch (err) {
     console.error('[license] checkUserAccess 오류:', err);

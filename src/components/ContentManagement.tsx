@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
+import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question, computeSequentialLabels } from '../utils/readingQuestionUtils';
 import { computeChronoDisplayNumbers } from '../utils/testLabel';
 import { extractVocabFromTest, vocabToCSV, type ExtractedVocab } from '../utils/extractVocab';
 import { generateVocabPdf } from '../utils/generateVocabPdf';
@@ -1576,6 +1576,9 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
             const m1 = section.questions.filter(q => !(q.questionType||'').includes('Module 2'));
             const m2 = section.questions.filter(q => (q.questionType||'').includes('Module 2'));
+            const m1Labels = computeSequentialLabels(m1);
+            const m2Labels = computeSequentialLabels(m2);
+            const labelOf = (q: any, isMod2: boolean) => (isMod2 ? m2Labels : m1Labels).get(String(q?.id ?? '')) || getQuestionRangeLabel(q);
 
             return (
               <div className="grid grid-cols-2 gap-3">
@@ -1594,13 +1597,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m1.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-gray-50 transition-colors ${editingQuestion?.id === q.id ? 'border-[#2d7a7c] bg-[#f0fafa] ring-1 ring-[#2d7a7c]/30' : 'border-gray-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">{labelOf(q, false)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:labelOf(q, false),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -1622,13 +1625,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m2.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-orange-50/60 transition-colors ${editingQuestion?.id === q.id ? 'border-orange-400 bg-orange-50 ring-1 ring-orange-300' : 'border-orange-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">{getQuestionRangeLabel(q)}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">{labelOf(q, true)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'').replace(' (Module 2)','')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:labelOf(q, true),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -4968,6 +4971,46 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
 }
 
 
+// ── 정답·난이도 필수 검증 헬퍼 ─────────────────────────────────────────
+// 자유응답/AI채점 유형은 correctAnswer 예외 (난이도는 예외 없음).
+const isFreeResponseQuestionType = (qt: string): boolean => {
+  const t = (qt || '').toLowerCase();
+  return (
+    t.includes('write an email') ||
+    t.includes('academic discussion') ||
+    t.includes('take an interview') ||
+    t.includes('read aloud') ||
+    t.includes('listen and respond') ||
+    t.includes('listen and repeat') ||
+    t.includes('give an opinion') ||
+    t.includes('speaking') ||
+    t.includes('interview')
+  );
+};
+
+const validateAnswersAndDifficulty = (
+  questions: TPOQuestion[]
+): { missingAnswerRows: string[]; missingDifficultyRows: string[] } => {
+  const missingAnswerRows: string[] = [];
+  const missingDifficultyRows: string[] = [];
+  const validDifficulty = new Set(['쉬움', '보통', '어려움']);
+  questions.forEach((q) => {
+    const label = getQuestionRangeLabel(q) || `Q${q.questionNumber ?? '?'}`;
+    const typeLabel = q.questionType || '유형 미지정';
+    if (!isFreeResponseQuestionType(q.questionType || '') && !(q.blanks && q.blanks.length > 0)) {
+      const ans = Array.isArray(q.correctAnswer)
+        ? q.correctAnswer.join('').trim()
+        : String(q.correctAnswer ?? '').trim();
+      if (!ans) missingAnswerRows.push(`${label} (${typeLabel})`);
+    }
+    const diff = String((q as any).difficulty ?? '').trim();
+    if (!diff || !validDifficulty.has(diff)) {
+      missingDifficultyRows.push(`${label} (${typeLabel})`);
+    }
+  });
+  return { missingAnswerRows, missingDifficultyRows };
+};
+
 // Bulk Upload Form Component (Text-based)
 interface BulkUploadFormProps {
   testType: 'TPO' | 'Test' | 'Training';
@@ -5824,7 +5867,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         return undefined;
       };
 
-      const difficulty = (single(['난이도:', '난이도']) || '보통') as '쉬움' | '보통' | '어려움';
+      const difficulty = (single(['난이도:', '난이도']) || '') as '쉬움' | '보통' | '어려움';
 
       // Module 1/2 for Reading/Listening — appended as ' (Module 2)' suffix to questionType
       const rawModule = single(['모듈:', '모듈', 'module:', 'Module:']);
@@ -6065,6 +6108,28 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     try {
       const qs = parseText(rawText);
       if (qs.length === 0) throw new Error('질문을 찾을 수 없습니다. Q1: 유형 형식으로 시작하는지 확인해주세요.');
+
+      // 정답·난이도 필수 검증 — CSV 업로드와 동일 규칙
+      const { missingAnswerRows, missingDifficultyRows } = validateAnswersAndDifficulty(qs);
+      const parts: string[] = [];
+      if (missingAnswerRows.length > 0) {
+        parts.push(
+          `정답이 누락된 문제가 ${missingAnswerRows.length}개 있습니다:\n` +
+          `${missingAnswerRows.slice(0, 8).join(', ')}${missingAnswerRows.length > 8 ? ` … 외 ${missingAnswerRows.length - 8}개` : ''}\n` +
+          `(자유응답/AI채점 유형은 예외)`
+        );
+      }
+      if (missingDifficultyRows.length > 0) {
+        parts.push(
+          `난이도가 누락된 문제가 ${missingDifficultyRows.length}개 있습니다:\n` +
+          `${missingDifficultyRows.slice(0, 8).join(', ')}${missingDifficultyRows.length > 8 ? ` … 외 ${missingDifficultyRows.length - 8}개` : ''}\n` +
+          `("난이도: 쉬움 / 보통 / 어려움" 중 하나)`
+        );
+      }
+      if (parts.length > 0) {
+        throw new Error(parts.join('\n\n') + '\n\n텍스트를 수정한 후 다시 붙여넣어 주세요.');
+      }
+
       setParsed(qs);
     } catch (err: any) {
       setError(err?.message || '파싱 오류');
@@ -6862,7 +6927,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                   passageTitle: finalPassageTitle,
                   passageText: finalPassageText,
                   scriptText: get(iScript) || undefined,
-                  difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+                  difficulty: get(iDiff) as '쉬움' | '보통' | '어려움',
                   context: get(iContext) || undefined,
                   ...emailFields,
                 } as TPOQuestion);
@@ -6883,7 +6948,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 organization: get(iOrg) || undefined,
                 organizationBlanks: get(iOrgBlanks) || undefined,
                 vocabularyNote: get(iVocab) || undefined,
-                difficulty: (get(iDiff) || '보통') as '쉬움' | '보통' | '어려움',
+                difficulty: get(iDiff) as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
                 context: isBuildSentence
                   ? bsContext
@@ -6908,42 +6973,31 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
 
         if (questions.length === 0) throw new Error('문제를 찾을 수 없습니다. CSV 형식을 확인하세요.');
 
-        // ── 정답 필수 검증 ────────────────────────────────────────────────
+        // ── 정답 · 난이도 필수 검증 ──────────────────────────────────────
         // 채점 가능한 유형만 correctAnswer 필수 (자유응답/AI채점 유형은 예외).
         // 예외: Write an Email, Academic Discussion, Take an Interview,
-        //       Speaking Read Aloud/Listen and Respond/Give an Opinion 등 자유응답,
+        //       Speaking Read Aloud/Listen and Respond/Listen and Repeat/
+        //       Give an Opinion 등 자유응답,
         //       blanks(Complete Words)가 이미 파싱되어 correctAnswer가 자동 구성된 경우.
-        const isFreeResponseType = (qt: string): boolean => {
-          const t = (qt || '').toLowerCase();
-          return (
-            t.includes('write an email') ||
-            t.includes('academic discussion') ||
-            t.includes('take an interview') ||
-            t.includes('read aloud') ||
-            t.includes('listen and respond') ||
-            t.includes('give an opinion') ||
-            t.includes('speaking') ||
-            t.includes('interview')
-          );
-        };
-        const missingAnswerRows: string[] = [];
-        questions.forEach((q) => {
-          if (isFreeResponseType(q.questionType || '')) return;
-          if (q.blanks && q.blanks.length > 0) return; // Complete Words — blanks가 정답
-          const ans = Array.isArray(q.correctAnswer)
-            ? q.correctAnswer.join('').trim()
-            : String(q.correctAnswer ?? '').trim();
-          if (!ans) {
-            const label = getQuestionRangeLabel(q) || `Q${q.questionNumber ?? '?'}`;
-            missingAnswerRows.push(`${label} (${q.questionType || '유형 미지정'})`);
-          }
-        });
+        // 난이도는 유형과 무관하게 모든 문제 필수.
+        const { missingAnswerRows, missingDifficultyRows } = validateAnswersAndDifficulty(questions);
+        const errorParts: string[] = [];
         if (missingAnswerRows.length > 0) {
-          throw new Error(
-            `정답(correctAnswer)이 누락된 문제가 ${missingAnswerRows.length}개 있어 등록할 수 없습니다:\n` +
+          errorParts.push(
+            `정답(correctAnswer)이 누락된 문제가 ${missingAnswerRows.length}개 있습니다:\n` +
             `${missingAnswerRows.slice(0, 8).join(', ')}${missingAnswerRows.length > 8 ? ` … 외 ${missingAnswerRows.length - 8}개` : ''}\n` +
-            `CSV의 correctAnswer 열을 모두 채운 후 다시 업로드하세요. (자유응답/AI채점 유형은 예외)`
+            `(자유응답/AI채점 유형은 예외)`
           );
+        }
+        if (missingDifficultyRows.length > 0) {
+          errorParts.push(
+            `난이도(difficulty)가 누락된 문제가 ${missingDifficultyRows.length}개 있습니다:\n` +
+            `${missingDifficultyRows.slice(0, 8).join(', ')}${missingDifficultyRows.length > 8 ? ` … 외 ${missingDifficultyRows.length - 8}개` : ''}\n` +
+            `(값: 쉬움 / 보통 / 어려움)`
+          );
+        }
+        if (errorParts.length > 0) {
+          throw new Error(errorParts.join('\n\n') + '\n\nCSV를 수정한 후 다시 업로드하세요.');
         }
 
         // questionNumber 기준 오름차순 정렬 — Q1-Q10이 맨 앞에 오도록 (TXT 모드와 동일)
@@ -6991,6 +7045,15 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   };
 
   if (parsed) {
+    const parsedM1 = parsed.filter((q: any) => !(q.questionType || '').includes('Module 2'));
+    const parsedM2 = parsed.filter((q: any) => (q.questionType || '').includes('Module 2'));
+    const parsedM1Labels = computeSequentialLabels(parsedM1);
+    const parsedM2Labels = computeSequentialLabels(parsedM2);
+    const parsedLabelOf = (q: any) => {
+      const isMod2 = (q.questionType || '').includes('Module 2');
+      const m = isMod2 ? parsedM2Labels : parsedM1Labels;
+      return m.get(String(q?.id ?? '')) || getQuestionRangeLabel(q);
+    };
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
         <h3 className="text-xl font-medium text-gray-800 mb-4">
@@ -7002,7 +7065,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             const previewPassage = isCW && q.passageText ? previewCompleteWordsPassage(q.passageText) : '';
             return (
             <div key={i} className="bg-gray-50 border rounded-lg p-3 text-sm">
-              <span className="font-bold text-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
+              <span className="font-bold text-[#2d7a7c]">{parsedLabelOf(q)}</span>
               <span className="mx-2 text-gray-400">|</span>
               <span>{q.questionType}</span>
               {q.difficulty && <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{q.difficulty}</span>}

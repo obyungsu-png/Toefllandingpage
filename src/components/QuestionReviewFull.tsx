@@ -1133,6 +1133,7 @@ export function QuestionReviewFull({
                     onClearAll={handleClearAllHighlights}
                     language={language}
                     onLanguageChange={handleLanguageChange}
+                    resetKey={`${activeSection}-${currentQuestionIndex}`}
                   />
                 </div>
               )}
@@ -1173,6 +1174,7 @@ export function QuestionReviewFull({
                     onClearAll={handleClearAllHighlights}
                     language={language}
                     onLanguageChange={handleLanguageChange}
+                    resetKey={`${activeSection}-${currentQuestionIndex}`}
                   />
                 </div>
               )}
