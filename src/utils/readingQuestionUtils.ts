@@ -166,6 +166,43 @@ export function getQuestionRangeLabel(question: any, fallbackStart = 1): string 
 }
 
 /**
+ * 목록 내 위치를 기준으로 순차 번호 라벨을 계산.
+ * Complete Words(빈칸넣기)는 10문제(빈칸 수)만큼 번호를 차지하고,
+ * 다음 문제는 그 뒤부터 이어진다.
+ * 예) [CW(10 blanks), CW(10 blanks), CW(10 blanks), MC]
+ *     → Q1-Q10, Q11-Q20, Q21-Q30, Q31
+ * 반환값: question.id → 라벨 문자열 Map.
+ */
+export function computeSequentialLabels(questions: any[]): Map<string, string> {
+  const labels = new Map<string, string>();
+  if (!Array.isArray(questions)) return labels;
+  const sorted = [...questions].sort((a, b) => {
+    const ra = parseQuestionRange(a?.questionNumber);
+    const rb = parseQuestionRange(b?.questionNumber);
+    return (ra?.start ?? 0) - (rb?.start ?? 0);
+  });
+  let cursor = 1;
+  for (const q of sorted) {
+    const key = String(q?.id ?? '');
+    const isCW = isCompleteWordsType(q?.questionType);
+    const count = isCW ? Math.max(1, getCompleteWordsBlankCount(q)) : 1;
+    const label = count > 1 ? `Q${cursor}-Q${cursor + count - 1}` : `Q${cursor}`;
+    if (key) labels.set(key, label);
+    cursor += count;
+  }
+  return labels;
+}
+
+/**
+ * 한 질문의 sequential 라벨을 조회. Map에 없으면 questionNumber 기반 fallback.
+ */
+export function getSequentialLabel(question: any, labels?: Map<string, string>): string {
+  const key = String(question?.id ?? '');
+  if (labels && key && labels.has(key)) return labels.get(key)!;
+  return getQuestionRangeLabel(question);
+}
+
+/**
  * 단일 문제의 "문제 수"를 반환.
  * Complete Words (Q1-Q10)는 10문제로 계산. 일반 문제는 1문제.
  */

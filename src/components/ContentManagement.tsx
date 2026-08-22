@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Upload, FileText, Music, Video, Image as ImageIcon, Trash2, Edit, Eye, Plus, Book, Headphones, Mic, PenTool, BookOpen, LayoutGrid, List, X } from 'lucide-react';
 import { supabase as supabaseClient } from '../utils/supabase/client';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question } from '../utils/readingQuestionUtils';
+import { getQuestionRangeLabel, getTotalQuestionCount, parseQuestionRange, isCompleteWordsType, isModule2Question, computeSequentialLabels } from '../utils/readingQuestionUtils';
 import { computeChronoDisplayNumbers } from '../utils/testLabel';
 import { extractVocabFromTest, vocabToCSV, type ExtractedVocab } from '../utils/extractVocab';
 import { generateVocabPdf } from '../utils/generateVocabPdf';
@@ -1576,6 +1576,9 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
 
             const m1 = section.questions.filter(q => !(q.questionType||'').includes('Module 2'));
             const m2 = section.questions.filter(q => (q.questionType||'').includes('Module 2'));
+            const m1Labels = computeSequentialLabels(m1);
+            const m2Labels = computeSequentialLabels(m2);
+            const labelOf = (q: any, isMod2: boolean) => (isMod2 ? m2Labels : m1Labels).get(String(q?.id ?? '')) || getQuestionRangeLabel(q);
 
             return (
               <div className="grid grid-cols-2 gap-3">
@@ -1594,13 +1597,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m1.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-gray-50 transition-colors ${editingQuestion?.id === q.id ? 'border-[#2d7a7c] bg-[#f0fafa] ring-1 ring-[#2d7a7c]/30' : 'border-gray-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-[#2d7a7c]">{labelOf(q, false)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:labelOf(q, false),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -1622,13 +1625,13 @@ export function ContentManagement({ tests: testsProp, tpoTests, onAddTest, onUpd
                       <p className="text-center text-xs text-gray-400 py-4">문제 없음</p>
                     ) : m2.map((q) => (
                       <div key={q.id} className={`flex items-center gap-1.5 px-2 py-1 border rounded-md hover:bg-orange-50/60 transition-colors ${editingQuestion?.id === q.id ? 'border-orange-400 bg-orange-50 ring-1 ring-orange-300' : 'border-orange-100'}`}>
-                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">{getQuestionRangeLabel(q)}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-white rounded text-[10px] font-bold bg-orange-500">{labelOf(q, true)}</span>
                         {q.difficulty && <span className={`shrink-0 text-[10px] px-1 py-0.5 rounded border ${q.difficulty==='쉬움'?'border-green-400 text-green-600':q.difficulty==='어려움'?'border-red-400 text-red-600':'border-yellow-400 text-yellow-600'}`}>{q.difficulty}</span>}
                         <p className="text-[11px] text-gray-600 truncate flex-1">{q.questionText || (q.questionType||'').replace(' (Module 2)','')}</p>
                         <div className="flex gap-0.5 shrink-0">
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>setPreviewQuestion(q)}><Eye className="w-3 h-3"/></button>
                           <button className="p-0.5 rounded hover:bg-gray-200 text-gray-500" onClick={()=>{setSelectedSection(selectedSection);setEditingQuestion(q);setShowUploadForm(false);}}><Edit className="w-3 h-3"/></button>
-                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:getQuestionRangeLabel(q),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
+                          <button className="p-0.5 rounded hover:bg-red-100 text-red-400" onClick={()=>{setDeleteConfirmation({type:'question',id:q.id,name:labelOf(q, true),onConfirm:()=>{const ut={...test};const si=ut.sections.findIndex(s=>s.sectionType===selectedSection);if(si!==-1){ut.sections[si].questions=ut.sections[si].questions.filter(x=>x.id!==q.id);ut.updatedAt=new Date();onUpdateTest(ut);}setDeleteConfirmation(null);}})}}><Trash2 className="w-3 h-3"/></button>
                         </div>
                       </div>
                     ))}
@@ -7042,6 +7045,15 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   };
 
   if (parsed) {
+    const parsedM1 = parsed.filter((q: any) => !(q.questionType || '').includes('Module 2'));
+    const parsedM2 = parsed.filter((q: any) => (q.questionType || '').includes('Module 2'));
+    const parsedM1Labels = computeSequentialLabels(parsedM1);
+    const parsedM2Labels = computeSequentialLabels(parsedM2);
+    const parsedLabelOf = (q: any) => {
+      const isMod2 = (q.questionType || '').includes('Module 2');
+      const m = isMod2 ? parsedM2Labels : parsedM1Labels;
+      return m.get(String(q?.id ?? '')) || getQuestionRangeLabel(q);
+    };
     return (
       <div className="bg-white rounded-lg shadow-lg border border-green-200 p-6 animate-[fadeSlideUp_0.3s_ease-out]">
         <h3 className="text-xl font-medium text-gray-800 mb-4">
@@ -7053,7 +7065,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             const previewPassage = isCW && q.passageText ? previewCompleteWordsPassage(q.passageText) : '';
             return (
             <div key={i} className="bg-gray-50 border rounded-lg p-3 text-sm">
-              <span className="font-bold text-[#2d7a7c]">{getQuestionRangeLabel(q)}</span>
+              <span className="font-bold text-[#2d7a7c]">{parsedLabelOf(q)}</span>
               <span className="mx-2 text-gray-400">|</span>
               <span>{q.questionType}</span>
               {q.difficulty && <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">{q.difficulty}</span>}
