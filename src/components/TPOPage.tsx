@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
@@ -413,44 +414,45 @@ export function TPOPage({
         </div>
       </div>
 
-      {/* Pagination */}
-      {filteredNumbers.length > itemsPerPage && (
-        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-6">
-          <div className="flex justify-center items-center gap-2">
-            <button
-              className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
-                currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md'
-              }`}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              이전
-            </button>
-
-            {Array.from({ length: Math.ceil(filteredNumbers.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+      {/* Pagination — 화살표 + 페이지/총페이지만 간결히 표시 */}
+      {filteredNumbers.length > itemsPerPage && (() => {
+        const totalPages = Math.ceil(filteredNumbers.length / itemsPerPage);
+        const canPrev = currentPage > 1;
+        const canNext = currentPage < totalPages;
+        return (
+          <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-3 md:py-5">
+            <div className="flex justify-center items-center gap-3">
               <button
-                key={pageNum}
-                className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
-                  currentPage === pageNum ? 'bg-[#e67e22] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                aria-label="이전 페이지"
+                className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${
+                  canPrev ? 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md active:scale-95' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                 }`}
-                onClick={() => setCurrentPage(pageNum)}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={!canPrev}
               >
-                {pageNum}
+                <ChevronLeft className="w-4 h-4" strokeWidth={2.4} />
               </button>
-            ))}
 
-            <button
-              className={`px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
-                currentPage * itemsPerPage >= filteredNumbers.length ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md'
-              }`}
-              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredNumbers.length / itemsPerPage), prev + 1))}
-              disabled={currentPage * itemsPerPage >= filteredNumbers.length}
-            >
-              다음
-            </button>
+              <span className="text-sm font-semibold text-gray-600 select-none tabular-nums">
+                <span className="text-[#2d7a7c]">{currentPage}</span>
+                <span className="text-gray-400 mx-1">/</span>
+                {totalPages}
+              </span>
+
+              <button
+                aria-label="다음 페이지"
+                className={`flex items-center justify-center w-9 h-9 rounded-full transition-all ${
+                  canNext ? 'bg-[#2d7a7c] text-white hover:bg-[#1e5a5c] shadow-md active:scale-95' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                }`}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={!canNext}
+              >
+                <ChevronRight className="w-4 h-4" strokeWidth={2.4} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Info */}
       <div className="pb-12">

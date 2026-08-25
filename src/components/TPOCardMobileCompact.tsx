@@ -196,11 +196,22 @@ export function TPOCardMobileCompact({
         </div>
       </div>
 
-      {dateMemo && !/demonstration/i.test(dateMemo) && (
-        <div className="px-4 py-1.5 bg-gray-50 text-[10px] text-gray-500 font-medium truncate border-t border-gray-100">
-          {dateMemo}
-        </div>
-      )}
+      {(() => {
+        // dateMemo 노출 규칙 — 년/월/일 배지와 겹치는 순수 날짜 문자열(예: "1/1", "2026-01-01",
+        // "Jan 1")은 중복이라 숨기고, 실제 안내 메모만 보여준다.
+        if (!dateMemo) return null;
+        if (/demonstration/i.test(dateMemo)) return null;
+        const trimmed = dateMemo.trim();
+        const looksLikeDateOnly =
+          /^\d{1,4}[\/\-.]\d{1,2}([\/\-.]\d{1,4})?$/.test(trimmed) ||
+          /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.?\s*\d{1,2}(,?\s*\d{2,4})?$/i.test(trimmed);
+        if (looksLikeDateOnly) return null;
+        return (
+          <div className="px-4 py-1.5 bg-gray-50 text-[10px] text-gray-500 font-medium truncate border-t border-gray-100">
+            {trimmed}
+          </div>
+        );
+      })()}
 
       {/* 확장 액션 스트립 — 탭한 섹션의 컬러 테마 적용 */}
       {openSection && openStyle && !isLocked && (
