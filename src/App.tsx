@@ -7828,9 +7828,14 @@ function AppContent() {
         </Suspense>
       )}
       {/* Header — 모바일 노치/상태바 안전영역만큼 상단 여백 확보 (viewport-fit=cover)
-          padding-top으로 safe-area 만큼 확보하고 height는 유지 → 데스크톱은 영향 없음. */}
+          padding-top으로 safe-area 만큼 확보하고 base height는 유지. inline style로
+          Tailwind arbitrary value 파서 회피 (env(...) 안 쉼표 이슈). */}
       <div
-        className="bg-white box-border content-stretch flex flex-col pt-[env(safe-area-inset-top,0px)] h-[calc(56px+env(safe-area-inset-top,0px))] md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full"
+        className="bg-white box-border content-stretch flex flex-col md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full"
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          minHeight: 'calc(56px + env(safe-area-inset-top, 0px))',
+        }}
       >
         <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-2 md:px-8">
           {/* Logo */}
