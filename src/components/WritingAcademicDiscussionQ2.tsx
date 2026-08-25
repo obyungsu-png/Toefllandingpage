@@ -300,30 +300,41 @@ export function WritingAcademicDiscussionQ2({
                 Your Response:
               </h3>
 
+              {/* 시간 종료 안내 — TPO Start 실전 모드에서 시간 0이 되면 입력 잠금 */}
+              {timeRemaining <= 0 && !isReviewMode && (
+                <div className="mb-3 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
+                  ⏰ 작성 시간이 종료되었습니다. 실전 시간 규칙에 따라 더 이상 응답을 수정할 수 없습니다.
+                </div>
+              )}
+
               {/* Toolbar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-300">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleCut}
-                    className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1e6b73] text-white text-sm rounded hover:bg-[#0A6068] transition-colors"
+                    disabled={timeRemaining <= 0 && !isReviewMode}
+                    className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1e6b73] text-white text-sm rounded hover:bg-[#0A6068] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Cut
                   </button>
                   <button
                     onClick={handlePaste}
-                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                    disabled={timeRemaining <= 0 && !isReviewMode}
+                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Paste
                   </button>
                   <button
                     onClick={() => document.execCommand('undo')}
-                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                    disabled={timeRemaining <= 0 && !isReviewMode}
+                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Undo
                   </button>
                   <button
                     onClick={() => document.execCommand('redo')}
-                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
+                    disabled={timeRemaining <= 0 && !isReviewMode}
+                    className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Redo
                   </button>
@@ -357,7 +368,8 @@ export function WritingAcademicDiscussionQ2({
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }, 80);
                 }}
-                className="w-full p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none overflow-hidden"
+                readOnly={timeRemaining <= 0 && !isReviewMode}
+                className={`w-full p-4 md:p-5 text-[15px] md:text-[17px] leading-8 font-['Georgia',_serif] border border-[#d6d0c2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none overflow-hidden ${timeRemaining <= 0 && !isReviewMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 style={{ minHeight: '280px' }}
                 placeholder="Write your response here..."
               />

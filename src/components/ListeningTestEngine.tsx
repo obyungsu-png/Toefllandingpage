@@ -668,16 +668,24 @@ function ListeningQuestionScreen({
   onNext,
   isReviewMode = false,
 }: ListeningQuestionScreenProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  // 이전에 선택한 답이 있으면 복원 (Back → Next 로 돌아와도 클릭 상태 유지).
+  // 저장 키는 answerKey(전역 슬롯) 우선, 없으면 qNum.
+  const storageKey = answerKey ?? qNum;
+  const readSavedAnswer = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return (window as any).__moduleAnswers?.[storageKey] ?? null;
+  };
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(readSavedAnswer);
   const [showMustAnswer, setShowMustAnswer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
-  // Reset answer when question changes
+  // 문제(qNum/answerKey) 가 바뀌면 해당 문제의 저장된 답을 다시 복원.
   useEffect(() => {
-    setSelectedAnswer(null);
+    setSelectedAnswer(readSavedAnswer());
     setShowMustAnswer(false);
-  }, [qNum]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qNum, answerKey]);
 
   const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
   const audioUrl: string = question?.audioUrl || '';

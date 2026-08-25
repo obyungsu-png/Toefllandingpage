@@ -250,6 +250,13 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
               </button>
             </div>
 
+            {/* 시간 종료 안내 — TPO Start 실전 모드에서 시간 0이 되면 입력 잠금 */}
+            {timeRemaining <= 0 && !isReviewMode && (
+              <div className="mb-3 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
+                ⏰ 작성 시간이 종료되었습니다. 실전 시간 규칙에 따라 더 이상 응답을 수정할 수 없습니다.
+              </div>
+            )}
+
             {/* Text area */}
             <textarea
               value={emailBody}
@@ -260,7 +267,8 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
                   e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 80);
               }}
-              className="w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none"
+              readOnly={timeRemaining <= 0 && !isReviewMode}
+              className={`w-full h-64 md:h-96 p-3 md:p-4 text-sm md:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#1e6b73] resize-none ${timeRemaining <= 0 && !isReviewMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Start typing your email here..."
             />
 
