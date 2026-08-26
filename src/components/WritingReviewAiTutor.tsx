@@ -496,11 +496,21 @@ const COLOR_LEGEND: Array<{ color: string; label: string }> = [
 ];
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
-// ── AI 첨삭 캐시 (sessionStorage) ──
-// 같은 답안을 다시 열었을 때 이전 분석 결과·모범답안·업그레이드 문장이 그대로
-// 보이도록 sessionStorage 에 저장한다. 학생이 답안을 수정하면 캐시 키가 바뀌므로
-// 자동으로 무효화되어 새 분석을 요청하게 된다.
-const AI_TUTOR_CACHE_PREFIX = 'writing_ai_tutor_v1';
+// ── AI 첨삭 저장소 (localStorage — 회원 계정별) ──
+// 회원 기간 내내 (탈퇴/로그아웃 전까지) 첨삭 기록이 유지되도록 localStorage 에
+// 저장한다. 같은 브라우저에서 브라우저를 닫았다 다시 열어도 그대로 남아 있고,
+// 로그인 사용자별로 키를 분리해 서로 다른 계정의 첨삭이 섞이지 않도록 한다.
+// (완전한 크로스-디바이스 동기화가 필요하면 상위 앱에서 testResults 로 함께
+//  bubble up 시켜 Supabase 로 sync 시키면 됨 — 지금은 device-local persist.)
+const AI_TUTOR_STORE_PREFIX = 'writing_ai_tutor_v2';
+function readCurrentUserName(): string {
+  if (typeof window === 'undefined') return 'anon';
+  try {
+    const raw = localStorage.getItem('amx_userName');
+    const name = (raw || '').trim();
+    return name || 'anon';
+  } catch { return 'anon'; }
+}
 function hashKey(input: string): string {
   // FNV-1a 32bit 해시 — 문자열 답안을 짧은 키로 축약
   let h = 0x811c9dc5;
@@ -510,33 +520,50 @@ function hashKey(input: string): string {
   }
   return h.toString(16);
 }
-function aiTutorCacheKey(writingType: WritingType, answer: string): string {
-  return `${AI_TUTOR_CACHE_PREFIX}:${writingType}:${hashKey((answer || '').trim())}`;
+function aiTutorStoreKey(writingType: WritingType, answer: string): string {
+  const user = readCurrentUserName();
+  return `${AI_TUTOR_STORE_PREFIX}:${user}:${writingType}:${hashKey((answer || '').trim())}`;
 }
-interface AiTutorCachePayload {
+interface AiTutorStorePayload {
   analysis: AnalysisResult;
   semanticHighlights: SemanticHighlight[];
   upgradeSuggestions: UpgradeSuggestion[];
   savedAt: number;
+  ownerName: string;
+  writingType: WritingType;
+  /** 학생 답안 원문 프리뷰 (첫 240자) — 나중에 History 목록에서 어떤 답안이었는지 식별용 */
+  answerPreview: string;
 }
-function loadAiTutorCache(writingType: WritingType, answer: string): AiTutorCachePayload | null {
+function loadAiTutorStore(writingType: WritingType, answer: string): AiTutorStorePayload | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(aiTutorCacheKey(writingType, answer));
+    const raw = localStorage.getItem(aiTutorStoreKey(writingType, answer));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as AiTutorCachePayload;
+    const parsed = JSON.parse(raw) as AiTutorStorePayload;
     if (!parsed || !parsed.analysis) return null;
     return parsed;
   } catch {
     return null;
   }
 }
-function saveAiTutorCache(writingType: WritingType, answer: string, payload: Omit<AiTutorCachePayload, 'savedAt'>): void {
+function saveAiTutorStore(
+  writingType: WritingType,
+  answer: string,
+  payload: Omit<AiTutorStorePayload, 'savedAt' | 'ownerName' | 'writingType' | 'answerPreview'>
+): void {
   if (typeof window === 'undefined') return;
   try {
-    const full: AiTutorCachePayload = { ...payload, savedAt: Date.now() };
-    sessionStorage.setItem(aiTutorCacheKey(writingType, answer), JSON.stringify(full));
-  } catch { /* 저장 실패는 무시 — 캐시는 편의 기능 */ }
+    const full: AiTutorStorePayload = {
+      ...payload,
+      savedAt: Date.now(),
+      ownerName: readCurrentUserName(),
+      writingType,
+      answerPreview: (answer || '').slice(0, 240),
+    };
+    localStorage.setItem(aiTutorStoreKey(writingType, answer), JSON.stringify(full));
+  } catch {
+    // 저장 실패(quota 초과 등)는 무시 — 다음 첨삭이 저장되면 자동으로 회복됨
+  }
 }
 
 export function WritingReviewAiTutor({
@@ -548,8 +575,8 @@ export function WritingReviewAiTutor({
   const [studentText, setStudentText] = useState(userAnswer || '');
   const [rewrittenText, setRewrittenText] = useState(userAnswer || '');
   // 이전 첨삭 결과가 있으면 복원 → 팝업을 닫았다 다시 열어도 재분석 없이 그대로 보임
-  const cachedOnMount = loadAiTutorCache(writingType, userAnswer || '');
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(cachedOnMount?.analysis ?? null);
+  const storedOnMount = loadAiTutorStore(writingType, userAnswer || '');
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(storedOnMount?.analysis ?? null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingModel, setIsGeneratingModel] = useState(false);
   // AI 분석·모범 에세이 생성에 사용할 모델 — 우측 AI 튜터 위젯과 동일한
@@ -571,12 +598,12 @@ export function WritingReviewAiTutor({
   const [liveScore, setLiveScore] = useState<number | null>(null);
 
   // 2026 트렌드 상태 — 캐시가 있으면 함께 복원
-  const [semanticHighlights, setSemanticHighlights] = useState<SemanticHighlight[]>(cachedOnMount?.semanticHighlights ?? []);
-  const [upgradeSuggestions, setUpgradeSuggestions] = useState<UpgradeSuggestion[]>(cachedOnMount?.upgradeSuggestions ?? []);
+  const [semanticHighlights, setSemanticHighlights] = useState<SemanticHighlight[]>(storedOnMount?.semanticHighlights ?? []);
+  const [upgradeSuggestions, setUpgradeSuggestions] = useState<UpgradeSuggestion[]>(storedOnMount?.upgradeSuggestions ?? []);
   const [activeUpgradeIdx, setActiveUpgradeIdx] = useState<number | null>(null);
   // 캐시로부터 복원된 첨삭이면 점수 탭으로 초기 이동 (사용자가 다시 열자마자 결과를 볼 수 있게)
   useEffect(() => {
-    if (cachedOnMount) setMobileView('score');
+    if (storedOnMount) setMobileView('score');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -719,7 +746,7 @@ ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 �
         setUpgradeSuggestions(nextUpgrades);
         setMobileView('score');
         // 세션 캐시에 저장 → 팝업을 닫았다 다시 열어도 첨삭이 그대로 유지됨
-        saveAiTutorCache(writingType, rewrittenText, {
+        saveAiTutorStore(writingType, rewrittenText, {
           analysis: nextAnalysis,
           semanticHighlights: nextHighlights,
           upgradeSuggestions: nextUpgrades,
@@ -755,7 +782,7 @@ ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 �
           modelEssay: { content, rationale: '학생 원본의 논리를 유지하되 어휘/문법/구조를 승급시킨 모범 답안입니다.' },
         };
         // 모범 에세이도 캐시에 함께 저장 (다시 열었을 때 유지)
-        saveAiTutorCache(writingType, rewrittenText, {
+        saveAiTutorStore(writingType, rewrittenText, {
           analysis: next,
           semanticHighlights,
           upgradeSuggestions,
