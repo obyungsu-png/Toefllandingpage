@@ -414,58 +414,81 @@ export function TPOPage({
         </div>
       </div>
 
-      {/* Pagination — 반응형: 모바일은 원형 아이콘만, 데스크톱은 "이전 / 다음" 텍스트 pill 형태 */}
+      {/* Pagination — 카드형 컨테이너 + 이전/다음 버튼 + 페이지 번호 pill + 현재 페이지 뱃지 */}
       {filteredNumbers.length > itemsPerPage && (() => {
         const totalPages = Math.ceil(filteredNumbers.length / itemsPerPage);
         const canPrev = currentPage > 1;
         const canNext = currentPage < totalPages;
-        const prevBase = 'group inline-flex items-center gap-1 md:gap-2 font-semibold transition-all select-none';
-        const prevActive = 'text-[#2d7a7c] hover:text-[#1e5a5c]';
-        const prevDisabled = 'text-gray-300 cursor-not-allowed';
+
+        // 현재 페이지 주변으로 최대 5개 페이지 번호를 노출 (양 끝은 항상 포함)
+        const pageNumbers: (number | 'gap')[] = [];
+        const push = (v: number | 'gap') => {
+          if (pageNumbers[pageNumbers.length - 1] !== v) pageNumbers.push(v);
+        };
+        const window = 1;
+        for (let p = 1; p <= totalPages; p++) {
+          if (p === 1 || p === totalPages || (p >= currentPage - window && p <= currentPage + window)) {
+            push(p);
+          } else if (p === currentPage - window - 1 || p === currentPage + window + 1) {
+            push('gap');
+          }
+        }
+
+        const prevNextBase = 'group inline-flex items-center gap-2 rounded-xl px-3 md:px-4 py-2 font-semibold transition-all select-none border';
+        const prevNextActive = 'text-[#2d7a7c] border-[#2d7a7c]/25 bg-white hover:bg-[#2d7a7c] hover:text-white hover:border-[#2d7a7c] hover:shadow-md active:scale-[0.97]';
+        const prevNextDisabled = 'text-gray-300 border-gray-100 bg-gray-50 cursor-not-allowed';
+
         return (
-          <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-3 md:py-5">
-            <div className="flex justify-center items-center gap-3 md:gap-6">
+          <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-6">
+            <div className="mx-auto flex items-center justify-center gap-2 md:gap-3 rounded-2xl border border-gray-100 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.04)] px-3 md:px-5 py-2.5 md:py-3 w-fit">
+
+              {/* 이전 버튼 */}
               <button
                 aria-label="이전 페이지"
-                className={`${prevBase} ${canPrev ? prevActive : prevDisabled}`}
+                className={`${prevNextBase} ${canPrev ? prevNextActive : prevNextDisabled}`}
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={!canPrev}
               >
-                <span
-                  className={`flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full transition-all ${
-                    canPrev
-                      ? 'bg-[#e6f2f2] group-hover:bg-[#2d7a7c] group-hover:text-white group-active:scale-95'
-                      : 'bg-gray-100'
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" strokeWidth={2.4} />
-                </span>
+                <ChevronLeft className="w-4 h-4" strokeWidth={2.4} />
                 <span className="hidden md:inline text-sm">이전</span>
               </button>
 
-              <span className="text-sm md:text-base font-semibold text-gray-500 select-none tabular-nums px-1">
-                <span className="text-[#2d7a7c] text-base md:text-lg font-bold">{currentPage}</span>
-                <span className="text-gray-300 mx-1.5">/</span>
-                <span>{totalPages}</span>
-                <span className="hidden md:inline text-xs text-gray-400 ml-2">페이지</span>
+              {/* 페이지 번호 pill 그룹 */}
+              <div className="flex items-center gap-1 md:gap-1.5 px-1 md:px-2">
+                {pageNumbers.map((p, i) =>
+                  p === 'gap' ? (
+                    <span key={`gap-${i}`} className="w-6 text-center text-gray-300 select-none">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      aria-current={p === currentPage ? 'page' : undefined}
+                      className={`min-w-[32px] md:min-w-[36px] h-8 md:h-9 px-2 rounded-lg text-sm font-semibold transition-all tabular-nums ${
+                        p === currentPage
+                          ? 'bg-gradient-to-br from-[#2d7a7c] to-[#1e6b73] text-white shadow-md scale-105'
+                          : 'text-gray-600 hover:bg-[#e6f2f2] hover:text-[#2d7a7c] active:scale-95'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* 총 페이지 안내 */}
+              <span className="hidden md:inline text-xs text-gray-400 border-l border-gray-200 pl-3 ml-1 tabular-nums">
+                총 <span className="text-gray-600 font-semibold">{totalPages}</span> 페이지
               </span>
 
+              {/* 다음 버튼 */}
               <button
                 aria-label="다음 페이지"
-                className={`${prevBase} ${canNext ? prevActive : prevDisabled}`}
+                className={`${prevNextBase} ${canNext ? prevNextActive : prevNextDisabled}`}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={!canNext}
               >
                 <span className="hidden md:inline text-sm">다음</span>
-                <span
-                  className={`flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-full transition-all ${
-                    canNext
-                      ? 'bg-[#e6f2f2] group-hover:bg-[#2d7a7c] group-hover:text-white group-active:scale-95'
-                      : 'bg-gray-100'
-                  }`}
-                >
-                  <ChevronRight className="w-4 h-4" strokeWidth={2.4} />
-                </span>
+                <ChevronRight className="w-4 h-4" strokeWidth={2.4} />
               </button>
             </div>
           </div>
