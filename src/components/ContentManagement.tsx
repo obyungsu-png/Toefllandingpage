@@ -6742,16 +6742,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               finalType = `${qType} (Module 2)`;
             }
 
-            const optionsRaw = [get(iA), get(iB), get(iC), get(iD)];
-            const options = optionsRaw.filter(o => o !== '');
-
-            // correctAnswer letter shorthand — TOEFL 정답표는 대부분 A/B/C/D 문자만 제공하므로
-            // 단일 문자로 들어오면 해당 optionA~D 텍스트로 자동 치환. (get(iAns) 를 오버라이드)
-            const rawAns = get(iAns);
-            const letterMatch = /^\s*([A-Da-d])\s*$/.exec(rawAns);
-            const answerFromLetter = letterMatch ? optionsRaw[letterMatch[1].toUpperCase().charCodeAt(0) - 65] : '';
-            const resolvedAnswer = letterMatch && answerFromLetter ? answerFromLetter : rawAns;
-            const getAns = () => resolvedAnswer;
+            const options = [get(iA), get(iB), get(iC), get(iD)].filter(o => o !== '');
 
             const rawNum = get(iNum);
             const questionNumber = rawNum || r;
@@ -6951,7 +6942,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                   questionText: interviewText || `Answer the researcher's question. (Question ${n} — audio only)`,
                   questionType: finalType,
                   options,
-                  correctAnswer: getAns() || undefined,
+                  correctAnswer: get(iAns) || undefined,
                   explanation: get(iExp) || undefined,
                   passageTitle: finalPassageTitle,
                   passageText: finalPassageText,
@@ -6968,7 +6959,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 questionText: isBuildSentence ? bsQuestionText : get(iQText),
                 questionType: finalType,
                 options,
-                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : getAns(),
+                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
                 explanation: get(iExp) || undefined,
                 passageTitle: finalPassageTitle,
                 passageText: isBuildSentence ? bsPassageText : finalPassageText,
