@@ -16,6 +16,43 @@ interface VocabularyDay {
   name: string;
 }
 
+// ── DAY 라벨 헬퍼 — 어휘 PDF/Word 출력물에 선택된 DAY 표시용 ──────────────────
+// [1,2,3,5] → "DAY 1-3, DAY 5"  /  [4] → "DAY 4"
+export function formatDayLabel(days: number[]): string {
+  const valid = (days || []).filter(d => Number.isFinite(d)).sort((a, b) => a - b);
+  if (valid.length === 0) return '';
+  const parts: string[] = [];
+  let rangeStart = valid[0];
+  let prev = valid[0];
+  for (let i = 1; i <= valid.length; i++) {
+    const cur = valid[i];
+    if (cur !== prev + 1) {
+      parts.push(rangeStart === prev ? `DAY ${rangeStart}` : `DAY ${rangeStart}-${prev}`);
+      rangeStart = cur;
+    }
+    if (cur !== undefined) prev = cur;
+  }
+  return parts.join(', ');
+}
+
+// 파일명용 — [1,2,3,5] → "DAY1-3,5" (공백 없음)
+export function formatDayFileTag(days: number[]): string {
+  const valid = (days || []).filter(d => Number.isFinite(d)).sort((a, b) => a - b);
+  if (valid.length === 0) return '';
+  const parts: string[] = [];
+  let rangeStart = valid[0];
+  let prev = valid[0];
+  for (let i = 1; i <= valid.length; i++) {
+    const cur = valid[i];
+    if (cur !== prev + 1) {
+      parts.push(rangeStart === prev ? `${rangeStart}` : `${rangeStart}-${prev}`);
+      rangeStart = cur;
+    }
+    if (cur !== undefined) prev = cur;
+  }
+  return `DAY${parts.join(',')}`;
+}
+
 interface SATVocaPageProps {
   testType?: 'SAT' | 'ACT';
   onBack?: () => void;
@@ -433,6 +470,12 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
           spacing: { after: 80 },
           children: [new TextRun({ text: dateStr, size: 18, color: '666666' })]
         }),
+        // 선택된 DAY 라벨 — 출력물 헤더에 표시 (예: "DAY 1-3, DAY 5")
+        ...(formatDayLabel(selectedDays) ? [new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 60 },
+          children: [new TextRun({ text: formatDayLabel(selectedDays), size: 22, color: instructionColor, bold: true })]
+        })] : []),
       ];
 
       const nameScoreTable = new Table({
@@ -537,7 +580,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     const doc = new Document({ sections });
     const blob = await Packer.toBlob(doc);
     const fileName = mode === 'test' ? '시험지' : mode === 'answer' ? '답안지' : '시험지_답안지';
-    saveAs(blob, `TOEFL_어휘_${dirLabel}_${fileName}_${dateStr}.docx`);
+    const dayFileTag = formatDayFileTag(selectedDays);
+    saveAs(blob, `TOEFL_어휘_${dirLabel}_${fileName}${dayFileTag ? `_${dayFileTag}` : ''}_${dateStr}.docx`);
     setShowWordDownloadModal(false);
     setShowUnifiedDownloadModal(false);
   };
@@ -641,7 +685,10 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         <div style="width:760px;padding:20px 17px;font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#fff">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="text-align:left;color:#666;font-size:11px">${dateStr}</div>
-            <div style="display:inline-block;padding:3px 12px;border-radius:4px;background:${cfg.badgeBg};color:#fff;font-size:10px;font-weight:bold;letter-spacing:1px">${cfg.badgeText}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${formatDayLabel(selectedDays) ? `<div style="display:inline-block;padding:3px 10px;border-radius:4px;border:1px solid ${cfg.headerColor};color:${cfg.headerColor};font-size:10px;font-weight:bold">${formatDayLabel(selectedDays)}</div>` : ''}
+              <div style="display:inline-block;padding:3px 12px;border-radius:4px;background:${cfg.badgeBg};color:#fff;font-size:10px;font-weight:bold;letter-spacing:1px">${cfg.badgeText}</div>
+            </div>
           </div>
           ${nameScoreHtml}
           <div style="text-align:center;padding:6px 0;margin-bottom:8px;background:${cfg.headerBg};border-radius:4px;border-left:4px solid ${cfg.headerColor}">
@@ -699,7 +746,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
 
     const dirLabel = direction === 'eng_to_kor' ? '영한' : direction === 'kor_to_eng' ? '한영' : '영영';
     const fileName = mode === 'test' ? '시험지' : mode === 'answer' ? '답안지' : '시험지_답안지';
-    pdfDoc.save(`TOEFL_어휘_${dirLabel}_${fileName}_${dateStr}.pdf`);
+    const dayFileTag = formatDayFileTag(selectedDays);
+    pdfDoc.save(`TOEFL_어휘_${dirLabel}_${fileName}${dayFileTag ? `_${dayFileTag}` : ''}_${dateStr}.pdf`);
     setShowPdfDownloadModal(false);
     setShowUnifiedDownloadModal(false);
   };
