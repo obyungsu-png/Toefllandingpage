@@ -86,14 +86,14 @@ const TAB_META: Record<string, { icon: LucideIcon; title: string; description: s
   },
 };
 
-function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): DictationExercise {
+function buildDictationExercise(_variant: ReviewVariant, cmsScript?: string): DictationExercise | null {
   if (cmsScript) {
     const allLines = cmsScript.split('\n').map(l => l.trim()).filter(Boolean);
     const narratorPattern = /^Narrator\s*:/i;
 
     // Narrator 안내문 제외, 나머지 전체 줄 유지
     const cleanLines = allLines.filter(l => !narratorPattern.test(l) && l.trim());
-    if (cleanLines.length === 0) return buildFallbackDictation(variant);
+    if (cleanLines.length === 0) return null;
 
     // 전체 스크립트를 하나의 문자열로 (fullSentence = TTS용)
     const fullScript = cleanLines.join(' ');
@@ -155,24 +155,7 @@ function buildDictationExercise(variant: ReviewVariant, cmsScript?: string): Dic
     };
   }
 
-  return buildFallbackDictation(variant);
-}
-/** CMS 스크립트 없을 때 사용하는 기본값 */
-function buildFallbackDictation(variant: ReviewVariant): DictationExercise {
-  if (variant === 'speaking-repeat') {
-    return {
-      prompt: '음성 아이콘을 누르고, 들리는 문장을 빈칸에 입력하세요.',
-      fullSentence: 'Please welcome the visitors and guide them to the main hall.',
-      blanks: ['welcome', 'guide', 'main'],
-      segments: ['Please ', ' the visitors and ', ' them to the ', ' hall.'],
-    };
-  }
-  return {
-    prompt: '음성 아이콘을 누르고, 들리는 내용을 받아쓰세요.',
-    fullSentence: 'The orientation session starts at nine and students should bring their ID cards.',
-    blanks: ['orientation', 'starts', 'students'],
-    segments: ['The ', ' session ', ' at nine and ', ' should bring their ID cards.'],
-  };
+  return null;
 }
 
 /** vocabularyNote에서 단어/구문의 한국어 뜻을 로컬 조회.
@@ -422,7 +405,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   useEffect(() => {
     setActiveTab(null);
     setPanelPinned(false);
-    setDictationInputs(Array(dictationExercise.blanks.length).fill(''));
+    setDictationInputs(Array((dictationExercise?.blanks.length ?? 0)).fill(''));
     setDictationChecked(false);
     setHintIndices(new Set());
     setWrongAttempts(0);
@@ -444,7 +427,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
     setRecordedUrl(null);
-  }, [contentKey, dictationExercise.blanks.length, tabs]);
+  }, [contentKey, (dictationExercise?.blanks.length ?? 0), tabs]);
 
   // ── audioUrl 변경 시 기존 오디오 정리 — 문제 바뀌면 이전 오디오가 재생되지 않도록 ──
   useEffect(() => {
@@ -830,10 +813,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const normalizeDictationValue = (value: string) =>
     value.trim().toLowerCase().replace(/[.,!?;:'"]/g, '').replace(/\s+/g, ' ');
 
-  const isDictationCorrect = (index: number) => normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
+  const isDictationCorrect = (index: number) => !!dictationExercise && normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
   // 정답 확인 — 틀린 빈칸은 오답 노트에 저장 + 틀린 횟수 추적 (3회 이상 시 힌트 권유)
   const handleCheckDictation = () => {
+    if (!dictationExercise) return;
     setDictationChecked(true);
     const wrongEntries: { word: string; sentence: string; contentKey: string }[] = [];
     let wrongCount = 0;
@@ -1137,7 +1121,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           {dictationExercise.segments.map((segment, index) => (
             <span key={index}>
               <span>{segment}</span>
-              {index < dictationExercise.blanks.length && (
+              {index < (dictationExercise?.blanks.length ?? 0) && (
                 <span className="inline-flex items-center gap-1 align-bottom">
                   <input
                     ref={(element) => { dictationInputRefs.current[index] = element; }}
@@ -1149,7 +1133,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                       setDictationChecked(false);
                     }}
                     onKeyDown={(event) => {
-                      if ((event.key === 'Tab' || event.key === 'Enter') && index < dictationExercise.blanks.length - 1) {
+                      if ((event.key === 'Tab' || event.key === 'Enter') && index < (dictationExercise?.blanks.length ?? 0) - 1) {
                         event.preventDefault();
                         dictationInputRefs.current[index + 1]?.focus();
                         dictationInputRefs.current[index + 1]?.select();
@@ -1157,7 +1141,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                       if (event.key !== 'Backspace' && event.key !== 'Delete' && event.key.length === 1) {
                         const projected = (dictationInputs[index] || '') + event.key;
                         const answerLen = normalizeDictationValue(dictationExercise.blanks[index]).length;
-                        if (index < dictationExercise.blanks.length - 1 && normalizeDictationValue(projected).length >= answerLen && answerLen >= 3) {
+                        if (index < (dictationExercise?.blanks.length ?? 0) - 1 && normalizeDictationValue(projected).length >= answerLen && answerLen >= 3) {
                           setTimeout(() => { dictationInputRefs.current[index + 1]?.focus(); dictationInputRefs.current[index + 1]?.select(); }, 50);
                         }
                       }
@@ -1203,7 +1187,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           </button>
           {dictationChecked && (
             <p className="text-xs text-[#64748b]">
-              {dictationExercise.blanks.filter((_, i) => isDictationCorrect(i)).length}/{dictationExercise.blanks.length} 정답
+              {dictationExercise.blanks.filter((_, i) => isDictationCorrect(i)).length}/{(dictationExercise?.blanks.length ?? 0)} 정답
             </p>
           )}
           {wrongAttempts >= 3 && dictationChecked && dictationExercise.blanks.some((_, i) => !isDictationCorrect(i)) && (
@@ -1611,13 +1595,30 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     );
   };
 
-  const renderDictation = () => (
-    <div className="space-y-3">
-      {renderDictationHeader()}
-      {dictationMode === 'training' ? renderTrainingMode() : renderReviewMode()}
-      {renderSelectionPopup()}
-    </div>
-  );
+  const renderDictation = () => {
+    // scriptText 가 CMS에 등록되지 않았거나 파싱되지 않은 경우 — 이전에는 하드코딩된
+    // "orientation session..." 문장이 노출되어 음성과 다르다는 오해를 유발했음.
+    // 이제는 안내 배너만 표시하고 훈련 UI 자체를 렌더하지 않는다.
+    if (!dictationExercise) {
+      return (
+        <div className="space-y-3">
+          {renderDictationHeader()}
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+            이 문제에는 <b>받아쓰기 스크립트(scriptText)</b>가 등록되어 있지 않아 훈련을 진행할 수 없습니다.
+            <br />
+            CMS에서 해당 리스닝 문제의 스크립트를 입력한 뒤 다시 시도해 주세요.
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-3">
+        {renderDictationHeader()}
+        {dictationMode === 'training' ? renderTrainingMode() : renderReviewMode()}
+        {renderSelectionPopup()}
+      </div>
+    );
+  };
   const renderWords = () => {
     if (vocabularyNote) {
       const lines = vocabularyNote.split('\n').filter(l => l.trim());
