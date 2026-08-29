@@ -6751,21 +6751,41 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             let finalPassageText = passageText;
             let finalPassageTitle = get(iPTitle) || undefined;
 
-            // Daily Life 구조화 서식 감지 — 두 가지 입력 방식을 모두 허용:
+            // Daily Life 구조화 서식 감지 — 세 가지 입력 방식을 모두 허용:
             //   (a) passageText 셀 안에 raw JSON 이 이미 들어 있는 경우
             //       예: {"structure":"flyer","color":"orange","fields":{...}}
+            //   (a2) 간이 JSON 형태 — {"type":"notice","title":"...","body":"..."} 처럼
+            //        top-level 필드를 쓰는 CSV 도 자동으로 정규화
             //   (b) 사람이 편집하기 쉬운 "유형: email\n필드:\nto: ..." 형태
             //       — 이 경우 텍스트/AI 모드와 동일한 구조화 JSON으로 자동 변환
             const looksLikeJson =
-              !!passageText && /^\s*\{[\s\S]*"structure"\s*:/.test(passageText);
+              !!passageText && /^\s*\{[\s\S]*(?:"structure"|"type")\s*:/.test(passageText);
             if (looksLikeJson) {
               try {
                 const parsed = JSON.parse(passageText!);
-                const structure = typeof parsed?.structure === 'string' ? parsed.structure : undefined;
-                const fields = parsed?.fields && typeof parsed.fields === 'object' ? parsed.fields : undefined;
+                // structure(정식) 또는 type(간이) 를 모두 인식
+                const rawKind = typeof parsed?.structure === 'string'
+                  ? parsed.structure
+                  : (typeof parsed?.type === 'string' ? parsed.type : undefined);
+                const structure = normalizeDailyFormat(rawKind) || rawKind;
+                // fields 가 없으면 top-level 필드(title/subtitle/body/…)를 fields 로 승격
+                let fields: Record<string, string> | undefined;
+                if (parsed?.fields && typeof parsed.fields === 'object') {
+                  fields = parsed.fields as Record<string, string>;
+                } else if (structure) {
+                  const promoted: Record<string, string> = {};
+                  for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+                    if (k === 'structure' || k === 'type' || k === 'color' || k === 'templateId' || k === 'fields') continue;
+                    if (typeof v === 'string') promoted[k] = v;
+                  }
+                  const mapped = mapFieldKeys(structure, promoted);
+                  if (Object.keys(mapped).length > 0) fields = mapped;
+                }
                 if (structure && fields && Object.keys(fields).length > 0) {
                   // Ensure templateId + color defaults so the runtime renderer picks it up.
-                  const color = typeof parsed?.color === 'string' ? parsed.color : 'teal';
+                  // 색상 기본값 — flyer 는 오렌지 톤, 그 외는 teal (TPO 표준과 일치)
+                  const defaultColor = structure === 'flyer' ? 'orange' : 'teal';
+                  const color = typeof parsed?.color === 'string' ? parsed.color : defaultColor;
                   finalPassageText = JSON.stringify({
                     templateId: parsed.templateId || `csv-${structure}`,
                     structure,
