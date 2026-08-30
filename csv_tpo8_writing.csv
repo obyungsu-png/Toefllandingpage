@@ -1,0 +1,25 @@
+questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName,context
+1,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The one that has the fastest processor will fit my needs perfectly.,,,,Which laptop are you planning to buy?
+2,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The invitation I received had the wrong address.,,,,Why didn't you go to the freshman orientation dinner last night?
+3,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Can you tell me whether it focuses on strength training or cardio?,,,,I signed up for the new fitness class at the school gym.
+4,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I believe it would be best to ask her friends who know her schedule.,,,,When should we have the surprise party for your classmate?
+5,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I didn't watch it because I had other plans.,,,,Did you watch the university cricket match last night?
+6,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Do you know if they will hold another session soon?,,,,The seminar on contemporary literature was fascinating.
+7,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The topic they are discussing is not relevant to my research.,,,,Why aren't you attending the seminar today?
+8,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,They are in the classroom that has the blue walls.,,,,Where did you leave your textbooks?
+9,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,What kind of things does your classmate like?,,,,I need to buy a gift for my classmate's birthday.
+10,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The book that my professor had assigned was available at the library.,,,,Did you have any trouble getting your textbook?
+11,Write an Email,보통,,,"To: Customer Service
+Subject: Recent Furniture Purchase",,,,,,"Write an email to customer service. In your email, do the following:
+• Mention what you particularly liked about the furniture.
+• Describe the issue you noticed with the furniture.
+• Suggest a resolution for the problem.
+Write as much as you can and in complete sentences.",,,,,,,,,"You recently purchased new furniture for your dorm room from an online store, and you are satisfied with it in general. However, you noticed some issues with the furniture. You need to contact customer service about the issue."
+12,Academic Discussion,보통,,,"Dr. Gupta: Today we'll discuss how different factors affect educational outcomes. Clearly, the quality of teaching and the resources available to students play a significant role in their academic success. On the other hand, some people believe that a student's home environment and parental involvement are equally, if not more, important. Which do you believe plays a larger role in a student's educational outcomes? Why?
+
+Claire: I think that the home environment and parental involvement are crucial. Students who have supportive parents and a stable home life tend to perform better academically. Parents who are involved in their child's education can provide additional support and encouragement.
+
+Paul: I believe that the quality of teaching and the resources available at school are more important. Schools that provide a positive learning environment and the necessary tools for learning can significantly impact a student's academic achievements.",,,,,,,,,,,,,,"Your professor is teaching a class on education. Write a post responding to the professor's question. In your response, you should do the following:
+• Express and support your opinion.
+• Make a contribution to the discussion in your own words.
+An effective response will contain at least 100 words."
