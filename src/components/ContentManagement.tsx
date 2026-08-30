@@ -6872,6 +6872,18 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 const stripped = answerSentence.replace(/[.?]$/, '').trim();
                 bsWords = stripped.split(/\s+/).filter(Boolean);
               }
+              // explanation 컬럼에 "단어은행: ..." (또는 "Word bank: ...") 형태의
+              // 구문 청크(| 로 구분)가 있으면 correctAnswer를 공백으로 쪼개는 대신
+              // 그 청크를 words로 사용합니다 (TPO7 형식).
+              // 예: "단어은행: is close | to my | hometown is | my favorite | spot | the beach that"
+              {
+                const explRaw = get(iExp);
+                const bankMatch = explRaw.match(/^\s*(?:단어\s*은행|word\s*bank)\s*[:：]\s*([\s\S]+)$/im);
+                if (bankMatch) {
+                  const chunks = bankMatch[1].split('|').map(c => c.trim()).filter(Boolean);
+                  if (chunks.length > 0) bsWords = chunks;
+                }
+              }
               // 표준 CSV 양식(csv_4.27_writing_1 기준)에서는 상황 프롬프트가
               // explanation 컬럼에 "Prompt: ..." 형태로 들어옵니다.
               // context 컬럼이 비어 있으면 그 문자열을 회색 상황 박스로 승격.

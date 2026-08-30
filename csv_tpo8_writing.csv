@@ -1,25 +1,42 @@
-questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName,context
-1,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The one that has the fastest processor will fit my needs perfectly.,,,,Which laptop are you planning to buy?
-2,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The invitation I received had the wrong address.,,,,Why didn't you go to the freshman orientation dinner last night?
-3,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Can you tell me whether it focuses on strength training or cardio?,,,,I signed up for the new fitness class at the school gym.
-4,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I believe it would be best to ask her friends who know her schedule.,,,,When should we have the surprise party for your classmate?
-5,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I didn't watch it because I had other plans.,,,,Did you watch the university cricket match last night?
-6,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Do you know if they will hold another session soon?,,,,The seminar on contemporary literature was fascinating.
-7,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The topic they are discussing is not relevant to my research.,,,,Why aren't you attending the seminar today?
-8,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,They are in the classroom that has the blue walls.,,,,Where did you leave your textbooks?
-9,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,What kind of things does your classmate like?,,,,I need to buy a gift for my classmate's birthday.
-10,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The book that my professor had assigned was available at the library.,,,,Did you have any trouble getting your textbook?
+﻿questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName,context
+1,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The one that has the fastest processor will fit my needs perfectly.,단어은행: the one | that has | the fastest | processor will | fit my | needs perfectly,,,Which laptop are you planning to buy?
+2,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The invitation I received had the wrong address.,단어은행: the invitation | I received | had the | wrong address,,,Why didn't you go to the freshman orientation dinner last night?
+3,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Can you tell me whether it focuses on strength training or cardio?,단어은행: can you | tell me | whether it | focuses on | strength training | or cardio,,,I signed up for the new fitness class at the school gym.
+4,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I believe it would be best to ask her friends who know her schedule.,단어은행: I believe | it would be | best to ask | her friends | who know | her schedule,,,When should we have the surprise party for your classmate?
+5,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,I didn't watch it because I had other plans.,단어은행: I | didn't watch | it because | I had | other plans,,,Did you watch the university cricket match last night?
+6,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,Do you know if they will hold another session soon?,단어은행: do you | know if | they will | hold another | session soon,,,The seminar on contemporary literature was fascinating.
+7,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The topic they are discussing is not relevant to my research.,단어은행: the topic | they are | discussing is | not relevant | to my | research,,,Why aren't you attending the seminar today?
+8,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,They are in the classroom that has the blue walls.,단어은행: they | are in | the classroom | that has | the blue | walls,,,Where did you leave your textbooks?
+9,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,What kind of things does your classmate like?,단어은행: what | kind of | things does | your classmate | like,,,I need to buy a gift for my classmate's birthday.
+10,Build a Sentence,보통,,,,,,,,Make an appropriate sentence.,,,,,The book that my professor had assigned was available at the library.,단어은행: the book | that my | professor had | assigned was | available at | the library,,,Did you have any trouble getting your textbook?
 11,Write an Email,보통,,,"To: Customer Service
-Subject: Recent Furniture Purchase",,,,,,"Write an email to customer service. In your email, do the following:
+Subject: Recent Furniture Purchase",,,,,"Write an email to customer service. In your email, do the following:
 • Mention what you particularly liked about the furniture.
 • Describe the issue you noticed with the furniture.
 • Suggest a resolution for the problem.
-Write as much as you can and in complete sentences.",,,,,,,,,"You recently purchased new furniture for your dorm room from an online store, and you are satisfied with it in general. However, you noticed some issues with the furniture. You need to contact customer service about the issue."
+Write as much as you can and in complete sentences.",,,,,자유 응답 (모범 답안 참조),"평가 기준: (1) 가구에 대해 특히 마음에 들었던 점 언급, (2) 가구에서 발견한 문제점 설명, (3) 해결 방안 제안.
+
+[모범 답안]
+Dear Customer Service,
+
+I recently purchased a desk and chair set for my dorm room from your online store, and overall I am very satisfied with my purchase. The quality of the materials is excellent, and the assembly instructions were clear and easy to follow.
+
+However, I noticed a small issue with the furniture. One of the desk legs is slightly uneven, which causes the desk to wobble when I write or use my laptop. Additionally, a screw on the chair armrest appears to be loose.
+
+I would appreciate it if you could send me a replacement part for the desk leg or provide instructions on how to fix the wobbling. If necessary, I would also be willing to exchange the item for a new one.
+
+Thank you for your attention to this matter.
+
+Best regards,
+Student",,,"You recently purchased new furniture for your dorm room from an online store, and you are satisfied with it in general. However, you noticed some issues with the furniture. You need to contact customer service about the issue."
 12,Academic Discussion,보통,,,"Dr. Gupta: Today we'll discuss how different factors affect educational outcomes. Clearly, the quality of teaching and the resources available to students play a significant role in their academic success. On the other hand, some people believe that a student's home environment and parental involvement are equally, if not more, important. Which do you believe plays a larger role in a student's educational outcomes? Why?
 
 Claire: I think that the home environment and parental involvement are crucial. Students who have supportive parents and a stable home life tend to perform better academically. Parents who are involved in their child's education can provide additional support and encouragement.
 
-Paul: I believe that the quality of teaching and the resources available at school are more important. Schools that provide a positive learning environment and the necessary tools for learning can significantly impact a student's academic achievements.",,,,,,,,,,,,,,"Your professor is teaching a class on education. Write a post responding to the professor's question. In your response, you should do the following:
+Paul: I believe that the quality of teaching and the resources available at school are more important. Schools that provide a positive learning environment and the necessary tools for learning can significantly impact a student's academic achievements.",,,,,,,,,,자유 응답 (모범 답안 참조),"평가 기준: (1) 자신의 의견 표명 및 근거 제시, (2) Claire/Paul과 겹치지 않는 자신만의 기여, (3) 100단어 이상.
+
+[모범 답안]
+I agree with Claire that the home environment and parental involvement play a larger role in a student's educational outcomes. While quality teaching is certainly valuable, it is the home that provides the foundation for learning. For instance, a student who grows up in a household where reading is encouraged and parents actively monitor homework will develop strong study habits regardless of the school's resources. Moreover, parental involvement sends a powerful message to children that education matters, which motivates them to work harder. Even the best teachers struggle to reach students who lack support at home. Therefore, I believe that the home environment has a more fundamental and lasting impact on academic success than school resources alone.",,,"Your professor is teaching a class on education. Write a post responding to the professor's question. In your response, you should do the following:
 • Express and support your opinion.
 • Make a contribution to the discussion in your own words.
 An effective response will contain at least 100 words."
