@@ -5,7 +5,7 @@ TPO7 리스닝/리딩에서 정착된 정본 포맷입니다. 새 TPO를 만들 
 ## 공통 헤더 (열 순서 고정)
 
 ```
-questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName
+questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,vocabularyNote,audioFileName,imageFileName
 ```
 
 - `module` 은 `Module 1` / `Module 2` 문자열 그대로. TPO7 이전 CSV의 `level`, `day` 컬럼은 파서가 무시하므로 사용 금지.
@@ -59,6 +59,18 @@ questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptTex
 - Listening 문제의 받아쓰기 훈련은 `scriptText` 를 기반으로 자동 생성됩니다.
 - `scriptText` 가 비어 있으면 훈련 탭이 안내 배너로 대체되므로, 리스닝 문제는 **반드시 `scriptText` 를 채워야** 합니다.
 - `Narrator:` 로 시작하는 안내 문장은 자동 제외되어 dictation 대상에서 빠집니다.
+
+## Key Vocabulary (`vocabularyNote`)
+
+- Dictation Training / 리뷰 패널의 **KEY VOCABULARY** 사이드에 노출되는 단어장.
+- 한 줄에 `단어=뜻` 형식, 여러 줄이면 줄바꿈으로 구분 (`\n`).
+  ```
+  reservation=예약
+  alumni=졸업생
+  private room=개별 룸
+  ```
+- 관례: 리딩은 지문당 6~10개, 리스닝 대화/강연은 그룹당 4~8개, Listen and Response 단문은 2~3개.
+- 같은 지문/스크립트를 공유하는 행은 vocab 도 동일하게 반복해서 넣습니다.
 
 ## 참고 파일
 

@@ -1,18 +1,18 @@
-questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName
-1,Listen and Response,보통,Module 1,,,<오디오로 재생되는 짧은 프롬프트 문장 (예: 질문 또는 진술)>,,,,Choose the best response.,<선택지 A 전체 텍스트>,<선택지 B 전체 텍스트>,<선택지 C 전체 텍스트>,<선택지 D 전체 텍스트>,<정답과 동일한 선택지 전체 텍스트>,<해설>,,
+questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,vocabularyNote,audioFileName,imageFileName
+1,Listen and Response,보통,Module 1,,,<오디오로 재생되는 짧은 프롬프트 문장 (예: 질문 또는 진술)>,,,,Choose the best response.,<선택지 A 전체 텍스트>,<선택지 B 전체 텍스트>,<선택지 C 전체 텍스트>,<선택지 D 전체 텍스트>,<정답과 동일한 선택지 전체 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
 13,Short Conversation,보통,Module 1,Conversation: <대화 제목>,,"Narrator: Listen to a conversation.
 Man: <남자 대사>
 Woman: <여자 대사>
 Man: <남자 대사>
-Woman: <여자 대사>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+Woman: <여자 대사>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
 14,Short Conversation,보통,Module 1,Conversation: <대화 제목>,,"Narrator: Listen to a conversation.
 Man: <남자 대사>
 Woman: <여자 대사>
 Man: <남자 대사>
-Woman: <여자 대사>",,,,<두 번째 문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
-19,Announcements,보통,Module 1,Announcement: <공지 제목>,,"Speaker: <공지 전문. 스크립트 전체를 한 셀에 그대로 넣기.>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
-25,Academic Talk,보통,Module 1,Talk: <강연 제목>,,"Professor: <강연 전문. 스크립트 전체를 한 셀에 그대로 넣기.>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
-1,Listen and Response,보통,Module 2,,,<Module 2 프롬프트 문장>,,,,Choose the best response.,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+Woman: <여자 대사>",,,,<두 번째 문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
+19,Announcements,보통,Module 1,Announcement: <공지 제목>,,Speaker: <공지 전문. 스크립트 전체를 한 셀에 그대로 넣기.>,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
+25,Academic Talk,보통,Module 1,Talk: <강연 제목>,,Professor: <강연 전문. 스크립트 전체를 한 셀에 그대로 넣기.>,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
+1,Listen and Response,보통,Module 2,,,<Module 2 프롬프트 문장>,,,,Choose the best response.,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
 4,Short Conversation,보통,Module 2,Conversation: <대화 제목>,,"Man: <대사>
-Woman: <대사>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
-8,Academic Talk,보통,Module 2,Talk: <강연 제목>,,"Speaker: <강연 전문>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+Woman: <대사>",,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,
+8,Academic Talk,보통,Module 2,Talk: <강연 제목>,,Speaker: <강연 전문>,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,<단어=뜻 을 줄바꿈으로 나열. Dictation KEY VOCABULARY에 노출>,,

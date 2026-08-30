@@ -1,28 +1,56 @@
-questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName
-1,Listen and Response,보통,Module 1,,,How long is the bus ride to the regional debate finals?,,,,Choose the best response.,About two hours.,This weekend.,It was expensive.,As far as I know.,About two hours.,,,
-2,Listen and Response,보통,Module 1,,,The restaurant has a great ambiance.,,,,Choose the best response.,The dining hall is open on Sundays.,I've never been inside.,His parties are always festive.,I'll do it first thing after class tomorrow.,I've never been inside.,,,
-3,Listen and Response,보통,Module 1,,,Where can I find the study materials?,,,,Choose the best response.,It was yesterday.,"Yes, please do that.",I don't have a preference.,They're right here.,They're right here.,,,
-4,Listen and Response,보통,Module 1,,,I thought the professor said the exam would be cumulative.,,,,Choose the best response.,The results are usually posted online.,"Yes, it was rescheduled for next week.",I've checked and the numbers don't add up.,"No, it covers only the most recent units.","No, it covers only the most recent units.",,,
-5,Listen and Response,보통,Module 1,,,The nature hike starts at 7 a.m.,,,,Choose the best response.,We should leave our dorm early to get there on time.,There is a park near the campus.,That's great. I love hiking in the evening.,What is the nature of your visit?,We should leave our dorm early to get there on time.,,,
-6,Listen and Response,보통,Module 1,,,The doctor recommends regular exercise.,,,,Choose the best response.,That store is having a sale.,I need to finish my report.,"Yes, I'll start going to the gym before my morning classes.",Let's meet for lunch tomorrow.,"Yes, I'll start going to the gym before my morning classes.",,,
-7,Listen and Response,보통,Module 1,,,Are you joining us for dinner tonight?,,,,Choose the best response.,They are joined at the hip.,Dinner is at seven p.m.,The dining hall is wonderful.,I need to check my schedule first.,I need to check my schedule first.,,,
-8,Listen and Response,보통,Module 1,,,I hear that the local gym has new equipment.,,,,Choose the best response.,The equipment goes in the back.,The student rec center is closed.,I don't think that's a good idea.,We'll have to check it out.,We'll have to check it out.,,,
-9,Listen and Response,보통,Module 1,,,When is the Student Government Forum starting?,,,,Choose the best response.,She registered in advance.,It's scheduled to last two hours.,The main auditorium.,Friday morning.,Friday morning.,,,
-10,Listen and Response,보통,Module 1,,,The bookstore has a section on self-help books.,,,,Choose the best response.,Help yourself to some drinks and appetizers.,"I know, I found it during my last visit.",Help yourself to free pamphlets at the student union.,He keeps a book containing his grandmother's best recipes.,"I know, I found it during my last visit.",,,
-11,Listen and Response,보통,Module 1,,,What can I help you with?,,,,Choose the best response.,It would be my pleasure.,I still have a lot to do for my history presentation.,"Sure, I can do it later.",My advisor has been very helpful.,I still have a lot to do for my history presentation.,,,
-12,Listen and Response,보통,Module 1,,,What's the best way to reach customer service?,,,,Choose the best response.,The student bookstore should have it.,The customer is always right.,I usually call them directly.,"It's very bright in here, isn't it?",I usually call them directly.,,,
+questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,vocabularyNote,audioFileName,imageFileName
+1,Listen and Response,보통,Module 1,,,How long is the bus ride to the regional debate finals?,,,,Choose the best response.,About two hours.,This weekend.,It was expensive.,As far as I know.,About two hours.,,"debate=토론
+finals=결승전
+regional=지역의",,
+2,Listen and Response,보통,Module 1,,,The restaurant has a great ambiance.,,,,Choose the best response.,The dining hall is open on Sundays.,I've never been inside.,His parties are always festive.,I'll do it first thing after class tomorrow.,I've never been inside.,,"ambiance=분위기
+festive=축제 분위기의",,
+3,Listen and Response,보통,Module 1,,,Where can I find the study materials?,,,,Choose the best response.,It was yesterday.,"Yes, please do that.",I don't have a preference.,They're right here.,They're right here.,,"materials=자료
+preference=선호",,
+4,Listen and Response,보통,Module 1,,,I thought the professor said the exam would be cumulative.,,,,Choose the best response.,The results are usually posted online.,"Yes, it was rescheduled for next week.",I've checked and the numbers don't add up.,"No, it covers only the most recent units.","No, it covers only the most recent units.",,"cumulative=누적된
+unit=단원
+reschedule=일정을 재조정하다",,
+5,Listen and Response,보통,Module 1,,,The nature hike starts at 7 a.m.,,,,Choose the best response.,We should leave our dorm early to get there on time.,There is a park near the campus.,That's great. I love hiking in the evening.,What is the nature of your visit?,We should leave our dorm early to get there on time.,,"nature hike=자연 산책
+dorm=기숙사",,
+6,Listen and Response,보통,Module 1,,,The doctor recommends regular exercise.,,,,Choose the best response.,That store is having a sale.,I need to finish my report.,"Yes, I'll start going to the gym before my morning classes.",Let's meet for lunch tomorrow.,"Yes, I'll start going to the gym before my morning classes.",,"recommend=권장하다
+regular=규칙적인
+gym=체육관",,
+7,Listen and Response,보통,Module 1,,,Are you joining us for dinner tonight?,,,,Choose the best response.,They are joined at the hip.,Dinner is at seven p.m.,The dining hall is wonderful.,I need to check my schedule first.,I need to check my schedule first.,,"join=합류하다
+schedule=일정",,
+8,Listen and Response,보통,Module 1,,,I hear that the local gym has new equipment.,,,,Choose the best response.,The equipment goes in the back.,The student rec center is closed.,I don't think that's a good idea.,We'll have to check it out.,We'll have to check it out.,,"equipment=장비
+rec center=휴게 센터",,
+9,Listen and Response,보통,Module 1,,,When is the Student Government Forum starting?,,,,Choose the best response.,She registered in advance.,It's scheduled to last two hours.,The main auditorium.,Friday morning.,Friday morning.,,"forum=포럼
+auditorium=강당
+register=등록하다",,
+10,Listen and Response,보통,Module 1,,,The bookstore has a section on self-help books.,,,,Choose the best response.,Help yourself to some drinks and appetizers.,"I know, I found it during my last visit.",Help yourself to free pamphlets at the student union.,He keeps a book containing his grandmother's best recipes.,"I know, I found it during my last visit.",,"self-help=자기 계발
+pamphlet=팸플릿
+recipe=요리법",,
+11,Listen and Response,보통,Module 1,,,What can I help you with?,,,,Choose the best response.,It would be my pleasure.,I still have a lot to do for my history presentation.,"Sure, I can do it later.",My advisor has been very helpful.,I still have a lot to do for my history presentation.,,"pleasure=기쁨
+presentation=발표
+advisor=지도교수",,
+12,Listen and Response,보통,Module 1,,,What's the best way to reach customer service?,,,,Choose the best response.,The student bookstore should have it.,The customer is always right.,I usually call them directly.,"It's very bright in here, isn't it?",I usually call them directly.,,"customer service=고객 서비스
+bookstore=서점",,
 13,Short Conversation,보통,Module 1,Conversation: The Wave Restaurant,,"Narrator: Listen to a conversation.
 Woman: I have great news. I was able to reserve The Wave Restaurant for the theater program's awards night.
 Man: The Wave? How did you pull that off? That place usually has a wait list as long as the phone book.
 Woman: It was easy. The manager helped us get a private room. Do you remember Chloe? She was in the theater program here two or three years ago.
 Man: Oh, that's terrific. The program sure has some dedicated alumni.
-Woman: It really does.",,,,Why is the man surprised?,Attendance at an event was higher than expected.,He has been asked to host an awards ceremony.,An event location will need to be changed.,The woman was able to get a reservation at a restaurant.,The woman was able to get a reservation at a restaurant.,,,
+Woman: It really does.",,,,Why is the man surprised?,Attendance at an event was higher than expected.,He has been asked to host an awards ceremony.,An event location will need to be changed.,The woman was able to get a reservation at a restaurant.,The woman was able to get a reservation at a restaurant.,,"reservation=예약
+wait list=대기자 명단
+alumni=졸업생
+private room=개별 룸
+dedicated=헌신적인
+pull off=해내다",,
 14,Short Conversation,보통,Module 1,Conversation: The Wave Restaurant,,"Narrator: Listen to a conversation.
 Woman: I have great news. I was able to reserve The Wave Restaurant for the theater program's awards night.
 Man: The Wave? How did you pull that off? That place usually has a wait list as long as the phone book.
 Woman: It was easy. The manager helped us get a private room. Do you remember Chloe? She was in the theater program here two or three years ago.
 Man: Oh, that's terrific. The program sure has some dedicated alumni.
-Woman: It really does.",,,,How does the woman know Chloe?,Chloe has won awards for her acting.,Chloe studied in the same program that the woman is studying in.,Chloe served her when the woman was a customer at The Wave Restaurant.,Chloe is the director of the university's theater program.,Chloe studied in the same program that the woman is studying in.,,,
+Woman: It really does.",,,,How does the woman know Chloe?,Chloe has won awards for her acting.,Chloe studied in the same program that the woman is studying in.,Chloe served her when the woman was a customer at The Wave Restaurant.,Chloe is the director of the university's theater program.,Chloe studied in the same program that the woman is studying in.,,"reservation=예약
+wait list=대기자 명단
+alumni=졸업생
+private room=개별 룸
+dedicated=헌신적인
+pull off=해내다",,
 15,Short Conversation,보통,Module 1,Conversation: Crumpets,,"Narrator: Listen to a conversation.
 Man: Hi, Laura. Did you go to your cooking class yesterday?
 Woman: We learned how to make crumpets.
@@ -32,7 +60,11 @@ Man: Oh, I know all about English muffins. They're great with butter and jam.
 Woman: I like mine with honey, or I'll use them to make sandwiches for lunch.
 Man: Well, maybe I should give crumpets a try.
 Woman: I'll show you how to make them.
-Man: Yes, let's do it.",,,,What does the woman compare crumpets to?,Pans and griddles.,Butter and jam.,English muffins.,Sandwiches.,English muffins.,,,
+Man: Yes, let's do it.",,,,What does the woman compare crumpets to?,Pans and griddles.,Butter and jam.,English muffins.,Sandwiches.,English muffins.,,"crumpet=크럼펫(빵)
+griddle=철판
+English muffin=잉글리시 머핀
+honey=꿀
+sandwich=샌드위치",,
 16,Short Conversation,보통,Module 1,Conversation: Crumpets,,"Narrator: Listen to a conversation.
 Man: Hi, Laura. Did you go to your cooking class yesterday?
 Woman: We learned how to make crumpets.
@@ -42,70 +74,178 @@ Man: Oh, I know all about English muffins. They're great with butter and jam.
 Woman: I like mine with honey, or I'll use them to make sandwiches for lunch.
 Man: Well, maybe I should give crumpets a try.
 Woman: I'll show you how to make them.
-Man: Yes, let's do it.",,,,How does the man feel about trying crumpets?,Regretful.,Enthusiastic.,Doubtful.,Anxious.,Enthusiastic.,,,
+Man: Yes, let's do it.",,,,How does the man feel about trying crumpets?,Regretful.,Enthusiastic.,Doubtful.,Anxious.,Enthusiastic.,,"crumpet=크럼펫(빵)
+griddle=철판
+English muffin=잉글리시 머핀
+honey=꿀
+sandwich=샌드위치",,
 17,Short Conversation,보통,Module 1,Conversation: Boutique,,"Narrator: Listen to a conversation.
 Woman: Hey, Megan, did you check out that new boutique on Andre Avenue yet?
 Man: I did yesterday, actually. It was packed, but their summer collection is stunning: floral prints, skirts, and even some vintage hats.
 Woman: Sounds like a fashion treasure hunt. Did you end up getting anything?
 Man: After trying on five dresses and debating with the sales clerk about sizes, I finally settled on a lightweight blue one. It was the last in stock.
 Woman: Lucky find. Hope it wasn't too pricey.
-Man: Let's just say my bank account is greatly reduced. Still, my friends are going to be jealous.",,,,What are the speakers mainly discussing?,A dress for an upcoming event.,A new clothing shop.,An online store.,A new fashion magazine.,A new clothing shop.,,,
+Man: Let's just say my bank account is greatly reduced. Still, my friends are going to be jealous.",,,,What are the speakers mainly discussing?,A dress for an upcoming event.,A new clothing shop.,An online store.,A new fashion magazine.,A new clothing shop.,,"boutique=부티크
+packed=꽉 찬
+collection=컬렉션
+floral=꽃무늬의
+vintage=빈티지의
+settled on=결정하다
+in stock=재고 있음
+jealous=부러워하는",,
 18,Short Conversation,보통,Module 1,Conversation: Boutique,,"Narrator: Listen to a conversation.
 Woman: Hey, Megan, did you check out that new boutique on Andre Avenue yet?
 Man: I did yesterday, actually. It was packed, but their summer collection is stunning: floral prints, skirts, and even some vintage hats.
 Woman: Sounds like a fashion treasure hunt. Did you end up getting anything?
 Man: After trying on five dresses and debating with the sales clerk about sizes, I finally settled on a lightweight blue one. It was the last in stock.
 Woman: Lucky find. Hope it wasn't too pricey.
-Man: Let's just say my bank account is greatly reduced. Still, my friends are going to be jealous.",,,,What is suggested about the dress Megan chose?,It has many colors.,It will be a gift for a friend.,It was expensive.,It was the wrong size.,It was expensive.,,,
+Man: Let's just say my bank account is greatly reduced. Still, my friends are going to be jealous.",,,,What is suggested about the dress Megan chose?,It has many colors.,It will be a gift for a friend.,It was expensive.,It was the wrong size.,It was expensive.,,"boutique=부티크
+packed=꽉 찬
+collection=컬렉션
+floral=꽃무늬의
+vintage=빈티지의
+settled on=결정하다
+in stock=재고 있음
+jealous=부러워하는",,
 19,Announcements,보통,Module 1,Announcement: Computer Lab Update,,"Announcer: Listen to a school radio announcement.
-Announcer: Attention students. Starting next week, there will be some changes to our computer lab equipment usage policy. All computers in the lab must be logged out and shut down by 10 p.m. to allow for nightly maintenance of our systems. This will ensure that our equipment remains in optimal condition for everyone's use. If you plan to use the lab during peak hours, especially in the afternoons, we urge you to reserve a workstation in advance to guarantee access.",,,,"According to the speaker, what change will begin next week?",New programs will be installed on the computers in the lab.,Equipment will have to be shut down by a specific time.,A computer lab will be closed in the afternoon.,Students will have to log in with different credentials.,Equipment will have to be shut down by a specific time.,,,
+Announcer: Attention students. Starting next week, there will be some changes to our computer lab equipment usage policy. All computers in the lab must be logged out and shut down by 10 p.m. to allow for nightly maintenance of our systems. This will ensure that our equipment remains in optimal condition for everyone's use. If you plan to use the lab during peak hours, especially in the afternoons, we urge you to reserve a workstation in advance to guarantee access.",,,,"According to the speaker, what change will begin next week?",New programs will be installed on the computers in the lab.,Equipment will have to be shut down by a specific time.,A computer lab will be closed in the afternoon.,Students will have to log in with different credentials.,Equipment will have to be shut down by a specific time.,,"log out=로그아웃하다
+maintenance=유지 보수
+optimal=최적의
+workstation=작업 공간
+guarantee=보장하다
+peak hours=혼잡 시간",,
 20,Announcements,보통,Module 1,Announcement: Computer Lab Update,,"Announcer: Listen to a school radio announcement.
-Announcer: Attention students. Starting next week, there will be some changes to our computer lab equipment usage policy. All computers in the lab must be logged out and shut down by 10 p.m. to allow for nightly maintenance of our systems. This will ensure that our equipment remains in optimal condition for everyone's use. If you plan to use the lab during peak hours, especially in the afternoons, we urge you to reserve a workstation in advance to guarantee access.",,,,What does the speaker recommend listeners do?,Use the computer lab in the evening.,Reserve space in the computer lab in advance.,Create a personal account.,Save and back up all computer files.,Reserve space in the computer lab in advance.,,,
+Announcer: Attention students. Starting next week, there will be some changes to our computer lab equipment usage policy. All computers in the lab must be logged out and shut down by 10 p.m. to allow for nightly maintenance of our systems. This will ensure that our equipment remains in optimal condition for everyone's use. If you plan to use the lab during peak hours, especially in the afternoons, we urge you to reserve a workstation in advance to guarantee access.",,,,What does the speaker recommend listeners do?,Use the computer lab in the evening.,Reserve space in the computer lab in advance.,Create a personal account.,Save and back up all computer files.,Reserve space in the computer lab in advance.,,"log out=로그아웃하다
+maintenance=유지 보수
+optimal=최적의
+workstation=작업 공간
+guarantee=보장하다
+peak hours=혼잡 시간",,
 21,Announcements,보통,Module 1,Announcement: Gala,,"Speaker: Listen to an announcement before a university event.
-Speaker: Good evening, everyone. In preparation for tonight's gala, I'd like to go over some important instructions. When you arrive, please check in at the registration desk to receive your name badge and program booklet. Dinner will be served at 7 p.m. and will be followed by a series of speeches and a musical performance. Scan the QR code in your booklet for more information on any of the participants. Special thanks to the student government for its financial backing of this event.",,,,Why do attendees need to check in at the registration desk?,To pick up a name tag and a pamphlet.,To reserve a slot to make a speech.,To place a dinner order.,To make a donation.,To pick up a name tag and a pamphlet.,,,
+Speaker: Good evening, everyone. In preparation for tonight's gala, I'd like to go over some important instructions. When you arrive, please check in at the registration desk to receive your name badge and program booklet. Dinner will be served at 7 p.m. and will be followed by a series of speeches and a musical performance. Scan the QR code in your booklet for more information on any of the participants. Special thanks to the student government for its financial backing of this event.",,,,Why do attendees need to check in at the registration desk?,To pick up a name tag and a pamphlet.,To reserve a slot to make a speech.,To place a dinner order.,To make a donation.,To pick up a name tag and a pamphlet.,,"gala=축제, 갈라
+registration=등록
+name badge=이름표
+booklet=소책자
+QR code=QR 코드
+financial backing=재정 지원",,
 22,Announcements,보통,Module 1,Announcement: Gala,,"Speaker: Listen to an announcement before a university event.
-Speaker: Good evening, everyone. In preparation for tonight's gala, I'd like to go over some important instructions. When you arrive, please check in at the registration desk to receive your name badge and program booklet. Dinner will be served at 7 p.m. and will be followed by a series of speeches and a musical performance. Scan the QR code in your booklet for more information on any of the participants. Special thanks to the student government for its financial backing of this event.",,,,What role does the speaker indicate the student government plays in the gala?,It arranges the event space on campus.,It produces the program booklets.,It provides monetary support.,It recruits speakers and musical acts.,It provides monetary support.,,,
+Speaker: Good evening, everyone. In preparation for tonight's gala, I'd like to go over some important instructions. When you arrive, please check in at the registration desk to receive your name badge and program booklet. Dinner will be served at 7 p.m. and will be followed by a series of speeches and a musical performance. Scan the QR code in your booklet for more information on any of the participants. Special thanks to the student government for its financial backing of this event.",,,,What role does the speaker indicate the student government plays in the gala?,It arranges the event space on campus.,It produces the program booklets.,It provides monetary support.,It recruits speakers and musical acts.,It provides monetary support.,,"gala=축제, 갈라
+registration=등록
+name badge=이름표
+booklet=소책자
+QR code=QR 코드
+financial backing=재정 지원",,
 23,Announcements,보통,Module 1,Announcement: Response Papers,,"Professor: Listen to an announcement in a classroom.
-Professor: I want to remind you all that we will have a paper due every Friday. The paper should be a response to the week's reading and should be at least two pages long. Papers should be uploaded to the class portal on Fridays by 5 p.m. I will grade them and send you feedback by the end of the weekend. Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension.",,,,What should students do every Friday?,Begin working on their papers.,Upload their papers to be graded.,Discuss the reading in groups.,Check for assignments on the class portal.,Upload their papers to be graded.,,,
+Professor: I want to remind you all that we will have a paper due every Friday. The paper should be a response to the week's reading and should be at least two pages long. Papers should be uploaded to the class portal on Fridays by 5 p.m. I will grade them and send you feedback by the end of the weekend. Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension.",,,,What should students do every Friday?,Begin working on their papers.,Upload their papers to be graded.,Discuss the reading in groups.,Check for assignments on the class portal.,Upload their papers to be graded.,,"response=반응, 답변
+portal=포털
+feedback=피드백
+mark down=감점하다
+letter grade=문자 등급
+extension=연장, 기한 연장",,
 24,Announcements,보통,Module 1,Announcement: Response Papers,,"Professor: Listen to an announcement in a classroom.
-Professor: I want to remind you all that we will have a paper due every Friday. The paper should be a response to the week's reading and should be at least two pages long. Papers should be uploaded to the class portal on Fridays by 5 p.m. I will grade them and send you feedback by the end of the weekend. Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension.",,,,What is mentioned as a reason to speak with the professor?,Requesting an explanation of the grading policy.,Requesting an extension for an assignment.,Asking a question about some reading material.,Asking a question about the topic of a paper.,Requesting an extension for an assignment.,,,
+Professor: I want to remind you all that we will have a paper due every Friday. The paper should be a response to the week's reading and should be at least two pages long. Papers should be uploaded to the class portal on Fridays by 5 p.m. I will grade them and send you feedback by the end of the weekend. Late papers will be marked down by one letter grade each day unless you speak with me ahead of time and receive an extension.",,,,What is mentioned as a reason to speak with the professor?,Requesting an explanation of the grading policy.,Requesting an extension for an assignment.,Asking a question about some reading material.,Asking a question about the topic of a paper.,Requesting an extension for an assignment.,,"response=반응, 답변
+portal=포털
+feedback=피드백
+mark down=감점하다
+letter grade=문자 등급
+extension=연장, 기한 연장",,
 25,Academic Talk,보통,Module 1,Talk: Why Ice Floats,,"Host: Listen to a talk on a physics podcast.
 Host: Have you ever wondered why ice floats on water? It's a curious phenomenon that has puzzled scientists for centuries. Normally, solids are denser than liquids because their molecules are packed more closely together. But water has a unique molecular structure, and it behaves differently.
 Host: As water molecules cool and form ice, they arrange themselves in a crystal structure that occupies more space than when they are in liquid form. This arrangement causes ice to be less dense than liquid water, enabling it to float.
 Host: But why is this important beyond just curiosity? Imagine a world where ice sank. Lakes and ponds would freeze from the bottom up, and this could have a huge impact on aquatic ecosystems. Aquatic life relies on ice forming at the surface, which creates an insulating layer that prevents the entire body of water from freezing.
-Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What is the talk mainly about?,The structure of some molecules.,The causes and consequences of a natural phenomenon.,A survival strategy of animals in winter.,A common result of climate change.,The causes and consequences of a natural phenomenon.,,,
+Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What is the talk mainly about?,The structure of some molecules.,The causes and consequences of a natural phenomenon.,A survival strategy of animals in winter.,A common result of climate change.,The causes and consequences of a natural phenomenon.,,"phenomenon=현상
+molecule=분자
+crystal structure=결정 구조
+dense=밀도가 높은
+aquatic=수생의
+insulating=단열의
+regulate=조절하다
+absorb=흡수하다",,
 26,Academic Talk,보통,Module 1,Talk: Why Ice Floats,,"Host: Listen to a talk on a physics podcast.
 Host: Have you ever wondered why ice floats on water? It's a curious phenomenon that has puzzled scientists for centuries. Normally, solids are denser than liquids because their molecules are packed more closely together. But water has a unique molecular structure, and it behaves differently.
 Host: As water molecules cool and form ice, they arrange themselves in a crystal structure that occupies more space than when they are in liquid form. This arrangement causes ice to be less dense than liquid water, enabling it to float.
 Host: But why is this important beyond just curiosity? Imagine a world where ice sank. Lakes and ponds would freeze from the bottom up, and this could have a huge impact on aquatic ecosystems. Aquatic life relies on ice forming at the surface, which creates an insulating layer that prevents the entire body of water from freezing.
-Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What difference between water and most other substances does the speaker discuss?,Scientists understand the structure of water molecules.,Water requires a lot of heat to change its temperature.,Water expands when it changes from liquid to solid.,Liquid water reflects a lot of sunlight.,Water expands when it changes from liquid to solid.,,,
+Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What difference between water and most other substances does the speaker discuss?,Scientists understand the structure of water molecules.,Water requires a lot of heat to change its temperature.,Water expands when it changes from liquid to solid.,Liquid water reflects a lot of sunlight.,Water expands when it changes from liquid to solid.,,"phenomenon=현상
+molecule=분자
+crystal structure=결정 구조
+dense=밀도가 높은
+aquatic=수생의
+insulating=단열의
+regulate=조절하다
+absorb=흡수하다",,
 27,Academic Talk,보통,Module 1,Talk: Why Ice Floats,,"Host: Listen to a talk on a physics podcast.
 Host: Have you ever wondered why ice floats on water? It's a curious phenomenon that has puzzled scientists for centuries. Normally, solids are denser than liquids because their molecules are packed more closely together. But water has a unique molecular structure, and it behaves differently.
 Host: As water molecules cool and form ice, they arrange themselves in a crystal structure that occupies more space than when they are in liquid form. This arrangement causes ice to be less dense than liquid water, enabling it to float.
 Host: But why is this important beyond just curiosity? Imagine a world where ice sank. Lakes and ponds would freeze from the bottom up, and this could have a huge impact on aquatic ecosystems. Aquatic life relies on ice forming at the surface, which creates an insulating layer that prevents the entire body of water from freezing.
-Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,Why does the speaker mention aquatic life?,To emphasize a difference between lakes where ice forms and lakes where it does not.,To explain the importance of the insulating effect of ice on the top of bodies of water.,To provide an example of a harmful effect of warming water temperatures.,To identify a curiosity that has puzzled scientists for centuries.,To explain the importance of the insulating effect of ice on the top of bodies of water.,,,
+Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,Why does the speaker mention aquatic life?,To emphasize a difference between lakes where ice forms and lakes where it does not.,To explain the importance of the insulating effect of ice on the top of bodies of water.,To provide an example of a harmful effect of warming water temperatures.,To identify a curiosity that has puzzled scientists for centuries.,To explain the importance of the insulating effect of ice on the top of bodies of water.,,"phenomenon=현상
+molecule=분자
+crystal structure=결정 구조
+dense=밀도가 높은
+aquatic=수생의
+insulating=단열의
+regulate=조절하다
+absorb=흡수하다",,
 28,Academic Talk,보통,Module 1,Talk: Why Ice Floats,,"Host: Listen to a talk on a physics podcast.
 Host: Have you ever wondered why ice floats on water? It's a curious phenomenon that has puzzled scientists for centuries. Normally, solids are denser than liquids because their molecules are packed more closely together. But water has a unique molecular structure, and it behaves differently.
 Host: As water molecules cool and form ice, they arrange themselves in a crystal structure that occupies more space than when they are in liquid form. This arrangement causes ice to be less dense than liquid water, enabling it to float.
 Host: But why is this important beyond just curiosity? Imagine a world where ice sank. Lakes and ponds would freeze from the bottom up, and this could have a huge impact on aquatic ecosystems. Aquatic life relies on ice forming at the surface, which creates an insulating layer that prevents the entire body of water from freezing.
-Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What difference between liquid water and ice does the speaker discuss at the end of the talk?,Ice temperatures change more quickly.,Ice can absorb more energy.,Ice is easier to see from space.,Ice reflects more light.,Ice reflects more light.,,,
+Host: This insulation is vital for the survival of fish and other animals during harsh winters. Even if the top layer is frozen, they can survive in the water underneath. Floating ice, especially in polar regions, also reflects a significant amount of sunlight back into space. This helps regulate global temperatures. If ice sank, it would disappear beneath the water, allowing more solar energy to be absorbed by the darker ocean or lake surfaces. This would lead to warmer water temperatures, accelerating global warming and disrupting climate patterns worldwide.",,,,What difference between liquid water and ice does the speaker discuss at the end of the talk?,Ice temperatures change more quickly.,Ice can absorb more energy.,Ice is easier to see from space.,Ice reflects more light.,Ice reflects more light.,,"phenomenon=현상
+molecule=분자
+crystal structure=결정 구조
+dense=밀도가 높은
+aquatic=수생의
+insulating=단열의
+regulate=조절하다
+absorb=흡수하다",,
 29,Academic Talk,보통,Module 1,Talk: Musical Borrowing,,"Professor: Listen to a talk in a music class.
 Professor: Have you ever listened to a piece of music and felt like you were suddenly somewhere else? Maybe walking through a Brazilian street market or climbing a misty mountain trail in China? That's the magic of musical borrowing, a practice where artists blend elements from different global traditions to create something fresh and emotionally resonant.
 Professor: Take bossa nova, for example. It's a genre that merges the laid-back swing of United States jazz music with the rhythmic pulse of Brazilian samba. When you listen to bossa nova, it feels both familiar and new at the same time.
 Professor: But successful musical borrowing isn't just about mixing sounds. It's about respect. When artists draw from other cultures, they need to understand the meanings behind the music. Composers like Tan Dun nail this in his score for the film Crouching Tiger, Hidden Dragon. He blends Chinese instruments like the erhu and pipa with Western orchestration, but not just for effect. The erhu's haunting tones and the pipa's intricate rhythms reflect centuries of Chinese musical storytelling.
-Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,How does the speaker begin the lecture?,By introducing his favorite music genre.,By pointing out an advantage of hearing local music live.,By describing possible reactions to listening to certain kinds of music.,By encouraging students to visit places where famous styles of music originated.,By describing possible reactions to listening to certain kinds of music.,,,
+Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,How does the speaker begin the lecture?,By introducing his favorite music genre.,By pointing out an advantage of hearing local music live.,By describing possible reactions to listening to certain kinds of music.,By encouraging students to visit places where famous styles of music originated.,By describing possible reactions to listening to certain kinds of music.,,"musical borrowing=음악 차용
+blend=혼합하다
+genre=장르
+bossa nova=보사노바
+samba=삼바
+orchestration=관현악법
+resonant=울림 있는
+fusion=융합
+transcend=초월하다",,
 30,Academic Talk,보통,Module 1,Talk: Musical Borrowing,,"Professor: Listen to a talk in a music class.
 Professor: Have you ever listened to a piece of music and felt like you were suddenly somewhere else? Maybe walking through a Brazilian street market or climbing a misty mountain trail in China? That's the magic of musical borrowing, a practice where artists blend elements from different global traditions to create something fresh and emotionally resonant.
 Professor: Take bossa nova, for example. It's a genre that merges the laid-back swing of United States jazz music with the rhythmic pulse of Brazilian samba. When you listen to bossa nova, it feels both familiar and new at the same time.
 Professor: But successful musical borrowing isn't just about mixing sounds. It's about respect. When artists draw from other cultures, they need to understand the meanings behind the music. Composers like Tan Dun nail this in his score for the film Crouching Tiger, Hidden Dragon. He blends Chinese instruments like the erhu and pipa with Western orchestration, but not just for effect. The erhu's haunting tones and the pipa's intricate rhythms reflect centuries of Chinese musical storytelling.
-Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,Why does the speaker mention bossa nova?,To emphasize the importance of rhythmic pulse in music.,To provide an example of a style that mixes musical sounds from different places.,To identify a style that influenced jazz music.,To explain the popularity of Brazilian music.,To provide an example of a style that mixes musical sounds from different places.,,,
+Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,Why does the speaker mention bossa nova?,To emphasize the importance of rhythmic pulse in music.,To provide an example of a style that mixes musical sounds from different places.,To identify a style that influenced jazz music.,To explain the popularity of Brazilian music.,To provide an example of a style that mixes musical sounds from different places.,,"musical borrowing=음악 차용
+blend=혼합하다
+genre=장르
+bossa nova=보사노바
+samba=삼바
+orchestration=관현악법
+resonant=울림 있는
+fusion=융합
+transcend=초월하다",,
 31,Academic Talk,보통,Module 1,Talk: Musical Borrowing,,"Professor: Listen to a talk in a music class.
 Professor: Have you ever listened to a piece of music and felt like you were suddenly somewhere else? Maybe walking through a Brazilian street market or climbing a misty mountain trail in China? That's the magic of musical borrowing, a practice where artists blend elements from different global traditions to create something fresh and emotionally resonant.
 Professor: Take bossa nova, for example. It's a genre that merges the laid-back swing of United States jazz music with the rhythmic pulse of Brazilian samba. When you listen to bossa nova, it feels both familiar and new at the same time.
 Professor: But successful musical borrowing isn't just about mixing sounds. It's about respect. When artists draw from other cultures, they need to understand the meanings behind the music. Composers like Tan Dun nail this in his score for the film Crouching Tiger, Hidden Dragon. He blends Chinese instruments like the erhu and pipa with Western orchestration, but not just for effect. The erhu's haunting tones and the pipa's intricate rhythms reflect centuries of Chinese musical storytelling.
-Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,What does the speaker emphasize about the music of Tan Dun?,It reflects the composer's own emotional experience.,It is more popular among Western audiences than among Chinese audiences.,It was inspired by a Chinese movie.,It shows a deep understanding of Chinese culture.,It shows a deep understanding of Chinese culture.,,,
+Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,What does the speaker emphasize about the music of Tan Dun?,It reflects the composer's own emotional experience.,It is more popular among Western audiences than among Chinese audiences.,It was inspired by a Chinese movie.,It shows a deep understanding of Chinese culture.,It shows a deep understanding of Chinese culture.,,"musical borrowing=음악 차용
+blend=혼합하다
+genre=장르
+bossa nova=보사노바
+samba=삼바
+orchestration=관현악법
+resonant=울림 있는
+fusion=융합
+transcend=초월하다",,
 32,Academic Talk,보통,Module 1,Talk: Musical Borrowing,,"Professor: Listen to a talk in a music class.
 Professor: Have you ever listened to a piece of music and felt like you were suddenly somewhere else? Maybe walking through a Brazilian street market or climbing a misty mountain trail in China? That's the magic of musical borrowing, a practice where artists blend elements from different global traditions to create something fresh and emotionally resonant.
 Professor: Take bossa nova, for example. It's a genre that merges the laid-back swing of United States jazz music with the rhythmic pulse of Brazilian samba. When you listen to bossa nova, it feels both familiar and new at the same time.
 Professor: But successful musical borrowing isn't just about mixing sounds. It's about respect. When artists draw from other cultures, they need to understand the meanings behind the music. Composers like Tan Dun nail this in his score for the film Crouching Tiger, Hidden Dragon. He blends Chinese instruments like the erhu and pipa with Western orchestration, but not just for effect. The erhu's haunting tones and the pipa's intricate rhythms reflect centuries of Chinese musical storytelling.
-Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,"According to the talk, what is one challenge of musical borrowing?",The difficulty of combining different types of music well.,The high cost of using traditional instruments.,The limited interest from international audiences.,The lack of available resources for composers.,The difficulty of combining different types of music well.,,,
+Professor: Tan Dun doesn't just borrow. He honors the culture, letting its emotional depth shine through. Of course, fusion isn't always seamless. Sometimes the mix feels forced, or the original meaning gets lost. But when it works, when the traditions truly speak to each other, it's proof that music can be a universal language capable of bridging worlds and telling stories that transcend borders.",,,,"According to the talk, what is one challenge of musical borrowing?",The difficulty of combining different types of music well.,The high cost of using traditional instruments.,The limited interest from international audiences.,The lack of available resources for composers.,The difficulty of combining different types of music well.,,"musical borrowing=음악 차용
+blend=혼합하다
+genre=장르
+bossa nova=보사노바
+samba=삼바
+orchestration=관현악법
+resonant=울림 있는
+fusion=융합
+transcend=초월하다",,
