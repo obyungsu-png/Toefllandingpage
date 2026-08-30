@@ -1255,6 +1255,23 @@ export function renderDailyLifePassage(passageText: string): React.ReactNode | n
     return null; // plain text — caller handles it
   }
 
+  // 하위 호환: 간이 스키마 {"type":"notice","title":"...","body":"..."} 자동 정규화
+  // - structure/fields 형태가 정식이지만, 과거 CSV/AI 도구가 top-level 필드를 쓴 경우도 렌더
+  if (!parsed?.structure && typeof (parsed as any)?.type === 'string') {
+    const promoted: Record<string, string> = {};
+    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+      if (k === 'type' || k === 'structure' || k === 'color' || k === 'templateId' || k === 'fields') continue;
+      if (typeof v === 'string') promoted[k] = v;
+    }
+    const kind = (parsed as any).type;
+    parsed = {
+      structure: kind,
+      // 색상 기본값 — flyer 는 오렌지, 그 외는 teal (TPO 표준과 일치)
+      color: (parsed as any).color || (kind === 'flyer' ? 'orange' : 'teal'),
+      fields: promoted,
+    };
+  }
+
   if (!parsed?.structure || !parsed?.fields) return null;
 
   const f = parsed.fields;
