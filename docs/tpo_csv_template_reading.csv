@@ -1,0 +1,9 @@
+questionNumber,questionType,difficulty,module,passageTitle,passageText,scriptText,dictationBlanks,organization,organizationBlanks,questionText,optionA,optionB,optionC,optionD,correctAnswer,explanation,audioFileName,imageFileName
+1-10,Complete Words,쉬움,Module 1,<지문 제목>,"<지문 본문. 빈칸 단어는 [answer] 또는 [answer:length] 형식으로 표시. 예: sust[ained], la[nd:4]>",,,,,Fill in the missing letters in the paragraph.,,,,,,,,
+11-20,Complete Words,쉬움,Module 1,<두 번째 Complete Words 지문 제목>,<두 번째 Complete Words 지문 본문>,,,,,Fill in the missing letters in the paragraph.,,,,,,,,
+21,Read in Daily Life,보통,Module 1,<Daily Life 항목 제목>,"{""structure"":""notice"",""color"":""teal"",""fields"":{""title"":""<노티스 상단 제목>"",""body"":""<노티스 본문. \n 으로 줄바꿈>""}}",,,,,<문제 스템>,<선택지 A 전체 텍스트>,<선택지 B 전체 텍스트>,<선택지 C 전체 텍스트>,<선택지 D 전체 텍스트>,<정답과 동일한 선택지 전체 텍스트>,<한국어 해설>,,
+22,Read in Daily Life,보통,Module 1,<Daily Life 항목 제목>,"{""structure"":""notice"",""color"":""teal"",""fields"":{""title"":""<노티스 상단 제목>"",""body"":""<노티스 본문>""}}",,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+23,Read in Daily Life,쉬움,Module 1,<Flyer 항목 제목>,"{""structure"":""flyer"",""color"":""orange"",""fields"":{""title"":""<플라이어 상단 제목>"",""body"":""<플라이어 본문. \n\n 로 문단 구분>""}}",,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+26,Read an Academic Passage,보통,Module 1,<아카데믹 지문 제목>,"<아카데믹 지문 본문. 문단 구분은 빈 줄로. [A] [B] [C] [D] 삽입 문제일 때 지문에 그대로 포함.>",,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
+1-10,Complete Words,쉬움,Module 2,<Module 2 Complete Words 지문 제목>,<Module 2 Complete Words 지문 본문>,,,,,Fill in the missing letters in the paragraph.,,,,,,,,
+11,Read an Academic Passage,보통,Module 2,<Module 2 아카데믹 지문 제목>,<Module 2 아카데믹 지문 본문>,,,,,<문제 스템>,<선택지 A>,<선택지 B>,<선택지 C>,<선택지 D>,<정답 텍스트>,<해설>,,
