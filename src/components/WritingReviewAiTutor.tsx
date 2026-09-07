@@ -129,8 +129,15 @@ const DIMENSION_META: Record<DimensionKey, { label: string; desc: string; priori
 };
 
 // 분량 기준 (2026 토플 공식)
+// 2026 개편 TOEFL Writing Rubric에는 '최대 단어 수 제한'이나 '분량 초과 감점 규정'이
+// 존재하지 않는다. 130단어, 150단어 이상을 적어도 단어 수 초과 자체만으로는 감점되지 않는다.
+// 다만 min 미달은 실제 감점 대상(과제 미완수)이므로 강한 경고로 유지한다.
+// max는 '권장 상한(soft cap)'으로 두고, 초과 시에는 감점이 아닌 간접 감점 위험 안내를 표시한다.
+//   ① 오탈자·문법 실수 증가 (글이 길수록 노출 확률↑)
+//   ② Email 7분 제한 안에서 Proofreading 시간 부족
+//   ③ 군더더기 문장으로 명확성(Conciseness) 저하
 const WORD_COUNT_RULE = {
-  email: { min: 80, max: 120, desc: '80~120 단어 (분량 준수 중요)' },
+  email: { min: 80, max: 120, desc: '권장 80~120 단어 (초과해도 단어 수만으로는 감점 없음)' },
   discussion: { min: 100, max: null, desc: '100단어 이상 (풍부한 논증 필요)' },
 } as const;
 
@@ -246,9 +253,20 @@ function buildRubricPrompt(writingType: WritingType, questionData?: any): string
 각 차원별 점수 산출 전, 반드시 학생 글에서 근거 문장을 발췌한 뒤(CoT) 점수를 매기고 피드백을 작성하라.
 
 [과제 분량 기준 — 반드시 확인]
-${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — ${wordRange}
+${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — 권장 ${wordRange}
 ${wordRule.desc}
-분량 미달/초과 시 overall 점수에서 감점 반영.
+
+[★ 2026 개편 TOEFL Writing 루브릭 — 단어 수 채점 원칙 (반드시 준수)]
+- TOEFL Writing 공식 채점 기준(Rubric)에는 '최대 단어 수 제한'도, '분량 초과 감점 규정'도 존재하지 않는다.
+- 학생이 130단어, 150단어, 200단어 이상을 작성했더라도 "단어 수 초과" 자체만으로는 절대 감점하지 마라.
+- overall 점수와 어떤 차원 점수에서도 "분량이 많다/길다"는 이유의 감점은 금지한다.
+- 단, 아래 두 가지는 예외:
+  (a) 최소 단어 수 미달(예: Email <80, Discussion <100)은 과제 미완수로 간주하여 감점한다.
+  (b) 글이 길어지면서 실제로 나타난 문제 — 문법 오류/오탈자 증가, 군더더기·중복으로 인한 명확성(Conciseness) 저하 — 는
+      각각 grammarAccuracy, emailStructure(또는 elaboration) 차원에서 실제 관찰된 문제로만 감점한다.
+      "길이 자체 때문에" 감점하지 말고, "글에 실제로 나타난 오류/군더더기"에 대해서만 감점하라.
+- overallFeedback에서 분량이 권장 범위를 넘긴 경우, 감점 대신 다음 취지로 안내하라:
+  "권장 분량을 넘겼지만 단어 수 초과 자체는 감점 요인이 아닙니다. 다만 (실제 관찰된 문법/명확성 문제 언급 또는) 7분 안에 검토(Proofreading) 시간을 확보하기 어려울 수 있으니 주의하세요."
 
 [평가 차원 — ${writingType === 'email' ? 'Email (Task 1)' : 'Academic Discussion (Task 2)'}]
 ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
@@ -643,9 +661,15 @@ export function WritingReviewAiTutor({
       const wordCount = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
       const lowerText = rewrittenText.toLowerCase();
       const rule = WORD_COUNT_RULE[writingType];
+      // 2026 TOEFL Writing 루브릭: 단어 수 초과는 감점 사유가 아니므로
+      // 상한 초과는 "감점 위험(경고)"이 아닌 '권장 초과(감점 아님)'로 표시한다.
       const wordCountStatus = rule.max
-        ? (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : wordCount > rule.max ? `초과 (+${wordCount - rule.max}단어)` : '적정')
-        : (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : '적정');
+        ? (wordCount < rule.min
+            ? `미달 (-${rule.min - wordCount}단어) — 과제 미완수 감점 위험`
+            : wordCount > rule.max
+              ? `권장 초과 (+${wordCount - rule.max}단어) — 단어 수만으로는 감점 없음`
+              : '적정')
+        : (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어) — 과제 미완수 감점 위험` : '적정');
 
       // Email: 수신자별 격식 키워드 (2026 공식 기준)
       const casualHits = (lowerText.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah|asap|can you)\b/g) || []).length;
@@ -995,14 +1019,23 @@ ${analysis.upgradedText}
   }, [rewrittenText, writingType]);
 
   // ── 분량 기준 위반 감지 (UI 경고용) ──
+  // 2026 TOEFL Writing 루브릭: 단어 수 초과는 감점 사유가 아니므로 '위반'으로 분류하지 않는다.
+  // 최소 단어 수 미달만 실제 감점 위험(under)으로 표시한다.
   const wordCountViolation = useMemo(() => {
     const wc = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
     const rule = WORD_COUNT_RULE[writingType];
-    if (rule.max) {
-      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
-      if (wc > rule.max) return { status: 'over', diff: wc - rule.max, rule };
-    } else {
-      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
+    if (wc < rule.min) return { status: 'under' as const, diff: rule.min - wc, rule };
+    return null;
+  }, [rewrittenText, writingType]);
+
+  // ── 권장 상한 초과 안내 (감점 아님, 간접 감점 위험만 안내) ──
+  // 초과 자체는 감점 없음. 다만 (1) 오탈자/문법 실수 노출 확률↑, (2) 7분 안 검토 시간 부족,
+  // (3) 군더더기 문장으로 명확성 저하 등 실전에서의 간접 감점 위험이 있으므로 안내로만 표시.
+  const wordCountAdvisory = useMemo(() => {
+    const wc = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
+    const rule = WORD_COUNT_RULE[writingType];
+    if (rule.max && wc > rule.max) {
+      return { diff: wc - rule.max, rule };
     }
     return null;
   }, [rewrittenText, writingType]);
@@ -1237,24 +1270,44 @@ ${analysis.upgradedText}
             }`}
           />
 
-          {/* 분량 기준 표시 (2026 토플 공식) */}
+          {/* 분량 기준 표시 (2026 토플 공식 — 단어 수 초과 자체는 감점 없음) */}
           <div className="mt-1.5 flex items-center justify-between text-xs">
             <span className="text-gray-500 dark:text-gray-400">
               분량 기준: {WORD_COUNT_RULE[writingType].desc}
             </span>
             <span className={`font-medium ${
               wordCountViolation
-                ? wordCountViolation.status === 'under' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
-                : 'text-green-600 dark:text-green-400'
+                ? 'text-red-600 dark:text-red-400'
+                : wordCountAdvisory
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-green-600 dark:text-green-400'
             }`}>
               {rewrittenText.trim().split(/\s+/).filter(Boolean).length} 단어
               {wordCountViolation && (
-                <span className="ml-1">
-                  ({wordCountViolation.status === 'under' ? `미달 -${wordCountViolation.diff}` : `초과 +${wordCountViolation.diff}`})
-                </span>
+                <span className="ml-1">(미달 -{wordCountViolation.diff})</span>
+              )}
+              {!wordCountViolation && wordCountAdvisory && (
+                <span className="ml-1">(권장 +{wordCountAdvisory.diff} · 감점 아님)</span>
               )}
             </span>
           </div>
+
+          {/* 권장 상한 초과 시 간접 감점 위험 안내 (감점 자체는 없음) */}
+          {wordCountAdvisory && !wordCountViolation && (
+            <div className="mt-2 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-[11px] leading-relaxed text-amber-800 dark:text-amber-200">
+              <div className="font-semibold mb-0.5">
+                권장 분량({wordCountAdvisory.rule.max}단어)을 {wordCountAdvisory.diff}단어 초과했습니다 — 단어 수 초과 자체는 감점 요인이 아닙니다.
+              </div>
+              <div className="opacity-90">
+                2026 TOEFL Writing 루브릭에는 <b>최대 단어 수 제한이나 분량 초과 감점 규정이 없습니다.</b> 다만 실전에서 다음 <b>간접 감점 위험</b>이 있으니 주의하세요:
+                <ol className="list-decimal list-inside mt-1 space-y-0.5">
+                  <li>글이 길수록 시제·수일치·철자 등 <b>문법 오류 노출 확률</b>이 높아집니다.</li>
+                  <li>Email은 제한 시간 <b>7분</b> — 검토(Proofreading) 시간 1~2분을 확보하지 못할 수 있습니다.</li>
+                  <li>불렛포인트와 무관한 부연이 길어지면 <b>명확성(Conciseness)</b>이 떨어집니다.</li>
+                </ol>
+              </div>
+            </div>
+          )}
 
           {/* 액션 버튼 */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
