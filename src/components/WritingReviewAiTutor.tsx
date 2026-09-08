@@ -129,8 +129,15 @@ const DIMENSION_META: Record<DimensionKey, { label: string; desc: string; priori
 };
 
 // 분량 기준 (2026 토플 공식)
+// 2026 개편 TOEFL Writing Rubric에는 '최대 단어 수 제한'이나 '분량 초과 감점 규정'이
+// 존재하지 않는다. 130단어, 150단어 이상을 적어도 단어 수 초과 자체만으로는 감점되지 않으며,
+// 상한을 넘긴 답안도 다른 답안과 완전히 동일한 기준으로 채점된다.
+// max는 '권장 상한(soft cap)' — UI에 별도 경고를 표시하지 않고, 채점 시에도 감점 사유가 아니다.
+// min 미달만 과제 미완수로 실제 감점 대상.
+// (참고: 실전에서는 글이 길어질수록 ① 문법·오탈자 노출 확률↑, ② Email 7분 제한 안 검토 시간 부족,
+//  ③ 군더더기로 인한 명확성 저하 위험이 있으나 이는 감점 규정이 아닌 학습자 유의사항.)
 const WORD_COUNT_RULE = {
-  email: { min: 80, max: 120, desc: '80~120 단어 (분량 준수 중요)' },
+  email: { min: 80, max: 120, desc: '권장 80~120 단어 (초과 감점 없음)' },
   discussion: { min: 100, max: null, desc: '100단어 이상 (풍부한 논증 필요)' },
 } as const;
 
@@ -246,9 +253,19 @@ function buildRubricPrompt(writingType: WritingType, questionData?: any): string
 각 차원별 점수 산출 전, 반드시 학생 글에서 근거 문장을 발췌한 뒤(CoT) 점수를 매기고 피드백을 작성하라.
 
 [과제 분량 기준 — 반드시 확인]
-${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — ${wordRange}
+${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — 권장 ${wordRange}
 ${wordRule.desc}
-분량 미달/초과 시 overall 점수에서 감점 반영.
+
+[★ 2026 개편 TOEFL Writing 루브릭 — 단어 수 채점 원칙 (반드시 준수)]
+- TOEFL Writing 공식 채점 기준(Rubric)에는 '최대 단어 수 제한'도, '분량 초과 감점 규정'도 존재하지 않는다.
+- 학생이 130단어, 150단어, 200단어 이상을 작성했더라도 "단어 수 초과" 자체만으로는 절대 감점하지 마라.
+- 권장 상한을 넘긴 답안도 다른 답안과 완전히 동일한 기준으로 채점하라 — 분량이 많다는 이유로 더 엄격하게 보거나 별도 감점을 주지 말 것.
+- overall 점수와 어떤 차원 점수에서도 "분량이 많다/길다"는 이유의 감점은 금지한다.
+- 최소 단어 수 미달(Email <80, Discussion <100)은 과제 미완수로 간주하여 감점한다.
+- 글이 길어지면서 실제로 나타난 문제(문법 오류/오탈자 증가, 군더더기·중복으로 인한 명확성 저하)는
+  각각 grammarAccuracy, emailStructure(또는 elaboration) 차원에서 실제 관찰된 문제로만 감점하라.
+  "길이 자체 때문에"가 아니라 "글에 실제로 나타난 오류/군더더기"에 대해서만 감점한다.
+- overallFeedback에서 분량 초과에 대한 별도 경고나 주의 안내를 추가하지 말 것 — 다른 답안과 동일한 톤으로 피드백하라.
 
 [평가 차원 — ${writingType === 'email' ? 'Email (Task 1)' : 'Academic Discussion (Task 2)'}]
 ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
@@ -496,12 +513,16 @@ const COLOR_LEGEND: Array<{ color: string; label: string }> = [
 ];
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
-// ── AI 첨삭 저장소 (localStorage — 회원 계정별) ──
-// 회원 기간 내내 (탈퇴/로그아웃 전까지) 첨삭 기록이 유지되도록 localStorage 에
-// 저장한다. 같은 브라우저에서 브라우저를 닫았다 다시 열어도 그대로 남아 있고,
+// ── AI 첨삭 저장소 (localStorage + Supabase 병행) ──
+// 회원 유료 기간 내내 첨삭 결과가 보관되도록 두 곳에 저장한다.
+//   1) localStorage — 디바이스 로컬 캐시(즉시 표시용, 오프라인 대응)
+//   2) Supabase writing_ai_reviews 테이블 — users_profile.expire_date 까지 서버 보관
+//      → 다른 기기/브라우저에서 로그인해도, 캐시를 지워도 유효 수강 기간 내면 그대로 복원됨.
 // 로그인 사용자별로 키를 분리해 서로 다른 계정의 첨삭이 섞이지 않도록 한다.
-// (완전한 크로스-디바이스 동기화가 필요하면 상위 앱에서 testResults 로 함께
-//  bubble up 시켜 Supabase 로 sync 시키면 됨 — 지금은 device-local persist.)
+import {
+  saveWritingAiReviewCloud,
+  loadWritingAiReviewCloud,
+} from '../utils/writingAiReviews';
 const AI_TUTOR_STORE_PREFIX = 'writing_ai_tutor_v2';
 function readCurrentUserName(): string {
   if (typeof window === 'undefined') return 'anon';
@@ -552,18 +573,32 @@ function saveAiTutorStore(
   payload: Omit<AiTutorStorePayload, 'savedAt' | 'ownerName' | 'writingType' | 'answerPreview'>
 ): void {
   if (typeof window === 'undefined') return;
+  const answerPreview = (answer || '').slice(0, 240);
   try {
     const full: AiTutorStorePayload = {
       ...payload,
       savedAt: Date.now(),
       ownerName: readCurrentUserName(),
       writingType,
-      answerPreview: (answer || '').slice(0, 240),
+      answerPreview,
     };
     localStorage.setItem(aiTutorStoreKey(writingType, answer), JSON.stringify(full));
   } catch {
     // 저장 실패(quota 초과 등)는 무시 — 다음 첨삭이 저장되면 자동으로 회복됨
   }
+  // Supabase에도 병행 upsert (fire-and-forget) — 유료 회원 기간 동안 크로스-디바이스 보관용.
+  // 로그인 안 됨/수강권 없음/네트워크 실패는 헬퍼 내부에서 조용히 무시됨.
+  const answerHash = hashKey((answer || '').trim());
+  void saveWritingAiReviewCloud({
+    writingType,
+    answerHash,
+    answerPreview,
+    payload: {
+      analysis: payload.analysis,
+      semanticHighlights: payload.semanticHighlights,
+      upgradeSuggestions: payload.upgradeSuggestions,
+    },
+  });
 }
 
 export function WritingReviewAiTutor({
@@ -607,6 +642,40 @@ export function WritingReviewAiTutor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── 클라우드 하이드레이션 ────────────────────────────────────────────────
+  // localStorage에 캐시가 없으면(다른 기기/다른 브라우저/캐시 삭제 등) Supabase에
+  // 유료 기간 안에 저장된 첨삭이 있는지 조회해서 화면에 복원한다.
+  // 저장된 게 있으면 localStorage에도 다시 채워 다음번엔 즉시 표시되도록 한다.
+  useEffect(() => {
+    if (storedOnMount) return; // 로컬에 이미 있으면 클라우드 조회 스킵
+    if (!userAnswer || !userAnswer.trim()) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await loadWritingAiReviewCloud({
+          writingType,
+          answerHash: hashKey(userAnswer.trim()),
+        });
+        if (cancelled || !cloud || !cloud.analysis) return;
+        setAnalysis(cloud.analysis as AnalysisResult);
+        setSemanticHighlights((cloud.semanticHighlights as SemanticHighlight[]) || []);
+        setUpgradeSuggestions((cloud.upgradeSuggestions as UpgradeSuggestion[]) || []);
+        setMobileView('score');
+        // 로컬 캐시에도 채워두기 → 다음번 열람은 즉시 표시
+        saveAiTutorStore(writingType, userAnswer, {
+          analysis: cloud.analysis as AnalysisResult,
+          semanticHighlights: (cloud.semanticHighlights as SemanticHighlight[]) || [],
+          upgradeSuggestions: (cloud.upgradeSuggestions as UpgradeSuggestion[]) || [],
+        });
+      } catch {
+        // 조회 실패는 조용히 무시 — 사용자는 그냥 "AI 분석" 버튼으로 새로 분석하면 됨
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 학생이 수정할 때마다 실시간 점수 변화 (경량 휴리스틱, 0-6점 기준)
   useEffect(() => {
     if (!analysis) return;
@@ -643,9 +712,14 @@ export function WritingReviewAiTutor({
       const wordCount = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
       const lowerText = rewrittenText.toLowerCase();
       const rule = WORD_COUNT_RULE[writingType];
+      // 2026 TOEFL Writing 루브릭: 단어 수 초과는 감점 사유가 아니다.
+      // 상한을 넘긴 답안도 다른 답안과 완전히 동일한 기준으로 채점한다.
+      // 최소 단어 수 미달만 과제 미완수로 감점 대상.
       const wordCountStatus = rule.max
-        ? (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : wordCount > rule.max ? `초과 (+${wordCount - rule.max}단어)` : '적정')
-        : (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어)` : '적정');
+        ? (wordCount < rule.min
+            ? `미달 (-${rule.min - wordCount}단어) — 과제 미완수 감점 위험`
+            : '적정 (권장 상한 초과여도 다른 답안과 동일 기준으로 채점)')
+        : (wordCount < rule.min ? `미달 (-${rule.min - wordCount}단어) — 과제 미완수 감점 위험` : '적정');
 
       // Email: 수신자별 격식 키워드 (2026 공식 기준)
       const casualHits = (lowerText.match(/\b(hey|thanks|gonna|wanna|ok|cool|stuff|yeah|asap|can you)\b/g) || []).length;
@@ -995,15 +1069,13 @@ ${analysis.upgradedText}
   }, [rewrittenText, writingType]);
 
   // ── 분량 기준 위반 감지 (UI 경고용) ──
+  // 2026 TOEFL Writing 루브릭: 단어 수 초과는 감점 사유가 아니므로 '위반'으로 분류하지 않는다.
+  // 최소 단어 수 미달만 실제 감점 위험(under)으로 표시하며, 상한 초과는 UI에 별도 표시하지 않는다.
+  // 초과 텍스트도 다른 답안과 완전히 동일한 기준으로 채점된다.
   const wordCountViolation = useMemo(() => {
     const wc = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
     const rule = WORD_COUNT_RULE[writingType];
-    if (rule.max) {
-      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
-      if (wc > rule.max) return { status: 'over', diff: wc - rule.max, rule };
-    } else {
-      if (wc < rule.min) return { status: 'under', diff: rule.min - wc, rule };
-    }
+    if (wc < rule.min) return { status: 'under' as const, diff: rule.min - wc, rule };
     return null;
   }, [rewrittenText, writingType]);
 
@@ -1237,21 +1309,19 @@ ${analysis.upgradedText}
             }`}
           />
 
-          {/* 분량 기준 표시 (2026 토플 공식) */}
+          {/* 분량 기준 표시 (2026 토플 공식 — 단어 수 초과 자체는 감점 없음) */}
           <div className="mt-1.5 flex items-center justify-between text-xs">
             <span className="text-gray-500 dark:text-gray-400">
               분량 기준: {WORD_COUNT_RULE[writingType].desc}
             </span>
             <span className={`font-medium ${
               wordCountViolation
-                ? wordCountViolation.status === 'under' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
+                ? 'text-red-600 dark:text-red-400'
                 : 'text-green-600 dark:text-green-400'
             }`}>
               {rewrittenText.trim().split(/\s+/).filter(Boolean).length} 단어
               {wordCountViolation && (
-                <span className="ml-1">
-                  ({wordCountViolation.status === 'under' ? `미달 -${wordCountViolation.diff}` : `초과 +${wordCountViolation.diff}`})
-                </span>
+                <span className="ml-1">(미달 -{wordCountViolation.diff})</span>
               )}
             </span>
           </div>
