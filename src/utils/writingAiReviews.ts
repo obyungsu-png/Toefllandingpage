@@ -134,6 +134,78 @@ export async function loadWritingAiReviewCloud(params: {
 }
 
 /**
+ * 현재 로그인 사용자의 모든 AI 첨삭을 즉시 삭제한다.
+ *
+ * 사용 시점 — 유료 수강권이 만료된 것을 감지했을 때:
+ *   - licenseUtils.checkUserAccess() 가 만료를 반환한 직후
+ *   - (또는) 관리자가 강제 정리 요청
+ *
+ * 서버 SIDE 에서도 pg_cron 배치(delete_reviews_for_expired_subscriptions) 로
+ * 재로그인 하지 않는 유저까지 정리되므로 실패해도 최종적으로는 지워진다.
+ *
+ * localStorage 캐시도 같이 정리 — 만료 후 남아있는 화면에서도 다시 안 보이도록.
+ */
+export async function purgeMyWritingAiReviews(): Promise<{ ok: boolean; removed?: number; reason?: string }> {
+  const userId = await getCurrentAuthUserId();
+  if (!userId) return { ok: false, reason: 'not-authenticated' };
+
+  // 1) 서버측 일괄 삭제 — SECURITY DEFINER RPC (RLS 우회하여 확실히 지움)
+  let removed = 0;
+  try {
+    const { data, error } = await supabase.rpc('purge_my_writing_ai_reviews');
+    if (error) {
+      // RPC 실패해도 아래 direct delete 로 재시도
+      console.warn('[writingAiReviews] purge RPC error, falling back to direct delete:', error);
+    } else if (typeof data === 'number') {
+      removed = data;
+    }
+  } catch (err) {
+    console.warn('[writingAiReviews] purge RPC exception:', err);
+  }
+
+  // 2) fallback — RLS 정책(본인 delete) 로 직접 삭제 (RPC 가 배포 안 됐을 때 대비)
+  if (removed === 0) {
+    try {
+      const { error } = await supabase
+        .from('writing_ai_reviews')
+        .delete()
+        .eq('user_id', userId);
+      if (error) {
+        console.warn('[writingAiReviews] direct delete error:', error);
+      }
+    } catch (err) {
+      console.warn('[writingAiReviews] direct delete exception:', err);
+    }
+  }
+
+  // 3) 로컬 캐시도 함께 정리
+  purgeLocalWritingAiReviewsCache();
+
+  return { ok: true, removed };
+}
+
+/**
+ * localStorage 에 남아있는 AI 첨삭 캐시(writing_ai_tutor_v2 프리픽스)를 모두 제거.
+ * 유료 만료 후에도 캐시가 남아있으면 팝업이 이전 첨삭을 보여줄 수 있어 정리.
+ */
+export function purgeLocalWritingAiReviewsCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.startsWith('writing_ai_tutor_v2:')) toRemove.push(k);
+    }
+    toRemove.forEach((k) => {
+      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
  * 로그인 사용자의 최근 첨삭 목록 (History 화면 등에서 사용)
  * 만료 안 된 것만, 최근 업데이트 순.
  */

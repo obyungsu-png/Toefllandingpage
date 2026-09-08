@@ -343,6 +343,15 @@ export async function checkUserAccess(checkPaidOnly = false): Promise<AccessChec
 
     // 3. 만료일 체크
     if (profile.expire_date < todayStr()) {
+      // 유료 기간이 끝난 회원의 저장된 AI 첨삭을 즉시 정리 (best-effort).
+      // 서버측 배치(delete_reviews_for_expired_subscriptions)도 매일 돌아
+      // 재로그인 하지 않는 유저까지 커버되므로 실패해도 최종적으로는 지워진다.
+      void (async () => {
+        try {
+          const mod = await import('./writingAiReviews');
+          await mod.purgeMyWritingAiReviews();
+        } catch { /* ignore */ }
+      })();
       return {
         allowed: false,
         reason: '수강 기간이 만료되었습니다. 선생님께 연장 문의하세요.',
