@@ -513,12 +513,16 @@ const COLOR_LEGEND: Array<{ color: string; label: string }> = [
 ];
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
-// ── AI 첨삭 저장소 (localStorage — 회원 계정별) ──
-// 회원 기간 내내 (탈퇴/로그아웃 전까지) 첨삭 기록이 유지되도록 localStorage 에
-// 저장한다. 같은 브라우저에서 브라우저를 닫았다 다시 열어도 그대로 남아 있고,
+// ── AI 첨삭 저장소 (localStorage + Supabase 병행) ──
+// 회원 유료 기간 내내 첨삭 결과가 보관되도록 두 곳에 저장한다.
+//   1) localStorage — 디바이스 로컬 캐시(즉시 표시용, 오프라인 대응)
+//   2) Supabase writing_ai_reviews 테이블 — users_profile.expire_date 까지 서버 보관
+//      → 다른 기기/브라우저에서 로그인해도, 캐시를 지워도 유효 수강 기간 내면 그대로 복원됨.
 // 로그인 사용자별로 키를 분리해 서로 다른 계정의 첨삭이 섞이지 않도록 한다.
-// (완전한 크로스-디바이스 동기화가 필요하면 상위 앱에서 testResults 로 함께
-//  bubble up 시켜 Supabase 로 sync 시키면 됨 — 지금은 device-local persist.)
+import {
+  saveWritingAiReviewCloud,
+  loadWritingAiReviewCloud,
+} from '../utils/writingAiReviews';
 const AI_TUTOR_STORE_PREFIX = 'writing_ai_tutor_v2';
 function readCurrentUserName(): string {
   if (typeof window === 'undefined') return 'anon';
@@ -569,18 +573,32 @@ function saveAiTutorStore(
   payload: Omit<AiTutorStorePayload, 'savedAt' | 'ownerName' | 'writingType' | 'answerPreview'>
 ): void {
   if (typeof window === 'undefined') return;
+  const answerPreview = (answer || '').slice(0, 240);
   try {
     const full: AiTutorStorePayload = {
       ...payload,
       savedAt: Date.now(),
       ownerName: readCurrentUserName(),
       writingType,
-      answerPreview: (answer || '').slice(0, 240),
+      answerPreview,
     };
     localStorage.setItem(aiTutorStoreKey(writingType, answer), JSON.stringify(full));
   } catch {
     // 저장 실패(quota 초과 등)는 무시 — 다음 첨삭이 저장되면 자동으로 회복됨
   }
+  // Supabase에도 병행 upsert (fire-and-forget) — 유료 회원 기간 동안 크로스-디바이스 보관용.
+  // 로그인 안 됨/수강권 없음/네트워크 실패는 헬퍼 내부에서 조용히 무시됨.
+  const answerHash = hashKey((answer || '').trim());
+  void saveWritingAiReviewCloud({
+    writingType,
+    answerHash,
+    answerPreview,
+    payload: {
+      analysis: payload.analysis,
+      semanticHighlights: payload.semanticHighlights,
+      upgradeSuggestions: payload.upgradeSuggestions,
+    },
+  });
 }
 
 export function WritingReviewAiTutor({
@@ -621,6 +639,40 @@ export function WritingReviewAiTutor({
   // 캐시로부터 복원된 첨삭이면 점수 탭으로 초기 이동 (사용자가 다시 열자마자 결과를 볼 수 있게)
   useEffect(() => {
     if (storedOnMount) setMobileView('score');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── 클라우드 하이드레이션 ────────────────────────────────────────────────
+  // localStorage에 캐시가 없으면(다른 기기/다른 브라우저/캐시 삭제 등) Supabase에
+  // 유료 기간 안에 저장된 첨삭이 있는지 조회해서 화면에 복원한다.
+  // 저장된 게 있으면 localStorage에도 다시 채워 다음번엔 즉시 표시되도록 한다.
+  useEffect(() => {
+    if (storedOnMount) return; // 로컬에 이미 있으면 클라우드 조회 스킵
+    if (!userAnswer || !userAnswer.trim()) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await loadWritingAiReviewCloud({
+          writingType,
+          answerHash: hashKey(userAnswer.trim()),
+        });
+        if (cancelled || !cloud || !cloud.analysis) return;
+        setAnalysis(cloud.analysis as AnalysisResult);
+        setSemanticHighlights((cloud.semanticHighlights as SemanticHighlight[]) || []);
+        setUpgradeSuggestions((cloud.upgradeSuggestions as UpgradeSuggestion[]) || []);
+        setMobileView('score');
+        // 로컬 캐시에도 채워두기 → 다음번 열람은 즉시 표시
+        saveAiTutorStore(writingType, userAnswer, {
+          analysis: cloud.analysis as AnalysisResult,
+          semanticHighlights: (cloud.semanticHighlights as SemanticHighlight[]) || [],
+          upgradeSuggestions: (cloud.upgradeSuggestions as UpgradeSuggestion[]) || [],
+        });
+      } catch {
+        // 조회 실패는 조용히 무시 — 사용자는 그냥 "AI 분석" 버튼으로 새로 분석하면 됨
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
