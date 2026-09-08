@@ -21,6 +21,18 @@ export interface WritingAiReviewPayload {
   analysis: any;
   semanticHighlights: any[];
   upgradeSuggestions: any[];
+  /** 학생 답안 원문 전체 (히스토리에서 재열람·재분석용, 선택적). */
+  answerText?: string;
+  /** 문제 컨텍스트(문항 지시문/시나리오 등) — 히스토리에서 어떤 문제였는지 표시용, 선택적 */
+  questionContext?: {
+    writingType?: 'email' | 'discussion';
+    emailScenario?: string;
+    emailInstruction?: string;
+    emailTo?: string;
+    questionText?: string;
+    passageText?: string;
+    testName?: string;
+  };
 }
 
 /** 현재 로그인 사용자 ID (없으면 null) */

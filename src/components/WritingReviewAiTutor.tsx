@@ -597,6 +597,8 @@ function saveAiTutorStore(
       analysis: payload.analysis,
       semanticHighlights: payload.semanticHighlights,
       upgradeSuggestions: payload.upgradeSuggestions,
+      // 히스토리에서 원문 다시 볼 수 있도록 전체 답안도 함께 저장
+      answerText: answer || '',
     },
   });
 }

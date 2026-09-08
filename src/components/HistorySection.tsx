@@ -24,6 +24,9 @@ const ReportSection = lazy(() =>
 const QuestionReviewFull = lazy(() =>
   import('./QuestionReviewFull').then(module => ({ default: module.QuestionReviewFull }))
 );
+const WritingReviewHistory = lazy(() =>
+  import('./WritingReviewHistory').then(module => ({ default: module.WritingReviewHistory }))
+);
 
 // Re-export for backward compatibility
 export type { TestResult } from '../types/testResult';
@@ -47,7 +50,7 @@ interface HistorySectionProps {
   onClearPendingReview?: () => void;
 }
 
-type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | '오답 노트';
+type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | '오답 노트' | 'AI 첨삭';
 type NavType = 'records';
 type TimeFilter = 'all' | 'today' | '7days' | '1month' | '3months';
 type StatusFilter = 'all' | 'completed' | 'incomplete';
@@ -178,7 +181,7 @@ export function HistorySection({
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', '오답 노트'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', '오답 노트', 'AI 첨삭'];
 
   const timeFilters: { key: TimeFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -215,6 +218,9 @@ export function HistorySection({
         break;
       case '오답 노트':
         // 오답 노트 탭은 별도 전체화면 UI(WrongNotesManager)로 렌더링 — records 리스트 미사용
+        return [];
+      case 'AI 첨삭':
+        // AI 첨삭 탭도 별도 전체화면 UI(WritingReviewHistory)로 렌더링 — records 리스트 미사용
         return [];
       default:
         filtered = effectiveResults;
@@ -512,6 +518,7 @@ export function HistorySection({
       case 'Wrong Answers': return effectiveResults.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0).length;
       case 'Report': return 0;
       case '오답 노트': return 0;
+      case 'AI 첨삭': return 0; // Supabase에서 별도 fetch — 여기서 카운트하지 않음
       default: return 0;
     }
   };
@@ -785,6 +792,14 @@ export function HistorySection({
                 onClose={() => setActiveTab('Report')}
                 fullScreen={true}
               />
+            ) : activeTab === 'AI 첨삭' ? (
+              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading AI 첨삭 히스토리...</div>}>
+                <WritingReviewHistory
+                  themeColor={themeColor}
+                  isLoggedIn={isLoggedIn}
+                  onRequestLogin={onRequestLogin}
+                />
+              </Suspense>
             ) : (
               <>
                 {/* Filters */}
@@ -950,6 +965,14 @@ export function HistorySection({
               onClose={() => setActiveTab('Report')}
               fullScreen={true}
             />
+          ) : activeTab === 'AI 첨삭' ? (
+            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading AI 첨삭 히스토리...</div>}>
+              <WritingReviewHistory
+                themeColor={themeColor}
+                isLoggedIn={isLoggedIn}
+                onRequestLogin={onRequestLogin}
+              />
+            </Suspense>
           ) : (
             <>
               {/* Filters */}
