@@ -358,52 +358,45 @@ function buildRubricPrompt(writingType: WritingType, questionData?: any): string
   const wordRule = WORD_COUNT_RULE[writingType];
   const wordRange = wordRule.max ? `${wordRule.min}~${wordRule.max}단어` : `${wordRule.min}단어 이상`;
 
-  const base = `너는 2026년 개편 TOEFL iBT Writing 공인 채점관이다.
+  const base = `You are an official ETS TOEFL iBT Writing Evaluator simulating the 2026 e-rater engine.
+너는 2026년 개편 TOEFL iBT Writing 공인 채점관이다. 반드시 아래 [STRICT RULE]을 최우선으로 지켜서 채점한다.
 반드시 0.0 ~ 6.0 사이의 점수로 평가하라 (6.0이 만점).
 각 차원별 점수 산출 전, 반드시 학생 글에서 근거 문장을 발췌한 뒤(CoT) 점수를 매기고 피드백을 작성하라.
 
+[STRICT RULE 1 — PROMPT OVERLAP EVALUATION (최우선)]
+1. 학생 답안을 [문제 컨텍스트] 의 지시문/제시문/다른 학생 의견과 대조하라.
+2. 3단어(3-consecutive words) 이상 완전 일치하는 문장·구절을 모두 식별하라.
+3. 그 복사된 단어들을 "Effective Word Count(유효 단어 수)" 에서 제외하라.
+4. Effective Word Count 가 다음 임계값 미만이면 taskCompletion(Email) 또는 elaboration(Discussion) 에 자동 감점(최대 2.0 이하로 강등):
+   - Email: 유효 단어 수 < 70 단어
+   - Discussion: 유효 단어 수 < 90 단어
+5. Bullet point/제시문 내용을 반드시 포함하되 동의어·문장구조 변형(paraphrasing)으로 자연스럽게 재구성했으면
+   syntacticComplexity / grammarAccuracy 의 Lexical Diversity 항목에 가산점을 반영하라.
+
+[STRICT RULE 2 — PARAPHRASING SCORE]
+- Email: 각 bullet point가 (a) 의미상 포함되었는가 (b) 원문과 다른 어휘/구조로 재작성되었는가 를 개별 체크하라.
+  * 포함 + paraphrase → 만점 기여
+  * 포함 + 원문 그대로 복사 → taskCompletion 는 인정하지만 syntacticComplexity/grammarAccuracy 감점
+  * 미포함 → taskCompletion 감점
+- Discussion: Andrew/Claire 등 동료 의견을 인용할 때
+  * 이름만 짧게 언급 + 내용은 학생 본인 어휘로 재가공 → 만점 기여
+  * 원문 그대로 옮김 → peerEngagement 는 인정하지만 syntacticComplexity 감점
+  * 언급 자체 없음 → peerEngagement 감점
+
+[STRICT RULE 3 — 단어 수 채점 원칙]
+- 최대 단어 수 상한은 없다. 130단어·150단어·200단어 이상도 "단어 수 초과" 자체만으로는 절대 감점하지 마라.
+- 상한을 넘긴 답안도 다른 답안과 완전히 동일한 기준으로 채점하라.
+- 최소 단어 수 미달(Email <80, Discussion <100 총 단어 기준, 또는 위 유효 단어 임계값)만 감점 대상.
+- 길이로 인해 실제 나타난 오류(문법 오류·군더더기)는 각 차원에서 관찰된 문제로만 감점하라.
+- overallFeedback 에 "분량이 많다"는 이유의 경고를 추가하지 마라.
+
 [과제 분량 기준 — 반드시 확인]
-${writingType === 'email' ? 'Task 1: Write an Email' : 'Task 2: Academic Discussion'} — 권장 ${wordRange}
+${writingType === 'email' ? 'Task 2: Write an Email' : 'Task 3: Academic Discussion'} — 권장 ${wordRange}
 ${wordRule.desc}
+※ 최소 총 단어(Email 80 / Discussion 100)는 UI 경고 기준이며,
+   실제 자동 페널티 기준(Effective Word Count)은 Email 70 / Discussion 90 이다.
 
-[★ 2026 개편 TOEFL Writing 루브릭 — 단어 수 채점 원칙 (반드시 준수)]
-- TOEFL Writing 공식 채점 기준(Rubric)에는 '최대 단어 수 제한'도, '분량 초과 감점 규정'도 존재하지 않는다.
-- 학생이 130단어, 150단어, 200단어 이상을 작성했더라도 "단어 수 초과" 자체만으로는 절대 감점하지 마라.
-- 권장 상한을 넘긴 답안도 다른 답안과 완전히 동일한 기준으로 채점하라 — 분량이 많다는 이유로 더 엄격하게 보거나 별도 감점을 주지 말 것.
-- overall 점수와 어떤 차원 점수에서도 "분량이 많다/길다"는 이유의 감점은 금지한다.
-- 최소 단어 수 미달(Email <80, Discussion <100)은 과제 미완수로 간주하여 감점한다.
-- 글이 길어지면서 실제로 나타난 문제(문법 오류/오탈자 증가, 군더더기·중복으로 인한 명확성 저하)는
-  각각 grammarAccuracy, emailStructure(또는 elaboration) 차원에서 실제 관찰된 문제로만 감점하라.
-  "길이 자체 때문에"가 아니라 "글에 실제로 나타난 오류/군더더기"에 대해서만 감점한다.
-- overallFeedback에서 분량 초과에 대한 별도 경고나 주의 안내를 추가하지 말 것 — 다른 답안과 동일한 톤으로 피드백하라.
-
-[★ 2026 디지털 TOEFL Writing — 지시문/제시문 복사 감점 규칙 (e-rater 기준, 반드시 준수)]
-디지털 토플의 자동 채점 엔진(e-rater)은 학생 답안과 지시문·제시문·다른 학생 의견의
-텍스트 유사도(Text Overlap / Similarity Index)를 가장 먼저 스캔한다. 인간 채점관과 교차
-채점되며, 오프라인 시험보다 오히려 더 엄격하게 적용된다. 다음 원칙을 반드시 지켜라:
-
-1) 복사 감지 시 이중 감점:
-   - (a) 복사된 문장·구절은 학생이 작성한 것으로 인정되지 않아 word count 계산에서 제외.
-         → effectiveWordCount(복사분 제외 실질 단어 수)를 기준으로 최소 분량 미달 여부를 재판정하고,
-           미달이면 taskCompletion(Email) / elaboration(Discussion) 에서 감점.
-   - (b) syntacticComplexity (또는 Email의 grammarAccuracy) 의 Lexical Diversity 항목을
-         최하점 수준으로 하향 — 오버랩이 30% 이상이면 해당 차원 2.0 이하로 제한, 15~30%면 3.0 이하로 제한.
-
-2) 감점 대상 예시:
-   - Email: 불렛포인트에 "Ask for a refund" 라고 되어 있는데 학생이 그대로 "Ask for a refund" 를
-     본문에 넣음 → 감점. 반드시 "I would like to request a full reimbursement" 처럼 동의어·문장
-     구조를 바꿔 Paraphrase 해야 함.
-   - Discussion: 교수 질문이나 앞선 학생(Andrew, Claire 등)의 문장을 그대로 옮겨 씀 → 감점.
-     동료 언급은 "As Andrew mentioned, ..." 수준으로 이름만 짧게 언급한 뒤 내용은 학생 본인의
-     어휘로 재가공(Paraphrase) 해야 함.
-
-3) 채점 방식:
-   - 아래 [1차 정량 분석 결과] 의 "지시문/제시문 오버랩" 항목을 반드시 확인.
-   - matchedPhrases에 실제로 감지된 복사 문구가 나열되어 있으면 overallFeedback에 어느 구절이
-     문제인지 인용하고, 어떻게 paraphrase해야 하는지 예시를 1~2개 제시하라.
-   - 오버랩이 0% 또는 매우 낮으면(<5%) 이 감점을 적용하지 말 것 — 일반 표현의 자연스러운 우연 일치는 무시.
-
-[평가 차원 — ${writingType === 'email' ? 'Email (Task 1)' : 'Academic Discussion (Task 2)'}]
+[평가 차원 — ${writingType === 'email' ? 'Email (Task 2)' : 'Academic Discussion (Task 3)'}]
 ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
 
   if (writingType === 'email') {
@@ -887,12 +880,33 @@ export function WritingReviewAiTutor({
       // ── 지시문/제시문 텍스트 오버랩 분석 (e-rater Text Overlap 시뮬레이션) ──
       const overlap = detectPromptOverlap(rewrittenText, writingType, questionData);
       const overlapPct = (overlap.ratio * 100).toFixed(1);
+      const effectiveFloor = writingType === 'email' ? 70 : 90;
+      const effUnder = overlap.effectiveWordCount < effectiveFloor;
       const overlapLine = overlap.copiedWordCount === 0
-        ? '지시문/제시문과 겹치는 5-gram 없음 → 감점 없음'
-        : `${overlap.copiedWordCount}단어 (${overlapPct}%) 가 [${overlap.sources.join(', ')}] 와 5-gram 이상 완전 일치 → `
-          + `e-rater 기준 복사로 간주. effectiveWordCount ${overlap.effectiveWordCount}단어 기준으로 최소 분량 미달 여부 재판정하고, `
-          + `${overlap.ratio >= 0.30 ? 'Lexical Diversity 차원(syntacticComplexity/grammarAccuracy) 2.0 이하로 제한' : overlap.ratio >= 0.15 ? 'Lexical Diversity 차원 3.0 이하로 제한' : '가벼운 감점 검토'}. `
+        ? '지시문/제시문과 겹치는 5-gram 없음 → 오버랩 감점 없음'
+        : `Total ${wordCount}단어 / Effective ${overlap.effectiveWordCount}단어 / Overlap ${overlapPct}% / Copied ${overlap.copiedWordCount}단어. `
+          + `소스: [${overlap.sources.join(', ')}]. `
+          + `${effUnder ? `⚠ Effective Word Count < ${effectiveFloor} → taskCompletion/elaboration 자동 감점(2.0 이하 강등). ` : ''}`
+          + `${overlap.ratio >= 0.30 ? 'Lexical Diversity 차원 2.0 이하 강등. ' : overlap.ratio >= 0.15 ? 'Lexical Diversity 차원 3.0 이하 제한. ' : '가벼운 감점 검토. '}`
           + `감지된 복사 문구 예시: ${overlap.matchedPhrases.map(p => `"${p}"`).join(' / ')}`;
+
+      // Email: 각 bullet point 별 커버리지·paraphrasing 힌트 생성 (LLM이 개별 체크할 수 있도록)
+      let bulletCoverageHint = '';
+      if (writingType === 'email' && Array.isArray(questionData?.emailBullets) && questionData.emailBullets.length > 0) {
+        const bullets: string[] = questionData.emailBullets;
+        const rows = bullets.map((b: string, i: number) => {
+          const bWords = normalizeForOverlap(b);
+          const bGrams = extractNGrams(bWords, 3);
+          const sWords = normalizeForOverlap(rewrittenText);
+          const sGrams = extractNGrams(sWords, 3);
+          let hits = 0;
+          bGrams.forEach(g => { if (sGrams.has(g)) hits++; });
+          const copyRatio = bGrams.size > 0 ? hits / bGrams.size : 0;
+          const label = copyRatio >= 0.5 ? '⚠ 원문 대량 복사 의심' : copyRatio >= 0.2 ? '일부 복사' : '복사 없음';
+          return `  Bullet ${i + 1} ("${b.slice(0, 60)}"${b.length > 60 ? '…' : ''}) → 3-gram 겹침 ${(copyRatio * 100).toFixed(0)}% (${label})`;
+        });
+        bulletCoverageHint = `\n- Bullet 별 복사 검사:\n${rows.join('\n')}`;
+      }
 
       // 2차 LLM 정성 분석 — CoT 기반 JSON
       const systemPrompt = `${rubricPrompt}
@@ -902,7 +916,7 @@ ${taskContext}
 
 [1차 정량 분석 결과 — 참고용]
 - 단어 수: ${wordCount} (기준: ${rule.max ? `${rule.min}~${rule.max}` : `${rule.min}+`}단어) → ${wordCountStatus}
-- 지시문/제시문 오버랩: ${overlapLine}
+- 지시문/제시문 오버랩: ${overlapLine}${bulletCoverageHint}
 ${writingType === 'email'
   ? `- 수신자 유형(추론): ${recipientLabel(recipientType)}
 - Casual 표현: ${casualHits}회 (hey, thanks, gonna, wanna, ok, asap...${recipientType === 'peer' ? ' — 동료 학생 수신 시 반격식 톤으로 허용 가능' : ' — 격식 수신 시 감점 대상'})
@@ -918,11 +932,23 @@ ${writingType === 'email'
 {
   "rubric": {
     "overall": 숫자(0-6, 소수점 1자리),
-    "overallFeedback": "전체 코멘트 (한국어, 2-3문장)",
+    "overallFeedback": "전체 코멘트 (한국어, 2-3문장). 오버랩이 있으면 어느 구절이 문제인지 인용하고 paraphrase 예시 1~2개 포함.",
     "dimensions": {
 ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 피드백 — 학생 글에서 근거 문장을 발췌한 뒤 개선 방향 제시" }`).join(',\n')}
     }
   },
+  "erater": {
+    "totalWordCount": 숫자,
+    "effectiveWordCount": 숫자(복사 제외),
+    "overlapPercentage": 숫자(0-100),
+    "copiedPhrases": ["복사된 정확한 문구1", "문구2"],
+    "autoPenaltyTriggered": true 또는 false (Effective Word Count < ${writingType === 'email' ? 70 : 90} 인 경우 true)
+  },
+  ${writingType === 'email' ? `"bulletCoverage": [
+    { "bullet": "지시문 bullet 텍스트", "covered": true|false, "paraphrased": true|false, "note": "한국어 짧은 코멘트" }
+  ],` : `"peerReferences": [
+    { "peer": "Andrew|Claire|기타", "referenced": true|false, "paraphrased": true|false, "note": "한국어 짧은 코멘트" }
+  ],`}
   "grammarCorrections": [
     { "original": "학생 원문 일부", "corrected": "교정된 표현", "rule": "문법 규칙 설명 (한국어)" }
   ],
@@ -930,7 +956,7 @@ ${dims.map(d => `      "${d}": { "score": 숫자(0-6), "feedback": "한국어 �
     { "text": "하이라이트할 학생 글의 정확한 문장/구절 (원문과 동일하게)", "category": "salutation|signoff|peerQuote|claim|elaboration", "color": "yellow|green|blue|purple" }
   ],
   "upgradedSentences": [
-    { "original": "유치하지만 문법적으로 틀리지 않은 학생 문장", "upgraded": "Band 6.0 수준 고급 문장으로 Paraphrase", "reason": "업그레이드 이유 (한국어)" }
+    { "original": "유치하거나 원문 복사인 학생 문장", "upgraded": "Band 6.0 수준으로 Paraphrase 된 문장", "reason": "업그레이드/paraphrase 이유 (한국어)" }
   ],
   "upgradedText": "학생 글을 최소한의 수정만 가미해 업그레이드한 전체 텍스트"
 }
@@ -1217,6 +1243,22 @@ ${analysis.upgradedText}
     return Math.round((formal / total) * 100);
   }, [rewrittenText, writingType]);
 
+  // ── 실시간 지시문/제시문 오버랩 분석 (e-rater 시뮬레이션) ──
+  // 학생이 입력할 때마다 5-gram 오버랩을 다시 계산해서 Dual Word Counter와
+  // Overlap Visualizer에 실시간으로 반영. 채점 클릭 전에도 학생이 자기 답안의
+  // 복사 위험을 눈으로 확인할 수 있게 한다.
+  const liveOverlap = useMemo(
+    () => detectPromptOverlap(rewrittenText, writingType, questionData),
+    [rewrittenText, writingType, questionData],
+  );
+
+  // ── e-rater 유효 단어 수 자동 페널티 임계값 ──
+  // 스펙: Email <70, Discussion <90 미만이면 Task Achievement 자동 감점.
+  // (min 단어수 80/100 은 UI 경고 기준, 아래 임계값은 실제 페널티 기준)
+  const EFFECTIVE_WORD_FLOOR = writingType === 'email' ? 70 : 90;
+  const isEffectiveUnder = liveOverlap.effectiveWordCount < EFFECTIVE_WORD_FLOOR
+    && rewrittenText.trim().split(/\s+/).filter(Boolean).length >= 30; // 아주 짧은 초안일 때는 경고 안 함
+
   // ── 분량 기준 위반 감지 (UI 경고용) ──
   // 2026 TOEFL Writing 루브릭: 단어 수 초과는 감점 사유가 아니므로 '위반'으로 분류하지 않는다.
   // 최소 단어 수 미달만 실제 감점 위험(under)으로 표시하며, 상한 초과는 UI에 별도 표시하지 않는다.
@@ -1342,16 +1384,93 @@ ${analysis.upgradedText}
             </div>
           )}
 
-          {/* 학생 원본 — Semantic Highlight 적용 */}
+          {/* Overlap Visualizer 범례 — 복사 구절이 감지된 경우에만 표시 */}
+          {liveOverlap.copiedWordCount > 0 && (
+            <div className="mb-2 flex items-center gap-2 text-xs bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md px-2 py-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+              <span className="text-orange-800 dark:text-orange-200">
+                <span className="underline decoration-orange-500 decoration-wavy decoration-2 font-semibold">주황 물결선</span>
+                {' '}= 지시문/제시문과 유사도 높은 구절 (e-rater 채점 시 단어 수 불인정)
+              </span>
+            </div>
+          )}
+
+          {/* 학생 원본 — Semantic Highlight + Overlap Visualizer 적용 */}
           <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700 min-h-[200px] text-sm md:text-base text-gray-800 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-            {highlightedOriginal
-              ? highlightedOriginal.map((seg, idx) =>
-                  seg.color
-                    ? <span key={idx} className={`px-1 rounded ${COLOR_CLASSES[seg.color]}`}>{seg.text}</span>
+            {(() => {
+              const source = studentText || '(작성된 답안이 없습니다.)';
+              if (!studentText) return source;
+
+              // Overlap 시각화 — 감지된 각 문구를 원문에서 찾아 주황 물결선으로 감싸기
+              const overlapPhrases = liveOverlap.matchedPhrases;
+              const overlapSources = liveOverlap.sources.join(', ');
+              const overlapPct = liveOverlap.copiedWordCount > 0 && studentText
+                ? Math.round((liveOverlap.copiedWordCount / (studentText.trim().split(/\s+/).filter(Boolean).length || 1)) * 100)
+                : 0;
+
+              // Semantic 하이라이트가 없으면 overlap만 표시
+              const segments: Array<{ text: string; kind: 'plain' | 'semantic' | 'overlap'; color?: string; tooltip?: string }> = [];
+              if (highlightedOriginal) {
+                highlightedOriginal.forEach(seg => {
+                  segments.push({ text: seg.text, kind: seg.color ? 'semantic' : 'plain', color: seg.color || undefined });
+                });
+              } else {
+                segments.push({ text: studentText, kind: 'plain' });
+              }
+
+              if (overlapPhrases.length === 0) {
+                // overlap 없음 — 기존 렌더링
+                return segments.map((seg, idx) =>
+                  seg.kind === 'semantic'
+                    ? <span key={idx} className={`px-1 rounded ${COLOR_CLASSES[seg.color!]}`}>{seg.text}</span>
                     : <span key={idx}>{seg.text}</span>
-                )
-              : (studentText || '(작성된 답안이 없습니다.)')
-            }
+                );
+              }
+
+              // Overlap 구절을 각 segment 내에서 찾아 분할
+              const tooltip = `이 구절은 [${overlapSources}] 와 유사도 높음 (전체 오버랩 ${overlapPct}%). e-rater 채점 시 단어 수로 인정받지 못해 감점될 수 있어요.`;
+              const finalSegments: Array<{ text: string; kind: 'plain' | 'semantic' | 'overlap'; color?: string }> = [];
+              segments.forEach(seg => {
+                let rest = seg.text;
+                const lowerRest = () => rest.toLowerCase();
+                while (rest.length > 0) {
+                  let bestIdx = Infinity;
+                  let bestLen = 0;
+                  for (const p of overlapPhrases) {
+                    const idx = lowerRest().indexOf(p.toLowerCase());
+                    if (idx !== -1 && idx < bestIdx) {
+                      bestIdx = idx;
+                      bestLen = p.length;
+                    }
+                  }
+                  if (bestIdx === Infinity) {
+                    finalSegments.push({ text: rest, kind: seg.kind, color: seg.color });
+                    break;
+                  }
+                  if (bestIdx > 0) {
+                    finalSegments.push({ text: rest.slice(0, bestIdx), kind: seg.kind, color: seg.color });
+                  }
+                  finalSegments.push({ text: rest.slice(bestIdx, bestIdx + bestLen), kind: 'overlap' });
+                  rest = rest.slice(bestIdx + bestLen);
+                }
+              });
+
+              return finalSegments.map((seg, idx) => {
+                if (seg.kind === 'overlap') {
+                  return (
+                    <span
+                      key={idx}
+                      title={tooltip}
+                      className="underline decoration-orange-500 decoration-wavy decoration-2 cursor-help bg-orange-50/50 dark:bg-orange-900/20 rounded-sm"
+                    >{seg.text}</span>
+                  );
+                }
+                if (seg.kind === 'semantic' && seg.color) {
+                  return <span key={idx} className={`px-1 rounded ${COLOR_CLASSES[seg.color]}`}>{seg.text}</span>;
+                }
+                return <span key={idx}>{seg.text}</span>;
+              });
+            })()}
           </div>
 
           {/* AI 교정본 — 교정된 전체 텍스트 + 변경 포인트 카드 (일반 영어 첨삭 형식) */}
@@ -1458,22 +1577,44 @@ ${analysis.upgradedText}
             }`}
           />
 
-          {/* 분량 기준 표시 (2026 토플 공식 — 단어 수 초과 자체는 감점 없음) */}
-          <div className="mt-1.5 flex items-center justify-between text-xs">
-            <span className="text-gray-500 dark:text-gray-400">
-              분량 기준: {WORD_COUNT_RULE[writingType].desc}
-            </span>
-            <span className={`font-medium ${
-              wordCountViolation
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-green-600 dark:text-green-400'
-            }`}>
-              {rewrittenText.trim().split(/\s+/).filter(Boolean).length} 단어
-              {wordCountViolation && (
-                <span className="ml-1">(미달 -{wordCountViolation.diff})</span>
-              )}
-            </span>
-          </div>
+          {/* Dual Word Counter — e-rater 스펙 (총 단어 vs 유효 단어) */}
+          {(() => {
+            const totalWords = rewrittenText.trim().split(/\s+/).filter(Boolean).length;
+            const effWords   = liveOverlap.effectiveWordCount;
+            const copied     = liveOverlap.copiedWordCount;
+            const overlapPct = totalWords > 0 ? Math.round((copied / totalWords) * 100) : 0;
+            return (
+              <div className="mt-1.5 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    분량 기준: {WORD_COUNT_RULE[writingType].desc}
+                  </span>
+                  <span className={`font-medium ${
+                    wordCountViolation ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                  }`}>
+                    총 {totalWords} 단어
+                    {wordCountViolation && <span className="ml-1">(미달 -{wordCountViolation.diff})</span>}
+                  </span>
+                </div>
+
+                {/* 유효 단어 카운터 — 복사분 제외 (e-rater Effective Word Count) */}
+                {copied > 0 && (
+                  <div className="flex items-center justify-between text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md px-2 py-1">
+                    <span className="text-amber-800 dark:text-amber-200 font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      유효 단어 수 (복사 제외): {effWords} 단어
+                    </span>
+                    <span className={`font-bold ${
+                      isEffectiveUnder ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-300'
+                    }`}>
+                      오버랩 {overlapPct}%
+                      {isEffectiveUnder && ` · ⚠ ${EFFECTIVE_WORD_FLOOR} 미만 자동 감점 위험`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* 액션 버튼 */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
