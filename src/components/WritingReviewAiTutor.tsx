@@ -241,6 +241,116 @@ ${profiles[recipient]}
 ${footer}`;
 }
 
+// ── 지시문/제시문 텍스트 오버랩 감지 (e-rater Text Overlap 시뮬레이션) ─────
+// 2026 디지털 토플의 자동 채점 엔진(e-rater)은 학생 답안이 지시문·제시문·
+// 다른 학생 의견 문장과 얼마나 겹치는지를 스캔한다. 겹치는 부분은
+// (1) 학생이 작성한 것으로 인정되지 않아 word count에서 제외되고,
+// (2) Lexical Diversity 점수를 최하로 만들어 감점된다.
+//
+// 여기서는 5-gram(5개 단어 연속 시퀀스) 완전 일치를 기준으로 오버랩을 감지한다.
+// (Turnitin 등 표절 감지 도구와 동일한 접근법 — 짧은 표현은 자연스러운 우연 일치가
+//  가능하지만 5-gram 이상 일치는 사실상 복사로 간주된다.)
+interface OverlapAnalysis {
+  ratio: number;              // 학생 답안 총 단어 대비 복사된 단어 비율 (0~1)
+  copiedWordCount: number;    // 오버랩으로 판정된 총 단어 수
+  matchedPhrases: string[];   // 실제로 검출된 복사 문구 목록 (최대 5개)
+  sources: string[];          // 어디서 복사됐는지 라벨 ('지시문', '교수 메시지' 등)
+  effectiveWordCount: number; // 복사분 제외한 실질 작성 단어 수
+}
+
+function normalizeForOverlap(text: string): string[] {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')  // 구두점 제거
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function extractNGrams(words: string[], n: number): Set<string> {
+  const grams = new Set<string>();
+  for (let i = 0; i + n <= words.length; i++) {
+    grams.add(words.slice(i, i + n).join(' '));
+  }
+  return grams;
+}
+
+function detectPromptOverlap(
+  studentText: string,
+  writingType: WritingType,
+  questionData: any,
+): OverlapAnalysis {
+  const studentWords = normalizeForOverlap(studentText);
+  const totalWords = studentWords.length;
+  if (totalWords < 5 || !questionData) {
+    return { ratio: 0, copiedWordCount: 0, matchedPhrases: [], sources: [], effectiveWordCount: totalWords };
+  }
+
+  // 소스 텍스트 — writingType별로 다름
+  const sources: { label: string; text: string }[] = [];
+  if (writingType === 'email') {
+    if (questionData.emailScenario)    sources.push({ label: '지시문 시나리오', text: questionData.emailScenario });
+    if (questionData.emailInstruction) sources.push({ label: '지시문 요구사항', text: questionData.emailInstruction });
+    if (Array.isArray(questionData.emailBullets)) {
+      questionData.emailBullets.forEach((b: string, i: number) =>
+        sources.push({ label: `불렛포인트 ${i + 1}`, text: b })
+      );
+    }
+    if (questionData.questionText) sources.push({ label: '문제 텍스트', text: questionData.questionText });
+  } else {
+    if (questionData.professorMessage || questionData.questionText) {
+      sources.push({ label: '교수 메시지', text: questionData.professorMessage || questionData.questionText });
+    }
+    if (questionData.student1Message) {
+      sources.push({ label: `${questionData.student1Name || 'Student 1'} 의견`, text: questionData.student1Message });
+    }
+    if (questionData.student2Message) {
+      sources.push({ label: `${questionData.student2Name || 'Student 2'} 의견`, text: questionData.student2Message });
+    }
+    if (questionData.passageText) sources.push({ label: '지문', text: questionData.passageText });
+  }
+
+  const N = 5; // 5-gram
+  const studentGrams = Array.from(extractNGrams(studentWords, N));
+  const matchedGrams = new Set<string>();
+  const hitSources = new Set<string>();
+
+  for (const src of sources) {
+    const srcWords = normalizeForOverlap(src.text);
+    if (srcWords.length < N) continue;
+    const srcGramSet = extractNGrams(srcWords, N);
+    for (const g of studentGrams) {
+      if (srcGramSet.has(g)) {
+        matchedGrams.add(g);
+        hitSources.add(src.label);
+      }
+    }
+  }
+
+  // 겹치는 n-gram이 커버하는 단어 수 계산 — n-gram이 겹치면 그 위치의 단어들을 '복사됨'으로 마킹
+  const copiedIdx = new Set<number>();
+  for (let i = 0; i + N <= studentWords.length; i++) {
+    const g = studentWords.slice(i, i + N).join(' ');
+    if (matchedGrams.has(g)) {
+      for (let j = i; j < i + N; j++) copiedIdx.add(j);
+    }
+  }
+
+  const copiedWordCount = copiedIdx.size;
+  const ratio = copiedWordCount / totalWords;
+  const effectiveWordCount = totalWords - copiedWordCount;
+
+  // 상위 5개 문구만 예시로 (긴 매치 우선)
+  const matchedPhrases = Array.from(matchedGrams).slice(0, 5);
+
+  return {
+    ratio,
+    copiedWordCount,
+    matchedPhrases,
+    sources: Array.from(hitSources),
+    effectiveWordCount,
+  };
+}
+
 // ── 채점 프롬프트 빌더 (2026 토플 공식 채점 기준 상세 반영) ────────────────────
 // questionData를 받아 수신자 유형을 추론하고, 격식 기준을 동적으로 적용
 function buildRubricPrompt(writingType: WritingType, questionData?: any): string {
@@ -266,6 +376,32 @@ ${wordRule.desc}
   각각 grammarAccuracy, emailStructure(또는 elaboration) 차원에서 실제 관찰된 문제로만 감점하라.
   "길이 자체 때문에"가 아니라 "글에 실제로 나타난 오류/군더더기"에 대해서만 감점한다.
 - overallFeedback에서 분량 초과에 대한 별도 경고나 주의 안내를 추가하지 말 것 — 다른 답안과 동일한 톤으로 피드백하라.
+
+[★ 2026 디지털 TOEFL Writing — 지시문/제시문 복사 감점 규칙 (e-rater 기준, 반드시 준수)]
+디지털 토플의 자동 채점 엔진(e-rater)은 학생 답안과 지시문·제시문·다른 학생 의견의
+텍스트 유사도(Text Overlap / Similarity Index)를 가장 먼저 스캔한다. 인간 채점관과 교차
+채점되며, 오프라인 시험보다 오히려 더 엄격하게 적용된다. 다음 원칙을 반드시 지켜라:
+
+1) 복사 감지 시 이중 감점:
+   - (a) 복사된 문장·구절은 학생이 작성한 것으로 인정되지 않아 word count 계산에서 제외.
+         → effectiveWordCount(복사분 제외 실질 단어 수)를 기준으로 최소 분량 미달 여부를 재판정하고,
+           미달이면 taskCompletion(Email) / elaboration(Discussion) 에서 감점.
+   - (b) syntacticComplexity (또는 Email의 grammarAccuracy) 의 Lexical Diversity 항목을
+         최하점 수준으로 하향 — 오버랩이 30% 이상이면 해당 차원 2.0 이하로 제한, 15~30%면 3.0 이하로 제한.
+
+2) 감점 대상 예시:
+   - Email: 불렛포인트에 "Ask for a refund" 라고 되어 있는데 학생이 그대로 "Ask for a refund" 를
+     본문에 넣음 → 감점. 반드시 "I would like to request a full reimbursement" 처럼 동의어·문장
+     구조를 바꿔 Paraphrase 해야 함.
+   - Discussion: 교수 질문이나 앞선 학생(Andrew, Claire 등)의 문장을 그대로 옮겨 씀 → 감점.
+     동료 언급은 "As Andrew mentioned, ..." 수준으로 이름만 짧게 언급한 뒤 내용은 학생 본인의
+     어휘로 재가공(Paraphrase) 해야 함.
+
+3) 채점 방식:
+   - 아래 [1차 정량 분석 결과] 의 "지시문/제시문 오버랩" 항목을 반드시 확인.
+   - matchedPhrases에 실제로 감지된 복사 문구가 나열되어 있으면 overallFeedback에 어느 구절이
+     문제인지 인용하고, 어떻게 paraphrase해야 하는지 예시를 1~2개 제시하라.
+   - 오버랩이 0% 또는 매우 낮으면(<5%) 이 감점을 적용하지 말 것 — 일반 표현의 자연스러운 우연 일치는 무시.
 
 [평가 차원 — ${writingType === 'email' ? 'Email (Task 1)' : 'Academic Discussion (Task 2)'}]
 ${dims.map(d => `- ${d} [${DIMENSION_META[d].priority}]: ${DIMENSION_META[d].desc}`).join('\n')}`;
@@ -748,6 +884,16 @@ export function WritingReviewAiTutor({
       const uniqueWords = new Set(rewrittenText.toLowerCase().match(/[a-z]+/g) || []).size;
       const lexicalDiversity = uniqueWords / Math.max(wordCount, 1);
 
+      // ── 지시문/제시문 텍스트 오버랩 분석 (e-rater Text Overlap 시뮬레이션) ──
+      const overlap = detectPromptOverlap(rewrittenText, writingType, questionData);
+      const overlapPct = (overlap.ratio * 100).toFixed(1);
+      const overlapLine = overlap.copiedWordCount === 0
+        ? '지시문/제시문과 겹치는 5-gram 없음 → 감점 없음'
+        : `${overlap.copiedWordCount}단어 (${overlapPct}%) 가 [${overlap.sources.join(', ')}] 와 5-gram 이상 완전 일치 → `
+          + `e-rater 기준 복사로 간주. effectiveWordCount ${overlap.effectiveWordCount}단어 기준으로 최소 분량 미달 여부 재판정하고, `
+          + `${overlap.ratio >= 0.30 ? 'Lexical Diversity 차원(syntacticComplexity/grammarAccuracy) 2.0 이하로 제한' : overlap.ratio >= 0.15 ? 'Lexical Diversity 차원 3.0 이하로 제한' : '가벼운 감점 검토'}. `
+          + `감지된 복사 문구 예시: ${overlap.matchedPhrases.map(p => `"${p}"`).join(' / ')}`;
+
       // 2차 LLM 정성 분석 — CoT 기반 JSON
       const systemPrompt = `${rubricPrompt}
 
@@ -756,6 +902,7 @@ ${taskContext}
 
 [1차 정량 분석 결과 — 참고용]
 - 단어 수: ${wordCount} (기준: ${rule.max ? `${rule.min}~${rule.max}` : `${rule.min}+`}단어) → ${wordCountStatus}
+- 지시문/제시문 오버랩: ${overlapLine}
 ${writingType === 'email'
   ? `- 수신자 유형(추론): ${recipientLabel(recipientType)}
 - Casual 표현: ${casualHits}회 (hey, thanks, gonna, wanna, ok, asap...${recipientType === 'peer' ? ' — 동료 학생 수신 시 반격식 톤으로 허용 가능' : ' — 격식 수신 시 감점 대상'})
