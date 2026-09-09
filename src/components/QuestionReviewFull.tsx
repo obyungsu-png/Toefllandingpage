@@ -11,6 +11,7 @@ import { getQuestionRangeLabel, buildGlobalSlots, getModuleSlots } from '../util
 import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
+import { fetchBuildSentenceExplanation, readCachedExplanation } from '../utils/buildSentenceExplain';
 
 /**
  * Reading review — Range API로 하이라이트/밑줄을 DOM에 적용 — 선택한 색상 반영
@@ -255,6 +256,14 @@ export function QuestionReviewFull({
   const passageRef = useRef<HTMLDivElement | null>(null);
   // Writing review — 드래그 하이라이트/밑줄/사전 적용 대상 컨테이너 (Reading passageRef와 별개)
   const writingReviewRef = useRef<HTMLDivElement | null>(null);
+
+  // Writing Build a Sentence — AI 해설 상태 (질문 id별 캐시)
+  //   explanations[id] = "여기에 2줄 이내 한국어 해설"
+  //   loadingIds       = 지금 API 호출 중인 질문 id 집합
+  //   errorIds[id]     = 실패 사유 (있으면 재시도 버튼 노출)
+  const [bsExplanations, setBsExplanations] = useState<Record<string, string>>({});
+  const [bsLoadingIds, setBsLoadingIds] = useState<Set<string>>(new Set());
+  const [bsErrorIds, setBsErrorIds] = useState<Record<string, string>>({});
 
   // Speaking-specific state
   // Real recordings — load from DB (10-day retention) with sessionStorage fallback
@@ -581,6 +590,31 @@ export function QuestionReviewFull({
   const handleLanguageChange = (lang: 'en' | 'ko') => {
     setLanguage(lang);
     localStorage.setItem('wordLookupLanguage', lang);
+  };
+
+  // ── Writing Build a Sentence — AI 해설 요청 핸들러 ──
+  // localStorage 캐시가 있으면 즉시 반환, 없으면 GLM/Claude 로 새로 생성.
+  // 회원 유료기간이 있는 학생은 처음 한 번 생성 후 계속 캐시로 열람.
+  const requestBuildSentenceExplain = async (params: {
+    questionId: string;
+    prompt: string;
+    words: string[];
+    correctAnswer: string;
+    sentenceEnding?: '.' | '?';
+    userAnswer?: string | null;
+  }) => {
+    const { questionId } = params;
+    if (bsLoadingIds.has(questionId)) return;
+    setBsErrorIds(prev => { const n = { ...prev }; delete n[questionId]; return n; });
+    setBsLoadingIds(prev => { const n = new Set(prev); n.add(questionId); return n; });
+    try {
+      const text = await fetchBuildSentenceExplanation(params);
+      setBsExplanations(prev => ({ ...prev, [questionId]: text }));
+    } catch (err: any) {
+      setBsErrorIds(prev => ({ ...prev, [questionId]: err?.message || '해설을 불러오지 못했어요.' }));
+    } finally {
+      setBsLoadingIds(prev => { const n = new Set(prev); n.delete(questionId); return n; });
+    }
   };
 
   // Reading review — 툴 + 색상 변경 핸들러
@@ -1945,6 +1979,78 @@ export function QuestionReviewFull({
                                 }`}>
                                   {userAns || (isWrong ? '(미제출)' : fullCorrect)}
                                 </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* AI 해설 (GLM/Claude로 짧은 한국어 해설 생성) */}
+                        {(() => {
+                          const qNum = currentQuestionIndex + 1;
+                          const wrongEntry = result.wrongAnswers.find(w => {
+                            const id = (w.questionId || '').toLowerCase();
+                            return id === `writing-bs-${qNum}` || id === String(qNum)
+                              || id === `writing-${qNum}` || id === `build-sentence-${qNum}`
+                              || id === `bs-${qNum}` || id === `q${qNum}`;
+                          });
+                          const userAns = wrongEntry?.userAnswer || null;
+                          const qId = currentWritingBuildSentence.id || `writing-bs-${qNum}`;
+
+                          // 마운트 시 캐시 확인 (렌더 중 setState 방지: state에 없으면 캐시 직접 조회)
+                          const stateExplain = bsExplanations[qId];
+                          const cachedExplain = stateExplain || readCachedExplanation(qId, correctText);
+                          const isLoading = bsLoadingIds.has(qId);
+                          const errorMsg = bsErrorIds[qId];
+
+                          if (!correctText) return null;
+
+                          return (
+                            <div className="flex items-start gap-2 pt-1">
+                              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1.5 shrink-0 w-12">해설</p>
+                              <div className="flex-1">
+                                {cachedExplain ? (
+                                  <div className="rounded-lg px-3 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                      <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">AI 해설</span>
+                                    </div>
+                                    <p className="text-sm text-gray-800 dark:text-gray-100 leading-relaxed whitespace-pre-line">
+                                      {cachedExplain}
+                                    </p>
+                                  </div>
+                                ) : isLoading ? (
+                                  <div className="rounded-lg px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-500 flex items-center gap-2">
+                                    <span className="inline-block w-3 h-3 rounded-full border-2 border-amber-400 border-t-transparent animate-spin" />
+                                    해설을 만드는 중…
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <button
+                                      onClick={() => requestBuildSentenceExplain({
+                                        questionId: qId,
+                                        prompt: currentWritingBuildSentence.prompt,
+                                        words: currentWritingBuildSentence.words,
+                                        correctAnswer: correctText,
+                                        sentenceEnding: currentWritingBuildSentence.sentenceEnding,
+                                        userAnswer: userAns,
+                                      })}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 transition-colors"
+                                    >
+                                      <Sparkles className="w-3.5 h-3.5" />
+                                      AI 해설 보기
+                                    </button>
+                                    {errorMsg && (
+                                      <p className="mt-1 text-[11px] text-red-500">{errorMsg} <button className="underline ml-1" onClick={() => requestBuildSentenceExplain({
+                                        questionId: qId,
+                                        prompt: currentWritingBuildSentence.prompt,
+                                        words: currentWritingBuildSentence.words,
+                                        correctAnswer: correctText,
+                                        sentenceEnding: currentWritingBuildSentence.sentenceEnding,
+                                        userAnswer: userAns,
+                                      })}>다시 시도</button></p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
