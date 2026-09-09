@@ -27,6 +27,9 @@ const QuestionReviewFull = lazy(() =>
 const WritingReviewHistory = lazy(() =>
   import('./WritingReviewHistory').then(module => ({ default: module.WritingReviewHistory }))
 );
+const StudyMaterialsRoom = lazy(() =>
+  import('./StudyMaterialsRoom').then(module => ({ default: module.StudyMaterialsRoom }))
+);
 
 // Re-export for backward compatibility
 export type { TestResult } from '../types/testResult';
@@ -45,12 +48,14 @@ interface HistorySectionProps {
   advertisements?: any[];
   isLoggedIn?: boolean;
   onRequestLogin?: () => void;
+  // 자료방 관리자 모드 — App.tsx 의 isPasswordCorrect 를 이 프롭으로 전달
+  isAdmin?: boolean;
   // 오답 복습 자동 열기 (App.tsx → HistorySection)
   pendingReviewResult?: TestResult | null;
   onClearPendingReview?: () => void;
 }
 
-type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | '오답 노트' | 'AI 첨삭';
+type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | '오답 노트' | 'AI 첨삭' | '자료방';
 type NavType = 'records';
 type TimeFilter = 'all' | 'today' | '7days' | '1month' | '3months';
 type StatusFilter = 'all' | 'completed' | 'incomplete';
@@ -98,7 +103,8 @@ export function HistorySection({
   onClearPendingReview,
   advertisements = [],
   isLoggedIn = true,
-  onRequestLogin
+  onRequestLogin,
+  isAdmin = false,
 }: HistorySectionProps) {
   // Navigation & Tab state
   const [activeNav, setActiveNav] = useState<NavType>('records');
@@ -181,7 +187,7 @@ export function HistorySection({
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', '오답 노트', 'AI 첨삭'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', '오답 노트', 'AI 첨삭', '자료방'];
 
   const timeFilters: { key: TimeFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -221,6 +227,9 @@ export function HistorySection({
         return [];
       case 'AI 첨삭':
         // AI 첨삭 탭도 별도 전체화면 UI(WritingReviewHistory)로 렌더링 — records 리스트 미사용
+        return [];
+      case '자료방':
+        // 자료방 탭도 별도 전체화면 UI(StudyMaterialsRoom)로 렌더링 — records 리스트 미사용
         return [];
       default:
         filtered = effectiveResults;
@@ -519,6 +528,7 @@ export function HistorySection({
       case 'Report': return 0;
       case '오답 노트': return 0;
       case 'AI 첨삭': return 0; // Supabase에서 별도 fetch — 여기서 카운트하지 않음
+      case '자료방': return 0; // Supabase에서 별도 fetch — 여기서 카운트하지 않음
       default: return 0;
     }
   };
@@ -800,6 +810,10 @@ export function HistorySection({
                   onRequestLogin={onRequestLogin}
                 />
               </Suspense>
+            ) : activeTab === '자료방' ? (
+              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading 자료방...</div>}>
+                <StudyMaterialsRoom themeColor={themeColor} isAdmin={isAdmin} />
+              </Suspense>
             ) : (
               <>
                 {/* Filters */}
@@ -972,6 +986,10 @@ export function HistorySection({
                 isLoggedIn={isLoggedIn}
                 onRequestLogin={onRequestLogin}
               />
+            </Suspense>
+          ) : activeTab === '자료방' ? (
+            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading 자료방...</div>}>
+              <StudyMaterialsRoom themeColor={themeColor} isAdmin={isAdmin} />
             </Suspense>
           ) : (
             <>

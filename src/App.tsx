@@ -8510,6 +8510,7 @@ function AppContent() {
               setTestResults(prev => prev.filter(r => r.id !== resultId));
               toast.success('기록이 삭제되었습니다.');
             }}
+            isAdmin={isPasswordCorrect}
           />
         </Suspense>
       )}
