@@ -13,9 +13,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen, Loader2, X, Mail, Users, Calendar, Star, RefreshCw,
-  MessageSquare, Wand2, Copy, CheckCircle2, ChevronDown, ChevronUp,
+  MessageSquare, Wand2, Copy, CheckCircle2, ChevronDown, ChevronUp, ArrowRight,
+  Palette, Sparkles,
 } from 'lucide-react';
 import { listRecentWritingAiReviewsCloud, type WritingType, type WritingAiReviewPayload } from '../utils/writingAiReviews';
+import { renderInlineDiff, extractChangeBlocks, COLOR_CLASSES, COLOR_LEGEND } from '../utils/writingDiff';
 
 // ── 로컬 타입 — writingAiReviews 헬퍼가 리턴하는 항목 형태 ─────────────────
 interface HistoryRow {
@@ -297,7 +299,7 @@ function DetailModal({
   row, themeColor, onClose,
 }: { row: HistoryRow; themeColor: string; onClose: () => void }) {
   const [copied, setCopied] = useState<'original' | 'upgraded' | null>(null);
-  const [openSection, setOpenSection] = useState<'answer' | 'model' | null>('answer');
+  const [openSection, setOpenSection] = useState<'answer' | 'upgraded' | 'model' | null>('answer');
 
   const rubric = row.payload.analysis?.rubric;
   const overall = Number(rubric?.overall ?? 0);
@@ -306,6 +308,41 @@ function DetailModal({
   const upgrades  = row.payload.upgradeSuggestions || [];
   const modelEssay = row.payload.analysis?.modelEssay?.content || '';
   const originalAnswer = row.payload.answerText || row.answerPreview || '';
+  const upgradedText = row.payload.analysis?.upgradedText || '';
+  const semanticHighlights = row.payload.semanticHighlights || [];
+
+  // 원본 → AI 교정본 inline diff (LCS 기반)
+  const diffSegments = useMemo(
+    () => (originalAnswer && upgradedText) ? renderInlineDiff(originalAnswer, upgradedText) : [],
+    [originalAnswer, upgradedText],
+  );
+  const changeBlocks = useMemo(() => extractChangeBlocks(diffSegments), [diffSegments]);
+
+  // Semantic Highlight 적용된 원본 세그먼트 (인사/맺음/동료인용/주장/예시 색상 코딩)
+  const highlightedOriginal = useMemo(() => {
+    if (!originalAnswer || !semanticHighlights.length) return null;
+    const segments: Array<{ text: string; color: string | null }> = [];
+    let remaining = originalAnswer;
+    while (remaining.length > 0) {
+      let bestMatch: { text: string; color: string } | null = null;
+      let bestIdx = Infinity;
+      for (const hl of semanticHighlights as Array<{ text: string; color: string }>) {
+        const idx = remaining.indexOf(hl.text);
+        if (idx !== -1 && idx < bestIdx) {
+          bestIdx = idx;
+          bestMatch = { text: hl.text, color: hl.color };
+        }
+      }
+      if (!bestMatch) {
+        segments.push({ text: remaining, color: null });
+        break;
+      }
+      if (bestIdx > 0) segments.push({ text: remaining.slice(0, bestIdx), color: null });
+      segments.push({ text: bestMatch.text, color: bestMatch.color });
+      remaining = remaining.slice(bestIdx + bestMatch.text.length);
+    }
+    return segments;
+  }, [originalAnswer, semanticHighlights]);
 
   const copy = async (text: string, key: 'original' | 'upgraded') => {
     try {
@@ -408,7 +445,7 @@ function DetailModal({
             </div>
           )}
 
-          {/* 원본 답안 */}
+          {/* 원본 답안 + Semantic 색상 코딩 */}
           {originalAnswer && (
             <CollapsibleSection
               open={openSection === 'answer'}
@@ -425,8 +462,93 @@ function DetailModal({
                 </button>
               }
             >
-              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{originalAnswer}</p>
+              {/* Semantic Color 범례 (하이라이트가 있을 때만) */}
+              {highlightedOriginal && (
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
+                  <Palette className="w-3.5 h-3.5 text-gray-400" />
+                  {COLOR_LEGEND.map(legend => (
+                    <span key={legend.color} className={`px-2 py-0.5 rounded ${COLOR_CLASSES[legend.color]} font-medium`}>
+                      {legend.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {highlightedOriginal
+                  ? highlightedOriginal.map((seg, idx) =>
+                      seg.color
+                        ? <span key={idx} className={`px-1 rounded ${COLOR_CLASSES[seg.color]}`}>{seg.text}</span>
+                        : <span key={idx}>{seg.text}</span>
+                    )
+                  : originalAnswer}
+              </p>
             </CollapsibleSection>
+          )}
+
+          {/* AI 교정본 (upgradedText) — 원본 대비 초록 하이라이트로 수정된 부분 표시 */}
+          {upgradedText && upgradedText.trim() && upgradedText !== originalAnswer && (
+            <CollapsibleSection
+              open={openSection === 'upgraded'}
+              onToggle={() => setOpenSection(openSection === 'upgraded' ? null : 'upgraded')}
+              title="AI 교정본 (수정된 전체 답안)"
+              icon={<Wand2 className="w-4 h-4" style={{ color: themeColor }} />}
+              action={
+                <button
+                  onClick={(e) => { e.stopPropagation(); copy(upgradedText, 'upgraded'); }}
+                  className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-800"
+                >
+                  {copied === 'upgraded' ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied === 'upgraded' ? '복사됨' : '복사'}
+                </button>
+              }
+            >
+              <p className="text-[11px] text-gray-500 mb-2">
+                <span className="inline-block bg-green-100 text-green-800 px-1 rounded font-medium">초록</span>
+                {' '}= 원본에서 수정·추가된 표현. 원본 그대로인 부분은 회색으로 표시.
+              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {diffSegments.length > 0
+                  ? diffSegments.map((seg, idx) => {
+                      if (seg.type === 'delete') return null; // 삭제된 부분은 아래 변경 포인트 카드에서
+                      if (seg.type === 'add') {
+                        return (
+                          <mark key={idx} className="bg-green-100 text-green-800 px-0.5 rounded font-medium">
+                            {seg.text}
+                          </mark>
+                        );
+                      }
+                      return <span key={idx} className="text-gray-700">{seg.text}</span>;
+                    })
+                  : <span className="text-gray-800">{upgradedText}</span>
+                }
+              </p>
+            </CollapsibleSection>
+          )}
+
+          {/* 변경 포인트 (Before → After 카드) */}
+          {changeBlocks.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" style={{ color: themeColor }} />
+                변경 포인트 ({changeBlocks.length}건)
+              </h4>
+              <div className="space-y-2">
+                {changeBlocks.map((block, idx) => (
+                  <div key={idx} className="bg-white rounded-lg border border-gray-200 p-3 text-xs">
+                    {block.before && (
+                      <div className="text-gray-500">
+                        <span className="font-bold text-red-500 mr-1">Before</span>
+                        <span className="line-through decoration-red-400">{block.before}</span>
+                      </div>
+                    )}
+                    <div className={`text-sm font-medium text-green-700 ${block.before ? 'mt-1' : ''}`}>
+                      <ArrowRight className="w-3 h-3 inline mr-1" />
+                      {block.after || '(삭제됨)'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* 문법 교정 */}
