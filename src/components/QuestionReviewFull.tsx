@@ -338,6 +338,19 @@ export function QuestionReviewFull({
     : allSlots;
   const moduleGlobalStart = moduleSlots.length > 0 ? moduleSlots[0].start : 1;
 
+  // 이 모듈을 실제로 시도했는지 여부 (모듈 전체 범위 기준, 단일 소스).
+  // 이전에는 Complete Words 지문 렌더링과 사이드바 Review Note가 각자
+  // "이 CW 10문항 구간에만" 오답이 있는지로 좁게 판단했는데, 그 구간을
+  // 전부 맞혀서 오답 기록이 하나도 없으면 "시도 안 함(미답변)"으로 잘못
+  // 표시되는 버그가 있었다. 아래 배지(맞은/틀린/안 푼) 계산과 동일하게
+  // "모듈 전체 범위" 기준으로 한 번만 계산해서 모든 곳에서 재사용한다.
+  const moduleSlotTotal = moduleSlots.reduce((sum, s) => sum + s.count, 0);
+  const moduleGlobalEndShared = moduleGlobalStart + (moduleSlotTotal > 0 ? moduleSlotTotal : (result.totalQuestions || 0)) - 1;
+  const isModuleAttempted = result.wrongAnswers.some(w => {
+    const num = parseInt(String(w.questionId || '').replace(/^blank-/i, ''));
+    return !isNaN(num) && num >= moduleGlobalStart && num <= moduleGlobalEndShared;
+  });
+
   // Complete Words review — 전역 슬롯 기반 범위 판정
   // TPO3/5/6 Reading M1처럼 CW 지문이 2개(로컬 1-10, 11-20)인 경우도 올바르게 처리:
   // 현재 로컬 번호가 어느 CW 슬롯 범위에 속하는지로 지문/blank-N 매핑을 결정한다.
@@ -384,10 +397,12 @@ export function QuestionReviewFull({
     const cmsCount = moduleSlots.reduce((sum, s) => sum + s.count, 0);
     const totalQ = cmsCount > 0 ? cmsCount : (result.totalQuestions || 0);
 
-    // 모듈 시도 여부: 이 모듈의 전역 번호 범위에 wrongAnswer가 하나라도 있으면 시도한 것으로 간주.
-    // 시도하지 않은 모듈의 문제는 "안 푼 문제" (회색 pill로 표시).
+    // 모듈 시도 여부: 컴포넌트 스코프의 isModuleAttempted(공용, 모듈 전체 범위 기준)를 그대로 사용.
+    // 예전에는 여기서 별도로 재계산했는데, Complete Words 지문/사이드바 쪽의
+    // (버그가 있던) 좁은 범위 계산과 기준이 달라 같은 화면에서 서로 다른
+    // "미답변" 판정이 나오는 원인이 되었다. 이제 한 군데(공용 변수)만 계산한다.
     const moduleGlobalEnd = moduleGlobalStart + totalQ - 1;
-    const attemptedSection = wrongQs.some(w => {
+    const attemptedSection = isModuleAttempted || wrongQs.some(w => {
       const num = parseInt(String(w.questionId).replace(/^blank-/i, ''));
       return !isNaN(num) && num >= moduleGlobalStart && num <= moduleGlobalEnd;
     });
@@ -857,24 +872,11 @@ export function QuestionReviewFull({
       // 현재 CW 지문의 전역 blank 범위 (M1은 1-10, M2는 11-20 등).
       // 모듈 전환 시 이전 모듈 답변이 남아 보이지 않도록 반드시 이 범위만으로 판단해야 함.
       const rangeStart = activeCwRange?.globalStart ?? 1;
-      const rangeEnd = rangeStart + extractedBlanks.length - 1;
 
-      // Complete Words 시도 여부: 이 CW 범위의 전역 번호에 해당하는 wrongAnswer 가 하나라도 있어야 시도한 것.
-      const attemptedCompleteWords = result.wrongAnswers.some(w => {
-        const id = (w.questionId || '').toLowerCase();
-        const numMatch = id.match(/^(?:blank-|q|reading-|complete-words-)?(\d+)$/);
-        if (numMatch) {
-          const num = parseInt(numMatch[1]);
-          return num >= rangeStart && num <= rangeEnd;
-        }
-        const rangeMatch = id.match(/^(\d+)\s*-\s*(\d+)$/);
-        if (rangeMatch) {
-          const s = parseInt(rangeMatch[1]);
-          const e = parseInt(rangeMatch[2]);
-          return !(e < rangeStart || s > rangeEnd);
-        }
-        return false;
-      });
+      // Complete Words 시도 여부: 모듈 전체 범위 기준 공용 플래그(isModuleAttempted)를 사용.
+      // (예전에는 이 CW 10문항 구간에만 오답이 있는지로 좁게 판단해서, 그 구간을
+      // 전부 맞히면 오답 기록이 없어 "시도 안 함(미답변)"으로 잘못 표시되는 버그가 있었음)
+      const attemptedCompleteWords = isModuleAttempted;
 
       while ((match = regex.exec(normalizedPassage)) !== null) {
         const blankIndex = Number(match[1]);
@@ -938,8 +940,14 @@ export function QuestionReviewFull({
         lastIndex = match.index + match[0].length;
       }
 
-      if (lastIndex < readingCompleteWordsConfig.passageText.length) {
-        parts.push(<span key={`text-${key++}`}>{readingCompleteWordsConfig.passageText.slice(lastIndex)}</span>);
+      // 버그 수정: lastIndex는 정규화된 문자열(normalizedPassage, [답:길이] → [번호]로
+      // 치환되어 원본보다 짧음) 기준 위치인데, 예전 코드는 이걸 원본 raw 문자열
+      // (readingCompleteWordsConfig.passageText, 치환 전이라 훨씬 김)과 비교/슬라이스했다.
+      // 그 결과 이 조건이 거의 항상 참이 되어, 원본 텍스트의 뒷부분이 [정답:길이] 원본
+      // 표기가 그대로 남은 채로 지문 끝에 중복 출력되는 버그가 있었다.
+      // → 반드시 같은 문자열(normalizedPassage)을 기준으로 비교/슬라이스해야 한다.
+      if (lastIndex < normalizedPassage.length) {
+        parts.push(<span key={`text-${key++}`}>{normalizedPassage.slice(lastIndex)}</span>);
       }
 
       return parts;
@@ -1345,25 +1353,12 @@ export function QuestionReviewFull({
                       }
                       // blank-N ID는 전역 슬롯 번호 기준 (CW2 지문이면 11부터 시작)
                       const globalBlankStart = activeCwRange?.globalStart ?? 1;
-                      const rangeEndForSidebar = globalBlankStart + displayBlanks.length - 1;
-                      // 이 CW 범위 내에서 시도된 흔적이 있어야 "시도한 모듈".
-                      // 이전 모듈만 풀고 현재 모듈은 안 푼 경우 → 이 범위 wrongAnswer 가 없으므로 false
-                      // → 미답변(회색) 로 표시되도록 함 (초록 정답 오표시 방지)
-                      const attemptedRange = result.wrongAnswers.some(w => {
-                        const id = (w.questionId || '').toLowerCase();
-                        const numMatch = id.match(/^(?:blank-|q|reading-|complete-words-)?(\d+)$/);
-                        if (numMatch) {
-                          const num = parseInt(numMatch[1]);
-                          return num >= globalBlankStart && num <= rangeEndForSidebar;
-                        }
-                        const rangeMatch = id.match(/^(\d+)\s*-\s*(\d+)$/);
-                        if (rangeMatch) {
-                          const s = parseInt(rangeMatch[1]);
-                          const e = parseInt(rangeMatch[2]);
-                          return !(e < globalBlankStart || s > rangeEndForSidebar);
-                        }
-                        return false;
-                      });
+                      // 모듈 시도 여부: 컴포넌트 스코프의 isModuleAttempted(모듈 전체 범위 기준)를 재사용.
+                      // (예전에는 이 CW 10문항 구간에만 오답이 있는지로 좁게 판단해서, 그 구간을
+                      // 전부 맞히면 오답 기록이 없어 "시도 안 함(미답변)"으로 잘못 표시되는 버그가 있었음.
+                      // 이 값은 상단 맞은/틀린/안 푼 배지와 지문 렌더링에서 쓰는 것과 동일한 값이라
+                      // 세 곳의 판정이 항상 일치한다.)
+                      const attemptedRange = isModuleAttempted;
                       return displayBlanks.map((blank, index) => {
                         const globalBlankNum = globalBlankStart + index;
                         const wrongEntry = result.wrongAnswers.find(w =>
