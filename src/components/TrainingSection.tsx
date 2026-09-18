@@ -1,7 +1,7 @@
 import { Button } from "./ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { BookOpen, Target, BarChart3, Upload, CheckCircle, Zap, Play } from "lucide-react";
+import { BookOpen, Target, BarChart3, Zap, Play, Hash, Check } from "lucide-react";
 // motion removed - using CSS animations
 import { AdModal } from './AdModal';
 import { Advertisement } from './AdManagement';
@@ -647,77 +647,60 @@ export function TrainingSection({
           </div>
         </div>
 
-        {/* ===== STEP 2: 문제 유형 선택 ===== */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow">
-          <h2 className="text-sm text-[#2d5a5d] mb-3 font-medium">문제 유형 선택</h2>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {(questionTypesBySubject[selectedSubject as keyof typeof questionTypesBySubject] || [])?.map((type, index) => {
-              const uploadedCount = getUploadedCountForType(type.id);
-              const Icon = type.icon;
-              const isSelected = selectedQuestionType?.id === type.id;
-              
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => setSelectedQuestionType(type)}
-                  className={`p-4 rounded-lg border-2 transition-all duration-300 text-left relative ${
-                    isSelected
-                      ? 'border-[#2d7a7c] bg-[#2d7a7c]/10 shadow-md'
-                      : 'border-gray-200 bg-white hover:border-[#2d7a7c]/50 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isSelected ? 'bg-[#2d7a7c]' : 'bg-gray-100'
-                    }`}>
-                      <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-[#2d7a7c]'}`} />
-                    </div>
-                    {isSelected && (
-                      <CheckCircle className="w-5 h-5 text-[#2d7a7c]" />
-                    )}
-                  </div>
-                  
-                  <h3 className={`text-sm mb-1 font-medium ${isSelected ? 'text-[#2d7a7c]' : 'text-[#2d5a5d]'}`}>
-                    {type.name}
-                  </h3>
-                  
-                  {/* 설명/부제목(Description) 제거 */}
-                  
-                  {uploadedCount > 0 && (
-                    <div className="inline-block">
-                      <span className="text-xs bg-[#e67e22]/10 text-[#e67e22] px-2 py-0.5 rounded">
-                        <Upload className="w-3 h-3 inline-block mr-0.5" />
-                        {uploadedCount}개
-                      </span>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ===== STEP 3 & 4: 난이도 및 문제 수 선택 (문제 유형이 선택되었을 때만 표시) ===== */}
-        {selectedQuestionType && (
-          <div
-            className="mb-4 rounded-xl border border-gray-200 bg-white shadow-sm"
-            style={{ animation: 'fadeInUp 0.25s ease-out' }}
-          >
-            {/* Header */}
-            <div className="border-b border-gray-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-gray-800">{selectedSubject} · {selectedQuestionType.name}</h2>
+        {/* ===== 문제 유형 → 난이도 → 문제 수: 하나의 카드, 아이콘 헤더 + 알약(pill) 버튼 행으로 통일 ===== */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100 mb-4">
+          {/* 문제 유형 */}
+          <div className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <BookOpen className="w-4 h-4 text-[#2d7a7c]" />
+              <span className="text-sm font-semibold text-gray-800">문제 유형</span>
             </div>
+            <div className="flex flex-wrap gap-2">
+              {(questionTypesBySubject[selectedSubject as keyof typeof questionTypesBySubject] || [])?.map((type) => {
+                const uploadedCount = getUploadedCountForType(type.id);
+                const Icon = type.icon;
+                const isSelected = selectedQuestionType?.id === type.id;
 
-            <div className="space-y-5 p-5">
-              {/* 난이도 선택 */}
-              <div>
-                <p className="mb-2.5 text-xs font-medium text-gray-500">난이도</p>
-                <div className="grid grid-cols-3 gap-2.5">
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => setSelectedQuestionType(type)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      isSelected
+                        ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50 hover:text-[#2d7a7c]'
+                    }`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-[#2d7a7c]'}`} />
+                    {type.name}
+                    {isSelected && <Check className="w-3.5 h-3.5" />}
+                    {uploadedCount > 0 && (
+                      <span className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-[#e67e22]/10 text-[#e67e22]'
+                      }`}>
+                        {uploadedCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 문제 유형이 선택되었을 때만 아래 단계 표시 */}
+          {selectedQuestionType && (
+            <>
+              {/* 난이도 */}
+              <div className="p-5" style={{ animation: 'fadeInUp 0.2s ease-out' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap className="w-4 h-4 text-[#2d7a7c]" />
+                  <span className="text-sm font-semibold text-gray-800">난이도</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {([
-                    { key: '쉬움' as const, label: 'Easy', sub: '쉬움' },
-                    { key: '보통' as const, label: 'Normal', sub: '보통' },
-                    { key: '어려움' as const, label: 'Hard', sub: '어려움' },
+                    { key: '쉬움' as const, label: '쉬움' },
+                    { key: '보통' as const, label: '보통' },
+                    { key: '어려움' as const, label: '어려움' },
                   ]).map((d) => {
                     const stats = getDifficultyStats(selectedSubject, selectedQuestionType.name);
                     const questionCount = stats[d.key];
@@ -727,27 +710,29 @@ export function TrainingSection({
                       <button
                         key={d.key}
                         onClick={() => setSelectedDifficulty(d.key)}
-                        className={`rounded-lg border px-3 py-3 text-center transition-colors ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                           isActive
-                            ? 'border-[#2d7a7c] bg-[#f0f9f9] text-[#2d7a7c]'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                            ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50 hover:text-[#2d7a7c]'
                         }`}
                       >
-                        <p className={`text-sm font-semibold ${isActive ? 'text-[#2d7a7c]' : 'text-gray-700'}`}>{d.label}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">{d.sub}</p>
-                        {questionCount > 0 && (
-                          <p className="text-[10px] text-gray-400 mt-1">{questionCount}문제</p>
-                        )}
+                        {d.label}
+                        <span className={`text-xs ${isActive ? 'text-white/80' : 'text-gray-400'}`}>
+                          {questionCount}문제
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* 문제 수 선택 */}
-              <div>
-                <p className="mb-2.5 text-xs font-medium text-gray-500">문제 수</p>
-                <div className="flex gap-2">
+              {/* 문항 수 */}
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Hash className="w-4 h-4 text-[#2d7a7c]" />
+                  <span className="text-sm font-semibold text-gray-800">문항 수</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {[
                     { value: '5문제', num: 5 },
                     { value: '10문제', num: 10 },
@@ -759,57 +744,50 @@ export function TrainingSection({
                       <button
                         key={c.value}
                         onClick={() => setSelectedQuestionCount(c.value)}
-                        className={`flex-1 rounded-lg border px-2 py-2.5 text-center transition-colors ${
+                        className={`inline-flex items-center justify-center rounded-full border px-5 py-2 text-sm font-semibold transition-colors ${
                           isActive
                             ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50 hover:text-[#2d7a7c]'
                         }`}
                       >
-                        <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-gray-700'}`}>{c.num}</p>
+                        {c.num}개
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* 선택 요약 */}
-              <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-gray-50 px-4 py-3">
-                {[
-                  selectedSubject,
-                  selectedQuestionType.name,
-                  selectedDifficulty,
-                  selectedQuestionCount,
-                  ...((yearFilter !== 'all' || monthFilter !== 'all') ? [
-                    `${yearFilter !== 'all' ? yearFilter : 'All'} / ${monthFilter !== 'all' ? monthOptions.find(o => o.value === monthFilter)?.label : 'All'}`
-                  ] : [])
-                ].map((tag, i) => (
-                  <span key={i} className="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs text-gray-600 border border-gray-200">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="rounded-lg border border-[#d7ecec] bg-[#f7fbfb] px-4 py-3 text-xs leading-5 text-gray-600">
+              {/* 안내 + 시작 버튼 */}
+              <div className="p-5 space-y-3">
                 {(() => {
                   const availableQuestions = getQuestionsByDifficulty(selectedSubject, selectedQuestionType.name, selectedDifficulty).length;
-                  return availableQuestions > 0
-                    ? `현재 선택 기준으로 ${availableQuestions}개의 실전형 문제가 연동되어 있습니다. 유형문제 훈련은 이 문제풀에서 비슷한 난이도의 문제를 자동으로 가져옵니다.`
-                    : '현재 선택 기준으로 연동된 훈련 문제가 없습니다. 다른 난이도나 유형을 선택해주세요.';
+                  const hasQuestions = availableQuestions > 0;
+                  return (
+                    <div className={`flex items-start gap-2 rounded-lg px-4 py-3 text-xs leading-5 ${
+                      hasQuestions ? 'bg-[#f7fbfb] text-gray-600' : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      <span>{hasQuestions ? '✅' : '⚠️'}</span>
+                      <span>
+                        {hasQuestions
+                          ? `${selectedSubject} · ${selectedQuestionType.name} · ${selectedDifficulty} 기준으로 ${availableQuestions}개의 실전형 문제가 연동되어 있습니다.`
+                          : '현재 선택(유형 · 난이도 · 연도/월) 기준으로 연동된 문제가 없습니다. 난이도를 바꾸거나, 상단 Year/Month 필터를 "전체"로 넓혀보세요.'}
+                      </span>
+                    </div>
+                  );
                 })()}
-              </div>
 
-              {/* 시작 버튼 */}
-              <button
-                onClick={handleStartTraining}
-                disabled={getQuestionsByDifficulty(selectedSubject, selectedQuestionType.name, selectedDifficulty).length === 0}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557] disabled:cursor-not-allowed disabled:bg-slate-300"
-              >
-                <Play className="h-4 w-4 fill-white" />
-                <span className="text-sm font-semibold">Start Training</span>
-              </button>
-            </div>
-          </div>
-        )}
+                <button
+                  onClick={handleStartTraining}
+                  disabled={getQuestionsByDifficulty(selectedSubject, selectedQuestionType.name, selectedDifficulty).length === 0}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557] disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  <Play className="h-4 w-4 fill-white" />
+                  <span className="text-sm font-semibold">Start Training</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
       </div>
     </div>
