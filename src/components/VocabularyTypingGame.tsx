@@ -1,23 +1,112 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Pause, Play, RotateCcw, Gauge, Heart, Trophy } from 'lucide-react';
-import { getAllWords, SATWord } from './vocaWordSets';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { X, Pause, Play, RotateCcw, Gauge, Heart, Trophy, Sparkles, Loader2, Zap } from 'lucide-react';
+import { getAllWords } from './vocaWordSets';
+import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 
 // ============================================================================
-// 데이터 준비
+// 단어 소스 — SATVocaPage의 5개 탭과 동일한 서버 엔드포인트 사용
 // ============================================================================
-// vocaWordSets.ts의 DB는 실제로 400단어(=DAY 1~10)만 실제 데이터이고,
-// DAY 11~50은 실제 단어가 부족해 "_11_3" 같은 접미사가 붙은 가짜(재사용) 단어로
-// 채워진다. 게임에 이상한 정답("accomplish_11_3")이 나오지 않도록,
-// 그런 접미사가 붙은 항목은 제외하고 "진짜" 단어만 사용한다.
-const CLEAN_WORDS: SATWord[] = getAllWords().filter((w) => !w.english.includes('_'));
-const WORDS_PER_DAY = 40;
-export const TYPING_GAME_TOTAL_DAYS = Math.max(1, Math.floor(CLEAN_WORDS.length / WORDS_PER_DAY));
+type SourceKey = 'toefl-easy' | 'toefl-hard' | 'etymology' | 'custom' | 'junior';
 
-function wordsForDay(day: number | 'all'): SATWord[] {
-  if (day === 'all') return CLEAN_WORDS;
-  const start = (day - 1) * WORDS_PER_DAY;
-  return CLEAN_WORDS.slice(start, start + WORDS_PER_DAY);
+const SOURCES: { key: SourceKey; label: string; short: string }[] = [
+  { key: 'toefl-easy', label: 'TOEFL 어휘 학습 vol.1', short: '어휘 vol.1' },
+  { key: 'toefl-hard', label: 'TOEFL 어휘 학습 vol.2', short: '어휘 vol.2' },
+  { key: 'etymology', label: '기출단어', short: '기출' },
+  { key: 'custom', label: '참고서 영단어', short: '참고서' },
+  { key: 'junior', label: '중3+고1 영단어 vol.5', short: 'vol.5' },
+];
+
+interface GameWord {
+  english: string;
+  korean: string;
+  synonyms: string[];
 }
+interface DayInfo {
+  id: number;
+  name: string;
+  count: number;
+}
+
+// 서버 단어 → 게임 단어 정규화 (가짜 "_11_3" 접미사 단어 제외, 동의어 배열화)
+function normalizeWords(raw: any[]): GameWord[] {
+  return (raw || [])
+    .filter(w => w?.english && w?.korean && !String(w.english).includes('_'))
+    .map(w => ({
+      english: String(w.english).trim(),
+      korean: String(w.korean).trim(),
+      synonyms: String(w.synonyms || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+    }));
+}
+
+function daysFromWords(words: any[]): DayInfo[] {
+  const map = new Map<number, number>();
+  words.forEach(w => {
+    const d = Number(w?.dayNumber);
+    if (Number.isFinite(d) && d > 0 && !String(w?.english || '').includes('_')) {
+      map.set(d, (map.get(d) || 0) + 1);
+    }
+  });
+  return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([id, count]) => ({ id, name: `DAY ${id}`, count }));
+}
+
+// vol.1 로컬 평백 (서버 실패 시) — vocaWordSets의 진짜 400단어를 40개씩 DAY로 묶음
+function localVol1(): { words: (GameWord & { dayNumber: number })[]; days: DayInfo[] } {
+  const clean = getAllWords().filter(w => !w.english.includes('_'));
+  const words = clean.map((w, i) => ({
+    english: w.english,
+    korean: w.korean,
+    synonyms: String(w.synonyms || '').split(',').map(s => s.trim()).filter(Boolean),
+    dayNumber: Math.floor(i / 40) + 1,
+  }));
+  return { words, days: daysFromWords(words) };
+}
+
+// ============================================================================
+// 효과음 — Web Audio (공유 AudioContext + 시퀀스)
+// ============================================================================
+let audioCtx: AudioContext | null = null;
+function getCtx(): AudioContext | null {
+  try {
+    if (!audioCtx) {
+      const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+      if (!Ctor) return null;
+      audioCtx = new Ctor();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    return audioCtx;
+  } catch { return null; }
+}
+function tone(freq: number, dur = 0.12, type: OscillatorType = 'sine', vol = 0.08, delay = 0) {
+  const ctx = getCtx();
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + delay;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  } catch { /* 무시 */ }
+}
+const sfx = {
+  correct: () => { tone(660, 0.1); tone(880, 0.14, 'sine', 0.08, 0.06); },
+  combo: (n: number) => { // 콤보 5단위마다 팡파레, 단계가 높을수록 화려
+    const base = [523, 659, 784, 1047];
+    const steps = Math.min(3, Math.floor(n / 5));
+    base.slice(0, 2 + steps).forEach((f, i) => tone(f * (steps >= 2 ? 1.0 : 1.0), 0.13, 'triangle', 0.09, i * 0.07));
+  },
+  fever: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.14, 'square', 0.06, i * 0.06)); },
+  wrong: () => { tone(220, 0.16, 'sawtooth', 0.05); tone(155, 0.22, 'sawtooth', 0.05, 0.07); },
+  miss: () => { tone(130, 0.22, 'square', 0.07); tone(98, 0.28, 'square', 0.06, 0.09); },
+  start: () => { [523, 659, 784].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.07)); },
+  gameover: () => { [440, 349, 294, 220].forEach((f, i) => tone(f, 0.28, 'triangle', 0.08, i * 0.18)); },
+};
 
 // ============================================================================
 // 타입 & 상수
@@ -31,9 +120,17 @@ interface FallingWord {
   prompt: string;
   answer: string;
   altAnswers: string[];
-  x: number; // 좌우 위치(%)
-  y: number; // 위에서부터 px
-  speed: number; // px / frame(60fps 기준)
+  hint: string | null; // kr→en일 때 첫글자 힌트
+  x: number;
+  y: number;
+  speed: number;
+  colorIdx: number;
+}
+interface ScorePopup {
+  id: number;
+  x: number;
+  y: number;
+  text: string;
 }
 
 const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawnMs: number }> = {
@@ -42,46 +139,60 @@ const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawn
   3: { label: '빠름', fallSpeed: 1.4, spawnMs: 1500 },
   4: { label: '매우 빠름', fallSpeed: 2.1, spawnMs: 1100 },
 };
-
 const START_LIVES = 5;
+const FEVER_COMBO = 10;
 
-function playBeep(correct: boolean) {
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = correct ? 880 : 220;
-    gain.gain.value = 0.07;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    const dur = correct ? 0.12 : 0.22;
-    osc.stop(ctx.currentTime + dur);
-    osc.onended = () => ctx.close();
-  } catch {
-    /* 오디오를 지원하지 않는 환경이면 그냥 무시 */
-  }
+// 단어 칩 색상 팔레트 (그라데이션)
+const CHIP_COLORS = [
+  'linear-gradient(135deg,#fdfbfb,#ebedee)',
+  'linear-gradient(135deg,#fff1eb,#ace0f9)',
+  'linear-gradient(135deg,#f6d5f7,#fbe9d7)',
+  'linear-gradient(135deg,#d4fc79,#96e6a1)',
+  'linear-gradient(135deg,#fbc2eb,#a6c1ee)',
+  'linear-gradient(135deg,#fdcbf1,#e6dee9)',
+  'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
+  'linear-gradient(135deg,#ffecd2,#fcb69f)',
+];
+
+// 영어 정답 첫글자 힌트 — "e _ _ _ _ _" (공백/하이픈 위치는 유지)
+function buildHint(answer: string): string {
+  return answer
+    .split('')
+    .map((c, i) => {
+      if (c === ' ') return '  ';
+      if (c === '-') return '- ';
+      return i === 0 ? `${c} ` : '_ ';
+    })
+    .join('')
+    .trim();
 }
 
 // ============================================================================
 // 메인 컴포넌트
 // ============================================================================
 export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
+  const [source, setSource] = useState<SourceKey>('toefl-easy');
+  const [days, setDays] = useState<DayInfo[]>([]);
+  const [wordsByDay, setWordsByDay] = useState<(GameWord & { dayNumber: number })[]>([]);
+  const [loadingSource, setLoadingSource] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [day, setDay] = useState<number | 'all'>(1);
   const [direction, setDirection] = useState<Direction>('kr2en');
   const [speedLevel, setSpeedLevel] = useState<SpeedLevel>(2);
 
   const [status, setStatus] = useState<GameStatus>('setup');
   const [words, setWords] = useState<FallingWord[]>([]);
+  const [popups, setPopups] = useState<ScorePopup[]>([]);
   const [input, setInput] = useState('');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(START_LIVES);
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
+  const [cleared, setCleared] = useState(0);
   const [flash, setFlash] = useState<'correct' | 'wrong' | null>(null);
+  const [shake, setShake] = useState(false);
+  const [fever, setFever] = useState(false);
 
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -89,32 +200,107 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const lastFrameRef = useRef(0);
   const lastSpawnRef = useRef(0);
   const nextIdRef = useRef(0);
-  const poolRef = useRef<SATWord[]>([]);
-  const recentRef = useRef<string[]>([]); // 최근에 낸 단어(직전 중복 방지용)
+  const popupIdRef = useRef(0);
+  const poolRef = useRef<GameWord[]>([]);
+  const recentRef = useRef<string[]>([]);
   const speedLevelRef = useRef(speedLevel);
   const comboRef = useRef(0);
+  const sourceCache = useRef<Partial<Record<SourceKey, { words: (GameWord & { dayNumber: number })[]; days: DayInfo[] }>>>({});
 
   useEffect(() => { speedLevelRef.current = speedLevel; }, [speedLevel]);
+
+  // ── 소스별 단어 로드 (서버 → 캐시 → vol.1 로컬 평백) ──
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const cached = sourceCache.current[source];
+      if (cached) {
+        setWordsByDay(cached.words);
+        setDays(cached.days);
+        setDay(cached.days.length > 0 ? cached.days[0].id : 'all');
+        return;
+      }
+      setLoadingSource(true);
+      setLoadError(null);
+      try {
+        const res = await fetch(`${SERVER_BASE_URL}/vocabulary/${source}`, {
+          method: 'GET',
+          headers: { ...getServerHeaders(), 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const rawWords = data.words || [];
+        const words = normalizeWords(rawWords).map((w, i) => ({
+          ...w,
+          dayNumber: Number(rawWords[i]?.dayNumber) || 0,
+        })).filter(w => w.dayNumber > 0);
+        const dayList = daysFromWords(rawWords);
+        if (words.length === 0) throw new Error('단어 없음');
+        if (cancelled) return;
+        sourceCache.current[source] = { words, days: dayList };
+        setWordsByDay(words);
+        setDays(dayList);
+        setDay(dayList.length > 0 ? dayList[0].id : 'all');
+      } catch (err: any) {
+        if (cancelled) return;
+        // vol.1만 로컬 데이터로 평백 가능
+        if (source === 'toefl-easy') {
+          const local = localVol1();
+          sourceCache.current[source] = local;
+          setWordsByDay(local.words);
+          setDays(local.days);
+          setDay(1);
+          setLoadError(null);
+        } else {
+          setWordsByDay([]);
+          setDays([]);
+          setLoadError('이 단어장을 불러오지 못했어요. 네트워크를 확인해주세요.');
+        }
+      } finally {
+        if (!cancelled) setLoadingSource(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [source]);
+
+  // 별 배경 (한 번만 생성)
+  const stars = useMemo(
+    () => Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: 1 + Math.random() * 2.5,
+      delay: Math.random() * 4,
+      dur: 3 + Math.random() * 4,
+    })),
+    []
+  );
 
   // 속도를 바꾸면 이미 떨어지고 있는 단어들의 속도도 즉시 반영
   useEffect(() => {
     if (status !== 'playing') return;
-    setWords((prev) => prev.map((w) => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed })));
+    setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed })));
   }, [speedLevel, status]);
 
   const startGame = () => {
-    poolRef.current = wordsForDay(day);
+    poolRef.current = day === 'all' ? wordsByDay : wordsByDay.filter(w => w.dayNumber === day);
+    if (poolRef.current.length === 0) return;
     recentRef.current = [];
     setWords([]);
+    setPopups([]);
     setScore(0);
     setLives(START_LIVES);
     setCombo(0);
     comboRef.current = 0;
     setBestCombo(0);
+    setCleared(0);
     setInput('');
     setFlash(null);
+    setFever(false);
     lastSpawnRef.current = 0;
     setStatus('playing');
+    sfx.start();
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
 
@@ -123,7 +309,6 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     if (pool.length === 0) return;
 
     let candidate = pool[Math.floor(Math.random() * pool.length)];
-    // 최근에 낸 단어와 겹치지 않도록 몇 번만 재시도 (풀이 작으면 포기하고 그냥 씀)
     let tries = 0;
     while (recentRef.current.includes(candidate.english) && tries < 8 && pool.length > 3) {
       candidate = pool[Math.floor(Math.random() * pool.length)];
@@ -134,36 +319,35 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       recentRef.current.shift();
     }
 
-    const prompt = direction === 'kr2en' ? candidate.korean : candidate.english;
-    const answer = direction === 'kr2en' ? candidate.english : candidate.korean;
-    const altAnswers =
-      direction === 'kr2en'
-        ? (candidate.synonyms || '')
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
+    const isKr2En = direction === 'kr2en';
+    const prompt = isKr2En ? candidate.korean : candidate.english;
+    const answer = isKr2En ? candidate.english : candidate.korean;
+    const altAnswers = isKr2En
+      ? candidate.synonyms
+      : candidate.korean.split(/[,，、;·\/]/).map(s => s.trim()).filter(s => s && s !== candidate.korean);
 
-    setWords((prev) => [
+    setWords(prev => [
       ...prev,
       {
         id: nextIdRef.current++,
         prompt,
         answer,
         altAnswers,
-        x: 6 + Math.random() * 80,
-        y: -12,
+        hint: isKr2En ? buildHint(candidate.english) : null,
+        x: 8 + Math.random() * 76,
+        y: -14,
         speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed,
+        colorIdx: nextIdRef.current % CHIP_COLORS.length,
       },
     ]);
   }, [direction]);
 
-  // 게임 루프 (playing 상태일 때만 동작, paused/gameover면 자동 정지)
+  // 게임 루프
   useEffect(() => {
     if (status !== 'playing') return;
 
     lastFrameRef.current = performance.now();
-    lastSpawnRef.current = performance.now() - SPEED_CONFIG[speedLevelRef.current].spawnMs + 400; // 시작하고 곧 한 단어 등장
+    lastSpawnRef.current = performance.now() - SPEED_CONFIG[speedLevelRef.current].spawnMs + 400;
 
     const tick = (now: number) => {
       const dt = now - lastFrameRef.current;
@@ -175,23 +359,27 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       }
 
       const areaHeight = gameAreaRef.current?.clientHeight || 420;
-      setWords((prev) => {
+      setWords(prev => {
         const kept: FallingWord[] = [];
         let missed = 0;
         for (const w of prev) {
           const ny = w.y + w.speed * (dt / 16.6);
-          if (ny > areaHeight - 36) {
-            missed += 1;
-          } else {
-            kept.push({ ...w, y: ny });
-          }
+          if (ny > areaHeight - 36) missed += 1;
+          else kept.push({ ...w, y: ny });
         }
         if (missed > 0) {
+          sfx.miss();
           comboRef.current = 0;
           setCombo(0);
-          setLives((l) => {
+          setFever(false);
+          setShake(true);
+          window.setTimeout(() => setShake(false), 350);
+          setLives(l => {
             const nl = Math.max(0, l - missed);
-            if (nl === 0) setStatus('gameover');
+            if (nl === 0) {
+              setStatus('gameover');
+              sfx.gameover();
+            }
             return nl;
           });
         }
@@ -207,87 +395,141 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     };
   }, [status, spawnWord]);
 
+  const addPopup = (x: number, y: number, text: string) => {
+    const id = popupIdRef.current++;
+    setPopups(prev => [...prev, { id, x, y, text }]);
+    window.setTimeout(() => setPopups(prev => prev.filter(p => p.id !== id)), 800);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (status !== 'playing' || !input.trim()) return;
     const typed = input.trim().toLowerCase();
 
-    let matched = false;
-    setWords((prev) => {
+    let matchedAt: { x: number; y: number } | null = null;
+    setWords(prev => {
       const idx = prev.findIndex(
-        (w) => w.answer.trim().toLowerCase() === typed || w.altAnswers.some((a) => a.toLowerCase() === typed)
+        w => w.answer.trim().toLowerCase() === typed || w.altAnswers.some(a => a.toLowerCase() === typed)
       );
       if (idx === -1) return prev;
-      matched = true;
+      matchedAt = { x: prev[idx].x, y: prev[idx].y };
       const copy = [...prev];
       copy.splice(idx, 1);
       return copy;
     });
 
-    if (matched) {
-      playBeep(true);
-      setFlash('correct');
+    if (matchedAt) {
       comboRef.current += 1;
-      setCombo(comboRef.current);
-      setBestCombo((b) => Math.max(b, comboRef.current));
-      setScore((s) => s + 10 + Math.min(20, comboRef.current * 2));
+      const c = comboRef.current;
+      setCombo(c);
+      setBestCombo(b => Math.max(b, c));
+      const isFever = c >= FEVER_COMBO;
+      if (isFever && !fever) {
+        setFever(true);
+        sfx.fever();
+      } else if (c % 5 === 0) {
+        sfx.combo(c);
+      } else {
+        sfx.correct();
+      }
+      const gain = (10 + Math.min(20, c * 2)) * (isFever ? 2 : 1);
+      setScore(s => s + gain);
+      setCleared(n => n + 1);
+      setFlash('correct');
+      addPopup((matchedAt as { x: number; y: number }).x, (matchedAt as { x: number; y: number }).y, `+${gain}`);
     } else {
-      playBeep(false);
-      setFlash('wrong');
+      sfx.wrong();
       comboRef.current = 0;
       setCombo(0);
+      setFever(false);
+      setFlash('wrong');
     }
     setInput('');
     window.setTimeout(() => setFlash(null), 220);
   };
 
-  const togglePause = () => setStatus((s) => (s === 'playing' ? 'paused' : s === 'paused' ? 'playing' : s));
+  const togglePause = () => setStatus(s => (s === 'playing' ? 'paused' : s === 'paused' ? 'playing' : s));
 
-  const promptLabel = direction === 'kr2en' ? '한글 뜻을 보고 영어 단어를 입력하세요' : '영어 단어를 보고 한글 뜻을 입력하세요';
+  const promptLabel = direction === 'kr2en'
+    ? '한글 뜻을 보고 영어 단어를 입력하세요 (첫글자 힌트 제공)'
+    : '영어 단어를 보고 한글 뜻을 입력하세요';
+
+  const dayWordCount = day === 'all' ? wordsByDay.length : wordsByDay.filter(w => w.dayNumber === day).length;
 
   // ==========================================================================
   // 화면: 설정
   // ==========================================================================
   if (status === 'setup') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+        <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl my-auto">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <h2 className="text-base font-bold text-gray-800">🎮 단어 타이핑 게임</h2>
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-[#2d7a7c]" /> 단어 타이핑 게임
+            </h2>
             <button onClick={onExit} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="space-y-5 p-5">
+          <div className="space-y-5 p-5 max-h-[75vh] overflow-y-auto">
+            {/* 단어장 선택 */}
+            <div>
+              <p className="mb-2.5 text-xs font-medium text-gray-500">단어장 선택</p>
+              <div className="grid grid-cols-2 gap-2">
+                {SOURCES.map(s => (
+                  <button
+                    key={s.key}
+                    onClick={() => setSource(s.key)}
+                    className={`rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                      source === s.key
+                        ? 'border-[#2d7a7c] bg-[#f0f9f9] text-[#2d7a7c]'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* DAY 선택 */}
             <div>
-              <p className="mb-2.5 text-xs font-medium text-gray-500">DAY 선택 (단어 출처)</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setDay('all')}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                    day === 'all'
-                      ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
-                      : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50'
-                  }`}
-                >
-                  전체 ({CLEAN_WORDS.length}단어)
-                </button>
-                {Array.from({ length: TYPING_GAME_TOTAL_DAYS }, (_, i) => i + 1).map((d) => (
+              <p className="mb-2.5 text-xs font-medium text-gray-500">
+                DAY 선택 {loadingSource && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+              </p>
+              {loadError ? (
+                <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{loadError}</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
                   <button
-                    key={d}
-                    onClick={() => setDay(d)}
-                    className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
-                      day === d
+                    onClick={() => setDay('all')}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      day === 'all'
                         ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
                         : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50'
                     }`}
                   >
-                    DAY {d}
+                    전체 ({wordsByDay.length})
                   </button>
-                ))}
-              </div>
+                  {days.map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => setDay(d.id)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        day === d.id
+                          ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-[#2d7a7c]/50'
+                      }`}
+                    >
+                      {d.name} <span className="opacity-60">({d.count})</span>
+                    </button>
+                  ))}
+                  {!loadingSource && days.length === 0 && !loadError && (
+                    <p className="text-xs text-gray-400">이 단어장에 등록된 단어가 없습니다.</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 방향 선택 */}
@@ -303,7 +545,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                   }`}
                 >
                   한글 → 영어
-                  <span className="mt-0.5 block text-[10px] font-normal text-gray-400">뜻이 내려오면 영어로 입력</span>
+                  <span className="mt-0.5 block text-[10px] font-normal text-gray-400">뜻이 낙하하면 영어로 입력 (첫글자 힌트)</span>
                 </button>
                 <button
                   onClick={() => setDirection('en2kr')}
@@ -314,7 +556,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                   }`}
                 >
                   영어 → 한글
-                  <span className="mt-0.5 block text-[10px] font-normal text-gray-400">단어가 내려오면 한글로 입력</span>
+                  <span className="mt-0.5 block text-[10px] font-normal text-gray-400">단어가 낙하하면 한글로 입력</span>
                 </button>
               </div>
             </div>
@@ -325,7 +567,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                 <Gauge className="h-3.5 w-3.5" /> 낙하 속도 (게임 중에도 변경 가능)
               </p>
               <div className="grid grid-cols-4 gap-2">
-                {([1, 2, 3, 4] as SpeedLevel[]).map((lv) => (
+                {([1, 2, 3, 4] as SpeedLevel[]).map(lv => (
                   <button
                     key={lv}
                     onClick={() => setSpeedLevel(lv)}
@@ -343,10 +585,13 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
 
             <button
               onClick={startGame}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668]"
+              disabled={loadingSource || dayWordCount === 0}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="h-4 w-4 fill-white" />
-              <span className="text-sm font-semibold">게임 시작</span>
+              <span className="text-sm font-semibold">
+                게임 시작 {dayWordCount > 0 ? `(${dayWordCount}단어)` : ''}
+              </span>
             </button>
           </div>
         </div>
@@ -359,19 +604,25 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   // ==========================================================================
   if (status === 'gameover') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl" style={{ animation: 'gameoverPop .4s ease-out' }}>
           <Trophy className="mx-auto mb-3 h-10 w-10 text-amber-400" />
           <h2 className="mb-1 text-lg font-bold text-gray-800">게임 종료!</h2>
-          <p className="mb-4 text-sm text-gray-500">DAY {day === 'all' ? '전체' : day} · {direction === 'kr2en' ? '한글→영어' : '영어→한글'}</p>
-          <div className="mb-5 grid grid-cols-2 gap-3">
+          <p className="mb-4 text-sm text-gray-500">
+            {SOURCES.find(s => s.key === source)?.short} · {day === 'all' ? '전체' : `DAY ${day}`} · {direction === 'kr2en' ? '한글→영어' : '영어→한글'}
+          </p>
+          <div className="mb-5 grid grid-cols-3 gap-2">
             <div className="rounded-lg bg-gray-50 py-3">
               <p className="text-2xl font-bold text-[#2d7a7c]">{score}</p>
               <p className="text-xs text-gray-500">점수</p>
             </div>
             <div className="rounded-lg bg-gray-50 py-3">
-              <p className="text-2xl font-bold text-[#2d7a7c]">{bestCombo}</p>
+              <p className="text-2xl font-bold text-[#e67e22]">{bestCombo}</p>
               <p className="text-xs text-gray-500">최고 콤보</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 py-3">
+              <p className="text-2xl font-bold text-emerald-600">{cleared}</p>
+              <p className="text-xs text-gray-500">맞춘 단어</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -400,9 +651,41 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   // 화면: 플레이 중 / 일시정지
   // ==========================================================================
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0f1b1c]">
+    <div
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{
+        background: fever
+          ? 'linear-gradient(180deg,#2a0a3a 0%,#3b1354 50%,#0f1b2e 100%)'
+          : 'linear-gradient(180deg,#0b1026 0%,#131a3a 60%,#0f1b1c 100%)',
+        transition: 'background 0.6s',
+      }}
+    >
+      <style>{`
+        @keyframes twinkle { 0%,100% { opacity:.2 } 50% { opacity:1 } }
+        @keyframes scoreFloat { 0% { opacity:1; transform:translate(-50%,0) scale(1) } 100% { opacity:0; transform:translate(-50%,-60px) scale(1.3) } }
+        @keyframes wordDrop { from { transform:translateX(-50%) scale(.6); opacity:0 } to { transform:translateX(-50%) scale(1); opacity:1 } }
+        @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+        @keyframes feverPulse { 0%,100%{opacity:.9} 50%{opacity:1} }
+        @keyframes gameoverPop { from { transform:scale(.8); opacity:0 } to { transform:scale(1); opacity:1 } }
+      `}</style>
+
+      {/* 별 배경 */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {stars.map(s => (
+          <div
+            key={s.id}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: `${s.left}%`, top: `${s.top}%`,
+              width: s.size, height: s.size,
+              animation: `twinkle ${s.dur}s ease-in-out ${s.delay}s infinite`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* HUD */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+      <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={onExit} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white">
             <X className="h-5 w-5" />
@@ -410,19 +693,22 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           <span className="text-sm font-semibold text-white">
             {score}<span className="ml-1 text-xs font-normal text-white/50">점</span>
           </span>
-          {combo > 1 && <span className="rounded-full bg-[#e67e22]/20 px-2 py-0.5 text-xs font-semibold text-[#f0a860]">🔥 {combo} 콤보</span>}
+          {combo > 1 && (
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${fever ? 'bg-fuchsia-500/30 text-fuchsia-200' : 'bg-[#e67e22]/20 text-[#f0a860]'}`}>
+              🔥 {combo} 콤보{fever ? ' ×2' : ''}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
           {Array.from({ length: START_LIVES }, (_, i) => (
-            <Heart key={i} className={`h-4 w-4 ${i < lives ? 'fill-red-500 text-red-500' : 'text-white/20'}`} />
+            <Heart key={i} className={`h-4 w-4 transition-all ${i < lives ? 'fill-red-500 text-red-500 scale-100' : 'text-white/20 scale-90'}`} />
           ))}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* 속도 조절 (게임 중에도 변경 가능) */}
           <div className="flex items-center gap-1 rounded-full bg-white/10 p-0.5">
-            {([1, 2, 3, 4] as SpeedLevel[]).map((lv) => (
+            {([1, 2, 3, 4] as SpeedLevel[]).map(lv => (
               <button
                 key={lv}
                 onClick={() => setSpeedLevel(lv)}
@@ -445,22 +731,57 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      <p className="px-4 pt-2 text-center text-xs text-white/40">{promptLabel}</p>
+      {fever && (
+        <div className="relative text-center py-1" style={{ animation: 'feverPulse 1s ease-in-out infinite' }}>
+          <span className="inline-flex items-center gap-1 text-xs font-extrabold tracking-widest text-fuchsia-300">
+            <Zap className="w-3.5 h-3.5 fill-fuchsia-300" /> FEVER TIME — 점수 2배! <Zap className="w-3.5 h-3.5 fill-fuchsia-300" />
+          </span>
+        </div>
+      )}
+      {!fever && <p className="relative px-4 pt-2 text-center text-xs text-white/40">{promptLabel}</p>}
 
       {/* 게임 영역 */}
-      <div ref={gameAreaRef} className="relative flex-1 overflow-hidden">
-        {words.map((w) => (
+      <div
+        ref={gameAreaRef}
+        className="relative flex-1 overflow-hidden"
+        style={shake ? { animation: 'shakeX 0.35s ease-out' } : undefined}
+      >
+        {words.map(w => (
           <div
             key={w.id}
-            className="absolute -translate-x-1/2 rounded-lg bg-white/95 px-3 py-1.5 text-sm font-semibold text-gray-800 shadow-lg"
-            style={{ left: `${w.x}%`, top: `${w.y}px` }}
+            className="absolute -translate-x-1/2 rounded-xl px-3.5 py-2 text-sm font-semibold text-gray-800"
+            style={{
+              left: `${w.x}%`,
+              top: `${w.y}px`,
+              background: CHIP_COLORS[w.colorIdx],
+              boxShadow: fever
+                ? '0 0 18px rgba(232,121,249,.55), 0 4px 10px rgba(0,0,0,.3)'
+                : combo >= 5
+                  ? '0 0 14px rgba(240,168,96,.45), 0 4px 10px rgba(0,0,0,.3)'
+                  : '0 4px 10px rgba(0,0,0,.35)',
+              animation: 'wordDrop .25s ease-out',
+            }}
           >
-            {w.prompt}
+            <div className="whitespace-nowrap">{w.prompt}</div>
+            {w.hint && (
+              <div className="mt-0.5 font-mono text-[11px] tracking-wider text-[#2d7a7c]/80">{w.hint}</div>
+            )}
+          </div>
+        ))}
+
+        {/* 점수 팝업 */}
+        {popups.map(p => (
+          <div
+            key={p.id}
+            className="pointer-events-none absolute text-lg font-extrabold text-emerald-300"
+            style={{ left: `${p.x}%`, top: `${p.y}px`, animation: 'scoreFloat 0.8s ease-out forwards' }}
+          >
+            {p.text}
           </div>
         ))}
 
         {status === 'paused' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/60 backdrop-blur-sm">
             <p className="text-lg font-bold text-white">일시정지</p>
             <div className="flex gap-2">
               <button
@@ -481,15 +802,15 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* 입력창 */}
-      <form onSubmit={handleSubmit} className="border-t border-white/10 p-4">
+      <form onSubmit={handleSubmit} className="relative border-t border-white/10 p-4">
         <input
           ref={inputRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={e => setInput(e.target.value)}
           disabled={status !== 'playing'}
           placeholder={status === 'playing' ? '정답을 입력하고 Enter' : ''}
           className={`w-full rounded-xl border-2 bg-white/95 px-4 py-3 text-center text-base font-medium text-gray-800 outline-none transition-colors ${
-            flash === 'correct' ? 'border-green-400' : flash === 'wrong' ? 'border-red-400' : 'border-transparent focus:border-[#2d7a7c]'
+            flash === 'correct' ? 'border-green-400 shadow-[0_0_16px_rgba(74,222,128,.5)]' : flash === 'wrong' ? 'border-red-400 shadow-[0_0_16px_rgba(248,113,113,.5)]' : 'border-transparent focus:border-[#2d7a7c]'
           }`}
           autoComplete="off"
           autoCapitalize="off"
