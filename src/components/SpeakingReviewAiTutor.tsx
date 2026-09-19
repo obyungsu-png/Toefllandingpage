@@ -16,16 +16,19 @@ import {
   type SpeakingRaterResult,
   type SpeakingQuestionScore,
 } from '../utils/speakingRater';
+import type { AiProvider } from '../utils/aiClient';
 import type { TPOQuestion } from './ContentManagement';
 
 interface SpeakingReviewAiTutorProps {
   questions: TPOQuestion[];
   recordings: Record<string, string>;
-  /** 채점 완료 시 부모로 점수 전달 (History 저장용) */
-  onScore?: (result: SpeakingRaterResult) => void;
+  /** 채점 완료 시 부모로 점수 전달 (History 저장용). provider 는 이번 채점에 쓰인 AI. */
+  onScore?: (result: SpeakingRaterResult, provider: AiProvider) => void;
   onClose?: () => void;
   /** true 이면 모달이 열리자마자 자동으로 채점 시작 (End 화면 자동 채점용). */
   autoStart?: boolean;
+  /** Interview 채점에 쓸 AI 모델. 자동 실행은 저비용 glm, 수동 재채점은 claude. */
+  provider?: AiProvider;
 }
 
 export function SpeakingReviewAiTutor({
@@ -34,6 +37,7 @@ export function SpeakingReviewAiTutor({
   onScore,
   onClose,
   autoStart,
+  provider = 'claude',
 }: SpeakingReviewAiTutorProps) {
   const { transcribe } = useStt();
   const [isGrading, setIsGrading] = useState(false);
@@ -54,17 +58,17 @@ export function SpeakingReviewAiTutor({
         recordings,
         transcribe,
         onProgress: (q, phase, msg) => setProgress({ q, msg: `Q${q} — ${msg}` }),
-        provider: 'claude',
+        provider,
       });
       setResult(r);
-      onScore?.(r);
+      onScore?.(r, provider);
     } catch (err: any) {
       setError(err?.message || '채점 중 오류가 발생했습니다.');
     } finally {
       setIsGrading(false);
       setProgress(null);
     }
-  }, [questions, recordings, transcribe, onScore]);
+  }, [questions, recordings, transcribe, onScore, provider]);
 
   // autoStart 시 마운트되면 한 번만 자동으로 채점 시작 (사용자 클릭 없이)
   useEffect(() => {

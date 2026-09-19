@@ -2,7 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { gradeWritingSession, type WritingRaterResult } from '../utils/writingRater';
 import { checkGradingTrigger } from '../utils/gradingTrigger';
+import type { AiProvider } from '../utils/aiClient';
 import type { TPOQuestion } from './ContentManagement';
+
+// 학생 응답 텍스트 세트의 안정적 지문 — sessionStorage 캐시 키. 같은 답을 다시
+// 채점하지 않도록 (End 화면 재진입/새로고침 방지).
+function hashResponses(responses: Record<string, string>): string {
+  const entries = Object.entries(responses)
+    .filter(([, v]) => v && v.trim())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${v}`)
+    .join('|');
+  let h = 5381;
+  for (let i = 0; i < entries.length; i++) h = ((h << 5) + h) ^ entries.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+const WRITING_CACHE_KEY = 'writing-ai-grade-cache';
+interface WritingCache {
+  hash: string;
+  rawScore: number;
+  bandScore: number;
+  feedback: string;
+  provider: AiProvider;
+}
 
 interface ScoreData {
   correct?: number;
@@ -59,10 +82,22 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   writingQuestions
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
-  const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
+  const [aiResult, setAiResult] = useState<{ score: number; feedback: string; provider: AiProvider } | null>(null);
   const [showModelAnswers, setShowModelAnswers] = useState(false);
   const [gradeWarning, setGradeWarning] = useState<string | null>(null);
   const autoTriggeredRef = useRef(false);
+
+  // 마운트 시 sessionStorage 캐시 복원
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(WRITING_CACHE_KEY);
+      if (!raw) return;
+      const cached: WritingCache = JSON.parse(raw);
+      if (cached && typeof cached.rawScore === 'number' && cached.feedback) {
+        setAiResult({ score: cached.rawScore, feedback: cached.feedback, provider: cached.provider });
+      }
+    } catch {}
+  }, []);
 
   const validModelAnswers = (modelAnswers || []).filter(m => m.modelAnswer && m.modelAnswer.trim());
 
@@ -71,10 +106,10 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   const bandScore = convertToBand(rawDisplayScore);
   const displayFeedback = aiResult?.feedback || score?.feedback;
 
-  // ── 실제 AI 채점 (writingRater 사용) — 가짜 Math.random 제거 ──
+  // ── 실제 AI 채점 (writingRater 사용) ──
   // 트리거: Writing은 전체 문항 100% 완료 시에만 채점 허용.
-  // auto=true 이면 End 화면 진입 즉시 자동 실행된 케이스 — 트리거 미달을 조용히 스킵.
-  const handleAiGrade = async (auto = false) => {
+  // auto=true → 저비용 GLM 자동 실행 / 수동 클릭 → Claude 로 정밀 채점.
+  const handleAiGrade = async (auto = false, provider: AiProvider = auto ? 'glm' : 'claude') => {
     setGradeWarning(null);
     setIsAiGrading(true);
 
@@ -113,18 +148,31 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
         return;
       }
 
-      // 4) AI 채점 실행
+      // 4) AI 채점 실행 — provider 로 GLM(자동) 또는 Claude(수동/재채점)
       const result: WritingRaterResult = await gradeWritingSession({
         questions: gradeableQuestions,
         responses,
-        provider: 'claude',
+        provider,
       });
 
       const aiRawScore = result.rawScore;
       const aiBand = result.overallBand;
       const aiFeedback = result.summaryFeedback;
 
-      setAiResult({ score: aiRawScore, feedback: aiFeedback });
+      setAiResult({ score: aiRawScore, feedback: aiFeedback, provider });
+
+      // sessionStorage 캐시 저장 — 재진입 시 중복 채점 방지
+      try {
+        const cache: WritingCache = {
+          hash: hashResponses(responses),
+          rawScore: aiRawScore,
+          bandScore: aiBand,
+          feedback: aiFeedback,
+          provider,
+        };
+        sessionStorage.setItem(WRITING_CACHE_KEY, JSON.stringify(cache));
+      } catch {}
+
       setIsAiGrading(false);
       onAiScore?.(aiRawScore, aiFeedback, aiBand);
     } catch (err: any) {
@@ -135,11 +183,29 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
 
   // ── End 화면 진입 시 AI 채점 자동 실행 ──
   // 학생이 "Grade with AI" 를 안 눌러도 점수가 남도록 마운트 후 한 번만 자동 트리거.
+  // 캐시에 동일 응답 세트의 채점 결과가 있으면 자동 실행 스킵.
   useEffect(() => {
     if (autoTriggeredRef.current) return;
     if (!writingQuestions || writingQuestions.length === 0) return;
     if (aiResult) return;
     if (score?.aiScore) return;
+
+    // 캐시 히트 검사
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('writingResponses') || '{}');
+      const responses: Record<string, string> = {};
+      Object.keys(stored).forEach(k => { responses[k] = stored[k]?.response || ''; });
+      const hash = hashResponses(responses);
+      const raw = sessionStorage.getItem(WRITING_CACHE_KEY);
+      if (raw) {
+        const cached: WritingCache = JSON.parse(raw);
+        if (cached?.hash === hash) {
+          autoTriggeredRef.current = true;
+          return;
+        }
+      }
+    } catch {}
+
     autoTriggeredRef.current = true;
     handleAiGrade(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,6 +318,25 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
                   <div className="mt-4 bg-gradient-to-r from-[#f0fafa] to-[#e8f4f8] rounded-xl p-4 text-left border border-[#d1e8e8]/50">
                     <p className="text-[10px] font-bold text-[#1e6b73] uppercase tracking-wider mb-2">Feedback</p>
                     <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{displayFeedback}</p>
+                  </div>
+                )}
+                {/* GLM 자동 채점 결과에 한해 Claude 정밀 재채점 버튼 노출 */}
+                {aiResult?.provider === 'glm' && (
+                  <div className="mt-4 text-left">
+                    <button
+                      onClick={() => handleAiGrade(false, 'claude')}
+                      disabled={isAiGrading}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border ${
+                        isAiGrading
+                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : 'bg-white text-[#1e6b73] border-[#1e6b73]/40 hover:bg-[#f0fafa]'
+                      }`}
+                    >
+                      {isAiGrading ? '재채점 중…' : '✨ 정밀 재채점 (Claude)'}
+                    </button>
+                    <p className="text-[11px] text-gray-400 mt-1.5 text-center">
+                      현재 점수는 저비용 자동 채점(GLM) 결과입니다. 더 정밀한 평가는 Claude 재채점을 눌러 주세요.
+                    </p>
                   </div>
                 )}
               </>

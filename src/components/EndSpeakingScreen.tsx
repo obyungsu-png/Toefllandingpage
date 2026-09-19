@@ -4,7 +4,30 @@ import { SpeakingReviewAiTutor } from './SpeakingReviewAiTutor';
 import { checkGradingTrigger } from '../utils/gradingTrigger';
 import { countAnswered } from '../utils/speakingRater';
 import type { SpeakingRaterResult } from '../utils/speakingRater';
+import type { AiProvider } from '../utils/aiClient';
 import type { TPOQuestion } from './ContentManagement';
+
+// 녹음 URL 목록의 안정적인 지문(fingerprint) 계산 — sessionStorage 캐시 키.
+// 같은 학생·같은 세션에서 End 화면을 다시 열어도 재채점하지 않도록 사용.
+function hashRecordings(recordings: Record<string, string>): string {
+  const entries = Object.entries(recordings)
+    .filter(([, v]) => v)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${v}`)
+    .join('|');
+  let h = 5381;
+  for (let i = 0; i < entries.length; i++) h = ((h << 5) + h) ^ entries.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+const SPEAKING_CACHE_KEY = 'speaking-ai-grade-cache';
+interface SpeakingCache {
+  hash: string;
+  rawScore: number;
+  bandScore: number;
+  feedback: string;
+  provider: AiProvider;
+}
 
 interface ScoreData {
   correct?: number;
@@ -72,11 +95,24 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
   speakingQuestions
 }) => {
   const [isAiGrading, setIsAiGrading] = useState(false);
-  const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
+  const [aiResult, setAiResult] = useState<{ score: number; feedback: string; provider: AiProvider } | null>(null);
   const [showAiTutor, setShowAiTutor] = useState(false);
   const [autoStartTutor, setAutoStartTutor] = useState(false);
+  const [tutorProvider, setTutorProvider] = useState<AiProvider>('glm');
   const [gradeWarning, setGradeWarning] = useState<string | null>(null);
   const autoTriggeredRef = useRef(false);
+
+  // 마운트 시 sessionStorage 캐시에서 이번 세션의 채점 결과 복원 (재진입/새로고침 시 재채점 방지)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SPEAKING_CACHE_KEY);
+      if (!raw) return;
+      const cached: SpeakingCache = JSON.parse(raw);
+      if (cached && typeof cached.rawScore === 'number' && cached.feedback) {
+        setAiResult({ score: cached.rawScore, feedback: cached.feedback, provider: cached.provider });
+      }
+    } catch {}
+  }, []);
 
   const score = speakingScore || null;
   const rawDisplayScore = aiResult ? aiResult.score : (score?.aiScore || score?.correct || 0);
@@ -85,9 +121,8 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
 
   // ── 실제 AI 채점 (SpeakingReviewAiTutor 모달 사용) ──
   // 트리거: Speaking은 전체 문항 100% 완료 시에만 채점 허용.
-  // auto=true 이면 End 화면 진입 즉시 자동 실행된 케이스 → 모달을 autoStart 로 열어
-  // 사용자가 다시 "AI 채점 시작" 을 누르지 않아도 바로 채점이 진행된다.
-  const handleAiGrade = async (auto = false) => {
+  // auto=true → 저비용 GLM 자동 실행. 수동(재)채점 → Claude 로 정밀 채점.
+  const handleAiGrade = async (auto = false, provider: AiProvider = auto ? 'glm' : 'claude') => {
     setGradeWarning(null);
 
     // sessionStorage 에서 녹음 로드
@@ -111,31 +146,61 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
     }
 
     // 모달 열기 — 실제 채점은 SpeakingReviewAiTutor 내부에서 실행
+    setTutorProvider(provider);
     setAutoStartTutor(auto);
     setShowAiTutor(true);
   };
 
   // ── End 화면 진입 시 AI 채점 자동 실행 ──
   // Writing 과 동작을 통일 — 학생이 "AI 채점 시작" 을 누르지 않고 넘겨도 점수가 남도록.
-  // 실행 조건: 문항이 로드됐고, 아직 점수 없음, 이번 세션에서 이미 자동 트리거하지 않음.
+  // 실행 조건: 문항이 로드됐고, 아직 점수 없음, 캐시에도 이번 녹음 세트 결과가 없음.
   useEffect(() => {
     if (autoTriggeredRef.current) return;
     if (!speakingQuestions || speakingQuestions.length === 0) return;
     if (aiResult) return;
     if (score?.aiScore) return;
+
+    // 캐시 확인 — 동일한 녹음 세트로 이미 채점한 이력이 있으면 자동 실행 스킵
+    try {
+      const recordings: Record<string, string> = JSON.parse(
+        sessionStorage.getItem('speakingRecordings') || '{}'
+      );
+      const hash = hashRecordings(recordings);
+      const raw = sessionStorage.getItem(SPEAKING_CACHE_KEY);
+      if (raw) {
+        const cached: SpeakingCache = JSON.parse(raw);
+        if (cached?.hash === hash) {
+          autoTriggeredRef.current = true;
+          return;
+        }
+      }
+    } catch {}
+
     autoTriggeredRef.current = true;
     handleAiGrade(true);
-    // handleAiGrade 는 매 렌더 재생성되지만 useEffect 는 마운트 후 한 번만 실행되면 되므로
-    // ref 가드로 중복 실행을 막고 deps 는 마운트 신호에 해당하는 값들만 넣는다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speakingQuestions?.length]);
 
-  // SpeakingReviewAiTutor 채점 완료 콜백
-  const handleSpeakingScore = (result: SpeakingRaterResult) => {
+  // SpeakingReviewAiTutor 채점 완료 콜백 — 캐시에도 저장하여 재진입 시 중복 호출 방지
+  const handleSpeakingScore = (result: SpeakingRaterResult, provider: AiProvider) => {
     setAiResult({
       score: result.rawScore,
       feedback: result.summaryFeedback,
+      provider,
     });
+    try {
+      const recordings: Record<string, string> = JSON.parse(
+        sessionStorage.getItem('speakingRecordings') || '{}'
+      );
+      const cache: SpeakingCache = {
+        hash: hashRecordings(recordings),
+        rawScore: result.rawScore,
+        bandScore: result.overallBand,
+        feedback: result.summaryFeedback,
+        provider,
+      };
+      sessionStorage.setItem(SPEAKING_CACHE_KEY, JSON.stringify(cache));
+    } catch {}
     onAiScore?.(result.rawScore, result.summaryFeedback, result.overallBand);
   };
 
@@ -230,6 +295,25 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
                   <div className="mt-4 bg-gradient-to-r from-[#f0fafa] to-[#e8f4f8] rounded-xl p-4 text-left border border-[#d1e8e8]/50">
                     <p className="text-[10px] font-bold text-[#1e6b73] uppercase tracking-wider mb-2">Feedback</p>
                     <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{displayFeedback}</p>
+                  </div>
+                )}
+                {/* GLM 자동 채점 결과에 한해 Claude 정밀 재채점 버튼 노출 */}
+                {aiResult?.provider === 'glm' && (
+                  <div className="mt-4 text-left">
+                    <button
+                      onClick={() => handleAiGrade(false, 'claude')}
+                      disabled={isAiGrading}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all border ${
+                        isAiGrading
+                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : 'bg-white text-[#1e6b73] border-[#1e6b73]/40 hover:bg-[#f0fafa]'
+                      }`}
+                    >
+                      ✨ 정밀 재채점 (Claude)
+                    </button>
+                    <p className="text-[11px] text-gray-400 mt-1.5 text-center">
+                      현재 점수는 저비용 자동 채점(GLM) 결과입니다. 더 정밀한 평가는 Claude 재채점을 눌러 주세요.
+                    </p>
                   </div>
                 )}
               </>
@@ -337,6 +421,7 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
             onScore={handleSpeakingScore}
             onClose={() => setShowAiTutor(false)}
             autoStart={autoStartTutor}
+            provider={tutorProvider}
           />
         );
       })()}
