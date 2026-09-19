@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { SpeakingReviewAiTutor } from './SpeakingReviewAiTutor';
 import { checkGradingTrigger } from '../utils/gradingTrigger';
@@ -74,7 +74,9 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
   const [isAiGrading, setIsAiGrading] = useState(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
   const [showAiTutor, setShowAiTutor] = useState(false);
+  const [autoStartTutor, setAutoStartTutor] = useState(false);
   const [gradeWarning, setGradeWarning] = useState<string | null>(null);
+  const autoTriggeredRef = useRef(false);
 
   const score = speakingScore || null;
   const rawDisplayScore = aiResult ? aiResult.score : (score?.aiScore || score?.correct || 0);
@@ -83,7 +85,9 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
 
   // ── 실제 AI 채점 (SpeakingReviewAiTutor 모달 사용) ──
   // 트리거: Speaking은 전체 문항 100% 완료 시에만 채점 허용.
-  const handleAiGrade = async () => {
+  // auto=true 이면 End 화면 진입 즉시 자동 실행된 케이스 → 모달을 autoStart 로 열어
+  // 사용자가 다시 "AI 채점 시작" 을 누르지 않아도 바로 채점이 진행된다.
+  const handleAiGrade = async (auto = false) => {
     setGradeWarning(null);
 
     // sessionStorage 에서 녹음 로드
@@ -101,13 +105,30 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
     });
 
     if (!trigger.canGrade) {
-      setGradeWarning(trigger.message);
+      // 자동 실행에서는 트리거 미달 시 조용히 스킵 (수동 시에만 경고 표시)
+      if (!auto) setGradeWarning(trigger.message);
       return;
     }
 
     // 모달 열기 — 실제 채점은 SpeakingReviewAiTutor 내부에서 실행
+    setAutoStartTutor(auto);
     setShowAiTutor(true);
   };
+
+  // ── End 화면 진입 시 AI 채점 자동 실행 ──
+  // Writing 과 동작을 통일 — 학생이 "AI 채점 시작" 을 누르지 않고 넘겨도 점수가 남도록.
+  // 실행 조건: 문항이 로드됐고, 아직 점수 없음, 이번 세션에서 이미 자동 트리거하지 않음.
+  useEffect(() => {
+    if (autoTriggeredRef.current) return;
+    if (!speakingQuestions || speakingQuestions.length === 0) return;
+    if (aiResult) return;
+    if (score?.aiScore) return;
+    autoTriggeredRef.current = true;
+    handleAiGrade(true);
+    // handleAiGrade 는 매 렌더 재생성되지만 useEffect 는 마운트 후 한 번만 실행되면 되므로
+    // ref 가드로 중복 실행을 막고 deps 는 마운트 신호에 해당하는 값들만 넣는다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakingQuestions?.length]);
 
   // SpeakingReviewAiTutor 채점 완료 콜백
   const handleSpeakingScore = (result: SpeakingRaterResult) => {
@@ -221,7 +242,7 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
                 </div>
                 <p className="text-gray-500 font-medium mb-5">Get AI-powered speaking evaluation</p>
                 <button
-                  onClick={handleAiGrade}
+                  onClick={() => handleAiGrade(false)}
                   disabled={isAiGrading}
                   className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-white transition-all ${
                     isAiGrading
@@ -315,6 +336,7 @@ const EndSpeakingScreen: React.FC<EndSpeakingScreenProps> = ({
             recordings={recordings}
             onScore={handleSpeakingScore}
             onClose={() => setShowAiTutor(false)}
+            autoStart={autoStartTutor}
           />
         );
       })()}

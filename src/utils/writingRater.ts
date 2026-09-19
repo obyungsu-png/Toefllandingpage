@@ -87,11 +87,13 @@ ${dims}
 - 2.0: 발전 필요. 의미 전달 어려움.
 - 1.0: 거의 평가 불가.
 
-반드시 JSON 형식으로만 응답하세요 (마크다운 금지):
+⚠️ 반드시 [평가 차원] 순서대로 4개 항목 모두 채워서 JSON 으로만 응답하세요.
+   dimensions 배열 길이가 정확히 4 가 아니면 채점이 무효 처리됩니다.
+   마크다운 코드펜스(\`\`\`) 없이 순수 JSON 오브젝트만 출력하세요:
 {
   "dimensions": [
     { "score": 0-6, "feedback": "한국어 1~2문장, 학생 글 근거 발췌" }
-    // 위 평가 차원 순서대로 4개
+    // 반드시 4개 — [평가 차원] 순서대로 각각 하나씩
   ],
   "overallBand": 0-6,
   "summary": "한국어 2~3문장 종합 피드백 + 개선 방향"
@@ -154,22 +156,48 @@ export async function scoreWritingQuestion(
   try {
     const systemPrompt = buildWritingSystemPrompt(questionType);
     const userPrompt = buildWritingUserPrompt(questionType, questionData, userResponse, modelAnswer);
-    const raw = await callAi(systemPrompt, userPrompt, provider, 1800, 0.3);
-    const parsed = safeJsonParse(raw);
+
+    // 1차 호출 + JSON 파싱 실패 시 1회 재시도 (더 낮은 temperature 로).
+    // AI 가 마크다운/설명문을 섞어 반환해 파싱이 실패하는 케이스에 대비.
+    let parsed: any = null;
+    let lastRaw = '';
+    for (const attempt of [0, 1]) {
+      const raw = await callAi(systemPrompt, userPrompt, provider, 1800, attempt === 0 ? 0.3 : 0.1);
+      lastRaw = raw;
+      parsed = safeJsonParse(raw);
+      if (parsed && Array.isArray(parsed.dimensions) && parsed.dimensions.length > 0) break;
+      parsed = null; // 다음 시도
+    }
     if (!parsed) throw new Error('AI 응답 JSON 파싱 실패');
 
     const clamp = (v: any) => Math.max(0, Math.min(6, Number(v) || 0));
-    const dims: WritingDimensionScore[] = Array.isArray(parsed.dimensions)
+    const rawDims: WritingDimensionScore[] = Array.isArray(parsed.dimensions)
       ? parsed.dimensions.slice(0, 4).map((d: any) => ({
           score: clamp(d?.score),
           feedback: String(d?.feedback || ''),
         }))
       : [];
-    // 차원이 4개 미만이면 채움
-    while (dims.length < 4) dims.push({ score: 1, feedback: '평가 누락' });
+
+    // 차원 누락 처리 개선:
+    // 예전 코드는 누락된 차원을 무조건 Band 1 로 채워서, AI 가 3개만 반환하면
+    // 실제 실력과 무관하게 평균이 폭락하는 문제가 있었다.
+    // 이제는 "AI 가 반환한 차원들의 평균 점수" 로 누락 차원을 채우고, 피드백만 명시.
+    const returnedAvg = rawDims.length > 0
+      ? rawDims.reduce((s, d) => s + d.score, 0) / rawDims.length
+      : 1;
+    const dims: WritingDimensionScore[] = [...rawDims];
+    while (dims.length < 4) {
+      dims.push({
+        score: Math.round(returnedAvg * 2) / 2,
+        feedback: 'AI 응답에 이 차원이 누락되어 나머지 차원의 평균으로 대체함.',
+      });
+    }
 
     const explicitOverall = clamp(parsed.overallBand);
-    const avg = dims.reduce((s, d) => s + d.score, 0) / dims.length;
+    // 종합 Band 는 "AI 가 실제로 채점한 차원" 만으로 계산 (누락 차원의 평균 대체값은
+    // 자기 자신을 다시 평균 내는 셈이라 최종 값에 영향을 주지 않지만, 명시적으로 rawDims 사용).
+    const gradedDims = rawDims.length > 0 ? rawDims : dims;
+    const avg = gradedDims.reduce((s, d) => s + d.score, 0) / gradedDims.length;
     const band = explicitOverall > 0 ? explicitOverall : Math.round(avg * 2) / 2;
     const feedback = String(parsed.summary || '');
 

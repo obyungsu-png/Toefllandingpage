@@ -160,7 +160,9 @@ const INTERVIEW_SYSTEM_PROMPT = `당신은 2026년 개편 TOEFL iBT Speaking 'Ta
 - 2.0: 발전 필요. 의미 전달 어려움.
 - 1.0: 거의 평가 불가.
 
-반드시 JSON 형식으로만 응답하세요 (마크다운 금지):
+⚠️ 반드시 delivery/fluency/topicDevelopment 3개 차원을 모두 채워서 JSON 으로만 응답하세요.
+   하나라도 누락되면 채점이 무효 처리됩니다.
+   마크다운 코드펜스(\`\`\`) 없이 순수 JSON 오브젝트만 출력하세요:
 {
   "delivery": { "score": 0-6, "feedback": "한국어 1~2문장, 학생 답변 근거 발췌" },
   "fluency": { "score": 0-6, "feedback": "한국어 1~2문장, WPM/정적 기반" },
@@ -210,27 +212,47 @@ ${audioMeta.durationSec ? `- 오디오 길이: ${audioMeta.durationSec}초` : ''
 위 데이터를 2026 ETS Speaking Rubric 으로 평가해 JSON 으로 응답하세요.`;
 
   try {
-    const raw = await callAi(INTERVIEW_SYSTEM_PROMPT, userPrompt, provider, 1500, 0.3);
-    const parsed = safeJsonParse(raw);
+    // 1차 호출 + JSON 파싱 실패 시 1회 재시도 (더 낮은 temperature 로).
+    let parsed: any = null;
+    for (const attempt of [0, 1]) {
+      const raw = await callAi(INTERVIEW_SYSTEM_PROMPT, userPrompt, provider, 1500, attempt === 0 ? 0.3 : 0.1);
+      parsed = safeJsonParse(raw);
+      if (parsed && (parsed.delivery || parsed.fluency || parsed.topicDevelopment)) break;
+      parsed = null;
+    }
     if (!parsed) {
       throw new Error('AI 응답 JSON 파싱 실패');
     }
     const clamp = (v: any) => Math.max(0, Math.min(6, Number(v) || 0));
+
+    // 어떤 차원들이 실제로 반환됐는지 표시 — 누락 차원은 반환된 차원 평균으로 대체.
+    // (예전 코드는 누락 시 score 를 0(=Band 1)으로 처리해서 부당한 폭락이 있었다.)
+    const rawDelivery = parsed.delivery ? clamp(parsed.delivery?.score) : null;
+    const rawFluency = parsed.fluency ? clamp(parsed.fluency?.score) : null;
+    const rawTopic = parsed.topicDevelopment ? clamp(parsed.topicDevelopment?.score) : null;
+    const returned = [rawDelivery, rawFluency, rawTopic].filter((v): v is number => v !== null);
+    const fallbackScore = returned.length > 0
+      ? Math.round((returned.reduce((s, v) => s + v, 0) / returned.length) * 2) / 2
+      : 1;
+    const fallbackFeedback = 'AI 응답에 이 차원이 누락되어 나머지 차원의 평균으로 대체함.';
+
     const delivery = {
-      score: clamp(parsed.delivery?.score),
-      feedback: String(parsed.delivery?.feedback || ''),
+      score: rawDelivery ?? fallbackScore,
+      feedback: parsed.delivery?.feedback ? String(parsed.delivery.feedback) : fallbackFeedback,
     };
     const fluency = {
-      score: clamp(parsed.fluency?.score),
-      feedback: String(parsed.fluency?.feedback || ''),
+      score: rawFluency ?? fallbackScore,
+      feedback: parsed.fluency?.feedback ? String(parsed.fluency.feedback) : fallbackFeedback,
     };
     const topicDevelopment = {
-      score: clamp(parsed.topicDevelopment?.score),
-      feedback: String(parsed.topicDevelopment?.feedback || ''),
+      score: rawTopic ?? fallbackScore,
+      feedback: parsed.topicDevelopment?.feedback ? String(parsed.topicDevelopment.feedback) : fallbackFeedback,
     };
-    // 종합 Band: 명시적 overallBand 우선, 없으면 가중평균 (Delivery 0.34, Fluency 0.33, Topic 0.33)
+    // 종합 Band: 명시적 overallBand 우선, 없으면 "실제 반환된 차원" 만의 평균으로 계산
+    // (누락 차원의 대체값은 자기 평균을 다시 평균 내는 셈이라 결과에 영향 없음).
     const explicitOverall = clamp(parsed.overallBand);
-    const weighted = delivery.score * 0.34 + fluency.score * 0.33 + topicDevelopment.score * 0.33;
+    const avgSource = returned.length > 0 ? returned : [delivery.score, fluency.score, topicDevelopment.score];
+    const weighted = avgSource.reduce((s, v) => s + v, 0) / avgSource.length;
     const band = explicitOverall > 0 ? explicitOverall : Math.round(weighted * 2) / 2;
     const feedback = String(parsed.summary || '');
 

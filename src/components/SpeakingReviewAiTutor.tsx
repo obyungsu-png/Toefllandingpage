@@ -8,7 +8,7 @@
  * EndSpeakingScreen 에서 호출 — 전체 문항 100% 완료 시에만 채점 허용.
  * 결과: 종합 Band(0~6) + 차원별 피드백 → History 전송 (onAiScore).
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Sparkles, X, Loader2, Mic, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useStt } from '../hooks/useStt';
 import {
@@ -24,6 +24,8 @@ interface SpeakingReviewAiTutorProps {
   /** 채점 완료 시 부모로 점수 전달 (History 저장용) */
   onScore?: (result: SpeakingRaterResult) => void;
   onClose?: () => void;
+  /** true 이면 모달이 열리자마자 자동으로 채점 시작 (End 화면 자동 채점용). */
+  autoStart?: boolean;
 }
 
 export function SpeakingReviewAiTutor({
@@ -31,12 +33,14 @@ export function SpeakingReviewAiTutor({
   recordings,
   onScore,
   onClose,
+  autoStart,
 }: SpeakingReviewAiTutorProps) {
   const { transcribe } = useStt();
   const [isGrading, setIsGrading] = useState(false);
   const [progress, setProgress] = useState<{ q: number; msg: string } | null>(null);
   const [result, setResult] = useState<SpeakingRaterResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const autoStartedRef = useRef(false);
 
   const handleGrade = useCallback(async () => {
     setIsGrading(true);
@@ -61,6 +65,15 @@ export function SpeakingReviewAiTutor({
       setProgress(null);
     }
   }, [questions, recordings, transcribe, onScore]);
+
+  // autoStart 시 마운트되면 한 번만 자동으로 채점 시작 (사용자 클릭 없이)
+  useEffect(() => {
+    if (!autoStart) return;
+    if (autoStartedRef.current) return;
+    if (!questions || questions.length === 0) return;
+    autoStartedRef.current = true;
+    handleGrade();
+  }, [autoStart, questions, handleGrade]);
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">

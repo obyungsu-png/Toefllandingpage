@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { gradeWritingSession, type WritingRaterResult } from '../utils/writingRater';
 import { checkGradingTrigger } from '../utils/gradingTrigger';
@@ -62,6 +62,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(null);
   const [showModelAnswers, setShowModelAnswers] = useState(false);
   const [gradeWarning, setGradeWarning] = useState<string | null>(null);
+  const autoTriggeredRef = useRef(false);
 
   const validModelAnswers = (modelAnswers || []).filter(m => m.modelAnswer && m.modelAnswer.trim());
 
@@ -72,7 +73,8 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
 
   // ── 실제 AI 채점 (writingRater 사용) — 가짜 Math.random 제거 ──
   // 트리거: Writing은 전체 문항 100% 완료 시에만 채점 허용.
-  const handleAiGrade = async () => {
+  // auto=true 이면 End 화면 진입 즉시 자동 실행된 케이스 — 트리거 미달을 조용히 스킵.
+  const handleAiGrade = async (auto = false) => {
     setGradeWarning(null);
     setIsAiGrading(true);
 
@@ -105,7 +107,8 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
       });
 
       if (!trigger.canGrade) {
-        setGradeWarning(trigger.message);
+        // 자동 실행이면 조용히 스킵 (수동 시에만 경고 표시)
+        if (!auto) setGradeWarning(trigger.message);
         setIsAiGrading(false);
         return;
       }
@@ -129,6 +132,18 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
       setIsAiGrading(false);
     }
   };
+
+  // ── End 화면 진입 시 AI 채점 자동 실행 ──
+  // 학생이 "Grade with AI" 를 안 눌러도 점수가 남도록 마운트 후 한 번만 자동 트리거.
+  useEffect(() => {
+    if (autoTriggeredRef.current) return;
+    if (!writingQuestions || writingQuestions.length === 0) return;
+    if (aiResult) return;
+    if (score?.aiScore) return;
+    autoTriggeredRef.current = true;
+    handleAiGrade(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writingQuestions?.length]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-[#f0fafa] to-white z-50 flex flex-col">
@@ -249,7 +264,7 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
                 </div>
                 <p className="text-gray-500 font-medium mb-5">Get AI-powered writing evaluation</p>
                 <button
-                  onClick={handleAiGrade}
+                  onClick={() => handleAiGrade(false)}
                   disabled={isAiGrading}
                   className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-white transition-all ${
                     isAiGrading
