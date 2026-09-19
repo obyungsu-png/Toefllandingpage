@@ -826,6 +826,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               { key: 'toefl-hard' as const, label: 'TOEFL 어휘 학습 vol.2', short: '어휘 vol.2' },
               { key: 'etymology' as const, label: '기출단어', short: '기출' },
               { key: 'custom' as const, label: '참고서 영단어', short: '참고서' },
+              { key: 'junior' as const, label: '중3+고1 영단어 vol.5', short: 'vol.5' },
             ]).map(tab => (
               <button
                 key={tab.key}
@@ -861,6 +862,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               ? '50일, 1,500개 TOEFL 고급 어휘를 마스터하요. (vol.2)'
               : activeTab === 'custom'
               ? 'CMS에서 추가한 참고서 영단어로 학습하세요.'
+              : activeTab === 'junior'
+              ? '중3+고1 초급 어휘 30일 과정을 학습하세요. (vol.5, 영/한/중)'
               : 'CMS에서 추가한 기출 단어로 학습하세요.'}
           </p>
         </div>
