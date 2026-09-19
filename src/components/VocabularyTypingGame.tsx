@@ -308,6 +308,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const [shots, setShots] = useState<CannonShot[]>([]);
   const [booms, setBooms] = useState<Boom[]>([]);
   const [firing, setFiring] = useState(false);
+  // 대포 조준 — 발사 시 목표 단어 쪽으로 좌우 이동 + 포신 각도 조절
+  const [cannonX, setCannonX] = useState(50);
+  const [barrelAngle, setBarrelAngle] = useState(0);
 
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -518,11 +521,19 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     window.setTimeout(() => setPopups(prev => prev.filter(p => p.id !== id)), 800);
   };
 
-  // 대포 발사 — 포탄이 날아가 목표 지점에서 폭발 + 점수 팝업
+  // 대포 발사 — 목표 쪽으로 대포가 이동/조준한 뒤 포탄이 포물선으로 날아가 폭발
   const fireCannon = (target: { x: number; y: number }, gainText: string) => {
     const areaH = gameAreaRef.current?.clientHeight || 420;
+    const areaW = gameAreaRef.current?.clientWidth || 800;
+    // 대포를 목표 아래쪽으로 이동시키고, 포신을 목표 방향으로 기울임
+    const nextX = Math.max(10, Math.min(90, target.x));
+    setCannonX(nextX);
+    const dx = ((target.x - nextX) / 100) * areaW;
+    const dy = Math.max(60, areaH - 30 - target.y);
+    const angle = Math.max(-55, Math.min(55, (Math.atan2(dx, dy) * 180) / Math.PI));
+    setBarrelAngle(angle);
     const id = popupIdRef.current++;
-    setShots(prev => [...prev, { id, fx: '50%', fy: `${areaH - 52}px`, tx: `${target.x}%`, ty: `${target.y}px` }]);
+    setShots(prev => [...prev, { id, fx: `${nextX}%`, fy: `${areaH - 52}px`, tx: `${target.x}%`, ty: `${target.y}px` }]);
     setFiring(true);
     sfx.cannon();
     window.setTimeout(() => sfx.whoosh(), 60);
@@ -809,10 +820,11 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes gameoverPop { from { transform:scale(.8); opacity:0 } to { transform:scale(1); opacity:1 } }
         @keyframes cannonFly { from { left:var(--fx); top:var(--fy) } to { left:var(--tx); top:var(--ty) } }
         @keyframes arcY { 0% { transform:translateY(6px) } 45% { transform:translateY(-48px) } 100% { transform:translateY(0) } }
+        @keyframes ballDepth { 0% { transform:scale(.65) } 55% { transform:scale(1.2) } 100% { transform:scale(.9) } }
         @keyframes boomFlash { 0% { transform:translate(-50%,-50%) scale(.3); opacity:1 } 100% { transform:translate(-50%,-50%) scale(2.8); opacity:0 } }
         @keyframes ringExpand { 0% { transform:translate(-50%,-50%) scale(.2); opacity:.95 } 100% { transform:translate(-50%,-50%) scale(2); opacity:0 } }
         @keyframes particleFly { from { transform:translate(-50%,-50%) rotate(var(--a)) translateX(0); opacity:1 } to { transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)); opacity:0 } }
-        @keyframes recoil { 0% { transform:translateX(-50%) translateY(0) } 25% { transform:translateX(-50%) translateY(10px) } 100% { transform:translateX(-50%) translateY(0) } }
+        @keyframes recoil { 0% { transform:translateY(0) } 25% { transform:translateY(10px) } 100% { transform:translateY(0) } }
         @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(2.1); opacity:0 } }
         @keyframes shakeSmall { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
       `}</style>
@@ -928,14 +940,16 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
               ['--fx' as any]: s.fx, ['--fy' as any]: s.fy, ['--tx' as any]: s.tx, ['--ty' as any]: s.ty,
             }}
           >
-            <span
-              className="block w-4 h-4 rounded-full"
-              style={{
-                background: 'radial-gradient(circle at 35% 30%, #fff7d6, #fbbf24 45%, #b45309 85%)',
-                boxShadow: '0 0 14px rgba(251,191,36,.95), 0 0 34px rgba(249,115,22,.6), -10px 8px 16px rgba(249,115,22,.35)',
-                animation: 'arcY .3s ease-in-out forwards',
-              }}
-            />
+            <span className="block" style={{ animation: 'arcY .3s ease-in-out forwards' }}>
+              <span
+                className="block w-4 h-4 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle at 32% 28%, #fffbe8 0%, #fde68a 25%, #f59e0b 55%, #92400e 90%)',
+                  boxShadow: '0 0 14px rgba(251,191,36,.95), 0 0 34px rgba(249,115,22,.6), -10px 8px 16px rgba(249,115,22,.35), inset -2px -3px 5px rgba(0,0,0,.45)',
+                  animation: 'ballDepth .3s ease-in-out forwards',
+                }}
+              />
+            </span>
             {/* 궤적 잔상 */}
             <span
               className="block absolute left-1 top-1 w-2 h-2 rounded-full bg-amber-400/70 blur-[2px]"
@@ -944,9 +958,18 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
         ))}
 
-        {/* 폭발 이펙트 — 플래시 + 충격파 링 + 파편 16개 */}
+        {/* 폭발 이펙트 — 배경 글로우 + 플래시 + 이중 충격파 링 + 원근 파편 16개 */}
         {booms.map(b => (
           <div key={b.id} className="pointer-events-none absolute" style={{ left: `${b.x}%`, top: `${b.y}px` }}>
+            {/* 배경 글로우 (뒤쪽, 블러로 원근감) */}
+            <div
+              className="absolute w-28 h-28 rounded-full blur-md"
+              style={{
+                background: 'radial-gradient(circle, rgba(249,115,22,.55) 0%, rgba(239,68,68,.25) 55%, transparent 75%)',
+                transform: 'translate(-50%,-50%)',
+                animation: 'boomFlash .55s ease-out forwards',
+              }}
+            />
             <div
               className="absolute w-20 h-20 rounded-full"
               style={{
@@ -958,6 +981,10 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
               className="absolute w-20 h-20 rounded-full border-[3px] border-amber-300/80"
               style={{ animation: 'ringExpand .5s ease-out forwards' }}
             />
+            <div
+              className="absolute w-24 h-24 rounded-full border-2 border-orange-400/50"
+              style={{ animation: 'ringExpand .6s ease-out .08s forwards', opacity: 0 }}
+            />
             {Array.from({ length: 16 }, (_, i) => (
               <span
                 key={i}
@@ -967,6 +994,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                   height: 3 + (i % 3) * 2,
                   background: i % 3 === 0 ? '#fef3c7' : i % 2 ? '#fbbf24' : '#f97316',
                   boxShadow: '0 0 7px rgba(251,146,60,.95)',
+                  filter: i % 4 === 3 ? 'blur(1.5px)' : undefined, // 뒤로 날아가는 파편은 흐리게 (원근)
                   animation: `particleFly ${0.4 + (i % 4) * 0.07}s ease-out forwards`,
                   ['--a' as any]: `${i * 22.5}deg`,
                   ['--d' as any]: `${42 + (i % 5) * 12}px`,
@@ -976,55 +1004,74 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
         ))}
 
-        {/* 대포 (하단 중앙) — 금속 포신 + 금장 포구 + 바퀴 + 장갑판 */}
+        {/* 대포 — 발사 시 목표 쪽으로 좌우 이동, 포신은 목표 방향으로 기울어짐 (입체 조준) */}
         <div
-          className="pointer-events-none absolute bottom-1 left-1/2"
-          style={firing ? { animation: 'recoil .34s ease-out' } : { transform: 'translateX(-50%)' }}
+          className="pointer-events-none absolute bottom-1"
+          style={{
+            left: `${cannonX}%`,
+            transform: 'translateX(-50%)',
+            transition: 'left .22s ease-out',
+          }}
         >
-          {firing && (
+          {/* 지면 그림자 (입체감) */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-20 h-3 rounded-[50%] bg-black/50 blur-[3px]"
+          />
+          <div style={firing ? { animation: 'recoil .34s ease-out' } : undefined}>
+            {/* 포신 그룹 — 목표 방향으로 회전 (하단 중심 축) */}
             <div
-              className="absolute -top-3 left-1/2 w-10 h-10 rounded-full"
+              className="relative flex flex-col items-center"
               style={{
-                background: 'radial-gradient(circle, rgba(255,246,200,1) 0%, rgba(251,191,36,.8) 40%, rgba(249,115,22,0) 75%)',
-                animation: 'muzzle .25s ease-out forwards',
+                transform: `rotate(${barrelAngle}deg)`,
+                transformOrigin: '50% 100%',
+                transition: 'transform .18s ease-out',
               }}
-            />
-          )}
-          <div className="relative flex flex-col items-center">
-            {/* 포구 (금장 링) */}
-            <div
-              className="z-10 w-7 h-3 rounded-full"
-              style={{ background: 'linear-gradient(180deg,#fde68a,#b45309)', boxShadow: '0 1px 3px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,255,255,.5)' }}
-            />
-            {/* 포신 */}
-            <div
-              className="-mt-0.5 w-6 h-11"
-              style={{
-                background: 'linear-gradient(90deg,#111827 0%,#4b5563 30%,#9ca3af 50%,#4b5563 70%,#111827 100%)',
-                borderRadius: '10px 10px 4px 4px',
-                boxShadow: 'inset 0 -4px 6px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.5)',
-              }}
-            />
-            {/* 장갑판 (리벳) */}
-            <div
-              className="-mt-1 w-14 h-4 rounded-md flex items-center justify-center gap-1.5"
-              style={{ background: 'linear-gradient(180deg,#6b7280,#374151)', boxShadow: '0 2px 4px rgba(0,0,0,.5)' }}
             >
-              {[0, 1, 2, 3].map(i => (
-                <span key={i} className="w-1 h-1 rounded-full bg-gray-300/80" style={{ boxShadow: 'inset 0 -1px 1px rgba(0,0,0,.6)' }} />
-              ))}
-            </div>
-            {/* 바퀴 */}
-            <div className="-mt-1 flex items-center gap-6">
-              {[0, 1].map(i => (
+              {firing && (
                 <div
-                  key={i}
-                  className="w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: 'radial-gradient(circle,#4b5563 30%,#1f2937 70%)', border: '2px solid #6b7280', boxShadow: '0 2px 3px rgba(0,0,0,.6)' }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                </div>
-              ))}
+                  className="absolute -top-3 left-1/2 w-10 h-10 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(255,246,200,1) 0%, rgba(251,191,36,.8) 40%, rgba(249,115,22,0) 75%)',
+                    animation: 'muzzle .25s ease-out forwards',
+                  }}
+                />
+              )}
+              {/* 포구 (금장 링) */}
+              <div
+                className="z-10 w-7 h-3 rounded-full"
+                style={{ background: 'linear-gradient(180deg,#fde68a,#b45309)', boxShadow: '0 1px 3px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,255,255,.5)' }}
+              />
+              {/* 포신 */}
+              <div
+                className="-mt-0.5 w-6 h-11"
+                style={{
+                  background: 'linear-gradient(90deg,#111827 0%,#4b5563 30%,#9ca3af 50%,#4b5563 70%,#111827 100%)',
+                  borderRadius: '10px 10px 4px 4px',
+                  boxShadow: 'inset 0 -4px 6px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.5)',
+                }}
+              />
+            </div>
+            {/* 장갑판 + 바퀴 (수평 유지) */}
+            <div className="relative flex flex-col items-center -mt-1">
+              <div
+                className="w-14 h-4 rounded-md flex items-center justify-center gap-1.5"
+                style={{ background: 'linear-gradient(180deg,#6b7280,#374151)', boxShadow: '0 2px 4px rgba(0,0,0,.5)' }}
+              >
+                {[0, 1, 2, 3].map(i => (
+                  <span key={i} className="w-1 h-1 rounded-full bg-gray-300/80" style={{ boxShadow: 'inset 0 -1px 1px rgba(0,0,0,.6)' }} />
+                ))}
+              </div>
+              <div className="-mt-1 flex items-center gap-6">
+                {[0, 1].map(i => (
+                  <div
+                    key={i}
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: 'radial-gradient(circle,#4b5563 30%,#1f2937 70%)', border: '2px solid #6b7280', boxShadow: '0 2px 3px rgba(0,0,0,.6)' }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
