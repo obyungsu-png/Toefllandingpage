@@ -137,26 +137,73 @@ const sfx = {
       noise.start(t);
     } catch { /* 무시 */ }
   },
-  // 폭발 — 짧은 크래클 (발사 후 0.28초 지연 호출)
+  // 포탄 비행 휘파람 — 밴드패스 노이즈 스윕 (슈우웁)
+  whoosh: () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    try {
+      const t = ctx.currentTime;
+      const len = Math.floor(ctx.sampleRate * 0.3);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - (i / len) * 0.5);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.Q.value = 1.4;
+      bp.frequency.setValueAtTime(500, t);
+      bp.frequency.exponentialRampToValueAtTime(2400, t + 0.13);
+      bp.frequency.exponentialRampToValueAtTime(450, t + 0.3);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.09, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+      src.start(t);
+    } catch { /* 무시 */ }
+  },
+  // 폭발 — 저음 붐 + 화약 버스트 + 크래클 + 스파클 4레이어
   explode: () => {
     const ctx = getCtx();
     if (!ctx) return;
     try {
       const t = ctx.currentTime;
-      const len = Math.floor(ctx.sampleRate * 0.18);
+      // 1) 저음 붐
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(110, t);
+      osc.frequency.exponentialRampToValueAtTime(32, t + 0.32);
+      og.gain.setValueAtTime(0.18, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+      osc.connect(og); og.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.36);
+      // 2) 화약 버스트 (로우패스 노이즈)
+      const len = Math.floor(ctx.sampleRate * 0.22);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.6);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.5);
       const noise = ctx.createBufferSource();
       noise.buffer = buf;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 1400;
-      const ng = ctx.createGain();
-      ng.gain.value = 0.14;
-      noise.connect(filter); filter.connect(ng); ng.connect(ctx.destination);
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 1100;
+      const ng = ctx.createGain(); ng.gain.value = 0.16;
+      noise.connect(lp); lp.connect(ng); ng.connect(ctx.destination);
       noise.start(t);
-      tone(320, 0.12, 'triangle', 0.07);
+      // 3) 크래클 (밴드패스 노이즈, 약간 지연)
+      const len2 = Math.floor(ctx.sampleRate * 0.14);
+      const buf2 = ctx.createBuffer(1, len2, ctx.sampleRate);
+      const data2 = buf2.getChannelData(0);
+      for (let i = 0; i < len2; i++) data2[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len2, 2);
+      const crk = ctx.createBufferSource();
+      crk.buffer = buf2;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.8;
+      const cg = ctx.createGain(); cg.gain.value = 0.1;
+      crk.connect(bp); bp.connect(cg); cg.connect(ctx.destination);
+      crk.start(t + 0.04);
+      // 4) 스파클 (방산 파편 반짝임)
+      [1568, 2093, 2637].forEach((f, i) => tone(f, 0.1, 'triangle', 0.045, 0.05 + i * 0.045));
     } catch { /* 무시 */ }
   },
 };
@@ -199,10 +246,10 @@ interface Boom {
 }
 
 const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawnMs: number }> = {
-  1: { label: '느림', fallSpeed: 0.45, spawnMs: 2800 },
-  2: { label: '보통', fallSpeed: 0.72, spawnMs: 2200 },
-  3: { label: '빠름', fallSpeed: 1.1, spawnMs: 1700 },
-  4: { label: '매우 빠름', fallSpeed: 1.65, spawnMs: 1300 },
+  1: { label: '느림', fallSpeed: 0.38, spawnMs: 3000 },
+  2: { label: '보통', fallSpeed: 0.6, spawnMs: 2400 },
+  3: { label: '빠름', fallSpeed: 0.9, spawnMs: 1900 },
+  4: { label: '매우 빠름', fallSpeed: 1.35, spawnMs: 1500 },
 };
 const START_LIVES = 5;
 const FEVER_COMBO = 10;
@@ -478,13 +525,20 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     setShots(prev => [...prev, { id, fx: '50%', fy: `${areaH - 52}px`, tx: `${target.x}%`, ty: `${target.y}px` }]);
     setFiring(true);
     sfx.cannon();
+    window.setTimeout(() => sfx.whoosh(), 60);
     window.setTimeout(() => {
       setShots(prev => prev.filter(s => s.id !== id));
       const bid = popupIdRef.current++;
       setBooms(prev => [...prev, { id: bid, x: target.x, y: target.y }]);
       sfx.explode();
       addPopup(target.x, target.y, gainText);
-      window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 500);
+      // 명중 충격으로 화면 미세 흔들림
+      const area = gameAreaRef.current;
+      if (area) {
+        area.style.animation = 'shakeSmall .3s ease-out';
+        window.setTimeout(() => { area.style.animation = ''; }, 320);
+      }
+      window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 550);
     }, 280);
     window.setTimeout(() => setFiring(false), 340);
   };
@@ -754,10 +808,13 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes feverPulse { 0%,100%{opacity:.9} 50%{opacity:1} }
         @keyframes gameoverPop { from { transform:scale(.8); opacity:0 } to { transform:scale(1); opacity:1 } }
         @keyframes cannonFly { from { left:var(--fx); top:var(--fy) } to { left:var(--tx); top:var(--ty) } }
-        @keyframes boomFlash { 0% { transform:translate(-50%,-50%) scale(.3); opacity:1 } 100% { transform:translate(-50%,-50%) scale(2.4); opacity:0 } }
-        @keyframes particleFly { from { transform:translate(-50%,-50%) rotate(var(--a)) translateX(0); opacity:1 } to { transform:translate(-50%,-50%) rotate(var(--a)) translateX(52px); opacity:0 } }
-        @keyframes recoil { 0% { transform:translateX(-50%) translateY(0) } 25% { transform:translateX(-50%) translateY(9px) } 100% { transform:translateX(-50%) translateY(0) } }
-        @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(1.8); opacity:0 } }
+        @keyframes arcY { 0% { transform:translateY(6px) } 45% { transform:translateY(-48px) } 100% { transform:translateY(0) } }
+        @keyframes boomFlash { 0% { transform:translate(-50%,-50%) scale(.3); opacity:1 } 100% { transform:translate(-50%,-50%) scale(2.8); opacity:0 } }
+        @keyframes ringExpand { 0% { transform:translate(-50%,-50%) scale(.2); opacity:.95 } 100% { transform:translate(-50%,-50%) scale(2); opacity:0 } }
+        @keyframes particleFly { from { transform:translate(-50%,-50%) rotate(var(--a)) translateX(0); opacity:1 } to { transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)); opacity:0 } }
+        @keyframes recoil { 0% { transform:translateX(-50%) translateY(0) } 25% { transform:translateX(-50%) translateY(10px) } 100% { transform:translateX(-50%) translateY(0) } }
+        @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(2.1); opacity:0 } }
+        @keyframes shakeSmall { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
       `}</style>
 
       {/* 별 배경 */}
@@ -860,69 +917,116 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
         ))}
 
-        {/* 대포 포탄 */}
+        {/* 대포 포탄 — 외곽 div는 직선 이동, 낶은 span이 포물선 궤적 + 잔상 */}
         {shots.map(s => (
           <div
             key={s.id}
-            className="pointer-events-none absolute w-3.5 h-3.5 rounded-full"
+            className="pointer-events-none absolute"
             style={{
               left: s.fx, top: s.fy,
-              background: 'radial-gradient(circle at 35% 35%, #ffe9a8, #f59e0b 60%, #92400e)',
-              boxShadow: '0 0 12px rgba(251,191,36,.8)',
-              animation: 'cannonFly .28s cubic-bezier(.3,.7,.6,1) forwards',
+              animation: 'cannonFly .3s linear forwards',
               ['--fx' as any]: s.fx, ['--fy' as any]: s.fy, ['--tx' as any]: s.tx, ['--ty' as any]: s.ty,
             }}
-          />
+          >
+            <span
+              className="block w-4 h-4 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 35% 30%, #fff7d6, #fbbf24 45%, #b45309 85%)',
+                boxShadow: '0 0 14px rgba(251,191,36,.95), 0 0 34px rgba(249,115,22,.6), -10px 8px 16px rgba(249,115,22,.35)',
+                animation: 'arcY .3s ease-in-out forwards',
+              }}
+            />
+            {/* 궤적 잔상 */}
+            <span
+              className="block absolute left-1 top-1 w-2 h-2 rounded-full bg-amber-400/70 blur-[2px]"
+              style={{ animation: 'arcY .3s ease-in-out .04s forwards' }}
+            />
+          </div>
         ))}
 
-        {/* 폭발 이펙트 */}
+        {/* 폭발 이펙트 — 플래시 + 충격파 링 + 파편 16개 */}
         {booms.map(b => (
           <div key={b.id} className="pointer-events-none absolute" style={{ left: `${b.x}%`, top: `${b.y}px` }}>
             <div
-              className="absolute w-16 h-16 rounded-full"
+              className="absolute w-20 h-20 rounded-full"
               style={{
-                background: 'radial-gradient(circle, rgba(255,236,170,.95) 0%, rgba(251,146,60,.7) 45%, rgba(239,68,68,0) 75%)',
+                background: 'radial-gradient(circle, rgba(255,244,200,.98) 0%, rgba(251,146,60,.85) 35%, rgba(239,68,68,.35) 65%, rgba(239,68,68,0) 80%)',
                 animation: 'boomFlash .45s ease-out forwards',
               }}
             />
-            {Array.from({ length: 10 }, (_, i) => (
+            <div
+              className="absolute w-20 h-20 rounded-full border-[3px] border-amber-300/80"
+              style={{ animation: 'ringExpand .5s ease-out forwards' }}
+            />
+            {Array.from({ length: 16 }, (_, i) => (
               <span
                 key={i}
-                className="absolute w-1.5 h-1.5 rounded-full"
+                className="absolute rounded-full"
                 style={{
-                  background: i % 2 ? '#fbbf24' : '#f97316',
-                  boxShadow: '0 0 6px rgba(251,146,60,.9)',
-                  animation: 'particleFly .45s ease-out forwards',
-                  ['--a' as any]: `${i * 36}deg`,
+                  width: 3 + (i % 3) * 2,
+                  height: 3 + (i % 3) * 2,
+                  background: i % 3 === 0 ? '#fef3c7' : i % 2 ? '#fbbf24' : '#f97316',
+                  boxShadow: '0 0 7px rgba(251,146,60,.95)',
+                  animation: `particleFly ${0.4 + (i % 4) * 0.07}s ease-out forwards`,
+                  ['--a' as any]: `${i * 22.5}deg`,
+                  ['--d' as any]: `${42 + (i % 5) * 12}px`,
                 }}
               />
             ))}
           </div>
         ))}
 
-        {/* 대포 (하단 중앙) */}
+        {/* 대포 (하단 중앙) — 금속 포신 + 금장 포구 + 바퀴 + 장갑판 */}
         <div
           className="pointer-events-none absolute bottom-1 left-1/2"
-          style={firing ? { animation: 'recoil .32s ease-out' } : { transform: 'translateX(-50%)' }}
+          style={firing ? { animation: 'recoil .34s ease-out' } : { transform: 'translateX(-50%)' }}
         >
           {firing && (
             <div
-              className="absolute -top-2 left-1/2 w-8 h-8 rounded-full"
+              className="absolute -top-3 left-1/2 w-10 h-10 rounded-full"
               style={{
-                background: 'radial-gradient(circle, rgba(255,240,180,.95), rgba(251,146,60,0) 70%)',
+                background: 'radial-gradient(circle, rgba(255,246,200,1) 0%, rgba(251,191,36,.8) 40%, rgba(249,115,22,0) 75%)',
                 animation: 'muzzle .25s ease-out forwards',
               }}
             />
           )}
-          {/* 포신 */}
-          <div
-            className="mx-auto w-5 h-10 rounded-t-full"
-            style={{ background: 'linear-gradient(180deg,#4b5563,#1f2937)', boxShadow: 'inset -2px 0 3px rgba(0,0,0,.5)' }}
-          />
-          {/* 포구 */}
-          <div className="mx-auto -mt-10 w-6 h-2.5 rounded-full bg-gray-900" style={{ boxShadow: '0 0 4px rgba(0,0,0,.6)' }} />
-          {/* 받침 */}
-          <div className="mx-auto -mt-0.5 w-12 h-3.5 rounded-full" style={{ background: 'linear-gradient(180deg,#6b7280,#374151)' }} />
+          <div className="relative flex flex-col items-center">
+            {/* 포구 (금장 링) */}
+            <div
+              className="z-10 w-7 h-3 rounded-full"
+              style={{ background: 'linear-gradient(180deg,#fde68a,#b45309)', boxShadow: '0 1px 3px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,255,255,.5)' }}
+            />
+            {/* 포신 */}
+            <div
+              className="-mt-0.5 w-6 h-11"
+              style={{
+                background: 'linear-gradient(90deg,#111827 0%,#4b5563 30%,#9ca3af 50%,#4b5563 70%,#111827 100%)',
+                borderRadius: '10px 10px 4px 4px',
+                boxShadow: 'inset 0 -4px 6px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.5)',
+              }}
+            />
+            {/* 장갑판 (리벳) */}
+            <div
+              className="-mt-1 w-14 h-4 rounded-md flex items-center justify-center gap-1.5"
+              style={{ background: 'linear-gradient(180deg,#6b7280,#374151)', boxShadow: '0 2px 4px rgba(0,0,0,.5)' }}
+            >
+              {[0, 1, 2, 3].map(i => (
+                <span key={i} className="w-1 h-1 rounded-full bg-gray-300/80" style={{ boxShadow: 'inset 0 -1px 1px rgba(0,0,0,.6)' }} />
+              ))}
+            </div>
+            {/* 바퀴 */}
+            <div className="-mt-1 flex items-center gap-6">
+              {[0, 1].map(i => (
+                <div
+                  key={i}
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: 'radial-gradient(circle,#4b5563 30%,#1f2937 70%)', border: '2px solid #6b7280', boxShadow: '0 2px 3px rgba(0,0,0,.6)' }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* 점수 팝업 */}
@@ -957,15 +1061,15 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         )}
       </div>
 
-      {/* 입력창 */}
-      <form onSubmit={handleSubmit} className="relative border-t border-white/10 p-4">
+      {/* 입력창 — 중앙 정렬, 적절한 너비로 제한 */}
+      <form onSubmit={handleSubmit} className="relative border-t border-white/10 px-4 py-3 flex justify-center">
         <input
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={status !== 'playing'}
           placeholder={status === 'playing' ? '정답을 입력하고 Enter' : ''}
-          className={`w-full rounded-xl border-2 bg-white/95 px-4 py-3 text-center text-base font-medium text-gray-800 outline-none transition-colors ${
+          className={`w-full max-w-md rounded-full border-2 bg-white/95 px-5 py-2.5 text-center text-sm font-medium text-gray-800 outline-none transition-colors ${
             flash === 'correct' ? 'border-green-400 shadow-[0_0_16px_rgba(74,222,128,.5)]' : flash === 'wrong' ? 'border-red-400 shadow-[0_0_16px_rgba(248,113,113,.5)]' : 'border-transparent focus:border-[#2d7a7c]'
           }`}
           autoComplete="off"
