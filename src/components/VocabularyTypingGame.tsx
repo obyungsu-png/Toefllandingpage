@@ -106,6 +106,59 @@ const sfx = {
   miss: () => { tone(130, 0.22, 'square', 0.07); tone(98, 0.28, 'square', 0.06, 0.09); },
   start: () => { [523, 659, 784].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.07)); },
   gameover: () => { [440, 349, 294, 220].forEach((f, i) => tone(f, 0.28, 'triangle', 0.08, i * 0.18)); },
+  // 대포 발사 — 낮은 펄스 + 노이즈 버스트
+  cannon: () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    try {
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150, t);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+      gain.gain.setValueAtTime(0.16, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.26);
+      // 노이즈 버스트 (발사 화약음)
+      const len = Math.floor(ctx.sampleRate * 0.12);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 900;
+      const ng = ctx.createGain();
+      ng.gain.value = 0.12;
+      noise.connect(filter); filter.connect(ng); ng.connect(ctx.destination);
+      noise.start(t);
+    } catch { /* 무시 */ }
+  },
+  // 폭발 — 짧은 크래클 (발사 후 0.28초 지연 호출)
+  explode: () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    try {
+      const t = ctx.currentTime;
+      const len = Math.floor(ctx.sampleRate * 0.18);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.6);
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1400;
+      const ng = ctx.createGain();
+      ng.gain.value = 0.14;
+      noise.connect(filter); filter.connect(ng); ng.connect(ctx.destination);
+      noise.start(t);
+      tone(320, 0.12, 'triangle', 0.07);
+    } catch { /* 무시 */ }
+  },
 };
 
 // ============================================================================
@@ -132,12 +185,24 @@ interface ScorePopup {
   y: number;
   text: string;
 }
+interface CannonShot {
+  id: number;
+  fx: string;  // 발사 위치 (CSS)
+  fy: string;
+  tx: string;  // 목표 위치 (CSS)
+  ty: string;
+}
+interface Boom {
+  id: number;
+  x: number;  // %
+  y: number;  // px
+}
 
 const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawnMs: number }> = {
-  1: { label: '느림', fallSpeed: 0.55, spawnMs: 2600 },
-  2: { label: '보통', fallSpeed: 0.9, spawnMs: 2000 },
-  3: { label: '빠름', fallSpeed: 1.4, spawnMs: 1500 },
-  4: { label: '매우 빠름', fallSpeed: 2.1, spawnMs: 1100 },
+  1: { label: '느림', fallSpeed: 0.45, spawnMs: 2800 },
+  2: { label: '보통', fallSpeed: 0.72, spawnMs: 2200 },
+  3: { label: '빠름', fallSpeed: 1.1, spawnMs: 1700 },
+  4: { label: '매우 빠름', fallSpeed: 1.65, spawnMs: 1300 },
 };
 const START_LIVES = 5;
 const FEVER_COMBO = 10;
@@ -193,6 +258,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const [flash, setFlash] = useState<'correct' | 'wrong' | null>(null);
   const [shake, setShake] = useState(false);
   const [fever, setFever] = useState(false);
+  const [shots, setShots] = useState<CannonShot[]>([]);
+  const [booms, setBooms] = useState<Boom[]>([]);
+  const [firing, setFiring] = useState(false);
 
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -289,6 +357,8 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     recentRef.current = [];
     setWords([]);
     setPopups([]);
+    setShots([]);
+    setBooms([]);
     setScore(0);
     setLives(START_LIVES);
     setCombo(0);
@@ -401,6 +471,24 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     window.setTimeout(() => setPopups(prev => prev.filter(p => p.id !== id)), 800);
   };
 
+  // 대포 발사 — 포탄이 날아가 목표 지점에서 폭발 + 점수 팝업
+  const fireCannon = (target: { x: number; y: number }, gainText: string) => {
+    const areaH = gameAreaRef.current?.clientHeight || 420;
+    const id = popupIdRef.current++;
+    setShots(prev => [...prev, { id, fx: '50%', fy: `${areaH - 52}px`, tx: `${target.x}%`, ty: `${target.y}px` }]);
+    setFiring(true);
+    sfx.cannon();
+    window.setTimeout(() => {
+      setShots(prev => prev.filter(s => s.id !== id));
+      const bid = popupIdRef.current++;
+      setBooms(prev => [...prev, { id: bid, x: target.x, y: target.y }]);
+      sfx.explode();
+      addPopup(target.x, target.y, gainText);
+      window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 500);
+    }, 280);
+    window.setTimeout(() => setFiring(false), 340);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (status !== 'playing' || !input.trim()) return;
@@ -429,14 +517,12 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         sfx.fever();
       } else if (c % 5 === 0) {
         sfx.combo(c);
-      } else {
-        sfx.correct();
-      }
+      } // 일반 정답음은 대포 발사음(fireCannon)이 대신함
       const gain = (10 + Math.min(20, c * 2)) * (isFever ? 2 : 1);
       setScore(s => s + gain);
       setCleared(n => n + 1);
       setFlash('correct');
-      addPopup((matchedAt as { x: number; y: number }).x, (matchedAt as { x: number; y: number }).y, `+${gain}`);
+      fireCannon(matchedAt as { x: number; y: number }, `+${gain}`);
     } else {
       sfx.wrong();
       comboRef.current = 0;
@@ -667,6 +753,11 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
         @keyframes feverPulse { 0%,100%{opacity:.9} 50%{opacity:1} }
         @keyframes gameoverPop { from { transform:scale(.8); opacity:0 } to { transform:scale(1); opacity:1 } }
+        @keyframes cannonFly { from { left:var(--fx); top:var(--fy) } to { left:var(--tx); top:var(--ty) } }
+        @keyframes boomFlash { 0% { transform:translate(-50%,-50%) scale(.3); opacity:1 } 100% { transform:translate(-50%,-50%) scale(2.4); opacity:0 } }
+        @keyframes particleFly { from { transform:translate(-50%,-50%) rotate(var(--a)) translateX(0); opacity:1 } to { transform:translate(-50%,-50%) rotate(var(--a)) translateX(52px); opacity:0 } }
+        @keyframes recoil { 0% { transform:translateX(-50%) translateY(0) } 25% { transform:translateX(-50%) translateY(9px) } 100% { transform:translateX(-50%) translateY(0) } }
+        @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(1.8); opacity:0 } }
       `}</style>
 
       {/* 별 배경 */}
@@ -768,6 +859,71 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
             )}
           </div>
         ))}
+
+        {/* 대포 포탄 */}
+        {shots.map(s => (
+          <div
+            key={s.id}
+            className="pointer-events-none absolute w-3.5 h-3.5 rounded-full"
+            style={{
+              left: s.fx, top: s.fy,
+              background: 'radial-gradient(circle at 35% 35%, #ffe9a8, #f59e0b 60%, #92400e)',
+              boxShadow: '0 0 12px rgba(251,191,36,.8)',
+              animation: 'cannonFly .28s cubic-bezier(.3,.7,.6,1) forwards',
+              ['--fx' as any]: s.fx, ['--fy' as any]: s.fy, ['--tx' as any]: s.tx, ['--ty' as any]: s.ty,
+            }}
+          />
+        ))}
+
+        {/* 폭발 이펙트 */}
+        {booms.map(b => (
+          <div key={b.id} className="pointer-events-none absolute" style={{ left: `${b.x}%`, top: `${b.y}px` }}>
+            <div
+              className="absolute w-16 h-16 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(255,236,170,.95) 0%, rgba(251,146,60,.7) 45%, rgba(239,68,68,0) 75%)',
+                animation: 'boomFlash .45s ease-out forwards',
+              }}
+            />
+            {Array.from({ length: 10 }, (_, i) => (
+              <span
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: i % 2 ? '#fbbf24' : '#f97316',
+                  boxShadow: '0 0 6px rgba(251,146,60,.9)',
+                  animation: 'particleFly .45s ease-out forwards',
+                  ['--a' as any]: `${i * 36}deg`,
+                }}
+              />
+            ))}
+          </div>
+        ))}
+
+        {/* 대포 (하단 중앙) */}
+        <div
+          className="pointer-events-none absolute bottom-1 left-1/2"
+          style={firing ? { animation: 'recoil .32s ease-out' } : { transform: 'translateX(-50%)' }}
+        >
+          {firing && (
+            <div
+              className="absolute -top-2 left-1/2 w-8 h-8 rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(255,240,180,.95), rgba(251,146,60,0) 70%)',
+                animation: 'muzzle .25s ease-out forwards',
+              }}
+            />
+          )}
+          {/* 포신 */}
+          <div
+            className="mx-auto w-5 h-10 rounded-t-full"
+            style={{ background: 'linear-gradient(180deg,#4b5563,#1f2937)', boxShadow: 'inset -2px 0 3px rgba(0,0,0,.5)' }}
+          />
+          {/* 포구 */}
+          <div className="mx-auto -mt-10 w-6 h-2.5 rounded-full bg-gray-900" style={{ boxShadow: '0 0 4px rgba(0,0,0,.6)' }} />
+          {/* 받침 */}
+          <div className="mx-auto -mt-0.5 w-12 h-3.5 rounded-full" style={{ background: 'linear-gradient(180deg,#6b7280,#374151)' }} />
+        </div>
 
         {/* 점수 팝업 */}
         {popups.map(p => (
