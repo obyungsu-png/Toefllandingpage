@@ -540,20 +540,25 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
               )}
             </div>
 
-            {/* 하루 신규 카드 개수 */}
+            {/* 하루 신규 카드 개수 — '전체' 는 제한 없이 이 DAY 전부 학습 */}
             <div>
               <p className="mb-2.5 text-xs font-medium text-gray-500">오늘 학습할 신규 카드 수</p>
-              <div className="grid grid-cols-4 gap-2">
-                {[5, 10, 15, 20].map(n => (
+              <div className="grid grid-cols-5 gap-2">
+                {[5, 10, 15, 20, Infinity].map(n => (
                   <button
-                    key={n}
+                    key={String(n)}
                     onClick={() => setNewLimit(n)}
                     className={`rounded-lg border py-2 text-sm font-semibold transition-colors ${
                       newLimit === n ? 'border-[#2d7a7c] bg-[#2d7a7c] text-white' : 'border-gray-200 bg-white text-gray-600'
                     }`}
-                  >{n}장</button>
+                  >{n === Infinity ? '전체' : `${n}장`}</button>
                 ))}
               </div>
+              {newLimit === Infinity && (
+                <p className="mt-2 text-[11px] text-gray-400">
+                  선택한 DAY의 신규 단어를 모두 오늘 학습합니다.
+                </p>
+              )}
             </div>
 
             {/* 오늘의 학습 통계 */}
