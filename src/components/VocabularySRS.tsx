@@ -3,7 +3,7 @@
  * -----------------------------------------------------------------------------
  * SRS(Spaced Repetition System, 간격 반복 학습) 기반 단어 학습 컴포넌트.
  * - Anki 계열 SM-2 알고리즘 단순화 버전을 사용해 카드마다 "언제 다시 볼지" 계산.
- * - 5개 단어장 소스 + DAY 선택 흐름은 VocabularyTypingGame 이 쓰던 구조 재사용.
+ * - 5개 단어장 소스(vol.1/vol.2/기출/참고서/vol.5) + DAY 선택 흐름 지원.
  * - 카드 형식: 기본 Flashcard, 예문(example) 이 있는 단어는 30% 확률로 Cloze 로 노출.
  * - 학습 상태는 localStorage 에 per-source-per-word 로 저장 (Supabase 연동은 추후).
  *
