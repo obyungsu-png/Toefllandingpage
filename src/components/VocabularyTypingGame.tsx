@@ -889,7 +889,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   // ==========================================================================
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col"
+      className="tg-root fixed left-0 right-0 top-0 z-50 flex flex-col"
       style={{
         background: fever
           ? 'linear-gradient(180deg,#2a0a3a 0%,#3b1354 50%,#0f1b2e 100%)'
@@ -898,6 +898,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       }}
     >
       <style>{`
+        /* 모바일 키보드 노출 시 게임 영역이 밀리도록 dynamic viewport 사용. dvh 미지원은 vh로 fallback. */
+        .tg-root { height: 100vh; }
+        @supports (height: 100dvh) { .tg-root { height: 100dvh; } }
         @keyframes twinkle { 0%,100% { opacity:.2 } 50% { opacity:1 } }
         @keyframes scoreFloat { 0% { opacity:1; transform:translate(-50%,0) scale(1) } 100% { opacity:0; transform:translate(-50%,-60px) scale(1.3) } }
         @keyframes wordDrop { from { transform:translateX(-50%) scale(.6); opacity:0 } to { transform:translateX(-50%) scale(1); opacity:1 } }
@@ -932,36 +935,38 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         ))}
       </div>
 
-      {/* HUD */}
-      <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={onExit} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white">
+      {/* HUD — 모바일에서 좁아지지 않도록 gap/크기 반응형 */}
+      <div className="relative flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 border-b border-white/10 px-3 sm:px-4 py-2.5 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={onExit} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white" aria-label="나가기">
             <X className="h-5 w-5" />
           </button>
-          <span key={score} className="inline-block text-sm font-semibold text-white" style={{ animation: 'scoreBump .35s ease-out' }}>
+          <span key={score} className="inline-block text-base sm:text-lg font-bold text-white" style={{ animation: 'scoreBump .35s ease-out' }}>
             {score}<span className="ml-1 text-xs font-normal text-white/50">점</span>
           </span>
           {combo > 1 && (
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${fever ? 'bg-fuchsia-500/30 text-fuchsia-200' : 'bg-[#e67e22]/20 text-[#f0a860]'}`}>
+            <span className={`rounded-full px-2 py-0.5 text-xs sm:text-sm font-semibold ${fever ? 'bg-fuchsia-500/30 text-fuchsia-200' : 'bg-[#e67e22]/20 text-[#f0a860]'}`}>
               🔥 {combo} 콤보{fever ? ' ×2' : ''}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {Array.from({ length: START_LIVES }, (_, i) => (
-            <Heart key={i} className={`h-4 w-4 transition-all ${i < lives ? 'fill-red-500 text-red-500 scale-100' : 'text-white/20 scale-90'}`} />
+            <Heart key={i} className={`h-4 w-4 sm:h-5 sm:w-5 transition-all ${i < lives ? 'fill-red-500 text-red-500 scale-100' : 'text-white/20 scale-90'}`} />
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-full bg-white/10 p-0.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-white/10 p-0.5">
             {([1, 2, 3, 4] as SpeedLevel[]).map(lv => (
               <button
                 key={lv}
                 onClick={() => setSpeedLevel(lv)}
                 title={SPEED_CONFIG[lv].label}
-                className={`h-6 w-6 rounded-full text-[10px] font-bold transition-colors ${
+                aria-label={`속도 ${SPEED_CONFIG[lv].label}`}
+                // 모바일 터치 타깃 확대 (h-8 w-8) — 데스크탑은 원래 크기 유지
+                className={`h-8 w-8 sm:h-6 sm:w-6 rounded-full text-xs sm:text-[10px] font-bold transition-colors ${
                   speedLevel === lv ? 'bg-[#2d7a7c] text-white' : 'text-white/50 hover:text-white'
                 }`}
               >
@@ -971,10 +976,11 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
           <button
             onClick={togglePause}
-            className="rounded-full bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white"
+            className="rounded-full bg-white/10 p-2 sm:p-2 text-white/80 hover:bg-white/20 hover:text-white"
             title={status === 'paused' ? '재개' : '일시정지'}
+            aria-label={status === 'paused' ? '재개' : '일시정지'}
           >
-            {status === 'paused' ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            {status === 'paused' ? <Play className="h-5 w-5 sm:h-4 sm:w-4" /> : <Pause className="h-5 w-5 sm:h-4 sm:w-4" />}
           </button>
         </div>
       </div>
@@ -997,7 +1003,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         {words.map(w => (
           <div
             key={w.id}
-            className="absolute -translate-x-1/2 rounded-xl px-3.5 py-2 text-sm font-semibold text-gray-800"
+            className="absolute -translate-x-1/2 rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 text-base sm:text-lg font-semibold text-gray-800"
             style={{
               left: `${w.x}%`,
               top: `${w.y}px`,
@@ -1014,7 +1020,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           >
             <div className="whitespace-nowrap">{w.prompt}</div>
             {w.hint && (
-              <div className="mt-0.5 font-mono text-[11px] tracking-wider text-[#2d7a7c]/80">{w.hint}</div>
+              <div className="mt-1 font-mono text-xs sm:text-sm tracking-wider text-[#2d7a7c]/80">{w.hint}</div>
             )}
           </div>
         ))}
@@ -1174,15 +1180,16 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         )}
       </div>
 
-      {/* 입력창 — 중앙 정렬, 적절한 너비로 제한 */}
-      <form onSubmit={handleSubmit} className="relative border-t border-white/10 px-4 py-3 flex justify-center">
+      {/* 입력창 — 중앙 정렬, 모바일에서도 잘 보이도록 폰트/패딩 확대 */}
+      <form onSubmit={handleSubmit} className="relative border-t border-white/10 px-4 py-3 sm:py-4 flex justify-center">
         <input
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={status !== 'playing'}
           placeholder={status === 'playing' ? '정답을 입력하고 Enter' : ''}
-          className={`w-full max-w-md rounded-full border-2 bg-white/95 px-5 py-2.5 text-center text-sm font-medium text-gray-800 outline-none transition-colors ${
+          // text-base=16px 최소 유지 — iOS Safari 가 16px 미만 input 포커스 시 확대(자동 줌)하는 것을 방지
+          className={`w-full max-w-lg rounded-full border-2 bg-white/95 px-5 py-3 sm:px-6 sm:py-3.5 text-center text-base sm:text-lg font-medium text-gray-800 outline-none transition-colors ${
             flash === 'correct' ? 'border-green-400 shadow-[0_0_16px_rgba(74,222,128,.5)]' : flash === 'wrong' ? 'border-red-400 shadow-[0_0_16px_rgba(248,113,113,.5)]' : 'border-transparent focus:border-[#2d7a7c]'
           }`}
           autoComplete="off"
