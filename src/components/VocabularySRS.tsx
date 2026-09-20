@@ -411,10 +411,16 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
       again: s.again + (grade === 0 ? 1 : 0),
     }));
 
-    // Again 은 이번 세션 큐 끝에 다시 붙임 (반복 학습 효과)
+    // Again 은 이번 세션에서 몇 칸 뒤에 다시 나오도록 재삽입 (즉시 반복 방지).
+    // 남은 카드가 충분하면 3장 뒤, 부족하면 남은 만큼 뒤에 삽입. 큐 마지막 카드이면
+    // 어쩔 수 없이 곧 다시 나오지만, 그 외 케이스는 최소 3장 이상 다른 카드 학습 후
+    // 다시 마주치도록 하여 학습 부담을 낮춘다.
     let nextQueue = queue;
     if (grade === 0) {
-      nextQueue = [...queue.slice(0, currentIdx + 1), current, ...queue.slice(currentIdx + 1)];
+      const before = queue.slice(0, currentIdx + 1);
+      const rest = queue.slice(currentIdx + 1);
+      const gap = Math.min(rest.length, 3);
+      nextQueue = [...before, ...rest.slice(0, gap), current, ...rest.slice(gap)];
     }
     const nextIdx = currentIdx + 1;
     if (nextIdx >= nextQueue.length) {
@@ -782,10 +788,10 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
                     <button
                       onClick={() => gradeCurrent(0)}
                       className="rounded-lg border-2 border-red-200 bg-white px-3 py-2.5 text-center hover:bg-red-50 transition-colors"
-                      title="10분 뒤 다시"
+                      title="이 세션에서 몇 카드 뒤에 다시 · 다음 정식 복습은 10분 뒤"
                     >
                       <p className="text-sm font-bold text-red-600">Again</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">10분 뒤</p>
+                      <p className="text-[9px] text-gray-400 mt-0.5">세션 내 재시도</p>
                     </button>
                     <button
                       onClick={() => gradeCurrent(1)}
