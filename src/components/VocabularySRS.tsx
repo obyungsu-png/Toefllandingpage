@@ -14,6 +14,7 @@ import { X, RotateCcw, Sparkles, Loader2, CheckCircle2, Volume2 } from 'lucide-r
 import { SATWord } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { getAllWords } from './vocaWordSets';
+import { callAi } from '../utils/aiClient';
 
 // ============================================================================
 // 소스 & 데이터
@@ -128,6 +129,58 @@ function nextCardState(prev: CardState, grade: Grade): CardState {
 }
 
 // ============================================================================
+// GLM 예문 자동 생성 — 학생 단어 학습용 짧은 영어 예문 1개
+// - 결과는 localStorage 에 캐시하여 재요청 없음 (첫 1회만 비용)
+// - 실패 시 null 반환 → Cloze 대신 Flashcard 로 fallback
+// ============================================================================
+const EXAMPLE_CACHE_PREFIX = 'srs-example-';
+
+function loadCachedExample(english: string): string | null {
+  try {
+    const raw = localStorage.getItem(`${EXAMPLE_CACHE_PREFIX}${english.toLowerCase()}`);
+    return raw && raw.length > 0 ? raw : null;
+  } catch { return null; }
+}
+function saveCachedExample(english: string, example: string) {
+  try { localStorage.setItem(`${EXAMPLE_CACHE_PREFIX}${english.toLowerCase()}`, example); } catch {}
+}
+
+/** GLM 으로 target 단어를 반드시 포함하는 자연스러운 학습용 예문 1개 생성.
+ *  - 문장 길이 8~14 단어, TOEFL 수준의 자연스러운 영어.
+ *  - target 단어의 어형(원형/과거/-ing 등) 을 문맥에 맞게 사용.
+ *  - 학습용이라 문장이 target 단어의 의미를 문맥으로 드러나게. */
+async function generateExampleGLM(english: string, korean: string): Promise<string | null> {
+  const cached = loadCachedExample(english);
+  if (cached) return cached;
+  const systemPrompt = `You generate ONE example sentence in English to help a TOEFL student learn a target word.
+Rules:
+- The sentence MUST contain the target word (any natural inflection is OK: base/past/-ing/-s).
+- 8 to 14 words long.
+- Natural, TOEFL-level English, no rare idioms.
+- The sentence's context should reveal the word's meaning.
+- Output ONLY the sentence text, no quotes, no explanations, no numbering.`;
+  const userPrompt = `Target word: ${english}
+Target meaning (Korean): ${korean}
+
+Write ONE example sentence.`;
+  try {
+    const raw = await callAi(systemPrompt, userPrompt, 'glm', 120, 0.7);
+    // 첫 줄만 취하고 따옴표/앞뒤 공백/마침표 유지
+    const line = String(raw || '').split('\n').map(s => s.trim()).filter(Boolean)[0] || '';
+    const cleaned = line.replace(/^["'`]|["'`]$/g, '').trim();
+    if (cleaned.length < 10) return null;
+    // 이형태 포함해서 target 단어가 등장하는지 확인 (최소 stem 매칭)
+    const stem = english.replace(/(ing|ed|es|s)$/i, '');
+    const re = new RegExp(`\\b(${escapeRegExp(english)}|${escapeRegExp(stem)}\\w*)\\b`, 'i');
+    if (!re.test(cleaned)) return null;
+    saveCachedExample(english, cleaned);
+    return cleaned;
+  } catch {
+    return null;
+  }
+}
+
+// ============================================================================
 // localStorage 저장 — key: srs-<source>-<english>
 // ============================================================================
 function stateKey(source: SourceKey, english: string): string {
@@ -204,6 +257,9 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   const [clozeResult, setClozeResult] = useState<'ok' | 'ng' | null>(null);
   const [sessionStats, setSessionStats] = useState({ reviewed: 0, correct: 0, again: 0 });
   const [newLimit, setNewLimit] = useState(10);            // 하루 신규 카드 수
+  // 현재 카드에서 사용할 예문(있으면 SATWord.example, 없으면 GLM 캐시/생성 결과)
+  const [currentExample, setCurrentExample] = useState<string | null>(null);
+  const [loadingExample, setLoadingExample] = useState(false);
 
   // --- 소스 로드 ---
   useEffect(() => {
@@ -296,22 +352,51 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     setQueue(combined);
     setCurrentIdx(0);
     setSessionStats({ reviewed: 0, correct: 0, again: 0 });
-    pickCardMode(combined[0]);
-    setFlipped(false);
-    setClozeAnswer('');
-    setClozeResult(null);
     setPhase('learn');
-  };
-
-  // 카드 하나의 형식(Flashcard vs Cloze) 결정
-  const pickCardMode = (w: SrsWord | undefined) => {
-    if (!w) { setClozeMode(false); return; }
-    // 예문 있고 target 매칭 가능 + 30% 확률 → Cloze
-    const canCloze = !!w.example && makeCloze(w.example, w.english).matched;
-    setClozeMode(canCloze && Math.random() < 0.3);
+    // 예문/모드 결정은 아래 useEffect(현재 카드) 에서 처리
   };
 
   const current = queue[currentIdx];
+
+  // --- 현재 카드가 바뀔 때: 예문 확보(SATWord.example → 캐시 → GLM 생성) + Cloze 여부 결정 ---
+  useEffect(() => {
+    if (phase !== 'learn' || !current) return;
+    // 카드가 넘어갈 때 UI 초기화
+    setFlipped(false);
+    setClozeAnswer('');
+    setClozeResult(null);
+    setClozeMode(false);
+    setCurrentExample(null);
+
+    let cancelled = false;
+    const decide = async () => {
+      // 1) 이미 있는 예문 우선 (CMS example → localStorage 캐시)
+      const existing = current.example || loadCachedExample(current.english);
+      const wantCloze = Math.random() < 0.3;
+
+      if (existing) {
+        if (cancelled) return;
+        setCurrentExample(existing);
+        setClozeMode(wantCloze && makeCloze(existing, current.english).matched);
+        return;
+      }
+
+      // 2) 예문 없음 + Cloze 원함 → GLM 으로 생성 시도
+      if (!wantCloze) return; // Flashcard 로 진행
+      setLoadingExample(true);
+      const gen = await generateExampleGLM(current.english, current.korean);
+      if (cancelled) { setLoadingExample(false); return; }
+      setLoadingExample(false);
+      if (gen && makeCloze(gen, current.english).matched) {
+        setCurrentExample(gen);
+        setClozeMode(true);
+      }
+      // 실패 시 그대로 Flashcard 로 진행
+    };
+    decide();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIdx, phase, queue.length]);
 
   // --- 카드 등급 매기기 (Flashcard 자체평가) ---
   const gradeCurrent = (grade: Grade) => {
@@ -338,10 +423,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     }
     setQueue(nextQueue);
     setCurrentIdx(nextIdx);
-    pickCardMode(nextQueue[nextIdx]);
-    setFlipped(false);
-    setClozeAnswer('');
-    setClozeResult(null);
+    // 예문/모드/UI 초기화는 currentIdx 변경 감지 useEffect 에서 처리
   };
 
   // --- Cloze 답 제출 ---
@@ -561,7 +643,10 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   // ==========================================================================
   if (!current) return null;
   const progress = queue.length > 0 ? ((currentIdx) / queue.length) * 100 : 0;
-  const clozeData = clozeMode && current.example ? makeCloze(current.example, current.english) : null;
+  // Cloze 는 currentExample(SATWord.example 또는 캐시/GLM 생성) 을 사용
+  const clozeData = clozeMode && currentExample ? makeCloze(currentExample, current.english) : null;
+  // 뒷면 노출 예문 (Flashcard/Cloze 모두 공용)
+  const displayExample = currentExample;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-[#f7fbfb] via-white to-[#f0f9f9]">
@@ -586,8 +671,17 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
       {/* 카드 */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
         <div className="w-full max-w-xl">
+          {/* GLM 예문 생성 대기 로딩 (Cloze 후보인데 아직 응답 안 옴) */}
+          {loadingExample && !clozeData && (
+            <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-8 text-center">
+              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[#2d7a7c]" />
+              <p className="text-sm font-semibold text-gray-700">예문 준비 중…</p>
+              <p className="text-xs text-gray-400 mt-1">AI 가 이 단어의 학습 예문을 만들고 있어요.</p>
+            </div>
+          )}
+
           {/* Cloze 모드 */}
-          {clozeMode && clozeData && !flipped && (
+          {!loadingExample && clozeMode && clozeData && !flipped && (
             <form onSubmit={submitCloze} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8">
               <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-3">문맥에서 단어 찾기</p>
               <p className="text-lg sm:text-xl leading-relaxed text-gray-800 mb-2">
@@ -616,7 +710,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
           )}
 
           {/* Flashcard 앞면 (뒤집기 전) */}
-          {(!clozeMode || (clozeMode && flipped && clozeData)) && !flipped && (
+          {!loadingExample && (!clozeMode || (clozeMode && flipped && clozeData)) && !flipped && (
             <button
               onClick={() => setFlipped(true)}
               className="w-full rounded-2xl bg-white shadow-xl border border-gray-100 p-8 sm:p-12 text-center hover:shadow-2xl transition-shadow"
@@ -663,10 +757,15 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
               {current.synonyms && (
                 <p className="text-xs text-gray-400 mb-3"><b>유의어:</b> {current.synonyms}</p>
               )}
-              {current.example && (
+              {displayExample && (
                 <div className="rounded-lg bg-gray-50 p-3 mb-4 border border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">예문</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{current.example}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    예문
+                    {!current.example && (
+                      <span className="text-[9px] font-medium text-[#2d7a7c]/70 normal-case tracking-normal">· AI 생성</span>
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{displayExample}</p>
                 </div>
               )}
 
