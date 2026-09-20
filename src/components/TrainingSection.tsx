@@ -1,12 +1,11 @@
 import { Button } from "./ui/button";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { BookOpen, Target, BarChart3, Zap, Play, Hash, Check, Gamepad2 } from "lucide-react";
+import { BookOpen, Target, BarChart3, Zap, Play, Hash, Check } from "lucide-react";
 // motion removed - using CSS animations
 import { AdModal } from './AdModal';
 import { Advertisement } from './AdManagement';
 import { TrainingInterface } from './TrainingInterface';
-import { VocabularyTypingGame } from './VocabularyTypingGame';
 import { LMSContent } from './LMSSection';
 import { TPOTest, TPOQuestion } from './ContentManagement';
 import { isCompleteWordsType, getCompleteWordsBlankCount } from '../utils/readingQuestionUtils';
@@ -37,8 +36,7 @@ const questionTypesBySubject = {
     { id: 'take-interview', name: 'Take an Interview', icon: BarChart3, description: '인터뷰 응답 과제' }
   ],
   'Vocabulary': [
-    { id: 'word-practice', name: 'Word Practice', icon: BookOpen, description: '단어 암기 및 복습' },
-    { id: 'typing-game', name: 'Typing Game', icon: Gamepad2, description: '떨어지는 단어 타이핑 게임 (DAY별 · 속도조절 · 일시정지)' }
+    { id: 'word-practice', name: 'Word Practice', icon: BookOpen, description: '단어 암기 및 복습' }
   ]
 };
 
@@ -140,7 +138,6 @@ export function TrainingSection({
   const [selectedDifficulty, setSelectedDifficulty] = useState<'쉬움' | '보통' | '어려움'>('보통');
   const [selectedQuestionCount, setSelectedQuestionCount] = useState('10문제');
   const [showTrainingInterface, setShowTrainingInterface] = useState(false);
-  const [showTypingGame, setShowTypingGame] = useState(false);
   const [activeTrainingSession, setActiveTrainingSession] = useState<ActiveTrainingSession | null>(null);
   const [resumeProgress, setResumeProgress] = useState<any>(null); // 이어풀기용 저장된 progress
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -439,12 +436,6 @@ export function TrainingSection({
     setShowResumeModal(false);
   };
 
-  // 단어 타이핑 게임 — CMS 문제풀/난이도 흐름을 타지 않고 vocaWordSets.ts의
-  // DAY별 단어를 직접 사용하는 독립 게임이라 별도 화면으로 분기한다.
-  if (showTypingGame) {
-    return <VocabularyTypingGame onExit={() => setShowTypingGame(false)} />;
-  }
-
   // Show training interface if active
   if (showTrainingInterface && activeTrainingSession) {
     return (
@@ -696,29 +687,8 @@ export function TrainingSection({
             </div>
           </div>
 
-          {/* Typing Game은 난이도/문항수 없이 바로 시작 (게임 자체 화면에서 DAY·방향·속도 설정) */}
-          {selectedQuestionType?.id === 'typing-game' && (
-            <div className="p-5" style={{ animation: 'fadeInUp 0.2s ease-out' }}>
-              <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#f7fbfb] px-4 py-3 text-xs leading-5 text-gray-600">
-                <span>🎮</span>
-                <span>
-                  단어장 DAY별로 원하는 만큼, 원하는 속도로 즐기는 타이핑 게임입니다. 게임 화면에서 DAY, 문제
-                  방향(한글→영어 / 영어→한글), 낙하 속도를 직접 고를 수 있고, 플레이 중 언제든 일시정지·속도
-                  조절이 가능합니다.
-                </span>
-              </div>
-              <button
-                onClick={() => setShowTypingGame(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] active:bg-[#1e5557]"
-              >
-                <Gamepad2 className="h-4 w-4" />
-                <span className="text-sm font-semibold">게임 시작</span>
-              </button>
-            </div>
-          )}
-
-          {/* 문제 유형이 선택되었을 때만 아래 단계 표시 (Typing Game 제외 — 위에서 바로 처리) */}
-          {selectedQuestionType && selectedQuestionType.id !== 'typing-game' && (
+          {/* 문제 유형이 선택되었을 때만 아래 단계 표시 */}
+          {selectedQuestionType && (
             <>
               {/* 난이도 */}
               <div className="p-5" style={{ animation: 'fadeInUp 0.2s ease-out' }}>
