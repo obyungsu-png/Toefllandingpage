@@ -96,6 +96,12 @@ function tone(freq: number, dur = 0.12, type: OscillatorType = 'sine', vol = 0.0
 }
 const sfx = {
   correct: () => { tone(660, 0.1); tone(880, 0.14, 'sine', 0.08, 0.06); },
+  // 정답 종소리 — 맑고 경쾌한 상행 차임 (딩-동-댕)
+  chime: () => {
+    tone(659, 0.14, 'sine', 0.09);
+    tone(880, 0.16, 'sine', 0.09, 0.07);
+    tone(1109, 0.22, 'sine', 0.08, 0.14);
+  },
   combo: (n: number) => { // 콤보 5단위마다 팡파레, 단계가 높을수록 화려
     const base = [523, 659, 784, 1047];
     const steps = Math.min(3, Math.floor(n / 5));
@@ -115,10 +121,10 @@ const sfx = {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(150, t);
-      osc.frequency.exponentialRampToValueAtTime(45, t + 0.22);
-      gain.gain.setValueAtTime(0.16, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+      osc.frequency.setValueAtTime(130, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + 0.2);
+      gain.gain.setValueAtTime(0.09, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
       osc.connect(gain); gain.connect(ctx.destination);
       osc.start(t); osc.stop(t + 0.26);
       // 노이즈 버스트 (발사 화약음)
@@ -130,9 +136,9 @@ const sfx = {
       noise.buffer = buf;
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 900;
+      filter.frequency.value = 700;
       const ng = ctx.createGain();
-      ng.gain.value = 0.12;
+      ng.gain.value = 0.06;
       noise.connect(filter); filter.connect(ng); ng.connect(ctx.destination);
       noise.start(t);
     } catch { /* 무시 */ }
@@ -168,42 +174,30 @@ const sfx = {
     if (!ctx) return;
     try {
       const t = ctx.currentTime;
-      // 1) 저음 붐
+      // 1) 저음 붐 (부드럽게)
       const osc = ctx.createOscillator();
       const og = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(110, t);
-      osc.frequency.exponentialRampToValueAtTime(32, t + 0.32);
-      og.gain.setValueAtTime(0.18, t);
-      og.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+      osc.frequency.setValueAtTime(100, t);
+      osc.frequency.exponentialRampToValueAtTime(38, t + 0.28);
+      og.gain.setValueAtTime(0.1, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
       osc.connect(og); og.connect(ctx.destination);
-      osc.start(t); osc.stop(t + 0.36);
-      // 2) 화약 버스트 (로우패스 노이즈)
-      const len = Math.floor(ctx.sampleRate * 0.22);
+      osc.start(t); osc.stop(t + 0.32);
+      // 2) 화약 버스트 (로우패스 노이즈, 억제)
+      const len = Math.floor(ctx.sampleRate * 0.18);
       const buf = ctx.createBuffer(1, len, ctx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.5);
       const noise = ctx.createBufferSource();
       noise.buffer = buf;
       const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = 1100;
-      const ng = ctx.createGain(); ng.gain.value = 0.16;
+      lp.type = 'lowpass'; lp.frequency.value = 800;
+      const ng = ctx.createGain(); ng.gain.value = 0.08;
       noise.connect(lp); lp.connect(ng); ng.connect(ctx.destination);
       noise.start(t);
-      // 3) 크래클 (밴드패스 노이즈, 약간 지연)
-      const len2 = Math.floor(ctx.sampleRate * 0.14);
-      const buf2 = ctx.createBuffer(1, len2, ctx.sampleRate);
-      const data2 = buf2.getChannelData(0);
-      for (let i = 0; i < len2; i++) data2[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len2, 2);
-      const crk = ctx.createBufferSource();
-      crk.buffer = buf2;
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.8;
-      const cg = ctx.createGain(); cg.gain.value = 0.1;
-      crk.connect(bp); bp.connect(cg); cg.connect(ctx.destination);
-      crk.start(t + 0.04);
-      // 4) 스파클 (방산 파편 반짝임)
-      [1568, 2093, 2637].forEach((f, i) => tone(f, 0.1, 'triangle', 0.045, 0.05 + i * 0.045));
+      // 3) 명중 종소리 (따르릉 — 기계음 대신 맑은 음)
+      [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.13, 'triangle', 0.075, i * 0.05));
     } catch { /* 무시 */ }
   },
 };
@@ -225,6 +219,7 @@ interface FallingWord {
   y: number;
   speed: number;
   colorIdx: number;
+  hit?: boolean; // 정답으로 맞춘 상태 — 그 자리에 멈춰 있다가 포탄 도착 시 폭발
 }
 interface ScorePopup {
   id: number;
@@ -246,10 +241,10 @@ interface Boom {
 }
 
 const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawnMs: number }> = {
-  1: { label: '느림', fallSpeed: 0.38, spawnMs: 3000 },
-  2: { label: '보통', fallSpeed: 0.6, spawnMs: 2400 },
-  3: { label: '빠름', fallSpeed: 0.9, spawnMs: 1900 },
-  4: { label: '매우 빠름', fallSpeed: 1.35, spawnMs: 1500 },
+  1: { label: '느림', fallSpeed: 0.25, spawnMs: 3600 },
+  2: { label: '보통', fallSpeed: 0.4, spawnMs: 3000 },
+  3: { label: '빠름', fallSpeed: 0.62, spawnMs: 2400 },
+  4: { label: '매우 빠름', fallSpeed: 0.95, spawnMs: 1900 },
 };
 const START_LIVES = 5;
 const FEVER_COMBO = 10;
@@ -277,6 +272,38 @@ function buildHint(answer: string): string {
     })
     .join('')
     .trim();
+}
+
+// 포탄 — WAAPI로 left/top을 직접 애니메이션 (CSS var() 키프레임 대비 확실한 동작)
+function CannonShotEl({ shot }: { shot: CannonShot }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.animate(
+      [{ left: shot.fx, top: shot.fy }, { left: shot.tx, top: shot.ty }],
+      { duration: 340, easing: 'linear', fill: 'forwards' }
+    );
+  }, [shot]);
+  return (
+    <div ref={ref} className="pointer-events-none absolute" style={{ left: shot.fx, top: shot.fy }}>
+      <span className="block" style={{ animation: 'arcY .34s ease-in-out forwards' }}>
+        <span
+          className="block w-4 h-4 rounded-full"
+          style={{
+            background: 'radial-gradient(circle at 32% 28%, #fffbe8 0%, #fde68a 25%, #f59e0b 55%, #92400e 90%)',
+            boxShadow: '0 0 14px rgba(251,191,36,.95), 0 0 34px rgba(249,115,22,.6), -10px 8px 16px rgba(249,115,22,.35), inset -2px -3px 5px rgba(0,0,0,.45)',
+            animation: 'ballDepth .34s ease-in-out forwards',
+          }}
+        />
+      </span>
+      {/* 궤적 잔상 */}
+      <span
+        className="block absolute left-1 top-1 w-2 h-2 rounded-full bg-amber-400/70 blur-[2px]"
+        style={{ animation: 'arcY .34s ease-in-out .04s forwards' }}
+      />
+    </div>
+  );
 }
 
 // ============================================================================
@@ -323,6 +350,10 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const recentRef = useRef<string[]>([]);
   const speedLevelRef = useRef(speedLevel);
   const comboRef = useRef(0);
+  // handleSubmit의 동기적 매칭 판정용 — setState updater 부수효과는 실행 시점이 보장되지 않아
+  // matchedAt이 null인 채로 발사 로직을 걄뛰는 버그가 있었음 (포탄이 아예 안 나가는 현상)
+  const wordsRef = useRef<FallingWord[]>([]);
+  useEffect(() => { wordsRef.current = words; }, [words]);
   const sourceCache = useRef<Partial<Record<SourceKey, { words: (GameWord & { dayNumber: number })[]; days: DayInfo[] }>>>({});
 
   useEffect(() => { speedLevelRef.current = speedLevel; }, [speedLevel]);
@@ -483,6 +514,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         const kept: FallingWord[] = [];
         let missed = 0;
         for (const w of prev) {
+          if (w.hit) { kept.push(w); continue; } // 명중된 단어는 폭발까지 그 자리에 고정
           const ny = w.y + w.speed * (dt / 16.6);
           if (ny > areaHeight - 36) missed += 1;
           else kept.push({ ...w, y: ny });
@@ -522,7 +554,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   };
 
   // 대포 발사 — 목표 쪽으로 대포가 이동/조준한 뒤 포탄이 포물선으로 날아가 폭발
-  const fireCannon = (target: { x: number; y: number }, gainText: string) => {
+  const fireCannon = (target: { x: number; y: number }, gainText: string, hitId: number) => {
     const areaH = gameAreaRef.current?.clientHeight || 420;
     const areaW = gameAreaRef.current?.clientWidth || 800;
     // 대포를 목표 아래쪽으로 이동시키고, 포신을 목표 방향으로 기울임
@@ -539,6 +571,8 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     window.setTimeout(() => sfx.whoosh(), 60);
     window.setTimeout(() => {
       setShots(prev => prev.filter(s => s.id !== id));
+      // 명중 표시된 단어를 이 시점에 제거 — 단어가 폭발하며 사라지는 연출
+      setWords(prev => prev.filter(w => w.id !== hitId));
       const bid = popupIdRef.current++;
       setBooms(prev => [...prev, { id: bid, x: target.x, y: target.y }]);
       sfx.explode();
@@ -549,9 +583,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         area.style.animation = 'shakeSmall .3s ease-out';
         window.setTimeout(() => { area.style.animation = ''; }, 320);
       }
-      window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 550);
-    }, 280);
-    window.setTimeout(() => setFiring(false), 340);
+      window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 700);
+    }, 340);
+    window.setTimeout(() => setFiring(false), 400);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -559,17 +593,17 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     if (status !== 'playing' || !input.trim()) return;
     const typed = input.trim().toLowerCase();
 
-    let matchedAt: { x: number; y: number } | null = null;
-    setWords(prev => {
-      const idx = prev.findIndex(
-        w => w.answer.trim().toLowerCase() === typed || w.altAnswers.some(a => a.toLowerCase() === typed)
-      );
-      if (idx === -1) return prev;
-      matchedAt = { x: prev[idx].x, y: prev[idx].y };
-      const copy = [...prev];
-      copy.splice(idx, 1);
-      return copy;
-    });
+    // wordsRef로 동기 판정 — updater 부수효과 방식은 발사가 누락될 수 있음
+    const current = wordsRef.current;
+    const idx = current.findIndex(
+      w => w.answer.trim().toLowerCase() === typed || w.altAnswers.some(a => a.toLowerCase() === typed)
+    );
+    const matchedAt: { x: number; y: number } | null = idx !== -1 ? { x: current[idx].x, y: current[idx].y } : null;
+    const hitId = idx !== -1 ? current[idx].id : -1;
+    if (idx !== -1) {
+      // 단어를 즉시 지우지 않고 명중 상태로 표시 — 포탄이 도착하면 폭발하며 사라짐
+      setWords(prev => prev.map(w => (w.id === hitId ? { ...w, hit: true } : w)));
+    }
 
     if (matchedAt) {
       comboRef.current += 1;
@@ -582,12 +616,14 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         sfx.fever();
       } else if (c % 5 === 0) {
         sfx.combo(c);
-      } // 일반 정답음은 대포 발사음(fireCannon)이 대신함
+      } else {
+        sfx.chime(); // 정답 종소리 (기계음 대신)
+      }
       const gain = (10 + Math.min(20, c * 2)) * (isFever ? 2 : 1);
       setScore(s => s + gain);
       setCleared(n => n + 1);
       setFlash('correct');
-      fireCannon(matchedAt as { x: number; y: number }, `+${gain}`);
+      fireCannon(matchedAt as { x: number; y: number }, `+${gain}`, hitId);
     } else {
       sfx.wrong();
       comboRef.current = 0;
@@ -819,8 +855,10 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes feverPulse { 0%,100%{opacity:.9} 50%{opacity:1} }
         @keyframes gameoverPop { from { transform:scale(.8); opacity:0 } to { transform:scale(1); opacity:1 } }
         @keyframes cannonFly { from { left:var(--fx); top:var(--fy) } to { left:var(--tx); top:var(--ty) } }
-        @keyframes arcY { 0% { transform:translateY(6px) } 45% { transform:translateY(-48px) } 100% { transform:translateY(0) } }
+        @keyframes arcY { 0% { transform:translateY(6px) } 45% { transform:translateY(-52px) } 100% { transform:translateY(0) } }
         @keyframes ballDepth { 0% { transform:scale(.65) } 55% { transform:scale(1.2) } 100% { transform:scale(.9) } }
+        @keyframes hitPulse { 0%,100% { transform:translateX(-50%) scale(1) } 50% { transform:translateX(-50%) scale(1.08) } }
+        @keyframes scoreBump { 0% { transform:scale(1.5); color:#4ade80 } 100% { transform:scale(1) } }
         @keyframes boomFlash { 0% { transform:translate(-50%,-50%) scale(.3); opacity:1 } 100% { transform:translate(-50%,-50%) scale(2.8); opacity:0 } }
         @keyframes ringExpand { 0% { transform:translate(-50%,-50%) scale(.2); opacity:.95 } 100% { transform:translate(-50%,-50%) scale(2); opacity:0 } }
         @keyframes particleFly { from { transform:translate(-50%,-50%) rotate(var(--a)) translateX(0); opacity:1 } to { transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)); opacity:0 } }
@@ -850,7 +888,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           <button onClick={onExit} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white">
             <X className="h-5 w-5" />
           </button>
-          <span className="text-sm font-semibold text-white">
+          <span key={score} className="inline-block text-sm font-semibold text-white" style={{ animation: 'scoreBump .35s ease-out' }}>
             {score}<span className="ml-1 text-xs font-normal text-white/50">점</span>
           </span>
           {combo > 1 && (
@@ -913,13 +951,15 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
             style={{
               left: `${w.x}%`,
               top: `${w.y}px`,
-              background: CHIP_COLORS[w.colorIdx],
-              boxShadow: fever
-                ? '0 0 18px rgba(232,121,249,.55), 0 4px 10px rgba(0,0,0,.3)'
-                : combo >= 5
-                  ? '0 0 14px rgba(240,168,96,.45), 0 4px 10px rgba(0,0,0,.3)'
-                  : '0 4px 10px rgba(0,0,0,.35)',
-              animation: 'wordDrop .25s ease-out',
+              background: w.hit ? 'linear-gradient(135deg,#fecaca,#f87171)' : CHIP_COLORS[w.colorIdx],
+              boxShadow: w.hit
+                ? '0 0 22px rgba(248,113,113,.9), 0 4px 10px rgba(0,0,0,.3)'
+                : fever
+                  ? '0 0 18px rgba(232,121,249,.55), 0 4px 10px rgba(0,0,0,.3)'
+                  : combo >= 5
+                    ? '0 0 14px rgba(240,168,96,.45), 0 4px 10px rgba(0,0,0,.3)'
+                    : '0 4px 10px rgba(0,0,0,.35)',
+              animation: w.hit ? 'hitPulse .34s ease-in-out infinite' : 'wordDrop .25s ease-out',
             }}
           >
             <div className="whitespace-nowrap">{w.prompt}</div>
@@ -929,33 +969,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
         ))}
 
-        {/* 대포 포탄 — 외곽 div는 직선 이동, 낶은 span이 포물선 궤적 + 잔상 */}
+        {/* 대포 포탄 — WAAPI로 좌표 직접 애니메이션 (CSS var 키프레임은 웹뷰에서 무효화될 수 있음) */}
         {shots.map(s => (
-          <div
-            key={s.id}
-            className="pointer-events-none absolute"
-            style={{
-              left: s.fx, top: s.fy,
-              animation: 'cannonFly .3s linear forwards',
-              ['--fx' as any]: s.fx, ['--fy' as any]: s.fy, ['--tx' as any]: s.tx, ['--ty' as any]: s.ty,
-            }}
-          >
-            <span className="block" style={{ animation: 'arcY .3s ease-in-out forwards' }}>
-              <span
-                className="block w-4 h-4 rounded-full"
-                style={{
-                  background: 'radial-gradient(circle at 32% 28%, #fffbe8 0%, #fde68a 25%, #f59e0b 55%, #92400e 90%)',
-                  boxShadow: '0 0 14px rgba(251,191,36,.95), 0 0 34px rgba(249,115,22,.6), -10px 8px 16px rgba(249,115,22,.35), inset -2px -3px 5px rgba(0,0,0,.45)',
-                  animation: 'ballDepth .3s ease-in-out forwards',
-                }}
-              />
-            </span>
-            {/* 궤적 잔상 */}
-            <span
-              className="block absolute left-1 top-1 w-2 h-2 rounded-full bg-amber-400/70 blur-[2px]"
-              style={{ animation: 'arcY .3s ease-in-out .04s forwards' }}
-            />
-          </div>
+          <CannonShotEl key={s.id} shot={s} />
         ))}
 
         {/* 폭발 이펙트 — 배경 글로우 + 플래시 + 이중 충격파 링 + 원근 파편 16개 */}
