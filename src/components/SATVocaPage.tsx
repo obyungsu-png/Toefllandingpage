@@ -832,7 +832,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               { key: 'etymology' as const, label: '기출단어', short: '기출' },
               { key: 'custom' as const, label: '참고서 영단어', short: '참고서' },
               { key: 'junior' as const, label: '중3+고1 영단어 vol.5', short: 'vol.5' },
-              { key: 'typing-game' as const, label: '단어 타이핑 게임', short: '타이핑' },
+              { key: 'typing-game' as const, label: '🎮 Typing Game', short: '🎮 Typing' },
             ]).map(tab => (
               <button
                 key={tab.key}
