@@ -105,7 +105,9 @@ const sfx = {
   combo: (n: number) => { // 콤보 5단위마다 팡파레, 단계가 높을수록 화려
     const base = [523, 659, 784, 1047];
     const steps = Math.min(3, Math.floor(n / 5));
-    base.slice(0, 2 + steps).forEach((f, i) => tone(f * (steps >= 2 ? 1.0 : 1.0), 0.13, 'triangle', 0.09, i * 0.07));
+    // 상위 콤보일수록 옥타브 살짝 올림 (5~9: 1.0x, 10~14: 1.06x, 15+: 1.12x)
+    const pitch = 1 + steps * 0.06;
+    base.slice(0, 2 + steps).forEach((f, i) => tone(f * pitch, 0.13, 'triangle', 0.09, i * 0.07));
   },
   fever: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.14, 'square', 0.06, i * 0.06)); },
   wrong: () => { tone(220, 0.16, 'sawtooth', 0.05); tone(155, 0.22, 'sawtooth', 0.05, 0.07); },
@@ -358,6 +360,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
 
   useEffect(() => { speedLevelRef.current = speedLevel; }, [speedLevel]);
 
+  // 재시도 트리거용 카운터 — 실패 시 "다시 시도" 버튼으로 증가시켜 아래 useEffect 재실행
+  const [retryTick, setRetryTick] = useState(0);
+
   // ── 소스별 단어 로드 (서버 → 캐시 → vol.1 로컬 평백) ──
   useEffect(() => {
     let cancelled = false;
@@ -411,7 +416,9 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     };
     load();
     return () => { cancelled = true; };
-  }, [source]);
+    // retryTick 를 deps 에 포함 — 사용자가 재시도 버튼 누르면 재로드
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, retryTick]);
 
   // 별 배경 (한 번만 생성)
   const stars = useMemo(
@@ -528,7 +535,8 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           window.setTimeout(() => setShake(false), 350);
           setLives(l => {
             const nl = Math.max(0, l - missed);
-            if (nl === 0) {
+            // gameover sfx 중복 재생 방지 — 이번 프레임에 처음 0에 닿을 때만 트리거
+            if (nl === 0 && l > 0) {
               setStatus('gameover');
               sfx.gameover();
             }
@@ -591,12 +599,21 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (status !== 'playing' || !input.trim()) return;
-    const typed = input.trim().toLowerCase();
+
+    // 답 정규화 — 여분 공백 압축 + 소문자 + 영어 앞의 관사(a/an/the) 무시.
+    // 예) "the apple" == "apple", " a  car " == "car"
+    const normalize = (s: string) =>
+      s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/^(a|an|the)\s+/, '');
+    const typed = normalize(input);
 
     // wordsRef로 동기 판정 — updater 부수효과 방식은 발사가 누락될 수 있음
     const current = wordsRef.current;
     const idx = current.findIndex(
-      w => w.answer.trim().toLowerCase() === typed || w.altAnswers.some(a => a.toLowerCase() === typed)
+      w =>
+        !w.hit && (
+          normalize(w.answer) === typed ||
+          w.altAnswers.some(a => normalize(a) === typed)
+        )
     );
     const matchedAt: { x: number; y: number } | null = idx !== -1 ? { x: current[idx].x, y: current[idx].y } : null;
     const hitId = idx !== -1 ? current[idx].id : -1;
@@ -636,6 +653,27 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   };
 
   const togglePause = () => setStatus(s => (s === 'playing' ? 'paused' : s === 'paused' ? 'playing' : s));
+
+  // paused → playing 재개 시 input 자동 포커스 (모바일에서는 키보드 재노출)
+  useEffect(() => {
+    if (status === 'playing') {
+      const id = window.setTimeout(() => inputRef.current?.focus(), 30);
+      return () => window.clearTimeout(id);
+    }
+  }, [status]);
+
+  // 키보드 단축키 — Esc 로 일시정지/재개 토글 (playing/paused 상태일 때만)
+  useEffect(() => {
+    if (status !== 'playing' && status !== 'paused') return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        togglePause();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [status]);
 
   const promptLabel = direction === 'kr2en'
     ? '한글 뜻을 보고 영어 단어를 입력하세요 (첫글자 힌트 제공)'
@@ -686,7 +724,19 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                 DAY 선택 {loadingSource && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
               </p>
               {loadError ? (
-                <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{loadError}</p>
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+                  <p className="flex-1 text-xs text-red-500">{loadError}</p>
+                  <button
+                    onClick={() => {
+                      // 실패한 소스 캐시 제거 후 재요청 트리거
+                      delete sourceCache.current[source];
+                      setRetryTick(t => t + 1);
+                    }}
+                    className="rounded-md border border-red-300 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-100"
+                  >
+                    다시 시도
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
                   <button
@@ -938,10 +988,10 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       )}
       {!fever && <p className="relative px-4 pt-2 text-center text-xs text-white/40">{promptLabel}</p>}
 
-      {/* 게임 영역 */}
+      {/* 게임 영역 — 모바일 키보드가 올라와도 최소 낙하 공간(240px) 확보 */}
       <div
         ref={gameAreaRef}
-        className="relative flex-1 overflow-hidden"
+        className="relative flex-1 overflow-hidden min-h-[240px]"
         style={shake ? { animation: 'shakeX 0.35s ease-out' } : undefined}
       >
         {words.map(w => (
