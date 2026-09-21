@@ -746,13 +746,27 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       ? candidate.synonyms
       : candidate.korean.split(/[,，、;·\/]/).map(s => s.trim()).filter(s => s && s !== candidate.korean);
 
+    // x 위치 — 상단 근처(y<130px)에 이미 있는 다른 단어와 최소 20%p 거리 확보.
+    // 순수 랜덤이면 새 단어와 기존 단어의 칩이 화면상 겹쳐 보이는 문제가 있어,
+    // 10번 재시도해서 가장 잘 떨어진 x 를 채택 (충족 못 하면 마지막 후보 사용).
+    const nearTop = wordsRef.current.filter(w => w.y < 130);
+    const MIN_GAP = 20;
+    let bestX = 8 + Math.random() * 76;
+    let bestDist = nearTop.length === 0 ? Infinity : Math.min(...nearTop.map(w => Math.abs(w.x - bestX)));
+    for (let i = 0; i < 10 && bestDist < MIN_GAP; i++) {
+      const c = 8 + Math.random() * 76;
+      const d = nearTop.length === 0 ? Infinity : Math.min(...nearTop.map(w => Math.abs(w.x - c)));
+      if (d > bestDist) { bestX = c; bestDist = d; }
+      if (d >= MIN_GAP) break;
+    }
+
     return {
       id: nextIdRef.current++,
       prompt,
       answer,
       altAnswers,
       hint: isKr2En ? buildHint(candidate.english) : null,
-      x: 8 + Math.random() * 76,
+      x: bestX,
       y: -14,
       speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed,
       colorIdx: nextIdRef.current % CHIP_COLORS.length,
