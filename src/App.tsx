@@ -8395,6 +8395,7 @@ function AppContent() {
             savedConfig={trainingConfig}
             onSaveConfig={setTrainingConfig}
             practiceResults={trainingResults}
+            ownerName={loggedInUserName || ''}
           />
         </Suspense>
       )}

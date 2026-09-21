@@ -109,6 +109,8 @@ interface TrainingSectionProps {
   savedConfig?: any;
   onSaveConfig?: (config: any) => void;
   practiceResults?: any[];
+  /** 로그인 학생 이름 — Typing Game 의 XP/스트릭/미션을 서버에 저장할 때 사용 */
+  ownerName?: string;
 }
 
 interface ActiveTrainingSession {
@@ -130,7 +132,8 @@ export function TrainingSection({
   onSaveResult,
   savedConfig,
   onSaveConfig,
-  practiceResults = []
+  practiceResults = [],
+  ownerName = '',
 }: TrainingSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -441,7 +444,7 @@ export function TrainingSection({
 
   // 단어 타이핑 슈팅 게임 — CMS 문제풀/난이도 흐름 없이 독립 화면으로 진입
   if (showTypingGame) {
-    return <VocabularyTypingGame onExit={() => setShowTypingGame(false)} />;
+    return <VocabularyTypingGame onExit={() => setShowTypingGame(false)} ownerName={ownerName} />;
   }
 
   // Show training interface if active

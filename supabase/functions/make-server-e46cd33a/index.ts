@@ -851,16 +851,45 @@ app.post("/make-server-e46cd33a/vocabulary-progress/:userId/:tabType", async (c)
     const tabType = c.req.param("tabType");
     const progressData = await c.req.json();
     const key = `vocabulary_progress_${userId}_${tabType}`;
-    
+
     await kv.set(key, {
       ...progressData,
       lastStudied: new Date().toISOString()
     });
-    
+
     return c.json({ success: true });
   } catch (error) {
     console.error("Error updating vocabulary progress:", error);
     return c.json({ error: "Failed to update vocabulary progress", details: error.message }, 500);
+  }
+});
+
+// ── Vocabulary Typing Game — 게이미피케이션 통계 (XP/레벨/스트릭/일일 미션) ──
+// key: game_stats_<ownerName>
+// value: { xp, level, streakCurrent, streakBest, lastPlayedDate, bestScore, bestCombo,
+//          totalGames, totalWordsLearned, dailyMissionsDate, dailyMissions[] }
+app.get("/make-server-e46cd33a/game-stats/:ownerName", async (c) => {
+  try {
+    const ownerName = c.req.param("ownerName");
+    const key = `game_stats_${ownerName}`;
+    const stats = await kv.get(key) || null;
+    return c.json({ stats });
+  } catch (error) {
+    console.error("Error fetching game stats:", error);
+    return c.json({ error: "Failed to fetch game stats", details: error.message }, 500);
+  }
+});
+
+app.post("/make-server-e46cd33a/game-stats/:ownerName", async (c) => {
+  try {
+    const ownerName = c.req.param("ownerName");
+    const stats = await c.req.json();
+    const key = `game_stats_${ownerName}`;
+    await kv.set(key, { ...stats, updatedAt: new Date().toISOString() });
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error updating game stats:", error);
+    return c.json({ error: "Failed to update game stats", details: error.message }, 500);
   }
 });
 

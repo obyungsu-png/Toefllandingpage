@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, Pause, Play, RotateCcw, Gauge, Heart, Trophy, Sparkles, Loader2, Zap } from 'lucide-react';
+import { X, Pause, Play, RotateCcw, Gauge, Heart, Trophy, Sparkles, Loader2, Zap, Flame, Target, CheckCircle2 } from 'lucide-react';
 import { getAllWords } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
+import {
+  loadGameStats, saveGameStats, applySessionDelta, bumpStreakOnLogin,
+  computeLevel, type GameStats,
+} from '../utils/gameStats';
 
 // ============================================================================
 // 단어 소스 — SATVocaPage의 5개 탭과 동일한 서버 엔드포인트 사용
@@ -331,7 +335,7 @@ function CannonShotEl({ shot }: { shot: CannonShot }) {
 // ============================================================================
 // 메인 컴포넌트
 // ============================================================================
-export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
+export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void; ownerName?: string }) {
   const [source, setSource] = useState<SourceKey>('toefl-easy');
   const [days, setDays] = useState<DayInfo[]>([]);
   const [wordsByDay, setWordsByDay] = useState<(GameWord & { dayNumber: number })[]>([]);
@@ -361,6 +365,14 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const [slowUntil, setSlowUntil] = useState(0); // 슬로우 종료 timestamp (ms)
   const [itemToast, setItemToast] = useState<ItemType | null>(null);
   const lastComboRewardRef = useRef(0);
+
+  // ── 게이미피케이션 (XP/레벨/스트릭/일일 미션) ──
+  // ownerName 없으면 게스트 모드 — 서버 저장 없이 세션 통계만.
+  const [gameStats, setGameStats] = useState<GameStats | null>(null);
+  const [streakToast, setStreakToast] = useState<number | null>(null);
+  const [xpToast, setXpToast] = useState<{ amount: number; missions: string[] } | null>(null);
+  // 이 판(단일 세션)에 발생한 이벤트 누적 — 게임 종료 시 applySessionDelta 로 반영
+  const sessionCountersRef = useRef({ words: 0, bombs: 0, slows: 0, fevers: 0 });
   const [booms, setBooms] = useState<Boom[]>([]);
   const [firing, setFiring] = useState(false);
   // 대포 조준 — 발사 시 목표 단어 쪽으로 좌우 이동 + 포신 각도 조절
@@ -467,6 +479,51 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed * mult })));
   }, [speedLevel, status, slowUntil]);
 
+  // ── 게이미피케이션: 마운트 시 게임 통계 로드 + 오늘 첫 접속이면 스트릭 +1 ──
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const loaded = await loadGameStats(ownerName || '');
+      if (cancelled) return;
+      const { stats: bumped, incremented } = bumpStreakOnLogin(loaded);
+      setGameStats(bumped);
+      if (incremented && bumped.streakCurrent > 1) {
+        setStreakToast(bumped.streakCurrent);
+        window.setTimeout(() => setStreakToast(null), 2600);
+      }
+      // 스트릭 갱신됐으면 서버에도 즉시 반영
+      if (incremented && ownerName) saveGameStats(ownerName, bumped);
+    })();
+    return () => { cancelled = true; };
+  }, [ownerName]);
+
+  // ── 게임 종료(gameover) 진입 시 세션 델타를 XP/미션에 반영 후 서버 저장 ──
+  const gameoverProcessedRef = useRef(false);
+  useEffect(() => {
+    if (status !== 'gameover') { gameoverProcessedRef.current = false; return; }
+    if (gameoverProcessedRef.current) return;
+    gameoverProcessedRef.current = true;
+    if (!gameStats) return;
+    const delta = {
+      score,
+      bestCombo,
+      wordsCorrect: sessionCountersRef.current.words,
+      bombsUsed: sessionCountersRef.current.bombs,
+      slowsUsed: sessionCountersRef.current.slows,
+      feversEntered: sessionCountersRef.current.fevers,
+      completedGame: true,
+    };
+    const { stats: next, xpGained, completedMissions } = applySessionDelta(gameStats, delta);
+    setGameStats(next);
+    setXpToast({
+      amount: xpGained,
+      missions: completedMissions.map(m => m.label),
+    });
+    window.setTimeout(() => setXpToast(null), 4200);
+    if (ownerName) saveGameStats(ownerName, next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
   // ── 콤보 마일스톤 → 아이템 자동 드롭 ──
   useEffect(() => {
     if (status !== 'playing') return;
@@ -512,6 +569,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       setWords(prev => prev.filter(w => w.hit));
       setScore(s => s + gain);
       setCleared(n => n + targets.length);
+      sessionCountersRef.current.bombs += 1; // 미션 진행도 (bomb N회 사용)
       sfx.explode();
       sfx.cannon();
       // 화면 흔들림
@@ -525,6 +583,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       setSlowUntil(until);
       // 이미 떨어지는 단어들도 즉시 감속 (원복은 위 useEffect 가 slowUntil 만료 후 재실행 X → 5초 뒤 직접 setWords)
       setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed * 0.5 })));
+      sessionCountersRef.current.slows += 1;
       sfx.chime();
       window.setTimeout(() => {
         // 만료 시 현재 속도 원복 (단, 그 사이 다시 slow 를 걸었으면 유지)
@@ -563,6 +622,8 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     setSlowUntil(0);
     setItemToast(null);
     lastComboRewardRef.current = 0;
+    // 세션 이벤트 카운터 리셋 (XP/미션 계산용)
+    sessionCountersRef.current = { words: 0, bombs: 0, slows: 0, fevers: 0 };
     lastSpawnRef.current = 0;
     setStatus('playing');
     sfx.start();
@@ -739,6 +800,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       if (isFever && !fever) {
         setFever(true);
         sfx.fever();
+        sessionCountersRef.current.fevers += 1; // 미션 진행도 (fever 진입)
       } else if (c % 5 === 0) {
         sfx.combo(c);
       } else {
@@ -746,6 +808,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       }
       const gain = (10 + Math.min(20, c * 2)) * (isFever ? 2 : 1);
       setScore(s => s + gain);
+      sessionCountersRef.current.words += 1; // 미션/XP (정답 단어 수)
       setCleared(n => n + 1);
       setFlash('correct');
       fireCannon(matchedAt as { x: number; y: number }, `+${gain}`, hitId);
@@ -807,6 +870,57 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           </div>
 
           <div className="space-y-5 p-5 max-h-[75vh] overflow-y-auto">
+            {/* ── 게이미피케이션: 레벨/XP/스트릭 + 오늘의 미션 3개 ── */}
+            {gameStats && (() => {
+              const lv = computeLevel(gameStats.xp);
+              return (
+                <div className="rounded-xl bg-gradient-to-br from-[#1e6b73] via-[#2d7a7c] to-[#3d8a8c] p-4 text-white shadow-lg">
+                  {/* 레벨 + 스트릭 + XP 바 */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-extrabold text-lg">
+                      {lv.level}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">Lv. {lv.level}</span>
+                        <span className="text-[11px] opacity-80">{lv.currentLevelXp} / {lv.needed} XP</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/20 overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-amber-300 to-yellow-200 transition-all" style={{ width: `${lv.percent}%` }} />
+                      </div>
+                    </div>
+                    {gameStats.streakCurrent > 0 && (
+                      <div className="flex items-center gap-1 rounded-full bg-orange-500/30 px-2.5 py-1">
+                        <Flame className="w-3.5 h-3.5 fill-orange-300 text-orange-300" />
+                        <span className="text-sm font-bold">{gameStats.streakCurrent}일</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 오늘의 미션 */}
+                  <div className="pt-3 border-t border-white/15">
+                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-2 flex items-center gap-1">
+                      <Target className="w-3 h-3" /> 오늘의 미션
+                    </p>
+                    <div className="space-y-1.5">
+                      {gameStats.dailyMissions.map(m => (
+                        <div key={m.id} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${m.completed ? 'bg-emerald-500/25' : 'bg-white/10'}`}>
+                          {m.completed
+                            ? <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                            : <span className="w-4 h-4 rounded-full border border-white/40 shrink-0" />}
+                          <span className={`flex-1 text-xs ${m.completed ? 'line-through opacity-70' : ''}`}>{m.label}</span>
+                          <span className="text-[10px] opacity-80 shrink-0">
+                            {Math.min(m.progress, m.target)}/{m.target}
+                          </span>
+                          <span className="text-[10px] font-bold text-amber-200 shrink-0">+{m.rewardXp} XP</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* 단어장 선택 */}
             <div>
               <p className="mb-2.5 text-xs font-medium text-gray-500">단어장 선택</p>
@@ -957,7 +1071,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           <p className="mb-4 text-sm text-gray-500">
             {SOURCES.find(s => s.key === source)?.short} · {day === 'all' ? '전체' : `DAY ${day}`} · {direction === 'kr2en' ? '한글→영어' : '영어→한글'}
           </p>
-          <div className="mb-5 grid grid-cols-3 gap-2">
+          <div className="mb-4 grid grid-cols-3 gap-2">
             <div className="rounded-lg bg-gray-50 py-3">
               <p className="text-2xl font-bold text-[#2d7a7c]">{score}</p>
               <p className="text-xs text-gray-500">점수</p>
@@ -971,6 +1085,28 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
               <p className="text-xs text-gray-500">맞춘 단어</p>
             </div>
           </div>
+
+          {/* XP 획득 + 완료 미션 알림 (게임 종료 useEffect 에서 세팅) */}
+          {xpToast && (
+            <div className="mb-4 rounded-xl bg-gradient-to-r from-[#1e6b73] to-[#2d7a7c] p-3 text-white shadow-lg" style={{ animation: 'gameoverPop .4s ease-out' }}>
+              <div className="flex items-center justify-center gap-2 text-lg font-extrabold">
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                +{xpToast.amount} XP 획득!
+              </div>
+              {xpToast.missions.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white/20 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">완료 미션</p>
+                  {xpToast.missions.map((m, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
               onClick={() => setStatus('setup')}
@@ -1030,6 +1166,14 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes toastPop { 0% { transform:translate(-50%,10px) scale(.7); opacity:0 } 40% { transform:translate(-50%,-4px) scale(1.15); opacity:1 } 100% { transform:translate(-50%,0) scale(1); opacity:1 } }
       `}</style>
 
+      {/* 스트릭 갱신 축하 토스트 (플레이 화면에도 뜸) */}
+      {streakToast && (
+        <div className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-20 rounded-full bg-orange-500/90 px-4 py-2 text-white font-bold shadow-2xl flex items-center gap-2" style={{ animation: 'toastPop .4s ease-out' }}>
+          <Flame className="w-4 h-4 fill-orange-200" />
+          {streakToast}일 연속 접속! 🎉
+        </div>
+      )}
+
       {/* 별 배경 */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {stars.map(s => (
@@ -1051,12 +1195,22 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           <button onClick={onExit} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white" aria-label="나가기">
             <X className="h-5 w-5" />
           </button>
+          {gameStats && (
+            <span className="rounded-full bg-[#2d7a7c]/40 border border-[#2d7a7c]/60 px-2 py-0.5 text-[11px] sm:text-xs font-bold text-emerald-100" title={`Lv. ${computeLevel(gameStats.xp).level} · 총 ${gameStats.xp} XP`}>
+              Lv. {computeLevel(gameStats.xp).level}
+            </span>
+          )}
           <span key={score} className="inline-block text-base sm:text-lg font-bold text-white" style={{ animation: 'scoreBump .35s ease-out' }}>
             {score}<span className="ml-1 text-xs font-normal text-white/50">점</span>
           </span>
           {combo > 1 && (
             <span className={`rounded-full px-2 py-0.5 text-xs sm:text-sm font-semibold ${fever ? 'bg-fuchsia-500/30 text-fuchsia-200' : 'bg-[#e67e22]/20 text-[#f0a860]'}`}>
               🔥 {combo} 콤보{fever ? ' ×2' : ''}
+            </span>
+          )}
+          {gameStats?.streakCurrent && gameStats.streakCurrent > 0 && (
+            <span className="hidden sm:flex items-center gap-1 rounded-full bg-orange-500/25 px-2 py-0.5 text-xs font-semibold text-orange-200" title={`연속 접속 ${gameStats.streakCurrent}일 · 최고 ${gameStats.streakBest}일`}>
+              <Flame className="w-3 h-3 fill-orange-300" /> {gameStats.streakCurrent}일
             </span>
           )}
         </div>
