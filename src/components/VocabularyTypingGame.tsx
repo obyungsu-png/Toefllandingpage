@@ -246,6 +246,22 @@ interface Boom {
 // 사용자 피드백 반영: 이전보다 30~40% 더 느리게 재조정.
 // - 초보자도 타이핑할 시간이 충분한 '느림' (약 3.5초 낙하)
 // - '매우 빠름'도 이전 '보통' 수준 (약 2초 내외)
+// 파워업 아이템 정의 — 콤보 마일스톤(10/20/30/40…) 에 순환하며 자동 드롭
+type ItemType = 'slow' | 'bomb' | 'heart';
+const ITEM_CONFIG: Record<ItemType, { emoji: string; label: string; desc: string }> = {
+  slow:  { emoji: '⏱', label: 'Slow',  desc: '5초간 낙하 속도 절반' },
+  bomb:  { emoji: '💣', label: 'Bomb',  desc: '화면의 모든 단어 파괴' },
+  heart: { emoji: '❤️', label: 'Heart', desc: '목숨 +1' },
+};
+/** 콤보 마일스톤 → 아이템 매핑. 10/40/70… slow, 20/50/80… bomb, 30/60/90… heart. */
+function itemForCombo(c: number): ItemType | null {
+  if (c <= 0 || c % 10 !== 0) return null;
+  const stage = (c / 10) % 3; // 1=slow, 2=bomb, 0=heart
+  if (stage === 1) return 'slow';
+  if (stage === 2) return 'bomb';
+  return 'heart';
+}
+
 const SPEED_CONFIG: Record<SpeedLevel, { label: string; fallSpeed: number; spawnMs: number }> = {
   1: { label: '느림', fallSpeed: 0.15, spawnMs: 4800 },
   2: { label: '보통', fallSpeed: 0.25, spawnMs: 4000 },
@@ -339,6 +355,12 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   const [shake, setShake] = useState(false);
   const [fever, setFever] = useState(false);
   const [shots, setShots] = useState<CannonShot[]>([]);
+  // ── 파워업 아이템 (인벤토리 3슬롯) ──
+  // 콤보 마일스톤 10/20/30/40... 에 각각 slow/bomb/heart 자동 드롭.
+  const [inventory, setInventory] = useState<(ItemType | null)[]>([null, null, null]);
+  const [slowUntil, setSlowUntil] = useState(0); // 슬로우 종료 timestamp (ms)
+  const [itemToast, setItemToast] = useState<ItemType | null>(null);
+  const lastComboRewardRef = useRef(0);
   const [booms, setBooms] = useState<Boom[]>([]);
   const [firing, setFiring] = useState(false);
   // 대포 조준 — 발사 시 목표 단어 쪽으로 좌우 이동 + 포신 각도 조절
@@ -438,10 +460,86 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
   );
 
   // 속도를 바꾸면 이미 떨어지고 있는 단어들의 속도도 즉시 반영
+  // (슬로우 파워업이 활성 중이면 그 배수 유지)
   useEffect(() => {
     if (status !== 'playing') return;
-    setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed })));
-  }, [speedLevel, status]);
+    const mult = Date.now() < slowUntil ? 0.5 : 1;
+    setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed * mult })));
+  }, [speedLevel, status, slowUntil]);
+
+  // ── 콤보 마일스톤 → 아이템 자동 드롭 ──
+  useEffect(() => {
+    if (status !== 'playing') return;
+    if (combo <= 0 || combo <= lastComboRewardRef.current) return;
+    const item = itemForCombo(combo);
+    if (!item) return;
+    lastComboRewardRef.current = combo;
+    // 첫 빈 슬롯에 삽입 (가득 차면 무시)
+    setInventory(prev => {
+      const idx = prev.findIndex(s => s === null);
+      if (idx === -1) return prev;
+      const next = [...prev];
+      next[idx] = item;
+      return next;
+    });
+    setItemToast(item);
+    sfx.chime();
+    window.setTimeout(() => setItemToast(cur => (cur === item ? null : cur)), 1600);
+  }, [combo, status]);
+
+  /** 인벤토리 슬롯 발동 — 클릭 or 숫자키 */
+  const useItem = (slotIdx: number) => {
+    if (status !== 'playing') return;
+    const item = inventory[slotIdx];
+    if (!item) return;
+    setInventory(prev => {
+      const next = [...prev];
+      next[slotIdx] = null;
+      return next;
+    });
+
+    if (item === 'bomb') {
+      // 화면의 모든 non-hit 단어 파괴 + 대량 점수
+      const targets = wordsRef.current.filter(w => !w.hit);
+      if (targets.length === 0) { sfx.explode(); return; }
+      let gain = 0;
+      targets.forEach(w => {
+        const bid = popupIdRef.current++;
+        setBooms(prev => [...prev, { id: bid, x: w.x, y: w.y }]);
+        window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 700);
+        gain += 20;
+      });
+      setWords(prev => prev.filter(w => w.hit));
+      setScore(s => s + gain);
+      setCleared(n => n + targets.length);
+      sfx.explode();
+      sfx.cannon();
+      // 화면 흔들림
+      const area = gameAreaRef.current;
+      if (area) {
+        area.style.animation = 'shakeX .4s ease-out';
+        window.setTimeout(() => { area.style.animation = ''; }, 420);
+      }
+    } else if (item === 'slow') {
+      const until = Date.now() + 5000;
+      setSlowUntil(until);
+      // 이미 떨어지는 단어들도 즉시 감속 (원복은 위 useEffect 가 slowUntil 만료 후 재실행 X → 5초 뒤 직접 setWords)
+      setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed * 0.5 })));
+      sfx.chime();
+      window.setTimeout(() => {
+        // 만료 시 현재 속도 원복 (단, 그 사이 다시 slow 를 걸었으면 유지)
+        if (Date.now() >= until) {
+          setSlowUntil(0);
+          setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed })));
+        }
+      }, 5100);
+    } else if (item === 'heart') {
+      setLives(l => Math.min(START_LIVES, l + 1));
+      sfx.chime();
+    }
+    // 클릭 후 입력창에 포커스 복귀 (게임 진행 유지)
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
 
   const startGame = () => {
     poolRef.current = day === 'all' ? wordsByDay : wordsByDay.filter(w => w.dayNumber === day);
@@ -460,6 +558,11 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
     setInput('');
     setFlash(null);
     setFever(false);
+    // 파워업 인벤토리/보상 상태 리셋
+    setInventory([null, null, null]);
+    setSlowUntil(0);
+    setItemToast(null);
+    lastComboRewardRef.current = 0;
     lastSpawnRef.current = 0;
     setStatus('playing');
     sfx.start();
@@ -535,6 +638,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
           comboRef.current = 0;
           setCombo(0);
           setFever(false);
+          lastComboRewardRef.current = 0; // 스트릭 끊김 → 다음 콤보 마일스톤 재보상 허용
           setShake(true);
           window.setTimeout(() => setShake(false), 350);
           setLives(l => {
@@ -650,6 +754,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
       comboRef.current = 0;
       setCombo(0);
       setFever(false);
+      lastComboRewardRef.current = 0; // 스트릭 끊김
       setFlash('wrong');
     }
     setInput('');
@@ -922,6 +1027,7 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
         @keyframes recoil { 0% { transform:translateY(0) } 25% { transform:translateY(10px) } 100% { transform:translateY(0) } }
         @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(2.1); opacity:0 } }
         @keyframes shakeSmall { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
+        @keyframes toastPop { 0% { transform:translate(-50%,10px) scale(.7); opacity:0 } 40% { transform:translate(-50%,-4px) scale(1.15); opacity:1 } 100% { transform:translate(-50%,0) scale(1); opacity:1 } }
       `}</style>
 
       {/* 별 배경 */}
@@ -1218,6 +1324,44 @@ export function VocabularyTypingGame({ onExit }: { onExit: () => void }) {
                 나가기
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* 인벤토리 3슬롯 + 슬로우 표시 — 하단 입력창 바로 위 */}
+      <div className="relative border-t border-white/10 px-4 pt-3 pb-1 flex items-center justify-center gap-2">
+        {inventory.map((it, i) => (
+          <button
+            key={i}
+            // onMouseDown 에서 preventDefault → input 이 blur 되지 않아 게임 진행 유지
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => useItem(i)}
+            disabled={!it}
+            title={it ? `${ITEM_CONFIG[it].label} — ${ITEM_CONFIG[it].desc}` : '빈 슬롯 (10 콤보 마다 획득)'}
+            className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 flex items-center justify-center text-2xl sm:text-3xl transition-all ${
+              it
+                ? 'border-amber-300/70 bg-amber-400/10 hover:bg-amber-400/25 hover:scale-110 active:scale-95 cursor-pointer'
+                : 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed'
+            }`}
+          >
+            {it ? ITEM_CONFIG[it].emoji : <span className="text-xs text-white/30">{i + 1}</span>}
+            {it && (
+              <span className="absolute -bottom-1 -right-1 rounded-full bg-black/70 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center border border-white/20">
+                {i + 1}
+              </span>
+            )}
+          </button>
+        ))}
+        {/* 슬로우 활성 표시 (남은 시간) */}
+        {slowUntil > Date.now() && (
+          <span className="ml-3 rounded-full bg-sky-500/25 px-2.5 py-1 text-xs font-bold text-sky-200">
+            ⏱ SLOW {Math.ceil((slowUntil - Date.now()) / 1000)}s
+          </span>
+        )}
+        {/* 아이템 획득 토스트 (짧게) */}
+        {itemToast && (
+          <div className="pointer-events-none absolute left-1/2 -top-6 -translate-x-1/2 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-bold text-white shadow-lg" style={{ animation: 'toastPop .35s ease-out' }}>
+            +{ITEM_CONFIG[itemToast].emoji} {ITEM_CONFIG[itemToast].label} 획득!
           </div>
         )}
       </div>
