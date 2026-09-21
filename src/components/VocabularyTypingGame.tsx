@@ -6,6 +6,8 @@ import {
   loadGameStats, saveGameStats, applySessionDelta, bumpStreakOnLogin,
   computeLevel, type GameStats,
 } from '../utils/gameStats';
+import { useEnrollmentGate } from '../utils/enrollmentGate';
+import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 
 // ============================================================================
 // 단어 소스 — SATVocaPage의 5개 탭과 동일한 서버 엔드포인트 사용
@@ -336,6 +338,9 @@ function CannonShotEl({ shot }: { shot: CannonShot }) {
 // 메인 컴포넌트
 // ============================================================================
 export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void; ownerName?: string }) {
+  // 학원생 등록 게이트 — 로그인 + 활성화 수강권 + 미만료 확인. 미통과 시 안내 카드만 노출.
+  const gate = useEnrollmentGate();
+
   const [source, setSource] = useState<SourceKey>('toefl-easy');
   const [days, setDays] = useState<DayInfo[]>([]);
   const [wordsByDay, setWordsByDay] = useState<(GameWord & { dayNumber: number })[]>([]);
@@ -852,6 +857,11 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     : '영어 단어를 보고 한글 뜻을 입력하세요';
 
   const dayWordCount = day === 'all' ? wordsByDay.length : wordsByDay.filter(w => w.dayNumber === day).length;
+
+  // 학원생 미등록 → 어떤 화면(setup/learn/gameover) 이든 안내만 표시하고 진입 차단.
+  if (gate.checking || !gate.allowed) {
+    return <EnrollmentBlockedCard checking={gate.checking} reason={gate.reason} onRetry={gate.retry} onExit={onExit} />;
+  }
 
   // ==========================================================================
   // 화면: 설정

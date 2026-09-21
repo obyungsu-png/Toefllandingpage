@@ -240,10 +240,11 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
     if (selectedIds.size === 0) return;
     if (!confirm(
       `선택된 ${selectedIds.size}명의 학생과 관련 데이터를 모두 삭제하시겠습니까?\n` +
-      `(시험 기록·리포트·리딩 하이라이트·수강권 배정 포함, 복구 불가)`,
+      `(시험 기록·리포트·리딩 하이라이트·수강권 배정·게임 통계·어휘 진행도 포함, 복구 불가)`,
     )) return;
     setActionLoading(true); setActionError('');
     try {
+      const { purgeUserServerData } = await import('../utils/gameStats');
       for (const id of Array.from(selectedIds)) {
         const s = enrichedStudents.find(x => x.user_id === id);
         if (!s) continue;
@@ -251,12 +252,19 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
           .from('license_keys')
           .update({ is_used: false, assigned_user_id: null, used_at: null })
           .eq('assigned_user_id', s.user_id);
-        for (const t of ['reports', 'reading_highlights']) {
+        for (const t of ['reports', 'reading_highlights', 'writing_ai_reviews']) {
           const { error: dErr } = await supabaseClient.from(t).delete().eq('user_id', s.user_id);
           if (dErr && !/relation .* does not exist/i.test(dErr.message)) {
             console.warn(`[batchDelete] ${t} 삭제 실패: ${dErr.message}`);
           }
         }
+        // kv_store 게임 통계 + 어휘 진행도 정리 (학생별)
+        try {
+          await purgeUserServerData({
+            ownerName: s.email || (s as any).name || '',
+            userId: s.user_id,
+          });
+        } catch { /* 개별 실패는 다음 학생 진행 */ }
         await supabaseClient.from('users_profile').delete().eq('user_id', s.user_id);
         const m = students.find(x => x.email === s.email);
         if (m) onDeleteStudent(m.id);
@@ -335,7 +343,7 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
   const handleDeleteProfile = async (student: EnrichedStudent) => {
     if (!confirm(
       `정말 ${student.email} 학생을 삭제하시겠습니까?\n\n` +
-      `이 학생의 시험 기록·리포트·리딩 하이라이트·수강권 배정 등 관련 데이터가 모두 삭제되고 복구할 수 없습니다.`,
+      `이 학생의 시험 기록·리포트·리딩 하이라이트·수강권 배정·게임 통계·어휘 학습 진행도 등 관련 데이터가 모두 삭제되고 복구할 수 없습니다.`,
     )) return;
     try {
       // 1) 수강권 회수 — 코드 자체는 남기되 사용자 배정만 해제(재활용 가능하게)
@@ -347,12 +355,23 @@ export function StudentManagement({ students, scores, onAddStudent, onUpdateStud
       // 2) 학생 소유 데이터 캐스케이드 삭제 — user_id가 auth.users(id)를 참조하는 테이블들.
       //    users_profile.delete()만으로는 이 테이블들이 남으므로 명시적으로 정리한다.
       //    없는 테이블 오류는 무시(개발/스테이징 환경 대비).
-      const cascadeTables = ['reports', 'reading_highlights'];
+      const cascadeTables = ['reports', 'reading_highlights', 'writing_ai_reviews'];
       for (const t of cascadeTables) {
         const { error: delErr } = await supabaseClient.from(t).delete().eq('user_id', student.user_id);
         if (delErr && !/relation .* does not exist/i.test(delErr.message)) {
           console.warn(`[deleteProfile] ${t} 삭제 실패: ${delErr.message}`);
         }
+      }
+
+      // 2-1) kv_store 데이터 정리 — 게임 통계(game_stats_<name>) + 어휘 진행도(vocabulary_progress_<uid>_*)
+      try {
+        const { purgeUserServerData } = await import('../utils/gameStats');
+        await purgeUserServerData({
+          ownerName: student.email || (student as any).name || '',
+          userId: student.user_id,
+        });
+      } catch (err) {
+        console.warn('[deleteProfile] kv_store purge 실패', err);
       }
 
       // 3) 프로필 삭제

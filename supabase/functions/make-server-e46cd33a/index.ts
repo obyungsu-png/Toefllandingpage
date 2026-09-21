@@ -893,6 +893,56 @@ app.post("/make-server-e46cd33a/game-stats/:ownerName", async (c) => {
   }
 });
 
+// ── 학생 탈퇴/삭제 시 kv_store 에 저장된 모든 학생 소유 데이터 일괄 제거 ──
+// body: { ownerName?: string, userId?: string } — 둘 중 하나 이상 필수.
+//   * ownerName 기반 키:  game_stats_<ownerName>
+//   * userId 기반 키:     vocabulary_progress_<userId>_*
+// SATVocaTest 결과·라이센스는 별도 Supabase 테이블에 있어 이 엔드포인트 범위 밖.
+app.delete("/make-server-e46cd33a/user-data", async (c) => {
+  try {
+    const body = await c.req.json();
+    const ownerName = (body?.ownerName || '').trim();
+    const userId = (body?.userId || '').trim();
+    if (!ownerName && !userId) {
+      return c.json({ error: 'ownerName 또는 userId 중 하나 이상 필요' }, 400);
+    }
+    const deleted: string[] = [];
+
+    // 1) ownerName 기반 게임 통계
+    if (ownerName) {
+      const key = `game_stats_${ownerName}`;
+      try { await kv.del(key); deleted.push(key); } catch (err) {
+        console.warn(`[user-data:delete] ${key} 삭제 실패`, err);
+      }
+    }
+
+    // 2) userId 기반 vocabulary_progress (5개 tabType × userId)
+    if (userId) {
+      const progressPrefix = `vocabulary_progress_${userId}_`;
+      try {
+        // getByPrefix 는 value 만 반환하지만 like 쿼리로 직접 삭제
+        const supa = (globalThis as any).SUPABASE_CLIENT_FOR_DELETE || null;
+        // 안전하게: 서비스 롤 client 로 like 삭제
+        const { createClient } = await import("jsr:@supabase/supabase-js@2.49.8");
+        const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const { error, count } = await sb
+          .from('kv_store_e46cd33a')
+          .delete({ count: 'exact' })
+          .like('key', `${progressPrefix}%`);
+        if (error) throw error;
+        deleted.push(`${progressPrefix}* (${count ?? 0} rows)`);
+      } catch (err) {
+        console.warn(`[user-data:delete] vocabulary_progress prefix 삭제 실패`, err);
+      }
+    }
+
+    return c.json({ success: true, deleted });
+  } catch (error) {
+    console.error("Error deleting user data:", error);
+    return c.json({ error: "Failed to delete user data", details: (error as any).message }, 500);
+  }
+});
+
 // Bulk upload words to a specific tab type
 app.post("/make-server-e46cd33a/vocabulary-bulk/:tabType", async (c) => {
   try {

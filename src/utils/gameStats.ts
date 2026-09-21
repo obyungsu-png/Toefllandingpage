@@ -177,6 +177,39 @@ export async function saveGameStats(ownerName: string, stats: GameStats): Promis
   }
 }
 
+/** 학생 탈퇴/삭제 시 kv_store 의 게임 통계 + 어휘 진행도 등을 서버에서 일괄 제거. */
+export async function purgeUserServerData(opts: { ownerName?: string; userId?: string }): Promise<void> {
+  const ownerName = opts.ownerName?.trim();
+  const userId = opts.userId?.trim();
+  if (!ownerName && !userId) return;
+  try {
+    await fetch(`${SERVER_BASE_URL}/user-data`, {
+      method: 'DELETE',
+      headers: { ...getServerHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerName, userId }),
+    });
+  } catch (err) {
+    console.warn('[gameStats] purge 실패:', err);
+  }
+}
+
+/** 학생 탈퇴/브라우저 로컬 저장소에 남아있는 학습 데이터 제거 (SRS 카드/예문 캐시 등). */
+export function purgeLocalStudyData(): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (
+        k.startsWith('srs-') ||          // SRS 카드 상태 + 예문 캐시
+        k.startsWith('speaking-ai-') ||  // Speaking AI 캐시
+        k.startsWith('writing-ai-')      // Writing AI 캐시
+      ) keysToRemove.push(k);
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch { /* 무시 */ }
+}
+
 // ── 스트릭/미션 리롤 로직 ──────────────────────────────────────────────────
 /** 로드 시 오늘 미션이 어제 것이면 새로 리롤. 파괴적이지 않은 sanitizer. */
 export function ensureFreshMissions(stats: GameStats): GameStats {

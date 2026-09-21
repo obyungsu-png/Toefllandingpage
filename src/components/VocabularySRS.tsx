@@ -15,6 +15,8 @@ import { SATWord } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { getAllWords } from './vocaWordSets';
 import { callAi } from '../utils/aiClient';
+import { useEnrollmentGate } from '../utils/enrollmentGate';
+import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 
 // ============================================================================
 // 소스 & 데이터
@@ -236,6 +238,9 @@ function escapeRegExp(s: string): string {
 // 메인 컴포넌트
 // ============================================================================
 export function VocabularySRS({ onExit }: { onExit: () => void }) {
+  // 학원생 등록 게이트
+  const gate = useEnrollmentGate();
+
   // --- 소스/DAY 선택 상태 ---
   const [source, setSource] = useState<SourceKey>('toefl-easy');
   const [days, setDays] = useState<DayInfo[]>([]);
@@ -465,6 +470,11 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     return n;
     // scopedWords, source, phase(세션 완료 후 갱신) 시 재계산
   }, [scopedWords, source, phase]);
+
+  // 학원생 미등록 → 진입 차단 안내
+  if (gate.checking || !gate.allowed) {
+    return <EnrollmentBlockedCard checking={gate.checking} reason={gate.reason} onRetry={gate.retry} onExit={onExit} />;
+  }
 
   // ==========================================================================
   // 화면 1: setup

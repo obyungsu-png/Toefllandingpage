@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { SATWord } from './vocaWordSets';
 import { SATVocaTest } from './SATVocaTest';
 import { VocabularySRS } from './VocabularySRS';
+import { useEnrollmentGate } from '../utils/enrollmentGate';
+import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel, PageBreak } from 'docx';
 import fileSaver from 'file-saver';
@@ -61,6 +63,7 @@ interface SATVocaPageProps {
 }
 
 export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaPageProps) {
+  const gate = useEnrollmentGate();
   const themeColor = testType === 'ACT' ? '#10B981' : '#3D5AA1';
   const serverUrl = SERVER_BASE_URL;
 
@@ -788,6 +791,11 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         onSaveResult={onSaveResult}
       />
     );
+  }
+
+  // 학원생 등록 게이트 — 미통과 학생은 안내 카드만 보이고 어휘 학습 전체 접근 차단
+  if (gate.checking || !gate.allowed) {
+    return <EnrollmentBlockedCard checking={gate.checking} reason={gate.reason} onRetry={gate.retry} onExit={onBack} />;
   }
 
   return (
