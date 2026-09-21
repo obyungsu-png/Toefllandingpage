@@ -1268,7 +1268,7 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
         @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(2.1); opacity:0 } }
         @keyframes shakeSmall { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
         @keyframes toastPop { 0% { transform:translate(-50%,10px) scale(.7); opacity:0 } 40% { transform:translate(-50%,-4px) scale(1.15); opacity:1 } 100% { transform:translate(-50%,0) scale(1); opacity:1 } }
-        @keyframes missPop { 0% { transform:translateY(20px) scale(.85); opacity:0 } 8% { transform:translateY(-3px) scale(1.05); opacity:1 } 15% { transform:translateY(0) scale(1); opacity:1 } 85% { transform:translateY(0) scale(1); opacity:1 } 100% { transform:translateY(-10px) scale(.95); opacity:0 } }
+        @keyframes missPop { 0% { transform:translateY(-20px) scale(.85); opacity:0 } 7% { transform:translateY(4px) scale(1.06); opacity:1 } 15% { transform:translateY(0) scale(1); opacity:1 } 88% { transform:translateY(0) scale(1); opacity:1 } 100% { transform:translateY(-14px) scale(.95); opacity:0 } }
       `}</style>
 
       {/* 스트릭 갱신 축하 토스트 (플레이 화면에도 뜸) */}
