@@ -530,7 +530,10 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
   useEffect(() => {
     if (status !== 'playing') return;
     const mult = Date.now() < slowUntil ? 0.5 : 1;
-    setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed * mult })));
+    // wordsRef 즉시 sync (tick 이 wordsRef.current 를 소스로 쓰므로 반드시 함께 갱신)
+    const updated = wordsRef.current.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevel].fallSpeed * mult }));
+    wordsRef.current = updated;
+    setWords(updated);
   }, [speedLevel, status, slowUntil]);
 
   // ── 게이미피케이션: 마운트 시 게임 통계 로드 + 오늘 첫 접속이면 스트릭 +1 ──
@@ -643,7 +646,9 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
         window.setTimeout(() => setBooms(prev => prev.filter(b => b.id !== bid)), 700);
         gain += 20;
       });
-      setWords(prev => prev.filter(w => w.hit));
+      const remaining = wordsRef.current.filter(w => w.hit);
+      wordsRef.current = remaining;
+      setWords(remaining);
       setScore(s => s + gain);
       setCleared(n => n + targets.length);
       sessionCountersRef.current.bombs += 1; // 미션 진행도 (bomb N회 사용)
@@ -659,14 +664,22 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       const until = Date.now() + 5000;
       setSlowUntil(until);
       // 이미 떨어지는 단어들도 즉시 감속 (원복은 위 useEffect 가 slowUntil 만료 후 재실행 X → 5초 뒤 직접 setWords)
-      setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed * 0.5 })));
+      {
+        const updated = wordsRef.current.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed * 0.5 }));
+        wordsRef.current = updated;
+        setWords(updated);
+      }
       sessionCountersRef.current.slows += 1;
       sfx.chime();
       window.setTimeout(() => {
         // 만료 시 현재 속도 원복 (단, 그 사이 다시 slow 를 걸었으면 유지)
         if (Date.now() >= until) {
           setSlowUntil(0);
-          setWords(prev => prev.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed })));
+          {
+            const updated = wordsRef.current.map(w => ({ ...w, speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed }));
+            wordsRef.current = updated;
+            setWords(updated);
+          }
         }
       }, 5100);
     } else if (item === 'heart') {
@@ -681,6 +694,7 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     poolRef.current = day === 'all' ? wordsByDay : wordsByDay.filter(w => w.dayNumber === day);
     if (poolRef.current.length === 0) return;
     recentRef.current = [];
+    wordsRef.current = [];
     setWords([]);
     setPopups([]);
     setShots([]);
@@ -708,9 +722,11 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const spawnWord = useCallback(() => {
+  // 다음 단어 하나를 만들어 반환 (setWords 는 호출하지 않음).
+  // tick 이 전체 words 상태를 한 번에 통합 계산하기 위한 순수 팩토리.
+  const buildNextWord = useCallback((): FallingWord | null => {
     const pool = poolRef.current;
-    if (pool.length === 0) return;
+    if (pool.length === 0) return null;
 
     let candidate = pool[Math.floor(Math.random() * pool.length)];
     let tries = 0;
@@ -730,20 +746,17 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       ? candidate.synonyms
       : candidate.korean.split(/[,，、;·\/]/).map(s => s.trim()).filter(s => s && s !== candidate.korean);
 
-    setWords(prev => [
-      ...prev,
-      {
-        id: nextIdRef.current++,
-        prompt,
-        answer,
-        altAnswers,
-        hint: isKr2En ? buildHint(candidate.english) : null,
-        x: 8 + Math.random() * 76,
-        y: -14,
-        speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed,
-        colorIdx: nextIdRef.current % CHIP_COLORS.length,
-      },
-    ]);
+    return {
+      id: nextIdRef.current++,
+      prompt,
+      answer,
+      altAnswers,
+      hint: isKr2En ? buildHint(candidate.english) : null,
+      x: 8 + Math.random() * 76,
+      y: -14,
+      speed: SPEED_CONFIG[speedLevelRef.current].fallSpeed,
+      colorIdx: nextIdRef.current % CHIP_COLORS.length,
+    };
   }, [direction]);
 
   // 게임 루프
@@ -757,26 +770,38 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       const dt = now - lastFrameRef.current;
       lastFrameRef.current = now;
 
+      const areaHeight = gameAreaRef.current?.clientHeight || 420;
+
+      // ── 이번 tick 의 통합 상태 계산 (wordsRef 기반, 즉시 sync) ──
+      // wordsRef 를 순수 소스 오브 트루스로 사용하고, spawn/낙하/miss 를 한 번에 계산.
+      // 이렇게 하지 않으면 setWords(updater) 지연으로 spawn 된 새 단어가 즉시
+      // 다음 tick 에서 사라지거나(reset), missedList 사이드 이펙트가 무시되는
+      // 문제가 발생함 (React 18 concurrent + StrictMode 이슈).
+      let nextWords: FallingWord[] = [...wordsRef.current];
+
+      // 1) spawn 조건이면 새 단어 하나 추가
       if (now - lastSpawnRef.current > SPEED_CONFIG[speedLevelRef.current].spawnMs) {
         lastSpawnRef.current = now;
-        spawnWord();
+        const newWord = buildNextWord();
+        if (newWord) nextWords.push(newWord);
       }
 
-      const areaHeight = gameAreaRef.current?.clientHeight || 420;
-      // wordsRef 를 기반으로 이번 tick 의 다음 상태 계산.
-      // setWords updater 안에서 사이드 이펙트(missedList.push)를 쓰면
-      // React 18/StrictMode 에서 updater 지연·이중 실행으로 팝업이 안 뜨거나
-      // 두 번 뜨는 버그가 있음. 순수 계산만 setWords 에 넣고 후처리는 밖에서.
-      const currentWords = wordsRef.current;
+      // 2) 낙하 + miss 감지
       const missedList: FallingWord[] = [];
       const kept: FallingWord[] = [];
-      for (const w of currentWords) {
+      for (const w of nextWords) {
         if (w.hit) { kept.push(w); continue; }
         const ny = w.y + w.speed * (dt / 16.6);
         if (ny > areaHeight - 36) missedList.push(w);
         else kept.push({ ...w, y: ny });
       }
+
+      // 3) 상태 반영: setWords 로 render 트리거 + wordsRef 즉시 sync
+      //    (wordsRef 의 useEffect sync 는 다음 렌더 이후이므로, 다음 tick 이 낡은
+      //    값을 못 보게 여기서 즉시 갱신)
+      wordsRef.current = kept;
       setWords(kept);
+
       if (missedList.length > 0) {
         const missed = missedList.length;
         sfx.miss();
@@ -817,7 +842,7 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [status, spawnWord]);
+  }, [status, buildNextWord]);
 
   const addPopup = (x: number, y: number, text: string) => {
     const id = popupIdRef.current++;
@@ -844,7 +869,11 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     window.setTimeout(() => {
       setShots(prev => prev.filter(s => s.id !== id));
       // 명중 표시된 단어를 이 시점에 제거 — 단어가 폭발하며 사라지는 연출
-      setWords(prev => prev.filter(w => w.id !== hitId));
+      {
+        const updated = wordsRef.current.filter(w => w.id !== hitId);
+        wordsRef.current = updated;
+        setWords(updated);
+      }
       const bid = popupIdRef.current++;
       setBooms(prev => [...prev, { id: bid, x: target.x, y: target.y }]);
       sfx.explode();
@@ -883,7 +912,10 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     const hitId = idx !== -1 ? current[idx].id : -1;
     if (idx !== -1) {
       // 단어를 즉시 지우지 않고 명중 상태로 표시 — 포탄이 도착하면 폭발하며 사라짐
-      setWords(prev => prev.map(w => (w.id === hitId ? { ...w, hit: true } : w)));
+      // wordsRef 를 즉시 갱신해서 다음 tick 이 덮어쓰지 않도록 함
+      const updated = wordsRef.current.map(w => (w.id === hitId ? { ...w, hit: true } : w));
+      wordsRef.current = updated;
+      setWords(updated);
       // 5티어: 이 단어가 서버 약점 목록에 있었다면 게임 종료 시 제거 대기열에 추가
       const isKr2En = direction === 'kr2en';
       const engResolved = isKr2En ? current[idx].answer : current[idx].prompt;
