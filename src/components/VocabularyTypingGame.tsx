@@ -12,10 +12,12 @@ import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 
 // ============================================================================
 // 단어 소스 — SATVocaPage의 5개 탭과 동일한 서버 엔드포인트 사용
+// 추가로 'weak' — 이 학생이 이전 게임에서 놓친 단어만 모아서 복습하는 특별 모드.
 // ============================================================================
-type SourceKey = 'toefl-easy' | 'toefl-hard' | 'etymology' | 'custom' | 'junior';
+type SourceKey = 'toefl-easy' | 'toefl-hard' | 'etymology' | 'custom' | 'junior' | 'weak';
 
 const SOURCES: { key: SourceKey; label: string; short: string }[] = [
+  { key: 'weak', label: '🔥 나의 약점 단어 (복습)', short: '🔥 약점' },
   { key: 'toefl-easy', label: 'TOEFL 어휘 학습 vol.1', short: '어휘 vol.1' },
   { key: 'toefl-hard', label: 'TOEFL 어휘 학습 vol.2', short: '어휘 vol.2' },
   { key: 'etymology', label: '기출단어', short: '기출' },
@@ -421,6 +423,42 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      // 'weak' 소스: 이 학생이 놓친 단어만 서버에서 로드. DAY 개념 없음(전체 하나로 통합).
+      if (source === 'weak') {
+        setLoadingSource(true);
+        setLoadError(null);
+        try {
+          const { loadWeakWords } = await import('../utils/weakWords');
+          const weak = ownerName ? await loadWeakWords(ownerName) : [];
+          if (cancelled) return;
+          if (weak.length === 0) {
+            setWordsByDay([]);
+            setDays([]);
+            setDay('all');
+            setLoadError('아직 놓친 단어가 없습니다. 다른 단어장에서 게임을 먼저 해보세요.');
+          } else {
+            const words = weak.map(w => ({
+              english: w.english,
+              korean: w.korean,
+              synonyms: [] as string[],
+              dayNumber: 1,
+            }));
+            const daysList = [{ id: 1, name: '전체 약점 단어', count: words.length }];
+            // weak 소스는 캐시하지 않음 — 세션마다 서버 최신 상태를 반영해야 함
+            // (게임 진행 중 정답 시 서버 목록에서 제거되므로)
+            setWordsByDay(words);
+            setDays(daysList);
+            setDay(1);
+          }
+        } catch (err: any) {
+          if (cancelled) return;
+          setLoadError('약점 단어 목록을 불러오지 못했어요.');
+        } finally {
+          if (!cancelled) setLoadingSource(false);
+        }
+        return;
+      }
+
       const cached = sourceCache.current[source];
       if (cached) {
         setWordsByDay(cached.words);
