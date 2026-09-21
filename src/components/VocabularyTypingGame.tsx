@@ -763,18 +763,20 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       }
 
       const areaHeight = gameAreaRef.current?.clientHeight || 420;
-      // tick 스코프에서 놓친 단어 원본 목록을 잡아 setWords 밖에서 후처리 (미스 팝업/약점 트래킹)
+      // wordsRef 를 기반으로 이번 tick 의 다음 상태 계산.
+      // setWords updater 안에서 사이드 이펙트(missedList.push)를 쓰면
+      // React 18/StrictMode 에서 updater 지연·이중 실행으로 팝업이 안 뜨거나
+      // 두 번 뜨는 버그가 있음. 순수 계산만 setWords 에 넣고 후처리는 밖에서.
+      const currentWords = wordsRef.current;
       const missedList: FallingWord[] = [];
-      setWords(prev => {
-        const kept: FallingWord[] = [];
-        for (const w of prev) {
-          if (w.hit) { kept.push(w); continue; }
-          const ny = w.y + w.speed * (dt / 16.6);
-          if (ny > areaHeight - 36) missedList.push(w);
-          else kept.push({ ...w, y: ny });
-        }
-        return kept;
-      });
+      const kept: FallingWord[] = [];
+      for (const w of currentWords) {
+        if (w.hit) { kept.push(w); continue; }
+        const ny = w.y + w.speed * (dt / 16.6);
+        if (ny > areaHeight - 36) missedList.push(w);
+        else kept.push({ ...w, y: ny });
+      }
+      setWords(kept);
       if (missedList.length > 0) {
         const missed = missedList.length;
         sfx.miss();
@@ -794,7 +796,7 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
           setMissPopups(cur => [...cur, { id: pid, english: eng, korean: kor }]);
           window.setTimeout(() => {
             setMissPopups(cur => cur.filter(p => p.id !== pid));
-          }, 2500);
+          }, 3000);
           sessionCountersRef.current.misses.push({ english: eng, korean: kor, source });
         }
 
@@ -1584,19 +1586,19 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
           </div>
         )}
 
-        {/* 5티어: 놓친 단어 뜻 팝업 — 대포 위쪽에 스택 (2.5초 후 자동 소멸) */}
+        {/* 5티어: 놓친 단어 뜻 팝업 — 화면 중앙 상단(HUD 아래)에 크게 노출하여 학생이 확실히 확인 */}
         {missPopups.length > 0 && (
-          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-24 sm:bottom-28 flex flex-col-reverse gap-2 items-center z-30">
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-6 sm:top-8 flex flex-col gap-2 items-center z-40">
             {missPopups.map(p => (
               <div
                 key={p.id}
-                className="rounded-xl bg-red-500/95 text-white px-4 py-2 shadow-2xl min-w-[220px] max-w-[85vw] text-center"
-                style={{ animation: 'missPop 2.5s ease-out forwards' }}
+                className="rounded-2xl bg-red-500 text-white px-5 py-3 shadow-2xl min-w-[240px] max-w-[85vw] text-center border-2 border-red-300/60"
+                style={{ animation: 'missPop 3s ease-out forwards' }}
               >
-                <p className="text-sm font-extrabold flex items-center justify-center gap-1">
-                  <span className="text-base">❌</span> {p.english}
+                <p className="text-base sm:text-lg font-extrabold flex items-center justify-center gap-1.5">
+                  <span className="text-lg">❌</span> {p.english}
                 </p>
-                <p className="text-xs opacity-90 mt-0.5">{p.korean}</p>
+                <p className="text-sm sm:text-base opacity-95 mt-1 font-medium">{p.korean}</p>
               </div>
             ))}
           </div>
