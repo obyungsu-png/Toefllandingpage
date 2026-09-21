@@ -17,6 +17,8 @@ import { getAllWords } from './vocaWordSets';
 import { callAi } from '../utils/aiClient';
 import { useEnrollmentGate } from '../utils/enrollmentGate';
 import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
+import { loadWeakWords, type WeakWord } from '../utils/weakWords';
+import { getCurrentOwnerName } from '../utils/gameStats';
 
 // ============================================================================
 // 소스 & 데이터
@@ -240,6 +242,11 @@ function escapeRegExp(s: string): string {
 export function VocabularySRS({ onExit }: { onExit: () => void }) {
   // 학원생 등록 게이트
   const gate = useEnrollmentGate();
+  // 로그인 학생 이름 — 약점 단어 서버 조회에 사용 (없으면 로컬 진행만)
+  const ownerName = useMemo(() => getCurrentOwnerName(), []);
+
+  // 약점 단어 (Typing Game 에서 놓친 단어들) — SRS 세션 큐 최상단에 우선 배치
+  const [weakWords, setWeakWords] = useState<WeakWord[]>([]);
 
   // --- 소스/DAY 선택 상태 ---
   const [source, setSource] = useState<SourceKey>('toefl-easy');
@@ -265,6 +272,14 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   // 현재 카드에서 사용할 예문(있으면 SATWord.example, 없으면 GLM 캐시/생성 결과)
   const [currentExample, setCurrentExample] = useState<string | null>(null);
   const [loadingExample, setLoadingExample] = useState(false);
+
+  // --- 마운트 시 약점 단어 로드 (setup 화면 열릴 때 한 번) ---
+  useEffect(() => {
+    if (!ownerName) return;
+    let cancelled = false;
+    loadWeakWords(ownerName).then(ws => { if (!cancelled) setWeakWords(ws); });
+    return () => { cancelled = true; };
+  }, [ownerName]);
 
   // --- 소스 로드 ---
   useEffect(() => {
@@ -339,21 +354,34 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   // --- 학습 시작: 오늘 due + 신규 N개 큐잉 (SM-2 스타일) ---
   const startSession = () => {
     const now = Date.now();
+    // 5티어: 약점 단어(놓친 단어)를 큐 최상단에 우선 배치.
+    // - 현재 scope 안의 단어만 대상 (다른 소스/DAY 의 약점 단어는 이번 세션에 안 나옴)
+    // - due/new 판정보다 앞서 별도 그룹으로 분리
+    const weakEngSet = new Set(weakWords.map(w => w.english.toLowerCase()));
+    const weakQueue: SrsWord[] = [];
     const dueQueue: SrsWord[] = [];
     const newQueue: SrsWord[] = [];
     for (const w of scopedWords) {
+      if (weakEngSet.has(w.english.toLowerCase())) {
+        weakQueue.push(w);
+        continue;
+      }
       const s = loadState(source, w.english);
       if (!s) newQueue.push(w);
       else if (s.dueAt <= now) dueQueue.push(w);
     }
-    // 신규는 하루 newLimit 개까지만
-    const combined = [...dueQueue, ...newQueue.slice(0, newLimit)];
-    if (combined.length === 0) return;
-    // 랜덤 셔플 (학습 순서 다양화)
-    for (let i = combined.length - 1; i > 0; i--) {
+    // 약점 큐는 랜덤(스크램블), 그 뒤에 due+new 를 셔플해서 붙임 — "약점 우선 학습"
+    for (let i = weakQueue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [combined[i], combined[j]] = [combined[j], combined[i]];
+      [weakQueue[i], weakQueue[j]] = [weakQueue[j], weakQueue[i]];
     }
+    const rest = [...dueQueue, ...newQueue.slice(0, newLimit)];
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    const combined = [...weakQueue, ...rest];
+    if (combined.length === 0) return;
     setQueue(combined);
     setCurrentIdx(0);
     setSessionStats({ reviewed: 0, correct: 0, again: 0 });
@@ -571,37 +599,55 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
               )}
             </div>
 
-            {/* 오늘의 학습 통계 */}
-            <div className="rounded-xl bg-gradient-to-br from-[#f0f9f9] to-[#e6f4f4] p-4 border border-[#d1e8e8]">
-              <p className="text-[10px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-2">오늘의 학습</p>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <p className="text-2xl font-extrabold text-[#2d7a7c]">{Math.min(newLimit, todayStats.newCards)}</p>
-                  <p className="text-[11px] text-gray-500">신규</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-[#e67e22]">{todayStats.dueCards}</p>
-                  <p className="text-[11px] text-gray-500">복습</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-extrabold text-emerald-600">{totalStudied}</p>
-                  <p className="text-[11px] text-gray-500">학습됨</p>
-                </div>
-              </div>
-            </div>
+            {/* 오늘의 학습 통계 — 5티어: 약점 단어 카운트 추가 (Typing Game 에서 놓친 단어) */}
+            {(() => {
+              const weakEngSet = new Set(weakWords.map(w => w.english.toLowerCase()));
+              const weakInScope = scopedWords.filter(w => weakEngSet.has(w.english.toLowerCase())).length;
+              const totalStart = weakInScope + todayStats.dueCards + Math.min(newLimit, todayStats.newCards);
+              return (
+                <>
+                  <div className="rounded-xl bg-gradient-to-br from-[#f0f9f9] to-[#e6f4f4] p-4 border border-[#d1e8e8]">
+                    <p className="text-[10px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-2">오늘의 학습</p>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div>
+                        <p className="text-2xl font-extrabold text-red-500">{weakInScope}</p>
+                        <p className="text-[10px] text-gray-500">약점</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-[#2d7a7c]">{Math.min(newLimit, todayStats.newCards)}</p>
+                        <p className="text-[10px] text-gray-500">신규</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-[#e67e22]">{todayStats.dueCards}</p>
+                        <p className="text-[10px] text-gray-500">복습</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-extrabold text-emerald-600">{totalStudied}</p>
+                        <p className="text-[10px] text-gray-500">학습됨</p>
+                      </div>
+                    </div>
+                    {weakInScope > 0 && (
+                      <p className="mt-2 text-[11px] text-red-500/80">
+                        ⚠️ 슈팅 게임에서 놓친 단어 {weakInScope}개가 이번 세션 앞부분에 우선 배치됩니다.
+                      </p>
+                    )}
+                  </div>
 
-            <button
-              onClick={startSession}
-              disabled={loadingSource || (todayStats.newCards === 0 && todayStats.dueCards === 0)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-semibold">
-                {todayStats.newCards === 0 && todayStats.dueCards === 0
-                  ? '오늘 학습할 카드가 없습니다'
-                  : `학습 시작 (${Math.min(newLimit, todayStats.newCards) + todayStats.dueCards}장)`}
-              </span>
-            </button>
+                  <button
+                    onClick={startSession}
+                    disabled={loadingSource || totalStart === 0}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2d7a7c] px-6 py-3 text-white transition-colors hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm font-semibold">
+                      {totalStart === 0
+                        ? '오늘 학습할 카드가 없습니다'
+                        : `학습 시작 (${totalStart}장)`}
+                    </span>
+                  </button>
+                </>
+              );
+            })()}
 
             {totalStudied > 0 && (
               <button

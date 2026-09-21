@@ -125,6 +125,12 @@ export function rollDailyMissions(): Mission[] {
   }));
 }
 
+// ── 현재 로그인 학생 이름 (localStorage 스냅샷) ───────────────────────────
+/** App.tsx 가 로그인 시 저장하는 'amx_userName' 규약을 그대로 재사용. */
+export function getCurrentOwnerName(): string {
+  try { return localStorage.getItem('amx_userName') || ''; } catch { return ''; }
+}
+
 // ── 기본값 ───────────────────────────────────────────────────────────────────
 export function defaultStats(): GameStats {
   const today = todayKST();

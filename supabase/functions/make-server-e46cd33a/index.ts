@@ -893,6 +893,37 @@ app.post("/make-server-e46cd33a/game-stats/:ownerName", async (c) => {
   }
 });
 
+// ── Vocabulary 약점 단어 (놓친/오답 단어) — SRS 학습에서 우선 출제 ──
+// key: weak_words_<ownerName>
+// value: { english, korean, source?, missedAt, count }[]  (최대 200개, 오래된 것 순 제거)
+app.get("/make-server-e46cd33a/weak-words/:ownerName", async (c) => {
+  try {
+    const ownerName = c.req.param("ownerName");
+    const key = `weak_words_${ownerName}`;
+    const words = await kv.get(key) || [];
+    return c.json({ words });
+  } catch (error) {
+    console.error("Error fetching weak words:", error);
+    return c.json({ error: "Failed to fetch weak words", details: error.message }, 500);
+  }
+});
+
+app.post("/make-server-e46cd33a/weak-words/:ownerName", async (c) => {
+  try {
+    const ownerName = c.req.param("ownerName");
+    const { words } = await c.req.json();
+    if (!Array.isArray(words)) return c.json({ error: 'words 배열 필요' }, 400);
+    const key = `weak_words_${ownerName}`;
+    // 최대 200개 유지 (오래된 것부터 절단)
+    const trimmed = words.slice(-200);
+    await kv.set(key, trimmed);
+    return c.json({ success: true, count: trimmed.length });
+  } catch (error) {
+    console.error("Error updating weak words:", error);
+    return c.json({ error: "Failed to update weak words", details: error.message }, 500);
+  }
+});
+
 // ── 학생 탈퇴/삭제 시 kv_store 에 저장된 모든 학생 소유 데이터 일괄 제거 ──
 // body: { ownerName?: string, userId?: string } — 둘 중 하나 이상 필수.
 //   * ownerName 기반 키:  game_stats_<ownerName>
@@ -908,11 +939,12 @@ app.delete("/make-server-e46cd33a/user-data", async (c) => {
     }
     const deleted: string[] = [];
 
-    // 1) ownerName 기반 게임 통계
+    // 1) ownerName 기반 게임 통계 + 약점 단어 목록
     if (ownerName) {
-      const key = `game_stats_${ownerName}`;
-      try { await kv.del(key); deleted.push(key); } catch (err) {
-        console.warn(`[user-data:delete] ${key} 삭제 실패`, err);
+      for (const key of [`game_stats_${ownerName}`, `weak_words_${ownerName}`]) {
+        try { await kv.del(key); deleted.push(key); } catch (err) {
+          console.warn(`[user-data:delete] ${key} 삭제 실패`, err);
+        }
       }
     }
 

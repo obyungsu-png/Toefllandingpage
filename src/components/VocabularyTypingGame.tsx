@@ -6,6 +6,7 @@ import {
   loadGameStats, saveGameStats, applySessionDelta, bumpStreakOnLogin,
   computeLevel, type GameStats,
 } from '../utils/gameStats';
+import { loadWeakWords, saveWeakWords, mergeWeakWords, type WeakWord } from '../utils/weakWords';
 import { useEnrollmentGate } from '../utils/enrollmentGate';
 import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 
@@ -377,7 +378,17 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
   const [streakToast, setStreakToast] = useState<number | null>(null);
   const [xpToast, setXpToast] = useState<{ amount: number; missions: string[] } | null>(null);
   // 이 판(단일 세션)에 발생한 이벤트 누적 — 게임 종료 시 applySessionDelta 로 반영
-  const sessionCountersRef = useRef({ words: 0, bombs: 0, slows: 0, fevers: 0 });
+  const sessionCountersRef = useRef({
+    words: 0, bombs: 0, slows: 0, fevers: 0,
+    // 5티어: 놓친 단어(약점) 트래킹 — 게임 종료 시 서버 weak_words 에 병합
+    misses: [] as Array<{ english: string; korean: string; source: string }>,
+    // 정답으로 맞춘 단어 — 서버 약점 목록에서 제거 대기
+    resolved: [] as string[],
+  });
+
+  // 미스 시 뜻 팝업 (2.5초 후 자동 소멸)
+  const [missPopups, setMissPopups] = useState<Array<{ id: number; english: string; korean: string }>>([]);
+  const missPopupIdRef = useRef(0);
   const [booms, setBooms] = useState<Boom[]>([]);
   const [firing, setFiring] = useState(false);
   // 대포 조준 — 발사 시 목표 단어 쪽으로 좌우 이동 + 포신 각도 조절
@@ -526,6 +537,29 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     });
     window.setTimeout(() => setXpToast(null), 4200);
     if (ownerName) saveGameStats(ownerName, next);
+
+    // 5티어: 이번 판의 miss/resolved 를 서버 약점 단어 목록에 병합 반영
+    if (ownerName) {
+      (async () => {
+        try {
+          const misses = sessionCountersRef.current.misses;
+          const resolved = sessionCountersRef.current.resolved;
+          if (misses.length === 0 && resolved.length === 0) return;
+          const existing = await loadWeakWords(ownerName);
+          // 정답으로 맞춘 단어 먼저 제거 → 그 뒤 이번 세션 miss 추가
+          let updated: WeakWord[] = existing;
+          for (const eng of resolved) {
+            updated = updated.filter(w => w.english.toLowerCase() !== eng.toLowerCase());
+          }
+          if (misses.length > 0) updated = mergeWeakWords(updated, misses);
+          if (updated.length !== existing.length || misses.length > 0) {
+            await saveWeakWords(ownerName, updated);
+          }
+        } catch (err) {
+          console.warn('[weakWords] 게임 종료 병합 실패', err);
+        }
+      })();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -627,8 +661,9 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     setSlowUntil(0);
     setItemToast(null);
     lastComboRewardRef.current = 0;
-    // 세션 이벤트 카운터 리셋 (XP/미션 계산용)
-    sessionCountersRef.current = { words: 0, bombs: 0, slows: 0, fevers: 0 };
+    // 세션 이벤트 카운터 리셋 (XP/미션 + 약점 단어 계산용)
+    sessionCountersRef.current = { words: 0, bombs: 0, slows: 0, fevers: 0, misses: [], resolved: [] };
+    setMissPopups([]);
     lastSpawnRef.current = 0;
     setStatus('playing');
     sfx.start();
@@ -690,35 +725,50 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
       }
 
       const areaHeight = gameAreaRef.current?.clientHeight || 420;
+      // tick 스코프에서 놓친 단어 원본 목록을 잡아 setWords 밖에서 후처리 (미스 팝업/약점 트래킹)
+      const missedList: FallingWord[] = [];
       setWords(prev => {
         const kept: FallingWord[] = [];
-        let missed = 0;
         for (const w of prev) {
-          if (w.hit) { kept.push(w); continue; } // 명중된 단어는 폭발까지 그 자리에 고정
+          if (w.hit) { kept.push(w); continue; }
           const ny = w.y + w.speed * (dt / 16.6);
-          if (ny > areaHeight - 36) missed += 1;
+          if (ny > areaHeight - 36) missedList.push(w);
           else kept.push({ ...w, y: ny });
-        }
-        if (missed > 0) {
-          sfx.miss();
-          comboRef.current = 0;
-          setCombo(0);
-          setFever(false);
-          lastComboRewardRef.current = 0; // 스트릭 끊김 → 다음 콤보 마일스톤 재보상 허용
-          setShake(true);
-          window.setTimeout(() => setShake(false), 350);
-          setLives(l => {
-            const nl = Math.max(0, l - missed);
-            // gameover sfx 중복 재생 방지 — 이번 프레임에 처음 0에 닿을 때만 트리거
-            if (nl === 0 && l > 0) {
-              setStatus('gameover');
-              sfx.gameover();
-            }
-            return nl;
-          });
         }
         return kept;
       });
+      if (missedList.length > 0) {
+        const missed = missedList.length;
+        sfx.miss();
+        comboRef.current = 0;
+        setCombo(0);
+        setFever(false);
+        lastComboRewardRef.current = 0;
+        setShake(true);
+        window.setTimeout(() => setShake(false), 350);
+
+        // 5티어: 놓친 단어마다 뜻 팝업 노출 + 약점 카운터에 기록
+        const isKr2En = direction === 'kr2en';
+        for (const w of missedList) {
+          const eng = isKr2En ? w.answer : w.prompt;
+          const kor = isKr2En ? w.prompt : w.answer;
+          const pid = missPopupIdRef.current++;
+          setMissPopups(cur => [...cur, { id: pid, english: eng, korean: kor }]);
+          window.setTimeout(() => {
+            setMissPopups(cur => cur.filter(p => p.id !== pid));
+          }, 2500);
+          sessionCountersRef.current.misses.push({ english: eng, korean: kor, source });
+        }
+
+        setLives(l => {
+          const nl = Math.max(0, l - missed);
+          if (nl === 0 && l > 0) {
+            setStatus('gameover');
+            sfx.gameover();
+          }
+          return nl;
+        });
+      }
 
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -794,6 +844,10 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
     if (idx !== -1) {
       // 단어를 즉시 지우지 않고 명중 상태로 표시 — 포탄이 도착하면 폭발하며 사라짐
       setWords(prev => prev.map(w => (w.id === hitId ? { ...w, hit: true } : w)));
+      // 5티어: 이 단어가 서버 약점 목록에 있었다면 게임 종료 시 제거 대기열에 추가
+      const isKr2En = direction === 'kr2en';
+      const engResolved = isKr2En ? current[idx].answer : current[idx].prompt;
+      sessionCountersRef.current.resolved.push(engResolved);
     }
 
     if (matchedAt) {
@@ -1174,6 +1228,7 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
         @keyframes muzzle { 0% { transform:translate(-50%,-100%) scale(.5); opacity:1 } 100% { transform:translate(-50%,-100%) scale(2.1); opacity:0 } }
         @keyframes shakeSmall { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
         @keyframes toastPop { 0% { transform:translate(-50%,10px) scale(.7); opacity:0 } 40% { transform:translate(-50%,-4px) scale(1.15); opacity:1 } 100% { transform:translate(-50%,0) scale(1); opacity:1 } }
+        @keyframes missPop { 0% { transform:translateY(20px) scale(.85); opacity:0 } 8% { transform:translateY(-3px) scale(1.05); opacity:1 } 15% { transform:translateY(0) scale(1); opacity:1 } 85% { transform:translateY(0) scale(1); opacity:1 } 100% { transform:translateY(-10px) scale(.95); opacity:0 } }
       `}</style>
 
       {/* 스트릭 갱신 축하 토스트 (플레이 화면에도 뜸) */}
@@ -1488,6 +1543,24 @@ export function VocabularyTypingGame({ onExit, ownerName }: { onExit: () => void
                 나가기
               </button>
             </div>
+          </div>
+        )}
+
+        {/* 5티어: 놓친 단어 뜻 팝업 — 대포 위쪽에 스택 (2.5초 후 자동 소멸) */}
+        {missPopups.length > 0 && (
+          <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-24 sm:bottom-28 flex flex-col-reverse gap-2 items-center z-30">
+            {missPopups.map(p => (
+              <div
+                key={p.id}
+                className="rounded-xl bg-red-500/95 text-white px-4 py-2 shadow-2xl min-w-[220px] max-w-[85vw] text-center"
+                style={{ animation: 'missPop 2.5s ease-out forwards' }}
+              >
+                <p className="text-sm font-extrabold flex items-center justify-center gap-1">
+                  <span className="text-base">❌</span> {p.english}
+                </p>
+                <p className="text-xs opacity-90 mt-0.5">{p.korean}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
