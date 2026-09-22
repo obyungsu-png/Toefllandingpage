@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 // motion replaced with CSS animations
-import { BookOpen, Download, FileText, Play, ChevronRight, Check, ArrowLeft, X, ArrowRightLeft, Loader2, Languages } from 'lucide-react';
+import { BookOpen, Download, FileText, Play, ChevronRight, Check, ArrowLeft, X, ArrowRightLeft, Loader2, Languages, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { SATWord } from './vocaWordSets';
 import { SATVocaTest } from './SATVocaTest';
+import { VocabularySRS } from './VocabularySRS';
 import { useEnrollmentGate } from '../utils/enrollmentGate';
 import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
@@ -134,7 +135,9 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
     throw new Error('fetchWithRetry: unreachable');
   };
   
-  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'custom' | 'etymology' | 'junior'>('toefl-easy');
+  const [activeTab, setActiveTab] = useState<'toefl-easy' | 'toefl-hard' | 'custom' | 'etymology' | 'junior' | 'srs'>('toefl-easy');
+  // SRS 학습은 별도 오버레이 화면 — 탭에서 "학습 시작" 클릭 시 오픈
+  const [showSRS, setShowSRS] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedWords, setSelectedWords] = useState<SATWord[]>([]);
@@ -183,6 +186,8 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
 
   // Fetch days and words from Supabase when activeTab changes (with caching)
   useEffect(() => {
+    // srs 탭은 컴포넌트 내부에서 자체 fetch 하므로 여기서는 스킵
+    if (activeTab === 'srs') return;
     const fetchData = async () => {
       // Step 1: Try to load from cache first for instant display
       const cachedData = loadFromCache(activeTab);
@@ -835,6 +840,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               { key: 'etymology' as const, label: '기출단어', short: '기출' },
               { key: 'custom' as const, label: '참고서 영단어', short: '참고서' },
               { key: 'junior' as const, label: '중3+고1 영단어 vol.5', short: 'vol.5' },
+              { key: 'srs' as const, label: '🧠 SRS 학습', short: '🧠 SRS' },
             ]).map(tab => (
               <button
                 key={tab.key}
@@ -872,11 +878,49 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               ? 'CMS에서 추가한 참고서 영단어로 학습하세요.'
               : activeTab === 'junior'
               ? '중3+고1 초급 어휘 30일 과정을 학습하세요. (vol.5, 영/한/중)'
+              : activeTab === 'srs'
+              ? '간격 반복 학습(Spaced Repetition) — 매일 복습할 카드를 알고리즘이 자동 관리합니다. 뜻/예문(Cloze) 문제를 섞어 장기 기억에 최적화.'
               : 'CMS에서 추가한 기출 단어로 학습하세요.'}
           </p>
         </div>
 
-        {/* Step Indicator */}
+        {/* SRS 탭: Step 1~3 흐름을 건너뛰고 학습 시작 CTA 노출 */}
+        {activeTab === 'srs' && (
+          <div
+            className="bg-white rounded-2xl shadow-lg p-6 md:p-10 text-center"
+            style={{ animation: 'fadeSlideUp 0.3s ease-out' }}
+          >
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: `${themeColor}15` }}>
+              <Sparkles className="h-8 w-8" style={{ color: themeColor }} />
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold mb-2" style={{ color: themeColor }}>
+              간격 반복 학습 (SRS)
+            </h2>
+            <p className="text-sm text-gray-500 mb-2 max-w-md mx-auto">
+              Anki 방식의 간격 반복 알고리즘으로, 학생이 잘 아는 단어는 뜸하게 · 어려운 단어는 자주 출제됩니다.
+            </p>
+            <ul className="text-xs text-gray-500 mb-6 max-w-md mx-auto text-left space-y-1">
+              <li>• 카드 뒤집기 뒤 <b>Again / Hard / Good / Easy</b> 자체평가 → 다음 복습일이 자동 계산</li>
+              <li>• 예문이 있는 단어는 30% 확률로 <b>Cloze(문맥 빈칸)</b> 형식 출제</li>
+              <li>• 학습 이력은 브라우저에 저장되어 <b>매일 "오늘의 복습"</b> 큐가 자동 갱신</li>
+            </ul>
+            <button
+              onClick={() => setShowSRS(true)}
+              className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-white font-bold transition-colors hover:opacity-90"
+              style={{ backgroundColor: themeColor }}
+            >
+              <Sparkles className="h-4 w-4" />
+              학습 시작
+            </button>
+          </div>
+        )}
+
+        {showSRS && (
+          <VocabularySRS onExit={() => setShowSRS(false)} />
+        )}
+
+        {/* Step Indicator (srs 탭은 Step 흐름을 타지 않으므로 숨김) */}
+        {activeTab !== 'srs' && (
         <div className="flex items-center justify-center mb-6 sm:mb-12">
           {[1, 2, 3].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
@@ -899,9 +943,10 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
             </div>
           ))}
         </div>
+        )}
 
-        {/* Step 1: DAY Selection and Question Count - ALL TABS */}
-        {step === 1 && (
+        {/* Step 1: DAY Selection and Question Count - ALL TABS (srs 제외) */}
+        {activeTab !== 'srs' && step === 1 && (
           <div
             className="bg-white rounded-2xl shadow-lg p-4 md:p-8"
             style={{ animation: 'fadeSlideUp 0.3s ease-out' }}
@@ -1297,7 +1342,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         )}
 
         {/* Step 2: Word Review */}
-        {step === 2 && (
+        {activeTab !== 'srs' && step === 2 && (
           <div
             style={{ animation: 'fadeSlideUp 0.3s ease-out' }}
             className="space-y-8"
@@ -1373,7 +1418,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
         )}
 
         {/* Step 3: Save and Download */}
-        {step === 3 && (
+        {activeTab !== 'srs' && step === 3 && (
           <div
             className="space-y-8"
             style={{ animation: 'fadeSlideUp 0.3s ease-out' }}
