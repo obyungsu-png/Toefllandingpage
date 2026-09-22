@@ -840,7 +840,7 @@ export function SATVocaPage({ testType = 'SAT', onBack, onSaveResult }: SATVocaP
               { key: 'etymology' as const, label: '기출단어', short: '기출' },
               { key: 'custom' as const, label: '참고서 영단어', short: '참고서' },
               { key: 'junior' as const, label: '중3+고1 영단어 vol.5', short: 'vol.5' },
-              { key: 'srs' as const, label: '🧠 SRS 학습', short: '🧠 SRS' },
+              { key: 'srs' as const, label: '📅 SRS 학습', short: '📅 SRS' },
             ]).map(tab => (
               <button
                 key={tab.key}
