@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import {
   BookOpen, Loader2, Download, ExternalLink, Plus, Pencil, Trash2, X,
-  Eye, EyeOff, ArrowUpDown, RefreshCw, Save, FolderOpen,
+  EyeOff, RefreshCw, Save, FolderOpen, FileText, Link2,
 } from 'lucide-react';
 import {
   listMaterials, listAllMaterialsAdmin,
@@ -28,6 +28,20 @@ interface StudyMaterialsRoomProps {
 function isExternalPageLink(url: string): boolean {
   const u = (url || '').toLowerCase();
   return /drive\.google\.com|baidu\.com|pan\.baidu|dropbox\.com|onedrive|mega\.nz|notion\.so|docs\.google/.test(u);
+}
+
+/** URL 확장자로 파일 타입 추정 (아이콘/라벨 표시용) */
+function getFileKind(url: string): { label: string; color: string } {
+  const u = (url || '').toLowerCase();
+  if (/\.pdf(\?|$)/.test(u)) return { label: 'PDF', color: '#dc2626' };
+  if (/\.(docx?|hwp)(\?|$)/.test(u)) return { label: 'DOC', color: '#2563eb' };
+  if (/\.(xlsx?|csv)(\?|$)/.test(u)) return { label: 'XLS', color: '#059669' };
+  if (/\.(pptx?)(\?|$)/.test(u)) return { label: 'PPT', color: '#ea580c' };
+  if (/\.(zip|rar|7z)(\?|$)/.test(u)) return { label: 'ZIP', color: '#7c3aed' };
+  if (/\.(mp3|wav|m4a)(\?|$)/.test(u)) return { label: 'AUDIO', color: '#db2777' };
+  if (/\.(mp4|mov|webm)(\?|$)/.test(u)) return { label: 'VIDEO', color: '#0891b2' };
+  if (/\.(png|jpe?g|webp|gif)(\?|$)/.test(u)) return { label: 'IMG', color: '#ca8a04' };
+  return { label: 'LINK', color: '#6b7280' };
 }
 
 /** 카테고리 배지 색상 */
@@ -70,23 +84,27 @@ export function StudyMaterialsRoom({ themeColor = '#005f61', isAdmin = false }: 
   };
 
   return (
-    <div className="p-3 md:p-6">
-      {/* 헤더 */}
-      <div className="mb-4 md:mb-6 flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
-            <FolderOpen className="w-5 h-5" style={{ color: themeColor }} />
+    <div className="p-3 md:p-6 max-w-5xl mx-auto">
+      {/* 헤더 — 자료방임을 강조하는 큰 배너 */}
+      <div
+        className="mb-5 rounded-2xl p-5 md:p-6 flex items-center justify-between gap-3 flex-wrap shadow-sm"
+        style={{ background: `linear-gradient(135deg, ${themeColor}, ${themeColor}dd)` }}
+      >
+        <div className="text-white">
+          <h2 className="text-xl md:text-2xl font-extrabold flex items-center gap-2">
+            <FolderOpen className="w-6 h-6" />
             자료방
           </h2>
-          <p className="text-xs md:text-sm text-gray-500 mt-1">
-            학습에 도움이 되는 자료를 다운로드하거나 외부 링크로 열어볼 수 있어요. 순번대로 정렬되어 있습니다.
+          <p className="text-xs md:text-sm text-white/90 mt-1 leading-relaxed max-w-xl">
+            학원 공식 학습 자료 모음집입니다. PDF·오디오·링크 등 다양한 형식의
+            자료를 <b>다운로드</b> 받거나 <b>외부 링크</b> 로 바로 열어볼 수 있어요.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setRefreshKey(k => k + 1)}
             disabled={loading}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/15 border border-white/30 text-white hover:bg-white/25 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             새로고침
@@ -94,8 +112,7 @@ export function StudyMaterialsRoom({ themeColor = '#005f61', isAdmin = false }: 
           {isAdmin && (
             <button
               onClick={() => { setEditing(null); setShowForm(true); }}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold text-white"
-              style={{ backgroundColor: themeColor }}
+              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-bold bg-white text-gray-800 hover:bg-gray-100"
             >
               <Plus className="w-3.5 h-3.5" /> 자료 추가
             </button>
@@ -110,42 +127,56 @@ export function StudyMaterialsRoom({ themeColor = '#005f61', isAdmin = false }: 
           <p className="text-sm text-gray-500">자료를 불러오는 중…</p>
         </div>
       ) : rows.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-2xl border border-gray-200">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 font-medium">아직 올라온 자료가 없어요</p>
-          {isAdmin && (
-            <p className="text-xs text-gray-400 mt-1">
-              우측 상단의 "자료 추가" 버튼으로 첫 자료를 올려보세요.
-            </p>
-          )}
+        <div className="p-10 md:p-14 text-center bg-white rounded-2xl border-2 border-dashed border-gray-200">
+          <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: `${themeColor}15` }}>
+            <BookOpen className="w-8 h-8" style={{ color: themeColor }} />
+          </div>
+          <p className="text-base font-bold text-gray-700">아직 올라온 자료가 없어요</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {isAdmin
+              ? '우측 상단의 "자료 추가" 버튼으로 첫 자료를 올려보세요.'
+              : '곧 학원 측에서 학습 자료를 업로드할 예정입니다.'}
+          </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {rows.map((m, i) => {
             const isExternal = isExternalPageLink(m.download_url);
             const Icon = isExternal ? ExternalLink : Download;
             const btnLabel = m.link_label || (isExternal ? '링크 열기' : '다운로드');
             const hidden = !m.is_visible;
+            const kind = getFileKind(m.download_url);
+            const typeIcon = isExternal ? Link2 : FileText;
+            const TypeIcon = typeIcon;
             return (
               <div
                 key={m.id}
-                className={`bg-white rounded-xl border p-3 md:p-4 flex items-start gap-3 md:gap-4 transition-shadow hover:shadow-md ${
+                className={`bg-white rounded-2xl border p-4 md:p-5 flex items-start gap-3 md:gap-4 transition-all hover:shadow-lg hover:-translate-y-0.5 ${
                   hidden ? 'border-dashed border-gray-300 opacity-60' : 'border-gray-200'
                 }`}
               >
-                {/* 순번 배지 */}
-                <div
-                  className="flex-shrink-0 w-10 h-10 md:w-11 md:h-11 rounded-lg flex items-center justify-center font-bold text-sm md:text-base text-white"
-                  style={{ backgroundColor: themeColor }}
-                  title={`순번 ${m.order_num || i + 1}`}
-                >
-                  {m.order_num || i + 1}
+                {/* 좌측: 순번 + 파일 타입 뱃지 */}
+                <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+                  <div
+                    className="w-11 h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-extrabold text-base md:text-lg text-white shadow-sm"
+                    style={{ backgroundColor: themeColor }}
+                    title={`순번 ${m.order_num || i + 1}`}
+                  >
+                    {m.order_num || i + 1}
+                  </div>
+                  <span
+                    className="text-[9px] font-bold text-white px-1.5 py-0.5 rounded"
+                    style={{ backgroundColor: kind.color }}
+                  >
+                    {kind.label}
+                  </span>
                 </div>
 
-                {/* 내용 */}
+                {/* 가운데: 내용 */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <h3 className="text-sm md:text-base font-bold text-gray-900 break-words">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <TypeIcon className="w-4 h-4 flex-shrink-0" style={{ color: themeColor }} />
+                    <h3 className="text-base md:text-lg font-bold text-gray-900 break-words">
                       {m.title}
                     </h3>
                     {m.category && (
@@ -168,22 +199,22 @@ export function StudyMaterialsRoom({ themeColor = '#005f61', isAdmin = false }: 
                     </p>
                   )}
                   {isAdmin && (
-                    <p className="mt-1 text-[10px] text-gray-400 truncate" title={m.download_url}>
-                      {m.download_url}
+                    <p className="mt-2 text-[10px] text-gray-400 truncate" title={m.download_url}>
+                      🔗 {m.download_url}
                     </p>
                   )}
                 </div>
 
-                {/* 액션 */}
-                <div className="flex-shrink-0 flex flex-col md:flex-row items-end md:items-center gap-1.5">
+                {/* 우측: 액션 */}
+                <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
                   <a
                     href={m.download_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold text-white px-3 py-1.5 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-4 py-2.5 rounded-xl transition-all hover:opacity-90 hover:scale-105 shadow-sm whitespace-nowrap"
                     style={{ backgroundColor: themeColor }}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-4 h-4" />
                     {btnLabel}
                   </a>
                   {isAdmin && (
