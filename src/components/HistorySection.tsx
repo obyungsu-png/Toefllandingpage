@@ -742,7 +742,6 @@ export function HistorySection({
                     }}
                   >
                     <span className="flex items-center gap-1.5">
-                      {isHighlight && <span className="text-amber-500">📁</span>}
                       {tab}
                     </span>
                     {count > 0 && tab !== 'Report' && (
@@ -782,7 +781,6 @@ export function HistorySection({
                   }`}
                   style={{ backgroundColor: isActive ? (isHighlight ? '#f59e0b' : themeColor) : undefined }}
                 >
-                  {isHighlight && <span>📁</span>}
                   {tab}
                 </button>
               );
