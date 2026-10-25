@@ -4,12 +4,10 @@
  * SRS(Spaced Repetition System, 간격 반복 학습) 기반 단어 학습 컴포넌트.
  * - Anki 계열 SM-2 알고리즘 단순화 버전을 사용해 카드마다 "언제 다시 볼지" 계산.
  * - 5개 단어장 소스(vol.1/vol.2/기출/참고서/vol.5) + DAY 선택 흐름 지원.
- * - 4단계 학습 사다리 (streak 기반):
- *     streak≤0         → flashcard (영→한 재인 셀프평가)  — 새 단어는 여기서 시작
- *     streak=1         → mc        (한 뜻 4지선다)
- *     streak=2         → typing    (한→영 철자 입력)
- *     streak≥3 + 예문  → cloze     (문맥 빈칸 + 힌트 사다리)
- *   틀리면 streak 리셋 → flashcard 로 복귀. 맞으면 한 단계 위로.
+ * - 메인 학습: 영→한 Flashcard 재인 + 4단계 셀프평가(Again/Hard/Good/Easy)
+ * - 세션 완료 시: 방금 Good/Easy 받은 단어 중 예문이 있는 것들로 "📝 문맥 복습" 보너스
+ *   세션(Cloze) 을 선택적으로 돌릴 수 있음. SRS 상태는 바뀌지 않음(순수 복습).
+ *   Cloze 는 "이미 아는 단어" 에만 노출되므로 모르는 단어로 벽에 막힐 일이 없음.
  * - 학습 상태는 localStorage 에 per-source-per-word 로 저장 (Supabase 연동은 추후).
  *
  * 리텐션 포인트: 앱을 열면 "오늘의 복습 N장"이 제시되어 매일 돌아올 이유를 제공.
@@ -118,33 +116,16 @@ function nextCardState(prev: CardState, grade: Grade): CardState {
     ease = Math.max(1.3, ease - 0.15);
     interval = 1;
   } else if (grade === 2) {
-    // Good — "Learning steps" (streak 1~3) 동안은 짧은 간격(<1일) 으로 설정 →
-    //   같은 세션 안에 재삽입되어 사다리의 다음 단계로 다시 등장. streak 4 부터
-    //   졸업(1일 뒤) 되어 SM-2 일수 기반 장기 복습으로 넘어감.
-    //     streak 1  (→ 다음은 MC)     : 10분 뒤 (세션 내 재등장)
-    //     streak 2  (→ 다음은 Typing) : 30분 뒤 (세션 내 재등장)
-    //     streak 3  (→ 다음은 Cloze)  : 60분 뒤 (세션 내 재등장)
-    //     streak 4                    : 1일 뒤  (졸업 — 다음 세션으로)
-    //     streak 5                    : 3일 뒤
-    //     streak 6+                   : SM-2 (interval * ease)
+    // Good — 첫 정답 1일, 두번째 3일, 이후 interval * ease
     streak += 1;
-    if (streak === 1) interval = 10 / (24 * 60);
-    else if (streak === 2) interval = 30 / (24 * 60);
-    else if (streak === 3) interval = 60 / (24 * 60);
-    else if (streak === 4) interval = 1;
-    else if (streak === 5) interval = 3;
+    if (streak === 1) interval = 1;
+    else if (streak === 2) interval = 3;
     else interval = Math.round(interval * ease);
   } else {
-    // Easy — "잘 알아요" → learning steps 를 건너뛰고 바로 일수 기반 복습으로 승급.
-    //     streak 1 : 1 일   (Flashcard → 하루 뒤 MC)
-    //     streak 2 : 4 일   (MC → 4일 뒤 Typing)
-    //     streak 3 : 10일   (Typing → 10일 뒤 Cloze)
-    //     streak 4+: SM-2 × 1.3 보너스
+    // Easy — 크게 늘림 (interval * ease * 1.3, 최소 4일부터)
     streak += 1;
     ease = Math.min(3.0, ease + 0.05);
-    if (streak === 1) interval = 1;
-    else if (streak === 2) interval = 4;
-    else if (streak === 3) interval = 10;
+    if (streak === 1) interval = 4;
     else interval = Math.round(interval * ease * 1.3);
   }
 
@@ -278,26 +259,27 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   const sourceCache = useRef<Partial<Record<SourceKey, { words: SrsWord[]; days: DayInfo[] }>>>({});
 
   // --- 학습 세션 상태 ---
-  type Phase = 'setup' | 'learn' | 'done';
-  type Mode = 'flashcard' | 'mc' | 'typing' | 'cloze';
+  type Phase = 'setup' | 'learn' | 'done' | 'cloze-bonus' | 'cloze-done';
   const [phase, setPhase] = useState<Phase>('setup');
   const [queue, setQueue] = useState<SrsWord[]>([]);       // 오늘 학습할 카드 큐
   const [currentIdx, setCurrentIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [mode, setMode] = useState<Mode>('flashcard');     // 현재 카드의 학습 단계
+  const [sessionStats, setSessionStats] = useState({ reviewed: 0, correct: 0, again: 0 });
+  const [newLimit, setNewLimit] = useState(10);            // 하루 신규 카드 수
+
+  // --- 세션 끝 Cloze 보너스 ---
+  //   방금 세션에서 Good/Easy 를 받은 "확실히 아는 단어" 들만 모아 문맥 복습.
+  //   SRS 상태는 절대 수정하지 않음(순수 복습용). 예문이 없는 단어는 자동 제외.
+  const [sessionGoodWords, setSessionGoodWords] = useState<SrsWord[]>([]);
+  const [clozeBonusQueue, setClozeBonusQueue] = useState<SrsWord[]>([]);
+  const [clozeBonusIdx, setClozeBonusIdx] = useState(0);
   const [clozeAnswer, setClozeAnswer] = useState('');
   const [clozeResult, setClozeResult] = useState<'ok' | 'ng' | null>(null);
   const [clozeHintLevel, setClozeHintLevel] = useState(0); // 0=없음, 1=첫글자, 2=앞 2글자
-  // 4지선다 (MC) 상태
-  const [mcOptions, setMcOptions] = useState<string[]>([]);
-  const [mcAnswer, setMcAnswer] = useState<string | null>(null);
-  const [mcResult, setMcResult] = useState<'ok' | 'ng' | null>(null);
-  // 타이핑 (한국어→영어 철자) 상태
-  const [typingAnswer, setTypingAnswer] = useState('');
-  const [typingResult, setTypingResult] = useState<'ok' | 'ng' | 'hard' | null>(null);
-  const [sessionStats, setSessionStats] = useState({ reviewed: 0, correct: 0, again: 0 });
-  const [newLimit, setNewLimit] = useState(10);            // 하루 신규 카드 수
+  const [bonusStats, setBonusStats] = useState({ attempted: 0, correct: 0 });
+
   // 현재 카드에서 사용할 예문(있으면 SATWord.example, 없으면 GLM 캐시/생성 결과)
+  //   메인 세션(learn) 에서는 뒷면 노출용. 보너스 세션(cloze-bonus) 에서는 빈칸 생성용.
   const [currentExample, setCurrentExample] = useState<string | null>(null);
   const [loadingExample, setLoadingExample] = useState(false);
 
@@ -413,93 +395,33 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     setQueue(combined);
     setCurrentIdx(0);
     setSessionStats({ reviewed: 0, correct: 0, again: 0 });
+    setSessionGoodWords([]);
     setPhase('learn');
-    // 예문/모드 결정은 아래 useEffect(현재 카드) 에서 처리
   };
 
   const current = queue[currentIdx];
 
-  // --- 현재 카드가 바뀔 때: 학습 단계(mode) 결정 + 예문/보기 준비 ---
-  //   streak 기반 단계 사다리.
-  //   - flashcard: streak≤0  — 영→한 재인 (셀프평가) · 새 단어는 여기서 시작
-  //   - mc       : streak=1  — 한 뜻 4지선다
-  //   - typing   : streak=2  — 한→영 철자 입력
-  //   - cloze    : streak≥3 + 예문 있음 — 문맥 빈칸 (없으면 typing 로 fallback)
+  // --- 현재 카드가 바뀔 때: UI 초기화 + 뒷면 노출용 예문 준비 ---
+  //   메인 세션은 Flashcard 전용 (영→한 재인). 예문은 뒤집었을 때만 참고용으로 보임.
+  //   DB(CMS)/캐시 예문이 있으면 그대로, 없으면 GLM 으로 생성 시도.
   useEffect(() => {
     if (phase !== 'learn' || !current) return;
-    // 카드가 넘어갈 때 UI 초기화
     setFlipped(false);
-    setClozeAnswer('');
-    setClozeResult(null);
-    setClozeHintLevel(0);
-    setTypingAnswer('');
-    setTypingResult(null);
-    setMcAnswer(null);
-    setMcResult(null);
     setCurrentExample(null);
 
-    const prev = loadState(source, current.english);
-    const streak = prev?.streak ?? 0;
-
-    // 1차 단계 결정
-    let decidedMode: Mode;
-    if (streak <= 0) decidedMode = 'flashcard';
-    else if (streak === 1) decidedMode = 'mc';
-    else if (streak === 2) decidedMode = 'typing';
-    else decidedMode = 'cloze';
-
-    // MC 보기 세팅 (정답 + 다른 단어 3개 뜻)
-    if (decidedMode === 'mc') {
-      const pool = scopedWords.filter(w => w.english.toLowerCase() !== current.english.toLowerCase() && w.korean && w.korean !== current.korean);
-      const picks: string[] = [];
-      const copy = [...pool];
-      for (let i = 0; i < 3 && copy.length > 0; i++) {
-        const idx = Math.floor(Math.random() * copy.length);
-        picks.push(copy.splice(idx, 1)[0].korean);
-      }
-      // 범위가 좁아 보기가 부족하면 flashcard 로 fallback
-      if (picks.length < 3) {
-        decidedMode = 'flashcard';
-      } else {
-        const options = [current.korean, ...picks];
-        for (let i = options.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [options[i], options[j]] = [options[j], options[i]];
-        }
-        setMcOptions(options);
-      }
-    }
-
-    setMode(decidedMode);
-
-    // 예문 준비 (cloze 가 필요로 함)
     let cancelled = false;
     const prepareExample = async () => {
       const existing = current.example || loadCachedExample(current.english);
       if (existing) {
-        if (cancelled) return;
-        setCurrentExample(existing);
-        // cloze 인데 target 단어를 블랭크할 수 없으면 typing 로 fallback
-        if (decidedMode === 'cloze' && !makeCloze(existing, current.english).matched) {
-          setMode('typing');
-        }
+        if (!cancelled) setCurrentExample(existing);
         return;
       }
-      // 예문 없음 — cloze 일 때만 GLM 생성 시도 (비용 절약)
-      if (decidedMode !== 'cloze') return;
+      // 예문 없음 → GLM 생성 1회 (실패해도 Flashcard 는 돌아감)
       setLoadingExample(true);
       const gen = await generateExampleGLM(current.english, current.korean);
       if (cancelled) { setLoadingExample(false); return; }
       setLoadingExample(false);
-      if (gen) {
-        setCurrentExample(gen);
-        if (decidedMode === 'cloze' && !makeCloze(gen, current.english).matched) {
-          setMode('typing');
-        }
-      } else if (decidedMode === 'cloze') {
-        // 예문 생성 실패 → typing 로 fallback
-        setMode('typing');
-      }
+      if (gen) setCurrentExample(gen);
     };
     prepareExample();
     return () => { cancelled = true; };
@@ -519,21 +441,22 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
       again: s.again + (grade === 0 ? 1 : 0),
     }));
 
-    // 세션 내 재삽입 — 짧은 간격(<1일) 카드는 같은 세션 안에 다시 등장시켜
-    //   학습 사다리의 다음 단계(MC/Typing/Cloze)가 바로 나오도록 함.
-    //     - Again(grade 0)              : 3장 뒤 (즉시 반복 방지, 재학습 집중)
-    //     - Good(2)/Easy(3) + 짧은 간격 : 6장 뒤 (한 바퀴 돌고 다음 단계 등장)
-    //   next.interval 이 1일 이상이면 "졸업" → 큐에서 빠지고 다음 세션에만 등장.
+    // Good/Easy 받은 "확실히 아는 단어" 는 세션 끝 Cloze 보너스 후보로 수집.
+    //   같은 단어가 세션 내 두 번 등장할 수도 있어 중복 제거.
+    if (grade >= 2) {
+      setSessionGoodWords(prevList => {
+        if (prevList.some(w => w.english.toLowerCase() === current.english.toLowerCase())) return prevList;
+        return [...prevList, current];
+      });
+    }
+
+    // Again 은 이번 세션에서 몇 칸 뒤에 다시 나오도록 재삽입 (즉시 반복 방지).
+    // 남은 카드가 충분하면 3장 뒤, 부족하면 남은 만큼 뒤에 삽입.
     let nextQueue = queue;
-    const SHORT_INTERVAL_DAYS = 1; // 이 미만이면 세션 내 재삽입
-    const reinsertGap =
-      grade === 0 ? 3 :
-      (grade >= 2 && next.interval < SHORT_INTERVAL_DAYS) ? 6 :
-      0;
-    if (reinsertGap > 0) {
+    if (grade === 0) {
       const before = queue.slice(0, currentIdx + 1);
       const rest = queue.slice(currentIdx + 1);
-      const gap = Math.min(rest.length, reinsertGap);
+      const gap = Math.min(rest.length, 3);
       nextQueue = [...before, ...rest.slice(0, gap), current, ...rest.slice(gap)];
     }
     const nextIdx = currentIdx + 1;
@@ -543,99 +466,86 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     }
     setQueue(nextQueue);
     setCurrentIdx(nextIdx);
-    // 예문/모드/UI 초기화는 currentIdx 변경 감지 useEffect 에서 처리
   };
 
-  // --- 입력 정답 판정 (Cloze / Typing 공용) ---
-  //   완전 일치 → 'ok'
-  //   어간 일치(단수/현재) → 'ok'
-  //   1 글자 차이 (오타 허용) → 'hard'
-  //   그 외 → 'ng'
-  const judgeSpelling = (typed: string, target: string): 'ok' | 'hard' | 'ng' => {
+  // --- 철자 판정 (완전 일치 / 어간 일치 / 그 외) ---
+  const judgeSpelling = (typed: string, target: string): 'ok' | 'ng' => {
     const t = typed.trim().toLowerCase();
     const g = target.trim().toLowerCase();
     if (!t) return 'ng';
     if (t === g) return 'ok';
     const stem = g.replace(/(ing|ed|es|s)$/i, '');
     if (t === stem) return 'ok';
-    // 단순 Levenshtein (1 글자 차이) — 길이 차이 ≤1 이고 편집거리 ≤1
-    const dist = (a: string, b: string): number => {
-      if (Math.abs(a.length - b.length) > 1) return 2;
-      let i = 0, j = 0, edits = 0;
-      while (i < a.length && j < b.length) {
-        if (a[i] === b[j]) { i++; j++; continue; }
-        edits++;
-        if (edits > 1) return 2;
-        if (a.length === b.length) { i++; j++; }
-        else if (a.length > b.length) { i++; }
-        else { j++; }
-      }
-      if (i < a.length || j < b.length) edits++;
-      return edits;
-    };
-    if (dist(t, g) <= 1) return 'hard';
     return 'ng';
   };
 
-  // --- Cloze 답 제출 ---
-  const submitCloze = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!current) return;
-    const verdict = judgeSpelling(clozeAnswer, current.english);
-    setClozeResult(verdict === 'ng' ? 'ng' : 'ok');
-    setFlipped(true);
+  // ==========================================================================
+  // 세션 끝 Cloze 보너스 핸들러
+  //   메인 세션에서 Good/Easy 받은 "확실히 아는 단어" + 예문이 있는 단어만 대상.
+  //   SRS 상태는 전혀 수정하지 않음(순수 복습용).
+  // ==========================================================================
+  const bonusCurrent = clozeBonusQueue[clozeBonusIdx];
+
+  // 보너스 세션 카드 전환 시 UI/예문 초기화
+  useEffect(() => {
+    if (phase !== 'cloze-bonus' || !bonusCurrent) return;
+    setFlipped(false);
+    setClozeAnswer('');
+    setClozeResult(null);
+    setClozeHintLevel(0);
+    setCurrentExample(bonusCurrent.example || loadCachedExample(bonusCurrent.english));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clozeBonusIdx, phase]);
+
+  // 보너스 세션 시작 — Good/Easy 단어 중 "target 을 blanks 처리 가능한 예문" 만 선별
+  const startClozeBonus = () => {
+    const eligible: SrsWord[] = [];
+    for (const w of sessionGoodWords) {
+      const ex = w.example || loadCachedExample(w.english);
+      if (ex && makeCloze(ex, w.english).matched) eligible.push(w);
+    }
+    if (eligible.length === 0) return;
+    // 가볍게 셔플
+    for (let i = eligible.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+    }
+    setClozeBonusQueue(eligible);
+    setClozeBonusIdx(0);
+    setBonusStats({ attempted: 0, correct: 0 });
+    setPhase('cloze-bonus');
   };
 
-  // --- Cloze 힌트 열기 (1단계: 첫글자, 2단계: 앞 2글자, 3단계=포기 → 정답 공개 + Again) ---
+  // 보너스 Cloze 답 제출
+  const submitCloze = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bonusCurrent) return;
+    const verdict = judgeSpelling(clozeAnswer, bonusCurrent.english);
+    setClozeResult(verdict);
+    setFlipped(true);
+    setBonusStats(s => ({ attempted: s.attempted + 1, correct: s.correct + (verdict === 'ok' ? 1 : 0) }));
+  };
+
+  // 힌트 사다리 (1단계=첫글자, 2단계=앞 2글자, 3단계=포기 → 정답 공개)
   const revealClozeHint = () => {
-    if (!current) return;
+    if (!bonusCurrent) return;
     if (clozeHintLevel >= 2) {
-      // "모르겠어요" — 정답 공개하고 Again 등급으로 다음
       setClozeResult('ng');
       setFlipped(true);
+      setBonusStats(s => ({ attempted: s.attempted + 1, correct: s.correct }));
       return;
     }
     setClozeHintLevel(l => l + 1);
   };
 
+  // 다음 보너스 카드로
   const continueAfterCloze = () => {
-    // Cloze 는 전부 다 요구하는 단계 — 정답 Good(2), 오답/포기 Again(0)
-    const grade: Grade = clozeResult === 'ok' ? 2 : 0;
-    gradeCurrent(grade);
-  };
-
-  // --- MC (4지선다) 선택 ---
-  const pickMc = (choice: string) => {
-    if (!current || mcAnswer) return; // 이미 선택했으면 무시
-    setMcAnswer(choice);
-    const ok = choice === current.korean;
-    setMcResult(ok ? 'ok' : 'ng');
-    setFlipped(true);
-  };
-  const continueAfterMc = () => {
-    const grade: Grade = mcResult === 'ok' ? 2 : 0;
-    gradeCurrent(grade);
-  };
-
-  // --- Typing (한→영 철자) 제출 ---
-  const submitTyping = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!current) return;
-    const verdict = judgeSpelling(typingAnswer, current.english);
-    setTypingResult(verdict);
-    setFlipped(true);
-  };
-  const revealTypingAnswer = () => {
-    if (!current) return;
-    setTypingResult('ng');
-    setFlipped(true);
-  };
-  const continueAfterTyping = () => {
-    // 정답=Good(2), 오타(1글자)=Hard(1), 오답=Again(0)
-    let grade: Grade = 0;
-    if (typingResult === 'ok') grade = 2;
-    else if (typingResult === 'hard') grade = 1;
-    gradeCurrent(grade);
+    const nextIdx = clozeBonusIdx + 1;
+    if (nextIdx >= clozeBonusQueue.length) {
+      setPhase('cloze-done');
+      return;
+    }
+    setClozeBonusIdx(nextIdx);
   };
 
   // --- 카드 리셋 (학습 이력 초기화) ---
@@ -812,10 +722,15 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   }
 
   // ==========================================================================
-  // 화면 3: 완료
+  // 화면 3: 완료 — 세션 끝에서 "방금 익힌 단어로 문맥 복습" 보너스 제안
   // ==========================================================================
   if (phase === 'done') {
     const acc = sessionStats.reviewed > 0 ? Math.round((sessionStats.correct / sessionStats.reviewed) * 100) : 0;
+    // 보너스 Cloze 대상 — Good/Easy 받은 단어 중 예문이 있고 target 을 blanks 가능한 것만.
+    const bonusEligible = sessionGoodWords.filter(w => {
+      const ex = w.example || loadCachedExample(w.english);
+      return !!ex && makeCloze(ex, w.english).matched;
+    });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
         <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl" style={{ animation: 'srsPop .4s ease-out' }}>
@@ -839,6 +754,21 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
               <p className="text-xs text-gray-500">Again</p>
             </div>
           </div>
+
+          {/* 📝 문맥 복습 보너스 (선택) — 방금 Good/Easy 받은 단어가 2개 이상일 때만 노출 */}
+          {bonusEligible.length >= 2 && (
+            <button
+              onClick={startClozeBonus}
+              className="mb-3 w-full rounded-lg bg-gradient-to-r from-[#2d7a7c] to-[#4d9a9c] px-4 py-3 text-sm font-semibold text-white hover:opacity-95 transition-opacity shadow"
+              title="방금 Good/Easy 받은 단어를 문장 안에서 다시 떠올려보기 (선택)"
+            >
+              📝 방금 익힌 단어 {bonusEligible.length}개로 문맥 복습
+              <span className="block text-[10px] font-normal opacity-80 mt-0.5">
+                SRS 점수에 영향 없음 · 선택
+              </span>
+            </button>
+          )}
+
           <div className="flex gap-2">
             <button
               onClick={() => setPhase('setup')}
@@ -856,26 +786,152 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   }
 
   // ==========================================================================
-  // 화면 2: 학습 진행 (4단계 사다리: flashcard → mc → typing → cloze)
+  // 화면 3-보너스: Cloze 보너스 세션 (방금 아는 단어만)
+  // ==========================================================================
+  if (phase === 'cloze-bonus' && bonusCurrent) {
+    const bonusProgress = clozeBonusQueue.length > 0 ? (clozeBonusIdx / clozeBonusQueue.length) * 100 : 0;
+    const bonusExample = currentExample || bonusCurrent.example || '';
+    const bonusCloze = bonusExample ? makeCloze(bonusExample, bonusCurrent.english) : null;
+    const bonusHintText =
+      clozeHintLevel >= 2 ? `${bonusCurrent.english.slice(0, 2)}___ (${bonusCurrent.english.length}글자)` :
+      clozeHintLevel === 1 ? `${bonusCurrent.english[0]}___ (${bonusCurrent.english.length}글자)` :
+      `___ (${bonusCurrent.english.length}글자)`;
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-[#f7fbfb] via-white to-[#f0f9f9]">
+        <style>{`@keyframes cardIn { from { transform:scale(.94); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
+        {/* 헤더 */}
+        <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
+          <button onClick={() => setPhase('done')} aria-label="그만" className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex-1 mx-4">
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#2d7a7c] to-[#4d9a9c] transition-all duration-300" style={{ width: `${bonusProgress}%` }} />
+            </div>
+            <p className="mt-1 text-center text-[10px] text-gray-400">
+              문맥 복습 · {clozeBonusIdx + 1} / {clozeBonusQueue.length}
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-[#2d7a7c] w-16 text-right">보너스</span>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-xl">
+            {!flipped && bonusCloze && (
+              <form onSubmit={submitCloze} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
+                <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-3">문맥에서 단어 찾기</p>
+                <p className="text-lg sm:text-xl leading-relaxed text-gray-800 mb-2">{bonusCloze.blanked}</p>
+                <p className="text-xs text-gray-400 mb-5">
+                  뜻: <b>{bonusCurrent.korean}</b> · {bonusHintText}
+                </p>
+                <input
+                  autoFocus
+                  value={clozeAnswer}
+                  onChange={e => setClozeAnswer(e.target.value)}
+                  placeholder="빈칸에 들어갈 영어 단어"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="w-full rounded-full border-2 border-gray-200 bg-white px-5 py-3 text-center text-base sm:text-lg font-medium text-gray-800 outline-none focus:border-[#2d7a7c] transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={!clozeAnswer.trim()}
+                  className="mt-4 w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >제출</button>
+                <button
+                  type="button"
+                  onClick={revealClozeHint}
+                  className="mt-2 w-full text-[12px] text-gray-500 hover:text-[#2d7a7c] underline underline-offset-2"
+                >
+                  {clozeHintLevel === 0 ? '힌트 — 첫 글자 보기' :
+                   clozeHintLevel === 1 ? '힌트 — 앞 2글자 보기' :
+                   '모르겠어요 — 정답 보기'}
+                </button>
+              </form>
+            )}
+
+            {flipped && (
+              <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
+                {clozeResult && (
+                  <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-semibold ${
+                    clozeResult === 'ok'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    {clozeResult === 'ok' ? '✅ 정답!' : `❌ 오답 (정답: ${bonusCurrent.english})`}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-2xl sm:text-3xl font-extrabold text-gray-800">{bonusCurrent.english}</p>
+                  <button
+                    onClick={() => speakEnglish(bonusCurrent.english)}
+                    aria-label="발음 듣기"
+                    className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-[#2d7a7c] transition-colors"
+                  ><Volume2 className="w-4 h-4" /></button>
+                </div>
+                <p className="text-base sm:text-lg text-[#2d7a7c] font-semibold mb-3">{bonusCurrent.korean}</p>
+                {bonusExample && (
+                  <div className="rounded-lg bg-gray-50 p-3 mb-4 border border-gray-100">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">예문</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{bonusExample}</p>
+                  </div>
+                )}
+                <button
+                  onClick={continueAfterCloze}
+                  className="w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] transition-colors"
+                >{clozeBonusIdx + 1 >= clozeBonusQueue.length ? '마치기' : '다음 →'}</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // 화면 3-보너스-완료: Cloze 보너스 결과
+  // ==========================================================================
+  if (phase === 'cloze-done') {
+    const bAcc = bonusStats.attempted > 0 ? Math.round((bonusStats.correct / bonusStats.attempted) * 100) : 0;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl" style={{ animation: 'srsPop .4s ease-out' }}>
+          <style>{`@keyframes srsPop { from { transform:scale(.85); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
+          <Sparkles className="mx-auto mb-3 h-12 w-12 text-[#2d7a7c]" />
+          <h2 className="mb-1 text-lg font-bold text-gray-800">문맥 복습 완료!</h2>
+          <p className="mb-5 text-sm text-gray-500">
+            {bonusStats.attempted} 문항 · 정답 {bonusStats.correct} / 정답률 {bAcc}%
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPhase('setup')}
+              className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+            >설정으로</button>
+            <button
+              onClick={onExit}
+              className="flex-1 rounded-lg bg-[#2d7a7c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#256668]"
+            >닫기</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  // ==========================================================================
+  // 화면 2: 학습 진행 — 순수 Flashcard (영→한 재인 + 4단계 셀프평가)
+  //   예전 시도했던 MC/Typing/Cloze 자동 사다리는 "모르는 단어 Cloze" 문제를 일으켜
+  //   제거됨. Cloze 는 세션 완료 화면의 "📝 문맥 복습" 보너스로만 등장.
   // ==========================================================================
   if (!current) return null;
-  const progress = queue.length > 0 ? ((currentIdx) / queue.length) * 100 : 0;
-  const clozeData = mode === 'cloze' && currentExample ? makeCloze(currentExample, current.english) : null;
+  const progress = queue.length > 0 ? (currentIdx / queue.length) * 100 : 0;
   const displayExample = currentExample;
-  const MODE_LABEL: Record<Mode, string> = {
-    flashcard: '재인',
-    mc: '4지선다',
-    typing: '철자',
-    cloze: '문맥',
-  };
-  // Cloze 힌트 표기 (레벨 1 = 첫 글자, 레벨 2 = 앞 2글자)
-  const clozeHintText =
-    clozeHintLevel >= 2 ? `${current.english.slice(0, 2)}___ (${current.english.length}글자)` :
-    clozeHintLevel === 1 ? `${current.english[0]}___ (${current.english.length}글자)` :
-    `___ (${current.english.length}글자)`;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-[#f7fbfb] via-white to-[#f0f9f9]">
+      <style>{`@keyframes cardIn { from { transform:scale(.94); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
       {/* 헤더 */}
       <div className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
         <button onClick={onExit} aria-label="닫기" className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
@@ -889,29 +945,14 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
             {currentIdx + 1} / {queue.length}
           </p>
         </div>
-        <span className="text-xs font-semibold text-[#2d7a7c] w-16 text-right">
-          {MODE_LABEL[mode]}
-        </span>
+        <span className="text-xs font-semibold text-[#2d7a7c] w-16 text-right">Flashcard</span>
       </div>
 
       {/* 카드 */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
         <div className="w-full max-w-xl">
-          <style>{`@keyframes cardIn { from { transform:scale(.94); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
-
-          {/* 예문 로딩 (cloze 가 GLM 응답 기다리는 중) */}
-          {loadingExample && (
-            <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-8 text-center">
-              <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[#2d7a7c]" />
-              <p className="text-sm font-semibold text-gray-700">예문 준비 중…</p>
-              <p className="text-xs text-gray-400 mt-1">AI 가 이 단어의 학습 예문을 만들고 있어요.</p>
-            </div>
-          )}
-
-          {/* ============================================================= */}
-          {/* 1단계 FLASHCARD — 영→한 재인 (셀프평가) · 새 단어는 여기서 시작 */}
-          {/* ============================================================= */}
-          {!loadingExample && mode === 'flashcard' && !flipped && (
+          {/* 앞면 — 영단어 (예문 로딩은 뒷면에서만 보여지면 되므로 앞면 가리지 않음) */}
+          {!flipped && (
             <button
               onClick={() => setFlipped(true)}
               className="w-full rounded-2xl bg-white shadow-xl border border-gray-100 p-8 sm:p-12 text-center hover:shadow-2xl transition-shadow"
@@ -930,146 +971,9 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
             </button>
           )}
 
-          {/* ============================================================= */}
-          {/* 2단계 MC — 한 뜻 4지선다                                        */}
-          {/* ============================================================= */}
-          {!loadingExample && mode === 'mc' && !flipped && (
-            <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
-              <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-3">이 단어의 뜻은?</p>
-              <div className="flex items-center justify-center gap-2 mb-5">
-                <p className="text-3xl sm:text-4xl font-extrabold text-gray-800">{current.english}</p>
-                <button
-                  onClick={() => speakEnglish(current.english)}
-                  aria-label="발음 듣기"
-                  className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-[#2d7a7c] transition-colors"
-                ><Volume2 className="w-4 h-4" /></button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {mcOptions.map((opt, i) => (
-                  <button
-                    key={`${i}-${opt}`}
-                    onClick={() => pickMc(opt)}
-                    className="rounded-lg border-2 border-gray-200 bg-white px-4 py-3 text-left text-sm font-medium text-gray-700 hover:border-[#2d7a7c] hover:bg-[#f0f9f9] transition-colors"
-                  >
-                    <span className="font-bold text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================= */}
-          {/* 3단계 TYPING — 한→영 철자 입력                                  */}
-          {/* ============================================================= */}
-          {!loadingExample && mode === 'typing' && !flipped && (
-            <form onSubmit={submitTyping} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
-              <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-3">뜻을 보고 영어로 쓰세요</p>
-              <p className="text-xl sm:text-2xl font-bold text-[#2d7a7c] text-center mb-2">{current.korean}</p>
-              <p className="text-[11px] text-gray-400 text-center mb-5">
-                {current.english[0]}로 시작 · {current.english.length}글자
-              </p>
-              <input
-                autoFocus
-                value={typingAnswer}
-                onChange={e => setTypingAnswer(e.target.value)}
-                placeholder="영단어를 입력하세요"
-                autoComplete="off"
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                className="w-full rounded-full border-2 border-gray-200 bg-white px-5 py-3 text-center text-base sm:text-lg font-medium text-gray-800 outline-none focus:border-[#2d7a7c] transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={!typingAnswer.trim()}
-                className="mt-4 w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >제출</button>
-              <button
-                type="button"
-                onClick={revealTypingAnswer}
-                className="mt-2 w-full text-[12px] text-gray-400 hover:text-gray-600 underline underline-offset-2"
-              >모르겠어요 — 정답 보기</button>
-            </form>
-          )}
-
-          {/* ============================================================= */}
-          {/* 4단계 CLOZE — 문맥 빈칸 + 힌트 사다리                           */}
-          {/* ============================================================= */}
-          {!loadingExample && mode === 'cloze' && clozeData && !flipped && (
-            <form onSubmit={submitCloze} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
-              <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-3">문맥에서 단어 찾기</p>
-              <p className="text-lg sm:text-xl leading-relaxed text-gray-800 mb-2">
-                {clozeData.blanked}
-              </p>
-              <p className="text-xs text-gray-400 mb-5">
-                뜻: <b>{current.korean}</b> · {clozeHintText}
-              </p>
-              <input
-                autoFocus
-                value={clozeAnswer}
-                onChange={e => setClozeAnswer(e.target.value)}
-                placeholder="빈칸에 들어갈 영어 단어"
-                autoComplete="off"
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                className="w-full rounded-full border-2 border-gray-200 bg-white px-5 py-3 text-center text-base sm:text-lg font-medium text-gray-800 outline-none focus:border-[#2d7a7c] transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={!clozeAnswer.trim()}
-                className="mt-4 w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >제출</button>
-              <button
-                type="button"
-                onClick={revealClozeHint}
-                className="mt-2 w-full text-[12px] text-gray-500 hover:text-[#2d7a7c] underline underline-offset-2"
-              >
-                {clozeHintLevel === 0 ? '힌트 — 첫 글자 보기' :
-                 clozeHintLevel === 1 ? '힌트 — 앞 2글자 보기' :
-                 '모르겠어요 — 정답 보기'}
-              </button>
-            </form>
-          )}
-
-          {/* ============================================================= */}
-          {/* 뒤집힘 — 뜻/예문 + 결과 + 다음 액션                             */}
-          {/* ============================================================= */}
+          {/* 뒷면 — 뜻 + 예문 + 4단계 셀프평가 */}
           {flipped && (
             <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
-              {/* 결과 배너 (MC / Typing / Cloze) */}
-              {mode === 'mc' && mcResult && (
-                <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-semibold ${
-                  mcResult === 'ok'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-red-50 text-red-700 border border-red-200'
-                }`}>
-                  {mcResult === 'ok' ? '✅ 정답!' : `❌ 오답 — 정답은 "${current.korean}"`}
-                </div>
-              )}
-              {mode === 'typing' && typingResult && (
-                <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-semibold ${
-                  typingResult === 'ok'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : typingResult === 'hard'
-                      ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                      : 'bg-red-50 text-red-700 border border-red-200'
-                }`}>
-                  {typingResult === 'ok' ? '✅ 정답!' :
-                   typingResult === 'hard' ? `✍️ 오타 — 정답: ${current.english}` :
-                   `❌ 오답 — 정답: ${current.english}`}
-                </div>
-              )}
-              {mode === 'cloze' && clozeResult && (
-                <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-semibold ${
-                  clozeResult === 'ok'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-red-50 text-red-700 border border-red-200'
-                }`}>
-                  {clozeResult === 'ok' ? '✅ 정답!' : `❌ 오답 (정답: ${current.english})`}
-                </div>
-              )}
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-800">{current.english}</p>
                 <button
@@ -1085,6 +989,9 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
               {current.synonyms && (
                 <p className="text-xs text-gray-400 mb-3"><b>유의어:</b> {current.synonyms}</p>
               )}
+              {loadingExample && (
+                <p className="text-xs text-gray-400 mb-3 italic">예문 준비 중…</p>
+              )}
               {displayExample && (
                 <div className="rounded-lg bg-gray-50 p-3 mb-4 border border-gray-100">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
@@ -1097,70 +1004,45 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
                 </div>
               )}
 
-              {/* 자동 채점 모드 (MC/Typing/Cloze) → "다음 카드" 버튼 */}
-              {mode === 'mc' && (
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">얼마나 잘 아셨나요?</p>
+              <div className="grid grid-cols-4 gap-2">
                 <button
-                  onClick={continueAfterMc}
-                  className="w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] transition-colors"
-                >다음 카드 →</button>
-              )}
-              {mode === 'typing' && (
+                  onClick={() => gradeCurrent(0)}
+                  className="rounded-lg border-2 border-red-200 bg-white px-3 py-2.5 text-center hover:bg-red-50 transition-colors"
+                  title="이 세션에서 몇 카드 뒤에 다시 · 다음 정식 복습은 10분 뒤"
+                >
+                  <p className="text-sm font-bold text-red-600">Again</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">세션 내 재시도</p>
+                </button>
                 <button
-                  onClick={continueAfterTyping}
-                  className="w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] transition-colors"
-                >다음 카드 →</button>
-              )}
-              {mode === 'cloze' && (
+                  onClick={() => gradeCurrent(1)}
+                  className="rounded-lg border-2 border-orange-200 bg-white px-3 py-2.5 text-center hover:bg-orange-50 transition-colors"
+                  title="1일 뒤"
+                >
+                  <p className="text-sm font-bold text-orange-600">Hard</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">1일 뒤</p>
+                </button>
                 <button
-                  onClick={continueAfterCloze}
-                  className="w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] transition-colors"
-                >다음 카드 →</button>
-              )}
-
-              {/* Flashcard 는 셀프평가 4버튼 */}
-              {mode === 'flashcard' && (
-                <>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">얼마나 잘 아셨나요?</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    <button
-                      onClick={() => gradeCurrent(0)}
-                      className="rounded-lg border-2 border-red-200 bg-white px-3 py-2.5 text-center hover:bg-red-50 transition-colors"
-                      title="이 세션에서 몇 카드 뒤에 다시 · 다음 정식 복습은 10분 뒤"
-                    >
-                      <p className="text-sm font-bold text-red-600">Again</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">세션 내 재시도</p>
-                    </button>
-                    <button
-                      onClick={() => gradeCurrent(1)}
-                      className="rounded-lg border-2 border-orange-200 bg-white px-3 py-2.5 text-center hover:bg-orange-50 transition-colors"
-                      title="1일 뒤"
-                    >
-                      <p className="text-sm font-bold text-orange-600">Hard</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">1일 뒤</p>
-                    </button>
-                    <button
-                      onClick={() => gradeCurrent(2)}
-                      className="rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-center hover:bg-emerald-50 transition-colors"
-                      title="이번 세션에서 MC → Typing → Cloze 로 단계 승급"
-                    >
-                      <p className="text-sm font-bold text-emerald-600">Good</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">다음 단계로</p>
-                    </button>
-                    <button
-                      onClick={() => gradeCurrent(3)}
-                      className="rounded-lg border-2 border-sky-200 bg-white px-3 py-2.5 text-center hover:bg-sky-50 transition-colors"
-                      title="학습 단계를 건너뛰고 바로 1일 복습으로"
-                    >
-                      <p className="text-sm font-bold text-sky-600">Easy</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">바로 1일 뒤</p>
-                    </button>
-                  </div>
-                </>
-              )}
+                  onClick={() => gradeCurrent(2)}
+                  className="rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-center hover:bg-emerald-50 transition-colors"
+                  title="점점 길게"
+                >
+                  <p className="text-sm font-bold text-emerald-600">Good</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">3~15일</p>
+                </button>
+                <button
+                  onClick={() => gradeCurrent(3)}
+                  className="rounded-lg border-2 border-sky-200 bg-white px-3 py-2.5 text-center hover:bg-sky-50 transition-colors"
+                  title="넉넉히 뒤"
+                >
+                  <p className="text-sm font-bold text-sky-600">Easy</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">7~60일</p>
+                </button>
+              </div>
             </div>
           )}
 
-          {/* 세션 통계 (하단 요약) */}
+          {/* 세션 통계 */}
           <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-gray-400">
             <span>학습 <b className="text-gray-600">{sessionStats.reviewed}</b></span>
             <span>정답 <b className="text-emerald-600">{sessionStats.correct}</b></span>
