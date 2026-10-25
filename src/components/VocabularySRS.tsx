@@ -15,8 +15,6 @@ import { SATWord } from './vocaWordSets';
 import { SERVER_BASE_URL, getServerHeaders } from '../utils/apiConfig';
 import { getAllWords } from './vocaWordSets';
 import { callAi } from '../utils/aiClient';
-import { useEnrollmentGate } from '../utils/enrollmentGate';
-import { EnrollmentBlockedCard } from './EnrollmentBlockedCard';
 import { loadWeakWords, type WeakWord } from '../utils/weakWords';
 import { getCurrentOwnerName } from '../utils/gameStats';
 
@@ -240,8 +238,7 @@ function escapeRegExp(s: string): string {
 // 메인 컴포넌트
 // ============================================================================
 export function VocabularySRS({ onExit }: { onExit: () => void }) {
-  // 학원생 등록 게이트
-  const gate = useEnrollmentGate();
+  // Vocabulary 는 학원생 등록 없이도 누구나 사용 가능 — 게이트 제거됨.
   // 로그인 학생 이름 — 약점 단어 서버 조회에 사용 (없으면 로컬 진행만)
   const ownerName = useMemo(() => getCurrentOwnerName(), []);
 
@@ -498,11 +495,6 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     return n;
     // scopedWords, source, phase(세션 완료 후 갱신) 시 재계산
   }, [scopedWords, source, phase]);
-
-  // 학원생 미등록 → 진입 차단 안내
-  if (gate.checking || !gate.allowed) {
-    return <EnrollmentBlockedCard checking={gate.checking} reason={gate.reason} onRetry={gate.retry} onExit={onExit} />;
-  }
 
   // ==========================================================================
   // 화면 1: setup
