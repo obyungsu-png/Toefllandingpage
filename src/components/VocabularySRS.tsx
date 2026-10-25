@@ -4,12 +4,11 @@
  * SRS(Spaced Repetition System, 간격 반복 학습) 기반 단어 학습 컴포넌트.
  * - Anki 계열 SM-2 알고리즘 단순화 버전을 사용해 카드마다 "언제 다시 볼지" 계산.
  * - 5개 단어장 소스(vol.1/vol.2/기출/참고서/vol.5) + DAY 선택 흐름 지원.
- * - 5단계 학습 사다리 (streak 기반):
- *     reps=0            → preview   (공부만)
- *     reps≥1, streak≤0  → flashcard (영→한 재인 셀프평가)
- *     streak=1          → mc        (한 뜻 4지선다)
- *     streak=2          → typing    (한→영 철자 입력)
- *     streak≥3 + 예문   → cloze     (문맥 빈칸 + 힌트 사다리)
+ * - 4단계 학습 사다리 (streak 기반):
+ *     streak≤0         → flashcard (영→한 재인 셀프평가)  — 새 단어는 여기서 시작
+ *     streak=1         → mc        (한 뜻 4지선다)
+ *     streak=2         → typing    (한→영 철자 입력)
+ *     streak≥3 + 예문  → cloze     (문맥 빈칸 + 힌트 사다리)
  *   틀리면 streak 리셋 → flashcard 로 복귀. 맞으면 한 단계 위로.
  * - 학습 상태는 localStorage 에 per-source-per-word 로 저장 (Supabase 연동은 추후).
  *
@@ -263,7 +262,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
 
   // --- 학습 세션 상태 ---
   type Phase = 'setup' | 'learn' | 'done';
-  type Mode = 'preview' | 'flashcard' | 'mc' | 'typing' | 'cloze';
+  type Mode = 'flashcard' | 'mc' | 'typing' | 'cloze';
   const [phase, setPhase] = useState<Phase>('setup');
   const [queue, setQueue] = useState<SrsWord[]>([]);       // 오늘 학습할 카드 큐
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -404,12 +403,11 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   const current = queue[currentIdx];
 
   // --- 현재 카드가 바뀔 때: 학습 단계(mode) 결정 + 예문/보기 준비 ---
-  //   streak/reps 기반 단계 사다리.
-  //   - preview  : reps=0 (처음 보는 단어) — 공부만, 평가 없음
-  //   - flashcard: reps≥1 && streak≤0     — 영→한 재인 (셀프평가)
-  //   - mc       : streak=1               — 한 뜻 4지선다
-  //   - typing   : streak=2               — 한→영 철자 입력
-  //   - cloze    : streak≥3 + 예문 있음   — 문맥 빈칸 (없으면 typing 로 fallback)
+  //   streak 기반 단계 사다리.
+  //   - flashcard: streak≤0  — 영→한 재인 (셀프평가) · 새 단어는 여기서 시작
+  //   - mc       : streak=1  — 한 뜻 4지선다
+  //   - typing   : streak=2  — 한→영 철자 입력
+  //   - cloze    : streak≥3 + 예문 있음 — 문맥 빈칸 (없으면 typing 로 fallback)
   useEffect(() => {
     if (phase !== 'learn' || !current) return;
     // 카드가 넘어갈 때 UI 초기화
@@ -424,13 +422,11 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     setCurrentExample(null);
 
     const prev = loadState(source, current.english);
-    const reps = prev?.reps ?? 0;
     const streak = prev?.streak ?? 0;
 
     // 1차 단계 결정
     let decidedMode: Mode;
-    if (reps === 0) decidedMode = 'preview';
-    else if (streak <= 0) decidedMode = 'flashcard';
+    if (streak <= 0) decidedMode = 'flashcard';
     else if (streak === 1) decidedMode = 'mc';
     else if (streak === 2) decidedMode = 'typing';
     else decidedMode = 'cloze';
@@ -459,7 +455,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
 
     setMode(decidedMode);
 
-    // 예문 준비 (preview 와 cloze 가 필요로 함)
+    // 예문 준비 (cloze 가 필요로 함)
     let cancelled = false;
     const prepareExample = async () => {
       const existing = current.example || loadCachedExample(current.english);
@@ -472,8 +468,8 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
         }
         return;
       }
-      // 예문 없음 — preview/cloze 일 때만 GLM 생성 시도 (비용 절약)
-      if (decidedMode !== 'preview' && decidedMode !== 'cloze') return;
+      // 예문 없음 — cloze 일 때만 GLM 생성 시도 (비용 절약)
+      if (decidedMode !== 'cloze') return;
       setLoadingExample(true);
       const gen = await generateExampleGLM(current.english, current.korean);
       if (cancelled) { setLoadingExample(false); return; }
@@ -618,10 +614,6 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
     else if (typingResult === 'hard') grade = 1;
     gradeCurrent(grade);
   };
-
-  // --- Preview 완료 (처음 보는 단어: 공부만 하고 넘김) ---
-  //   grade=1 (Hard) → interval 1일, streak 유지(0) → 다음 세션에 flashcard 로 재인 테스트
-  const completePreview = () => gradeCurrent(1);
 
   // --- 카드 리셋 (학습 이력 초기화) ---
   const resetProgress = () => {
@@ -841,14 +833,13 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
   }
 
   // ==========================================================================
-  // 화면 2: 학습 진행 (5단계 사다리: preview → flashcard → mc → typing → cloze)
+  // 화면 2: 학습 진행 (4단계 사다리: flashcard → mc → typing → cloze)
   // ==========================================================================
   if (!current) return null;
   const progress = queue.length > 0 ? ((currentIdx) / queue.length) * 100 : 0;
   const clozeData = mode === 'cloze' && currentExample ? makeCloze(currentExample, current.english) : null;
   const displayExample = currentExample;
   const MODE_LABEL: Record<Mode, string> = {
-    preview: '학습',
     flashcard: '재인',
     mc: '4지선다',
     typing: '철자',
@@ -885,7 +876,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
         <div className="w-full max-w-xl">
           <style>{`@keyframes cardIn { from { transform:scale(.94); opacity:0 } to { transform:scale(1); opacity:1 } }`}</style>
 
-          {/* 예문 로딩 (preview / cloze 가 GLM 응답 기다리는 중) */}
+          {/* 예문 로딩 (cloze 가 GLM 응답 기다리는 중) */}
           {loadingExample && (
             <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-8 text-center">
               <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-[#2d7a7c]" />
@@ -895,49 +886,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
           )}
 
           {/* ============================================================= */}
-          {/* 1단계 PREVIEW — 처음 보는 단어는 공부만 (평가 없음)             */}
-          {/* ============================================================= */}
-          {!loadingExample && mode === 'preview' && (
-            <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
-              <p className="text-[11px] font-bold text-[#2d7a7c] uppercase tracking-wider mb-4">새 단어 — 먼저 익혀봐요</p>
-              <div className="flex items-center gap-2 mb-3">
-                <p className="text-4xl sm:text-5xl font-extrabold text-gray-800">{current.english}</p>
-                <button
-                  onClick={() => speakEnglish(current.english)}
-                  aria-label="발음 듣기"
-                  className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-[#2d7a7c] transition-colors"
-                ><Volume2 className="w-5 h-5" /></button>
-              </div>
-              <p className="text-lg sm:text-xl text-[#2d7a7c] font-semibold mb-3">{current.korean}</p>
-              {current.definition && (
-                <p className="text-sm text-gray-500 mb-3 leading-relaxed">{current.definition}</p>
-              )}
-              {current.synonyms && (
-                <p className="text-xs text-gray-400 mb-3"><b>유의어:</b> {current.synonyms}</p>
-              )}
-              {displayExample && (
-                <div className="rounded-lg bg-gray-50 p-3 mb-5 border border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                    예문
-                    {!current.example && (
-                      <span className="text-[9px] font-medium text-[#2d7a7c]/70 normal-case tracking-normal">· AI 생성</span>
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{displayExample}</p>
-                </div>
-              )}
-              <p className="text-[11px] text-gray-400 mb-3 text-center">
-                👁️ 눈으로 익히고 넘어가세요. 다음 복습부터 테스트가 시작됩니다.
-              </p>
-              <button
-                onClick={completePreview}
-                className="w-full rounded-lg bg-[#2d7a7c] px-6 py-3 text-white font-semibold hover:bg-[#256668] transition-colors"
-              >익혔어요 — 다음 →</button>
-            </div>
-          )}
-
-          {/* ============================================================= */}
-          {/* 2단계 FLASHCARD — 영→한 재인 (셀프평가)                        */}
+          {/* 1단계 FLASHCARD — 영→한 재인 (셀프평가) · 새 단어는 여기서 시작 */}
           {/* ============================================================= */}
           {!loadingExample && mode === 'flashcard' && !flipped && (
             <button
@@ -959,7 +908,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
           )}
 
           {/* ============================================================= */}
-          {/* 3단계 MC — 한 뜻 4지선다                                        */}
+          {/* 2단계 MC — 한 뜻 4지선다                                        */}
           {/* ============================================================= */}
           {!loadingExample && mode === 'mc' && !flipped && (
             <div className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
@@ -988,7 +937,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
           )}
 
           {/* ============================================================= */}
-          {/* 4단계 TYPING — 한→영 철자 입력                                  */}
+          {/* 3단계 TYPING — 한→영 철자 입력                                  */}
           {/* ============================================================= */}
           {!loadingExample && mode === 'typing' && !flipped && (
             <form onSubmit={submitTyping} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
@@ -1022,7 +971,7 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
           )}
 
           {/* ============================================================= */}
-          {/* 5단계 CLOZE — 문맥 빈칸 + 힌트 사다리                           */}
+          {/* 4단계 CLOZE — 문맥 빈칸 + 힌트 사다리                           */}
           {/* ============================================================= */}
           {!loadingExample && mode === 'cloze' && clozeData && !flipped && (
             <form onSubmit={submitCloze} className="rounded-2xl bg-white shadow-xl border border-gray-100 p-6 sm:p-8" style={{ animation: 'cardIn .3s ease-out' }}>
