@@ -118,16 +118,33 @@ function nextCardState(prev: CardState, grade: Grade): CardState {
     ease = Math.max(1.3, ease - 0.15);
     interval = 1;
   } else if (grade === 2) {
-    // Good — 첫 정답 1일, 두번째 3일, 이후 interval * ease
+    // Good — "Learning steps" (streak 1~3) 동안은 짧은 간격(<1일) 으로 설정 →
+    //   같은 세션 안에 재삽입되어 사다리의 다음 단계로 다시 등장. streak 4 부터
+    //   졸업(1일 뒤) 되어 SM-2 일수 기반 장기 복습으로 넘어감.
+    //     streak 1  (→ 다음은 MC)     : 10분 뒤 (세션 내 재등장)
+    //     streak 2  (→ 다음은 Typing) : 30분 뒤 (세션 내 재등장)
+    //     streak 3  (→ 다음은 Cloze)  : 60분 뒤 (세션 내 재등장)
+    //     streak 4                    : 1일 뒤  (졸업 — 다음 세션으로)
+    //     streak 5                    : 3일 뒤
+    //     streak 6+                   : SM-2 (interval * ease)
     streak += 1;
-    if (streak === 1) interval = 1;
-    else if (streak === 2) interval = 3;
+    if (streak === 1) interval = 10 / (24 * 60);
+    else if (streak === 2) interval = 30 / (24 * 60);
+    else if (streak === 3) interval = 60 / (24 * 60);
+    else if (streak === 4) interval = 1;
+    else if (streak === 5) interval = 3;
     else interval = Math.round(interval * ease);
   } else {
-    // Easy — 크게 늘림 (interval * ease * 1.3, 최소 4일부터)
+    // Easy — "잘 알아요" → learning steps 를 건너뛰고 바로 일수 기반 복습으로 승급.
+    //     streak 1 : 1 일   (Flashcard → 하루 뒤 MC)
+    //     streak 2 : 4 일   (MC → 4일 뒤 Typing)
+    //     streak 3 : 10일   (Typing → 10일 뒤 Cloze)
+    //     streak 4+: SM-2 × 1.3 보너스
     streak += 1;
     ease = Math.min(3.0, ease + 0.05);
-    if (streak === 1) interval = 4;
+    if (streak === 1) interval = 1;
+    else if (streak === 2) interval = 4;
+    else if (streak === 3) interval = 10;
     else interval = Math.round(interval * ease * 1.3);
   }
 
@@ -502,15 +519,21 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
       again: s.again + (grade === 0 ? 1 : 0),
     }));
 
-    // Again 은 이번 세션에서 몇 칸 뒤에 다시 나오도록 재삽입 (즉시 반복 방지).
-    // 남은 카드가 충분하면 3장 뒤, 부족하면 남은 만큼 뒤에 삽입. 큐 마지막 카드이면
-    // 어쩔 수 없이 곧 다시 나오지만, 그 외 케이스는 최소 3장 이상 다른 카드 학습 후
-    // 다시 마주치도록 하여 학습 부담을 낮춘다.
+    // 세션 내 재삽입 — 짧은 간격(<1일) 카드는 같은 세션 안에 다시 등장시켜
+    //   학습 사다리의 다음 단계(MC/Typing/Cloze)가 바로 나오도록 함.
+    //     - Again(grade 0)              : 3장 뒤 (즉시 반복 방지, 재학습 집중)
+    //     - Good(2)/Easy(3) + 짧은 간격 : 6장 뒤 (한 바퀴 돌고 다음 단계 등장)
+    //   next.interval 이 1일 이상이면 "졸업" → 큐에서 빠지고 다음 세션에만 등장.
     let nextQueue = queue;
-    if (grade === 0) {
+    const SHORT_INTERVAL_DAYS = 1; // 이 미만이면 세션 내 재삽입
+    const reinsertGap =
+      grade === 0 ? 3 :
+      (grade >= 2 && next.interval < SHORT_INTERVAL_DAYS) ? 6 :
+      0;
+    if (reinsertGap > 0) {
       const before = queue.slice(0, currentIdx + 1);
       const rest = queue.slice(currentIdx + 1);
-      const gap = Math.min(rest.length, 3);
+      const gap = Math.min(rest.length, reinsertGap);
       nextQueue = [...before, ...rest.slice(0, gap), current, ...rest.slice(gap)];
     }
     const nextIdx = currentIdx + 1;
@@ -1118,18 +1141,18 @@ export function VocabularySRS({ onExit }: { onExit: () => void }) {
                     <button
                       onClick={() => gradeCurrent(2)}
                       className="rounded-lg border-2 border-emerald-200 bg-white px-3 py-2.5 text-center hover:bg-emerald-50 transition-colors"
-                      title="점점 길게"
+                      title="이번 세션에서 MC → Typing → Cloze 로 단계 승급"
                     >
                       <p className="text-sm font-bold text-emerald-600">Good</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">3~15일</p>
+                      <p className="text-[9px] text-gray-400 mt-0.5">다음 단계로</p>
                     </button>
                     <button
                       onClick={() => gradeCurrent(3)}
                       className="rounded-lg border-2 border-sky-200 bg-white px-3 py-2.5 text-center hover:bg-sky-50 transition-colors"
-                      title="넉넉히 뒤"
+                      title="학습 단계를 건너뛰고 바로 1일 복습으로"
                     >
                       <p className="text-sm font-bold text-sky-600">Easy</p>
-                      <p className="text-[9px] text-gray-400 mt-0.5">7~60일</p>
+                      <p className="text-[9px] text-gray-400 mt-0.5">바로 1일 뒤</p>
                     </button>
                   </div>
                 </>
