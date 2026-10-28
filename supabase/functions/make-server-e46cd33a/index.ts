@@ -893,7 +893,7 @@ app.post("/make-server-e46cd33a/game-stats/:ownerName", async (c) => {
   }
 });
 
-// ── Vocabulary 약점 단어 (놓친/오답 단어) — SRS 학습에서 우선 출제 ──
+// ── Vocabulary 약점 단어 (놓친/오답 단어) — Typing Game 약점 복습 모드에서 우선 출제 ──
 // key: weak_words_<ownerName>
 // value: { english, korean, source?, missedAt, count }[]  (최대 200개, 오래된 것 순 제거)
 app.get("/make-server-e46cd33a/weak-words/:ownerName", async (c) => {

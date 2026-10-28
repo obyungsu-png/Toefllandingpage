@@ -199,7 +199,7 @@ export async function purgeUserServerData(opts: { ownerName?: string; userId?: s
   }
 }
 
-/** 학생 탈퇴/브라우저 로컬 저장소에 남아있는 학습 데이터 제거 (SRS 카드/예문 캐시 등). */
+/** 학생 탈퇴/브라우저 로컬 저장소에 남아있는 학습 데이터 제거. */
 export function purgeLocalStudyData(): void {
   try {
     const keysToRemove: string[] = [];
@@ -207,7 +207,7 @@ export function purgeLocalStudyData(): void {
       const k = localStorage.key(i);
       if (!k) continue;
       if (
-        k.startsWith('srs-') ||          // SRS 카드 상태 + 예문 캐시
+        k.startsWith('srs-') ||          // 과거 SRS 학습 캐시 (legacy — 기능 제거 후 정리용)
         k.startsWith('speaking-ai-') ||  // Speaking AI 캐시
         k.startsWith('writing-ai-')      // Writing AI 캐시
       ) keysToRemove.push(k);
