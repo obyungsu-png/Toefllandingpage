@@ -26,9 +26,6 @@ const QuestionReviewFull = lazy(() =>
 const WritingReviewHistory = lazy(() =>
   import('./WritingReviewHistory').then(module => ({ default: module.WritingReviewHistory }))
 );
-const StudyMaterialsRoom = lazy(() =>
-  import('./StudyMaterialsRoom').then(module => ({ default: module.StudyMaterialsRoom }))
-);
 
 // Re-export for backward compatibility
 export type { TestResult } from '../types/testResult';
@@ -47,14 +44,14 @@ interface HistorySectionProps {
   advertisements?: any[];
   isLoggedIn?: boolean;
   onRequestLogin?: () => void;
-  // 자료방 관리자 모드 — App.tsx 의 isPasswordCorrect 를 이 프롭으로 전달
+  // 관리자 모드 — App.tsx 의 isPasswordCorrect 를 이 프롭으로 전달
   isAdmin?: boolean;
   // 오답 복습 자동 열기 (App.tsx → HistorySection)
   pendingReviewResult?: TestResult | null;
   onClearPendingReview?: () => void;
 }
 
-type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | 'AI 첨삭' | '자료방';
+type TabType = 'TPO' | 'Test' | 'Training' | 'Wrong Answers' | 'Report' | 'AI 첨삭';
 type NavType = 'records';
 type TimeFilter = 'all' | 'today' | '7days' | '1month' | '3months';
 type StatusFilter = 'all' | 'completed' | 'incomplete';
@@ -186,7 +183,7 @@ export function HistorySection({
   const displayAd = activeAds.length > 0 ? activeAds[0] : null;
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', 'AI 첨삭', '자료방'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Training', 'Wrong Answers', 'Report', 'AI 첨삭'];
 
   const timeFilters: { key: TimeFilter; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -223,9 +220,6 @@ export function HistorySection({
         break;
       case 'AI 첨삭':
         // AI 첨삭 탭도 별도 전체화면 UI(WritingReviewHistory)로 렌더링 — records 리스트 미사용
-        return [];
-      case '자료방':
-        // 자료방 탭도 별도 전체화면 UI(StudyMaterialsRoom)로 렌더링 — records 리스트 미사용
         return [];
       default:
         filtered = effectiveResults;
@@ -523,7 +517,6 @@ export function HistorySection({
       case 'Wrong Answers': return effectiveResults.filter(r => r.wrongAnswers && r.wrongAnswers.length > 0).length;
       case 'Report': return 0;
       case 'AI 첨삭': return 0; // Supabase에서 별도 fetch — 여기서 카운트하지 않음
-      case '자료방': return 0; // Supabase에서 별도 fetch — 여기서 카운트하지 않음
       default: return 0;
     }
   };
@@ -722,8 +715,6 @@ export function HistorySection({
               {tabs.map(tab => {
                 const count = getTabCount(tab);
                 const isActive = activeTab === tab;
-                // 자료방 탭은 강조색(앰버) 로 눈에 띄게 — 공지성 콘텐츠 성격
-                const isHighlight = tab === '자료방';
                 return (
                   <button
                     key={tab}
@@ -731,19 +722,15 @@ export function HistorySection({
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-bold transition-all ${
                       isActive
                         ? 'bg-opacity-10'
-                        : isHighlight
-                          ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                     style={{
-                      backgroundColor: isActive ? (isHighlight ? '#f59e0b' : `${themeColor}15`) : undefined,
-                      color: isActive ? (isHighlight ? '#ffffff' : themeColor) : undefined,
-                      borderLeft: isActive ? `3px solid ${isHighlight ? '#f59e0b' : themeColor}` : (isHighlight ? '3px solid #f59e0b' : '3px solid transparent'),
+                      backgroundColor: isActive ? `${themeColor}15` : undefined,
+                      color: isActive ? themeColor : undefined,
+                      borderLeft: isActive ? `3px solid ${themeColor}` : '3px solid transparent',
                     }}
                   >
-                    <span className="flex items-center gap-1.5">
-                      {tab}
-                    </span>
+                    <span>{tab}</span>
                     {count > 0 && tab !== 'Report' && (
                       <span
                         className={`text-xs px-1.5 py-0.5 rounded-full ${
@@ -767,19 +754,14 @@ export function HistorySection({
           <div className="bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide shrink-0 min-w-0 max-w-full">
             {tabs.map(tab => {
               const isActive = activeTab === tab;
-              const isHighlight = tab === '자료방';
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 ${
-                    isActive
-                      ? 'text-white'
-                      : isHighlight
-                        ? 'bg-amber-100 text-amber-700 border border-amber-300'
-                        : 'bg-gray-100 text-gray-600'
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                    isActive ? 'text-white' : 'bg-gray-100 text-gray-600'
                   }`}
-                  style={{ backgroundColor: isActive ? (isHighlight ? '#f59e0b' : themeColor) : undefined }}
+                  style={{ backgroundColor: isActive ? themeColor : undefined }}
                 >
                   {tab}
                 </button>
@@ -809,10 +791,6 @@ export function HistorySection({
                   isLoggedIn={isLoggedIn}
                   onRequestLogin={onRequestLogin}
                 />
-              </Suspense>
-            ) : activeTab === '자료방' ? (
-              <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading 자료방...</div>}>
-                <StudyMaterialsRoom themeColor={themeColor} isAdmin={isAdmin} />
               </Suspense>
             ) : (
               <>
@@ -980,10 +958,6 @@ export function HistorySection({
                 isLoggedIn={isLoggedIn}
                 onRequestLogin={onRequestLogin}
               />
-            </Suspense>
-          ) : activeTab === '자료방' ? (
-            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading 자료방...</div>}>
-              <StudyMaterialsRoom themeColor={themeColor} isAdmin={isAdmin} />
             </Suspense>
           ) : (
             <>

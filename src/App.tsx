@@ -109,7 +109,7 @@ import {
 import { computeChronoDisplayNumbers } from './utils/testLabel';
 import { checkGradingTrigger } from './utils/gradingTrigger';
 
-type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Training' | 'TOEFL Prep';
+type TabType = 'Question Types' | 'TPO' | 'Test' | 'History' | 'Board' | 'Training' | 'TOEFL Prep';
 type SkillType = 'Listening' | 'Reading' | 'Writing' | 'Speaking' | 'Vocabulary';
 type TPORange = 'TPO 1-5';
 type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
@@ -124,6 +124,9 @@ const LMSSection = lazy(() =>
 );
 const HistorySection = lazy(() =>
   import('./components/HistorySection').then(module => ({ default: module.HistorySection }))
+);
+const BoardSection = lazy(() =>
+  import('./components/BoardSection').then(module => ({ default: module.BoardSection }))
 );
 
 function AppContent() {
@@ -863,7 +866,7 @@ function AppContent() {
     };
   }, []);
 
-  const tabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History'];
+  const tabs: TabType[] = ['TPO', 'Test', 'Question Types', 'Training', 'History', 'Board'];
   
   // Helper function to change tab with URL navigation
   const handleTabChange = (tab: TabType) => {
@@ -883,6 +886,7 @@ function AppContent() {
       'Question Types': '/question-types',
       'Training': '/specialized-training',
       'History': '/history',
+      'Board': '/board',
       'TOEFL Prep': '/admin'
     };
     navigate(tabRoutes[tab]);
@@ -7906,6 +7910,20 @@ function AppContent() {
               History
             </button>
 
+            {/* Board Button - Visible on mobile (옆 자리) */}
+            <button
+              onClick={() => {
+                handleTabChange('Board');
+              }}
+              className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
+                activeTab === 'Board'
+                  ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg'
+                  : 'bg-white text-[#005f61] border border-[#005f61] hover:bg-[#005f61] hover:text-white'
+              }`}
+            >
+              Board
+            </button>
+
             {/* Login Button or User Greeting */}
             {!isLoggedIn ? (
               <button 
@@ -8512,6 +8530,21 @@ function AppContent() {
               toast.success('기록이 삭제되었습니다.');
             }}
             isAdmin={isPasswordCorrect}
+          />
+        </Suspense>
+      )}
+
+      {activeTab === 'Board' && (
+        <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading board...</div>}>
+          <BoardSection
+            themeColor="#005f61"
+            isAdmin={isPasswordCorrect}
+            isLoggedIn={isLoggedIn}
+            studentName={loggedInUserName || undefined}
+            onRequestLogin={() => {
+              setShowLoginForm(true);
+              setLoginFormKey(prev => prev + 1);
+            }}
           />
         </Suspense>
       )}
