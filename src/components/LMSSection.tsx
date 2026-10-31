@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import { Button } from './ui/button';
-import { Upload, FileText, Music, Image as ImageIcon, FileCheck, Trash2, Settings, BookOpen, Book, Users, ChevronDown, ChevronRight, Edit, Megaphone } from 'lucide-react';
+import { Upload, FileText, Music, Image as ImageIcon, FileCheck, Trash2, Settings, BookOpen, Book, Users, ChevronDown, ChevronRight, Edit, Megaphone, Film } from 'lucide-react';
 // motion removed - using CSS animations
 import { SubscriptionManagement } from './SubscriptionManagement';
 import type { TPOTest } from './ContentManagement';
@@ -15,6 +15,9 @@ const ContentManagement = lazy(() =>
 );
 const QuestionTypeCMS = lazy(() =>
   import('./QuestionTypeCMS').then(module => ({ default: module.QuestionTypeCMS }))
+);
+const VideoManagementSection = lazy(() =>
+  import('./VideoManagementSection').then(module => ({ default: module.VideoManagementSection }))
 );
 
 export interface LMSContent {
@@ -122,7 +125,7 @@ export function LMSSection({
   onUpdateVocabularyScore,
   onDeleteVocabularyScore
 }: LMSSectionProps) {
-  const [activeTab, setActiveTab] = useState<'TPO/Test' | 'Training' | 'Vocabulary' | 'Subscription' | 'Students' | 'Advertisements'>('TPO/Test');
+  const [activeTab, setActiveTab] = useState<'TPO/Test' | 'Training' | 'Vocabulary' | 'Videos' | 'Subscription' | 'Students' | 'Advertisements'>('TPO/Test');
   const [activeSkill, setActiveSkill] = useState<'Reading' | 'Listening' | 'Speaking' | 'Writing'>('Reading');
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -318,6 +321,18 @@ export function LMSSection({
                 <span className="sm:hidden">Vocabulary</span>
               </button>
               <button
+                onClick={() => setActiveTab('Videos')}
+                className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${
+                  activeTab === 'Videos'
+                    ? 'bg-[#2d5a5d] text-white shadow-lg'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Film className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Video Lectures</span>
+                <span className="sm:hidden">영상</span>
+              </button>
+              <button
                 onClick={() => setActiveTab('Subscription')}
                 className={`flex items-center gap-2 px-4 md:px-6 py-3 rounded-lg font-bold transition-all text-sm md:text-base whitespace-nowrap ${
                   activeTab === 'Subscription'
@@ -396,6 +411,13 @@ export function LMSSection({
             onUpdateDay={onUpdateDay}
             onDeleteDay={onDeleteDay}
           />
+        )}
+
+        {/* Video Lectures Tab Content */}
+        {activeTab === 'Videos' && (
+          <Suspense fallback={<div className="py-12 text-center text-gray-400">Loading video management...</div>}>
+            <VideoManagementSection />
+          </Suspense>
         )}
 
         {/* Subscription Tab Content */}
