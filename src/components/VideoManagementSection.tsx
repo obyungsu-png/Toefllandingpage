@@ -617,6 +617,12 @@ function VideoForm({ initial, prefillKey, onClose, onSaved }: {
               {!keyLocked && <span className="text-gray-400"> · 이미 등록된 문제라면 자동 수정됩니다.</span>}
             </p>
           )}
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-2.5 text-[10px] text-gray-500 leading-relaxed">
+            <p className="font-semibold text-gray-700 mb-1">📌 문제 번호 가이드</p>
+            <p>• <b>Reading / Listening</b> : 섹션 내 문제 번호 (Q1 ~)</p>
+            <p>• <b>Writing</b> : Build a Sentence Q1~Q10 · Email Q11 · Academic Discussion Q12</p>
+            <p>• <b>Speaking</b> : Listen &amp; Speak Q1~Q7 · Take an Interview Q8~Q13</p>
+          </div>
 
           {/* 영상 URL */}
           <div>

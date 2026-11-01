@@ -18,6 +18,8 @@ export interface BoardPost {
   category: string | null;
   title: string;
   body: string;
+  /** 관련 문제 key (예: "tpo:3:reading:4") — 특정 문제에 묶인 질문이면 설정됨 */
+  question_key: string | null;
   answer_body: string | null;
   answer_link: string | null;
   answered_at: string | null;
@@ -59,6 +61,7 @@ export async function addPost(input: {
   body: string;
   category?: string | null;
   authorName?: string;
+  questionKey?: string | null;
 }): Promise<{ ok: boolean; reason?: string; id?: string }> {
   try {
     const { data: userRes } = await supabase.auth.getUser();
@@ -69,6 +72,7 @@ export async function addPost(input: {
       title:          input.title.trim(),
       body:           input.body.trim(),
       category:       input.category || null,
+      question_key:   input.questionKey?.trim() || null,
       is_visible:     true,
     };
     const { data, error } = await supabase
@@ -83,7 +87,22 @@ export async function addPost(input: {
   }
 }
 
-export async function updatePost(id: string, patch: Partial<Pick<BoardPost, 'title' | 'body' | 'category' | 'is_visible'>>): Promise<{ ok: boolean; reason?: string }> {
+/** 특정 문제(question_key)에 묶인 Q&A 글만 조회 — 리뷰 화면용 */
+export async function listPostsByQuestionKey(questionKey: string): Promise<BoardPost[]> {
+  if (!questionKey) return [];
+  try {
+    const { data, error } = await supabase
+      .from('board_posts')
+      .select('*')
+      .eq('question_key', questionKey)
+      .eq('is_visible', true)
+      .order('created_at', { ascending: false });
+    if (error) return [];
+    return (data || []) as BoardPost[];
+  } catch { return []; }
+}
+
+export async function updatePost(id: string, patch: Partial<Pick<BoardPost, 'title' | 'body' | 'category' | 'is_visible' | 'question_key'>>): Promise<{ ok: boolean; reason?: string }> {
   try {
     const { error } = await supabase.from('board_posts').update(patch).eq('id', id);
     if (error) return { ok: false, reason: error.message };
