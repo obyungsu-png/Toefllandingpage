@@ -9,6 +9,8 @@ import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel, buildGlobalSlots, getModuleSlots } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
+import { VideoLectureButton } from './VideoLectureButton';
+import { buildQuestionKey } from '../utils/questionKey';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
 import { fetchBuildSentenceExplanation, readCachedExplanation } from '../utils/buildSentenceExplain';
@@ -137,6 +139,8 @@ interface QuestionReviewFullProps {
   initialIndex?: number;
   /** Reading/Listening 모듈 (모달에서 넘어온 모듈 유지용) */
   initialModule?: 1 | 2;
+  /** 영상 접근 게이트에서 "로그인/가입" 눌렀을 때 호출 */
+  onRequestLogin?: () => void;
 }
 
 interface ReviewQuestion {
@@ -210,7 +214,8 @@ export function QuestionReviewFull({
   themeColor = '#005f61',
   initialSection,
   initialIndex = 0,
-  initialModule = 1
+  initialModule = 1,
+  onRequestLogin,
 }: QuestionReviewFullProps) {
   const [activeSection, setActiveSection] = useState<SectionTab>(initialSection || (result.category as SectionTab) || 'Reading');
   const [activeModule, setActiveModule] = useState<number>(initialModule);
@@ -1785,6 +1790,22 @@ export function QuestionReviewFull({
                     <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
                       <p className="text-xs font-bold text-blue-800 dark:text-blue-200 mb-1">Explanation</p>
                       <p className="text-xs text-blue-700 dark:text-blue-300">{currentQuestion.explanation}</p>
+                    </div>
+                  )}
+
+                  {/* 선생님 강의 영상 — 영상이 있는 문제에만 자동 노출 */}
+                  {currentQuestion && tpoNumber && (
+                    <div className="mb-4">
+                      <VideoLectureButton
+                        questionKey={buildQuestionKey({
+                          family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                          testNumber:     tpoNumber,
+                          section:        activeSection.toLowerCase() as 'reading' | 'listening' | 'writing' | 'speaking',
+                          questionNumber: currentQuestion.number,
+                        })}
+                        themeColor={themeColor}
+                        onRequestLogin={onRequestLogin}
+                      />
                     </div>
                   )}
 

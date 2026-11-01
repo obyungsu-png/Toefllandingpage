@@ -646,6 +646,7 @@ export function HistorySection({
           initialSection={reviewInitialSection}
           initialIndex={reviewInitialIndex}
           initialModule={reviewInitialModule}
+          onRequestLogin={onRequestLogin}
         />
       </Suspense>
     );
