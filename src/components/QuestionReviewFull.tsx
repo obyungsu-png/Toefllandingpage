@@ -10,7 +10,9 @@ import { UniversalAudioPlayer } from './UniversalAudioPlayer';
 import { getQuestionRangeLabel, buildGlobalSlots, getModuleSlots } from '../utils/readingQuestionUtils';
 import { ReadingReviewToolbar, ReadingReviewActions } from './ReadingReviewToolbar';
 import { VideoLectureButton } from './VideoLectureButton';
+import { RelatedBoardPosts } from './RelatedBoardPosts';
 import { buildQuestionKey } from '../utils/questionKey';
+import { listVideosByPrefix } from '../utils/questionVideos';
 import { WordPopup } from './WordPopup';
 import { saveHighlight, loadHighlights, deleteAllHighlights, Highlight } from '../utils/readingHighlights';
 import { fetchBuildSentenceExplanation, readCachedExplanation } from '../utils/buildSentenceExplain';
@@ -290,6 +292,10 @@ export function QuestionReviewFull({
   // Writing review — AI 채점(WritingReviewAiTutor) 팝업 표시
   const [showWritingAiGrader, setShowWritingAiGrader] = useState<'email' | 'discussion' | null>(null);
 
+  // 영상 등록된 question_key 집합 (Q 네비게이션에 🎥 뱃지 표시용)
+  // test + section 바뀔 때마다 한 번 fetch 로 해당 섹션 전체 영상 조회.
+  const [sectionVideoKeys, setSectionVideoKeys] = useState<Set<string>>(new Set());
+
   // TPO 번호 — 결과 레코드에 저장된 낸부 testNumber를 최우선 사용.
   // (testName 정규식 파싱은 "TPO 2026년 1월" 형식에서 2026을 번호로 오인하는 버그가 있었음)
   const tpoNumber = (() => {
@@ -317,6 +323,19 @@ export function QuestionReviewFull({
 
   if (typeof window !== 'undefined') {
   }
+
+  // 섹션 바뀌거나 테스트 바뀔 때마다 영상 등록된 question_key 전체 fetch
+  useEffect(() => {
+    let cancelled = false;
+    if (!tpoNumber) { setSectionVideoKeys(new Set()); return; }
+    const fam = resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo';
+    const prefix = `${fam}:${tpoNumber}:${activeSection.toLowerCase()}:`;
+    (async () => {
+      const list = await listVideosByPrefix(prefix);
+      if (!cancelled) setSectionVideoKeys(new Set(list.map(v => v.question_key)));
+    })();
+    return () => { cancelled = true; };
+  }, [tpoNumber, resultType, activeSection]);
 
   // Load speaking recordings once currentTPOTest is available
   useEffect(() => {
@@ -1066,11 +1085,15 @@ export function QuestionReviewFull({
           <div className="flex flex-wrap gap-1.5 justify-center items-center">
             {activeSection === 'Writing' && writingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
+              const fam = resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo';
+              // Writing qNo : M1→Q(index+1), M2→Q11, M3→Q12
+              const writingQNo = activeModule === 2 ? 11 : activeModule === 3 ? 12 : idx + 1;
+              const hasVideo = tpoNumber ? sectionVideoKeys.has(`${fam}:${tpoNumber}:writing:${writingQNo}`) : false;
               return (
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
+                  className={`relative w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -1079,18 +1102,30 @@ export function QuestionReviewFull({
                     backgroundColor: isCurrent ? themeColor : undefined,
                     borderColor: isCurrent ? themeColor : undefined
                   }}
+                  title={hasVideo ? `Q${q.number} · 🎥 영상 있음` : `Q${q.number}`}
                 >
                   Q{q.number}
+                  {hasVideo && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-white dark:ring-gray-900"
+                      style={{ backgroundColor: '#dc2626' }}
+                      aria-label="영상 있음"
+                    />
+                  )}
                 </button>
               );
             })}
             {activeSection === 'Speaking' && speakingPills.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
+              const fam = resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo';
+              // Speaking qNo : M1→Q(index+1), M2→Q(index+8)
+              const speakingQNo = activeModule === 1 ? idx + 1 : idx + 8;
+              const hasVideo = tpoNumber ? sectionVideoKeys.has(`${fam}:${tpoNumber}:speaking:${speakingQNo}`) : false;
               return (
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
+                  className={`relative w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -1099,19 +1134,29 @@ export function QuestionReviewFull({
                     backgroundColor: isCurrent ? themeColor : undefined,
                     borderColor: isCurrent ? themeColor : undefined
                   }}
+                  title={hasVideo ? `Q${q.number} · 🎥 영상 있음` : `Q${q.number}`}
                 >
                   Q{q.number}
+                  {hasVideo && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-white dark:ring-gray-900"
+                      style={{ backgroundColor: '#dc2626' }}
+                      aria-label="영상 있음"
+                    />
+                  )}
                 </button>
               );
             })}
             {(activeSection === 'Reading' || activeSection === 'Listening') && questions.map((q, idx) => {
               const isCurrent = idx === currentQuestionIndex;
               const isCorrect = q.isCorrect;
+              const fam = resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo';
+              const hasVideo = tpoNumber ? sectionVideoKeys.has(`${fam}:${tpoNumber}:${activeSection.toLowerCase()}:${q.number}`) : false;
               return (
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
+                  className={`relative w-7 h-7 md:w-9 md:h-9 rounded-full text-[11px] md:text-sm font-bold flex items-center justify-center transition-all ${
                     isCurrent
                       ? 'text-white shadow-lg scale-110'
                       : q.unscored
@@ -1126,9 +1171,16 @@ export function QuestionReviewFull({
                     backgroundColor: isCurrent ? themeColor : undefined,
                     borderColor: isCurrent ? themeColor : undefined
                   }}
-                  title={`Q${q.number} — ${q.unscored ? '정답 미등록' : isCorrect ? '정답' : q.isUnanswered ? '미답변' : '오답'}`}
+                  title={`Q${q.number} — ${q.unscored ? '정답 미등록' : isCorrect ? '정답' : q.isUnanswered ? '미답변' : '오답'}${hasVideo ? ' · 🎥 영상 있음' : ''}`}
                 >
                   Q{q.number}
+                  {hasVideo && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-white dark:ring-gray-900"
+                      style={{ backgroundColor: '#dc2626' }}
+                      aria-label="영상 있음"
+                    />
+                  )}
                 </button>
               );
             })}
@@ -1793,21 +1845,25 @@ export function QuestionReviewFull({
                     </div>
                   )}
 
-                  {/* 선생님 강의 영상 — 영상이 있는 문제에만 자동 노출 */}
-                  {currentQuestion && tpoNumber && (
-                    <div className="mb-4">
-                      <VideoLectureButton
-                        questionKey={buildQuestionKey({
-                          family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
-                          testNumber:     tpoNumber,
-                          section:        activeSection.toLowerCase() as 'reading' | 'listening' | 'writing' | 'speaking',
-                          questionNumber: currentQuestion.number,
-                        })}
-                        themeColor={themeColor}
-                        onRequestLogin={onRequestLogin}
-                      />
-                    </div>
-                  )}
+                  {/* 선생님 강의 영상 + 관련 Board Q&A — 둘 다 자동으로 숨겨짐(해당 데이터 없으면) */}
+                  {currentQuestion && tpoNumber && (() => {
+                    const qKey = buildQuestionKey({
+                      family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                      testNumber:     tpoNumber,
+                      section:        activeSection.toLowerCase() as 'reading' | 'listening' | 'writing' | 'speaking',
+                      questionNumber: currentQuestion.number,
+                    });
+                    return (
+                      <div className="mb-4">
+                        <VideoLectureButton
+                          questionKey={qKey}
+                          themeColor={themeColor}
+                          onRequestLogin={onRequestLogin}
+                        />
+                        <RelatedBoardPosts questionKey={qKey} themeColor={themeColor} />
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-3">
                     {(() => {
@@ -2076,6 +2132,24 @@ export function QuestionReviewFull({
                   })()}
                 </div>
 
+                {/* 선생님 강의 영상 + 관련 Board Q&A — Writing M1 (Build a Sentence, Q1-10) */}
+                {tpoNumber && (() => {
+                  const qKey = buildQuestionKey({
+                    family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                    testNumber:     tpoNumber,
+                    section:        'writing',
+                    questionNumber: currentQuestionIndex + 1,
+                  });
+                  return (
+                    <div className="mt-4">
+                      <div className="flex justify-center">
+                        <VideoLectureButton questionKey={qKey} themeColor={themeColor} onRequestLogin={onRequestLogin} />
+                      </div>
+                      <RelatedBoardPosts questionKey={qKey} themeColor={themeColor} />
+                    </div>
+                  );
+                })()}
+
                 {/* Nav buttons */}
                 <div className="flex justify-between mt-4">
                   <button
@@ -2152,6 +2226,24 @@ export function QuestionReviewFull({
                       <span>{bookmarkedQuestions.has('writing-email') ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
                   </div>
+
+                  {/* 선생님 강의 영상 + 관련 Board Q&A — Writing M2 (Email, Q11) */}
+                  {tpoNumber && (() => {
+                    const qKey = buildQuestionKey({
+                      family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                      testNumber:     tpoNumber,
+                      section:        'writing',
+                      questionNumber: 11,
+                    });
+                    return (
+                      <div className="mt-4">
+                        <div className="flex justify-center">
+                          <VideoLectureButton questionKey={qKey} themeColor={themeColor} onRequestLogin={onRequestLogin} />
+                        </div>
+                        <RelatedBoardPosts questionKey={qKey} themeColor={themeColor} />
+                      </div>
+                    );
+                  })()}
                 </div>
               </>
             )}
@@ -2256,6 +2348,24 @@ export function QuestionReviewFull({
                         <span>{bookmarkedQuestions.has('writing-discussion') ? 'Bookmarked' : 'Bookmark'}</span>
                       </button>
                     </div>
+
+                    {/* 선생님 강의 영상 + 관련 Board Q&A — Writing M3 (Academic Discussion, Q12) */}
+                    {tpoNumber && (() => {
+                      const qKey = buildQuestionKey({
+                        family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                        testNumber:     tpoNumber,
+                        section:        'writing',
+                        questionNumber: 12,
+                      });
+                      return (
+                        <div className="mt-4">
+                          <div className="flex justify-center">
+                            <VideoLectureButton questionKey={qKey} themeColor={themeColor} onRequestLogin={onRequestLogin} />
+                          </div>
+                          <RelatedBoardPosts questionKey={qKey} themeColor={themeColor} />
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </>
@@ -2352,6 +2462,24 @@ export function QuestionReviewFull({
                         녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
                       </p>
                     )}
+                  </div>
+                );
+              })()}
+
+              {/* 선생님 강의 영상 + 관련 Board Q&A — Speaking */}
+              {tpoNumber && (() => {
+                const qKey = buildQuestionKey({
+                  family:         (resultType === 'test' ? 'test' : resultType === 'training' ? 'training' : 'tpo'),
+                  testNumber:     tpoNumber,
+                  section:        'speaking',
+                  questionNumber: activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8,
+                });
+                return (
+                  <div className="mb-3">
+                    <div className="flex justify-center">
+                      <VideoLectureButton questionKey={qKey} themeColor={themeColor} onRequestLogin={onRequestLogin} />
+                    </div>
+                    <RelatedBoardPosts questionKey={qKey} themeColor={themeColor} />
                   </div>
                 );
               })()}

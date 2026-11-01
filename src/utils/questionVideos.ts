@@ -77,6 +77,24 @@ export async function getVideosByKeys(questionKeys: string[]): Promise<QuestionV
   } catch { return []; }
 }
 
+/**
+ * 특정 test/section 에 등록된 모든 영상 조회 (prefix 매치).
+ * 예: listVideosByPrefix("tpo:3:reading:") → tpo:3:reading:* 전부
+ * 리뷰 화면에서 Q 네비게이션에 🎥 뱃지를 뿌릴 때 1회 fetch 로 전체 조회.
+ */
+export async function listVideosByPrefix(prefix: string): Promise<QuestionVideo[]> {
+  if (!prefix) return [];
+  try {
+    const { data, error } = await supabase
+      .from('question_videos')
+      .select('*')
+      .like('question_key', `${prefix}%`)
+      .eq('is_visible', true);
+    if (error) return [];
+    return (data || []) as QuestionVideo[];
+  } catch { return []; }
+}
+
 export async function listVideos(): Promise<QuestionVideo[]> {
   try {
     const { data, error } = await supabase

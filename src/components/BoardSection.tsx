@@ -16,6 +16,10 @@ import {
   listPosts, listAllPostsAdmin, addPost, updatePost, setAnswer, deletePost,
   type BoardPost,
 } from '../utils/boardPosts';
+import {
+  buildQuestionKey, parseQuestionKey, formatQuestionLabel,
+  type QuestionFamily, type QuestionSection,
+} from '../utils/questionKey';
 
 const StudyMaterialsRoom = lazy(() =>
   import('./StudyMaterialsRoom').then(m => ({ default: m.StudyMaterialsRoom }))
@@ -169,6 +173,7 @@ function QASection({
         || p.body.toLowerCase().includes(q)
         || (p.answer_body || '').toLowerCase().includes(q)
         || (p.category || '').toLowerCase().includes(q)
+        || (p.question_key || '').toLowerCase().includes(q)
         || p.author_name.toLowerCase().includes(q);
     });
   }, [posts, search, filter]);
@@ -332,6 +337,15 @@ function PostCard({ post, themeColor, isAdmin, onEdit, onDelete, onAnswer }: {
                 {post.category}
               </span>
             )}
+            {post.question_key && (
+              <span
+                className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full border"
+                style={{ borderColor: `${themeColor}55`, color: themeColor }}
+                title="관련 문제"
+              >
+                📖 {formatQuestionLabel(post.question_key)}
+              </span>
+            )}
             <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate">
               {post.title}
             </h3>
@@ -444,16 +458,46 @@ function PostForm({ initial, themeColor, studentName, onClose, onSaved }: {
   const [saving, setSaving]     = useState(false);
   const [err, setErr]           = useState<string | null>(null);
 
+  // 관련 문제(옵션) — question_key 로 묶기
+  const seedRef = parseQuestionKey(initial?.question_key || '');
+  const [linkEnabled, setLinkEnabled] = useState<boolean>(!!seedRef);
+  const [linkFamily, setLinkFamily]   = useState<QuestionFamily>(seedRef?.family || 'tpo');
+  const [linkTestNo, setLinkTestNo]   = useState<string>(seedRef?.testNumber ? String(seedRef.testNumber) : '');
+  const [linkSection, setLinkSection] = useState<QuestionSection>(seedRef?.section || 'reading');
+  const [linkQNo, setLinkQNo]         = useState<string>(seedRef?.questionNumber ? String(seedRef.questionNumber) : '');
+
+  const resolvedQuestionKey = (() => {
+    if (!linkEnabled) return null;
+    const tn = Number(linkTestNo), qn = Number(linkQNo);
+    if (!Number.isFinite(tn) || tn <= 0 || !Number.isFinite(qn) || qn <= 0) return null;
+    return buildQuestionKey({ family: linkFamily, testNumber: tn, section: linkSection, questionNumber: qn });
+  })();
+
   const handleSave = async () => {
     if (!title.trim() || !body.trim()) {
       setErr('제목과 내용은 필수입니다.');
       return;
     }
+    if (linkEnabled && !resolvedQuestionKey) {
+      setErr('관련 문제의 시험 번호와 문제 번호를 올바르게 입력해 주세요.');
+      return;
+    }
     setSaving(true);
     setErr(null);
     const r = initial
-      ? await updatePost(initial.id, { title: title.trim(), body: body.trim(), category: category || null, is_visible: visible })
-      : await addPost({ title, body, category: category || null, authorName: studentName });
+      ? await updatePost(initial.id, {
+          title: title.trim(),
+          body: body.trim(),
+          category: category || null,
+          is_visible: visible,
+          question_key: resolvedQuestionKey,
+        })
+      : await addPost({
+          title, body,
+          category: category || null,
+          authorName: studentName,
+          questionKey: resolvedQuestionKey,
+        });
     setSaving(false);
     if (!r.ok) { setErr(r.reason || '저장 실패'); return; }
     onSaved();
@@ -512,6 +556,64 @@ function PostForm({ initial, themeColor, studentName, onClose, onSaved }: {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none resize-none"
             />
           </div>
+
+          {/* 관련 문제 지정 (옵션) */}
+          <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+            <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={linkEnabled}
+                onChange={e => setLinkEnabled(e.target.checked)}
+              />
+              📌 특정 문제에 관한 질문입니다
+            </label>
+            {linkEnabled && (
+              <>
+                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                  <select
+                    value={linkFamily}
+                    onChange={e => setLinkFamily(e.target.value as QuestionFamily)}
+                    className="px-2 py-1.5 border border-gray-200 rounded-md bg-white focus:outline-none"
+                  >
+                    <option value="tpo">TPO</option>
+                    <option value="test">Test</option>
+                    <option value="training">Training</option>
+                  </select>
+                  <input
+                    type="number" min="1"
+                    value={linkTestNo}
+                    onChange={e => setLinkTestNo(e.target.value)}
+                    placeholder="시험#"
+                    className="px-2 py-1.5 border border-gray-200 rounded-md bg-white focus:outline-none"
+                  />
+                  <select
+                    value={linkSection}
+                    onChange={e => setLinkSection(e.target.value as QuestionSection)}
+                    className="px-2 py-1.5 border border-gray-200 rounded-md bg-white focus:outline-none"
+                  >
+                    <option value="reading">Reading</option>
+                    <option value="listening">Listening</option>
+                    <option value="writing">Writing</option>
+                    <option value="speaking">Speaking</option>
+                  </select>
+                  <input
+                    type="number" min="1"
+                    value={linkQNo}
+                    onChange={e => setLinkQNo(e.target.value)}
+                    placeholder="문제#"
+                    className="px-2 py-1.5 border border-gray-200 rounded-md bg-white focus:outline-none"
+                  />
+                </div>
+                {resolvedQuestionKey && (
+                  <p className="mt-1.5 text-[11px] text-gray-500">
+                    대상 : <span className="font-bold text-gray-700">{formatQuestionLabel(resolvedQuestionKey)}</span>
+                    <span className="text-gray-400"> · 리뷰 화면에서 이 질문이 함께 노출됩니다.</span>
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
           {initial && (
             <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
               <input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />
