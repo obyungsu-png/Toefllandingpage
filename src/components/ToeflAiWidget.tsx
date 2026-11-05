@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, Sparkles, Send, Bot, User, Pin, PinOff, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import AiTutorRobot, { useDraggableFab } from './AiTutorRobot.single';
 import { AI_ENDPOINTS, AI_MODELS, readPreferredAiModel, writePreferredAiModel, type AiProvider } from '../utils/aiClient';
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -261,6 +262,8 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     return { w: 880, h: 700 };
   }, []);
   const [pinned, setPinned] = useState(false);
+  // AI 튜터 3D 로봇 FAB — 드래그 이동 + 위치 저장
+  const fab = useDraggableFab<HTMLDivElement>();
   // pinned 토글 래퍼 — 부모에게 상태 변화 알림 + 패널 위치/크기 초기화
   const togglePinned = useCallback((next: boolean) => {
     setPinned(next);
@@ -475,8 +478,6 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     }
   };
 
-  const fabSideClass = position === 'left' ? 'left-6' : 'right-6';
-
   return (
     <>
       <style>{`
@@ -662,20 +663,27 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
         }
       `}</style>
 
-      {/* AI 도움 버튼 (이모티콘 FAB) — 통합 모드에서는 숨김 */}
+      {/* AI 도움 버튼 — 3D 로봇 FAB (드래그 이동 지원) */}
       {showFab && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className={`toefl-ai-fab fixed bottom-16 md:bottom-6 ${fabSideClass}`}
-          style={{ zIndex }}
-          aria-label="AI 튜터에게 물어보세요"
-          title="AI 튜터에게 물어보세요"
+        <div
+          ref={fab.boxRef}
+          className="toefl-ai-robot-fab"
+          style={{
+            position: 'fixed',
+            zIndex,
+            ...(fab.style ?? (position === 'left' ? { left: 24, bottom: 88 } : { right: 24, bottom: 88 })),
+          }}
         >
-          <span className="toefl-ai-fab-eyes">
-            <span></span>
-            <span></span>
-          </span>
-        </button>
+          <button
+            {...fab.handlers}
+            onClick={() => { if (fab.consumeDrag()) return; setIsOpen(true); }}
+            className={`aibot-btn ${fab.dragging ? 'aibot-dragging' : ''}`}
+            aria-label="AI 튜터에게 물어보세요"
+            title="AI 튜터에게 물어보세요"
+          >
+            <AiTutorRobot size={62} />
+          </button>
+        </div>
       )}
 
       {/* AI 패널 (슬라이드인 or 중앙 모달 팝업) */}
@@ -704,16 +712,13 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
             >
               <div className="flex items-center gap-1.5 md:gap-3">
                 <span
-                  className="toefl-ai-fab shrink-0"
+                  className="shrink-0 flex items-center justify-center"
                   style={pinned
-                    ? { width: 36, height: 36, background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(8px)' }
-                    : { width: 36, height: 36 }
+                    ? { width: 40, height: 40, background: 'rgba(255,255,255,0.22)', borderRadius: 10, backdropFilter: 'blur(8px)' }
+                    : { width: 40, height: 40 }
                   }
                 >
-                  <span className="toefl-ai-fab-eyes">
-                    <span style={{ width: 3, height: 3 }}></span>
-                    <span style={{ width: 3, height: 3 }}></span>
-                  </span>
+                  <AiTutorRobot size={38} still />
                 </span>
                 <div className="flex flex-col">
                   <span
