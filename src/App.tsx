@@ -8024,25 +8024,32 @@ function AppContent() {
         }}
       />
 
-      {/* Banner */}
+      {/* Banner — 모바일에선 슬림 스트립, 데스크탑에선 기존 큰 히어로 */}
       {!showLoginForm && !isInTrainingMode && (
-        <div className="h-[130px] md:h-[140px] bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full shadow-lg">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-['Inter',_sans-serif] font-bold text-white tracking-wide">
-                TOEFL Preparation
-              </h1>
-              <p className="text-base md:text-lg text-white/90 mt-2 font-['Inter',_sans-serif] font-medium">
-                Your Path to Success
-              </p>
-            </div>
+        <>
+          {/* 모바일 슬림 바 */}
+          <div className="md:hidden h-9 bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full flex items-center justify-center overflow-hidden">
+            <span className="text-[11px] font-['Inter',_sans-serif] font-bold text-white tracking-[0.18em] uppercase">
+              TOEFL Preparation
+            </span>
           </div>
-          
-          {/* Decorative elements */}
-          <div className="absolute top-4 left-8 w-16 h-16 bg-white/10 rounded-full"></div>
-          <div className="absolute bottom-4 right-12 w-12 h-12 bg-white/10 rounded-full"></div>
-          <div className="absolute top-1/2 right-1/4 w-8 h-8 bg-white/5 rounded-full"></div>
-        </div>
+          {/* 데스크탑 기존 히어로 유지 */}
+          <div className="hidden md:block h-[140px] bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full shadow-lg">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-4xl font-['Inter',_sans-serif] font-bold text-white tracking-wide">
+                  TOEFL Preparation
+                </h1>
+                <p className="text-lg text-white/90 mt-2 font-['Inter',_sans-serif] font-medium">
+                  Your Path to Success
+                </p>
+              </div>
+            </div>
+            <div className="absolute top-4 left-8 w-16 h-16 bg-white/10 rounded-full"></div>
+            <div className="absolute bottom-4 right-12 w-12 h-12 bg-white/10 rounded-full"></div>
+            <div className="absolute top-1/2 right-1/4 w-8 h-8 bg-white/5 rounded-full"></div>
+          </div>
+        </>
       )}
 
       {/* Main Content */}

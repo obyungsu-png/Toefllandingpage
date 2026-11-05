@@ -234,54 +234,53 @@ export function TPOCardMobileCompact({
         ) : null}
       </div>
 
-      {/* 섹션 점수 그리드 — R / L / S / W */}
+      {/* 섹션 pill 행 — R / L / S / W (완료=teal, 대기=회색, 활성=teal fill) */}
       {!isLocked && (
-        <div className="grid grid-cols-4 gap-1 px-3.5 pb-3">
+        <div className="flex items-center gap-1 px-3.5 pb-3 flex-wrap">
           {SECTION_ORDER.map((key) => {
-            const style = SECTION_STYLE[key];
             const hasContent = getSectionQuestionCount(key) > 0;
             const summary = summaries[key];
             const hasProgress = hasSavedProgress(key);
             const isActive = openSection === key;
+            const state: 'na' | 'rest' | 'wip' | 'done' | 'active' =
+              !hasContent ? 'na'
+              : isActive ? 'active'
+              : summary.completed ? 'done'
+              : hasProgress ? 'wip'
+              : 'rest';
+            const cls = {
+              na:     'bg-gray-50 text-gray-300 cursor-not-allowed',
+              rest:   'bg-gray-50 text-gray-500 border border-gray-200/80 hover:bg-gray-100',
+              wip:    'bg-amber-50 text-amber-700 border border-amber-200',
+              done:   '',  // style 로 teal 처리
+              active: 'text-white shadow-sm scale-[1.02]',
+            }[state];
+            const inlineStyle: React.CSSProperties = state === 'done'
+              ? { backgroundColor: '#e8f1f0', color: BRAND, borderColor: `${BRAND}30`, borderWidth: 1 }
+              : state === 'active'
+              ? { backgroundColor: BRAND }
+              : {};
             return (
               <button
                 key={key}
                 onClick={() => handleChipTap(key)}
                 disabled={!hasContent}
                 title={key}
-                className={`relative flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-all ${
-                  !hasContent
-                    ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                    : isActive
-                    ? 'scale-[1.02] shadow-sm'
-                    : 'active:scale-95'
-                }`}
-                style={{
-                  background: !hasContent
-                    ? undefined
-                    : isActive
-                    ? style.activeBg
-                    : summary.completed
-                    ? style.doneBg
-                    : style.restBg,
-                  color: !hasContent
-                    ? undefined
-                    : isActive
-                    ? '#fff'
-                    : summary.completed
-                    ? style.doneText
-                    : style.restText,
-                }}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all active:scale-95 ${cls}`}
+                style={inlineStyle}
               >
-                <span className="text-[9.5px] font-bold uppercase tracking-widest leading-none opacity-80">
-                  {SECTION_SHORT[key]}
-                </span>
-                <span className="text-[13px] font-bold tabular-nums leading-none">
-                  {summary.completed && summary.score !== null ? summary.score : summary.completed ? '✓' : '—'}
-                </span>
-                {hasProgress && hasContent && !isActive && !summary.completed && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400" />
-                )}
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  state === 'done' || state === 'active' ? '' :
+                  state === 'wip' ? 'bg-amber-500' :
+                  state === 'rest' ? 'bg-gray-300' :
+                  'bg-gray-200'
+                }`}
+                style={state === 'done' ? { backgroundColor: BRAND } : state === 'active' ? { backgroundColor: '#ffffff' } : undefined}
+                />
+                <span className="tracking-wider">{SECTION_SHORT[key]}</span>
+                {summary.completed && summary.score !== null ? (
+                  <span className="tabular-nums font-extrabold">{summary.score}</span>
+                ) : null}
               </button>
             );
           })}
@@ -306,11 +305,8 @@ export function TPOCardMobileCompact({
 
       {/* 확장 액션 스트립 */}
       {openSection && !isLocked && (
-        <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-gray-100 animate-[expandDown_0.15s_ease-out]"
-             style={{ backgroundColor: `${SECTION_STYLE[openSection].doneBg}` }}
-        >
-          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider shrink-0"
-                style={{ color: SECTION_STYLE[openSection].doneText }}>
+        <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-gray-100 bg-gray-50/70 animate-[expandDown_0.15s_ease-out]">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider shrink-0 text-gray-600">
             {openSection}
           </span>
           <div className="flex-1 flex items-center gap-1.5 justify-end">
@@ -352,30 +348,3 @@ export function TPOCardMobileCompact({
   );
 }
 
-// ── 섹션별 색 — 완료/미완료/활성/배경 ─────────────────────────────────
-const SECTION_STYLE: Record<SectionKey, {
-  restBg: string;  restText: string;
-  doneBg: string;  doneText: string;
-  activeBg: string;
-}> = {
-  Reading: {
-    restBg: '#ecfdf5', restText: '#047857',
-    doneBg: '#d1fae5', doneText: '#065f46',
-    activeBg: '#059669',
-  },
-  Listening: {
-    restBg: '#f5f3ff', restText: '#6d28d9',
-    doneBg: '#ede9fe', doneText: '#5b21b6',
-    activeBg: '#7c3aed',
-  },
-  Speaking: {
-    restBg: '#fff7ed', restText: '#c2410c',
-    doneBg: '#ffedd5', doneText: '#9a3412',
-    activeBg: '#ea580c',
-  },
-  Writing: {
-    restBg: '#eff6ff', restText: '#1d4ed8',
-    doneBg: '#dbeafe', doneText: '#1e40af',
-    activeBg: '#2563eb',
-  },
-};
