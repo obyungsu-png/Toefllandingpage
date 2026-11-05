@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Target, Trophy, ArrowUpDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
 import { TPOTest } from './ContentManagement';
 import { TPOCardMobileCompact } from './TPOCardMobileCompact';
 import { computeChronoDisplayNumbers, effectiveDay } from '../utils/testLabel';
+import { TestResult } from '../types/testResult';
 
 
 type TestSetRange = '1-5' | '1-4' | '5-8' | '9-12' | '13-16' | '17-20';
@@ -30,6 +31,8 @@ interface TPOPageProps {
   TPOCard: any;
   TestCard: any;
   advertisements?: Advertisement[];
+  /** 학생의 TPO 응시 결과 — 각 카드의 밴드 점수·섹션 완료 표시용 */
+  testResults?: TestResult[];
 }
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -53,7 +56,8 @@ export function TPOPage({
   onReviewTest,
   TPOCard,
   TestCard,
-  advertisements
+  advertisements,
+  testResults,
 }: TPOPageProps) {
 
   const [yearFilter, setYearFilter] = useState<number | 'all'>('all');
@@ -191,6 +195,30 @@ export function TPOPage({
     </button>
   );
 
+  const MobileChip = ({ active, label, onClick, count }: {
+    active: boolean; label: string; onClick: () => void; count?: number;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all ${
+        active
+          ? 'text-white shadow-sm'
+          : 'bg-white text-gray-500 border border-gray-150 hover:bg-gray-50'
+      }`}
+      style={{
+        backgroundColor: active ? '#005f61' : undefined,
+        borderColor: active ? '#005f61' : '#eceeed',
+      }}
+    >
+      {label}
+      {count !== undefined && count > 0 && (
+        <span className={`text-[9px] font-bold tabular-nums ${active ? 'opacity-80' : 'opacity-60'}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+
   // Count tests per year / month for badges
   const countByYear = useMemo(() => {
     const map: Record<number, number> = {};
@@ -209,6 +237,62 @@ export function TPOPage({
       });
     return map;
   }, [tpoTests, yearFilter]);
+
+  // ── 모바일 Hero 통계 — 밴드 / 완료 / 연속 ────────────────────────────
+  const heroStats = useMemo(() => {
+    const totalTpos = tpoTests.filter(t => t.testType === 'TPO').length || 0;
+    const tpoResults = (testResults || []).filter(r => r.type === 'TPO');
+
+    // 완료 TPO — 4섹션 전부 응시한 testNumber 집합
+    const perTest = new Map<number, Set<string>>();
+    for (const r of tpoResults) {
+      if (!r.testNumber) continue;
+      const cat = r.category || '';
+      if (!['Reading','Listening','Speaking','Writing'].includes(cat)) continue;
+      const completed = r.status === 'completed' || (r.answeredCount ?? 0) > 0 || (r.correctAnswers ?? 0) > 0;
+      if (!completed) continue;
+      if (!perTest.has(r.testNumber)) perTest.set(r.testNumber, new Set());
+      perTest.get(r.testNumber)!.add(cat);
+    }
+    const doneTpoNumbers = [...perTest.entries()].filter(([_, secs]) => secs.size >= 4).map(([n]) => n);
+    const completedCount = doneTpoNumbers.length;
+
+    // 최근 밴드 — 완료된 TPO의 평균 점수
+    let latestBand: number | null = null;
+    if (doneTpoNumbers.length > 0) {
+      const scores: number[] = [];
+      const lastN = doneTpoNumbers[doneTpoNumbers.length - 1];
+      for (const r of tpoResults) {
+        if (r.testNumber !== lastN) continue;
+        const sc = (r.category === 'Speaking' || r.category === 'Writing')
+          ? (r.aiBandScore ?? r.aiScore ?? (Number.isFinite(r.score) ? r.score : null))
+          : (Number.isFinite(r.score) ? r.score : null);
+        if (sc !== null) scores.push(sc);
+      }
+      if (scores.length > 0) {
+        latestBand = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      }
+    }
+
+    // 연속 일수 — 가장 최근 응시일부터 역순으로 끊김 없이 이어진 날짜 수
+    const dates = [...new Set(tpoResults.map(r => (r.date || '').slice(0, 10)).filter(Boolean))].sort().reverse();
+    let streak = 0;
+    if (dates.length > 0) {
+      const toISO = (d: Date) => d.toISOString().slice(0, 10);
+      const start = new Date(dates[0] + 'T00:00:00Z');
+      for (let i = 0; i < dates.length; i++) {
+        const want = new Date(start); want.setUTCDate(start.getUTCDate() - i);
+        if (dates[i] === toISO(want)) streak++; else break;
+      }
+    }
+
+    // 목표 — localStorage에 저장된 사용자 목표, 기본 100
+    let goal = 100;
+    try { const v = localStorage.getItem('tpo_band_goal'); if (v && Number(v) > 0) goal = Number(v); } catch { /* ignore */ }
+    const remaining = Math.max(0, goal - (latestBand ?? 0));
+
+    return { totalTpos, completedCount, latestBand, streak, goal, remaining };
+  }, [tpoTests, testResults]);
 
   return (
     <div className="bg-white relative shrink-0 w-full shadow-sm pb-24 md:pb-0">
@@ -246,103 +330,171 @@ export function TPOPage({
         </div>
       )}
 
-      {/* Filter Section */}
-      <div className="border-b border-gray-200">
-        <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-5 space-y-3 md:space-y-4">
+      {/* ============ MOBILE: Hero + Compact Filters ============ */}
+      {isMobile ? (
+        <div>
+          {/* Hero — 목표 + 밴드 + 완료 + 연속 */}
+          <div className="px-4 pt-4 pb-3">
+            <h1 className="text-[22px] font-extrabold tracking-tight text-gray-900 leading-[1.05]">
+              TOEFL<br />Preparation
+            </h1>
+            {heroStats.latestBand !== null && heroStats.remaining > 0 && (
+              <p className="mt-1 text-[12px] text-gray-500">
+                목표 <b className="text-gray-700">{heroStats.goal}점</b>까지 <b style={{ color: '#005f61' }}>{heroStats.remaining}점</b>
+              </p>
+            )}
 
-          {/* Sort order toggle */}
-          <div className="flex items-center gap-3 md:gap-5">
-            <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">정렬</span>
-            <div className="flex gap-2 md:gap-3">
-              <FilterPill
-                active={sortOrder === 'asc'}
-                label="오름차순 ↑"
-                onClick={() => setSortOrder('asc')}
-              />
-              <FilterPill
-                active={sortOrder === 'desc'}
-                label="내림차순 ↓"
-                onClick={() => setSortOrder('desc')}
-              />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {/* 밴드 */}
+              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                  <Target className="w-2.5 h-2.5" /> Band
+                </div>
+                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight"
+                     style={{ color: heroStats.latestBand !== null ? '#005f61' : '#cbd0cf' }}>
+                  {heroStats.latestBand ?? '—'}
+                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">/120</span>
+                </div>
+              </div>
+              {/* 완료 */}
+              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                  <Trophy className="w-2.5 h-2.5" /> 완료
+                </div>
+                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight text-gray-900">
+                  {heroStats.completedCount}
+                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">/{heroStats.totalTpos}</span>
+                </div>
+              </div>
+              {/* 연속 */}
+              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                  <Flame className="w-2.5 h-2.5" /> 연속
+                </div>
+                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight"
+                     style={{ color: heroStats.streak > 0 ? '#d97706' : '#cbd0cf' }}>
+                  {heroStats.streak}
+                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">일</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Row 1: Year */}
-          <div className="flex items-center gap-3 md:gap-5">
-            <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">Year</span>
-            <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
-              <FilterPill
-                active={yearFilter === 'all'}
-                label="전체"
+          {/* 컴팩트 필터 바 — 한 줄 가로 스크롤 */}
+          <div className="border-b border-gray-100 px-4 pb-2.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                title={sortOrder === 'asc' ? '오름차순 — 과거 먼저' : '내림차순 — 최신 먼저'}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-gray-150 bg-white text-gray-500 text-[11px] font-semibold shrink-0 hover:bg-gray-50"
+                style={{ borderColor: '#eceeed' }}
+              >
+                <ArrowUpDown className="w-3 h-3" />
+                {sortOrder === 'asc' ? '과거↑' : '최신↓'}
+              </button>
+              <MobileChip
+                active={yearFilter === 'all' && monthFilter === 'all'}
+                label="All"
                 onClick={() => { setYearFilter('all'); setMonthFilter('all'); }}
               />
               {availableYears.map(y => (
-                <FilterPill
-                  key={y}
-                  active={yearFilter === y}
+                <MobileChip
+                  key={`y-${y}`}
+                  active={yearFilter === y && monthFilter === 'all'}
                   label={String(y)}
                   count={countByYear[y]}
                   onClick={() => { setYearFilter(y); setMonthFilter('all'); }}
                 />
               ))}
-              {availableYears.length === 0 && (
-                <span className="text-xs text-gray-400 self-center">CMS에서 연도 설정 후 표시됩니다</span>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2: Month */}
-          <div className="flex items-center gap-3 md:gap-5">
-            <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">Month</span>
-            <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
-              <FilterPill
-                active={monthFilter === 'all'}
-                label="전체"
-                onClick={() => setMonthFilter('all')}
-              />
               {filteredMonthOptions.map(m => (
-                <FilterPill
-                  key={m}
+                <MobileChip
+                  key={`m-${m}`}
                   active={monthFilter === m}
                   label={MONTH_NAMES[m - 1]}
                   count={countByMonth[m]}
                   onClick={() => setMonthFilter(m)}
                 />
               ))}
-              {filteredMonthOptions.length === 0 && yearFilter !== 'all' && (
-                <span className="text-xs text-gray-400 self-center">해당 연도에 월 데이터가 없습니다</span>
-              )}
-              {filteredMonthOptions.length === 0 && yearFilter === 'all' && (
-                <span className="text-xs text-gray-400 self-center">CMS에서 월 설정 후 표시됩니다</span>
-              )}
             </div>
           </div>
-
-          {/* Active filter summary */}
-          {(yearFilter !== 'all' || monthFilter !== 'all') && (
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-gray-500">필터:</span>
-              {yearFilter !== 'all' && (
-                <span className="text-xs bg-[#2d7a7c]/10 text-[#2d7a7c] px-2 py-0.5 rounded-full font-medium">
-                  {yearFilter}년
-                </span>
-              )}
-              {monthFilter !== 'all' && (
-                <span className="text-xs bg-[#e67e22]/10 text-[#e67e22] px-2 py-0.5 rounded-full font-medium">
-                  {MONTH_NAMES[(monthFilter as number) - 1]}
-                </span>
-              )}
-              <span className="text-xs text-gray-500">· {filteredNumbers.length}개</span>
-              <button
-                className="text-xs text-gray-400 underline hover:text-gray-600 ml-1"
-                onClick={() => { setYearFilter('all'); setMonthFilter('all'); }}
-              >
-                초기화
-              </button>
-            </div>
-          )}
         </div>
-      </div>
+      ) : (
+        <div className="border-b border-gray-200">
+          <div className="w-full md:max-w-7xl md:mx-auto px-4 md:px-8 py-4 md:py-5 space-y-3 md:space-y-4">
+
+            {/* Sort order toggle */}
+            <div className="flex items-center gap-3 md:gap-5">
+              <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">정렬</span>
+              <div className="flex gap-2 md:gap-3">
+                <FilterPill active={sortOrder === 'asc'}  label="오름차순 ↑" onClick={() => setSortOrder('asc')} />
+                <FilterPill active={sortOrder === 'desc'} label="내림차순 ↓" onClick={() => setSortOrder('desc')} />
+              </div>
+            </div>
+
+            {/* Row 1: Year */}
+            <div className="flex items-center gap-3 md:gap-5">
+              <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">Year</span>
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+                <FilterPill active={yearFilter === 'all'} label="전체" onClick={() => { setYearFilter('all'); setMonthFilter('all'); }} />
+                {availableYears.map(y => (
+                  <FilterPill
+                    key={y}
+                    active={yearFilter === y}
+                    label={String(y)}
+                    count={countByYear[y]}
+                    onClick={() => { setYearFilter(y); setMonthFilter('all'); }}
+                  />
+                ))}
+                {availableYears.length === 0 && (
+                  <span className="text-xs text-gray-400 self-center">CMS에서 연도 설정 후 표시됩니다</span>
+                )}
+              </div>
+            </div>
+
+            {/* Row 2: Month */}
+            <div className="flex items-center gap-3 md:gap-5">
+              <span className="text-xs md:text-sm font-bold text-gray-400 shrink-0 w-10 md:w-12">Month</span>
+              <div className="flex gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+                <FilterPill active={monthFilter === 'all'} label="전체" onClick={() => setMonthFilter('all')} />
+                {filteredMonthOptions.map(m => (
+                  <FilterPill
+                    key={m}
+                    active={monthFilter === m}
+                    label={MONTH_NAMES[m - 1]}
+                    count={countByMonth[m]}
+                    onClick={() => setMonthFilter(m)}
+                  />
+                ))}
+                {filteredMonthOptions.length === 0 && yearFilter !== 'all' && (
+                  <span className="text-xs text-gray-400 self-center">해당 연도에 월 데이터가 없습니다</span>
+                )}
+                {filteredMonthOptions.length === 0 && yearFilter === 'all' && (
+                  <span className="text-xs text-gray-400 self-center">CMS에서 월 설정 후 표시됩니다</span>
+                )}
+              </div>
+            </div>
+
+            {(yearFilter !== 'all' || monthFilter !== 'all') && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-xs text-gray-500">필터:</span>
+                {yearFilter !== 'all' && (
+                  <span className="text-xs bg-[#2d7a7c]/10 text-[#2d7a7c] px-2 py-0.5 rounded-full font-medium">{yearFilter}년</span>
+                )}
+                {monthFilter !== 'all' && (
+                  <span className="text-xs bg-[#e67e22]/10 text-[#e67e22] px-2 py-0.5 rounded-full font-medium">{MONTH_NAMES[(monthFilter as number) - 1]}</span>
+                )}
+                <span className="text-xs text-gray-500">· {filteredNumbers.length}개</span>
+                <button
+                  className="text-xs text-gray-400 underline hover:text-gray-600 ml-1"
+                  onClick={() => { setYearFilter('all'); setMonthFilter('all'); }}
+                >
+                  초기화
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* TPO Cards Grid */}
       <div className="!w-full py-4 md:py-8">
@@ -394,6 +546,7 @@ export function TPOPage({
                         testData={tpoData}
                         onStartTest={handleStartTest}
                         onReviewTest={handleReviewTest}
+                        results={testResults}
                       />
                     ) : (
                       <TPOCard

@@ -8366,6 +8366,7 @@ function AppContent() {
           TPOCard={TPOCard}
           TestCard={TestCard}
           advertisements={advertisements}
+          testResults={testResults}
         />
         </Suspense>
       )}
