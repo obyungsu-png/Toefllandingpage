@@ -333,18 +333,9 @@ export function TPOPage({
       {/* ============ MOBILE: Hero + Compact Filters ============ */}
       {isMobile ? (
         <div>
-          {/* Hero — 목표 + 밴드 + 완료 + 연속 */}
-          <div className="px-4 pt-4 pb-3">
-            <h1 className="text-[22px] font-extrabold tracking-tight text-gray-900 leading-[1.05]">
-              TOEFL<br />Preparation
-            </h1>
-            {heroStats.latestBand !== null && heroStats.remaining > 0 && (
-              <p className="mt-1 text-[12px] text-gray-500">
-                목표 <b className="text-gray-700">{heroStats.goal}점</b>까지 <b style={{ color: '#005f61' }}>{heroStats.remaining}점</b>
-              </p>
-            )}
-
-            <div className="mt-3 grid grid-cols-3 gap-2">
+          {/* Hero — 상단 글로벌 배너와 중복되지 않도록 타이틀 없이 밴드/완료/연속만 */}
+          <div className="px-4 pt-3 pb-2">
+            <div className="grid grid-cols-3 gap-2">
               {/* 밴드 */}
               <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
                 <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
