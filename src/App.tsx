@@ -7833,10 +7833,10 @@ function AppContent() {
           padding-top으로 safe-area 만큼 확보하고 base height는 유지. inline style로
           Tailwind arbitrary value 파서 회피 (env(...) 안 쉼표 이슈). */}
       <div
-        className="bg-white box-border content-stretch flex flex-col md:h-[80px] items-center justify-start relative md:shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] border-b border-gray-100 md:border-b-0 shrink-0 w-full"
+        className="bg-white box-border content-stretch flex flex-col md:h-[80px] items-center justify-center relative md:shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          minHeight: 'calc(52px + env(safe-area-inset-top, 0px))',
+          minHeight: 'calc(48px + env(safe-area-inset-top, 0px))',
         }}
       >
         <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-2 md:px-8">
@@ -8030,8 +8030,8 @@ function AppContent() {
       {/* Banner — 모바일 ~68px 세련 버전 / 데스크탑 기존 큰 히어로 */}
       {!showLoginForm && !isInTrainingMode && (
         <>
-          {/* 모바일: 적당 크기 + 품격 있는 타이포 + 둥근 아래쪽 */}
-          <div className="md:hidden h-[68px] bg-gradient-to-br from-[#2d7a7c] via-[#1e6b73] to-[#1e6b73] relative shrink-0 w-full overflow-hidden rounded-b-2xl shadow-[0_2px_8px_rgba(30,107,115,0.15)]">
+          {/* 모바일: 직사각형, 상단 네비와 밀착 */}
+          <div className="md:hidden h-[64px] bg-gradient-to-br from-[#2d7a7c] via-[#1e6b73] to-[#1e6b73] relative shrink-0 w-full overflow-hidden">
             {/* 은은한 장식 */}
             <div className="absolute -top-4 -left-6 w-16 h-16 bg-white/[0.06] rounded-full"></div>
             <div className="absolute -bottom-6 -right-4 w-20 h-20 bg-white/[0.05] rounded-full"></div>
@@ -8412,6 +8412,7 @@ function AppContent() {
           onReviewTest={(number, section) => launchSection(number, section, 'test', 'review')}
           TestCard={TestCard}
           advertisements={advertisements}
+          testResults={testResults}
         />
         </Suspense>
       )}

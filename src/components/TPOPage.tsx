@@ -380,63 +380,67 @@ export function TPOPage({
       {/* ============ MOBILE: Hero + Compact Filters ============ */}
       {isMobile ? (
         <div>
-          {/* Band Focus 다크 히어로 — 배너 바로 아래 */}
-          <div className="px-4 pt-2 pb-3 -mt-2.5">
+          {/* Band Focus 라이트 히어로 — 흰 배경 + teal 액센트 */}
+          <div className="px-4 pt-3 pb-2">
             <div
-              className="relative overflow-hidden rounded-2xl p-4 pb-3.5"
+              className="relative overflow-hidden rounded-2xl p-4 pb-3.5 bg-white border border-[#005f61]/15"
               style={{
-                background: 'linear-gradient(135deg, #0a0f1a 0%, #0e1724 55%, #122032 100%)',
-                boxShadow: '0 4px 14px -4px rgba(10, 15, 26, 0.3), 0 1px 3px rgba(10, 15, 26, 0.12)',
+                boxShadow: '0 1px 2px rgba(0, 95, 97, 0.04), 0 2px 8px -4px rgba(0, 95, 97, 0.08)',
               }}
             >
+              {/* 좌측 액센트 바 */}
+              <div
+                className="absolute left-0 top-4 bottom-4 w-1 rounded-r"
+                style={{ background: 'linear-gradient(180deg, #005f61, #00bcd4)' }}
+              />
               {/* 은은한 데코 */}
-              <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-[#00d4a1]/[0.06]" />
-              <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-[#00d4a1]/[0.04]" />
+              <div className="absolute -top-10 -right-8 w-28 h-28 rounded-full bg-[#005f61]/[0.04]" />
+              <div className="absolute -bottom-10 -right-20 w-32 h-32 rounded-full bg-[#00bcd4]/[0.03]" />
 
               {/* eyebrow */}
-              <div className="relative text-[9.5px] font-extrabold tracking-[0.18em] uppercase text-[#4ddfb4]">
+              <div className="relative pl-2 text-[9.5px] font-extrabold tracking-[0.18em] uppercase text-[#005f61]">
                 Your Target · {heroStats.targetMonth}
               </div>
 
               {/* 헤드라인 */}
-              <h2 className="relative mt-1 text-white font-extrabold leading-[1.05] tracking-tight text-[22px]">
+              <h2 className="relative pl-2 mt-1 font-extrabold leading-[1.05] tracking-tight text-[22px] text-gray-900">
                 목표 {heroStats.goal}점
                 {heroStats.remaining !== null && heroStats.remaining > 0 && (
-                  <><br />까지 {heroStats.remaining}점</>
+                  <><br /><span className="text-gray-700">까지 </span><span style={{ color: '#005f61' }}>{heroStats.remaining}점</span></>
                 )}
                 {heroStats.remaining === 0 && (
-                  <span className="block text-[14px] text-[#4ddfb4] mt-0.5">목표 도달!</span>
+                  <span className="block text-[14px] mt-0.5" style={{ color: '#005f61' }}>목표 도달!</span>
                 )}
                 {heroStats.remaining === null && (
-                  <span className="block text-[12px] text-white/60 mt-0.5 font-medium">첫 TPO 응시 후 측정 시작</span>
+                  <span className="block text-[12px] text-gray-500 mt-0.5 font-medium">첫 TPO 응시 후 측정 시작</span>
                 )}
               </h2>
 
               {/* 큰 밴드 숫자 + sub */}
-              <div className="relative mt-3 flex items-end gap-2.5">
+              <div className="relative pl-2 mt-3 flex items-end gap-2.5">
                 <div
                   className="font-extrabold leading-none tabular-nums tracking-tight"
                   style={{
                     fontSize: '46px',
-                    color: heroStats.latestBand !== null ? '#4ddfb4' : 'rgba(255,255,255,0.3)',
+                    color: heroStats.latestBand !== null ? '#005f61' : '#cbd0cf',
                   }}
                 >
                   {heroStats.latestBand ?? '—'}
                 </div>
-                <div className="pb-1 text-[11px] text-white/70 font-medium leading-tight">
+                <div className="pb-1 text-[11px] text-gray-500 font-medium leading-tight">
                   현재 밴드 / 6
                 </div>
               </div>
 
               {/* 하단 미니 통계 */}
-              <div className="relative mt-2 text-[11px] text-white/75 font-medium tabular-nums">
-                완료 <b className="text-white font-bold">{heroStats.completedCount}</b>
-                <span className="text-white/35 mx-1.5">·</span>
-                연속 <b className="text-[#f0a658] font-bold">{heroStats.streak}일</b>
+              <div className="relative pl-2 mt-2 text-[11px] text-gray-500 font-medium tabular-nums">
+                완료 <b className="text-gray-900 font-bold">{heroStats.completedCount}</b>
+                <span className="text-gray-300 mx-1.5">·</span>
+                연속 <b className="font-bold" style={{ color: '#d97706' }}>{heroStats.streak}일</b>
                 {heroStats.weekDelta !== null && heroStats.weekDelta !== 0 && (
                   <>
-                    <span className="text-white/35 mx-1.5">·</span>
-                    이번 주 <b className={heroStats.weekDelta > 0 ? 'text-[#4ddfb4]' : 'text-[#f87171]'}>
+                    <span className="text-gray-300 mx-1.5">·</span>
+                    이번 주 <b style={{ color: heroStats.weekDelta > 0 ? '#005f61' : '#dc2626' }}>
                       {heroStats.weekDelta > 0 ? '+' : ''}{heroStats.weekDelta}점
                     </b>
                   </>
