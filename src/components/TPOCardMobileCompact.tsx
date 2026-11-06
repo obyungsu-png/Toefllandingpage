@@ -18,8 +18,10 @@ interface TPOCardMobileCompactProps {
   testData?: TPOTest;
   customTitle?: string;
   bankType?: string;
-  /** 이 TPO의 응시 결과 — 섹션별 점수/완료 표시 */
+  /** 이 TPO/Test 의 응시 결과 — 섹션별 점수/완료 표시 */
   results?: TestResult[];
+  /** results 필터 타입 — 기본 'TPO'. Test 카드로 쓸 때 'Test' 지정 */
+  resultType?: 'TPO' | 'Test' | 'Training';
 }
 
 type SectionKey = 'Reading' | 'Listening' | 'Speaking' | 'Writing';
@@ -37,8 +39,8 @@ interface SectionSummary {
   score: number | null;
 }
 
-/** 이 TPO의 섹션별 요약 산출 */
-function computeSectionSummaries(number: number, results: TestResult[] | undefined): Record<SectionKey, SectionSummary> {
+/** 이 TPO/Test 의 섹션별 요약 산출 */
+function computeSectionSummaries(number: number, results: TestResult[] | undefined, resultType: 'TPO' | 'Test' | 'Training' = 'TPO'): Record<SectionKey, SectionSummary> {
   const empty: Record<SectionKey, SectionSummary> = {
     Reading:   { completed: false, score: null },
     Listening: { completed: false, score: null },
@@ -48,7 +50,7 @@ function computeSectionSummaries(number: number, results: TestResult[] | undefin
   if (!results || results.length === 0) return empty;
 
   for (const r of results) {
-    if (r.type !== 'TPO') continue;
+    if (r.type !== resultType) continue;
     if (r.testNumber !== number) continue;
     const cat = (r.category || '') as SectionKey;
     if (!SECTION_ORDER.includes(cat)) continue;
@@ -91,7 +93,11 @@ export function TPOCardMobileCompact({
   customTitle,
   bankType = 'tpo',
   results,
+  resultType,
 }: TPOCardMobileCompactProps) {
+  // resultType 기본 추론: bankType → type
+  const effResultType: 'TPO' | 'Test' | 'Training' = resultType
+    ?? (bankType === 'test' ? 'Test' : bankType === 'training' ? 'Training' : 'TPO');
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
 
   const getSectionQuestionCount = (sectionType: string): number => {
@@ -102,7 +108,7 @@ export function TPOCardMobileCompact({
 
   const hasSavedProgress = (section: string) => !!localStorage.getItem(`tpo_progress_${bankType}_${number}_${section}`);
 
-  const summaries = useMemo(() => computeSectionSummaries(number, results), [number, results]);
+  const summaries = useMemo(() => computeSectionSummaries(number, results, effResultType), [number, results, effResultType]);
   const completedCount = SECTION_ORDER.filter(s => summaries[s].completed).length;
   const availableSections = SECTION_ORDER.filter(s => getSectionQuestionCount(s) > 0);
   const availableCount = availableSections.length || 4;
