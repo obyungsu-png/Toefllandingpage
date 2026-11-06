@@ -8024,14 +8024,24 @@ function AppContent() {
         }}
       />
 
-      {/* Banner — 모바일에선 슬림 스트립, 데스크탑에선 기존 큰 히어로 */}
+      {/* Banner — 모바일 ~68px 세련 버전 / 데스크탑 기존 큰 히어로 */}
       {!showLoginForm && !isInTrainingMode && (
         <>
-          {/* 모바일 슬림 바 */}
-          <div className="md:hidden h-9 bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full flex items-center justify-center overflow-hidden">
-            <span className="text-[11px] font-['Inter',_sans-serif] font-bold text-white tracking-[0.18em] uppercase">
-              TOEFL Preparation
-            </span>
+          {/* 모바일: 적당 크기 + 품격 있는 타이포 + 둥근 아래쪽 */}
+          <div className="md:hidden h-[68px] bg-gradient-to-br from-[#2d7a7c] via-[#1e6b73] to-[#1e6b73] relative shrink-0 w-full overflow-hidden rounded-b-2xl shadow-[0_2px_8px_rgba(30,107,115,0.15)]">
+            {/* 은은한 장식 */}
+            <div className="absolute -top-4 -left-6 w-16 h-16 bg-white/[0.06] rounded-full"></div>
+            <div className="absolute -bottom-6 -right-4 w-20 h-20 bg-white/[0.05] rounded-full"></div>
+            <div className="absolute top-1/2 right-1/3 w-3 h-3 bg-white/[0.08] rounded-full"></div>
+
+            <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
+              <h1 className="text-[18px] font-['Inter',_sans-serif] font-bold text-white tracking-[0.01em] leading-none">
+                TOEFL Preparation
+              </h1>
+              <p className="text-[10.5px] text-white/85 mt-1 font-['Inter',_sans-serif] font-medium tracking-[0.08em] leading-none">
+                Your Path to Success
+              </p>
+            </div>
           </div>
           {/* 데스크탑 기존 히어로 유지 */}
           <div className="hidden md:block h-[140px] bg-gradient-to-r from-[#2d7a7c] to-[#1e6b73] relative shrink-0 w-full shadow-lg">
