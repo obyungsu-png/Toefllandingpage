@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Flame, Target, Trophy, ArrowUpDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Advertisement } from './AdManagement';
 import { AdModal } from './AdModal';
@@ -238,12 +238,29 @@ export function TPOPage({
     return map;
   }, [tpoTests, yearFilter]);
 
-  // ── 모바일 Hero 통계 — 밴드 / 완료 / 연속 ────────────────────────────
+  // ── 모바일 Hero 통계 — 밴드(0~6) · 완료 · 연속 ────────────────────────
+  // TOEFL 밴드 스케일 0~6. R/L 원점수(0~30) → 밴드(÷5), S/W aiBandScore 사용.
   const heroStats = useMemo(() => {
     const totalTpos = tpoTests.filter(t => t.testType === 'TPO').length || 0;
     const tpoResults = (testResults || []).filter(r => r.type === 'TPO');
 
-    // 완료 TPO — 4섹션 전부 응시한 testNumber 집합
+    // 섹션 점수 → 0~6 밴드
+    const sectionBand = (r: TestResult): number | null => {
+      const cat = r.category || '';
+      if (cat === 'Speaking' || cat === 'Writing') {
+        const b = r.aiBandScore;
+        if (typeof b === 'number' && Number.isFinite(b)) return Math.max(0, Math.min(6, b));
+        const sc = r.aiScore ?? (Number.isFinite(r.score) ? r.score : null);
+        if (sc === null) return null;
+        return Math.max(0, Math.min(6, sc <= 6 ? sc : sc / 5));  // 0~6 또는 0~30 추정
+      }
+      // R/L : 0~30 → ÷5 → 0~6
+      const sc = Number.isFinite(r.score) ? r.score : null;
+      if (sc === null) return null;
+      return Math.max(0, Math.min(6, sc / 5));
+    };
+
+    // 완료 TPO — 4섹션 전부 응시
     const perTest = new Map<number, Set<string>>();
     for (const r of tpoResults) {
       if (!r.testNumber) continue;
@@ -257,24 +274,38 @@ export function TPOPage({
     const doneTpoNumbers = [...perTest.entries()].filter(([_, secs]) => secs.size >= 4).map(([n]) => n);
     const completedCount = doneTpoNumbers.length;
 
-    // 최근 밴드 — 완료된 TPO의 평균 점수
+    // 최근 밴드 — 가장 최근 완료 TPO 섹션 평균 (소수 첫째자리)
     let latestBand: number | null = null;
     if (doneTpoNumbers.length > 0) {
-      const scores: number[] = [];
       const lastN = doneTpoNumbers[doneTpoNumbers.length - 1];
+      const bands: number[] = [];
       for (const r of tpoResults) {
         if (r.testNumber !== lastN) continue;
-        const sc = (r.category === 'Speaking' || r.category === 'Writing')
-          ? (r.aiBandScore ?? r.aiScore ?? (Number.isFinite(r.score) ? r.score : null))
-          : (Number.isFinite(r.score) ? r.score : null);
-        if (sc !== null) scores.push(sc);
+        const b = sectionBand(r);
+        if (b !== null) bands.push(b);
       }
-      if (scores.length > 0) {
-        latestBand = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      if (bands.length > 0) {
+        latestBand = Math.round((bands.reduce((a, b) => a + b, 0) / bands.length) * 10) / 10;
       }
     }
 
-    // 연속 일수 — 가장 최근 응시일부터 역순으로 끊김 없이 이어진 날짜 수
+    // 지난 주 변화 — 완료 TPO 2개 이상일 때, 최근 2개 평균 차
+    let weekDelta: number | null = null;
+    if (doneTpoNumbers.length >= 2) {
+      const prevN = doneTpoNumbers[doneTpoNumbers.length - 2];
+      const prevBands: number[] = [];
+      for (const r of tpoResults) {
+        if (r.testNumber !== prevN) continue;
+        const b = sectionBand(r);
+        if (b !== null) prevBands.push(b);
+      }
+      if (prevBands.length > 0 && latestBand !== null) {
+        const prev = prevBands.reduce((a, b) => a + b, 0) / prevBands.length;
+        weekDelta = Math.round((latestBand - prev) * 10) / 10;
+      }
+    }
+
+    // 연속 일수
     const dates = [...new Set(tpoResults.map(r => (r.date || '').slice(0, 10)).filter(Boolean))].sort().reverse();
     let streak = 0;
     if (dates.length > 0) {
@@ -286,16 +317,32 @@ export function TPOPage({
       }
     }
 
-    // 목표 — localStorage에 저장된 사용자 목표, 기본 100
-    let goal = 100;
-    try { const v = localStorage.getItem('tpo_band_goal'); if (v && Number(v) > 0) goal = Number(v); } catch { /* ignore */ }
-    const remaining = Math.max(0, goal - (latestBand ?? 0));
+    // 목표 — localStorage, 기본 5.5 (0~6 스케일)
+    let goal = 5.5;
+    try {
+      const v = localStorage.getItem('tpo_band_goal');
+      if (v && Number(v) > 0 && Number(v) <= 6) goal = Number(v);
+    } catch { /* ignore */ }
+    const remaining = latestBand !== null
+      ? Math.max(0, Math.round((goal - latestBand) * 10) / 10)
+      : null;
 
-    return { totalTpos, completedCount, latestBand, streak, goal, remaining };
+    // 목표 달 — localStorage 'tpo_band_target_month' (예: "Oct 2027"), 기본 지금+3개월
+    let targetMonth = '';
+    try {
+      const v = localStorage.getItem('tpo_band_target_month');
+      if (v) targetMonth = v;
+    } catch { /* ignore */ }
+    if (!targetMonth) {
+      const d = new Date(); d.setMonth(d.getMonth() + 3);
+      targetMonth = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    return { totalTpos, completedCount, latestBand, streak, goal, remaining, weekDelta, targetMonth };
   }, [tpoTests, testResults]);
 
   return (
-    <div className="bg-white relative shrink-0 w-full shadow-sm pb-24 md:pb-0">
+    <div className="relative shrink-0 w-full shadow-sm pb-24 md:pb-0 bg-[#f6f6f1] md:bg-white">
       {/* Ad Modal */}
       {displayAd && (
         <AdModal ad={displayAd} isOpen={isAdModalOpen} onClose={() => setIsAdModalOpen(false)} />
@@ -333,40 +380,67 @@ export function TPOPage({
       {/* ============ MOBILE: Hero + Compact Filters ============ */}
       {isMobile ? (
         <div>
-          {/* Hero — 배너 바로 아래 slim 영역: 카드 상단 모서리가 배너에 살짝 겹치듯 */}
-          <div className="px-4 pt-2 pb-2 -mt-2.5">
-            <div className="grid grid-cols-3 gap-2">
-              {/* 밴드 */}
-              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
-                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
-                  <Target className="w-2.5 h-2.5" /> Band
-                </div>
-                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight"
-                     style={{ color: heroStats.latestBand !== null ? '#005f61' : '#cbd0cf' }}>
+          {/* Band Focus 다크 히어로 — 배너 바로 아래 */}
+          <div className="px-4 pt-2 pb-3 -mt-2.5">
+            <div
+              className="relative overflow-hidden rounded-2xl p-4 pb-3.5"
+              style={{
+                background: 'linear-gradient(135deg, #0a0f1a 0%, #0e1724 55%, #122032 100%)',
+                boxShadow: '0 4px 14px -4px rgba(10, 15, 26, 0.3), 0 1px 3px rgba(10, 15, 26, 0.12)',
+              }}
+            >
+              {/* 은은한 데코 */}
+              <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-[#00d4a1]/[0.06]" />
+              <div className="absolute -bottom-10 -left-6 w-24 h-24 rounded-full bg-[#00d4a1]/[0.04]" />
+
+              {/* eyebrow */}
+              <div className="relative text-[9.5px] font-extrabold tracking-[0.18em] uppercase text-[#4ddfb4]">
+                Your Target · {heroStats.targetMonth}
+              </div>
+
+              {/* 헤드라인 */}
+              <h2 className="relative mt-1 text-white font-extrabold leading-[1.05] tracking-tight text-[22px]">
+                목표 {heroStats.goal}점
+                {heroStats.remaining !== null && heroStats.remaining > 0 && (
+                  <><br />까지 {heroStats.remaining}점</>
+                )}
+                {heroStats.remaining === 0 && (
+                  <span className="block text-[14px] text-[#4ddfb4] mt-0.5">목표 도달!</span>
+                )}
+                {heroStats.remaining === null && (
+                  <span className="block text-[12px] text-white/60 mt-0.5 font-medium">첫 TPO 응시 후 측정 시작</span>
+                )}
+              </h2>
+
+              {/* 큰 밴드 숫자 + sub */}
+              <div className="relative mt-3 flex items-end gap-2.5">
+                <div
+                  className="font-extrabold leading-none tabular-nums tracking-tight"
+                  style={{
+                    fontSize: '46px',
+                    color: heroStats.latestBand !== null ? '#4ddfb4' : 'rgba(255,255,255,0.3)',
+                  }}
+                >
                   {heroStats.latestBand ?? '—'}
-                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">/120</span>
+                </div>
+                <div className="pb-1 text-[11px] text-white/70 font-medium leading-tight">
+                  현재 밴드 / 6
                 </div>
               </div>
-              {/* 완료 */}
-              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
-                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
-                  <Trophy className="w-2.5 h-2.5" /> 완료
-                </div>
-                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight text-gray-900">
-                  {heroStats.completedCount}
-                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">/{heroStats.totalTpos}</span>
-                </div>
-              </div>
-              {/* 연속 */}
-              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
-                <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
-                  <Flame className="w-2.5 h-2.5" /> 연속
-                </div>
-                <div className="mt-0.5 font-extrabold text-[20px] leading-none tabular-nums tracking-tight"
-                     style={{ color: heroStats.streak > 0 ? '#d97706' : '#cbd0cf' }}>
-                  {heroStats.streak}
-                  <span className="text-[10px] text-gray-400 font-medium ml-0.5">일</span>
-                </div>
+
+              {/* 하단 미니 통계 */}
+              <div className="relative mt-2 text-[11px] text-white/75 font-medium tabular-nums">
+                완료 <b className="text-white font-bold">{heroStats.completedCount}</b>
+                <span className="text-white/35 mx-1.5">·</span>
+                연속 <b className="text-[#f0a658] font-bold">{heroStats.streak}일</b>
+                {heroStats.weekDelta !== null && heroStats.weekDelta !== 0 && (
+                  <>
+                    <span className="text-white/35 mx-1.5">·</span>
+                    이번 주 <b className={heroStats.weekDelta > 0 ? 'text-[#4ddfb4]' : 'text-[#f87171]'}>
+                      {heroStats.weekDelta > 0 ? '+' : ''}{heroStats.weekDelta}점
+                    </b>
+                  </>
+                )}
               </div>
             </div>
           </div>
