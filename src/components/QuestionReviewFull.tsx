@@ -2536,7 +2536,30 @@ export function QuestionReviewFull({
         pinnable={true}
         onPinnedChange={setAiTutorPinned}
         suggestedQuestions={
-          activeSection === 'Writing' && activeModule === 2
+          activeSection === 'Reading'
+            ? [
+                '🔍 이 문제 정답의 근거가 지문 어디에 있어?',
+                '❌ 내가 고른 보기가 왜 틀렸어? 함정 짚어줘',
+                '✅ 정답과 매력적인 오답의 차이 설명해줘',
+                '💡 이런 문제 유형(예: Inference / Vocabulary) 풀이 전략',
+                '📚 지문의 핵심 단어·표현 뜻 알려줘',
+              ]
+            : activeSection === 'Listening'
+            ? [
+                '🎧 이 문제의 정답 단서가 들린 지점(키워드)을 짚어줘',
+                '❌ 왜 내 답이 틀렸지? 들린 내용과 다른 이유',
+                '🗣️ 화자의 태도·뉘앙스 분석해줘',
+                '🧩 Main Idea / Attitude / Inference 문제 접근법',
+                '📝 스크립트의 핵심 어휘·표현 5가지',
+              ]
+            : activeSection === 'Writing' && activeModule === 1
+            ? [
+                '✍️ 제시된 단어로 자연스러운 문장 조합 알려줘',
+                '📚 이 문장의 문법 포인트(어순/시제/조사)는?',
+                '💡 같은 뜻을 다른 표현으로 바꾼다면?',
+                '❓ 내 답과 정답의 차이가 뭐야?',
+              ]
+            : activeSection === 'Writing' && activeModule === 2
             ? [
                 '📌 문제 핵심 요구사항 & 추천 구조',
                 '👥 상황별 맞춤 어휘 & 이메일 표현',
@@ -2549,6 +2572,14 @@ export function QuestionReviewFull({
                 '👥 타인 의견 인용 및 연계 표현 추천',
                 '✍️ 토론형 라이팅 도입부(첫 문장) 예시',
                 '💡 독창적 의견 전개를 위한 브레인스토밍',
+              ]
+            : activeSection === 'Speaking'
+            ? [
+                '🎙️ 이 문제의 이상적인 답변 구조(Opening / Body / Closing)',
+                '📚 사용하면 좋은 핵심 표현·접속사 5가지',
+                '⏱️ 시간 분배(Prep · Speak) 전략 알려줘',
+                '💡 내 답변의 약한 부분(발음·유창성·논리) 진단해줘',
+                '🗣️ 비슷한 유형 모범답 예시 1개',
               ]
             : undefined
         }

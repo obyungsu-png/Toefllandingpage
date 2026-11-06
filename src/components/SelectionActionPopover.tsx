@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Underline, Highlighter, BookOpen, Bot, X } from 'lucide-react';
+import { Underline, Highlighter, BookOpen, X } from 'lucide-react';
+import AiTutorRobot from './AiTutorRobot.single';
 import { prefetchWordDefinitions } from '../utils/dictionaryApi';
 import { prefetchWordTranslation } from '../utils/wordTranslate';
 import { callAi, readPreferredAiModel } from '../utils/aiClient';
@@ -341,18 +342,24 @@ export function SelectionActionPopover({
         >
           <BookOpen size={16} />
         </button>
-        {/* AI 튜터 버튼 — showAiTutor가 true일 때만 표시 */}
+        {/* AI 튜터 버튼 — showAiTutor가 true일 때만 표시 (3D 로봇 아이콘) */}
         {showAiTutor && (
           <button
             onClick={() => setActivePanel(activePanel === 'ai' ? null : 'ai')}
-            className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-              activePanel === 'ai'
-                ? 'bg-[#667eea] text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            className={`relative flex items-center justify-center w-8 h-8 rounded-full overflow-hidden transition-all ${
+              activePanel === 'ai' ? 'scale-110' : 'hover:scale-105'
             }`}
+            style={{
+              background: activePanel === 'ai'
+                ? 'radial-gradient(circle at 35% 30%, #a9c6ff 0%, #667eea 100%)'
+                : 'radial-gradient(circle at 35% 30%, #cfe0ff 0%, #a9c6ff 35%, #8fd6ee 70%, #bfe9ff 100%)',
+              boxShadow: activePanel === 'ai'
+                ? '0 2px 8px rgba(102,126,234,0.35)'
+                : '0 1px 3px rgba(102,126,234,0.2), inset 0 1px 1px rgba(255,255,255,0.5)',
+            }}
             title="AI 튜터"
           >
-            <Bot size={16} />
+            <AiTutorRobot size={26} still />
           </button>
         )}
       </div>
@@ -414,8 +421,13 @@ export function SelectionActionPopover({
           {/* 헤더 */}
           <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[#667eea] text-white">
-                <Bot size={14} />
+              <span className="relative w-7 h-7 flex items-center justify-center rounded-full overflow-hidden"
+                style={{
+                  background: 'radial-gradient(circle at 35% 30%, #cfe0ff 0%, #a9c6ff 35%, #8fd6ee 70%, #bfe9ff 100%)',
+                  boxShadow: '0 1px 3px rgba(102,126,234,0.3)',
+                }}
+              >
+                <AiTutorRobot size={22} still />
               </span>
               <span className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
                 AI 튜터 · {aiAction && AI_TUTOR_ACTIONS.find(a => a.key === aiAction)?.label}
