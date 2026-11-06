@@ -333,11 +333,11 @@ export function TPOPage({
       {/* ============ MOBILE: Hero + Compact Filters ============ */}
       {isMobile ? (
         <div>
-          {/* Hero — 상단 글로벌 배너와 중복되지 않도록 타이틀 없이 밴드/완료/연속만 */}
-          <div className="px-4 pt-3 pb-2">
+          {/* Hero — 배너 바로 아래 slim 영역: 카드 상단 모서리가 배너에 살짝 겹치듯 */}
+          <div className="px-4 pt-2 pb-2 -mt-2.5">
             <div className="grid grid-cols-3 gap-2">
               {/* 밴드 */}
-              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
                 <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
                   <Target className="w-2.5 h-2.5" /> Band
                 </div>
@@ -348,7 +348,7 @@ export function TPOPage({
                 </div>
               </div>
               {/* 완료 */}
-              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
                 <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
                   <Trophy className="w-2.5 h-2.5" /> 완료
                 </div>
@@ -358,7 +358,7 @@ export function TPOPage({
                 </div>
               </div>
               {/* 연속 */}
-              <div className="rounded-xl border border-gray-150 bg-white p-2.5" style={{ borderColor: '#eceeed' }}>
+              <div className="rounded-xl bg-white p-2.5 shadow-[0_1px_3px_rgba(15,20,25,0.04)] border border-[#f0f1ee]">
                 <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
                   <Flame className="w-2.5 h-2.5" /> 연속
                 </div>
