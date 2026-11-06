@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
 import { BookOpen, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
-import AiTutorRobot, { useDraggableFab } from './AiTutorRobot.single';
+import AiTutorRobot from './AiTutorRobot.single';
 import { createCachedAudioSync } from '../utils/mediaCache';
 import { translateWord } from '../utils/wordTranslate';
 
@@ -292,8 +292,6 @@ function getTabMeta(tab: string) {
 
 export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote, audioUrl, scriptText, sentenceTimestamps }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
-  // AI 튜터 로봇 — 기본 위치(위젯 맨 오른쪽)에서 드래그로 자유 이동 가능 (위치 저장)
-  const tutorFab = useDraggableFab<HTMLDivElement>();
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
@@ -1720,7 +1718,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   };
 
   return (
-    <div className="fixed right-4 bottom-[88px] md:bottom-6 z-[85] flex flex-col items-end gap-2">
+    <div className="fixed right-4 bottom-[68px] md:bottom-6 z-[85] flex flex-col items-end gap-2">
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
       <div className="flex flex-row gap-3 shrink-0">
         {tabs.map((tab) => {
@@ -1796,31 +1794,23 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         )}
 
         {/* AI 튜터 버튼 — 배경 없이 로봇만, 라벨은 기존 회색으로 통일.
-            기본 위치는 위젯 맨 오른쪽, 드래그하면 자유 이동(위치 저장) */}
+            위치는 위젯 맨 오른쪽 고정. 팔(타자)·머리(포인터 추적) 애니메이션은 유지 */}
         {onOpenAiTutor && (
-          <div
-            ref={tutorFab.boxRef}
-            className="z-[86]"
-            style={tutorFab.style ? { position: 'fixed', ...tutorFab.style } : undefined}
+          <button
+            type="button"
+            title="AI 튜터"
+            onClick={onOpenAiTutor}
+            className="group flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
-            <button
-              {...tutorFab.handlers}
-              type="button"
-              title="AI 튜터"
-              onClick={() => { if (tutorFab.consumeDrag()) return; onOpenAiTutor(); }}
-              className="group flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
-              style={{ touchAction: 'none', cursor: tutorFab.dragging ? 'grabbing' : 'grab' }}
-            >
-              <span className="relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center">
-                <span className="scale-[0.82] md:scale-100 origin-center flex">
-                  <AiTutorRobot size={44} still />
-                </span>
+            <span className="relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center">
+              <span className="scale-[0.82] md:scale-100 origin-center flex">
+                <AiTutorRobot size={44} />
               </span>
-              <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#64748b] opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-4">
-                AI 튜터
-              </span>
-            </button>
-          </div>
+            </span>
+            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#64748b] opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-4">
+              AI 튜터
+            </span>
+          </button>
         )}
       </div>
 
