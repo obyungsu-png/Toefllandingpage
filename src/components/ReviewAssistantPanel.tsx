@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
-import { BookOpen, Bot, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { BookOpen, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import AiTutorRobot from './AiTutorRobot.single';
 import { createCachedAudioSync } from '../utils/mediaCache';
 import { translateWord } from '../utils/wordTranslate';
 
@@ -1743,25 +1744,27 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               className="flex flex-col items-center gap-1 transition-all duration-200"
             >
               <span
-                className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isActive ? '-translate-x-0.5 shadow-md' : 'hover:-translate-x-0.5'}`}
+                className={`relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isActive ? '-translate-x-0.5 shadow-md' : 'hover:-translate-x-0.5'}`}
                 style={{
                   background: isActive
                     ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
-                    : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
-                  boxShadow: isActive ? `0 6px 18px ${theme.accent}33` : '0 2px 8px rgba(15,23,42,0.08)',
+                    : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #f0eafc 42%, #d9d1f0 100%)',
+                  boxShadow: isActive
+                    ? `0 6px 18px ${theme.accent}33`
+                    : '0 4px 12px rgba(124,58,237,0.18), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(124,58,237,0.08)',
                 }}
               >
-                <Icon className="h-5 w-5" style={{ color: isActive ? 'white' : theme.accent }} />
+                <Icon className="h-5 w-5" style={{ color: isActive ? 'white' : theme.accent }} strokeWidth={2.2} />
               </span>
               <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
-                style={{ color: isActive ? theme.accent : '#94a3b8' }}>
+                style={{ color: isActive ? theme.accent : '#64748b' }}>
                 {tab}
               </span>
             </button>
           );
         })}
 
-        {/* AI 튜터 버튼 — 오른쪽 통합 아이콘 바에 배치 */}
+        {/* Play Audio 버튼 — 3D 로봇과 어울리는 소프트 그라데이션 */}
         {audioUrl && (
           <button
             type="button"
@@ -1770,23 +1773,26 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span
-              className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
+              className="relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
               style={{
                 background: isPlayingAudio
                   ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
-                  : 'linear-gradient(180deg, #f1f5f9 0%, #e8edf2 100%)',
-                boxShadow: isPlayingAudio ? `0 6px 18px ${theme.accent}33` : '0 2px 8px rgba(15,23,42,0.08)',
+                  : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #f0eafc 42%, #d9d1f0 100%)',
+                boxShadow: isPlayingAudio
+                  ? `0 6px 18px ${theme.accent}33`
+                  : '0 4px 12px rgba(124,58,237,0.18), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(124,58,237,0.08)',
               }}
             >
-              {isPlayingAudio ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5" style={{ color: theme.accent }} />}
+              {isPlayingAudio ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5" style={{ color: theme.accent }} strokeWidth={2.2} fill={theme.accent} />}
             </span>
             <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
-              style={{ color: isPlayingAudio ? theme.accent : '#94a3b8' }}>
+              style={{ color: isPlayingAudio ? theme.accent : '#64748b' }}>
               {isPlayingAudio ? 'Pause' : 'Play'}
             </span>
           </button>
         )}
 
+        {/* AI 튜터 버튼 — 3D 로봇 캐릭터 */}
         {onOpenAiTutor && (
           <button
             type="button"
@@ -1795,13 +1801,13 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span
-              className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
+              className="relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 overflow-hidden"
               style={{
                 background: 'radial-gradient(circle at 35% 30%, #cfe0ff 0%, #a9c6ff 35%, #8fd6ee 70%, #bfe9ff 100%)',
-                boxShadow: '0 6px 18px rgba(102, 126, 234, 0.30)',
+                boxShadow: '0 6px 18px rgba(102, 126, 234, 0.30), inset 0 1px 1px rgba(255,255,255,0.5)',
               }}
             >
-              <Bot className="h-5 w-5" style={{ color: '#2d2d3a' }} />
+              <AiTutorRobot size={44} still />
             </span>
             <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#667eea]">
               AI 튜터
