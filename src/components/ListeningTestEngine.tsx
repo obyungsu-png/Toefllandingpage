@@ -193,6 +193,25 @@ export function ListeningTestEngine({
     else onExitBack();
   };
 
+  // 정답(라디오) 선택 시 3초 뒤 자동 다음 문제 — 실제 TOEFL 리스닝 흐름 (리뷰 포함)
+  // 현재 문제 화면 내부의 라디오에만 반응하도록 범위 제한
+  const flowRef = useRef<HTMLDivElement>(null);
+  const autoNextTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const t = e.target as HTMLInputElement | null;
+      if (!t || t.type !== 'radio') return;
+      if (!flowRef.current?.contains(t)) return;
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+      autoNextTimer.current = setTimeout(() => goNext(), 3000);
+    };
+    document.addEventListener('change', onChange, true);
+    return () => {
+      document.removeEventListener('change', onChange, true);
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+    };
+  }, [segmentIndex]);
+
   const current = segments[segmentIndex];
 
   // 현재 질문의 표시 번호 계산 (질문 세그먼트만 카운트)
@@ -248,17 +267,19 @@ export function ListeningTestEngine({
   // Question 페이지
   const question = current.question;
   return (
-    <ListeningQuestionScreen
-      key={current.legacyKey}
-      question={question}
-      qNum={displayQNum}
-      answerKey={globalAnswerKey}
-      totalQuestions={totalQuestions}
-      onHome={onHome}
-      onBack={goBack}
-      onNext={goNext}
-      isReviewMode={isReviewMode}
-    />
+    <div ref={flowRef} className="contents">
+      <ListeningQuestionScreen
+        key={current.legacyKey}
+        question={question}
+        qNum={displayQNum}
+        answerKey={globalAnswerKey}
+        totalQuestions={totalQuestions}
+        onHome={onHome}
+        onBack={goBack}
+        onNext={goNext}
+        isReviewMode={isReviewMode}
+      />
+    </div>
   );
 }
 

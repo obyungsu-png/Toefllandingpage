@@ -19,7 +19,7 @@ export function MobileQuestionNav({
 }: MobileQuestionNavProps) {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-      <div className="grid grid-cols-3 h-16 px-4">
+      <div className="grid grid-cols-3 h-12 px-4">
         {/* Back Button */}
         <button
           onClick={onBack}

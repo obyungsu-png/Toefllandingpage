@@ -1720,7 +1720,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   };
 
   return (
-    <div className={`fixed right-4 ${section === 'Speaking' ? 'bottom-4' : 'bottom-16'} md:bottom-6 z-[85] flex flex-col items-end gap-2`}>
+    <div className={`fixed right-4 ${section === 'Speaking' ? 'bottom-4' : 'bottom-12'} md:bottom-6 z-[85] flex flex-col items-end gap-2`}>
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
       <div className="flex flex-row gap-3 shrink-0">
         {/* AI 튜터 버튼 — 맨 왼쪽. 배경 없이 로봇만, 팔(타자)·머리(포인터 추적) 애니메이션.
