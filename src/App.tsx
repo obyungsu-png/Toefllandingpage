@@ -7833,10 +7833,10 @@ function AppContent() {
           padding-top으로 safe-area 만큼 확보하고 base height는 유지. inline style로
           Tailwind arbitrary value 파서 회피 (env(...) 안 쉼표 이슈). */}
       <div
-        className="bg-white box-border content-stretch flex flex-col md:h-[80px] items-center justify-start relative shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] shrink-0 w-full"
+        className="bg-white box-border content-stretch flex flex-col md:h-[80px] items-center justify-start relative md:shadow-[0px_0px_12px_0px_rgba(0,0,0,0.15)] border-b border-gray-100 md:border-b-0 shrink-0 w-full"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          minHeight: 'calc(56px + env(safe-area-inset-top, 0px))',
+          minHeight: 'calc(52px + env(safe-area-inset-top, 0px))',
         }}
       >
         <div className="content-stretch flex items-center justify-between relative shrink-0 w-full max-w-[1200px] px-2 md:px-8">
@@ -7899,10 +7899,10 @@ function AppContent() {
               onClick={() => {
                 handleTabChange('History');
               }}
-              className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
+              className={`md:hidden px-2.5 py-1 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] transition-colors ${
                 activeTab === 'History'
-                  ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg'
-                  : 'bg-white text-[#005f61] border border-[#005f61] hover:bg-[#005f61] hover:text-white'
+                  ? 'bg-[#005f61] text-white'
+                  : 'bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20'
               }`}
             >
               History
@@ -7913,10 +7913,10 @@ function AppContent() {
               onClick={() => {
                 handleTabChange('Board');
               }}
-              className={`md:hidden px-2 py-1.5 rounded-md font-['Inter',_sans-serif] font-bold text-[11px] transition-all duration-300 transform hover:scale-105 shadow-sm ${
+              className={`md:hidden px-2.5 py-1 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] transition-colors ${
                 activeTab === 'Board'
-                  ? 'bg-gradient-to-r from-[#005f61] to-[#0891b2] text-white hover:shadow-lg'
-                  : 'bg-white text-[#005f61] border border-[#005f61] hover:bg-[#005f61] hover:text-white'
+                  ? 'bg-[#005f61] text-white'
+                  : 'bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20'
               }`}
             >
               Board
@@ -7939,15 +7939,18 @@ function AppContent() {
               </button>
             ) : (
               <div className="flex items-center gap-1.5 md:gap-3">
-                <div className="flex items-center gap-1">
-                  <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
+                <div className="hidden md:flex items-center gap-1">
+                  <span className="text-base font-['Inter',_sans-serif] font-bold text-[#005f61]">
                     Hello!
                   </span>
-                  <span className="text-[11px] md:text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
+                  <span className="text-base font-['Inter',_sans-serif] font-bold text-[#e67e22]">
                     {loggedInUserName}
                   </span>
                 </div>
-                <button 
+                <span className="md:hidden text-[11px] font-['Inter',_sans-serif] font-bold text-[#e67e22] max-w-[80px] truncate">
+                  {loggedInUserName}
+                </span>
+                <button
                   onClick={async () => {
                     await supabase.auth.signOut();
                     setIsLoggedIn(false);
@@ -7960,7 +7963,7 @@ function AppContent() {
                     setShowLoginForm(true);
                     setLoginFormKey(prev => prev + 1);
                   }}
-                  className="px-2 md:px-4 py-1.5 md:py-2.5 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-sm transition-all duration-300 transform hover:scale-105 shadow-sm bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20"
+                  className="px-2.5 md:px-4 py-1 md:py-2.5 rounded-lg font-['Inter',_sans-serif] font-bold text-[11px] md:text-sm transition-colors bg-[#005f61]/10 text-[#005f61] hover:bg-[#005f61]/20"
                 >
                   Logout
                 </button>
@@ -8599,7 +8602,7 @@ function AppContent() {
       {/* Bottom Navigation - Mobile */}
       {isMobile && !isInQuestionMode && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-          <div className="grid grid-cols-6 h-16">
+          <div className="grid grid-cols-5 h-16">
             <button
               onClick={() => handleTabChange('TPO')}
               className={`flex flex-col items-center justify-center gap-0.5 transition-all ${
