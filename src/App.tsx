@@ -543,7 +543,13 @@ function AppContent() {
   const [currentListeningReviewScreen, setCurrentListeningReviewScreen] = useState<M1Screen | M2Screen | null>(null);
   const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
   const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
-  
+
+  // 리뷰 모드 표시 — 모바일에서 문제 화면의 Play Audio 알약 버튼을 CSS로 숨기기 위한 body 클래스
+  useEffect(() => {
+    document.body.classList.toggle('is-review-mode', isReviewMode);
+    return () => { document.body.classList.remove('is-review-mode'); };
+  }, [isReviewMode]);
+
   // Section Score States (for end-of-section result screens)
   const [showEndListening, setShowEndListening] = useState(false);
   const [showEndWriting, setShowEndWriting] = useState(false);

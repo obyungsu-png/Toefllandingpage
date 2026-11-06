@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
 import { BookOpen, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
-import AiTutorRobot from './AiTutorRobot.single';
+import AiTutorRobot, { useDraggableFab } from './AiTutorRobot.single';
 import { createCachedAudioSync } from '../utils/mediaCache';
 import { translateWord } from '../utils/wordTranslate';
 
@@ -292,6 +292,8 @@ function getTabMeta(tab: string) {
 
 export function ReviewAssistantPanel({ section, variant, contentKey, questionType, currentDifficulty, onStartTraining, onOpenAiTutor, translationNote, analysisNote, vocabularyNote, audioUrl, scriptText, sentenceTimestamps }: ReviewAssistantPanelProps) {
   const tabs = TAB_CONFIG[variant];
+  // AI 튜터 로봇 — 기본 위치(위젯 맨 오른쪽)에서 드래그로 자유 이동 가능 (위치 저장)
+  const tutorFab = useDraggableFab<HTMLDivElement>();
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [dictationInputs, setDictationInputs] = useState<string[]>([]);
   const [dictationChecked, setDictationChecked] = useState(false);
@@ -1718,7 +1720,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   };
 
   return (
-    <div className="fixed right-4 bottom-4 md:bottom-6 z-[85] flex flex-col items-end gap-2">
+    <div className="fixed right-4 bottom-[88px] md:bottom-6 z-[85] flex flex-col items-end gap-2">
       {/* ── Right vertical icon sidebar (horizontal row) ── */}
       <div className="flex flex-row gap-3 shrink-0">
         {tabs.map((tab) => {
@@ -1741,22 +1743,23 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   setActiveTab((current) => current === tab ? null : tab);
                 }
               }}
-              className="flex flex-col items-center gap-1 transition-all duration-200"
+              className="group flex flex-col items-center gap-1 transition-all duration-200"
             >
+              {/* 탭 아이콘 — 하늘색 계열 배경. 모바일: 원형+약간 작게 / 데스크탑: 네모 유지 */}
               <span
-                className={`relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 ${isActive ? '-translate-x-0.5 shadow-md' : 'hover:-translate-x-0.5'}`}
+                className={`relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full md:rounded-2xl transition-all duration-200 ${isActive ? '-translate-x-0.5 shadow-md' : 'hover:-translate-x-0.5'}`}
                 style={{
                   background: isActive
-                    ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
-                    : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #f0eafc 42%, #d9d1f0 100%)',
+                    ? 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)'
+                    : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #e3f2fd 42%, #b3e0f7 100%)',
                   boxShadow: isActive
-                    ? `0 6px 18px ${theme.accent}33`
-                    : '0 4px 12px rgba(124,58,237,0.18), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(124,58,237,0.08)',
+                    ? '0 6px 18px rgba(37,99,235,0.35)'
+                    : '0 4px 12px rgba(56,189,248,0.25), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(56,189,248,0.10)',
                 }}
               >
-                <Icon className="h-5 w-5" style={{ color: isActive ? 'white' : theme.accent }} strokeWidth={2.2} />
+                <Icon className="h-4 w-4 md:h-5 md:w-5" style={{ color: isActive ? 'white' : '#2563eb' }} strokeWidth={2.2} />
               </span>
-              <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
+              <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-4"
                 style={{ color: isActive ? theme.accent : '#64748b' }}>
                 {tab}
               </span>
@@ -1764,55 +1767,60 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           );
         })}
 
-        {/* Play Audio 버튼 — 3D 로봇과 어울리는 소프트 그라데이션 */}
+        {/* Play Audio 버튼 — 하늘색 계열. 모바일: 원형+약간 작게 / 데스크탑: 네모 유지 */}
         {audioUrl && (
           <button
             type="button"
             title={isPlayingAudio ? 'Pause' : 'Play Audio'}
             onClick={handlePlayAudio}
-            className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
+            className="group flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
           >
             <span
-              className="relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200"
+              className="relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full md:rounded-2xl transition-all duration-200"
               style={{
                 background: isPlayingAudio
-                  ? `linear-gradient(135deg, ${theme.accent} 0%, ${theme.accent}cc 100%)`
-                  : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #f0eafc 42%, #d9d1f0 100%)',
+                  ? 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)'
+                  : 'radial-gradient(circle at 32% 28%, #ffffff 0%, #e3f2fd 42%, #b3e0f7 100%)',
                 boxShadow: isPlayingAudio
-                  ? `0 6px 18px ${theme.accent}33`
-                  : '0 4px 12px rgba(124,58,237,0.18), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(124,58,237,0.08)',
+                  ? '0 6px 18px rgba(37,99,235,0.35)'
+                  : '0 4px 12px rgba(56,189,248,0.25), inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -2px 4px rgba(56,189,248,0.10)',
               }}
             >
-              {isPlayingAudio ? <Pause className="h-5 w-5 text-white" /> : <Play className="h-5 w-5" style={{ color: theme.accent }} strokeWidth={2.2} fill={theme.accent} />}
+              {isPlayingAudio ? <Pause className="h-4 w-4 md:h-5 md:w-5 text-white" /> : <Play className="h-4 w-4 md:h-5 md:w-5" style={{ color: '#2563eb' }} strokeWidth={2.2} fill="#2563eb" />}
             </span>
-            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px]"
+            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-4"
               style={{ color: isPlayingAudio ? theme.accent : '#64748b' }}>
               {isPlayingAudio ? 'Pause' : 'Play'}
             </span>
           </button>
         )}
 
-        {/* AI 튜터 버튼 — 3D 로봇 캐릭터 */}
+        {/* AI 튜터 버튼 — 배경 없이 로봇만, 라벨은 기존 회색으로 통일.
+            기본 위치는 위젯 맨 오른쪽, 드래그하면 자유 이동(위치 저장) */}
         {onOpenAiTutor && (
-          <button
-            type="button"
-            title="AI 튜터"
-            onClick={onOpenAiTutor}
-            className="flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
+          <div
+            ref={tutorFab.boxRef}
+            className="z-[86]"
+            style={tutorFab.style ? { position: 'fixed', ...tutorFab.style } : undefined}
           >
-            <span
-              className="relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 overflow-hidden"
-              style={{
-                background: 'radial-gradient(circle at 35% 30%, #cfe0ff 0%, #a9c6ff 35%, #8fd6ee 70%, #bfe9ff 100%)',
-                boxShadow: '0 6px 18px rgba(102, 126, 234, 0.30), inset 0 1px 1px rgba(255,255,255,0.5)',
-              }}
+            <button
+              {...tutorFab.handlers}
+              type="button"
+              title="AI 튜터"
+              onClick={() => { if (tutorFab.consumeDrag()) return; onOpenAiTutor(); }}
+              className="group flex flex-col items-center gap-1 transition-all duration-200 hover:-translate-x-0.5"
+              style={{ touchAction: 'none', cursor: tutorFab.dragging ? 'grabbing' : 'grab' }}
             >
-              <AiTutorRobot size={44} still />
-            </span>
-            <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#667eea]">
-              AI 튜터
-            </span>
-          </button>
+              <span className="relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center">
+                <span className="scale-[0.82] md:scale-100 origin-center flex">
+                  <AiTutorRobot size={44} still />
+                </span>
+              </span>
+              <span className="text-[10px] font-semibold leading-tight text-center max-w-[52px] text-[#64748b] opacity-0 max-h-0 overflow-hidden transition-all duration-200 group-hover:opacity-100 group-hover:max-h-4">
+                AI 튜터
+              </span>
+            </button>
+          </div>
         )}
       </div>
 

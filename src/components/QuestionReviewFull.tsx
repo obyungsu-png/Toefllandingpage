@@ -1556,9 +1556,10 @@ export function QuestionReviewFull({
                       </div>
                     )}
 
-                    {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload */}
+                    {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload.
+                        모바일에선 우하단 위젯(Play 버튼)으로 대체하므로 숨김 */}
                     {(currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl) ? (
-                      <div className="mb-3">
+                      <div className="mb-3 hidden md:block">
                         <UniversalAudioPlayer
                           key={`listen-audio-${currentQuestionIndex}`}
                           audioUrl={currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl}

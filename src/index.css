@@ -9,3 +9,9 @@
 @layer base {
   html, body, #root { min-height: 100vh; height: 100%; margin: 0; }
 }
+/* 리뷰 모드(모바일) — 문제 화면의 'Play Audio' 알약 버튼 숨김 (우하단 위젯 Play로 대체) */
+@media (max-width: 767px) {
+  body.is-review-mode button[class*="px-8 py-3 rounded-full font-semibold text-base mb-6"] {
+    display: none;
+  }
+}
