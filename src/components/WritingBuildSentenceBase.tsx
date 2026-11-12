@@ -13,6 +13,11 @@ export interface WritingBuildSentenceProps {
   words?: string[];
   sentenceEnding?: '.' | '?';
   context?: string;
+  /** 정답 문장 — CMS 작성자가 단어 목록을 어떤 순서로 넣었든 이 문장을 기준으로
+   *  미리 채워넣는 단어(`[word]`)의 위치가 결정된다. 예: "she wants to know
+   *  when my art exhibition will be held". 공백 없이 비워두면 words 배열
+   *  순서를 그대로 쓴다. */
+  correctAnswer?: string;
 }
 
 interface WritingBuildSentenceBaseProps extends WritingBuildSentenceProps {
@@ -33,18 +38,56 @@ export function WritingBuildSentenceBase({
   context,
   questionNumber,
   slotCount,
+  correctAnswer,
 }: WritingBuildSentenceBaseProps) {
   const sourceWords = words || [];
-  
+
   // Parse words:
   //   [word] = prefilled  — 문장에 고정 텍스트로 표시 (드래그 불가)
   //   {word} = hint       — 빈칸으로 표시되고, 클릭하면 정답 단어가 그 칸에 고정됨
   //   word   = draggable  — 단어 은행에서 드래그/탭으로 채우는 일반 빈칸
-  const parsedWords = sourceWords.map(w => {
+  const rawParsed = sourceWords.map(w => {
     if (w.startsWith('[') && w.endsWith(']')) return { text: w.slice(1, -1), kind: 'prefilled' as const };
     if (w.startsWith('{') && w.endsWith('}')) return { text: w.slice(1, -1), kind: 'hint' as const };
     return { text: w, kind: 'draggable' as const };
   });
+
+  // correctAnswer 가 있으면 그 문장의 어순을 기준으로 단어들을 재정렬한다.
+  // 이렇게 하면 CMS 작성자가 단어 목록을 어떤 순서로 넣었든, 미리 채워넣는 단어는
+  // 항상 정답 문장에서의 자리에 고정된다. 중복 단어는 등장 순서대로 매칭.
+  const parsedWords = React.useMemo(() => {
+    const normalize = (s: string) => s.trim().toLowerCase().replace(/[.?!,]+$/g, '');
+    const endings = /[.?!]+\s*$/;
+    const cleanAnswer = (correctAnswer || '').trim().replace(endings, '');
+    if (!cleanAnswer) return rawParsed;
+    const answerTokens = cleanAnswer.split(/\s+/).filter(Boolean);
+    if (answerTokens.length === 0) return rawParsed;
+
+    // 각 토큰의 등장 순서를 매칭에 쓰기 위한 사용 카운터
+    const remaining = rawParsed.map((pw, i) => ({ ...pw, _idx: i, _used: false }));
+    const matchByText = (token: string) => {
+      const t = normalize(token);
+      return remaining.find(r => !r._used && normalize(r.text) === t);
+    };
+
+    const ordered: typeof rawParsed = [];
+    for (const token of answerTokens) {
+      const m = matchByText(token);
+      if (m) {
+        m._used = true;
+        ordered.push({ text: m.text, kind: m.kind });
+      } else {
+        // 정답 문장에 있는데 CMS 단어 목록에 없는 단어 → 미리 채워진 것으로 삽입
+        // (학생이 채울 수 없는 단어가 생기지 않도록 안전망)
+        ordered.push({ text: token, kind: 'prefilled' as const });
+      }
+    }
+    // 매칭 안 된 단어들은 뒤에 붙여 유실 방지
+    for (const r of remaining) if (!r._used) ordered.push({ text: r.text, kind: r.kind });
+    return ordered;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correctAnswer, sourceWords.join('|')]);
+
   // 슬롯(빈칸)은 prefilled 를 제외한 순서 — 힌트 빈칸 포함
   const slotDefs = parsedWords.filter(w => w.kind !== 'prefilled');
   const draggableWords = parsedWords.filter(w => w.kind === 'draggable').map(w => w.text);
