@@ -228,6 +228,7 @@ export function SpeakingSectionWrapper({
           isReviewMode={isReviewMode}
           introText={(firstRepeat as any)?.introText || undefined}
           introImageUrl={(firstRepeat as any)?.introImageUrl || firstRepeat?.imageUrl || undefined}
+          introVideoUrl={(firstRepeat as any)?.introVideoUrl || undefined}
           {...volumeProps}
         />
       );

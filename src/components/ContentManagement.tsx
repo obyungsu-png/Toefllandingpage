@@ -323,6 +323,7 @@ export interface TPOQuestion {
   imageUrl?: string;
   introImageUrl?: string; // Speaking intro screen image (Q1 Listen&Repeat intro, Q8 Interview intro)
   introAudioUrl?: string;  // Speaking intro screen audio (replaces TTS on intro screens)
+  introVideoUrl?: string;  // Speaking intro screen video (file upload or direct/YouTube/Vimeo link)
   introText?: string;      // Speaking intro screen text (shown above intro image)
   passageText?: string;
   duration?: number; // for speaking/writing
@@ -1725,6 +1726,8 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
     introImageUrl: '',
     introAudioFile: null as File | null,
     introAudioUrl: '',
+    introVideoFile: null as File | null,
+    introVideoUrl: '',
     introText: '',
     duration: 0,
     audioPlayDuration: 0,
@@ -1913,6 +1916,20 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (question as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
+    }
+    // Handle introVideoUrl (그룹 인트로 동영상 — 파일 업로드/링크/제거 모두 Supabase에 반영)
+    if ((formData as any).introVideoFile) {
+      try {
+        (question as any).introVideoUrl = await uploadToStorage((formData as any).introVideoFile, 'listening-video');
+      } catch (err) {
+        console.error('[handleSubmit] introVideoFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 동영상: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (question as any).introVideoUrl = '';
+      }
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (blob 미리보기 URL은 저장하지 않음)
+      const introVideoUrl = ((formData as any).introVideoUrl || '').trim();
+      (question as any).introVideoUrl = introVideoUrl && !introVideoUrl.startsWith('blob:') ? introVideoUrl : '';
     }
     // Handle introText (Speaking 인트로 화면 텍스트 — 인트로 이미지 위에 표시)
     (question as any).introText = ((formData as any).introText || '').trim();
@@ -2371,6 +2388,33 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
                 />
               </div>
             )}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">🎬 그룹 인트로 동영상 (선택 — 파일 업로드 또는 링크)</label>
+              {(formData as any).introVideoUrl && (
+                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                  <video controls src={(formData as any).introVideoUrl} className="h-16 w-24 rounded bg-black object-contain" />
+                  <div className="flex-1 text-xs text-gray-600 truncate">{((formData as any).introVideoUrl || '').split('/').pop()}</div>
+                  <button type="button" onClick={() => setFormData({ ...formData, introVideoUrl: '', introVideoFile: null } as any)}
+                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="video/*"
+                className="text-sm w-full mb-2"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introVideoFile: f, introVideoUrl: URL.createObjectURL(f) } as any); }}
+              />
+              <input
+                type="url"
+                value={(formData as any).introVideoUrl?.startsWith('blob:') ? '' : ((formData as any).introVideoUrl || '')}
+                onChange={(e) => setFormData({ ...formData, introVideoUrl: e.target.value, introVideoFile: e.target.value ? null : (formData as any).introVideoFile } as any)}
+                placeholder="동영상 URL을 입력하세요 (mp4 / YouTube / Vimeo)"
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400 bg-white"
+              />
+              <p className="mt-1 text-[11px] text-gray-500">
+                동영상 파일을 올리거나 mp4·YouTube·Vimeo 링크를 입력할 수 있어요. 파일이 있으면 파일을 우선 사용합니다.
+              </p>
+            </div>
             {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">📝 그룹 인트로 텍스트 (선택)</label>
@@ -3502,6 +3546,8 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
     introImageUrl: (question as any).introImageUrl || '',
     introAudioFile: null as File | null,
     introAudioUrl: (question as any).introAudioUrl || '',
+    introVideoFile: null as File | null,
+    introVideoUrl: (question as any).introVideoUrl || '',
     introText: (question as any).introText || '',
     audioUrl: question.audioUrl || '',
     duration: question.duration || 0,
@@ -3703,6 +3749,19 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
     } else {
       // 파일이 없으면 formData의 URL 사용 (빈 문자열이면 제거됨 → Supabase에서도 제거)
       (updatedQuestion as any).introAudioUrl = ((formData as any).introAudioUrl || '').trim();
+    }
+    // Handle introVideoUrl (그룹 인트로 동영상 — 파일 업로드/링크/제거 모두 Supabase에 반영)
+    if ((formData as any).introVideoFile) {
+      try { (updatedQuestion as any).introVideoUrl = await uploadToStorage((formData as any).introVideoFile, 'listening-video'); }
+      catch (err) {
+        console.error('[handleSubmit] introVideoFile 업로드 실패:', err);
+        uploadErrors.push(`인트로 동영상: ${err instanceof Error ? err.message : '알 수 없는 오류'}`);
+        (updatedQuestion as any).introVideoUrl = (question as any).introVideoUrl || '';
+      }
+    } else {
+      // 파일이 없으면 formData의 URL 사용 (blob 미리보기 URL은 저장하지 않음)
+      const introVideoUrl = ((formData as any).introVideoUrl || '').trim();
+      (updatedQuestion as any).introVideoUrl = introVideoUrl && !introVideoUrl.startsWith('blob:') ? introVideoUrl : undefined;
     }
     // introText (Speaking 인트로 화면 텍스트 — 인트로 이미지 위에 표시)
     (updatedQuestion as any).introText = ((formData as any).introText || '').trim();
@@ -4117,6 +4176,33 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
                 />
               </div>
             )}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">🎬 그룹 인트로 동영상 (선택 — 파일 업로드 또는 링크)</label>
+              {(formData as any).introVideoUrl && (
+                <div className="mb-2 flex items-center gap-3 p-2 bg-white border border-rose-200 rounded-lg">
+                  <video controls src={(formData as any).introVideoUrl} className="h-16 w-24 rounded bg-black object-contain" />
+                  <div className="flex-1 text-xs text-gray-600 truncate">{((formData as any).introVideoUrl || '').split('/').pop()}</div>
+                  <button type="button" onClick={() => setFormData({ ...formData, introVideoUrl: '', introVideoFile: null } as any)}
+                    className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded">제거</button>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="video/*"
+                className="text-sm w-full mb-2"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) setFormData({ ...formData, introVideoFile: f, introVideoUrl: URL.createObjectURL(f) } as any); }}
+              />
+              <input
+                type="url"
+                value={(formData as any).introVideoUrl?.startsWith('blob:') ? '' : ((formData as any).introVideoUrl || '')}
+                onChange={(e) => setFormData({ ...formData, introVideoUrl: e.target.value, introVideoFile: e.target.value ? null : (formData as any).introVideoFile } as any)}
+                placeholder="동영상 URL을 입력하세요 (mp4 / YouTube / Vimeo)"
+                className="w-full px-3 py-2 border border-rose-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400 bg-white"
+              />
+              <p className="mt-1 text-[11px] text-gray-500">
+                동영상 파일을 올리거나 mp4·YouTube·Vimeo 링크를 입력할 수 있어요. 파일이 있으면 파일을 우선 사용합니다.
+              </p>
+            </div>
             {((formData.questionType || '').includes('Listen and Repeat') || (formData.questionType || '').includes('Take an Interview')) && (
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">📝 그룹 인트로 텍스트 (선택)</label>

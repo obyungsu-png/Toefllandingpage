@@ -13,11 +13,22 @@ interface SpeakingListenRepeatIntroProps {
   isReviewMode?: boolean;
   introText?: string;      // CMS 편집 가능한 인트로 안내 문구 (없으면 기본 문구)
   introImageUrl?: string;  // 인트로 화면 이미지 (없으면 표시 안 함)
+  introVideoUrl?: string;  // 인트로 화면 동영상 (파일 업로드 URL 또는 mp4/YouTube/Vimeo 링크)
 }
 
 const DEFAULT_INTRO_TEXT = 'You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. Repeat only once.';
 
-export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false, introText, introImageUrl }: SpeakingListenRepeatIntroProps) {
+// 링크 형태의 동영상 지원 — YouTube/Vimeo는 iframe 임베드, 그 외(mp4 등)는 <video>로 재생
+function getIntroVideoEmbedUrl(url: string): string | null {
+  const youtube = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  if (youtube) return `https://www.youtube.com/embed/${youtube[1]}?rel=0`;
+  const vimeo = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
+}
+
+export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false, introText, introImageUrl, introVideoUrl }: SpeakingListenRepeatIntroProps) {
+  const introVideoEmbedUrl = introVideoUrl ? getIntroVideoEmbedUrl(introVideoUrl) : null;
   const textToRead = introText || DEFAULT_INTRO_TEXT;
   // TTS가 끝나기 전에는 Next(다음 문제로 이동)를 막음
   const [ttsDone, setTtsDone] = useState(false);
@@ -133,11 +144,34 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
             {textToRead}
           </p>
 
-          {introImageUrl && (
+          {(introVideoUrl || introImageUrl) && (
             <div className="flex justify-center mb-8">
-              <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
-                <ImageWithFallback src={introImageUrl} alt="Listen and Repeat" className="w-full h-full object-cover" />
-              </div>
+              {introVideoUrl ? (
+                <div className="w-full max-w-[460px] aspect-video overflow-hidden rounded-lg border border-gray-300 bg-black">
+                  {introVideoEmbedUrl ? (
+                    <iframe
+                      src={introVideoEmbedUrl}
+                      title="Listen and Repeat intro video"
+                      className="h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={introVideoUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      preload="metadata"
+                      className="h-full w-full object-contain"
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+                  <ImageWithFallback src={introImageUrl} alt="Listen and Repeat" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
           )}
         </div>
