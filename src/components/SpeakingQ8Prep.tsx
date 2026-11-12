@@ -149,9 +149,17 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
-        <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText || "Please answer the interviewer's questions."}</h1>
-        </div>
+        {/* 실제 TOEFL처럼: 시험 모드에서는 인터뷰 질문 스크립트(오디오로만 들려주는 내용)를
+            표시하지 않고 고정 안내 문구를 보여줌. Review 모드에서는 질문 텍스트 표시. */}
+        {isReviewMode ? (
+          <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
+            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center whitespace-pre-wrap">{questionText || "Please answer the interviewer's questions."}</h1>
+          </div>
+        ) : (
+          <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
+            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">Please answer the interviewer's questions.</h1>
+          </div>
+        )}
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
             <ImageWithFallback

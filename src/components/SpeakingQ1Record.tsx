@@ -46,14 +46,14 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       }, delay);
     };
 
-    if (audioUrl) {
+    if (audioUrl && isReviewMode) {
+      // Review(복습): 오디오를 다시 들려준 뒤 수동 Record 버튼으로 시작 (기존 동작 유지)
       const audio = createCachedAudioSync(audioUrl);
       promptAudioRef.current = audio;
-      audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
-      audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };
-      audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
+      audio.play().catch(() => {});
     } else if (!isReviewMode) {
-      // No audio — just wait and beep
+      // Test: 오디오는 리슨 화면(SpeakingQ1)에서 이미 한 번 재생됨 — 여기서 재생하지 않고
+      // 곧바로 딜레이 → 삐 → 녹음 시작 (오디오 2회 재생 방지)
       startDelayAndBeep();
     }
 
@@ -177,11 +177,18 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
-        {/* 문장 텍스트는 시험 모드에서 숨김 — 오디오로만 듣고 따라 말해야 하므로.
-            Review 모드에서는 어떤 문장이었는지 확인할 수 있게 표시. */}
-        {isReviewMode && questionText && (
+        {/* 실제 TOEFL처럼: 시험 모드에서는 고정 안내 문구("Listen and repeat only once.")를
+            사진 위에 표시하고, 따라 말한 문장 자체는 노출하지 않음.
+            Review 모드에서는 어떤 문장이었는지 확인할 수 있게 문장을 표시. */}
+        {isReviewMode ? (
+          questionText && (
+            <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
+              <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
+            </div>
+          )
+        ) : (
           <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
+            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">Listen and repeat only once.</h1>
           </div>
         )}
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
