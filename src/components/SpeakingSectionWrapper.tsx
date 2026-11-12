@@ -216,10 +216,34 @@ export function SpeakingSectionWrapper({
       return <SpeakingIntro onNext={goNext} onLogoClick={onHome} />;
     }
     if (screen === 'repeat-intro') {
-      return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />;
+      // 그룹 인트로 미디어는 이 섹션 첫 문항(repeat Q1)이 들고 있다.
+      const introQ = repeatQuestions[0] as any;
+      return (
+        <SpeakingListenRepeatIntro
+          onNext={goNext}
+          onLogoClick={onHome}
+          isReviewMode={isReviewMode}
+          introImageUrl={introQ?.introImageUrl}
+          introVideoUrl={introQ?.introVideoUrl}
+          introAudioUrl={introQ?.introAudioUrl}
+          introText={introQ?.introText}
+          {...volumeProps}
+        />
+      );
     }
     if (screen === 'interview-intro') {
-      return <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />;
+      const introQ = interviewQuestions[0] as any;
+      return (
+        <SpeakingTakeInterviewIntro
+          onNext={goNext}
+          onHome={onHome}
+          isReviewMode={isReviewMode}
+          introImageUrl={introQ?.introImageUrl}
+          introVideoUrl={introQ?.introVideoUrl}
+          introAudioUrl={introQ?.introAudioUrl}
+          introText={introQ?.introText}
+        />
+      );
     }
     if (screen === 'end-session') {
       return <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />;

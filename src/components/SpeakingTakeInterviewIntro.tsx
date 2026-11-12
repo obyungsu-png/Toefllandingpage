@@ -2,33 +2,52 @@ import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
+import { IntroMedia } from './IntroMedia';
 
 interface SpeakingTakeInterviewIntroProps {
   onNext: () => void;
   onHome?: () => void;
   onVolumeClick?: () => void;
   isReviewMode?: boolean;
+  /** 그룹 인트로 미디어 — CMS 에서 설정 */
+  introImageUrl?: string;
+  introVideoUrl?: string;
+  introAudioUrl?: string;
+  introText?: string;
 }
 
-export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false }: SpeakingTakeInterviewIntroProps) {
+export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false, introImageUrl, introVideoUrl, introAudioUrl, introText }: SpeakingTakeInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const stopTtsRef = useRef<(() => void) | null>(null);
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
-    const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
-
+    // 영상이 있으면 영상 재생이 끝날 때까지 TTS/오디오 없이 둔다 (설명이 영상에 포함된 경우가 많음)
+    if (introVideoUrl) return;
+    // 인트로 오디오가 있으면 그걸 재생, 없으면 TTS 로 설명.
+    if (introAudioUrl) {
+      const audio = new Audio(introAudioUrl);
+      audio.onplay = () => setIsAudioPlaying(true);
+      audio.onended = () => { setIsAudioPlaying(false); if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); };
+      audio.onerror = () => { setIsAudioPlaying(false); if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); };
+      audio.play().catch(() => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); });
+      return () => { audio.pause(); audio.src = ''; };
+    }
+    const textToRead = introText || `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
     const stop = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext(), 500);
+        if (!isReviewMode) setTimeout(() => onNextRef.current(), 500);
       },
     });
     stopTtsRef.current = stop;
     return stop;
-  }, [onNext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introVideoUrl, introAudioUrl, introText]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
@@ -90,20 +109,35 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center bg-white p-4 md:p-12">
-        <div className="max-w-2xl w-full">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12">
+        <div className="max-w-3xl w-full">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">
             Take an Interview
           </h1>
-          
-          <div className="border-t-2 border-gray-300 pt-6 md:pt-8">
-            <p className="text-gray-700 text-sm md:text-xl mb-4 md:mb-6 leading-relaxed">
-              An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed.
-            </p>
-            
-            <p className="text-gray-700 text-sm md:text-xl leading-relaxed">
-              No time for preparation will be provided.
-            </p>
-          </div>
+
+          {(introVideoUrl || introImageUrl) ? (
+            <div>
+              <IntroMedia
+                videoUrl={introVideoUrl}
+                imageUrl={introImageUrl}
+                onVideoEnded={() => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); }}
+              />
+              {introText && (
+                <p className="mt-4 text-sm md:text-lg text-gray-700 leading-relaxed whitespace-pre-wrap text-center">
+                  {introText}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="border-t-2 border-gray-300 pt-6 md:pt-8">
+              <p className="text-gray-700 text-sm md:text-xl mb-4 md:mb-6 leading-relaxed">
+                An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed.
+              </p>
+
+              <p className="text-gray-700 text-sm md:text-xl leading-relaxed">
+                No time for preparation will be provided.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

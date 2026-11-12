@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
+import { IntroMedia } from './IntroMedia';
 
 interface SpeakingListenRepeatIntroProps {
   onNext: () => void;
@@ -10,19 +11,36 @@ interface SpeakingListenRepeatIntroProps {
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
   onLogoClick?: () => void;
   isReviewMode?: boolean;
+  /** 그룹 인트로 미디어 — CMS 에서 설정 */
+  introImageUrl?: string;
+  introVideoUrl?: string;
+  introAudioUrl?: string;
+  introText?: string;
 }
 
-export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false }: SpeakingListenRepeatIntroProps) {
-  useEffect(() => {
-    const textToRead = `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
+export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false, introImageUrl, introVideoUrl, introAudioUrl, introText }: SpeakingListenRepeatIntroProps) {
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
+  useEffect(() => {
+    // 영상이 있으면 영상 재생 끝난 후 자동 진행 — TTS/오디오는 재생하지 않는다.
+    // (영상 안에 설명 음성이 들어있는 경우가 많아서 겹치면 혼란)
+    if (introVideoUrl) return;
+    // 오디오가 있으면 오디오 재생 끝난 후 자동 진행 — TTS 안 함.
+    if (introAudioUrl) {
+      const audio = new Audio(introAudioUrl);
+      audio.onended = () => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); };
+      audio.onerror = () => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); };
+      audio.play().catch(() => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); });
+      return () => { audio.pause(); audio.src = ''; };
+    }
+    const textToRead = introText || `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
     return speakWithBritishFemaleVoice({
       text: textToRead,
-      onend: () => {
-        if (!isReviewMode) setTimeout(() => onNext(), 500);
-      },
+      onend: () => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); },
     });
-  }, [onNext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introVideoUrl, introAudioUrl, introText]);
 
   return (
     <div className="fixed inset-0 bg-[#F5F5F5] z-50 flex flex-col">
@@ -94,15 +112,30 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-4xl font-['Inter',_sans-serif] text-gray-800 mb-4 md:mb-8 pb-4 border-b-2 border-gray-300">Listen and Repeat</h1>
 
-          <div className="mb-8">
-            <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed mb-4 md:mb-6">
-              You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak.
-            </p>
+          {(introVideoUrl || introImageUrl) ? (
+            <div className="mb-6 md:mb-8">
+              <IntroMedia
+                videoUrl={introVideoUrl}
+                imageUrl={introImageUrl}
+                onVideoEnded={() => { if (!isReviewMode) setTimeout(() => onNextRef.current(), 500); }}
+              />
+              {introText && (
+                <p className="mt-4 text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed whitespace-pre-wrap text-center">
+                  {introText}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mb-8">
+              <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed mb-4 md:mb-6">
+                You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak.
+              </p>
 
-            <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              No time for preparation will be provided.
-            </p>
-          </div>
+              <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
+                No time for preparation will be provided.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
