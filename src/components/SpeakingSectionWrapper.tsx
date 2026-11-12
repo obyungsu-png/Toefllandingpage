@@ -231,9 +231,14 @@ export function SpeakingSectionWrapper({
       const q = repeatQByKey(screen);
       const isRecord = !!repMatch[2];
       const sentence = (q as any)?.scriptText || q?.questionText || '';
+      // 화면 라벨 — 시험 섹션 전체에서 이 문항의 순번/총개수 (예: "Question 2 of 11")
+      const totalQs = repeatQuestions.length + interviewQuestions.length;
+      const qNum = q ? numOf(q) : Number(repMatch[1]);
+      const questionLabel = Number.isFinite(qNum) && totalQs > 0 ? `Question ${qNum} of ${totalQs}` : undefined;
       if (isRecord) {
         return (
           <SpeakingQ1Record
+            key={screen}
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
@@ -243,11 +248,13 @@ export function SpeakingSectionWrapper({
             responseDelay={(q as any)?.responseDelay}
             stopDuration={(q as any)?.stopDuration}
             duration={(q as any)?.duration}
+            questionLabel={questionLabel}
           />
         );
       }
       return (
         <SpeakingQ1
+          key={screen}
           onNext={goNext}
           onHome={onHome}
           isReviewMode={isReviewMode}
@@ -255,6 +262,7 @@ export function SpeakingSectionWrapper({
           introAudioUrl={(q as any)?.audioUrl || (q as any)?.introAudioUrl}
           introText={(q as any)?.introText || sentence}
           questionText={sentence}
+          questionLabel={questionLabel}
         />
       );
     }

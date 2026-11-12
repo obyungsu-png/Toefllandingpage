@@ -19,9 +19,22 @@ interface SpeakingQ1RecordProps {
   duration?: number; // seconds for recording countdown
   audioUrl?: string;
   isReviewMode?: boolean;
+  questionLabel?: string; // e.g. "Question 2 of 11"
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false }: SpeakingQ1RecordProps) {
+/**
+ * stopDuration을 안전한 범위(0.5s ~ 10s)로 보정 — CMS가 비정상 값(NaN,
+ * 문자열, 거대한 수)이어도 "Stop Speaking" 오버레이에서 사용자가 영원히
+ * 멈추지 않도록 한다. 기본 3초.
+ */
+function resolveStopDelayMs(stopDuration: unknown): number {
+  const n = Number(stopDuration);
+  if (!Number.isFinite(n) || n <= 0) return 3000;
+  const ms = n * 1000;
+  return Math.max(500, Math.min(10_000, ms));
+}
+
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, questionLabel = 'Question 1 of 11' }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
@@ -30,6 +43,11 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep/녹음 중복 방지)
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reviewHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // onNext를 ref에 저장 — effect 재실행 없이 항상 최신 참조 사용 (스턱 방지)
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   // Play the prompt audio first, THEN wait delay, THEN beep
   useEffect(() => {
@@ -87,10 +105,11 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
             recorder.stopRecording();
             setShowStopOverlay(true);
             if (!isReviewMode) {
-              setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+              // onNext ref로 호출 — stopDuration 값이 비정상이어도 안전한 지연으로 보정
+              advanceTimerRef.current = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
             } else {
               // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
+              reviewHideTimerRef.current = setTimeout(() => setShowStopOverlay(false), 1800);
             }
             return 0;
           }
@@ -101,7 +120,15 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       return () => clearInterval(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRecording, timeRemaining, onNext]);
+  }, [isRecording, timeRemaining]);
+
+  // 언마운트 시 보류 중인 advance/hide 타이머 정리 — 다음 화면에 잔존 호출 유출 방지
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+      if (reviewHideTimerRef.current) clearTimeout(reviewHideTimerRef.current);
+    };
+  }, []);
 
   // Upload recording when blob is ready after stop
   useEffect(() => {
@@ -115,7 +142,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 1 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -168,7 +195,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
               Speaking
             </div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 1 of 11
+              {questionLabel}
             </div>
           </div>
         </div>

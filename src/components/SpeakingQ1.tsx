@@ -13,14 +13,26 @@ interface SpeakingQ1Props {
   introText?: string;     // CMS-managed intro text (shown above image; falls back to questionText)
   questionText?: string;  // CMS-managed heading text
   isReviewMode?: boolean;
+  questionLabel?: string; // e.g. "Question 2 of 11"
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText, questionText, isReviewMode = false }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText, questionText, isReviewMode = false, questionLabel }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // onNext를 ref에 저장 — effect 재실행 없이 항상 최신 참조 사용 (스턱 방지)
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    let advanced = false;
+    const advance = (delay = 500) => {
+      if (advanced || isReviewMode) return;
+      advanced = true;
+      fallbackTimer = setTimeout(() => onNextRef.current?.(), delay);
+    };
+
     // ── Real audio from CMS ──────────────────────────────────────────────────
     if (introAudioUrl) {
       const audio = createCachedAudioSync(introAudioUrl);
@@ -29,17 +41,20 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       audio.onplay  = () => setIsAudioPlaying(true);
       audio.onended = () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
+        advance(500);
       };
       audio.onerror = () => {
-        // fallback to TTS if audio fails
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext?.();
+        advance(300);
       };
 
-      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNext?.(); }), 500);
+      const t = setTimeout(() => audio.play().catch(() => advance(300)), 500);
+      // 안전망 — 오디오가 60초 안에 끝나지 않으면 강제 진행
+      const safety = setTimeout(() => advance(0), 60_000);
       return () => {
         clearTimeout(t);
+        clearTimeout(safety);
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         audio.pause();
         audio.src = '';
       };
@@ -47,23 +62,36 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
 
     // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
     const textToRead = introText || questionText;
-    if (!textToRead) return;
+    if (!textToRead) {
+      // CMS 데이터가 비어도 사용자가 멈추지 않도록 짧게 기다렸다가 다음으로.
+      advance(800);
+      return () => { if (fallbackTimer) clearTimeout(fallbackTimer); };
+    }
 
     setIsAudioPlaying(true);
-    return speakWithBritishFemaleVoice({
+    const ttsCleanup = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
+        advance(500);
       },
     });
-  }, [introAudioUrl, onNext, introText, questionText]);
+    // TTS 안전망 — 20초 안에 끝나지 않으면 진행
+    const ttsSafety = setTimeout(() => advance(0), 20_000);
+    return () => {
+      clearTimeout(ttsSafety);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      if (typeof ttsCleanup === 'function') ttsCleanup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introAudioUrl, introText, questionText]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -113,6 +141,11 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
             <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
               Speaking
             </div>
+            {questionLabel && (
+              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+                {questionLabel}
+              </div>
+            )}
           </div>
         </div>
       </div>
