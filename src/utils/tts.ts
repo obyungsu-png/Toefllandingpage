@@ -22,6 +22,8 @@ export interface SpeakOptions {
   rate?: number;       // default 1.0
   pitch?: number;      // default 1.0
   volume?: number;     // default 1.0
+  /** TTS 재생 시작 전 대기 시간(ms) — 기본 500ms. 0으로 줄이면 즉시 재생 */
+  delay?: number;
   onstart?: () => void;
   onend?: () => void;
   onerror?: () => void;
@@ -179,7 +181,7 @@ export function pickBestBritishFemaleVoice(): SpeechSynthesisVoice | null {
  * Returns a cleanup function that cancels the speech.
  */
 export function speakWithBritishFemaleVoice(options: SpeakOptions): () => void {
-  const { text, rate = 1.0, pitch = 1.0, volume = 1.0, onstart, onend, onerror } = options;
+  const { text, rate = 1.0, pitch = 1.0, volume = 1.0, delay, onstart, onend, onerror } = options;
 
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     // No speech synthesis support — call onend after a short delay
@@ -222,7 +224,7 @@ export function speakWithBritishFemaleVoice(options: SpeakOptions): () => void {
   const speakTimer = setTimeout(() => {
     window.speechSynthesis.cancel(); // clear any queued speech
     window.speechSynthesis.speak(utterance);
-  }, 500);
+  }, delay ?? 500);
 
   return () => {
     clearTimeout(speakTimer);

@@ -31,6 +31,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
     safetyTimerRef.current = setTimeout(() => setTtsDone(true), 20000);
     const stop = speakWithBritishFemaleVoice({
       text: textToRead,
+      delay: 0, // 인트로는 화면 진입 즉시 TTS 시작 (기본 500ms 대기 제거)
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         // cancel(중단)로 발생한 onend는 무시 — TTS가 실제로 끝났을 때만 진행
@@ -39,7 +40,8 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
         setIsAudioPlaying(false);
         setTtsDone(true);
         if (!isReviewMode) {
-          advanceTimerRef.current = setTimeout(() => onNextRef.current(), 500);
+          // TTS 종료 후 2초 대기했다가 다음 문제로 전환 — 문제 준비 시간 확보
+          advanceTimerRef.current = setTimeout(() => onNextRef.current(), 2000);
         }
       },
     });
