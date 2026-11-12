@@ -218,6 +218,7 @@ export function SpeakingSectionWrapper({
     if (screen === 'repeat-intro') {
       // 첫 Listen and Repeat 문항의 introText/introImageUrl 을 인트로 화면에 전달 —
       // CMS(질문 편집 → 그룹 인트로 텍스트)에서 수정 가능.
+      // 인트로 이미지 미등록 시 Q1 이미지로 fallback 표시.
       const firstRepeat = repeatQuestions[0];
       return (
         <SpeakingListenRepeatIntro
@@ -225,7 +226,7 @@ export function SpeakingSectionWrapper({
           onLogoClick={onHome}
           isReviewMode={isReviewMode}
           introText={(firstRepeat as any)?.introText || undefined}
-          introImageUrl={(firstRepeat as any)?.introImageUrl || undefined}
+          introImageUrl={(firstRepeat as any)?.introImageUrl || firstRepeat?.imageUrl || undefined}
           {...volumeProps}
         />
       );
@@ -249,7 +250,7 @@ export function SpeakingSectionWrapper({
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
-            imageUrl={q?.imageUrl}
+            imageUrl={q?.imageUrl || (q as any)?.introImageUrl}
             audioUrl={(q as any)?.audioUrl}
             questionText={sentence}
             responseDelay={(q as any)?.responseDelay}
@@ -263,7 +264,7 @@ export function SpeakingSectionWrapper({
           onNext={goNext}
           onHome={onHome}
           isReviewMode={isReviewMode}
-          imageUrl={q?.imageUrl}
+          imageUrl={q?.imageUrl || (q as any)?.introImageUrl}
           introAudioUrl={(q as any)?.audioUrl || (q as any)?.introAudioUrl}
           introText={(q as any)?.introText || sentence}
           questionText={sentence}

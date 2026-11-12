@@ -15,7 +15,7 @@ interface SpeakingListenRepeatIntroProps {
   introImageUrl?: string;  // 인트로 화면 이미지 (없으면 표시 안 함)
 }
 
-const DEFAULT_INTRO_TEXT = 'Listen to the speaker and repeat what she says. Repeat only once.';
+const DEFAULT_INTRO_TEXT = 'You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. Repeat only once.';
 
 export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false, introText, introImageUrl }: SpeakingListenRepeatIntroProps) {
   const textToRead = introText || DEFAULT_INTRO_TEXT;
