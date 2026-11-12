@@ -47,8 +47,6 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep/녹음 중복 방지)
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reviewHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // onNext를 ref에 저장 — effect 재실행 없이 항상 최신 참조 사용 (스턱 방지)
   const onNextRef = useRef(onNext);
   useEffect(() => { onNextRef.current = onNext; }, [onNext]);
@@ -106,39 +104,40 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   };
 
   useEffect(() => {
-    if (isRecording && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsRecording(false);
-            recorder.stopRecording();
-            setShowStopOverlay(true);
-            if (!isReviewMode) {
-              // onNext ref로 호출 — stopDuration 값이 비정상이어도 안전한 지연으로 보정
-              advanceTimerRef.current = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
-            } else {
-              // Review mode: show briefly, then hide — do NOT auto-advance
-              reviewHideTimerRef.current = setTimeout(() => setShowStopOverlay(false), 1800);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+    if (!isRecording) return;
+    if (timeRemaining <= 0) {
+      // 녹음 종료 사이드이펙트를 setState 업데이터 안이 아닌 effect 본문에서 실행.
+      // 이렇게 하면 React 가 업데이터를 재실행해도 사이드이펙트가 중복되지 않고,
+      // 어떤 타이밍에도 showStopOverlay 로의 전이가 커밋되는 것이 보장된다.
+      setIsRecording(false);
+      recorder.stopRecording();
+      setShowStopOverlay(true);
+      return;
     }
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, timeRemaining]);
 
-  // 언마운트 시 보류 중인 advance/hide 타이머 정리 — 다음 화면에 잔존 호출 유출 방지
+  // Stop 오버레이가 뜨면 → 안전한 지연 후 자동 다음 화면 (리뷰 모드에선 숨기기만).
+  // 과거엔 이 setTimeout 이 setInterval tick callback 안에 있어서, tick 이 어떤
+  // 이유로든 못 울리거나 setState 가 재배치되는 경우 영원히 안 발동됐다. 이렇게
+  // showStopOverlay state 를 보고 독립 effect 에서 예약하면 훨씬 안정적이다.
   useEffect(() => {
-    return () => {
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-      if (reviewHideTimerRef.current) clearTimeout(reviewHideTimerRef.current);
-    };
-  }, []);
+    if (!showStopOverlay) return;
+    if (!isReviewMode) {
+      const delay = resolveStopDelayMs(stopDuration);
+      const t = setTimeout(() => onNextRef.current(), delay);
+      // 2단 안전망 — 어떤 이유로든 위 setTimeout 이 못 울리면 최대 12초 후 강제 진행
+      const safety = setTimeout(() => onNextRef.current(), Math.max(delay + 2000, 12_000));
+      return () => { clearTimeout(t); clearTimeout(safety); };
+    }
+    // Review mode: 잠깐 보여줬다 숨김
+    const hide = setTimeout(() => setShowStopOverlay(false), 1800);
+    return () => clearTimeout(hide);
+  }, [showStopOverlay, isReviewMode, stopDuration]);
 
   // Upload recording when blob is ready after stop
   useEffect(() => {

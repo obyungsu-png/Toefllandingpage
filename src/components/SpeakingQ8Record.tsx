@@ -33,8 +33,6 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep 중복 방지)
-  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reviewHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onNextRef = useRef(onNext);
   useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
@@ -70,36 +68,36 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   }
 
   useEffect(() => {
-    if (isRecording && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsRecording(false);
-            recorder.stopRecording();
-            setShowStopOverlay(true);
-            if (!isReviewMode) {
-              advanceTimerRef.current = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
-            } else {
-              // Review mode: show briefly, then hide — do NOT auto-advance
-              reviewHideTimerRef.current = setTimeout(() => setShowStopOverlay(false), 1800);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
+    if (!isRecording) return;
+    if (timeRemaining <= 0) {
+      // 녹음 종료 사이드이펙트를 effect 본문에서 실행 — setState 업데이터 재실행
+      // 에도 중복되지 않고 showStopOverlay 커밋이 안정적으로 이뤄진다.
+      setIsRecording(false);
+      recorder.stopRecording();
+      setShowStopOverlay(true);
+      return;
     }
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording, timeRemaining]);
 
+  // Stop 오버레이가 뜨면 → 안전한 지연 후 자동 다음 화면 (리뷰 모드에선 숨기기만).
+  // 과거엔 이 setTimeout 이 setInterval tick callback 안에 있어서 조건에 따라
+  // 영원히 발동되지 않을 수 있었다. 독립 effect 로 뽑아 안정화 + 2단 안전망.
   useEffect(() => {
-    return () => {
-      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
-      if (reviewHideTimerRef.current) clearTimeout(reviewHideTimerRef.current);
-    };
-  }, []);
+    if (!showStopOverlay) return;
+    if (!isReviewMode) {
+      const delay = resolveStopDelayMs(stopDuration);
+      const t = setTimeout(() => onNextRef.current(), delay);
+      const safety = setTimeout(() => onNextRef.current(), Math.max(delay + 2000, 12_000));
+      return () => { clearTimeout(t); clearTimeout(safety); };
+    }
+    const hide = setTimeout(() => setShowStopOverlay(false), 1800);
+    return () => clearTimeout(hide);
+  }, [showStopOverlay, isReviewMode, stopDuration]);
 
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
