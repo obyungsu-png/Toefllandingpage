@@ -3567,7 +3567,11 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
       questionNumber: formData.questionNumber,
       questionText: (formData.questionType === 'Complete Words' && !formData.questionText.trim())
         ? 'Fill in the missing letters in the blank.'
-        : formData.questionText,
+        // Speaking Listen and Repeat/Speak: questionText(따라 말하기 문장)와 scriptText는
+        // 같은 문장 — 한쪽만 입력해도 양쪽 모두 채워지도록 자동 동기화
+        : (/listen\s*and\s*(repeat|speak)/i.test(formData.questionType) && !formData.questionText.trim() && (formData as any).scriptText?.trim()
+            ? (formData as any).scriptText.trim()
+            : formData.questionText),
       questionType: (formData as any).module === 'Module 2' ? `${formData.questionType} (Module 2)` : formData.questionType,
       options: formData.options.filter(o => o.trim() !== ''),
       correctAnswer: formData.correctAnswer,
@@ -3603,7 +3607,16 @@ function QuestionEditForm({ testType, testNumber, displayNumber, section, questi
       student2Message: (formData as any).student2Message || undefined,
       student2ImageUrl: (formData as any).student2ImageUrl || undefined,
       translationNote: (formData as any).translationNote || undefined,
-      scriptText: (formData as any).scriptText || undefined,
+      // Speaking Listen and Repeat/Speak: questionText와 scriptText 자동 동기화 —
+      // 한쪽만 입력해도 양쪽 모두 같은 문장이 저장되도록 함
+      scriptText: (() => {
+        const st = String((formData as any).scriptText || '').trim();
+        if (st) return st;
+        if (/listen\s*and\s*(repeat|speak)/i.test(formData.questionType) && formData.questionText.trim()) {
+          return formData.questionText.trim();
+        }
+        return undefined;
+      })(),
       dictationBlanks: (formData as any).dictationBlanks || undefined,
       organization: (formData as any).organization || undefined,
       organizationBlanks: (formData as any).organizationBlanks || undefined,
@@ -6996,17 +7009,27 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 } as TPOQuestion);
               }
             } else {
+              // Speaking Listen and Repeat/Speak(Q1-7): questionText(문제 표시용 문장)와
+              // scriptText(따라 말하기 스크립트)는 같은 문장입니다. 한쪽만 입력된 경우
+              // 자동으로 복사해 양쪽 모두 채워지도록 합니다.
+              const isSpeakingRepeat = /listen\s*and\s*(repeat|speak)/i.test(finalType) || /listen\s*and\s*(repeat|speak)/i.test(qType);
+              let spQuestionText = isBuildSentence ? bsQuestionText : get(iQText);
+              let spScriptText = get(iScript);
+              if (isSpeakingRepeat) {
+                if (!spQuestionText?.trim() && spScriptText?.trim()) spQuestionText = spScriptText.trim();
+                if (!spScriptText?.trim() && spQuestionText?.trim()) spScriptText = spQuestionText.trim();
+              }
               questions.push({
                 id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
                 questionNumber,
-                questionText: isBuildSentence ? bsQuestionText : get(iQText),
+                questionText: spQuestionText,
                 questionType: finalType,
                 options,
                 correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : (isBuildSentence && bsCorrectAnswer ? bsCorrectAnswer : get(iAns)),
                 explanation: get(iExp) || undefined,
                 passageTitle: finalPassageTitle,
                 passageText: isBuildSentence ? bsPassageText : finalPassageText,
-                scriptText: get(iScript) || undefined,
+                scriptText: spScriptText || undefined,
                 dictationBlanks: get(iDictBlanks) || undefined,
                 organization: get(iOrg) || undefined,
                 organizationBlanks: get(iOrgBlanks) || undefined,
