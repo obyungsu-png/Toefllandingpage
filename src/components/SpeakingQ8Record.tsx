@@ -85,7 +85,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
       uploadedRef.current = true;
-      uploadRecording(recorder.audioBlob, 8).catch(() => {});
+      uploadRecording(recorder.audioBlob, questionNumber ?? 8).catch(() => {});
     }
   }, [showStopOverlay, recorder.audioBlob]);
 

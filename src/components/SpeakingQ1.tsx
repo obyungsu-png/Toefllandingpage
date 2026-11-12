@@ -22,6 +22,9 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
   const questionLabel = `Question ${questionNumber ?? 1} of ${totalQuestions ?? 11}`;
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const onNextRef = useRef(onNext);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     // ── Real audio from CMS ──────────────────────────────────────────────────
@@ -32,17 +35,18 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       audio.onplay  = () => setIsAudioPlaying(true);
       audio.onended = () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
+        if (!isReviewMode) advanceTimerRef.current = setTimeout(() => onNextRef.current?.(), 500);
       };
       audio.onerror = () => {
         // fallback to TTS if audio fails
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNext?.();
+        if (!isReviewMode) onNextRef.current?.();
       };
 
-      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNext?.(); }), 500);
+      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNextRef.current?.(); }), 500);
       return () => {
         clearTimeout(t);
+        if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
         audio.pause();
         audio.src = '';
       };
@@ -58,10 +62,11 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext?.(), 500);
+        if (!isReviewMode) advanceTimerRef.current = setTimeout(() => onNextRef.current?.(), 500);
       },
     });
-  }, [introAudioUrl, onNext, introText, questionText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [introAudioUrl, introText, questionText]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">

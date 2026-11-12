@@ -110,7 +110,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
       uploadedRef.current = true;
-      uploadRecording(recorder.audioBlob, 1).catch(() => {});
+      uploadRecording(recorder.audioBlob, questionNumber ?? 1).catch(() => {});
     }
   }, [showStopOverlay, recorder.audioBlob]);
 
