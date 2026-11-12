@@ -136,10 +136,15 @@ export function WritingBuildSentenceBase({
 
   const isComplete = sentenceSlots.every(slot => slot !== null);
 
+  const formatSlotWord = (word: string | null, index: number) => {
+    if (index !== 0 || !word) return word || '';
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  };
+
   // Save answer to window.__writingBsAnswers for review
   React.useEffect(() => {
     if (typeof window !== 'undefined' && isComplete) {
-      const assembled = sentenceSlots.filter(Boolean).join(' ') + (sentenceEnding || '.');
+      const assembled = sentenceSlots.map(formatSlotWord).filter(Boolean).join(' ') + (sentenceEnding || '.');
       const existing = (window as any).__writingBsAnswers || {};
       (window as any).__writingBsAnswers = { ...existing, [questionNumber]: assembled };
     }
@@ -436,7 +441,7 @@ export function WritingBuildSentenceBase({
                             title={isHintSlot(si) && !word ? '클릭하면 정답이 채워집니다' : undefined}
                           >
                             <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
-                              <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
+                              <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{formatSlotWord(word, si)}</span>
                             </div>
                             <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'} ${isHintSlot(si) && !word ? 'border-dashed border-gray-400' : ''}`}></div>
                           </div>

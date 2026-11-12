@@ -248,6 +248,7 @@ export function SpeakingSectionWrapper({
       if (isRecord) {
         return (
           <SpeakingQ1Record
+            key={screen}
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
