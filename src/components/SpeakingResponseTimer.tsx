@@ -30,17 +30,17 @@ export function SpeakingResponseTimer({
   const showAsButton = !!onRecordClick && !isRecording;
 
   return (
-    <div className="w-fit min-w-[240px] overflow-hidden rounded-xl border border-[#8fd2cf] bg-white shadow-[0_2px_6px_rgba(20,139,143,0.1)] sm:min-w-[290px] sm:rounded-2xl">
+    <div className="w-fit min-w-[300px] overflow-hidden rounded-2xl border border-[#8fd2cf] bg-white shadow-[0_2px_6px_rgba(20,139,143,0.1)]">
       {/* Header */}
-      <div 
-        className="px-5 py-1.5 text-center text-[10px] font-bold tracking-[0.06em] text-white sm:px-8 sm:py-2 sm:text-[11px]"
+      <div
+        className="px-8 py-2 text-center text-[11px] font-bold tracking-[0.06em] text-white"
         style={{ backgroundColor: '#1e6b73' }}
       >
         RESPONSE TIME
       </div>
 
-      <div className="flex items-center justify-center gap-2 px-4 py-2 sm:gap-3 sm:px-6 sm:py-3">
-        <div className="relative flex h-9 w-9 items-center justify-center sm:h-10 sm:w-10">
+      <div className="flex items-center justify-center gap-3 px-6 py-3">
+        <div className="relative flex h-10 w-10 items-center justify-center">
           <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 48 48" aria-hidden="true">
             <circle cx="24" cy="24" r={radius} fill="none" stroke="#d9eceb" strokeWidth="4" />
             <circle
@@ -81,7 +81,7 @@ export function SpeakingResponseTimer({
         </div>
 
         {/* Timer display */}
-        <span className="text-[18px] font-bold leading-none tracking-[0.01em] text-[#10213a] sm:text-[22px]">
+        <span className="text-[22px] font-bold leading-none tracking-[0.01em] text-[#10213a]">
           {formatTime(timeRemaining)}
         </span>
         {isRecording && (

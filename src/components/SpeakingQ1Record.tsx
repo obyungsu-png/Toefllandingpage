@@ -49,22 +49,28 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       }, delay);
     };
 
+    let playTimer: ReturnType<typeof setTimeout>;
+
     if (audioUrl) {
       // Start/Review 공통: 녹음 화면에서 오디오를 한 번 재생 (RESPONSE TIME 카드는
       // 재생 중에도 표시됨). Start 모드는 재생 종료 후 딜레이 → 삐 → 자동 녹음,
       // Review 모드는 수동 Record 버튼으로 시작.
+      // 문제 진입 시 2초 준비 시간을 준 뒤 오디오 재생 (인트로→문제, 문제→문제 전환 공통).
       const audio = createCachedAudioSync(audioUrl);
       promptAudioRef.current = audio;
       audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
       audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };
-      audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
+      playTimer = setTimeout(() => {
+        audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
+      }, isReviewMode ? 500 : 2000);
     } else if (!isReviewMode) {
-      // 오디오 없음 — 바로 딜레이 → 삐 → 녹음
+      // 오디오 없음 — 2초 준비 시간 후 딜레이 → 삐 → 녹음
       startDelayAndBeep();
     }
 
     return () => {
       clearTimeout(startTimer);
+      if (playTimer) clearTimeout(playTimer);
       if (promptAudioRef.current) {
         promptAudioRef.current.pause();
         promptAudioRef.current.src = '';
