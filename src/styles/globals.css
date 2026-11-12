@@ -384,12 +384,6 @@ html {
 /* ===== ReviewAssistantPanel animations =====
    (Tailwind animate-in 플러그인 의존성 제거 — 순수 CSS keyframe) */
 
-/* 단어 드래그 → 한국어 번역 팝업 등장 */
-@keyframes selectionPopupIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 /* 리뷰 패널 오버레이 배경 페이드인 */
 @keyframes reviewPanelFadeIn {
   from { opacity: 0; }

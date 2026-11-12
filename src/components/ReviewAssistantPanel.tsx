@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, ReactElement } from 'react';
-import { BookOpen, ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
+import { ClipboardList, Eye, EyeOff, FileText, Languages, Lightbulb, MessageSquareText, Mic, Pause, Play, Pin, PinOff, Repeat, Sparkles, Volume2, X, type LucideIcon } from 'lucide-react';
 import AiTutorRobot, { useDraggableFab } from './AiTutorRobot.single';
 import { createCachedAudioSync } from '../utils/mediaCache';
-import { translateWord } from '../utils/wordTranslate';
 
 export type ReviewSection = 'Reading' | 'Listening' | 'Writing' | 'Speaking';
 export type ReviewVariant = 'reading' | 'listening' | 'writing-basic' | 'writing-guided' | 'speaking-repeat' | 'speaking-interview';
@@ -45,11 +44,11 @@ interface DictationExercise {
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   reading: [],
-  listening: ['Dictation'],
+  listening: ['Dictation', 'Analysis'],
   'writing-basic': [],
   'writing-guided': [],
-  'speaking-repeat': ['Dictation'],
-  'speaking-interview': [],
+  'speaking-repeat': ['Dictation', 'Analysis'],
+  'speaking-interview': ['Analysis'],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
@@ -161,8 +160,7 @@ function buildDictationExercise(_variant: ReviewVariant, cmsScript?: string): Di
 
 /** vocabularyNote에서 단어/구문의 한국어 뜻을 로컬 조회.
  *  형식: "word=meaning" 또는 "phrase=meaning" 한 줄씩.
- *  대소문자 구분 없이 정확 매칭. 없으면 null. */
-function lookupVocabularyNote(vocabularyNote: string | undefined, query: string): string | null {
+ *  대소문자 구분 없이 정확 매칭. 없으면 null. */function lookupVocabularyNote(vocabularyNote: string | undefined, query: string): string | null {
   if (!vocabularyNote || !query) return null;
   const q = query.trim().toLowerCase();
   if (!q) return null;
@@ -198,33 +196,6 @@ function splitIntoSentences(script: string): string[] {
   // 문장 종결 부호 기준 분할 (종결 부호를 문장에 붙여서 유지)
   const raw = joined.match(/[^.!?]+[.!?]+["']?\s*/g) || [joined];
   return raw.map(s => s.trim()).filter(s => s.length > 1);
-}
-
-/** 오답 노트 — 틀린 빈칸 단어를 localStorage에 저장해 재학습 가능하게 */
-const WRONG_NOTE_KEY = 'dictation_wrong_notes';
-interface WrongNoteEntry { word: string; sentence: string; savedAt: number; contentKey: string; }
-
-function loadWrongNotes(): WrongNoteEntry[] {
-  try {
-    return JSON.parse(localStorage.getItem(WRONG_NOTE_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveWrongNotes(entries: Omit<WrongNoteEntry, 'savedAt'>[]) {
-  if (!entries.length) return;
-  const existing = loadWrongNotes();
-  const now = Date.now();
-  const merged = [...existing];
-  entries.forEach(e => {
-    // 같은 단어+문장 조합은 중복 저장하지 않고 최신으로 갱신
-    const idx = merged.findIndex(m => m.word === e.word && m.sentence === e.sentence);
-    if (idx >= 0) merged[idx] = { ...e, savedAt: now };
-    else merged.push({ ...e, savedAt: now });
-  });
-  // 최대 200개 유지
-  localStorage.setItem(WRONG_NOTE_KEY, JSON.stringify(merged.slice(-200)));
 }
 
 function getWords(section: ReviewSection, variant: ReviewVariant) {
@@ -330,21 +301,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   // ── Dictation 학습 상태 ──
   // 모드 분리: 훈련(빈칸 받아쓰기) vs 복습(풀 스크립트 + 하이라이트 싱크)
   const [dictationMode, setDictationMode] = useState<'training' | 'review'>('training');
-  const [showWrongNotes, setShowWrongNotes] = useState(false); // 오답 노트 조회 토글
-  const [wrongNoteFilter, setWrongNoteFilter] = useState<'this' | 'all'>('this'); // 오답 노트 필터
-  const [wrongNotesVersion, setWrongNotesVersion] = useState(0); // 오답 노트 변경 시 재렌더링 트리거 (삭제 후 즉시 반영)
   const [showTranslation, setShowTranslation] = useState(false); // 복습 모드 한글 번역 토글
   const [showSentences, setShowSentences] = useState(false); // 훈련 모드에서 문장별 듣기 목록 표시
   // 4단계 프레임워크 1단계(무자막 정취) 지원 — 스크립트 블러 토글
   const [scriptBlur, setScriptBlur] = useState(false);
-  // 복습 모드 Key Words 사이드바 토글 — 스크립트 옆에 핵심 어휘를 나란히 표시
-  const [showKeyWordsSidebar, setShowKeyWordsSidebar] = useState(false);
-  // 단어 드래그 → 한국어 팝업 — 하이브리드: 로컬 vocabularyNote 우선, 없으면 Google Translate (무료)
-  const [selectionPopup, setSelectionPopup] = useState<{
-    x: number; y: number; text: string; translation: string | null; partOfSpeech: string | null; source: 'local' | 'api' | 'loading' | 'error';
-  } | null>(null);
-  // 드래그 도구(사전/번역 팝업) 활성화 — 기본 false, Tools 버튼 눌러야만 드래그 팝업 동작
-  const [selectionToolsEnabled, setSelectionToolsEnabled] = useState(false);
+  // 단어 뜻 툴팁 — 스크립트 단어에 마우스 오버(데스크톱)/탭(모바일) 시 뜻 표시
+  const [wordTip, setWordTip] = useState<{ idx: string; word: string; meaning: string } | null>(null);
   // 문장 자동 정지 모드 — 한 문장 재생 후 자동 일시정지, "다음 문장" 버튼으로 진행 (1·2단계 집중 훈련)
   const [autoStopMode, setAutoStopMode] = useState(false);
   const [autoStopIdx, setAutoStopIdx] = useState<number | null>(null); // 자동 정지된 문장 인덱스
@@ -399,6 +361,59 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
   const wordList = useMemo(() => getWords(section, variant), [section, variant]);
   const activeTabMeta = activeTab ? getTabMeta(activeTab) : null;
 
+  // 단어 뜻 맵 — vocabularyNote("word=뜻")를 우선하고 기본 wordList로 보완.
+  // 스크립트 단어에 마우스를 올리거나(데스크톱) 탭하면(모바일) 뜻을 표시할 때 사용.
+  const wordMeaningMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (vocabularyNote) {
+      vocabularyNote.split('\n').filter(l => l.trim()).forEach(line => {
+        const eq = line.indexOf('=');
+        if (eq <= 0) return;
+        const w = line.slice(0, eq).trim().toLowerCase();
+        const m = line.slice(eq + 1).trim();
+        if (w && m && !map.has(w)) map.set(w, m);
+      });
+    }
+    wordList.forEach(item => {
+      const w = item.word.trim().toLowerCase();
+      if (w && !map.has(w)) map.set(w, item.meaning);
+    });
+    return map;
+  }, [vocabularyNote, wordList]);
+
+  // 문장을 단어 단위로 렌더 — 단어장에 있는 단어는 점선 밑줄 + 마우스 오버/탭 시 뜻 툴팁.
+  // 단어 클릭은 stopPropagation으로 문장 재생(클릭 점프)과 분리.
+  const renderSentenceWithMeanings = (sentence: string, sentenceKey: string) => {
+    const tokens = sentence.split(/(\s+)/);
+    return tokens.map((token, i) => {
+      if (!token.trim()) return <span key={i}>{token}</span>;
+      const core = token.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, '').toLowerCase();
+      const meaning = core ? wordMeaningMap.get(core) : undefined;
+      if (!meaning) return <span key={i}>{token}</span>;
+      const tipKey = `${sentenceKey}-${i}`;
+      const open = wordTip?.idx === tipKey;
+      return (
+        <span
+          key={i}
+          className="relative inline-block cursor-help border-b border-dotted border-[#94a3b8]"
+          onMouseEnter={() => setWordTip({ idx: tipKey, word: core, meaning })}
+          onMouseLeave={() => setWordTip(prev => (prev?.idx === tipKey ? null : prev))}
+          onClick={(e) => {
+            e.stopPropagation();
+            setWordTip(prev => (prev?.idx === tipKey ? null : { idx: tipKey, word: core, meaning }));
+          }}
+        >
+          {token}
+          {open && (
+            <span className="absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#0f172a] px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg">
+              <span className="text-amber-300">{core}</span> {meaning}
+            </span>
+          )}
+        </span>
+      );
+    });
+  };
+
   // state + ref 동기화 — 오디오 이벤트 핸들러 클로저에서도 최신 반복 문장 참조
   const updateLoopSentence = (idx: number | null) => {
     loopSentenceIdxRef.current = idx;
@@ -416,14 +431,11 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     updateLoopSentence(null);
     setShowSentences(false);
     setDictationMode('training');
-    setShowWrongNotes(false);
     setShowTranslation(false);
-    setWrongNoteFilter('this');
     setAutoStopMode(false);
     setAutoStopIdx(null);
     setScriptBlur(false);
-    setShowKeyWordsSidebar(false);
-    setSelectionPopup(null);
+    setWordTip(null);
     // 녹음 중이면 정리
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
@@ -818,27 +830,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
 
   const isDictationCorrect = (index: number) => !!dictationExercise && normalizeDictationValue(dictationInputs[index] || '') === normalizeDictationValue(dictationExercise.blanks[index] || '');
 
-  // 정답 확인 — 틀린 빈칸은 오답 노트에 저장 + 틀린 횟수 추적 (3회 이상 시 힌트 권유)
+  // 정답 확인 — 틀린 횟수 추적 (3회 이상 시 힌트 권유)
   const handleCheckDictation = () => {
     if (!dictationExercise) return;
     setDictationChecked(true);
-    const wrongEntries: { word: string; sentence: string; contentKey: string }[] = [];
-    let wrongCount = 0;
-    dictationExercise.blanks.forEach((blank, i) => {
-      if (!isDictationCorrect(i)) {
-        wrongCount++;
-        // 틀린 단어가 포함된 문장 찾기
-        const sentence = dictationSentences.find(s => s.toLowerCase().includes(blank.toLowerCase())) || dictationExercise.fullSentence.slice(0, 120);
-        wrongEntries.push({ word: blank, sentence, contentKey });
-      }
-    });
-    if (wrongEntries.length > 0) {
-      saveWrongNotes(wrongEntries);
-      setWrongAttempts(prev => prev + 1);
-      setWrongNotesVersion(v => v + 1); // 복습 모드 오답 카운트 즉시 갱신
-    } else {
-      setWrongAttempts(0);
-    }
+    const hasWrong = dictationExercise.blanks.some((_, i) => !isDictationCorrect(i));
+    setWrongAttempts(prev => (hasWrong ? prev + 1 : 0));
   };
 
   // 첫 글자 힌트 토글
@@ -849,92 +846,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       return next;
     });
   };
-
-  // ── 단어 드래그 → 한국어 팝업 (하이브리드) ──
-  // 1차: vocabularyNote 로컬 조회 (즉시 표시)
-  // 2차: Google Translate gtx API (무료) — 로딩 상태 표시 후 결과 반영
-  // Tools 버튼이 활성화되어 있을 때만 동작 — 기본은 꺼져 있음
-  const handleTextSelection = () => {
-    if (!selectionToolsEnabled) {
-      setSelectionPopup(null);
-      return;
-    }
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
-      setSelectionPopup(null);
-      return;
-    }
-    const text = selection.toString().trim();
-    if (!text || text.length > 80) { // 너무 긴 선택은 무시 (문장 단위 드래그가 아닌 경우 방지)
-      setSelectionPopup(null);
-      return;
-    }
-    // 영어/한글 단어·구문만 처리 (숫자만 있는 경우 제외)
-    if (!/[a-zA-Z가-힣]/.test(text)) {
-      setSelectionPopup(null);
-      return;
-    }
-    // 선택 영역 위치 계산 — 팝업을 선택 영역 바로 아래에 표시
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const popupX = rect.left + rect.width / 2;
-    const popupY = rect.bottom + 8; // 선택 영역 아래 8px 여백
-
-    // 1차: 로컬 vocabularyNote lookup (즉시)
-    const localMeaning = lookupVocabularyNote(vocabularyNote, text);
-    if (localMeaning) {
-      setSelectionPopup({
-        x: popupX, y: popupY, text,
-        translation: localMeaning,
-        partOfSpeech: null,
-        source: 'local',
-      });
-      return;
-    }
-    // 2차: Google Translate API (비동기)
-    setSelectionPopup({
-      x: popupX, y: popupY, text,
-      translation: null,
-      partOfSpeech: null,
-      source: 'loading',
-    });
-    translateWord(text)
-      .then(result => {
-        if (result) {
-          setSelectionPopup(prev => prev && prev.text === text ? {
-            ...prev,
-            translation: result.koreanMeaning,
-            partOfSpeech: result.partOfSpeech,
-            source: 'api',
-          } : prev);
-        } else {
-          setSelectionPopup(prev => prev && prev.text === text ? { ...prev, source: 'error' } : prev);
-        }
-      })
-      .catch(() => {
-        setSelectionPopup(prev => prev && prev.text === text ? { ...prev, source: 'error' } : prev);
-      });
-  };
-
-  // 팝업 외부 클릭 / ESC / 새 선택 시 닫기
-  useEffect(() => {
-    if (!selectionPopup) return;
-    const handleDocumentMouseDown = (e: MouseEvent) => {
-      // 팝업 자체를 클릭한 경우는 닫지 않음 (이벤트 버블링으로 처리)
-      const target = e.target as HTMLElement;
-      if (target?.closest('[data-selection-popup]')) return;
-      setSelectionPopup(null);
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectionPopup(null);
-    };
-    document.addEventListener('mousedown', handleDocumentMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleDocumentMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectionPopup]);
 
   // 현재 학습 단계 계산 — 4단계 프레임워크 인디케이터용
   // 1: 무자막 정취 (훈련+입력없음) / 2: 받아쓰기 (훈련+입력시작) / 3: 갭분석 (훈련+정답확인) / 4: 쉐도잉 (복습)
@@ -952,7 +863,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         <div className="flex items-center gap-1 rounded-full bg-white/60 p-0.5 border border-gray-200">
           <button
             type="button"
-            onClick={() => { setDictationMode('training'); setShowWrongNotes(false); }}
+            onClick={() => { setDictationMode('training'); }}
             className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${dictationMode === 'training' ? 'text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             style={dictationMode === 'training' ? { backgroundColor: theme.accent } : undefined}
           >
@@ -1071,9 +982,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       )}
 
       {/* 문장별 듣기 목록 — 클릭하면 해당 문장으로 이동(전체 재생 중 점프/seek), 반복 버튼으로 무한 루프.
-          단어 드래그 시 한국어 팝업 표시. */}
+          단어에 마우스를 올리거나 탭하면 뜻 툴팁 표시. */}
       {showSentences && dictationSentences.length > 1 && (
-        <div ref={sentenceListRef} onMouseUp={handleTextSelection} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3 space-y-1.5 max-h-56 overflow-y-auto">
+        <div ref={sentenceListRef} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3 space-y-1.5 max-h-56 overflow-y-auto">
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">스크립트 — 문장 클릭 시 해당 부분부터 재생</p>
           {dictationSentences.map((sentence, idx) => {
             const isActive = activeSentenceIdx === idx;
@@ -1099,7 +1010,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   className={`flex-1 text-xs leading-5 cursor-pointer transition-colors ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#334155]'}`}
                   onClick={() => handleSentenceClick(idx)}
                 >
-                  {sentence}
+                  {renderSentenceWithMeanings(sentence, `list-${idx}`)}
                 </span>
                 <button
                   type="button"
@@ -1125,7 +1036,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             <span key={index}>
               <span>{segment}</span>
               {index < (dictationExercise?.blanks.length ?? 0) && (
-                <span className="inline-flex items-center gap-1 align-bottom">
+                <span key={index} className="inline-flex items-baseline gap-1 align-baseline whitespace-nowrap">
                   <input
                     ref={(element) => { dictationInputRefs.current[index] = element; }}
                     value={dictationInputs[index] || ''}
@@ -1149,7 +1060,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                         }
                       }
                     }}
-                    className={`inline-block border-b-2 bg-transparent px-1 py-0 text-center outline-none align-baseline ${
+                    className={`inline-block h-7 border-b-2 bg-transparent px-1 py-0 text-center text-[14px] outline-none align-baseline ${
                       dictationChecked
                         ? isDictationCorrect(index) ? 'border-green-500 text-green-700' : 'border-red-500 text-red-600'
                         : 'border-[#94a3b8] text-[#1f2937]'
@@ -1161,7 +1072,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                     type="button"
                     onClick={() => toggleHint(index)}
                     title={hintIndices.has(index) ? '힌트 숨기기' : '첫 글자 힌트'}
-                    className={`inline-flex items-center justify-center h-5 min-w-[20px] rounded px-0.5 text-[10px] font-bold transition-colors ${
+                    className={`inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center self-center rounded px-0.5 text-[10px] font-bold transition-colors ${
                       hintIndices.has(index)
                         ? 'bg-amber-100 text-amber-700 border border-amber-300'
                         : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'
@@ -1170,7 +1081,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                     {hintIndices.has(index) ? dictationExercise.blanks[index].charAt(0).toUpperCase() : <Lightbulb className="h-3 w-3" />}
                   </button>
                   {dictationChecked && !isDictationCorrect(index) && (
-                    <span className="text-xs font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
+                    <span className="self-center whitespace-nowrap text-xs font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
                   )}
                 </span>
               )}
@@ -1197,9 +1108,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
             <p className="text-xs text-amber-600 font-medium">💡 어려우면 빈칸 옆 전구 아이콘으로 첫 글자 힌트를 확인하세요</p>
           )}
         </div>
-        {dictationChecked && dictationExercise.blanks.some((_, i) => !isDictationCorrect(i)) && (
-          <p className="mt-2 text-[11px] text-gray-400">틀린 단어는 오답 노트에 자동 저장되었습니다. (복습 모드에서 조회 가능)</p>
-        )}
       </div>
     </>
   );
@@ -1233,20 +1141,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               style={showTranslation ? { backgroundColor: '#2563eb' } : undefined}
             >
               <Languages className="h-3 w-3" /> 번역 {showTranslation ? '숨기기' : '보기'}
-            </button>
-          )}
-          {/* 단어장 사이드바 토글 — 스크립트 옆에 핵심 어휘를 나란히 표시 (CMS vocabularyNote 또는 기본 wordList) */}
-          {(vocabularyNote || wordList.length > 0) && (
-            <button
-              type="button"
-              onClick={() => setShowKeyWordsSidebar(s => !s)}
-              className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${
-                showKeyWordsSidebar ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-              }`}
-              style={showKeyWordsSidebar ? { backgroundColor: '#0d9488' } : undefined}
-              title="핵심 어휘 사이드바 — 이 지문의 Key Vocabulary & 숙어"
-            >
-              <BookOpen className="h-3 w-3" /> 단어장 {showKeyWordsSidebar ? '닫기' : '보기'}
             </button>
           )}
           {/* 쉐도잉 녹음 — 마이크로 내 음성 녹음 후 비교 */}
@@ -1303,33 +1197,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       {/* 숨겨진 녹음 재생용 audio 요소 */}
       {recordedUrl && <audio ref={recordedAudioRef} src={recordedUrl} className="hidden" />}
 
-      {/* Tools 토글 — 드래그 시 사전/번역 팝업 활성화. 기본은 꺼져 있어 드래그해도 팝업이 뜨지 않음 */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setSelectionToolsEnabled(prev => !prev)}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm transition-colors ${
-            selectionToolsEnabled ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-          }`}
-          style={selectionToolsEnabled ? { backgroundColor: theme.accent } : undefined}
-          title="단어를 드래그했을 때 사전/번역 팝업을 띄웁니다"
-        >
-          <Sparkles className="h-3 w-3" />
-          {selectionToolsEnabled ? 'Tools 켜짐' : 'Tools'}
-        </button>
-        <span className="text-[11px] text-gray-400">
-          {selectionToolsEnabled ? '단어 드래그 시 사전 팝업이 표시됩니다' : '단어 드래그 팝업이 꺼져 있습니다'}
-        </span>
-      </div>
-
-      {/* 풀 스크립트 + 단어장 사이드바 — flex 레이아웃 (모바일에서는 자동 세로 스택) */}
+      {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤.
+          scriptBlur 시 블러 처리 (1단계 무자막 정취). 클릭/재생은 그대로 작동.
+          단어에 마우스를 올리거나 탭하면 뜻 툴팁 표시. */}
       <div className="flex flex-col md:flex-row gap-3">
-        {/* 풀 스크립트 — 문장별 클릭 가능, 재생 중 하이라이트 + 자동 스크롤.
-            scriptBlur 시 블러 처리 (1단계 무자막 정취). 클릭/재생은 그대로 작동.
-            단어 드래그 시 한국어 팝업 표시 (vocabularyNote 우선 → Google Translate). */}
         <div
           ref={sentenceListRef}
-          onMouseUp={handleTextSelection}
           className={`rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 space-y-1 max-h-[420px] overflow-y-auto flex-1 min-w-0 transition-all ${scriptBlur ? 'blur-sm' : ''}`}
         >
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 sticky top-0 bg-white py-1">
@@ -1353,7 +1226,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 <span className="text-[10px] font-bold text-gray-300 mt-0.5 shrink-0 w-5">{idx + 1}</span>
                 <div className="flex-1 min-w-0">
                   <span className={`text-sm leading-6 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
-                    {sentence}
+                    {renderSentenceWithMeanings(sentence, `full-${idx}`)}
                   </span>
                   {translation && (
                     <span className="text-xs leading-5 text-gray-500 mt-0.5 block border-l-2 border-blue-100 pl-2">
@@ -1379,224 +1252,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
           )}
         </div>
 
-        {/* 단어장 사이드바 — showKeyWordsSidebar && (vocabularyNote 또는 wordList)가 있을 때 표시.
-            CMS vocabularyNote를 우선, 없으면 기본 wordList 사용. */}
-        {showKeyWordsSidebar && (vocabularyNote || wordList.length > 0) && (
-          <div className="md:w-56 shrink-0 rounded-xl border border-[#0d9488]/30 bg-gradient-to-b from-teal-50/40 to-white px-3 py-3 max-h-[420px] overflow-y-auto">
-            <p className="text-[11px] font-bold text-[#0d9488] uppercase tracking-wide mb-2 sticky top-0 bg-inherit py-1">
-              📚 Key Vocabulary
-            </p>
-            {vocabularyNote ? (
-              <div className="space-y-1.5">
-                {vocabularyNote.split('\n').filter(l => l.trim()).map((line, i) => {
-                  const [word, ...rest] = line.split('=');
-                  const meaning = rest.join('=').trim();
-                  return (
-                    <div key={i} className="border-b border-teal-100 last:border-0 pb-1.5">
-                      <p className="text-xs font-bold text-[#0f172a] leading-tight">{word.trim()}</p>
-                      {meaning && <p className="text-[11px] text-gray-600 leading-tight mt-0.5">{meaning}</p>}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {wordList.map((item) => (
-                  <div key={item.word} className="border-b border-teal-100 last:border-0 pb-1.5">
-                    <p className="text-xs font-bold text-[#0f172a] leading-tight">{item.word}</p>
-                    <p className="text-[11px] text-gray-600 leading-tight mt-0.5">{item.meaning}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
-
-      {/* 오답 노트 조회 — 토글 버튼 + 카운트 (전체 관리는 History 탭 Report에서) */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          onClick={() => setShowWrongNotes(s => !s)}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors ${
-            showWrongNotes ? 'text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-          }`}
-          style={showWrongNotes ? { backgroundColor: theme.accent } : undefined}
-        >
-          📒 오답 노트 {showWrongNotes ? '닫기' : '보기'}
-        </button>
-        {(() => {
-          void wrongNotesVersion; // 삭제 시 카운트 즉시 갱신
-          const allNotes = loadWrongNotes();
-          const thisCount = allNotes.filter(n => n.contentKey === contentKey).length;
-          return (
-            <span className="text-[11px] text-gray-400">
-              이 문제 {thisCount}개 · 전체 {allNotes.length}개 (History 탭에서 관리)
-            </span>
-          );
-        })()}
-      </div>
-
-      {showWrongNotes && (() => {
-        // wrongNotesVersion 참조 — 삭제 시 즉시 재렌더링
-        void wrongNotesVersion;
-        const allNotes = loadWrongNotes();
-        const filtered = wrongNoteFilter === 'this'
-          ? allNotes.filter(n => n.contentKey === contentKey)
-          : allNotes;
-        return (
-          <div className="rounded-xl border border-red-200 bg-red-50/40 px-4 py-3 space-y-2 max-h-64 overflow-y-auto">
-            {/* 필터 토글 */}
-            <div className="flex items-center justify-between sticky top-0">
-              <div className="flex items-center gap-1 rounded-full bg-white p-0.5 border border-red-200">
-                <button
-                  type="button"
-                  onClick={() => setWrongNoteFilter('this')}
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${wrongNoteFilter === 'this' ? 'text-white' : 'text-gray-500'}`}
-                  style={wrongNoteFilter === 'this' ? { backgroundColor: '#dc2626' } : undefined}
-                >
-                  이 문제
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWrongNoteFilter('all')}
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-colors ${wrongNoteFilter === 'all' ? 'text-white' : 'text-gray-500'}`}
-                  style={wrongNoteFilter === 'all' ? { backgroundColor: '#dc2626' } : undefined}
-                >
-                  전체
-                </button>
-              </div>
-              {allNotes.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('오답 노트를 모두 삭제할까요?')) {
-                      localStorage.removeItem(WRONG_NOTE_KEY);
-                      setWrongNotesVersion(v => v + 1);
-                      setShowWrongNotes(false);
-                    }
-                  }}
-                  className="text-[10px] text-gray-400 hover:text-red-500"
-                >
-                  전체 삭제
-                </button>
-              )}
-            </div>
-            {filtered.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-4">저장된 오답이 없습니다.</p>
-            ) : (
-              filtered.slice().reverse().map((note, i) => (
-                <div key={i} className="rounded-lg bg-white border border-red-100 px-3 py-2 flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-red-600">{note.word}</span>
-                      <span className="text-[10px] text-gray-400">
-                        {new Date(note.savedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-gray-600 leading-5">{note.sentence}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // 개별 삭제 — 같은 word+sentence 조합 제거 + version 증가로 즉시 재렌더링
-                      const remaining = loadWrongNotes().filter(n => !(n.word === note.word && n.sentence === note.sentence));
-                      localStorage.setItem(WRONG_NOTE_KEY, JSON.stringify(remaining.slice(-200)));
-                      setWrongNotesVersion(v => v + 1);
-                    }}
-                    title="이 오답 삭제"
-                    className="text-gray-300 hover:text-red-500 shrink-0"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        );
-      })()}
     </>
   );
-
-  // ── 단어 드래그 팝업 — fixed 포지셔닝으로 viewport 기준 표시 ──
-  const renderSelectionPopup = () => {
-    if (!selectionPopup) return null;
-    if (typeof window === 'undefined') return null;
-    const { x, y, text, translation, partOfSpeech, source } = selectionPopup;
-    // 팝업이 화면 오른쪽/아래로 넘어가지 않도록 보정
-    const popupWidth = 280;
-    const popupHeight = 140;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const adjustedX = Math.min(Math.max(x - popupWidth / 2, 8), vw - popupWidth - 8);
-    const adjustedY = y + popupHeight > vh ? y - popupHeight - 24 : y;
-
-    const sourceBadge = source === 'local'
-      ? { label: '단어장', color: 'bg-teal-100 text-teal-700' }
-      : source === 'api'
-      ? { label: 'Google 번역', color: 'bg-blue-100 text-blue-700' }
-      : null;
-
-    return (
-      <div
-        data-selection-popup
-        className="fixed z-[60]"
-        style={{
-          animation: 'selectionPopupIn 0.15s ease-out',
-          ...({
-            '--popup-x': `${adjustedX}px`,
-          } as React.CSSProperties),
-          left: `${adjustedX}px`,
-          top: `${adjustedY}px`,
-          width: `${popupWidth}px`,
-        }}
-      >
-        <div className="rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
-          {/* 헤더 — 단어 + 출처 뱃지 + 닫기 */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-r from-slate-50 to-white border-b border-gray-100">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-bold text-[#0f172a] truncate">{text}</span>
-              {partOfSpeech && (
-                <span className="text-[10px] font-medium text-gray-400 italic shrink-0">{partOfSpeech}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {sourceBadge && (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${sourceBadge.color}`}>
-                  {sourceBadge.label}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setSelectionPopup(null)}
-                className="text-gray-300 hover:text-gray-500 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-          {/* 본문 — 번역 결과 */}
-          <div className="px-3 py-3">
-            {source === 'loading' && (
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <span className="h-3 w-3 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin" />
-                번역 조회 중...
-              </div>
-            )}
-            {source === 'error' && (
-              <p className="text-xs text-gray-400">번역을 가져오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
-            )}
-            {(source === 'local' || source === 'api') && translation && (
-              <p className="text-sm text-[#1f2937] leading-6">{translation}</p>
-            )}
-            {(source === 'local' || source === 'api') && !translation && (
-              <p className="text-xs text-gray-400">번역 결과가 없습니다.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const renderDictation = () => {
     // scriptText 가 CMS에 등록되지 않았거나 파싱되지 않은 경우 — 이전에는 하드코딩된
@@ -1618,7 +1276,6 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
       <div className="space-y-3">
         {renderDictationHeader()}
         {dictationMode === 'training' ? renderTrainingMode() : renderReviewMode()}
-        {renderSelectionPopup()}
       </div>
     );
   };
@@ -1707,9 +1364,16 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
     }
         if (activeTab === 'Analysis') {
       if (analysisNote) {
+        // CMS analysisNote — 줄 단위로 카드 정렬 (주요 단어/구, 정답 근거, 팁 등)
+        const lines = analysisNote.split('\n').map(l => l.trim()).filter(Boolean);
         return (
-          <div className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap">
-            {analysisNote}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Question Analysis</p>
+            {lines.map((line, i) => (
+              <div key={i} className="rounded-xl bg-[#f8fafc] px-3 py-2 text-sm leading-6 text-[#334155]">
+                {line}
+              </div>
+            ))}
           </div>
         );
       }

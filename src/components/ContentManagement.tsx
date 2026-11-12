@@ -6165,6 +6165,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     // 한 줄에 "word=한글 뜻" 형식으로 여러 줄 입력. 컬럼 순서 변경 시 기존
     // 예시 배열이 밀리지 않도록 CSV_COLUMNS 마지막에 배치.
     'vocabularyNote',
+    // Review "분석(Analysis)" 탭 데이터 — 주요 단어/구, 정답 근거, 풀이 팁 등.
+    // 여러 줄 입력 가능. 파서가 header 이름 기준으로 읽으므로 맨 끝에 추가해도
+    // 기존 예시 배열이 밀리지 않음.
+    'analysisNote',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -6201,6 +6205,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '', '', '', '', '', '', '', '', '',
       // vocabularyNote — Review dictation "단어장 보기" 데이터 (word=한글 뜻, 줄바꿈으로 구분)
       'library=도서관\nquad=사각 마당(대학교 정문 앞 잔디 공간)\nscience building=과학관',
+      // analysisNote — Review "분석" 탭 데이터 (주요 단어/구, 정답 이유, 팁 — 줄바꿈으로 구분)
+      '핵심 표현: across the quad(구내 건너편) / next to(~옆에)\n정답 이유: 여자가 도서관 위치를 "science building 옆, quad 건너편"이라고 정확히 안내했음\n팁: 위치를 물는 문제는 장소를 그대로 언급한 선택지가 정답인 경우가 많음',
     ].map(csvEscape).join(',') : [
       '1',
       (questionTypeOptions?.[0] || 'Detail Questions'),
@@ -6706,6 +6712,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iPTitle = idx('passageTitle'), iPText = idx('passageText'), iScript = idx('scriptText');
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iVocab = idx('vocabularyNote');
+        const iAnalysis = idx('analysisNote');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
         const iContext = idx('context'); // Build a Sentence / Writing 상황 박스 (회색 박스)
@@ -6876,12 +6883,22 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
               // 구문 청크(| 로 구분)가 있으면 correctAnswer를 공백으로 쪼개는 대신
               // 그 청크를 words로 사용합니다 (TPO7 형식).
               // 예: "단어은행: is close | to my | hometown is | my favorite | spot | the beach that"
+              // 기본은 한 단어 = 빈칸 1개. 청크를 공백으로 다시 분할해 단어 단위로 만들고,
+              // [대괄호]로 감싼 청크(미리 채워진 고정 텍스트)는 그대로 하나로 유지합니다.
               {
                 const explRaw = get(iExp);
                 const bankMatch = explRaw.match(/^\s*(?:단어\s*은행|word\s*bank)\s*[:：]\s*([\s\S]+)$/im);
                 if (bankMatch) {
                   const chunks = bankMatch[1].split('|').map(c => c.trim()).filter(Boolean);
-                  if (chunks.length > 0) bsWords = chunks;
+                  const expanded: string[] = [];
+                  for (const chunk of chunks) {
+                    if (/^\[[^\]]*\]$/.test(chunk)) {
+                      expanded.push(chunk); // prefilled 고정 텍스트 — 통째로 유지
+                    } else {
+                      expanded.push(...chunk.split(/\s+/).filter(Boolean)); // 단어별 빈칸
+                    }
+                  }
+                  if (expanded.length > 0) bsWords = expanded;
                 }
               }
               // 표준 CSV 양식(csv_4.27_writing_1 기준)에서는 상황 프롬프트가
@@ -6980,6 +6997,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 organization: get(iOrg) || undefined,
                 organizationBlanks: get(iOrgBlanks) || undefined,
                 vocabularyNote: get(iVocab) || undefined,
+                analysisNote: get(iAnalysis) || undefined,
                 difficulty: get(iDiff) as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
                 context: isBuildSentence

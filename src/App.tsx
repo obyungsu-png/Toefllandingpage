@@ -2663,6 +2663,9 @@ function AppContent() {
           audioUrl: reviewQuestion?.audioUrl || undefined,
           scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || (reviewQuestion as any)?.questionText || undefined,
           sentenceTimestamps: reviewQuestion?.sentenceTimestamps,
+          translationNote: reviewQuestion?.translationNote,
+          analysisNote: (reviewQuestion as any)?.analysisNote,
+          vocabularyNote: reviewQuestion?.vocabularyNote,
           questionData: reviewQuestion || undefined,
         };
       }
