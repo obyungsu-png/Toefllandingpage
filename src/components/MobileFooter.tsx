@@ -1,38 +1,51 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Home } from 'lucide-react';
+import { useSwipeNavigation } from '../utils/useSwipeNavigation';
 
 interface MobileFooterProps {
   onBack?: () => void;
   onHome?: () => void;
   onNext?: () => void;
   onVolumeClick?: () => void;
-  /** 하단 Back 버튼 표시 — 기본 false (사용자 요청: 손가락 스와이프로 넘김) */
+  /** 하단 Back 버튼 표시 — 기본 false (사용자 요청: 스와이프로 넘김) */
   showBack?: boolean;
+  /** 하단 Home 버튼 표시 — 기본 false (상단 타이틀 클릭으로 홈 이동) */
   showHome?: boolean;
   /** 하단 Next 버튼 표시 — 기본 false */
   showNext?: boolean;
   backLabel?: string;
   nextLabel?: string;
+  /** 스와이프 네비 비활성 — 특정 화면에서만 끄고 싶을 때 */
+  disableSwipe?: boolean;
 }
 
 /**
- * MobileFooter — 하단 홈 버튼만 노출 (슬림)
+ * MobileFooter — 기본 완전 숨김 + 가로 스와이프 네비
  * -----------------------------------------------------------------------------
- * 2026-11 개편: 사용자 피드백에 따라 Back/Next 버튼 기본 숨김.
- * 이전/다음 이동은 화면 가로 스와이프(useSwipeNavigation) 또는 상단 네비로.
- * 과거 코드 호환을 위해 showBack/showNext 프롭은 유지되지만 기본값 false.
+ * 2026-11 개편:
+ *  - Back/Next/Home 버튼 모두 기본 숨김 (opt-in)
+ *  - onBack / onNext 가 전달되면 **모든 화면에서 자동으로 가로 스와이프**
+ *    이전/다음 이동 가능 (useSwipeNavigation 훅 내장).
+ *  - 버튼은 안 보여도 훅은 돌아가므로 null 리턴해도 OK.
+ *
+ *  28개 화면에서 MobileFooter 가 쓰이고 있으므로, 여기에 스와이프를
+ *  심는 것만으로 전 화면 자동 적용.
  */
 export function MobileFooter({
   onBack,
   onHome,
   onNext,
   showBack = false,
-  showHome = true,
+  showHome = false,
   showNext = false,
   backLabel = 'Back',
   nextLabel = 'Next',
+  disableSwipe = false,
 }: MobileFooterProps) {
-  // Back/Next 둘 다 숨김이고 Home 도 없으면 아예 렌더링하지 않음
+  // 전역 가로 스와이프 — Back/Next 함수가 있을 때 자동 작동
+  useSwipeNavigation(onBack, onNext, { disabled: disableSwipe });
+
+  // Back/Next/Home 모두 숨김이면 아예 렌더링 X (훅은 이미 돌아감)
   if (!showBack && !showNext && !(showHome && onHome)) return null;
 
   const colCount = (showBack ? 1 : 0) + (showHome && onHome ? 1 : 0) + (showNext ? 1 : 0);
@@ -47,7 +60,6 @@ export function MobileFooter({
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className={`${gridClass} h-12 px-4`}>
-        {/* Back — 기본 숨김, legacy 호환 */}
         {showBack && (
           <button
             onClick={onBack}
@@ -61,7 +73,6 @@ export function MobileFooter({
           </button>
         )}
 
-        {/* Home — 유지 */}
         {showHome && onHome && (
           <button
             onClick={onHome}
@@ -72,7 +83,6 @@ export function MobileFooter({
           </button>
         )}
 
-        {/* Next — 기본 숨김, legacy 호환 */}
         {showNext && (
           <button
             onClick={onNext}

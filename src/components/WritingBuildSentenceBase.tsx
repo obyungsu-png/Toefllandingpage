@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
-import { useSwipeNavigation } from '../utils/useSwipeNavigation';
 
 export interface WritingBuildSentenceProps {
   onBack: () => void;
@@ -72,8 +71,7 @@ export function WritingBuildSentenceBase({
   const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
   const draggedWordRef = useRef<string | null>(null);
 
-  // 가로 스와이프로 이전/다음 문제 이동 — 단어 드래그 영역(.bs-slot-area)은 무시
-  useSwipeNavigation(onBack, onNext, { ignoreSelector: '.bs-slot-area, .bs-word-bank' });
+  // 가로 스와이프는 MobileFooter 가 전역으로 처리 (onBack/onNext 를 그쪽에 넘김)
 
   useEffect(() => {
     setSentenceSlots(Array(effectiveSlotCount).fill(null));
