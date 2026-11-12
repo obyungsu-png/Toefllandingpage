@@ -6,16 +6,17 @@
  *
  * - 세로 스크롤과 충돌 방지 (가로/세로 이동량 비교)
  * - 작은 움직임 무시 (threshold)
- * - 특정 요소에서는 스와이프 무시 (ignoreSelector) — 단어 드래그 영역 등
+ * - 특정 요소에서는 스와이프 무시 (ignoreSelector) — 꼭 필요한 경우에만.
+ *   영역이 너무 크면 스와이프가 전혀 안 걸리므로 보수적으로 사용.
  */
 import { useEffect, useRef } from 'react';
 
 interface SwipeOptions {
-  /** 최소 스와이프 거리 (px). 기본 60px */
+  /** 최소 스와이프 거리 (px). 기본 50px */
   threshold?: number;
-  /** 가로/세로 각도 허용치 — (|dx| / (|dy|+1)) >= ratio 여야 수평 스와이프로 간주. 기본 1.2 */
+  /** 가로/세로 각도 허용치 — (|dx| / (|dy|+1)) >= ratio 여야 수평 스와이프로 간주. 기본 1.0 */
   horizontalRatio?: number;
-  /** 스와이프 무시할 요소 셀렉터 (예: 단어 드래그 영역) */
+  /** 스와이프 무시할 요소 셀렉터 (예: 가로 스크롤 있는 캐러셀) */
   ignoreSelector?: string;
   /** 비활성화 */
   disabled?: boolean;
@@ -27,14 +28,13 @@ export function useSwipeNavigation(
   options: SwipeOptions = {}
 ) {
   const {
-    threshold = 60,
-    horizontalRatio = 1.2,
+    threshold = 50,
+    horizontalRatio = 1.0,
     ignoreSelector,
     disabled = false,
   } = options;
 
   const startRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const movedRef = useRef(false);
 
   useEffect(() => {
     if (disabled) return;
@@ -47,15 +47,6 @@ export function useSwipeNavigation(
       }
       const t = e.touches[0];
       startRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
-      movedRef.current = false;
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!startRef.current || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      const dx = t.clientX - startRef.current.x;
-      const dy = t.clientY - startRef.current.y;
-      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) movedRef.current = true;
     };
 
     const onTouchEnd = (e: TouchEvent) => {
@@ -67,8 +58,8 @@ export function useSwipeNavigation(
       const dt = Date.now() - startRef.current.time;
       startRef.current = null;
 
-      // 매우 느린 스와이프(1초+) 무시 — 실수로 끌었을 가능성
-      if (dt > 1000) return;
+      // 매우 느린 스와이프(1.5초+) 무시
+      if (dt > 1500) return;
 
       // 수평 지배적인 움직임만
       if (Math.abs(dx) < threshold) return;
@@ -78,14 +69,16 @@ export function useSwipeNavigation(
       else if (dx > 0 && onBack) onBack();
     };
 
+    const onTouchCancel = () => { startRef.current = null; };
+
     window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchCancel, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchCancel);
     };
   }, [onBack, onNext, threshold, horizontalRatio, ignoreSelector, disabled]);
 }
