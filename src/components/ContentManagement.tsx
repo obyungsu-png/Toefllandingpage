@@ -2879,6 +2879,23 @@ function QuestionUploadForm({ testType, testNumber, displayNumber, section, ques
               )}
             </div>
 
+            {/* 정답 문장 — 미리 채워넣는 단어 위치 결정용 */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                ✅ 정답 문장 (선택 — 입력 시 미리 채워넣는 단어가 정답 위치에 고정됨)
+              </label>
+              <input
+                type="text"
+                value={formData.correctAnswer}
+                onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#2d7a7c]"
+                placeholder="예: she wants to know when my art exhibition will be held"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                💡 단어 목록을 어떤 순서로 넣었든 이 문장을 기준으로 미리 채워넣는 단어(<code className="bg-gray-100 px-1 rounded">[단어]</code>)가 정답 위치에 고정됩니다. 비워두면 단어 목록 순서를 그대로 씁니다.
+              </p>
+            </div>
+
             {/* Sentence Ending */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-2">

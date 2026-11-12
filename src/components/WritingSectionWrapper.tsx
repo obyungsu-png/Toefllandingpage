@@ -467,6 +467,7 @@ export function WritingSectionWrapper({
             words={cmsQ?.words}
             sentenceEnding={cmsQ?.sentenceEnding}
             context={cmsQ?.context}
+            correctAnswer={typeof (cmsQ as any)?.correctAnswer === 'string' ? (cmsQ as any).correctAnswer : undefined}
           />
         );
       })()}
