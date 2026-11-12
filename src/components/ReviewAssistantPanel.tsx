@@ -44,11 +44,11 @@ interface DictationExercise {
 
 const TAB_CONFIG: Record<ReviewVariant, string[]> = {
   reading: [],
-  listening: ['Dictation', 'Analysis'],
+  listening: ['Dictation'],
   'writing-basic': [],
   'writing-guided': [],
-  'speaking-repeat': ['Dictation', 'Analysis'],
-  'speaking-interview': ['Analysis'],
+  'speaking-repeat': ['Dictation'],
+  'speaking-interview': [],
 };
 
 const PANEL_THEME: Record<ReviewSection, { accent: string; soft: string; border: string }> = {
