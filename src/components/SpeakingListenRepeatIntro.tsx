@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingListenRepeatIntroProps {
@@ -10,18 +11,24 @@ interface SpeakingListenRepeatIntroProps {
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
   onLogoClick?: () => void;
   isReviewMode?: boolean;
+  introText?: string;      // CMS 편집 가능한 인트로 안내 문구 (없으면 기본 문구)
+  introImageUrl?: string;  // 인트로 화면 이미지 (없으면 표시 안 함)
 }
 
-export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false }: SpeakingListenRepeatIntroProps) {
-  useEffect(() => {
-    const textToRead = `Listen and Repeat. You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak. No time for preparation will be provided.`;
+const DEFAULT_INTRO_TEXT = 'Listen to the speaker and repeat what she says. Repeat only once.';
 
+export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen, volumeButtonRef, onLogoClick, isReviewMode = false, introText, introImageUrl }: SpeakingListenRepeatIntroProps) {
+  const textToRead = introText || DEFAULT_INTRO_TEXT;
+
+  useEffect(() => {
+    // 인트로 내용을 기존 기계음성(TTS)으로 읽어주고, 끝나면 다음 화면(문제 1번)으로 자동 이동
     return speakWithBritishFemaleVoice({
       text: textToRead,
       onend: () => {
         if (!isReviewMode) setTimeout(() => onNext(), 500);
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onNext]);
 
   return (
@@ -94,15 +101,18 @@ export function SpeakingListenRepeatIntro({ onNext, onVolumeClick, isVolumeOpen,
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-4xl font-['Inter',_sans-serif] text-gray-800 mb-4 md:mb-8 pb-4 border-b-2 border-gray-300">Listen and Repeat</h1>
 
-          <div className="mb-8">
-            <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed mb-4 md:mb-6">
-              You will listen as someone speaks to you. Listen carefully and then repeat what you have heard. The clock will indicate how much time you have to speak.
-            </p>
+          {/* CMS에서 수정 가능한 인트로 안내 문구 — 이미지 위에 표시 */}
+          <p className="text-sm md:text-lg text-gray-800 font-['Inter',_sans-serif] leading-relaxed mb-6 md:mb-8">
+            {textToRead}
+          </p>
 
-            <p className="text-sm md:text-base text-gray-700 font-['Inter',_sans-serif] leading-relaxed">
-              No time for preparation will be provided.
-            </p>
-          </div>
+          {introImageUrl && (
+            <div className="flex justify-center mb-8">
+              <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+                <ImageWithFallback src={introImageUrl} alt="Listen and Repeat" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

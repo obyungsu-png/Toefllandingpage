@@ -216,7 +216,19 @@ export function SpeakingSectionWrapper({
       return <SpeakingIntro onNext={goNext} onLogoClick={onHome} />;
     }
     if (screen === 'repeat-intro') {
-      return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />;
+      // 첫 Listen and Repeat 문항의 introText/introImageUrl 을 인트로 화면에 전달 —
+      // CMS(질문 편집 → 그룹 인트로 텍스트)에서 수정 가능.
+      const firstRepeat = repeatQuestions[0];
+      return (
+        <SpeakingListenRepeatIntro
+          onNext={goNext}
+          onLogoClick={onHome}
+          isReviewMode={isReviewMode}
+          introText={(firstRepeat as any)?.introText || undefined}
+          introImageUrl={(firstRepeat as any)?.introImageUrl || undefined}
+          {...volumeProps}
+        />
+      );
     }
     if (screen === 'interview-intro') {
       return <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />;
