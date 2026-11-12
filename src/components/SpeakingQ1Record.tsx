@@ -49,14 +49,17 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       }, delay);
     };
 
-    if (audioUrl && isReviewMode) {
-      // Review(복습): 오디오를 다시 들려준 뒤 수동 Record 버튼으로 시작 (기존 동작 유지)
+    if (audioUrl) {
+      // Start/Review 공통: 녹음 화면에서 오디오를 한 번 재생 (RESPONSE TIME 카드는
+      // 재생 중에도 표시됨). Start 모드는 재생 종료 후 딜레이 → 삐 → 자동 녹음,
+      // Review 모드는 수동 Record 버튼으로 시작.
       const audio = createCachedAudioSync(audioUrl);
       promptAudioRef.current = audio;
-      audio.play().catch(() => {});
+      audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
+      audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };
+      audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
     } else if (!isReviewMode) {
-      // Test: 오디오는 리슨 화면(SpeakingQ1)에서 이미 한 번 재생됨 — 여기서 재생하지 않고
-      // 곧바로 딜레이 → 삐 → 녹음 시작 (오디오 2회 재생 방지)
+      // 오디오 없음 — 바로 딜레이 → 삐 → 녹음
       startDelayAndBeep();
     }
 

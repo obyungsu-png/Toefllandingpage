@@ -89,15 +89,14 @@ export function SpeakingSectionWrapper({
   }, [questions]);
 
   // Dynamic screen list — each question gets its own key (actual questionNumber).
-  // Review(복습) 모드에서는 리슨 전용 화면(repeat-qN)을 생략 — 녹음 화면에서
-  // 오디오를 들려주고 Record 버튼으로 바로 녹음할 수 있어 흐름이 간결함.
+  // 리슨 전용 화면(repeat-qN)은 사용하지 않음 — 녹음 화면에서 오디오를 재생하고
+  // 삐 소리 후 녹음 시작 (Start/Review 공통). RESPONSE TIME 카드는 처음부터 표시됨.
   const screens = useMemo(() => {
     const s: SpeakingScreen[] = ['intro'];
     if (repeatQuestions.length > 0) {
       s.push('repeat-intro');
       repeatQuestions.forEach((q) => {
         const n = numOf(q);
-        if (!isReviewMode) s.push(`repeat-q${n}`);
         s.push(`repeat-q${n}-record`);
       });
     }
@@ -111,7 +110,7 @@ export function SpeakingSectionWrapper({
     }
     s.push('end-session');
     return s;
-  }, [repeatQuestions, interviewQuestions, isReviewMode]);
+  }, [repeatQuestions, interviewQuestions]);
 
   // Auto-save progress
   const {
