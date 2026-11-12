@@ -36,13 +36,20 @@ export function WritingBuildSentenceBase({
 }: WritingBuildSentenceBaseProps) {
   const sourceWords = words || [];
   
-  // Parse words: [word] = prefilled (shown in sentence, not draggable), others = draggable blanks
-  const parsedWords = sourceWords.map(w => ({
-    text: w.replace(/^\[|\]$/g, ''),
-    prefilled: w.startsWith('[') && w.endsWith(']'),
-  }));
-  const draggableWords = parsedWords.filter(w => !w.prefilled).map(w => w.text);
-  const effectiveSlotCount = draggableWords.length; // blanks = draggable words only
+  // Parse words:
+  //   [word] = prefilled  — 문장에 고정 텍스트로 표시 (드래그 불가)
+  //   {word} = hint       — 빈칸으로 표시되고, 클릭하면 정답 단어가 그 칸에 고정됨
+  //   word   = draggable  — 단어 은행에서 드래그/탭으로 채우는 일반 빈칸
+  const parsedWords = sourceWords.map(w => {
+    if (w.startsWith('[') && w.endsWith(']')) return { text: w.slice(1, -1), kind: 'prefilled' as const };
+    if (w.startsWith('{') && w.endsWith('}')) return { text: w.slice(1, -1), kind: 'hint' as const };
+    return { text: w, kind: 'draggable' as const };
+  });
+  // 슬롯(빈칸)은 prefilled 를 제외한 순서 — 힌트 빈칸 포함
+  const slotDefs = parsedWords.filter(w => w.kind !== 'prefilled');
+  const draggableWords = parsedWords.filter(w => w.kind === 'draggable').map(w => w.text);
+  const effectiveSlotCount = slotDefs.length; // blanks = hint + draggable words
+  const isHintSlot = (index: number) => slotDefs[index]?.kind === 'hint';
 
   // Shuffle the Word Bank display order so it doesn't just show the words
   // in the already-correct sentence order (which would give the answer away).
@@ -116,6 +123,14 @@ export function WritingBuildSentenceBase({
   const canUseWord = (word: string) => getUsedCount(word) < draggableWords.filter(candidate => normalizeWord(candidate) === normalizeWord(word)).length;
 
   const handleSlotClick = (index: number) => {
+    // 힌트 빈칸 — 클릭하면 정답 단어가 고정됨 (이후 제거/변경 불가)
+    if (isHintSlot(index)) {
+      if (sentenceSlots[index]) return;
+      const newSlots = [...sentenceSlots];
+      newSlots[index] = slotDefs[index].text;
+      setSentenceSlots(newSlots);
+      return;
+    }
     if (!sentenceSlots[index]) {
       return;
     }
@@ -125,10 +140,10 @@ export function WritingBuildSentenceBase({
     setSentenceSlots(newSlots);
   };
 
-  // 모바일 터치 지원 — 단어 탭 시 첫 번째 빈 슬롯에 배치 (HTML5 드래그는 터치 불가)
+  // 모바일 터치 지원 — 단어 탭 시 첫 번째 빈 일반 슬롯에 배치 (HTML5 드래그는 터치 불가)
   const handleWordTap = (word: string) => {
     if (!canUseWord(word)) return;
-    const firstEmpty = sentenceSlots.findIndex(s => s === null);
+    const firstEmpty = sentenceSlots.findIndex((s, i) => s === null && !isHintSlot(i));
     if (firstEmpty === -1) return;
     const newSlots = [...sentenceSlots];
     newSlots[firstEmpty] = word;
@@ -152,6 +167,8 @@ export function WritingBuildSentenceBase({
   const handleDragEnter = (e: React.DragEvent, index: number) => {
     e.preventDefault();
 
+    // 힌트 빈칸은 드롭 대상 제외 — 클릭으로만 채움
+    if (isHintSlot(index)) return;
     if (sentenceSlots[index] === null) {
       setDragOverSlotIndex(index);
     }
@@ -161,6 +178,7 @@ export function WritingBuildSentenceBase({
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 
+    if (isHintSlot(index)) return;
     if (sentenceSlots[index] === null) {
       setDragOverSlotIndex(index);
     }
@@ -171,7 +189,7 @@ export function WritingBuildSentenceBase({
     setDragOverSlotIndex(null);
 
     const droppedWord = draggedWordRef.current || draggedWord || e.dataTransfer.getData('text/plain');
-    if (!droppedWord || sentenceSlots[index] !== null || !canUseWord(droppedWord)) {
+    if (!droppedWord || isHintSlot(index) || sentenceSlots[index] !== null || !canUseWord(droppedWord)) {
       draggedWordRef.current = null;
       setDraggedWord(null);
       return;
@@ -322,7 +340,7 @@ export function WritingBuildSentenceBase({
                     {(() => {
                       let slotIdx = 0;
                       return parsedWords.map((pw, i) => {
-                        if (pw.prefilled) {
+                        if (pw.kind === 'prefilled') {
                           // Fixed text — not draggable
                           return (
                             <span key={`pre-${i}`} className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] pb-2 whitespace-nowrap">
@@ -335,18 +353,19 @@ export function WritingBuildSentenceBase({
                         return (
                           <div
                             key={`slot-${si}`}
-                            onClick={() => word ? handleSlotClick(si) : undefined}
+                            onClick={() => (word || isHintSlot(si)) ? handleSlotClick(si) : undefined}
                             onDragEnter={(e) => handleDragEnter(e, si)}
                             onDragOver={(e) => handleDragOver(e, si)}
                             onDragLeave={() => { if (dragOverSlotIndex === si) setDragOverSlotIndex(null); }}
                             onDrop={(e) => handleDrop(e, si)}
-                            className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${word ? 'cursor-pointer' : ''}`}
+                            className={`relative inline-flex min-h-[48px] flex-col justify-end transition-colors ${(word || isHintSlot(si)) ? 'cursor-pointer' : ''}`}
                             style={{ minWidth: word ? '0px' : getEmptySlotWidth(), width: word ? 'fit-content' : getEmptySlotWidth(), paddingBottom: '4px' }}
+                            title={isHintSlot(si) && !word ? '클릭하면 정답이 채워집니다' : undefined}
                           >
                             <div className={`rounded-sm py-1 text-center ${isComplete ? 'px-1 md:px-1.5' : 'px-2'} ${dragOverSlotIndex === si && !word ? 'bg-[#eef4f3]' : ''}`}>
                               <span className="text-sm md:text-xl font-['Inter',_sans-serif] text-[#1f2937] whitespace-nowrap">{word || ''}</span>
                             </div>
-                            <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'}`}></div>
+                            <div className={`absolute bottom-0 left-0 right-0 border-b-2 ${dragOverSlotIndex === si && !word ? 'border-[#2a8a8d]' : 'border-gray-800'} ${isHintSlot(si) && !word ? 'border-dashed border-gray-400' : ''}`}></div>
                           </div>
                         );
                       });

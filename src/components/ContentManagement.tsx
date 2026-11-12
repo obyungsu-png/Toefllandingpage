@@ -6628,7 +6628,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Did you book your flight yet?',
       '', '', '', '',
       'I have already booked my flight.',
-      "'I have already booked my flight.' 순서로 배열하는 문장 배열 문제입니다. correctAnswer에 전체 문장을 입력하면 words가 자동 분할됩니다.",
+      "문장 배열 문제. correctAnswer에 전체 문장을 입력하면 words가 자동 분할됩니다. 힌트 빈칸을 만들려면 correctAnswer나 단어은행에서 해당 단어를 {중괄호}로 감싸세요(예: I have {already} booked my flight.) — 클릭하면 정답이 그 칸에 고정됩니다.",
       '',
       '',
     ].map(csvEscape).join(',') : null;
@@ -6860,6 +6860,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             let bsQuestionText = get(iQText);
             let bsPassageText = finalPassageText;
             let bsContext = get(iContext) || undefined;
+            // Build a Sentence — {단어} 힌트 마커 제거 후의 채점용 정답 (마커가 있었을 때만 설정)
+            let bsCorrectAnswer: string | undefined;
             if (isBuildSentence) {
               // passageText에 실제 질문이 들어 있는 경우: questionText로 승격
               if (finalPassageText && finalPassageText.trim().length > 0) {
@@ -6877,7 +6879,19 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 bsSentenceEnding = lastChar === '?' ? '?' : '.';
                 // 끝부호 제거 후 단어 분할
                 const stripped = answerSentence.replace(/[.?]$/, '').trim();
-                bsWords = stripped.split(/\s+/).filter(Boolean);
+                // {단어} 힌트 마커 보호 — 공백 분할 시 다중 단어 힌트가 쪼개지지 않도록
+                // 공백을 임시 문자로 치환했다가 복원
+                bsWords = stripped
+                  .replace(/\{([^}]*)\}/g, (_m, inner: string) => `\u0001${inner.trim().replace(/\s+/g, '\u0002')}\u0001`)
+                  .split(/\s+/).filter(Boolean)
+                  .map(t => t.replace('\u0001', '{').replace(/\u0002/g, ' ').replace('\u0001', '}'));
+                // correctAnswer는 채점용 순수 문장이어야 하므로 힌트 마커 제거
+                const cleanedAnswer = stripped.replace(/\{([^}]*)\}/g, '$1').replace(/\s+/g, ' ').trim();
+                if (cleanedAnswer && cleanedAnswer !== stripped) {
+                  // 힌트 마커가 있었던 경우에만 correctAnswer 갱신
+                  // (끝부호는 bsSentenceEnding이 담당하므로 여기서는 제거된 상태 유지)
+                  bsCorrectAnswer = cleanedAnswer;
+                }
               }
               // explanation 컬럼에 "단어은행: ..." (또는 "Word bank: ...") 형태의
               // 구문 청크(| 로 구분)가 있으면 correctAnswer를 공백으로 쪼개는 대신
@@ -6892,8 +6906,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                   const chunks = bankMatch[1].split('|').map(c => c.trim()).filter(Boolean);
                   const expanded: string[] = [];
                   for (const chunk of chunks) {
-                    if (/^\[[^\]]*\]$/.test(chunk)) {
-                      expanded.push(chunk); // prefilled 고정 텍스트 — 통째로 유지
+                    if (/^\[[^\]]*\]$/.test(chunk) || /^\{[^}]*\}$/.test(chunk)) {
+                      expanded.push(chunk); // prefilled/hint 마커 — 통째로 유지
                     } else {
                       expanded.push(...chunk.split(/\s+/).filter(Boolean)); // 단어별 빈칸
                     }
@@ -6988,7 +7002,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 questionText: isBuildSentence ? bsQuestionText : get(iQText),
                 questionType: finalType,
                 options,
-                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
+                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : (isBuildSentence && bsCorrectAnswer ? bsCorrectAnswer : get(iAns)),
                 explanation: get(iExp) || undefined,
                 passageTitle: finalPassageTitle,
                 passageText: isBuildSentence ? bsPassageText : finalPassageText,
