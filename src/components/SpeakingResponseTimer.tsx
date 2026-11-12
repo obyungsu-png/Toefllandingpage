@@ -30,7 +30,7 @@ export function SpeakingResponseTimer({
   const showAsButton = !!onRecordClick && !isRecording;
 
   return (
-    <div className="w-fit overflow-hidden rounded-xl border border-[#8fd2cf] bg-white shadow-[0_2px_6px_rgba(20,139,143,0.1)] sm:rounded-2xl">
+    <div className="w-fit min-w-[240px] overflow-hidden rounded-xl border border-[#8fd2cf] bg-white shadow-[0_2px_6px_rgba(20,139,143,0.1)] sm:min-w-[290px] sm:rounded-2xl">
       {/* Header */}
       <div 
         className="px-5 py-1.5 text-center text-[10px] font-bold tracking-[0.06em] text-white sm:px-8 sm:py-2 sm:text-[11px]"
