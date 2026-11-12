@@ -51,6 +51,14 @@ function getGroupIntroData(questionType: string): { title: string } {
   }
 }
 
+/** 지문 공유형 문항(대화/안내방송/강의) — 인트로에서 지문 오디오를 1회 재생하고
+ *  개별 문항 화면에서는 재생 버튼을 숨긴다. Listen and Response/Choose a Response는
+ *  문항마다 개별 오디오가 있으므로 그룹에서 제외. */
+const GROUP_AUDIO_TYPES = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture'];
+
+/** 문항 화면에서 오디오 재생 중 여부 (전역) — 재생 중에는 자동 다음 이동 금지 */
+let listeningAudioActive = false;
+
 /**
  * Flexible, data-driven Listening test engine. Mirrors TPO 2's structure:
  *   Section Intro → Module Intro → Questions → Module 2 Intro → Questions
@@ -86,7 +94,7 @@ export function ListeningTestEngine({
     | { kind: 'section-intro'; legacyKey: string }
     | { kind: 'module-intro'; legacyKey: string }
     | { kind: 'group-intro'; title: string; imageUrl: string; audioUrl?: string; questionType: string; legacyKey: string }
-    | { kind: 'question'; question: any; legacyKey: string };
+    | { kind: 'question'; question: any; suppressAudio?: boolean; legacyKey: string };
 
   const segments: Segment[] = [];
 
@@ -98,28 +106,37 @@ export function ListeningTestEngine({
   // Module 안내 페이지
   segments.push({ kind: 'module-intro', legacyKey: module === 2 ? 'm2-intro' : 'm1-intro' });
 
-  // 질문 + 그룹 인트로 (questionType이 변경될 때마다 인트로 페이지 삽입)
+  // 질문 + 그룹 인트로 (같은 지문 오디오를 공유하는 문항 묶음마다 인트로 페이지 삽입)
+  // - 대화/안내방송/강의(GROUP_AUDIO_TYPES)는 인트로 화면에서 지문 오디오를 1회 재생하고
+  //   이후 개별 문항 화면에서는 재생 버튼을 숨김·자동재생도 하지 않는다.
+  // - 새 지문 판정: 유형이 바뀌거나, 오디오 파일이 이전 문항과 다를 때 (첫 문항 포함).
+  //   오디오가 비어 있으면 이전 문항과 같은 지문으로 간주 (그룹의 2번째 문항).
   let prevQuestionType: string | null = null;
+  let prevAudioUrl: string | null = null;
   let questionIdx = 0;
   moduleQuestions.forEach((q) => {
     const qt = q?.questionType || '';
-    // 첫 그룹이 아니고 questionType이 변경되면 group-intro 삽입
-    // 단, Listen and Response는 인트로 불필요 (module-intro가 대체)
-    if (prevQuestionType !== null && qt !== prevQuestionType && qt !== 'Listen and Response') {
+    const groupAudioUrl: string = q?.introAudioUrl || q?.audioUrl || '';
+    const isGroupType = GROUP_AUDIO_TYPES.includes(qt);
+    const isNewPassage = isGroupType && (qt !== prevQuestionType || (!!groupAudioUrl && groupAudioUrl !== prevAudioUrl));
+    if (isNewPassage) {
       const intro = getGroupIntroData(qt);
       segments.push({
         kind: 'group-intro',
         title: intro.title,
         imageUrl: q?.introImageUrl || q?.imageUrl || '',
-        audioUrl: q?.introAudioUrl || q?.audioUrl || '',
+        audioUrl: groupAudioUrl,
         questionType: qt,
         legacyKey: `group-intro-${questionIdx}`,
       });
     }
     prevQuestionType = qt;
+    prevAudioUrl = groupAudioUrl || prevAudioUrl;
     segments.push({
       kind: 'question',
       question: q,
+      // 같은 지문을 공유하는 그룹 문항은 시험 모드에서 재생 버튼 숨김(인트로에서 이미 재생)
+      suppressAudio: isGroupType && !isReviewMode,
       legacyKey: module === 2 ? `m2q${questionIdx + 1}` : `q${questionIdx + 1}`,
     });
     questionIdx++;
@@ -193,6 +210,29 @@ export function ListeningTestEngine({
     else onExitBack();
   };
 
+  // 정답(라디오) 선택 시 3초 뒤 자동 다음 문제 — 실제 TOEFL 리스닝 흐름 (리뷰 포함)
+  // 현재 문제 화면 내부의 라디오에만 반응하도록 범위 제한
+  // 오디오 재생 중에는 다음으로 자동 이동하지 않음 (재생 종료 후 3초 카운트 유지)
+  const flowRef = useRef<HTMLDivElement>(null);
+  const autoNextTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const t = e.target as HTMLInputElement | null;
+      if (!t || t.type !== 'radio') return;
+      if (!flowRef.current?.contains(t)) return;
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+      autoNextTimer.current = setTimeout(() => {
+        if (listeningAudioActive) return; // 재생 중이면 자동 이동 보류
+        goNext();
+      }, 3000);
+    };
+    document.addEventListener('change', onChange, true);
+    return () => {
+      document.removeEventListener('change', onChange, true);
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+    };
+  }, [segmentIndex]);
+
   const current = segments[segmentIndex];
 
   // 현재 질문의 표시 번호 계산 (질문 세그먼트만 카운트)
@@ -248,17 +288,20 @@ export function ListeningTestEngine({
   // Question 페이지
   const question = current.question;
   return (
-    <ListeningQuestionScreen
-      key={current.legacyKey}
-      question={question}
-      qNum={displayQNum}
-      answerKey={globalAnswerKey}
-      totalQuestions={totalQuestions}
-      onHome={onHome}
-      onBack={goBack}
-      onNext={goNext}
-      isReviewMode={isReviewMode}
-    />
+    <div ref={flowRef} className="contents">
+      <ListeningQuestionScreen
+        key={current.legacyKey}
+        question={question}
+        qNum={displayQNum}
+        answerKey={globalAnswerKey}
+        totalQuestions={totalQuestions}
+        onHome={onHome}
+        onBack={goBack}
+        onNext={goNext}
+        isReviewMode={isReviewMode}
+        suppressAudio={current.suppressAudio}
+      />
+    </div>
   );
 }
 
@@ -499,6 +542,7 @@ function GroupIntroScreen({
           <button
             className={`flex items-center gap-2 border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 transition-colors ${canGoNext ? 'bg-white hover:bg-gray-100' : 'bg-gray-200 cursor-not-allowed'}`}
             onClick={handleNext}
+            disabled={!canGoNext}
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
@@ -656,6 +700,9 @@ interface ListeningQuestionScreenProps {
   onNext: () => void;
   /** Review 모드에서는 문제 오디오 자동 재생 안 함 (dictation 자막 정확도 우선) */
   isReviewMode?: boolean;
+  /** 지문 공유형 그룹 문항 — 인트로에서 오디오를 이미 재생했으므로
+   *  시험 모드에서는 재생 버튼을 숨기고 자동재생도 하지 않음 (review는 그대로 노출) */
+  suppressAudio?: boolean;
 }
 
 function ListeningQuestionScreen({
@@ -667,6 +714,7 @@ function ListeningQuestionScreen({
   onBack,
   onNext,
   isReviewMode = false,
+  suppressAudio = false,
 }: ListeningQuestionScreenProps) {
   // 이전에 선택한 답이 있으면 복원 (Back → Next 로 돌아와도 클릭 상태 유지).
   // 저장 키는 answerKey(전역 슬롯) 우선, 없으면 qNum.
@@ -736,6 +784,12 @@ function ListeningQuestionScreen({
     // dictation 패널의 자막/재생 컨트롤과 겹치지 않도록.
     if (isReviewMode) {
       stopAllSpeech(); // 잔여 TTS 정지 (이전 세그먼트에서 넘어온 경우)
+      listeningAudioActive = false;
+      return;
+    }
+    // 그룹 지문 문항 — 인트로에서 이미 지문 오디오를 재생했으므로 여기서는 재생하지 않음
+    if (suppressAudio) {
+      listeningAudioActive = false;
       return;
     }
     if (audioUrl && !audioPlayedRef.current) {
@@ -760,7 +814,13 @@ function ListeningQuestionScreen({
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioUrl, qNum, isReviewMode]);
+  }, [audioUrl, qNum, isReviewMode, suppressAudio]);
+
+  // 재생 중 플래그 — 엔진의 자동 다음 이동(정답 후 3초)이 재생을 방해하지 않도록
+  useEffect(() => {
+    listeningAudioActive = isPlaying;
+    return () => { listeningAudioActive = false; };
+  }, [isPlaying]);
 
   const handlePlayAudio = async () => {
     if (!audioUrl || isPlaying) return;
@@ -787,8 +847,9 @@ function ListeningQuestionScreen({
     }
   };
 
-  // 정답 선택해야 Next 가능
+  // 정답 선택해야 Next 가능 + 오디오 재생 중에는 Next 불가
   const handleNext = () => {
+    if (isPlaying) return;
     if (!selectedAnswer) {
       setShowMustAnswer(true);
       return;
@@ -828,13 +889,14 @@ function ListeningQuestionScreen({
             <span className="hidden sm:inline text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
           </button>
 
-          {/* Next Button */}
+          {/* Next Button — 오디오 재생 중에는 비활성화 */}
           <button
-            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 hover:bg-gray-100 transition-colors"
+            className={`flex items-center gap-2 border-2 border-[#0A6068] rounded-lg px-3 sm:px-5 py-2 transition-colors ${isPlaying ? 'bg-gray-200 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}`}
             onClick={handleNext}
+            disabled={isPlaying}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-sm sm:text-base">Next</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
+            <span className={`font-['Inter',_sans-serif] font-semibold text-sm sm:text-base ${isPlaying ? 'text-gray-400' : 'text-[#0A6068]'}`}>Next</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={isPlaying ? '#9ca3af' : '#0A6068'}>
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
             </svg>
           </button>
@@ -867,8 +929,8 @@ function ListeningQuestionScreen({
               </div>
             )}
 
-            {/* Play Audio Button - Mobile */}
-            {audioUrl && (
+            {/* Play Audio Button - Mobile — 그룹 지문 문항은 시험 모드에서 숨김 (인트로에서 재생) */}
+            {audioUrl && !suppressAudio && (
               <button
                 onClick={handlePlayAudio}
                 disabled={isPlaying}
@@ -912,8 +974,8 @@ function ListeningQuestionScreen({
 
           {/* Desktop: 이미지 왼쪽 + 질문(오른쪽 상단) + 옵션(오른쪽) */}
           <div className="hidden md:block">
-            {/* Play Audio Button - Desktop */}
-            {audioUrl && (
+            {/* Play Audio Button - Desktop — 그룹 지문 문항은 시험 모드에서 숨김 (인트로에서 재생) */}
+            {audioUrl && !suppressAudio && (
               <div className="flex justify-center mb-8">
                 <button
                   onClick={handlePlayAudio}

@@ -6165,6 +6165,10 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
     // 한 줄에 "word=한글 뜻" 형식으로 여러 줄 입력. 컬럼 순서 변경 시 기존
     // 예시 배열이 밀리지 않도록 CSV_COLUMNS 마지막에 배치.
     'vocabularyNote',
+    // Review "분석(Analysis)" 탭 데이터 — 주요 단어/구, 정답 근거, 풀이 팁 등.
+    // 여러 줄 입력 가능. 파서가 header 이름 기준으로 읽으므로 맨 끝에 추가해도
+    // 기존 예시 배열이 밀리지 않음.
+    'analysisNote',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -6201,6 +6205,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       '', '', '', '', '', '', '', '', '',
       // vocabularyNote — Review dictation "단어장 보기" 데이터 (word=한글 뜻, 줄바꿈으로 구분)
       'library=도서관\nquad=사각 마당(대학교 정문 앞 잔디 공간)\nscience building=과학관',
+      // analysisNote — Review "분석" 탭 데이터 (주요 단어/구, 정답 이유, 팁 — 줄바꿈으로 구분)
+      '핵심 표현: across the quad(구내 건너편) / next to(~옆에)\n정답 이유: 여자가 도서관 위치를 "science building 옆, quad 건너편"이라고 정확히 안내했음\n팁: 위치를 물는 문제는 장소를 그대로 언급한 선택지가 정답인 경우가 많음',
     ].map(csvEscape).join(',') : [
       '1',
       (questionTypeOptions?.[0] || 'Detail Questions'),
@@ -6622,7 +6628,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
       'Did you book your flight yet?',
       '', '', '', '',
       'I have already booked my flight.',
-      "'I have already booked my flight.' 순서로 배열하는 문장 배열 문제입니다. correctAnswer에 전체 문장을 입력하면 words가 자동 분할됩니다.",
+      "문장 배열 문제. correctAnswer에 전체 문장을 입력하면 words가 자동 분할됩니다. 힌트 빈칸을 만들려면 correctAnswer나 단어은행에서 해당 단어를 {중괄호}로 감싸세요(예: I have {already} booked my flight.) — 클릭하면 정답이 그 칸에 고정됩니다.",
       '',
       '',
     ].map(csvEscape).join(',') : null;
@@ -6706,6 +6712,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iPTitle = idx('passageTitle'), iPText = idx('passageText'), iScript = idx('scriptText');
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iVocab = idx('vocabularyNote');
+        const iAnalysis = idx('analysisNote');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
         const iContext = idx('context'); // Build a Sentence / Writing 상황 박스 (회색 박스)
@@ -6853,6 +6860,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
             let bsQuestionText = get(iQText);
             let bsPassageText = finalPassageText;
             let bsContext = get(iContext) || undefined;
+            // Build a Sentence — {단어} 힌트 마커 제거 후의 채점용 정답 (마커가 있었을 때만 설정)
+            let bsCorrectAnswer: string | undefined;
             if (isBuildSentence) {
               // passageText에 실제 질문이 들어 있는 경우: questionText로 승격
               if (finalPassageText && finalPassageText.trim().length > 0) {
@@ -6870,18 +6879,40 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 bsSentenceEnding = lastChar === '?' ? '?' : '.';
                 // 끝부호 제거 후 단어 분할
                 const stripped = answerSentence.replace(/[.?]$/, '').trim();
-                bsWords = stripped.split(/\s+/).filter(Boolean);
+                // {단어} 힌트 마커 보호 — 공백 분할 시 다중 단어 힌트가 쪼개지지 않도록
+                // 공백을 임시 문자로 치환했다가 복원
+                bsWords = stripped
+                  .replace(/\{([^}]*)\}/g, (_m, inner: string) => `\u0001${inner.trim().replace(/\s+/g, '\u0002')}\u0001`)
+                  .split(/\s+/).filter(Boolean)
+                  .map(t => t.replace('\u0001', '{').replace(/\u0002/g, ' ').replace('\u0001', '}'));
+                // correctAnswer는 채점용 순수 문장이어야 하므로 힌트 마커 제거
+                const cleanedAnswer = stripped.replace(/\{([^}]*)\}/g, '$1').replace(/\s+/g, ' ').trim();
+                if (cleanedAnswer && cleanedAnswer !== stripped) {
+                  // 힌트 마커가 있었던 경우에만 correctAnswer 갱신
+                  // (끝부호는 bsSentenceEnding이 담당하므로 여기서는 제거된 상태 유지)
+                  bsCorrectAnswer = cleanedAnswer;
+                }
               }
               // explanation 컬럼에 "단어은행: ..." (또는 "Word bank: ...") 형태의
               // 구문 청크(| 로 구분)가 있으면 correctAnswer를 공백으로 쪼개는 대신
               // 그 청크를 words로 사용합니다 (TPO7 형식).
               // 예: "단어은행: is close | to my | hometown is | my favorite | spot | the beach that"
+              // 기본은 한 단어 = 빈칸 1개. 청크를 공백으로 다시 분할해 단어 단위로 만들고,
+              // [대괄호]로 감싼 청크(미리 채워진 고정 텍스트)는 그대로 하나로 유지합니다.
               {
                 const explRaw = get(iExp);
                 const bankMatch = explRaw.match(/^\s*(?:단어\s*은행|word\s*bank)\s*[:：]\s*([\s\S]+)$/im);
                 if (bankMatch) {
                   const chunks = bankMatch[1].split('|').map(c => c.trim()).filter(Boolean);
-                  if (chunks.length > 0) bsWords = chunks;
+                  const expanded: string[] = [];
+                  for (const chunk of chunks) {
+                    if (/^\[[^\]]*\]$/.test(chunk) || /^\{[^}]*\}$/.test(chunk)) {
+                      expanded.push(chunk); // prefilled/hint 마커 — 통째로 유지
+                    } else {
+                      expanded.push(...chunk.split(/\s+/).filter(Boolean)); // 단어별 빈칸
+                    }
+                  }
+                  if (expanded.length > 0) bsWords = expanded;
                 }
               }
               // 표준 CSV 양식(csv_4.27_writing_1 기준)에서는 상황 프롬프트가
@@ -6971,7 +7002,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 questionText: isBuildSentence ? bsQuestionText : get(iQText),
                 questionType: finalType,
                 options,
-                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : get(iAns),
+                correctAnswer: blanks ? blanks.map(b => b.answer).join(', ') : (isBuildSentence && bsCorrectAnswer ? bsCorrectAnswer : get(iAns)),
                 explanation: get(iExp) || undefined,
                 passageTitle: finalPassageTitle,
                 passageText: isBuildSentence ? bsPassageText : finalPassageText,
@@ -6980,6 +7011,7 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 organization: get(iOrg) || undefined,
                 organizationBlanks: get(iOrgBlanks) || undefined,
                 vocabularyNote: get(iVocab) || undefined,
+                analysisNote: get(iAnalysis) || undefined,
                 difficulty: get(iDiff) as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
                 context: isBuildSentence

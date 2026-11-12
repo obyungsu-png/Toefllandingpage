@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
@@ -909,6 +909,25 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
     }
   };
 
+  // 정답(라디오) 선택 시 3초 뒤 자동 다음 문제 — 실제 TOEFL 리스닝 흐름 (리뷰 포함)
+  // 이 래퍼가 렌더링하는 문제 화면 내부의 라디오에만 반응하도록 범위 제한
+  const flowRef = useRef<HTMLDivElement>(null);
+  const autoNextTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const t = e.target as HTMLInputElement | null;
+      if (!t || t.type !== 'radio') return;
+      if (!flowRef.current?.contains(t)) return;
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+      autoNextTimer.current = setTimeout(() => goNext(), 3000);
+    };
+    document.addEventListener('change', onChange, true);
+    return () => {
+      document.removeEventListener('change', onChange, true);
+      if (autoNextTimer.current) clearTimeout(autoNextTimer.current);
+    };
+  }, [currentScreen]);
+
   // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
   useEffect(() => {
     const handler = () => goBack();
@@ -933,7 +952,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
 
   // Render the appropriate screen
   return (
-    <>
+    <div ref={flowRef} className="contents">
       {showRestoreModal && savedProgress && (
         <TestProgressRestoreModal
           savedProgress={savedProgress}
@@ -992,6 +1011,6 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
           />
         );
       })()}
-    </>
+    </div>
   );
 }

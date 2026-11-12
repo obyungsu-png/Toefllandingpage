@@ -131,3 +131,42 @@ export async function loadRecordings(
   const merged: Record<string, string> = { ...dbRecs, ...sessionRecs };
   return merged;
 }
+
+/** Delete a recording — Storage 파일 + DB 행 + sessionStorage 캐시 제거 */
+export async function deleteRecording(
+  testType: string,
+  testNumber: number,
+  questionNumber: number | string,
+): Promise<void> {
+  const sessionId = getSessionId();
+
+  // 1. DB 행 삭제
+  try {
+    await supabase
+      .from('speaking_recordings')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('test_type', testType)
+      .eq('test_number', testNumber)
+      .eq('question_number', Number(questionNumber));
+  } catch { /* ignore */ }
+
+  // 2. Storage 파일 삭제 (URL에서 경로 역산 — 실패해도 무시)
+  try {
+    const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+    const url: string | undefined = stored[String(questionNumber)];
+    if (url) {
+      const m = url.match(/\/object\/public\/recordings\/(.+)$/);
+      if (m) {
+        await supabase.storage.from('recordings').remove([decodeURIComponent(m[1])]);
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 3. sessionStorage 캐시 제거
+  try {
+    const stored = JSON.parse(sessionStorage.getItem('speakingRecordings') || '{}');
+    delete stored[String(questionNumber)];
+    sessionStorage.setItem('speakingRecordings', JSON.stringify(stored));
+  } catch { /* ignore */ }
+}

@@ -121,9 +121,13 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-4 md:p-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center whitespace-pre-wrap">
-            {introText || questionText}
-          </h1>
+          {/* 문장 텍스트는 시험 모드에서 숨김 — 오디오로만 듣고 리듬을 익히도록.
+              Review 모드에서는 어떤 문장인지 확인할 수 있게 표시. */}
+          {isReviewMode && (
+            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center whitespace-pre-wrap">
+              {introText || questionText}
+            </h1>
+          )}
 
           <div className="flex justify-center my-6 md:my-8">
             <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">

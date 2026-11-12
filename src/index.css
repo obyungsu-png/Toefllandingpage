@@ -9,3 +9,17 @@
 @layer base {
   html, body, #root { min-height: 100vh; height: 100%; margin: 0; }
 }
+/* 리뷰 모드(모바일) — 문제 화면의 'Play Audio' 알약 버튼 숨김 (우하단 위젯 Play로 대체) */
+@media (max-width: 767px) {
+  body.is-review-mode button[class*="px-8 py-3 rounded-full font-semibold text-base mb-6"] {
+    display: none;
+  }
+}
+
+/* 리뷰 모드(모바일) — 위젯(Dictation/Play/AI 로봇)과 보기·질문 겹침 방지 */
+@media (max-width: 767px) {
+  /* 스크롤 콘텐츠 하단 여백 확보 — 위젯 높이만큼 */
+  body.is-review-mode .pb-20 { padding-bottom: 140px; }
+  /* 보기 간격·질문 주변 여백 축소 */
+  body.is-review-mode .space-y-5 > * + * { margin-top: 0.75rem; }
+}

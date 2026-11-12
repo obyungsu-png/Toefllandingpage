@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 // motion removed - using CSS animations
-import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic, Moon, Sun, Sparkles } from 'lucide-react';
+import { ChevronLeft, Play, Pause, Star, StarOff, Check, X, Volume2, ChevronDown, ChevronUp, Mic, Moon, Sun, Sparkles, Trash2, Square } from 'lucide-react';
 import { TestResult } from './HistorySection';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { loadRecordings } from '../utils/uploadRecording';
+import { loadRecordings, uploadRecording, deleteRecording } from '../utils/uploadRecording';
+import { useAudioRecorder } from './useAudioRecorder';
 import { ToeflAiWidget } from './ToeflAiWidget';
 import { WritingReviewAiTutor } from './WritingReviewAiTutor';
 import { UniversalAudioPlayer } from './UniversalAudioPlayer';
@@ -280,8 +281,41 @@ export function QuestionReviewFull({
   const [modelProgress, setModelProgress] = useState(0);
   const [userProgress, setUserProgress] = useState(0);
   const [materialProgress, setMaterialProgress] = useState(0);
-  const [showModelText, setShowModelText] = useState(true);
+  const [showModelText, setShowModelText] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
+  // 재녹음(새 녹음) — 기존 My Recording 과 별도 슬롯(qNum+100)에 저장.
+  // 녹음은 리뷰 화면에서 수동 시작/정지하며, 완료 시 uploadRecording 으로 업로드.
+  const retakeRecorder = useAudioRecorder();
+  const [retakingQNum, setRetakingQNum] = useState<number | null>(null);
+  const [retakeUploading, setRetakeUploading] = useState(false);
+  const retakeUploadedRef = useRef(false);
+  useEffect(() => {
+    if (retakeRecorder.audioBlob && retakingQNum !== null && !retakeUploadedRef.current) {
+      retakeUploadedRef.current = true;
+      setRetakeUploading(true);
+      const retakeKey = retakingQNum + 100;
+      uploadRecording(retakeRecorder.audioBlob, retakeKey)
+        .then((url) => {
+          if (url) setSpeakingRecordings(prev => ({ ...prev, [String(retakeKey)]: url }));
+        })
+        .catch(() => {})
+        .finally(() => setRetakeUploading(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retakeRecorder.audioBlob, retakingQNum]);
+
+  // 녹음 삭제 (DB + Storage + 세션 캐시)
+  const handleDeleteRecording = async (qNum: number) => {
+    if (!window.confirm(`Q${qNum} 녹음을 삭제할까요?`)) return;
+    const testType = String(currentTPOTest?.testType ?? sessionStorage.getItem('current_test_type') ?? 'tpo');
+    const testNumber = Number(currentTPOTest?.testNumber ?? Number(sessionStorage.getItem('current_test_number') ?? 0));
+    await deleteRecording(testType, testNumber, qNum);
+    setSpeakingRecordings(prev => {
+      const next = { ...prev };
+      delete next[String(qNum)];
+      return next;
+    });
+  };
   const modelInterval = useRef<number | null>(null);
   const userInterval = useRef<number | null>(null);
   const materialInterval = useRef<number | null>(null);
@@ -764,8 +798,12 @@ export function QuestionReviewFull({
     setModelProgress(0);
     setUserProgress(0);
     setMaterialProgress(0);
-    setShowModelText(true);
+    setShowModelText(false);
     setShowFullText(false);
+    // 문제 이동 시 진행 중인 재녹음 정지
+    if (retakeRecorder.isRecording) retakeRecorder.stopRecording();
+    setRetakingQNum(null);
+    setRetakeUploading(false);
     setIsPlaying(false);
     setAudioProgress(0);
     if (listeningAudioRef.current) listeningAudioRef.current.pause();
@@ -1556,9 +1594,10 @@ export function QuestionReviewFull({
                       </div>
                     )}
 
-                    {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload */}
+                    {/* Audio Player — UniversalAudioPlayer: URL 변경 시 자동 reload.
+                        모바일에선 우하단 위젯(Play 버튼)으로 대체하므로 숨김 */}
                     {(currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl) ? (
-                      <div className="mb-3">
+                      <div className="mb-3 hidden md:block">
                         <UniversalAudioPlayer
                           key={`listen-audio-${currentQuestionIndex}`}
                           audioUrl={currentQuestion?.audioUrl || cmsFallbackQ?.audioUrl}
@@ -2387,11 +2426,14 @@ export function QuestionReviewFull({
                 </span>
               </div>
 
-              {/* Prompt */}
-              <div className="mb-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400 mb-2">Prompt</p>
-                <p className="text-base md:text-lg text-gray-900 dark:text-gray-100 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
-              </div>
+              {/* Prompt — Listen and Speak(따라 말하기)는 실전에서 문장 텍스트를 보여주지 않으므로
+                  리뷰에서도 노출하지 않음 (스크립트는 View Script 토글로 확인 가능) */}
+              {currentSpeakingQ.taskGroup !== 'Listen and Speak' && (
+                <div className="mb-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400 mb-2">Prompt</p>
+                  <p className="text-base md:text-lg text-gray-900 dark:text-gray-100 leading-relaxed font-medium">{currentSpeakingQ.prompt}</p>
+                </div>
+              )}
 
               {/* Reference image + question audio (실제 시험 화면 구조) */}
               <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 mb-3">
@@ -2441,26 +2483,85 @@ export function QuestionReviewFull({
                 </div>
               </div>
 
-              {/* My Recording */}
+              {/* My Recording + 재녹음(새 녹음) */}
               {(() => {
                 const qNum = activeModule === 1 ? currentQuestionIndex + 1 : currentQuestionIndex + 8;
                 const recUrl = speakingRecordings[String(qNum)];
+                const retakeUrl = speakingRecordings[String(qNum + 100)];
+                const isRetaking = retakingQNum === qNum && retakeRecorder.isRecording;
+                const showRetakePreview = retakingQNum === qNum && !!retakeRecorder.audioUrl;
                 return (
-                  <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800 p-4 mb-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-9 h-9 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
-                        <Mic className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                  <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800 p-4 mb-3 space-y-3">
+                    {/* 기존 녹음 (My Recording) */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <div className="w-9 h-9 rounded-full bg-blue-200 dark:bg-blue-800 flex items-center justify-center">
+                          <Mic className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
+                          My Recording — Q{qNum}
+                        </span>
+                        <div className="ml-auto flex items-center gap-1.5">
+                          {isRetaking ? (
+                            <button
+                              onClick={() => retakeRecorder.stopRecording()}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600"
+                            >
+                              <Square className="w-3 h-3 fill-white" /> 정지
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => { retakeUploadedRef.current = false; setRetakingQNum(qNum); retakeRecorder.startRecording(); }}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500 text-white hover:bg-blue-600"
+                            >
+                              <Mic className="w-3 h-3" /> 재녹음
+                            </button>
+                          )}
+                          {recUrl && (
+                            <button
+                              onClick={() => handleDeleteRecording(qNum)}
+                              title="녹음 삭제"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
-                        My Recording — Q{qNum}
-                      </span>
+                      {isRetaking ? (
+                        <p className="text-xs text-red-500 font-medium">녹음 중... 말한 뒤 정지를 누르세요.</p>
+                      ) : retakeUploading && retakingQNum === qNum ? (
+                        <p className="text-xs text-gray-400 italic">업로드 중...</p>
+                      ) : recUrl ? (
+                        <AudioPlayer src={recUrl} qNum={qNum} />
+                      ) : (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                          녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
+                        </p>
+                      )}
+                      {retakeRecorder.error && retakingQNum === qNum && (
+                        <p className="text-xs text-red-500 mt-1">{retakeRecorder.error}</p>
+                      )}
                     </div>
-                    {recUrl ? (
-                      <AudioPlayer src={recUrl} qNum={qNum} />
-                    ) : (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 italic">
-                        녹음이 없습니다. (스피킹 세션 완료 후 표시됩니다)
-                      </p>
+                    {/* 새 녹음 (재녹음) — 기존 My Recording 과 별도 슬롯 */}
+                    {(retakeUrl || showRetakePreview) && (
+                      <div className="border-t border-blue-200 dark:border-blue-800 pt-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-white">
+                            새 녹음 — Q{qNum}
+                          </span>
+                          {retakeUrl && (
+                            <button
+                              onClick={() => handleDeleteRecording(qNum + 100)}
+                              title="새 녹음 삭제"
+                              className="ml-auto p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        <AudioPlayer src={retakeUrl || (retakeRecorder.audioUrl as string)} qNum={qNum + 100} />
+                      </div>
                     )}
                   </div>
                 );

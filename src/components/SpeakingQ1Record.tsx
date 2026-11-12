@@ -177,9 +177,13 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
-        <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-          <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
-        </div>
+        {/* 문장 텍스트는 시험 모드에서 숨김 — 오디오로만 듣고 따라 말해야 하므로.
+            Review 모드에서는 어떤 문장이었는지 확인할 수 있게 표시. */}
+        {isReviewMode && questionText && (
+          <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
+            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
+          </div>
+        )}
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
             <ImageWithFallback

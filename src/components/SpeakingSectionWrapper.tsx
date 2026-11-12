@@ -3,28 +3,9 @@ import { SpeakingIntro } from './SpeakingIntro';
 import { SpeakingListenRepeatIntro } from './SpeakingListenRepeatIntro';
 import { SpeakingQ1 } from './SpeakingQ1';
 import { SpeakingQ1Record } from './SpeakingQ1Record';
-import { SpeakingQ2Prep } from './SpeakingQ2Prep';
-import { SpeakingQ2Record } from './SpeakingQ2Record';
-import { SpeakingQ3Prep } from './SpeakingQ3Prep';
-import { SpeakingQ3Record } from './SpeakingQ3Record';
-import { SpeakingQ4Prep } from './SpeakingQ4Prep';
-import { SpeakingQ4Record } from './SpeakingQ4Record';
-import { SpeakingQ5Prep } from './SpeakingQ5Prep';
-import { SpeakingQ5Record } from './SpeakingQ5Record';
-import { SpeakingQ6Prep } from './SpeakingQ6Prep';
-import { SpeakingQ6Record } from './SpeakingQ6Record';
-import { SpeakingQ7Prep } from './SpeakingQ7Prep';
-import { SpeakingQ7Record } from './SpeakingQ7Record';
 import { SpeakingTakeInterviewIntro } from './SpeakingTakeInterviewIntro';
-import { SpeakingInterviewIntro } from './SpeakingInterviewIntro';
 import { SpeakingQ8Prep } from './SpeakingQ8Prep';
 import { SpeakingQ8Record } from './SpeakingQ8Record';
-import { SpeakingQ9Prep } from './SpeakingQ9Prep';
-import { SpeakingQ9Record } from './SpeakingQ9Record';
-import { SpeakingQ10Prep } from './SpeakingQ10Prep';
-import { SpeakingQ10Record } from './SpeakingQ10Record';
-import { SpeakingQ11Prep } from './SpeakingQ11Prep';
-import { SpeakingQ11Record } from './SpeakingQ11Record';
 import { SpeakingEndSession } from './SpeakingEndSession';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { useTestProgress } from '../hooks/useTestProgress';
@@ -32,43 +13,25 @@ import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 import { TPOQuestion, TPOTest } from './ContentManagement';
 
 // ============================================================================
-// Speaking Section - All Screens Wrapper
-// Manages internal navigation via a single screen state instead of 26 booleans.
-// Also owns its own VolumeControl so App doesn't need to wire it.
+// Speaking Section - All Screens Wrapper (dynamic question counts)
+//
+// Screen keys (dynamic, keyed by ACTUAL questionNumber):
+//   intro
+//   repeat-intro
+//   repeat-q<num>            — Listen and Repeat: listen phase (plays sentence audio)
+//   repeat-q<num>-record     — Listen and Repeat: record phase
+//   interview-intro
+//   interview-q<num>-prep    — Take an Interview: question audio/prep
+//   interview-q<num>-record  — Take an Interview: record phase
+//   end-session
+//
+// The number of "Listen and Repeat" and "Take an Interview" questions is no
+// longer hard-coded (was 7 + 4). It is derived from the questions actually
+// present, in the canonical type order (Repeat first, then Interview), so any
+// question count renders correctly.
 // ============================================================================
 
-export type SpeakingScreen =
-  | 'intro' | 'listen-repeat-intro'
-  | 'q1' | 'q1-record'
-  | 'q2-prep' | 'q2-record'
-  | 'q3-prep' | 'q3-record'
-  | 'q4-prep' | 'q4-record'
-  | 'q5-prep' | 'q5-record'
-  | 'q6-prep' | 'q6-record'
-  | 'q7-prep' | 'q7-record'
-  | 'take-interview-intro' | 'interview-intro'
-  | 'q8-prep' | 'q8-record'
-  | 'q9-prep' | 'q9-record'
-  | 'q10-prep' | 'q10-record'
-  | 'q11-prep' | 'q11-record'
-  | 'end-session';
-
-const SPEAKING_SCREEN_ORDER: SpeakingScreen[] = [
-  'intro', 'listen-repeat-intro',
-  'q1', 'q1-record',
-  'q2-prep', 'q2-record',
-  'q3-prep', 'q3-record',
-  'q4-prep', 'q4-record',
-  'q5-prep', 'q5-record',
-  'q6-prep', 'q6-record',
-  'q7-prep', 'q7-record',
-  'take-interview-intro', 'interview-intro',
-  'q8-prep', 'q8-record',
-  'q9-prep', 'q9-record',
-  'q10-prep', 'q10-record',
-  'q11-prep', 'q11-record',
-  'end-session',
-];
+export type SpeakingScreen = string;
 
 interface SpeakingSectionWrapperProps {
   initialScreen: SpeakingScreen;
@@ -92,16 +55,62 @@ export function SpeakingSectionWrapper({
   const [screen, setScreen] = useState<SpeakingScreen>(initialScreen);
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
 
-  const sortedQuestions = useMemo(() => {
-    return [...questions].sort((a, b) => {
-      const aNum = typeof a.questionNumber === 'number' ? a.questionNumber : Number(String(a.questionNumber).replace(/\D/g, ''));
-      const bNum = typeof b.questionNumber === 'number' ? b.questionNumber : Number(String(b.questionNumber).replace(/\D/g, ''));
-      const safeANum = Number.isNaN(aNum) ? Number.MAX_SAFE_INTEGER : aNum;
-      const safeBNum = Number.isNaN(bNum) ? Number.MAX_SAFE_INTEGER : bNum;
-      return safeANum - safeBNum;
-    });
+  const numOf = (q: any): number => {
+    const n = typeof q?.questionNumber === 'number'
+      ? q.questionNumber
+      : Number(String(q?.questionNumber ?? '').replace(/\D/g, ''));
+    return Number.isNaN(n) ? Number.MAX_SAFE_INTEGER : n;
+  };
+  const byNum = (a: any, b: any) => numOf(a) - numOf(b);
+
+  // Group questions by type (canonical order: Repeat → Interview).
+  const repeatQuestions = useMemo(() => {
+    return questions
+      .filter((q) => {
+        const t = (q.questionType || '').toLowerCase();
+        return (
+          t.includes('listen and repeat') ||
+          t.includes('listen and speak') ||
+          t.includes('repeat') ||
+          t.includes('read aloud') ||
+          t.includes('shadowing')
+        );
+      })
+      .sort(byNum);
   }, [questions]);
-  
+
+  const interviewQuestions = useMemo(() => {
+    return questions
+      .filter((q) => {
+        const t = (q.questionType || '').toLowerCase();
+        return t.includes('take an interview') || t.includes('interview') || t.includes('integrated');
+      })
+      .sort(byNum);
+  }, [questions]);
+
+  // Dynamic screen list — each question gets its own key (actual questionNumber).
+  const screens = useMemo(() => {
+    const s: SpeakingScreen[] = ['intro'];
+    if (repeatQuestions.length > 0) {
+      s.push('repeat-intro');
+      repeatQuestions.forEach((q) => {
+        const n = numOf(q);
+        s.push(`repeat-q${n}`);
+        s.push(`repeat-q${n}-record`);
+      });
+    }
+    if (interviewQuestions.length > 0) {
+      s.push('interview-intro');
+      interviewQuestions.forEach((q) => {
+        const n = numOf(q);
+        s.push(`interview-q${n}-prep`);
+        s.push(`interview-q${n}-record`);
+      });
+    }
+    s.push('end-session');
+    return s;
+  }, [repeatQuestions, interviewQuestions]);
+
   // Auto-save progress
   const {
     savedProgress,
@@ -115,9 +124,9 @@ export function SpeakingSectionWrapper({
     enabled: true
   });
 
-  // Restore progress on mount
+  // Restore progress on mount (only if the saved screen still exists)
   useEffect(() => {
-    if (savedProgress && savedProgress.currentScreen) {
+    if (savedProgress && savedProgress.currentScreen && screens.includes(savedProgress.currentScreen)) {
       setScreen(savedProgress.currentScreen as SpeakingScreen);
     }
   }, []);
@@ -138,16 +147,17 @@ export function SpeakingSectionWrapper({
 
   // Auto-save when screen changes
   useEffect(() => {
-    const screenIndex = SPEAKING_SCREEN_ORDER.indexOf(screen);
-    if (screenIndex < SPEAKING_SCREEN_ORDER.length - 1) {
+    const screenIndex = screens.indexOf(screen);
+    if (screenIndex >= 0 && screenIndex < screens.length - 1) {
       saveProgress({
         currentScreen: screen,
         currentQuestionIndex: screenIndex,
-        totalQuestions: SPEAKING_SCREEN_ORDER.length
+        totalQuestions: screens.length
       });
     } else {
       clearProgress();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
   useEffect(() => {
@@ -155,18 +165,18 @@ export function SpeakingSectionWrapper({
   }, [onScreenChange, screen]);
 
   const goNext = () => {
-    const idx = SPEAKING_SCREEN_ORDER.indexOf(screen);
-    if (idx < SPEAKING_SCREEN_ORDER.length - 1) {
-      setScreen(SPEAKING_SCREEN_ORDER[idx + 1]);
+    const idx = screens.indexOf(screen);
+    if (idx >= 0 && idx < screens.length - 1) {
+      setScreen(screens[idx + 1]);
     } else {
       onComplete();
     }
   };
 
   const goBack = () => {
-    const idx = SPEAKING_SCREEN_ORDER.indexOf(screen);
+    const idx = screens.indexOf(screen);
     if (idx > 0) {
-      setScreen(SPEAKING_SCREEN_ORDER[idx - 1]);
+      setScreen(screens[idx - 1]);
     }
   };
 
@@ -186,7 +196,7 @@ export function SpeakingSectionWrapper({
 
   const handleRestore = () => {
     restoreProgress();
-    if (savedProgress && savedProgress.currentScreen) {
+    if (savedProgress && savedProgress.currentScreen && screens.includes(savedProgress.currentScreen)) {
       setScreen(savedProgress.currentScreen as SpeakingScreen);
     }
   };
@@ -197,52 +207,94 @@ export function SpeakingSectionWrapper({
     volumeButtonRef,
   };
 
-  const getQuestionIndexFromScreen = (currentScreen: SpeakingScreen): number | null => {
-    const match = currentScreen.match(/^q(\d+)/);
-    if (!match) return null;
+  // Resolve a screen key to its question object.
+  const repeatQByKey = (key: string) => repeatQuestions.find((q) => numOf(q) === Number(key.replace(/\D/g, '')));
+  const interviewQByKey = (key: string) => interviewQuestions.find((q) => numOf(q) === Number(key.replace(/\D/g, '')));
 
-    const questionNumber = Number(match[1]);
-    if (Number.isNaN(questionNumber) || questionNumber < 1) return null;
+  const renderScreen = (): React.ReactNode => {
+    if (screen === 'intro') {
+      return <SpeakingIntro onNext={goNext} onLogoClick={onHome} />;
+    }
+    if (screen === 'repeat-intro') {
+      return <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />;
+    }
+    if (screen === 'interview-intro') {
+      return <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />;
+    }
+    if (screen === 'end-session') {
+      return <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />;
+    }
 
-    return questionNumber - 1;
-  };
+    // Listen and Repeat: listen + record phases
+    const repMatch = screen.match(/^repeat-q(\d+)(-record)?$/);
+    if (repMatch) {
+      const q = repeatQByKey(screen);
+      const isRecord = !!repMatch[2];
+      const sentence = (q as any)?.scriptText || q?.questionText || '';
+      if (isRecord) {
+        return (
+          <SpeakingQ1Record
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            imageUrl={q?.imageUrl}
+            audioUrl={(q as any)?.audioUrl}
+            questionText={sentence}
+            responseDelay={(q as any)?.responseDelay}
+            stopDuration={(q as any)?.stopDuration}
+            duration={(q as any)?.duration}
+          />
+        );
+      }
+      return (
+        <SpeakingQ1
+          onNext={goNext}
+          onHome={onHome}
+          isReviewMode={isReviewMode}
+          imageUrl={q?.imageUrl}
+          introAudioUrl={(q as any)?.audioUrl || (q as any)?.introAudioUrl}
+          introText={(q as any)?.introText || sentence}
+          questionText={sentence}
+        />
+      );
+    }
 
-  const currentQuestion = (() => {
-    const idx = getQuestionIndexFromScreen(screen);
-    if (idx === null) return null;
-    return sortedQuestions[idx] || null;
-  })();
+    // Take an Interview: prep + record phases
+    const intMatch = screen.match(/^interview-q(\d+)-(prep|record)$/);
+    if (intMatch) {
+      const q = interviewQByKey(screen);
+      const isRecord = intMatch[2] === 'record';
+      if (isRecord) {
+        return (
+          <SpeakingQ8Record
+            onNext={goNext}
+            onHome={onHome}
+            isReviewMode={isReviewMode}
+            {...volumeProps}
+            imageUrl={q?.imageUrl}
+            questionText={q?.questionText}
+            responseDelay={(q as any)?.responseDelay}
+            stopDuration={(q as any)?.stopDuration}
+            duration={(q as any)?.duration}
+          />
+        );
+      }
+      return (
+        <SpeakingQ8Prep
+          onNext={goNext}
+          onHome={onHome}
+          isReviewMode={isReviewMode}
+          {...volumeProps}
+          imageUrl={q?.imageUrl}
+          audioUrl={(q as any)?.audioUrl}
+          videoUrl={(q as any)?.videoUrl}
+          questionText={q?.questionText}
+          audioPlayDuration={(q as any)?.audioPlayDuration}
+        />
+      );
+    }
 
-  // Map questions to image URLs (Q1=0, Q2=1, Q3=2, etc.)
-  const getImageUrl = (questionIndex: number) => {
-    return sortedQuestions[questionIndex]?.imageUrl;
-  };
-  const getAudioUrl = (questionIndex: number) => {
-    return sortedQuestions[questionIndex]?.audioUrl;
-  };
-  const getVideoUrl = (questionIndex: number) => {
-    return (sortedQuestions[questionIndex] as any)?.videoUrl;
-  };
-  const getQuestionText = (questionIndex: number) => {
-    return sortedQuestions[questionIndex]?.questionText;
-  };
-  const getIntroImageUrl = (questionIndex: number) => {
-    const q = sortedQuestions[questionIndex] as any;
-    return q?.introImageUrl || q?.imageUrl;
-  };
-  const getIntroAudioUrl = (questionIndex: number) => {
-    return (sortedQuestions[questionIndex] as any)?.introAudioUrl;
-  };
-  const getIntroText = (questionIndex: number) => {
-    return (sortedQuestions[questionIndex] as any)?.introText;
-  };
-  const getTiming = (questionIndex: number) => ({
-    audioPlayDuration: (sortedQuestions[questionIndex] as any)?.audioPlayDuration,
-    responseDelay:     (sortedQuestions[questionIndex] as any)?.responseDelay,
-    stopDuration:      (sortedQuestions[questionIndex] as any)?.stopDuration,
-  });
-  const getDuration = (questionIndex: number) => {
-    return sortedQuestions[questionIndex]?.duration;
+    return null;
   };
 
   return (
@@ -256,37 +308,8 @@ export function SpeakingSectionWrapper({
         />
       )}
 
-      {screen === 'intro' && <SpeakingIntro onNext={goNext} onLogoClick={onHome} />}
-      {screen === 'listen-repeat-intro' && (
-        <SpeakingListenRepeatIntro onNext={goNext} onLogoClick={onHome} isReviewMode={isReviewMode} {...volumeProps} />
-      )}
-      {screen === 'q1' && <SpeakingQ1 onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(0)} introAudioUrl={getIntroAudioUrl(0)} introText={getIntroText(0)} questionText={getQuestionText(0)} />}
-      {screen === 'q1-record' && <SpeakingQ1Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(0)} audioUrl={getAudioUrl(0)} questionText={getQuestionText(0)} responseDelay={getTiming(0).responseDelay} stopDuration={getTiming(0).stopDuration} duration={getDuration(0)} />}
-      {screen === 'q2-prep' && <SpeakingQ2Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(1)} audioUrl={getAudioUrl(1)} questionText={getQuestionText(1)} audioPlayDuration={getTiming(1).audioPlayDuration} />}
-      {screen === 'q2-record' && <SpeakingQ2Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(1)} questionText={getQuestionText(1)} responseDelay={getTiming(1).responseDelay} stopDuration={getTiming(1).stopDuration} duration={getDuration(1)} />}
-      {screen === 'q3-prep' && <SpeakingQ3Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(2)} audioUrl={getAudioUrl(2)} questionText={getQuestionText(2)} audioPlayDuration={getTiming(2).audioPlayDuration} />}
-      {screen === 'q3-record' && <SpeakingQ3Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(2)} questionText={getQuestionText(2)} responseDelay={getTiming(2).responseDelay} stopDuration={getTiming(2).stopDuration} duration={getDuration(2)} />}
-      {screen === 'q4-prep' && <SpeakingQ4Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(3)} audioUrl={getAudioUrl(3)} questionText={getQuestionText(3)} audioPlayDuration={getTiming(3).audioPlayDuration} />}
-      {screen === 'q4-record' && <SpeakingQ4Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getImageUrl(3)} questionText={getQuestionText(3)} responseDelay={getTiming(3).responseDelay} stopDuration={getTiming(3).stopDuration} duration={getDuration(3)} />}
-      {screen === 'q5-prep' && <SpeakingQ5Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(4)} audioUrl={getAudioUrl(4)} questionText={getQuestionText(4)} audioPlayDuration={getTiming(4).audioPlayDuration} />}
-      {screen === 'q5-record' && <SpeakingQ5Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(4)} questionText={getQuestionText(4)} responseDelay={getTiming(4).responseDelay} stopDuration={getTiming(4).stopDuration} duration={getDuration(4)} />}
-      {screen === 'q6-prep' && <SpeakingQ6Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(5)} audioUrl={getAudioUrl(5)} questionText={getQuestionText(5)} audioPlayDuration={getTiming(5).audioPlayDuration} />}
-      {screen === 'q6-record' && <SpeakingQ6Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(5)} questionText={getQuestionText(5)} responseDelay={getTiming(5).responseDelay} stopDuration={getTiming(5).stopDuration} duration={getDuration(5)} />}
-      {screen === 'q7-prep' && <SpeakingQ7Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} audioUrl={getAudioUrl(6)} questionText={getQuestionText(6)} audioPlayDuration={getTiming(6).audioPlayDuration} />}
-      {screen === 'q7-record' && <SpeakingQ7Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(6)} questionText={getQuestionText(6)} responseDelay={getTiming(6).responseDelay} stopDuration={getTiming(6).stopDuration} duration={getDuration(6)} />}
-      {screen === 'take-interview-intro' && <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />}
-      {screen === 'interview-intro' && <SpeakingInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} imageUrl={getIntroImageUrl(7)} introAudioUrl={getIntroAudioUrl(7)} introText={getIntroText(7)} questionText={getQuestionText(7)} />}
-      {screen === 'q8-prep' && <SpeakingQ8Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} audioUrl={getAudioUrl(7)} videoUrl={getVideoUrl(7)} questionText={getQuestionText(7)} audioPlayDuration={getTiming(7).audioPlayDuration} />}
-      {screen === 'q8-record' && <SpeakingQ8Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(7)} questionText={getQuestionText(7)} responseDelay={getTiming(7).responseDelay} stopDuration={getTiming(7).stopDuration} duration={getDuration(7)} />}
-      {screen === 'q9-prep' && <SpeakingQ9Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(8) || getImageUrl(7)} audioUrl={getAudioUrl(8)} videoUrl={getVideoUrl(8)} questionText={getQuestionText(8)} audioPlayDuration={getTiming(8).audioPlayDuration} />}
-      {screen === 'q9-record' && <SpeakingQ9Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(8) || getImageUrl(7)} questionText={getQuestionText(8)} responseDelay={getTiming(8).responseDelay} stopDuration={getTiming(8).stopDuration} duration={getDuration(8)} />}
-      {screen === 'q10-prep' && <SpeakingQ10Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(9)} audioUrl={getAudioUrl(9)} videoUrl={getVideoUrl(9)} questionText={getQuestionText(9)} audioPlayDuration={getTiming(9).audioPlayDuration} />}
-      {screen === 'q10-record' && <SpeakingQ10Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(9)} questionText={getQuestionText(9)} responseDelay={getTiming(9).responseDelay} stopDuration={getTiming(9).stopDuration} duration={getDuration(9)} />}
-      {screen === 'q11-prep' && <SpeakingQ11Prep onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(10)} audioUrl={getAudioUrl(10)} videoUrl={getVideoUrl(10)} questionText={getQuestionText(10)} audioPlayDuration={getTiming(10).audioPlayDuration} />}
-      {screen === 'q11-record' && <SpeakingQ11Record onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} {...volumeProps} imageUrl={getImageUrl(10)} questionText={getQuestionText(10)} responseDelay={getTiming(10).responseDelay} stopDuration={getTiming(10).stopDuration} duration={getDuration(10)} />}
-      {screen === 'end-session' && <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />}
+      {renderScreen()}
 
-      
       <VolumeControl isOpen={isVolumeOpen} onClose={closeVolume} buttonRef={volumeButtonRef} />
     </>
   );

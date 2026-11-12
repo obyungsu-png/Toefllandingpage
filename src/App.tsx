@@ -543,7 +543,13 @@ function AppContent() {
   const [currentListeningReviewScreen, setCurrentListeningReviewScreen] = useState<M1Screen | M2Screen | null>(null);
   const [currentWritingReviewScreen, setCurrentWritingReviewScreen] = useState<WritingScreen | null>(null);
   const [currentSpeakingReviewScreen, setCurrentSpeakingReviewScreen] = useState<SpeakingScreen | null>(null);
-  
+
+  // 리뷰 모드 표시 — 모바일에서 문제 화면의 Play Audio 알약 버튼을 CSS로 숨기기 위한 body 클래스
+  useEffect(() => {
+    document.body.classList.toggle('is-review-mode', isReviewMode);
+    return () => { document.body.classList.remove('is-review-mode'); };
+  }, [isReviewMode]);
+
   // Section Score States (for end-of-section result screens)
   const [showEndListening, setShowEndListening] = useState(false);
   const [showEndWriting, setShowEndWriting] = useState(false);
@@ -2610,20 +2616,20 @@ function AppContent() {
       }
     } else if (activeWritingScreen) {
       const screen = currentWritingReviewScreen || activeWritingScreen;
-      const isWritingQuestionScreen = screen.startsWith('bs-q') || screen === 'email-q1' || screen === 'academic-q2';
-      if (isWritingQuestionScreen) {
-        const variant: ReviewVariant = screen.startsWith('bs-q') ? 'writing-basic' : 'writing-guided';
+      const isBs = screen.startsWith('bs-q');
+      const isEmail = screen.startsWith('email-q');
+      const isDisc = screen.startsWith('academic-q');
+      if (isBs || isEmail || isDisc) {
+        const variant: ReviewVariant = isBs ? 'writing-basic' : 'writing-guided';
         let writingQuestionType = 'Build a Sentence';
         let writingQuestionCandidates = ['Build a Sentence'];
         let targetQuestionNumber = Number(screen.replace(/\D/g, '')) || undefined;
-        if (screen === 'email-q1') {
+        if (isEmail) {
           writingQuestionType = 'Write an Email';
           writingQuestionCandidates = ['Write an Email'];
-          targetQuestionNumber = 1;
-        } else if (screen === 'academic-q2') {
+        } else if (isDisc) {
           writingQuestionType = 'Academic Discussion';
           writingQuestionCandidates = ['Academic Discussion'];
-          targetQuestionNumber = 2;
         }
 
         const reviewQuestion = findReviewQuestion('Writing', writingQuestionCandidates, targetQuestionNumber);
@@ -2638,8 +2644,9 @@ function AppContent() {
       }
     } else if (activeSpeakingScreen) {
       const screen = currentSpeakingReviewScreen || activeSpeakingScreen;
-      if (screen.startsWith('q')) {
-        const isRepeat = screen === 'q1' || screen === 'q1-record' || screen === 'q2-prep' || screen === 'q2-record' || screen === 'q3-prep' || screen === 'q3-record' || screen === 'q4-prep' || screen === 'q4-record' || screen === 'q5-prep' || screen === 'q5-record' || screen === 'q6-prep' || screen === 'q6-record' || screen === 'q7-prep' || screen === 'q7-record';
+      const isRepeat = screen.startsWith('repeat-q');
+      const isInterview = screen.startsWith('interview-q');
+      if (isRepeat || isInterview) {
         const variant: ReviewVariant = isRepeat ? 'speaking-repeat' : 'speaking-interview';
         const questionNumber = parseInt(screen.replace(/\D/g, ''), 10);
         const speakingQuestionType = isRepeat ? 'Listen and Repeat' : 'Take an Interview';
@@ -2656,6 +2663,9 @@ function AppContent() {
           audioUrl: reviewQuestion?.audioUrl || undefined,
           scriptText: reviewQuestion?.scriptText || (reviewQuestion as any)?.passageText || (reviewQuestion as any)?.questionText || undefined,
           sentenceTimestamps: reviewQuestion?.sentenceTimestamps,
+          translationNote: reviewQuestion?.translationNote,
+          analysisNote: (reviewQuestion as any)?.analysisNote,
+          vocabularyNote: reviewQuestion?.vocabularyNote,
           questionData: reviewQuestion || undefined,
         };
       }

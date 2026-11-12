@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { WritingIntro } from './WritingIntro';
 import { WritingBuildSentenceIntro } from './WritingBuildSentenceIntro';
-import { WritingBuildSentenceQ1 } from './WritingBuildSentenceQ1';
-import { WritingBuildSentenceQ2 } from './WritingBuildSentenceQ2';
-import { WritingBuildSentenceQ3 } from './WritingBuildSentenceQ3';
-import { WritingBuildSentenceQ4 } from './WritingBuildSentenceQ4';
-import { WritingBuildSentenceQ5 } from './WritingBuildSentenceQ5';
-import { WritingBuildSentenceQ6 } from './WritingBuildSentenceQ6';
-import { WritingBuildSentenceQ7 } from './WritingBuildSentenceQ7';
-import { WritingBuildSentenceQ8 } from './WritingBuildSentenceQ8';
-import { WritingBuildSentenceQ9 } from './WritingBuildSentenceQ9';
-import { WritingBuildSentenceQ10 } from './WritingBuildSentenceQ10';
+import { WritingBuildSentenceBase } from './WritingBuildSentenceBase';
 import { WritingEmailIntro } from './WritingEmailIntro';
 import { WritingEmailQ1 } from './WritingEmailQ1';
 import { WritingAcademicDiscussionIntro } from './WritingAcademicDiscussionIntro';
@@ -24,24 +15,11 @@ import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 // Manages internal navigation via a single screen state instead of 17 booleans.
 // ============================================================================
 
-export type WritingScreen =
-  | 'intro'
-  | 'build-sentence-intro'
-  | 'bs-q1' | 'bs-q2' | 'bs-q3' | 'bs-q4' | 'bs-q5'
-  | 'bs-q6' | 'bs-q7' | 'bs-q8' | 'bs-q9' | 'bs-q10'
-  | 'email-intro' | 'email-q1'
-  | 'academic-intro' | 'academic-q2'
-  | 'end';
-
-const WRITING_SCREEN_ORDER: WritingScreen[] = [
-  'intro',
-  'build-sentence-intro',
-  'bs-q1', 'bs-q2', 'bs-q3', 'bs-q4', 'bs-q5',
-  'bs-q6', 'bs-q7', 'bs-q8', 'bs-q9', 'bs-q10',
-  'email-intro', 'email-q1',
-  'academic-intro', 'academic-q2',
-  'end',
-];
+// Dynamic screen key. A question screen is encoded as `<type>-q<questionNumber>`
+// (e.g. 'bs-q3', 'email-q11', 'academic-q12') so the review panel in App.tsx can
+// recover the actual question number, while the number of questions per type is
+// free to vary (no hard-coded 10/1/1).
+export type WritingScreen = string;
 
 // ─── Writing passageText JSON template parsing ───
 // CSV import converts "유형: email\n필드:\nto: ...\nsubject: ...\nbody: ..."
@@ -332,7 +310,49 @@ export function WritingSectionWrapper({
   isReviewMode = false,
 }: WritingSectionWrapperProps) {
   const [screen, setScreen] = useState<WritingScreen>(initialScreen);
-  
+
+  const numOf = (q: any): number => {
+    const n = typeof q?.questionNumber === 'number'
+      ? q.questionNumber
+      : parseInt(String(q?.questionNumber ?? '').replace(/\D/g, ''), 10);
+    return Number.isNaN(n) ? Number.MAX_SAFE_INTEGER : n;
+  };
+  const byNum = (a: any, b: any) => numOf(a) - numOf(b);
+
+  // Questions found by TYPE and sorted by questionNumber — not raw CMS position.
+  const buildSentenceQuestions = writingQuestions
+    .filter((q: any) => (q.questionType || '').toLowerCase().includes('build a sentence'))
+    .sort(byNum);
+  const emailQuestions = writingQuestions
+    .filter((q: any) => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('write an email') || t.includes('email');
+    })
+    .sort(byNum);
+  const discussionQuestions = writingQuestions
+    .filter((q: any) => {
+      const t = (q.questionType || '').toLowerCase();
+      return t.includes('academic discussion') || t.includes('discussion');
+    })
+    .sort(byNum);
+
+  // Dynamic screen list — sections only appear when they have questions, and
+  // each question gets its own screen keyed by its actual questionNumber.
+  const screens: WritingScreen[] = ['intro'];
+  if (buildSentenceQuestions.length > 0) {
+    screens.push('build-sentence-intro');
+    buildSentenceQuestions.forEach((q: any) => screens.push(`bs-q${numOf(q)}`));
+  }
+  if (emailQuestions.length > 0) {
+    screens.push('email-intro');
+    emailQuestions.forEach((q: any) => screens.push(`email-q${numOf(q)}`));
+  }
+  if (discussionQuestions.length > 0) {
+    screens.push('academic-intro');
+    discussionQuestions.forEach((q: any) => screens.push(`academic-q${numOf(q)}`));
+  }
+  screens.push('end');
+
   // Auto-save progress
   const {
     savedProgress,
@@ -346,9 +366,9 @@ export function WritingSectionWrapper({
     enabled: true
   });
 
-  // Restore progress on mount
+  // Restore progress on mount (only if the saved screen still exists)
   useEffect(() => {
-    if (savedProgress && savedProgress.currentScreen) {
+    if (savedProgress && savedProgress.currentScreen && screens.includes(savedProgress.currentScreen)) {
       setScreen(savedProgress.currentScreen as WritingScreen);
     }
   }, []);
@@ -361,16 +381,17 @@ export function WritingSectionWrapper({
 
   // Auto-save when screen changes
   useEffect(() => {
-    if (screen !== 'end') {
-      const screenIndex = WRITING_SCREEN_ORDER.indexOf(screen);
+    const screenIndex = screens.indexOf(screen);
+    if (screenIndex >= 0 && screenIndex < screens.length - 1) {
       saveProgress({
         currentScreen: screen,
         currentQuestionIndex: screenIndex,
-        totalQuestions: WRITING_SCREEN_ORDER.length
+        totalQuestions: screens.length
       });
     } else {
       clearProgress();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
   useEffect(() => {
@@ -378,32 +399,24 @@ export function WritingSectionWrapper({
   }, [onScreenChange, screen]);
 
   const goNext = () => {
-    const idx = WRITING_SCREEN_ORDER.indexOf(screen);
-    if (idx < WRITING_SCREEN_ORDER.length - 1) {
-      setScreen(WRITING_SCREEN_ORDER[idx + 1]);
+    const idx = screens.indexOf(screen);
+    if (idx >= 0 && idx < screens.length - 1) {
+      setScreen(screens[idx + 1]);
     } else {
       onComplete();
     }
   };
 
   const goBack = () => {
-    const idx = WRITING_SCREEN_ORDER.indexOf(screen);
+    const idx = screens.indexOf(screen);
     if (idx > 0) {
-      setScreen(WRITING_SCREEN_ORDER[idx - 1]);
+      setScreen(screens[idx - 1]);
     }
   };
 
-  // Build a Sentence questions, found by TYPE and sorted by questionNumber —
-  // not by raw position in the CMS array. This keeps bs-q1..bs-q10 correct
-  // even if Email/Discussion questions were saved in between, or in a
-  // different order, in the CMS.
-  const buildSentenceQuestions = writingQuestions
-    .filter((q: any) => (q.questionType || '').toLowerCase().includes('build a sentence'))
-    .sort((a: any, b: any) => {
-      const na = typeof a.questionNumber === 'number' ? a.questionNumber : parseInt(String(a.questionNumber)) || 0;
-      const nb = typeof b.questionNumber === 'number' ? b.questionNumber : parseInt(String(b.questionNumber)) || 0;
-      return na - nb;
-    });
+  const resolveBs = (key: string) => buildSentenceQuestions.find((q: any) => numOf(q) === Number(key.replace(/\D/g, '')));
+  const resolveEmail = (key: string) => emailQuestions.find((q: any) => numOf(q) === Number(key.replace(/\D/g, '')));
+  const resolveDisc = (key: string) => discussionQuestions.find((q: any) => numOf(q) === Number(key.replace(/\D/g, '')));
 
   // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
   useEffect(() => {
@@ -421,7 +434,7 @@ export function WritingSectionWrapper({
 
   const handleRestore = () => {
     restoreProgress();
-    if (savedProgress && savedProgress.currentScreen) {
+    if (savedProgress && savedProgress.currentScreen && screens.includes(savedProgress.currentScreen)) {
       setScreen(savedProgress.currentScreen as WritingScreen);
     }
   };
@@ -439,157 +452,15 @@ export function WritingSectionWrapper({
 
       {screen === 'intro' && <WritingIntro onNext={goNext} onHome={onHome} />}
       {screen === 'build-sentence-intro' && <WritingBuildSentenceIntro onBack={goBack} onNext={goNext} onHome={onHome} />}
-      {screen === 'bs-q1' && (() => {
-        const cmsQ = buildSentenceQuestions[0];
+      {/^bs-q\d+$/.test(screen) && (() => {
+        const cmsQ = resolveBs(screen);
         return (
-          <WritingBuildSentenceQ1
+          <WritingBuildSentenceBase
             onBack={goBack}
             onNext={goNext}
             onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q2' && (() => {
-        const cmsQ = buildSentenceQuestions[1];
-        return (
-          <WritingBuildSentenceQ2
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q3' && (() => {
-        const cmsQ = buildSentenceQuestions[2];
-        return (
-          <WritingBuildSentenceQ3
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q4' && (() => {
-        const cmsQ = buildSentenceQuestions[3];
-        return (
-          <WritingBuildSentenceQ4
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q5' && (() => {
-        const cmsQ = buildSentenceQuestions[4];
-        return (
-          <WritingBuildSentenceQ5
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q6' && (() => {
-        const cmsQ = buildSentenceQuestions[5];
-        return (
-          <WritingBuildSentenceQ6
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q7' && (() => {
-        const cmsQ = buildSentenceQuestions[6];
-        return (
-          <WritingBuildSentenceQ7
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q8' && (() => {
-        const cmsQ = buildSentenceQuestions[7];
-        return (
-          <WritingBuildSentenceQ8
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q9' && (() => {
-        const cmsQ = buildSentenceQuestions[8];
-        return (
-          <WritingBuildSentenceQ9
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
-            avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
-            avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
-            questionText={cmsQ?.questionText}
-            words={cmsQ?.words}
-            sentenceEnding={cmsQ?.sentenceEnding}
-            context={cmsQ?.context}
-          />
-        );
-      })()}
-      {screen === 'bs-q10' && (() => {
-        const cmsQ = buildSentenceQuestions[9];
-        return (
-          <WritingBuildSentenceQ10
-            onBack={goBack}
-            onNext={goNext}
-            onHome={onHome}
+            questionNumber={cmsQ ? numOf(cmsQ) : 1}
+            slotCount={(cmsQ?.words || []).length || 6}
             avatar1ImageUrl={cmsQ?.avatar1ImageUrl}
             avatar2ImageUrl={cmsQ?.avatar2ImageUrl}
             questionText={cmsQ?.questionText}
@@ -600,14 +471,8 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'email-intro' && <WritingEmailIntro onNext={goNext} onHome={onHome} />}
-      {screen === 'email-q1' && (() => {
-        const emailQ = writingQuestions.find((q: any) =>
-          (q.questionType || '').toLowerCase().includes('write an email') ||
-          (q.questionType || '').toLowerCase().includes('email')
-        );
-        // Parse passageText JSON template (created by CSV import) into the
-        // structured fields WritingEmailQ1 expects (emailTo, emailSubject,
-        // emailScenario, emailInstruction).
+      {/^email-q\d+$/.test(screen) && (() => {
+        const emailQ = resolveEmail(screen);
         const emailWritingQuestion = buildEmailWritingQuestion(emailQ);
         return (
           <WritingEmailQ1
@@ -620,14 +485,8 @@ export function WritingSectionWrapper({
         );
       })()}
       {screen === 'academic-intro' && <WritingAcademicDiscussionIntro onBegin={goNext} onHome={onHome} />}
-      {screen === 'academic-q2' && (() => {
-        // Find the Academic Discussion question from CMS (by type or by position — typically Q12, after 10 Build Sentence + 1 Email)
-        const adQ = writingQuestions.find((q: any) =>
-          (q.questionType || '').toLowerCase().includes('academic discussion') ||
-          (q.questionType || '').toLowerCase().includes('discussion')
-        ) || null;
-        // Parse passageText JSON template (created by CSV import) into the
-        // professor/student message fields WritingAcademicDiscussionQ2 expects.
+      {/^academic-q\d+$/.test(screen) && (() => {
+        const adQ = resolveDisc(screen) || null;
         const adProps = buildAcademicDiscussionProps(adQ);
         return (
           <WritingAcademicDiscussionQ2
