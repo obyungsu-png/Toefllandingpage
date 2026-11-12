@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileFooter } from './MobileFooter';
+import { useSwipeNavigation } from '../utils/useSwipeNavigation';
 
 export interface WritingBuildSentenceProps {
   onBack: () => void;
@@ -70,6 +71,9 @@ export function WritingBuildSentenceBase({
   const [draggedWord, setDraggedWord] = useState<string | null>(null);
   const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
   const draggedWordRef = useRef<string | null>(null);
+
+  // 가로 스와이프로 이전/다음 문제 이동 — 단어 드래그 영역(.bs-slot-area)은 무시
+  useSwipeNavigation(onBack, onNext, { ignoreSelector: '.bs-slot-area, .bs-word-bank' });
 
   useEffect(() => {
     setSentenceSlots(Array(effectiveSlotCount).fill(null));
@@ -150,7 +154,12 @@ export function WritingBuildSentenceBase({
     setSentenceSlots(newSlots);
   };
 
-  const getEmptySlotWidth = () => '120px';
+  // 모바일에선 단어마다 가로 폭을 작게 (지저분한 줄바꿈 방지)
+  // 데스크탑은 기존 120px 유지
+  const getEmptySlotWidth = () => {
+    if (typeof window === 'undefined') return '120px';
+    return window.innerWidth < 768 ? '68px' : '120px';
+  };
 
   const handleDragStart = (e: React.DragEvent, word: string) => {
     if (!canUseWord(word)) {
@@ -210,17 +219,17 @@ export function WritingBuildSentenceBase({
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 flex flex-col">
-      <div className="bg-[#1e6b73] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
-        <div className="flex items-center">
-          <div
-            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={onHome}
-          >
-            *toefl ibt
-          </div>
-        </div>
+      {/* 상단 네비 — 모바일은 슬림 한 줄, 데스크탑은 기존 유지 */}
+      <div className="bg-[#1e6b73] h-11 md:h-16 flex items-center justify-between px-3 md:px-8 md:shadow-lg">
+        <button
+          onClick={onHome}
+          className="text-white text-[13px] md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide hover:opacity-80 transition-opacity"
+        >
+          <span className="md:hidden">TOEFL iBT</span>
+          <span className="hidden md:inline">*toefl ibt</span>
+        </button>
 
-        <div className="flex items-center gap-1.5 md:gap-3">
+        <div className="hidden md:flex items-center gap-3">
           {onVolumeClick && (
             <button
               className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-md px-5 py-1.5 hover:bg-[#084d52] transition-colors"
@@ -232,7 +241,6 @@ export function WritingBuildSentenceBase({
               </svg>
             </button>
           )}
-
           <button
             className="flex items-center gap-2 bg-[#0A6068] border border-white rounded-md px-5 py-1.5 hover:bg-[#084d52] transition-colors"
             onClick={onBack}
@@ -240,27 +248,51 @@ export function WritingBuildSentenceBase({
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
-            <span className="text-white font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Back</span>
+            <span className="text-white font-['Inter',_sans-serif] font-semibold text-base">Back</span>
           </button>
-
           <button
-            className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-5 py-2 hover:bg-gray-100 transition-colors"
             onClick={onNext}
           >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Next</span>
+            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-base">Next</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
               <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
             </svg>
           </button>
         </div>
+
+        {/* 모바일: 질문 번호 + 시간만 간결하게 상단 오른쪽 */}
+        <div className="md:hidden flex items-center gap-2.5 text-white/95">
+          <span className="text-[11px] font-['Inter',_sans-serif] font-semibold tabular-nums">
+            Q{questionNumber}/10
+          </span>
+          {showTime && (
+            <span className="text-[11px] font-['Inter',_sans-serif] font-semibold tabular-nums">
+              {formatTime(timeRemaining)}
+            </span>
+          )}
+          <button
+            onClick={() => setShowTime(!showTime)}
+            className="text-white/70 hover:text-white"
+            title={showTime ? 'Hide Time' : 'Show Time'}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              {showTime ? (
+                <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z" />
+              ) : (
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white border-b border-gray-300">
+      {/* 데스크탑 전용 서브 헤더 (문제 번호 + 타이머) */}
+      <div className="hidden md:block bg-white border-b border-gray-300">
         <div className="px-8 py-3 flex items-center justify-between">
           <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
             Writing | Question {questionNumber} of 10
           </div>
-
           <div className="flex items-center gap-4">
             {showTime && (
               <div className="text-gray-700 font-['Inter',_sans-serif] font-semibold">
@@ -284,9 +316,9 @@ export function WritingBuildSentenceBase({
         </div>
       </div>
 
-      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
+      <div className="flex-1 p-3 md:p-8 overflow-auto bg-white border-0 md:border md:border-black pb-14 md:pb-8">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-4 md:mb-6 text-center">
+          <h2 className="text-base md:text-3xl font-['Inter',_sans-serif] font-bold text-black mb-3 md:mb-6 text-center">
             Make an appropriate sentence.
           </h2>
 
@@ -299,11 +331,11 @@ export function WritingBuildSentenceBase({
             </div>
           )}
 
-          <div className="space-y-6 md:space-y-10 mt-10 md:mt-20 px-2 md:pl-12 md:pr-8">
+          <div className="space-y-4 md:space-y-10 mt-4 md:mt-20 px-0 md:pl-12 md:pr-8">
             {/* 질문 영역 (avatar1) */}
             <div>
-              <div className="flex items-center gap-4 md:gap-6">
-                <div className="w-20 h-20 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0">
+              <div className="flex items-center gap-2.5 md:gap-6">
+                <div className="w-12 h-12 md:w-28 md:h-28 rounded-full overflow-hidden border-2 md:border-4 border-[#1e6b73] flex-shrink-0">
                   {avatar1ImageUrl ? (
                     <ImageWithFallback src={avatar1ImageUrl} alt="Question person" className="w-full h-full object-cover" />
                   ) : (
@@ -314,7 +346,7 @@ export function WritingBuildSentenceBase({
                     </div>
                   )}
                 </div>
-                <div className="text-base md:text-xl font-['Inter',_sans-serif] text-gray-800">
+                <div className="text-sm md:text-xl font-['Inter',_sans-serif] text-gray-800 leading-snug">
                   {questionText || ''}
                 </div>
               </div>
@@ -322,8 +354,8 @@ export function WritingBuildSentenceBase({
 
             {/* 답변 영역 (avatar2) */}
             <div>
-              <div className="flex items-end gap-4 md:gap-6">
-                <div className="w-20 h-20 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
+              <div className="flex items-end gap-2.5 md:gap-6">
+                <div className="w-12 h-12 md:w-28 md:h-28 rounded-full overflow-hidden border-2 md:border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
                   {avatar2ImageUrl ? (
                     <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
                   ) : (
@@ -335,7 +367,7 @@ export function WritingBuildSentenceBase({
                   )}
                 </div>
 
-                <div className="flex-1 overflow-x-auto">
+                <div className="flex-1 overflow-x-auto bs-slot-area">
                   <div className={`flex flex-wrap items-end ${isComplete ? 'gap-0.5 md:gap-1' : 'gap-1.5 md:gap-2'}`}>
                     {(() => {
                       let slotIdx = 0;
@@ -377,7 +409,7 @@ export function WritingBuildSentenceBase({
             </div>
 
             {/* Word Bank — 드래그할 단어들 (라벨 없이 단어만 표시) */}
-            <div className="mt-8 md:mt-12">
+            <div className="mt-8 md:mt-12 bs-word-bank">
               <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
                 {shuffledDraggableWords.map(({ text: word, originalIndex }) => {
                   const usedCount = getUsedCount(word);
