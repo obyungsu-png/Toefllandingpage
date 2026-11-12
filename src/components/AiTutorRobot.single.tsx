@@ -246,7 +246,7 @@ export function AiTutorRobot({ size = 62, still = false }: { size?: number; stil
 }
 
 /* ===== 3) 드래그 훅 (원래 useDraggableFab.ts) ===== */
-const STORAGE_KEY = 'aiTutorFabPos';
+const STORAGE_KEY = 'aiTutorFabPos_v2'; // v2 — 기본 위치 변경(오른쪽·위쪽, 더 크게) 반영을 위해 저장 위치 초기화
 const MARGIN = 4;
 const DRAG_THRESHOLD = 5;
 

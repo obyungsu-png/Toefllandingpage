@@ -274,6 +274,14 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
     }
     onPinnedChange?.(next);
   }, [onPinnedChange, getDefaultPanelSize]);
+  // 데스크톱 여부 — FAB 기본 위치/크기를 화면에 맞게 조정 (컴퓨터에서 오른쪽·위쪽으로 조금 더, 약간 크게)
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
   const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
   const [panelSize, setPanelSize] = useState(getDefaultPanelSize);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -671,7 +679,9 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
           style={{
             position: 'fixed',
             zIndex,
-            ...(fab.style ?? (position === 'left' ? { left: 24, bottom: 88 } : { right: 24, bottom: 88 })),
+            ...(fab.style ?? (position === 'left'
+              ? { left: 24, bottom: isDesktop ? 120 : 88 }
+              : { right: isDesktop ? 10 : 24, bottom: isDesktop ? 120 : 88 })),
           }}
         >
           <button
@@ -681,7 +691,7 @@ export function ToeflAiWidget({ position = 'right', contextLabel, questionData, 
             aria-label="AI 튜터에게 물어보세요"
             title="AI 튜터에게 물어보세요"
           >
-            <AiTutorRobot size={62} />
+            <AiTutorRobot size={isDesktop ? 76 : 62} />
           </button>
         </div>
       )}
