@@ -177,20 +177,11 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       </div>
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-white overflow-y-auto">
-        {/* 실제 TOEFL처럼: 시험 모드에서는 고정 안내 문구("Listen and repeat only once.")를
-            사진 위에 표시하고, 따라 말한 문장 자체는 노출하지 않음.
-            Review 모드에서는 어떤 문장이었는지 확인할 수 있게 문장을 표시. */}
-        {isReviewMode ? (
-          questionText && (
-            <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-              <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">{questionText}</h1>
-            </div>
-          )
-        ) : (
-          <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
-            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 text-center">Listen and repeat only once.</h1>
-          </div>
-        )}
+        {/* 실제 TOEFL처럼: Start/Review 모두 동일한 고정 안내 문구를 사진 위에 표시.
+            따라 말한 문장 자체는 노출하지 않음. */}
+        <div className="pt-6 md:pt-8 pb-3 md:pb-6 flex-shrink-0">
+          <h1 className="text-lg md:text-2xl font-bold text-gray-900 text-center">Listen and repeat only once.</h1>
+        </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
           <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
             <ImageWithFallback

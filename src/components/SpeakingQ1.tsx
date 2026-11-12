@@ -121,18 +121,11 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-white p-4 md:p-12">
         <div className="max-w-5xl mx-auto">
-          {/* 실제 TOEFL처럼: 시험 모드에서는 고정 안내 문구("Listen and repeat only once.")를
-              사진 위에 표시하고, 따라 말할 문장 자체는 노출하지 않음.
-              Review 모드에서는 어떤 문장인지 확인할 수 있게 문장을 표시. */}
-          {isReviewMode ? (
-            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center whitespace-pre-wrap">
-              {introText || questionText}
-            </h1>
-          ) : (
-            <h1 className="text-[15px] md:text-lg font-bold text-gray-900 mb-4 md:mb-8 text-center">
-              Listen and repeat only once.
-            </h1>
-          )}
+          {/* 실제 TOEFL처럼: Start/Review 모두 동일한 고정 안내 문구를 사진 위에 표시.
+              따라 말할 문장 자체는 노출하지 않음. */}
+          <h1 className="text-lg md:text-2xl font-bold text-gray-900 mb-4 md:mb-8 text-center">
+            Listen and repeat only once.
+          </h1>
 
           <div className="flex justify-center my-6 md:my-8">
             <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
