@@ -234,7 +234,19 @@ export function SpeakingSectionWrapper({
       );
     }
     if (screen === 'interview-intro') {
-      return <SpeakingTakeInterviewIntro onNext={goNext} onHome={onHome} isReviewMode={isReviewMode} />;
+      // 첫 Take an Interview 문항의 introText/introImageUrl/introVideoUrl 을 인트로 화면에 전달 —
+      // CMS(질문 편집 → 그룹 인트로)에서 수정 가능.
+      const firstInterview = interviewQuestions[0];
+      return (
+        <SpeakingTakeInterviewIntro
+          onNext={goNext}
+          onHome={onHome}
+          isReviewMode={isReviewMode}
+          introText={(firstInterview as any)?.introText || undefined}
+          introImageUrl={(firstInterview as any)?.introImageUrl || firstInterview?.imageUrl || undefined}
+          introVideoUrl={(firstInterview as any)?.introVideoUrl || undefined}
+        />
+      );
     }
     if (screen === 'end-session') {
       return <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />;

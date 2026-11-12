@@ -2,15 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import { VolumeControl } from './VolumeControl';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { speakWithBritishFemaleVoice } from '../utils/tts';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface SpeakingTakeInterviewIntroProps {
   onNext: () => void;
   onHome?: () => void;
   onVolumeClick?: () => void;
   isReviewMode?: boolean;
+  introText?: string;      // CMS 편집 가능한 인트로 안내 문구 (없으면 기본 문구)
+  introImageUrl?: string;  // 인트로 화면 이미지 (없으면 표시 안 함)
+  introVideoUrl?: string;  // 인트로 화면 동영상 (파일 업로드 URL 또는 mp4/YouTube/Vimeo 링크)
 }
 
-export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false }: SpeakingTakeInterviewIntroProps) {
+const DEFAULT_INTRO_TEXT = 'An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.';
+
+// 링크 형태의 동영상 지원 — YouTube/Vimeo는 iframe 임베드, 그 외(mp4 등)는 <video>로 재생
+function getIntroVideoEmbedUrl(url: string): string | null {
+  const youtube = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  if (youtube) return `https://www.youtube.com/embed/${youtube[1]}?rel=0`;
+  const vimeo = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
+}
+
+export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false, introText, introImageUrl, introVideoUrl }: SpeakingTakeInterviewIntroProps) {
+  const introVideoEmbedUrl = introVideoUrl ? getIntroVideoEmbedUrl(introVideoUrl) : null;
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   // TTS가 끝나기 전에는 Next(다음 문제로 이동)를 막음
@@ -25,7 +41,7 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
   useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
-    const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
+    const textToRead = introText || DEFAULT_INTRO_TEXT;
 
     cancelledRef.current = false;
     safetyTimerRef.current = setTimeout(() => setTtsDone(true), 20000);
@@ -116,20 +132,47 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center bg-white p-4 md:p-12">
-        <div className="max-w-2xl w-full">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-12">
+      <div className="flex-1 flex items-center justify-center bg-white p-4 md:p-12 overflow-auto">
+        <div className="max-w-3xl w-full">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8">
             Take an Interview
           </h1>
-          
+
           <div className="border-t-2 border-gray-300 pt-6 md:pt-8">
-            <p className="text-gray-700 text-sm md:text-xl mb-4 md:mb-6 leading-relaxed">
-              An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed.
+            <p className="text-gray-700 text-sm md:text-xl mb-4 md:mb-6 leading-relaxed whitespace-pre-wrap">
+              {introText || DEFAULT_INTRO_TEXT}
             </p>
-            
-            <p className="text-gray-700 text-sm md:text-xl leading-relaxed">
-              No time for preparation will be provided.
-            </p>
+
+            {(introVideoUrl || introImageUrl) && (
+              <div className="flex justify-center mt-4 md:mt-6">
+                {introVideoUrl ? (
+                  <div className="w-full max-w-[560px] aspect-video overflow-hidden rounded-lg border border-gray-300 bg-black">
+                    {introVideoEmbedUrl ? (
+                      <iframe
+                        src={introVideoEmbedUrl}
+                        title="Take an Interview intro video"
+                        className="h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={introVideoUrl}
+                        controls
+                        autoPlay
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-contain"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50">
+                    <ImageWithFallback src={introImageUrl} alt="Take an Interview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
