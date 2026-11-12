@@ -13,10 +13,13 @@ interface SpeakingQ1Props {
   introText?: string;     // CMS-managed intro text (shown above image; falls back to questionText)
   questionText?: string;  // CMS-managed heading text
   isReviewMode?: boolean;
+  questionNumber?: number;
+  totalQuestions?: number;
 }
 
-export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText, questionText, isReviewMode = false }: SpeakingQ1Props) {
+export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText, questionText, isReviewMode = false, questionNumber, totalQuestions }: SpeakingQ1Props) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
+  const questionLabel = `Question ${questionNumber ?? 1} of ${totalQuestions ?? 11}`;
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -64,6 +67,7 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -112,6 +116,9 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
           <div className="flex gap-8">
             <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
               Speaking
+            </div>
+            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+              {questionLabel}
             </div>
           </div>
         </div>

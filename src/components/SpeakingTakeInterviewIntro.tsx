@@ -13,29 +13,53 @@ interface SpeakingTakeInterviewIntroProps {
 export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = false }: SpeakingTakeInterviewIntroProps) {
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  // TTS가 끝나기 전에는 Next(다음 문제로 이동)를 막음
+  const [ttsDone, setTtsDone] = useState(false);
   const stopTtsRef = useRef<(() => void) | null>(null);
+  const onNextRef = useRef(onNext);
+  const cancelledRef = useRef(false);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 안전장치 — 브라우저 이슈로 onend가 발생하지 않아도 일정 시간 후 Next 허용
+  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     const textToRead = `Take an Interview. An interviewer will ask you questions. Answer the questions and be sure to say as much as you can in the time allowed. No time for preparation will be provided.`;
 
+    cancelledRef.current = false;
+    safetyTimerRef.current = setTimeout(() => setTtsDone(true), 20000);
     const stop = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
+        // cancel(중단)로 발생한 onend는 무시 — TTS가 실제로 끝났을 때만 진행
+        if (cancelledRef.current) return;
+        if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
         setIsAudioPlaying(false);
-        if (!isReviewMode) setTimeout(() => onNext(), 500);
+        setTtsDone(true);
+        if (!isReviewMode) {
+          advanceTimerRef.current = setTimeout(() => onNextRef.current(), 500);
+        }
       },
     });
     stopTtsRef.current = stop;
-    return stop;
-  }, [onNext]);
+    return () => {
+      // cancel()이 onend를 발생시켜 자동 이동이 중복 실행되는 버그 방지
+      cancelledRef.current = true;
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+      if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+      stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReviewMode]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
         onBack={onHome}
-        onNext={() => { stopTtsRef.current?.(); onNext(); }}
+        onNext={ttsDone ? onNext : undefined}
         showNext
         showVolume={true}
         onVolumeClick={() => setShowVolumeControl(true)}
@@ -63,10 +87,11 @@ export function SpeakingTakeInterviewIntro({ onNext, onHome, isReviewMode = fals
             </svg>
           </button>
 
-          {/* Next Button */}
+          {/* Next Button — TTS 재생이 끝나야 활성화 */}
           <button
-            onClick={() => { stopTtsRef.current?.(); onNext(); }}
-            className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
+            onClick={() => { if (ttsDone) onNext(); }}
+            disabled={!ttsDone}
+            className={`flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 transition-colors ${ttsDone ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'}`}
           >
             <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Next</span>
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">

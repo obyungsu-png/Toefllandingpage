@@ -112,18 +112,6 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
       {/* Main content */}
       <div className="flex-1 overflow-auto bg-white flex items-center justify-center py-8">
         <div className="max-w-xl mx-auto text-center px-6 w-full">
-          {/* Big Score Circle */}
-          <div className={`w-32 h-32 mx-auto mb-4 rounded-full flex items-center justify-center shadow-lg ${
-            score && percentage >= 70 ? 'bg-gradient-to-br from-green-400 to-green-600' :
-            score && percentage >= 40 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
-            score ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gray-200'
-          }`}>
-            <div className="text-center">
-              <p className="text-4xl font-bold text-white">{score ? percentage : '-'}</p>
-              <p className="text-xs text-white/80">%</p>
-            </div>
-          </div>
-
           <h1 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-2">Reading Section Complete!</h1>
           
           {/* CEFR Badge - 2026 New TOEFL */}
@@ -169,22 +157,6 @@ const EndModule2Screen: React.FC<EndModule2ScreenProps> = ({
                   <p className="text-3xl font-bold">{score.correct}<span className="text-base opacity-70"> / {score.total}</span></p>
                   <p className="text-xs opacity-80 mt-1 font-medium">{percentage}%</p>
                   <p className="text-[10px] opacity-70 mt-1">Band {bandScore} / 6.0</p>
-                </div>
-              </div>
-
-              {/* Legacy / CEFR summary */}
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
-                <div className="text-center">
-                  <p className="text-[10px] text-gray-400 uppercase mb-1">Accuracy</p>
-                  <p className={`text-lg font-bold ${percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>{percentage}%</p>
-                </div>
-                <div className="text-center border-x border-gray-100">
-                  <p className="text-[10px] text-gray-400 uppercase mb-1">Raw Score</p>
-                  <p className="text-lg font-bold text-[#1e6b73]">{toeflEstimate}<span className="text-xs text-gray-400"> / 22</span></p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-gray-400 uppercase mb-1">Wrong</p>
-                  <p className="text-lg font-bold text-red-500">{score.total - score.correct}</p>
                 </div>
               </div>
 

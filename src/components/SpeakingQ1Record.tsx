@@ -19,10 +19,13 @@ interface SpeakingQ1RecordProps {
   duration?: number; // seconds for recording countdown
   audioUrl?: string;
   isReviewMode?: boolean;
+  questionNumber?: number;
+  totalQuestions?: number;
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false }: SpeakingQ1RecordProps) {
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, questionNumber, totalQuestions }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
+  const questionLabel = `Question ${questionNumber ?? 1} of ${totalQuestions ?? 11}`;
   const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
@@ -115,7 +118,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 1 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -168,7 +171,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
               Speaking
             </div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 1 of 11
+              {questionLabel}
             </div>
           </div>
         </div>

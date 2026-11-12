@@ -20,9 +20,12 @@ interface SpeakingQ8RecordProps {
   stopDuration?: number;
   duration?: number; // seconds for recording countdown (currently hardcoded to 45)
   isReviewMode?: boolean;
+  questionNumber?: number;
+  totalQuestions?: number;
 }
 
-export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false}: SpeakingQ8RecordProps) {
+export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false, questionNumber, totalQuestions}: SpeakingQ8RecordProps) {
+  const questionLabel = `Question ${questionNumber ?? 8} of ${totalQuestions ?? 11}`;
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
@@ -90,7 +93,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 8 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -136,7 +139,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         <div className="px-8 py-3">
           <div className="flex gap-8">
             <div className="text-gray-700 font-[\'Inter\',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Speaking</div>
-            <div className="text-gray-500 text-sm font-[\'Inter\',_sans-serif] font-medium self-end pb-2">Question 8 of 11</div>
+            <div className="text-gray-500 text-sm font-[\'Inter\',_sans-serif] font-medium self-end pb-2">{questionLabel}</div>
           </div>
         </div>
       </div>

@@ -256,6 +256,8 @@ export function SpeakingSectionWrapper({
             responseDelay={(q as any)?.responseDelay}
             stopDuration={(q as any)?.stopDuration}
             duration={(q as any)?.duration}
+            questionNumber={q ? numOf(q) : undefined}
+            totalQuestions={questions.length || undefined}
           />
         );
       }
@@ -268,6 +270,8 @@ export function SpeakingSectionWrapper({
           introAudioUrl={(q as any)?.audioUrl || (q as any)?.introAudioUrl}
           introText={(q as any)?.introText || sentence}
           questionText={sentence}
+          questionNumber={q ? numOf(q) : undefined}
+          totalQuestions={questions.length || undefined}
         />
       );
     }
@@ -289,6 +293,8 @@ export function SpeakingSectionWrapper({
             responseDelay={(q as any)?.responseDelay}
             stopDuration={(q as any)?.stopDuration}
             duration={(q as any)?.duration}
+            questionNumber={q ? numOf(q) : undefined}
+            totalQuestions={questions.length || undefined}
           />
         );
       }
@@ -303,6 +309,8 @@ export function SpeakingSectionWrapper({
           videoUrl={(q as any)?.videoUrl}
           questionText={q?.questionText}
           audioPlayDuration={(q as any)?.audioPlayDuration}
+          questionNumber={q ? numOf(q) : undefined}
+          totalQuestions={questions.length || undefined}
         />
       );
     }

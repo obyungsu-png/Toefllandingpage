@@ -18,9 +18,12 @@ interface SpeakingQ8PrepProps {
   questionText?: string;
   audioPlayDuration?: number;
   isReviewMode?: boolean;
+  questionNumber?: number;
+  totalQuestions?: number;
 }
 
-export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false}: SpeakingQ8PrepProps) {
+export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false, questionNumber, totalQuestions}: SpeakingQ8PrepProps) {
+  const questionLabel = `Question ${questionNumber ?? 8} of ${totalQuestions ?? 11}`;
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [audioElapsed, setAudioElapsed] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -87,7 +90,7 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 8 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -140,7 +143,7 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
               Speaking
             </div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 8 of 11
+              {questionLabel}
             </div>
           </div>
         </div>
