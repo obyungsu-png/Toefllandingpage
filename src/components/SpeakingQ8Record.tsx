@@ -18,17 +18,25 @@ interface SpeakingQ8RecordProps {
   questionText?: string;
   responseDelay?: number;
   stopDuration?: number;
-  duration?: number; // seconds for recording countdown (currently hardcoded to 45)
+  duration?: number; // seconds for recording countdown (default 45)
   isReviewMode?: boolean;
+  questionLabel?: string;
+  /** 녹음 업로드 시 사용될 실제 질문 번호 — 과거엔 8로 하드코딩되어 모든
+   *  Interview 문제의 녹음이 Q8 로 덮어쓰이는 버그가 있었음. */
+  questionNumber?: number;
 }
 
-export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false}: SpeakingQ8RecordProps) {
-  const [timeRemaining, setTimeRemaining] = useState(45);
+export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, questionLabel = 'Question 8 of 11', questionNumber = 8 }: SpeakingQ8RecordProps) {
+  const [timeRemaining, setTimeRemaining] = useState(duration || 45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep 중복 방지)
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reviewHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     if (isReviewMode) return; // Review mode: wait for manual Record button click
@@ -49,11 +57,17 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const handleManualRecord = async () => {
     uploadedRef.current = false;
     setShowStopOverlay(false);
-    setTimeRemaining(45);
+    setTimeRemaining(duration || 45);
     await playBeep();
     setIsRecording(true);
     recorder.startRecording();
   };
+
+  function resolveStopDelayMs(v: unknown): number {
+    const n = Number(v);
+    if (!Number.isFinite(n) || n <= 0) return 3000;
+    return Math.max(500, Math.min(10_000, n * 1000));
+  }
 
   useEffect(() => {
     if (isRecording && timeRemaining > 0) {
@@ -65,10 +79,10 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
             recorder.stopRecording();
             setShowStopOverlay(true);
             if (!isReviewMode) {
-              setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
+              advanceTimerRef.current = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
             } else {
               // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
+              reviewHideTimerRef.current = setTimeout(() => setShowStopOverlay(false), 1800);
             }
             return 0;
           }
@@ -77,20 +91,28 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [isRecording, timeRemaining, onNext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRecording, timeRemaining]);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+      if (reviewHideTimerRef.current) clearTimeout(reviewHideTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
       uploadedRef.current = true;
-      uploadRecording(recorder.audioBlob, 8).catch(() => {});
+      uploadRecording(recorder.audioBlob, questionNumber).catch(() => {});
     }
-  }, [showStopOverlay, recorder.audioBlob]);
+  }, [showStopOverlay, recorder.audioBlob, questionNumber]);
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 8 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -136,7 +158,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
         <div className="px-8 py-3">
           <div className="flex gap-8">
             <div className="text-gray-700 font-[\'Inter\',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">Speaking</div>
-            <div className="text-gray-500 text-sm font-[\'Inter\',_sans-serif] font-medium self-end pb-2">Question 8 of 11</div>
+            <div className="text-gray-500 text-sm font-[\'Inter\',_sans-serif] font-medium self-end pb-2">{questionLabel}</div>
           </div>
         </div>
       </div>

@@ -48,7 +48,9 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
         advance(300);
       };
 
-      const t = setTimeout(() => audio.play().catch(() => advance(300)), 500);
+      // 리뷰 모드에서는 지연 없이 즉시 재생 — "다음 문제로 넘어가면 바로 음성이 안나옴" 대응
+      const playDelay = isReviewMode ? 0 : 500;
+      const t = setTimeout(() => audio.play().catch(() => advance(300)), playDelay);
       // 안전망 — 오디오가 60초 안에 끝나지 않으면 강제 진행
       const safety = setTimeout(() => advance(0), 60_000);
       return () => {

@@ -8,6 +8,7 @@ import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { createCachedAudioSync } from '../utils/mediaCache';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingQ1RecordProps {
   onNext: () => void;
@@ -20,6 +21,9 @@ interface SpeakingQ1RecordProps {
   audioUrl?: string;
   isReviewMode?: boolean;
   questionLabel?: string; // e.g. "Question 2 of 11"
+  /** 녹음 업로드 시 사용될 실제 질문 번호 — 과거엔 1로 하드코딩되어 모든
+   *  Repeat 문제의 녹음이 Q1 로 덮어쓰이는 버그가 있었음. */
+  questionNumber?: number;
 }
 
 /**
@@ -34,7 +38,7 @@ function resolveStopDelayMs(stopDuration: unknown): number {
   return Math.max(500, Math.min(10_000, ms));
 }
 
-export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, questionLabel = 'Question 1 of 11' }: SpeakingQ1RecordProps) {
+export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionText, responseDelay, stopDuration, duration, isReviewMode = false, questionLabel = 'Question 1 of 11', questionNumber = 1 }: SpeakingQ1RecordProps) {
   const { isOpen, buttonRef, toggleVolume, closeVolume } = useVolumeControl();
   const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
@@ -52,6 +56,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   // Play the prompt audio first, THEN wait delay, THEN beep
   useEffect(() => {
     let startTimer: ReturnType<typeof setTimeout>;
+    let ttsCleanup: (() => void) | undefined;
 
     const startDelayAndBeep = () => {
       if (startedRef.current) return; // 이미 예약됨 — 중복 호출 무시
@@ -70,6 +75,10 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
       audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };
       audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
+    } else if (isReviewMode && questionText) {
+      // 리뷰 모드에서 오디오가 없으면 TTS 로 문장 읽어주기 — 사용자는 다음 Q 로
+      // 넘어가자마자 바로 음성을 들을 수 있다.
+      ttsCleanup = speakWithBritishFemaleVoice({ text: questionText }) || undefined;
     } else if (!isReviewMode) {
       // No audio — just wait and beep
       startDelayAndBeep();
@@ -77,6 +86,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
 
     return () => {
       clearTimeout(startTimer);
+      if (ttsCleanup) ttsCleanup();
       if (promptAudioRef.current) {
         promptAudioRef.current.pause();
         promptAudioRef.current.src = '';
@@ -134,7 +144,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {
       uploadedRef.current = true;
-      uploadRecording(recorder.audioBlob, 1).catch(() => {});
+      uploadRecording(recorder.audioBlob, questionNumber).catch(() => {});
     }
   }, [showStopOverlay, recorder.audioBlob]);
 

@@ -249,6 +249,7 @@ export function SpeakingSectionWrapper({
             stopDuration={(q as any)?.stopDuration}
             duration={(q as any)?.duration}
             questionLabel={questionLabel}
+            questionNumber={qNum}
           />
         );
       }
@@ -272,9 +273,13 @@ export function SpeakingSectionWrapper({
     if (intMatch) {
       const q = interviewQByKey(screen);
       const isRecord = intMatch[2] === 'record';
+      const totalQs = repeatQuestions.length + interviewQuestions.length;
+      const qNum = q ? numOf(q) : Number(intMatch[1]);
+      const questionLabel = Number.isFinite(qNum) && totalQs > 0 ? `Question ${qNum} of ${totalQs}` : undefined;
       if (isRecord) {
         return (
           <SpeakingQ8Record
+            key={screen}
             onNext={goNext}
             onHome={onHome}
             isReviewMode={isReviewMode}
@@ -284,11 +289,14 @@ export function SpeakingSectionWrapper({
             responseDelay={(q as any)?.responseDelay}
             stopDuration={(q as any)?.stopDuration}
             duration={(q as any)?.duration}
+            questionLabel={questionLabel}
+            questionNumber={qNum}
           />
         );
       }
       return (
         <SpeakingQ8Prep
+          key={screen}
           onNext={goNext}
           onHome={onHome}
           isReviewMode={isReviewMode}
@@ -298,6 +306,7 @@ export function SpeakingSectionWrapper({
           videoUrl={(q as any)?.videoUrl}
           questionText={q?.questionText}
           audioPlayDuration={(q as any)?.audioPlayDuration}
+          questionLabel={questionLabel}
         />
       );
     }

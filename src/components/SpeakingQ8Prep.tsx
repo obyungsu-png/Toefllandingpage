@@ -5,6 +5,7 @@ import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { createCachedAudioSync } from '../utils/mediaCache';
+import { speakWithBritishFemaleVoice } from '../utils/tts';
 
 interface SpeakingQ8PrepProps {
   onNext: () => void;
@@ -18,17 +19,24 @@ interface SpeakingQ8PrepProps {
   questionText?: string;
   audioPlayDuration?: number;
   isReviewMode?: boolean;
+  questionLabel?: string;
 }
 
-export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false}: SpeakingQ8PrepProps) {
+export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, audioPlayDuration, audioUrl, videoUrl, isReviewMode = false, questionLabel = 'Question 8 of 11' }: SpeakingQ8PrepProps) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [audioElapsed, setAudioElapsed] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     let advanceTimer: ReturnType<typeof setTimeout>;
+    let ttsCleanup: (() => void) | undefined;
     const soundSrc = audioUrl || videoUrl;
+
+    // 리뷰 모드에서는 자동 넘어가기 금지 — 사용자가 직접 Next 눌러야 함.
+    const autoAdvance = (fn: () => void) => { if (!isReviewMode) fn(); };
 
     if (soundSrc) {
       const audio = createCachedAudioSync(soundSrc);
@@ -42,19 +50,21 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        onNext();
+        autoAdvance(() => onNextRef.current());
       };
       audio.onerror = () => {
         if (ended) return;
         ended = true;
         setIsAudioPlaying(false);
-        onNext();
+        autoAdvance(() => onNextRef.current());
       };
 
+      // 리뷰 모드에서는 지연 없이 즉시 재생 — "바로 음성이 안나옴" 대응
+      const playDelay = isReviewMode ? 0 : 400;
       const startTimer = setTimeout(() => {
         setIsAudioPlaying(true);
-        audio.play().catch(() => { if (!ended) { ended = true; onNext(); } });
-      }, 400);
+        audio.play().catch(() => { if (!ended) { ended = true; autoAdvance(() => onNextRef.current()); } });
+      }, playDelay);
 
       return () => {
         clearTimeout(startTimer);
@@ -64,8 +74,20 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
       };
     }
 
+    // 리뷰 모드 + 오디오 없음 → TTS 폴백으로 문장 읽어주기
+    if (isReviewMode && questionText) {
+      ttsCleanup = speakWithBritishFemaleVoice({
+        text: questionText,
+        onstart: () => setIsAudioPlaying(true),
+        onend: () => setIsAudioPlaying(false),
+      }) || undefined;
+      return () => { if (ttsCleanup) ttsCleanup(); };
+    }
+
     const startTimer = setTimeout(() => setIsAudioPlaying(true), 400);
-    advanceTimer = setTimeout(() => { onNext(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+    autoAdvance(() => {
+      advanceTimer = setTimeout(() => { onNextRef.current(); }, audioPlayDuration ? audioPlayDuration * 1000 : 5000);
+    });
     return () => {
       clearTimeout(startTimer);
       clearTimeout(advanceTimer);
@@ -87,7 +109,7 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <MobileSectionHeader
         sectionLabel="Speaking"
-        questionLabel="Question 8 of 11"
+        questionLabel={questionLabel}
         onBack={onHome}
         onNext={onNext}
         showNext={isReviewMode}
@@ -140,7 +162,7 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
               Speaking
             </div>
             <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question 8 of 11
+              {questionLabel}
             </div>
           </div>
         </div>
