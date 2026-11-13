@@ -29,19 +29,27 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const [timeRemaining, setTimeRemaining] = useState(duration || 8);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
+  // 질문 오디오 재생이 끝났는지 — true 가 되면 RESPONSE TIME 카드가 화면에 등장한다.
+  // 오디오가 없는 문제는 처음부터 true (즉시 카드 표시).
+  const [audioFinished, setAudioFinished] = useState<boolean>(!audioUrl);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep/녹음 중복 방지)
 
-  // Play the prompt audio first, THEN wait delay, THEN beep
+  // Play the prompt audio first, THEN wait 0.5s, THEN beep
   useEffect(() => {
     let startTimer: ReturnType<typeof setTimeout>;
+    let playTimer: ReturnType<typeof setTimeout>;
+
+    const markFinished = () => setAudioFinished(true);
 
     const startDelayAndBeep = () => {
       if (startedRef.current) return; // 이미 예약됨 — 중복 호출 무시
       startedRef.current = true;
-      const delay = responseDelay ? responseDelay * 1000 : 2000;
+      // 질문이 끝난 뒤 0.5초 뒤 삐 소리와 함께 녹음 시작 — 사용자 요청.
+      // CMS 가 responseDelay 를 지정했으면 그 값을 쓰고, 아니면 500ms.
+      const delay = responseDelay ? responseDelay * 1000 : 500;
       startTimer = setTimeout(async () => {
         await playBeep();
         setIsRecording(true);
@@ -49,22 +57,30 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
       }, delay);
     };
 
-    let playTimer: ReturnType<typeof setTimeout>;
-
     if (audioUrl) {
-      // Start/Review 공통: 녹음 화면에서 오디오를 한 번 재생 (RESPONSE TIME 카드는
-      // 재생 중에도 표시됨). Start 모드는 재생 종료 후 딜레이 → 삐 → 자동 녹음,
-      // Review 모드는 수동 Record 버튼으로 시작.
-      // 문제 진입 시 2초 준비 시간을 준 뒤 오디오 재생 (인트로→문제, 문제→문제 전환 공통).
+      // 녹음 화면 진입 → 2초 준비 시간 후 질문 오디오 재생.
+      // 질문이 재생되는 동안 RESPONSE TIME 카드는 숨긴다 (audioFinished=false).
+      // 재생이 끝나면 카드를 표시하고 0.5초 뒤 삐 + 자동 녹음 (Start 모드).
+      // Review 모드에선 자동 녹음 대신 수동 Record 버튼으로 시작.
       const audio = createCachedAudioSync(audioUrl);
       promptAudioRef.current = audio;
-      audio.onended = () => { if (!isReviewMode) startDelayAndBeep(); };
-      audio.onerror = () => { if (!isReviewMode) startDelayAndBeep(); };
+      audio.onended = () => {
+        markFinished();
+        if (!isReviewMode) startDelayAndBeep();
+      };
+      audio.onerror = () => {
+        markFinished();
+        if (!isReviewMode) startDelayAndBeep();
+      };
       playTimer = setTimeout(() => {
-        audio.play().catch(() => { if (!isReviewMode) startDelayAndBeep(); });
+        audio.play().catch(() => {
+          markFinished();
+          if (!isReviewMode) startDelayAndBeep();
+        });
       }, isReviewMode ? 500 : 2000);
     } else if (!isReviewMode) {
-      // 오디오 없음 — 2초 준비 시간 후 딜레이 → 삐 → 녹음
+      // 오디오 없음 — RESPONSE TIME 카드는 이미 보임 (audioFinished=true 초기값).
+      // 0.5초 대기 후 삐 → 녹음 시작.
       startDelayAndBeep();
     }
 
@@ -204,20 +220,23 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
           </div>
         </div>
         
-        {!isReviewMode ? (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer
-              timeRemaining={timeRemaining}
-              totalDuration={duration || 8}
-              isRecording={isRecording}
-              onRecordClick={!isRecording ? handleManualRecord : undefined}
-              recordLabel={uploadedRef.current ? 'Re-record' : 'Record'}
-            />
-          </div>
+        {/* 질문 오디오 재생 중엔 RESPONSE TIME 카드 숨김 — 재생이 끝나면 등장. */}
+        {audioFinished && (
+          !isReviewMode ? (
+            <div className="flex justify-center">
+              <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={duration || 8} isRecording={isRecording} />
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <SpeakingResponseTimer
+                timeRemaining={timeRemaining}
+                totalDuration={duration || 8}
+                isRecording={isRecording}
+                onRecordClick={!isRecording ? handleManualRecord : undefined}
+                recordLabel={uploadedRef.current ? 'Re-record' : 'Record'}
+              />
+            </div>
+          )
         )}
       </div>
 

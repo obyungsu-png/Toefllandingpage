@@ -36,7 +36,10 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   useEffect(() => {
     if (isReviewMode) return; // Review mode: wait for manual Record button click
     if (startedRef.current) return; // 이미 시작됨 — 중복 beep 방지
-    const delay = responseDelay ? responseDelay * 1000 : 2000;
+    // Take an Interview 는 질문 오디오가 이전 Prep 화면에서 이미 재생되고 종료된 상태.
+    // 이 녹음 화면에 들어오면 RESPONSE TIME 카드가 즉시 보이고, 0.5초 뒤 삐 → 녹음 시작.
+    // CMS 가 responseDelay 를 지정했으면 그 값을 쓰고, 아니면 500ms.
+    const delay = responseDelay ? responseDelay * 1000 : 500;
     const startTimer = setTimeout(async () => {
       if (startedRef.current) return;
       startedRef.current = true;
