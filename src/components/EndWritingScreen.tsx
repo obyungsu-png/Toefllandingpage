@@ -341,40 +341,28 @@ const EndWritingScreen: React.FC<EndWritingScreenProps> = ({
                 )}
               </>
             ) : (
+              /* AI 채점은 마운트 시 자동 트리거 + History 의 Result Review 에서
+                 상세 채점. 여기선 별도 수동 "Grade with AI" 버튼을 두지 않고,
+                 진행 상태만 가볍게 안내한다 (중복 UI 제거). */
               <div className="text-center py-6">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#1e6b73]/10 to-[#2d7a7c]/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-[#2d7a7c]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>
-                  </svg>
-                </div>
-                <p className="text-gray-500 font-medium mb-5">Get AI-powered writing evaluation</p>
-                <button
-                  onClick={() => handleAiGrade(false)}
-                  disabled={isAiGrading}
-                  className={`inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-white transition-all ${
-                    isAiGrading
-                      ? 'bg-[#a8c8c9] cursor-not-allowed'
-                      : 'bg-gradient-to-r from-[#1e6b73] to-[#2d7a7c] hover:shadow-lg hover:scale-[1.02] active:scale-95'
-                  }`}
-                >
                   {isAiGrading ? (
-                    <>
-                      <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                      </svg>
-                      Grading...
-                    </>
+                    <svg className="w-8 h-8 text-[#2d7a7c] animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
                   ) : (
-                    <>
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                      </svg>
-                      Grade with AI
-                    </>
+                    <svg className="w-8 h-8 text-[#2d7a7c]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                   )}
-                </button>
-                {/* 채점 트리거 거부/오류 안내 */}
+                </div>
+                <p className="text-gray-700 font-semibold mb-1">
+                  {isAiGrading ? 'AI 채점 중입니다…' : '응답이 저장되었습니다'}
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  상세 AI 채점·피드백은 <span className="font-semibold text-[#1e6b73]">History → Result Review</span> 에서 확인할 수 있습니다.
+                </p>
                 {gradeWarning && (
                   <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
                     <p className="text-xs text-amber-700 leading-relaxed">⚠️ {gradeWarning}</p>

@@ -108,23 +108,23 @@ export function ResizableReadingLayout({
   if (isMobile) {
     return (
       <div className="flex flex-col h-full relative">
-        {/* Mobile Tab Header — back arrow removed, just Passage/Questions tabs */}
+        {/* Mobile Tab Header — 모바일 압축 (py-3 → py-1.5) */}
         <div className="flex items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10 px-1">
-          <button 
+          <button
             onClick={() => { setMobileTab('passage'); setPassageExpanded(false); }}
-            className={`flex-1 py-3 text-center text-base font-bold transition-colors ${
-              mobileTab === 'passage' 
-                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' 
+            className={`flex-1 py-1.5 text-center text-sm font-bold transition-colors ${
+              mobileTab === 'passage'
+                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
                 : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             Passage
           </button>
-          <button 
+          <button
             onClick={() => setMobileTab('questions')}
-            className={`flex-1 py-3 text-center text-base font-bold transition-colors ${
-              mobileTab === 'questions' 
-                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]' 
+            className={`flex-1 py-1.5 text-center text-sm font-bold transition-colors ${
+              mobileTab === 'questions'
+                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
                 : 'text-gray-400 dark:text-gray-500'
             }`}
           >
@@ -136,9 +136,9 @@ export function ResizableReadingLayout({
         <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 scrollbar-thin pb-4">
           {mobileTab === 'passage' ? (
             /* Passage View - larger text */
-            <div className="p-4">
+            <div className="p-3">
               {passageTitle && (
-                <h2 className="text-2xl font-bold text-black dark:text-gray-100 mb-4 font-['Inter',_sans-serif]">
+                <h2 className="text-xl font-bold text-black dark:text-gray-100 mb-2 font-['Inter',_sans-serif]">
                   {passageTitle}
                 </h2>
               )}
@@ -148,35 +148,41 @@ export function ResizableReadingLayout({
             </div>
           ) : (
             /* Questions View */
-            <div className="p-4">
-              {/* Collapsed/Expandable passage area - no border on mobile */}
+            <div className="p-3">
+              {/* Collapsed/Expandable passage area - 간격 압축 */}
               {(passageSummary || leftContent) && (
-                <div className="mb-3">
+                <div className="mb-2">
                   {!passageExpanded ? (
                     /* Collapsed summary - no border */
-                    <div 
-                      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 cursor-pointer"
+                    <div
+                      className="bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 cursor-pointer flex items-center justify-between gap-2"
                       onClick={() => setPassageExpanded(true)}
                     >
-                      <div className="text-base text-gray-700 dark:text-gray-300 font-['Inter',_sans-serif] line-clamp-2">
-                        {passageSummary}
+                      <div className="text-xs text-gray-600 dark:text-gray-300 font-['Inter',_sans-serif] line-clamp-1 flex-1 min-w-0">
+                        {passageSummary || 'Passage'}
                       </div>
+                      <span className="flex items-center gap-0.5 text-[#1e6b73] text-xs font-semibold flex-shrink-0">
+                        Expand
+                        <ChevronDown className="w-3 h-3" />
+                      </span>
                     </div>
                   ) : (
-                    /* Expanded: show full passage content - no border, no background */
-                    <div className="mobile-expanded-passage max-h-[50vh] overflow-y-auto scrollbar-thin">
-                      <div className="text-base text-gray-800 dark:text-gray-100 font-['Inter',_sans-serif]">
-                        {leftContent}
+                    /* Expanded: full passage content + collapse button inline */
+                    <div>
+                      <div className="mobile-expanded-passage max-h-[50vh] overflow-y-auto scrollbar-thin">
+                        <div className="text-base text-gray-800 dark:text-gray-100 font-['Inter',_sans-serif]">
+                          {leftContent}
+                        </div>
                       </div>
+                      <button
+                        onClick={() => setPassageExpanded(false)}
+                        className="flex items-center gap-0.5 text-[#1e6b73] text-xs mt-1 ml-auto font-semibold"
+                      >
+                        Collapse
+                        <ChevronUp className="w-3 h-3" />
+                      </button>
                     </div>
                   )}
-                  <button 
-                    onClick={() => setPassageExpanded(!passageExpanded)}
-                    className="flex items-center gap-1 text-[#1e6b73] text-sm mt-1.5 ml-auto"
-                  >
-                    {passageExpanded ? 'Collapse' : 'Expand'}
-                    {passageExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  </button>
                 </div>
               )}
 

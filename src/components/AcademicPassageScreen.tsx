@@ -128,14 +128,14 @@ export function AcademicPassageScreen({
         </div>
       </div>
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs — 모바일에선 압축 (Listening 과 통일) */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700">
-        <div className="px-8 py-3">
-          <div className="flex gap-8 items-end">
-            <div className="text-gray-700 dark:text-gray-200 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
+        <div className="px-3 md:px-8 py-1 md:py-3">
+          <div className="flex gap-4 md:gap-8 items-end">
+            <div className="text-gray-700 dark:text-gray-200 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-1 md:pb-2 text-sm md:text-base">
               Reading
             </div>
-            <div className="text-gray-500 dark:text-gray-400 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
+            <div className="text-gray-500 dark:text-gray-400 text-xs md:text-sm font-['Inter',_sans-serif] font-medium self-end pb-1 md:pb-2">
               Question {questionIndex + 1} of {totalQuestions}
             </div>
             {isReviewMode && (
@@ -176,9 +176,9 @@ export function AcademicPassageScreen({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-2 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
+      <div className="flex-1 p-1.5 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
         <div className="max-w-screen-2xl mx-auto pl-0">
-          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-2 md:mb-4 lg:mb-8">{passageTitle}</h2>
+          <h2 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-1 md:mb-4 lg:mb-8">{passageTitle}</h2>
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
