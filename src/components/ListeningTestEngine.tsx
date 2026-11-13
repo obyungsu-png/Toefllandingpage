@@ -903,46 +903,50 @@ function ListeningQuestionScreen({
         </div>
       </div>
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs — 모바일에서는 'Question N of M' 옆에 작은 Play Audio 버튼 */}
       <div className="bg-white border-b border-gray-300">
         <div className="px-4 sm:px-8 py-3">
-          <div className="flex gap-8">
-            <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
-              Listening
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex gap-6 sm:gap-8 flex-1 min-w-0">
+              <div className="text-gray-700 font-['Inter',_sans-serif] font-bold border-b-2 border-[#1e6b73] pb-2">
+                Listening
+              </div>
+              <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2 truncate">
+                Question {qNum} of {totalQuestions}
+              </div>
             </div>
-            <div className="text-gray-500 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
-              Question {qNum} of {totalQuestions}
-            </div>
+            {/* 모바일 전용 작은 Play Audio 버튼 — 데스크탑은 본문 가운데에 큰 버튼 유지 */}
+            {audioUrl && !suppressAudio && (
+              <button
+                type="button"
+                onClick={handlePlayAudio}
+                disabled={isPlaying}
+                aria-label={isPlaying ? 'Playing audio' : 'Play audio'}
+                className={`md:hidden flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold self-end mb-1 transition-all shadow-sm whitespace-nowrap ${
+                  isPlaying
+                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0] active:scale-95'
+                }`}
+              >
+                <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '5px 0 5px 8px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+                <span>{isPlaying ? 'Playing' : 'Play Audio'}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Main content — TPO 2 QuestionScreen 레이아웃 */}
-      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-20 md:pb-8">
+      {/* Main content — TPO 2 QuestionScreen 레이아웃.
+          pb: 하단 네비 바 제거 후 여유 공간만 유지 (스와이프 네비). */}
+      <div className="flex-1 p-4 md:p-8 overflow-auto bg-white border border-black pb-6 md:pb-8">
         <div className="w-full">
-          {/* Mobile: Image → Audio → Question → Options */}
+          {/* Mobile: Image → Question → Options (Play Audio는 상단 탭 바로 이동) */}
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
             {imageUrl && (
               <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
                 <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
               </div>
-            )}
-
-            {/* Play Audio Button - Mobile — 그룹 지문 문항은 시험 모드에서 숨김 (인트로에서 재생) */}
-            {audioUrl && !suppressAudio && (
-              <button
-                onClick={handlePlayAudio}
-                disabled={isPlaying}
-                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base mb-6 transition-all shadow-sm ${
-                  isPlaying
-                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
-                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
-                }`}
-              >
-                <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
-                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-              </button>
             )}
 
             {/* Question */}
