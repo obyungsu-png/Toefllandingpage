@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Pause, Play } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
-import { SpeakingResponseTimer } from './SpeakingResponseTimer';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { createCachedAudioSync } from '../utils/mediaCache';
@@ -193,13 +192,8 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
             )}
           </div>
         </div>
-        <div className="flex justify-center">
-          <SpeakingResponseTimer
-            timeRemaining={Math.max(0, Math.ceil((audioDuration || audioPlayDuration || 45) - audioElapsed))}
-            totalDuration={Math.ceil(audioDuration || audioPlayDuration || 45)}
-            isRecording={false}
-          />
-        </div>
+        {/* 질문 영상/음성 재생 중엔 RESPONSE TIME 카드 숨김 — 사용자 요청.
+            카드와 녹음 흐름은 다음(SpeakingQ8Record) 화면에서 진행된다. */}
       </div>
 
       {/* Volume Control Dropdown */}

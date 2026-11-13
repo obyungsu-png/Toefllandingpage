@@ -15,6 +15,9 @@ interface SpeakingQ8RecordProps {
   isVolumeOpen?: boolean;
   volumeButtonRef?: React.RefObject<HTMLButtonElement>;
   imageUrl?: string;
+  /** Prep 화면에서 재생된 질문 영상 URL — 녹음 화면에선 영상의 첫 프레임을
+   *  poster 로 사용해 "인터뷰어가 가만히 있는" 모양을 유지한다. */
+  videoUrl?: string;
   questionText?: string;
   responseDelay?: number;
   stopDuration?: number;
@@ -24,11 +27,14 @@ interface SpeakingQ8RecordProps {
   totalQuestions?: number;
 }
 
-export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, questionText, responseDelay, stopDuration, isReviewMode = false, questionNumber, totalQuestions}: SpeakingQ8RecordProps) {
+export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, volumeButtonRef, imageUrl, videoUrl, questionText, responseDelay, stopDuration, isReviewMode = false, questionNumber, totalQuestions}: SpeakingQ8RecordProps) {
   const questionLabel = `Question ${questionNumber ?? 8} of ${totalQuestions ?? 11}`;
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isRecording, setIsRecording] = useState(false);
   const [showStopOverlay, setShowStopOverlay] = useState(false);
+  // 녹음 섹션(RESPONSE TIME 카드)을 처음엔 숨기고, 1초 뒤 삐 소리와 함께 등장시킨다.
+  // 사용자 요청: "음성이 끝나고 1초 뒤에 녹음 버튼이 나타나며 삐 소리와 함께 녹음 시작".
+  const [showTimerCard, setShowTimerCard] = useState(isReviewMode);
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep 중복 방지)
@@ -36,14 +42,15 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   useEffect(() => {
     if (isReviewMode) return; // Review mode: wait for manual Record button click
     if (startedRef.current) return; // 이미 시작됨 — 중복 beep 방지
-    // Take an Interview 는 질문 오디오가 이전 Prep 화면에서 이미 재생되고 종료된 상태.
-    // 이 녹음 화면에 들어오면 RESPONSE TIME 카드가 즉시 보이고, 0.5초 뒤 삐 → 녹음 시작.
-    // CMS 가 responseDelay 를 지정했으면 그 값을 쓰고, 아니면 500ms.
-    const delay = responseDelay ? responseDelay * 1000 : 500;
+    // Take an Interview 는 질문 오디오/영상이 이전 Prep 화면에서 이미 재생되고 종료됨.
+    // 녹음 화면 진입 → 1초 대기(RESPONSE TIME 카드 숨김) → 카드 등장 + 삐 + 녹음 시작.
+    // CMS 가 responseDelay 를 지정했으면 그 값을 쓰고, 아니면 1000ms.
+    const delay = responseDelay ? responseDelay * 1000 : 1000;
     const startTimer = setTimeout(async () => {
       if (startedRef.current) return;
       startedRef.current = true;
-      await playBeep();
+      setShowTimerCard(true);   // 카드 등장
+      await playBeep();         // 삐 소리
       setIsRecording(true);
       recorder.startRecording();
     }, delay);
@@ -55,6 +62,7 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const handleManualRecord = async () => {
     uploadedRef.current = false;
     setShowStopOverlay(false);
+    setShowTimerCard(true);
     setTimeRemaining(45);
     await playBeep();
     setIsRecording(true);
@@ -156,28 +164,48 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
           <h1 className="text-lg md:text-2xl font-bold text-gray-900 text-center">Please answer the interviewer's questions.</h1>
         </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
-          <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex-shrink-0">
-            <ImageWithFallback
-              src={imageUrl}
-              alt="Interviewer"
-              className="w-full h-full object-cover"
-            />
+          {/* 녹음 중 사각 프레임 — 영상이 있으면 영상의 "첫 프레임(poster)"만
+              정지 화면처럼 보여주고(=소리 X, 재생 X), 영상이 없으면 imageUrl 노출. */}
+          <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-black flex-shrink-0">
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                preload="metadata"
+                muted
+                playsInline
+                className="w-full h-full object-cover bg-gray-50 pointer-events-none"
+                onLoadedMetadata={(e) => {
+                  // 첫 프레임을 확실히 보여주기 위해 currentTime 을 0.01 로 세팅.
+                  // 일부 브라우저는 metadata 만 로드하면 썸네일이 안 생길 수 있어서.
+                  try { e.currentTarget.currentTime = 0.01; } catch { /* noop */ }
+                }}
+              />
+            ) : (
+              <ImageWithFallback
+                src={imageUrl}
+                alt="Interviewer"
+                className="w-full h-full object-cover bg-gray-50"
+              />
+            )}
           </div>
         </div>
-        {!isReviewMode ? (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={45} isRecording={isRecording} />
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <SpeakingResponseTimer
-              timeRemaining={timeRemaining}
-              totalDuration={45}
-              isRecording={isRecording}
-              onRecordClick={!isRecording ? handleManualRecord : undefined}
-              recordLabel={uploadedRef.current ? 'Re-record' : 'Record'}
-            />
-          </div>
+        {/* 카드 등장은 showTimerCard 로 게이팅 — 1초 대기 뒤 삐 소리와 함께 표시. */}
+        {showTimerCard && (
+          !isReviewMode ? (
+            <div className="flex justify-center">
+              <SpeakingResponseTimer timeRemaining={timeRemaining} totalDuration={45} isRecording={isRecording} />
+            </div>
+          ) : (
+            <div className="flex justify-center">
+              <SpeakingResponseTimer
+                timeRemaining={timeRemaining}
+                totalDuration={45}
+                isRecording={isRecording}
+                onRecordClick={!isRecording ? handleManualRecord : undefined}
+                recordLabel={uploadedRef.current ? 'Re-record' : 'Record'}
+              />
+            </div>
+          )
         )}
       </div>
 

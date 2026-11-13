@@ -304,6 +304,7 @@ export function SpeakingSectionWrapper({
             isReviewMode={isReviewMode}
             {...volumeProps}
             imageUrl={q?.imageUrl}
+            videoUrl={(q as any)?.videoUrl}
             questionText={q?.questionText}
             responseDelay={(q as any)?.responseDelay}
             stopDuration={(q as any)?.stopDuration}
