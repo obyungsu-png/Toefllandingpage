@@ -64,9 +64,7 @@ export function ListeningM2Announcement({ onBack, onNext, onHome, onVolumeClick,
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#1e6b73] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg shrink-0">
-        <div className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80" onClick={onHome}>
-          *toefl ibt
-        </div>
+        <div className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 flex items-center gap-1.5" onClick={onHome} title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
         <div className="hidden md:flex items-center gap-1.5 md:gap-3">
           <button className="flex items-center gap-1.5 md:gap-3 bg-[#0A6068] border border-white rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-[#084d52]" onClick={onVolumeClick}>
             <span className="text-white font-semibold text-base">Volume</span>

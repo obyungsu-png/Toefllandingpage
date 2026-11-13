@@ -279,7 +279,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
         <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
           <div className="flex items-center min-w-0 shrink">
             <div 
-              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate"
+              className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate flex items-center gap-1.5"
               onClick={() => {
                 setShowFillBlanksTest(false);
                 setShowReadingSection(false);
@@ -290,9 +290,7 @@ const FillBlanksTestScreen: React.FC<FillBlanksTestScreenProps> = ({
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Volume Button */}

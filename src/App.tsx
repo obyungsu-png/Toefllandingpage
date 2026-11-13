@@ -2725,9 +2725,7 @@ function AppContent() {
         {/* Header */}
         <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
           <div className="flex items-center shrink-0">
-            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(false); setShowFillBlanksTest(false); setShowReadingSection(false); setShowToeflTest(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }}>
-              *toefl ibt
-            </div>
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight flex items-center gap-1.5" onClick={() => { setShowReadNoticeTest2(false); setShowReadNoticeTest(false); setShowFillBlanksTest(false); setShowReadingSection(false); setShowToeflTest(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }} title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
@@ -2867,7 +2865,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowSocialMediaTest(false);
                 setShowReadNoticeTest2(false);
@@ -2881,9 +2879,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -3055,7 +3051,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowSocialMediaTest2(false);
                 setShowReadNoticeTest2(false);
@@ -3069,9 +3065,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -3241,7 +3235,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowSocialMediaTest3(false);
                 setShowReadNoticeTest2(false);
@@ -3255,9 +3249,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -3479,7 +3471,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule1Question16(false);
                 if (testBankType === 'tpo') {
@@ -3488,9 +3480,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -3655,7 +3645,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule1Question17(false);
                 if (testBankType === 'tpo') {
@@ -3664,9 +3654,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
@@ -3834,7 +3822,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule1Question18(false);
                 if (testBankType === 'tpo') {
@@ -3843,9 +3831,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
@@ -4014,7 +4000,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule1Question19(false);
                 if (testBankType === 'tpo') {
@@ -4023,9 +4009,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
@@ -4195,7 +4179,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule1Question20(false);
                 if (testBankType === 'tpo') {
@@ -4204,9 +4188,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-3 bg-[#0A6068] border border-white rounded-lg px-5 py-2 hover:bg-[#084d52] transition-colors">
@@ -4343,7 +4325,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2(false);
                 if (testBankType === 'tpo') {
@@ -4352,9 +4334,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -4543,7 +4523,7 @@ function AppContent() {
           <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
             <div className="flex items-center min-w-0 shrink">
               <div 
-                className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate"
+                className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate flex items-center gap-1.5"
                 onClick={() => {
                   setShowModule2FillBlanks(false);
                   if (testBankType === 'tpo') {
@@ -4552,9 +4532,7 @@ function AppContent() {
                     handleTabChange('Test');
                   }
                 }}
-              >
-                *toefl ibt
-              </div>
+               title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button 
@@ -4766,9 +4744,7 @@ function AppContent() {
         {/* Header */}
         <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
           <div className="flex items-center shrink-0">
-            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight" onClick={() => { setShowModule2Question11(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }}>
-              *toefl ibt
-            </div>
+            <div className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight flex items-center gap-1.5" onClick={() => { setShowModule2Question11(false); if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); } }} title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
@@ -4925,7 +4901,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question12(false);
                 if (testBankType === 'tpo') {
@@ -4934,9 +4910,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -5126,7 +5100,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question13(false);
                 if (testBankType === 'tpo') {
@@ -5135,9 +5109,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -5343,7 +5315,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question14(false);
                 if (testBankType === 'tpo') {
@@ -5352,9 +5324,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -5549,7 +5519,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question15(false);
                 if (testBankType === 'tpo') {
@@ -5558,9 +5528,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -5764,7 +5732,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question16(false);
                 if (testBankType === 'tpo') {
@@ -5773,9 +5741,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -5926,7 +5892,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question17(false);
                 if (testBankType === 'tpo') {
@@ -5935,9 +5901,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -6095,7 +6059,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question18(false);
                 if (testBankType === 'tpo') {
@@ -6104,9 +6068,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -6264,7 +6226,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question19(false);
                 if (testBankType === 'tpo') {
@@ -6273,9 +6235,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -6433,7 +6393,7 @@ function AppContent() {
         <div className="bg-[#1e6b73] h-16 flex items-center justify-between px-8 shadow-lg">
           <div className="flex items-center">
             <div 
-              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-white text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
               onClick={() => {
                 setShowModule2Question20(false);
                 if (testBankType === 'tpo') {
@@ -6442,9 +6402,7 @@ function AppContent() {
                   handleTabChange('Test');
                 }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-3">
             {/* Volume Button */}
@@ -6789,9 +6747,7 @@ function AppContent() {
         <div className="flex-1 flex flex-col overflow-auto">
           <div className="bg-[#1e6b73] h-12 sm:h-14 flex items-center justify-between px-3 sm:px-8 shrink-0 relative">
             <div className="flex items-center min-w-0 shrink">
-              <div className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate" onClick={onHome}>
-                *toefl ibt
-              </div>
+              <div className="text-white text-lg sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity truncate flex items-center gap-1.5" onClick={onHome} title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
@@ -6916,7 +6872,7 @@ function AppContent() {
         <div className="flex bg-[#1e6b73] h-12 sm:h-16 items-center justify-between px-2 sm:px-8 shadow-lg">
           <div className="flex items-center shrink-0">
             <div 
-              className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight"
+              className="text-white text-sm sm:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity leading-tight flex items-center gap-1.5"
               onClick={() => {
                 setShowReadNoticeTest(false);
                 setShowFillBlanksTest(false);
@@ -6924,9 +6880,7 @@ function AppContent() {
                 setShowToeflTest(false);
                 if (testBankType === 'tpo') { handleTabChange('TPO'); } else { handleTabChange('Test'); }
               }}
-            >
-              *toefl ibt
-            </div>
+             title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">
             <button ref={volumeButtonRef} onClick={toggleVolume} className="flex items-center gap-1 sm:gap-3 bg-[#0A6068] border border-white rounded-lg px-2 sm:px-5 py-1.5 sm:py-2 hover:bg-[#084d52] transition-colors">
