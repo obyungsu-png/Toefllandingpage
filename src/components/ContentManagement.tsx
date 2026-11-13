@@ -6280,28 +6280,51 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
   };
 
   // ─── CSV mode: spreadsheet-friendly bulk upload ───
+  // 파서는 header 이름으로 컬럼을 찾기 때문에 뒤에 추가해도 순서 걱정 없음.
+  // 모든 신규 컬럼은 **선택 사항**(비워두면 기본값 또는 생략) — 기존 CSV 와 완전 호환.
   const CSV_COLUMNS = [
     'questionNumber', 'questionType', 'difficulty', 'module',
     'passageTitle', 'passageText', 'scriptText',
     'dictationBlanks', 'organization', 'organizationBlanks',
     'questionText', 'optionA', 'optionB', 'optionC', 'optionD',
     'correctAnswer', 'explanation', 'audioFileName', 'imageFileName',
-    // Write an Email (Writing) — previously only editable one-by-one in the
-    // Add/Edit form; CSV bulk upload silently dropped these, leaving the
-    // email prompt blank on the actual test screen. Now carried via CSV too.
+    // Write an Email (Writing)
     'emailScenario', 'emailInstruction',
     'emailBullet1', 'emailBullet2', 'emailBullet3', 'emailBullet4',
     'emailTo', 'emailSubject',
     // Build a Sentence / Writing: 회색 상황 박스 (질문 위 추가 컨텍스트)
     'context',
-    // Review dictation 의 "복습 → 단어장 보기" 데이터.
-    // 한 줄에 "word=한글 뜻" 형식으로 여러 줄 입력. 컬럼 순서 변경 시 기존
-    // 예시 배열이 밀리지 않도록 CSV_COLUMNS 마지막에 배치.
+    // Review dictation "단어장 보기" (word=한글 뜻, 줄바꿈으로 구분)
     'vocabularyNote',
-    // Review "분석(Analysis)" 탭 데이터 — 주요 단어/구, 정답 근거, 풀이 팁 등.
-    // 여러 줄 입력 가능. 파서가 header 이름 기준으로 읽으므로 맨 끝에 추가해도
-    // 기존 예시 배열이 밀리지 않음.
+    // Review "분석(Analysis)" 탭 (주요 단어/구, 정답 근거, 풀이 팁 — 줄바꿈으로 구분)
     'analysisNote',
+    // Dictation Training 복습 모드의 "번역 보기" — 문장 순서대로 줄바꿈 구분.
+    'translationNote',
+    // Writing 자유응답 모범답안 (Email / Academic Discussion) — End 화면과 Review 에서 표시.
+    'modelAnswer',
+    // Speaking/Listening 그룹 인트로 화면 미디어 (Q1 Listen&Repeat 인트로, Q8 Interview 인트로).
+    // URL 을 직접 넣거나 비워두면 기본 인트로 노출.
+    'introImageUrl', 'introAudioUrl', 'introVideoUrl', 'introText',
+    // Listening 그룹 인트로 상단 한 줄 제목 (Conversation/Announcement/Lecture).
+    'interstitialTitle',
+    // Build a Sentence 아바타 (질문자/답변자) + 조립할 단어 목록 + 끝 부호.
+    //   words 는 쉼표 구분. 미리 채워진 단어는 [단어] 로 감쌈 (예: she, wants, to, [will], know).
+    //   sentenceEnding 은 "." 또는 "?" 중 하나.
+    'avatar1ImageUrl', 'avatar2ImageUrl', 'words', 'sentenceEnding',
+    // Academic Discussion (Writing Q2) — 교수 + 학생 2명.
+    'professorImageUrl', 'professorName', 'professorMessage',
+    'student1ImageUrl', 'student1Name', 'student1Message',
+    'student2ImageUrl', 'student2Name', 'student2Message',
+    // Speaking phase timing (초 단위) — Prep/Record 화면 세부 조정.
+    //   duration = 녹음 가능 시간, audioPlayDuration = 오디오 재생 창 유지 시간,
+    //   responseDelay = 오디오 종료 후 삐 소리까지 대기, stopDuration = Stop 오버레이 지속.
+    'duration', 'audioPlayDuration', 'responseDelay', 'stopDuration',
+    // 문장별 타임스탬프 — Listening/Speaking 오디오-텍스트 싱크 정확도용.
+    //   형식: 한 줄에 "start,end" (초) — 문장 수와 동일.
+    //   예: "0,2.5\n2.5,5.1\n5.1,8.0"
+    'sentenceTimestamps',
+    // Writing / 자유응답 문항에 영상 파일 첨부 (일반적으로 사용 안 함).
+    'videoFileName',
   ];
 
   // Properly escape a CSV cell (wrap in quotes if it contains comma/quote/newline)
@@ -6846,6 +6869,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iDictBlanks = idx('dictationBlanks'), iOrg = idx('organization'), iOrgBlanks = idx('organizationBlanks');
         const iVocab = idx('vocabularyNote');
         const iAnalysis = idx('analysisNote');
+        const iTranslation = idx('translationNote');
+        const iModelAnswer = idx('modelAnswer');
         const iQText = idx('questionText'), iA = idx('optionA'), iB = idx('optionB'), iC = idx('optionC'), iD = idx('optionD');
         const iAns = idx('correctAnswer'), iExp = idx('explanation');
         const iContext = idx('context'); // Build a Sentence / Writing 상황 박스 (회색 박스)
@@ -6853,6 +6878,23 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
         const iEmailBullet1 = idx('emailBullet1'), iEmailBullet2 = idx('emailBullet2'),
               iEmailBullet3 = idx('emailBullet3'), iEmailBullet4 = idx('emailBullet4');
         const iEmailTo = idx('emailTo'), iEmailSubject = idx('emailSubject');
+        // 그룹 인트로 미디어 (Q1 Listen&Repeat 인트로, Q8 Interview 인트로)
+        const iIntroImg = idx('introImageUrl'), iIntroAud = idx('introAudioUrl'),
+              iIntroVid = idx('introVideoUrl'), iIntroTxt = idx('introText'),
+              iInterstitial = idx('interstitialTitle');
+        // Build a Sentence 아바타 + 단어 목록 + 끝 부호
+        const iAvatar1 = idx('avatar1ImageUrl'), iAvatar2 = idx('avatar2ImageUrl'),
+              iWords = idx('words'), iSentEnd = idx('sentenceEnding');
+        // Academic Discussion (Writing Q2) — 교수 + 학생 2명
+        const iProfImg = idx('professorImageUrl'), iProfName = idx('professorName'), iProfMsg = idx('professorMessage');
+        const iS1Img = idx('student1ImageUrl'), iS1Name = idx('student1Name'), iS1Msg = idx('student1Message');
+        const iS2Img = idx('student2ImageUrl'), iS2Name = idx('student2Name'), iS2Msg = idx('student2Message');
+        // Speaking phase timing (seconds)
+        const iDuration = idx('duration'), iAudioPlayDur = idx('audioPlayDuration'),
+              iResponseDelay = idx('responseDelay'), iStopDur = idx('stopDuration');
+        // 문장별 타임스탬프 (한 줄에 "start,end" — 문장 수 만큼)
+        const iTimestamps = idx('sentenceTimestamps');
+        const iVideoFile = idx('videoFileName');
 
         const supportsModule = section === 'Reading' || section === 'Listening';
         const questions: TPOQuestion[] = [];
@@ -7139,6 +7181,31 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 if (!spQuestionText?.trim() && spScriptText?.trim()) spQuestionText = spScriptText.trim();
                 if (!spScriptText?.trim() && spQuestionText?.trim()) spScriptText = spQuestionText.trim();
               }
+              // 숫자 파싱 헬퍼 — 비어있으면 undefined (기본값 사용)
+              const parseNum = (s: string): number | undefined => {
+                const t = s.trim();
+                if (!t) return undefined;
+                const n = Number(t);
+                return Number.isFinite(n) ? n : undefined;
+              };
+              // sentenceTimestamps 파싱 — 각 줄이 "start,end" 형식
+              const parseTimestamps = (raw: string): Array<{ start: number; end: number }> | undefined => {
+                const trimmed = raw.trim();
+                if (!trimmed) return undefined;
+                const rows = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const result: Array<{ start: number; end: number }> = [];
+                for (const row of rows) {
+                  const [a, b] = row.split(/[,\t]/).map(x => Number(x.trim()));
+                  if (Number.isFinite(a) && Number.isFinite(b)) result.push({ start: a, end: b });
+                }
+                return result.length > 0 ? result : undefined;
+              };
+              // 명시적으로 쓴 words 컬럼이 Build Sentence 자동 파생 값을 덮어쓰도록 — CMS 우선.
+              const explicitWordsRaw = get(iWords);
+              const explicitWords = explicitWordsRaw
+                ? explicitWordsRaw.split(/[,]+/).map(w => w.trim()).filter(Boolean)
+                : undefined;
+              const explicitSentEnd = (get(iSentEnd).trim() === '?' ? '?' : (get(iSentEnd).trim() === '.' ? '.' : undefined)) as '.' | '?' | undefined;
               questions.push({
                 id: `q-${Date.now()}-${rawNum || r}-${Math.random().toString(36).slice(2, 7)}`,
                 questionNumber,
@@ -7155,6 +7222,8 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                 organizationBlanks: get(iOrgBlanks) || undefined,
                 vocabularyNote: get(iVocab) || undefined,
                 analysisNote: get(iAnalysis) || undefined,
+                translationNote: get(iTranslation) || undefined,
+                modelAnswer: get(iModelAnswer) || undefined,
                 difficulty: get(iDiff) as '쉬움' | '보통' | '어려움',
                 // Build a Sentence / Writing: context 컬럼 → 회색 상황 박스
                 context: isBuildSentence
@@ -7162,9 +7231,35 @@ In conclusion, technology in the classroom should be embraced with thoughtful gu
                   : (isWriteEmail
                       ? (weContext ?? (get(iContext) || undefined))
                       : (get(iContext) || undefined)),
+                // 그룹 인트로 미디어
+                introImageUrl: get(iIntroImg) || undefined,
+                introAudioUrl: get(iIntroAud) || undefined,
+                introVideoUrl: get(iIntroVid) || undefined,
+                introText: get(iIntroTxt) || undefined,
+                interstitialTitle: get(iInterstitial) || undefined,
+                // Build a Sentence 아바타
+                avatar1ImageUrl: get(iAvatar1) || undefined,
+                avatar2ImageUrl: get(iAvatar2) || undefined,
+                // Academic Discussion
+                professorImageUrl: get(iProfImg) || undefined,
+                professorName: get(iProfName) || undefined,
+                professorMessage: get(iProfMsg) || undefined,
+                student1ImageUrl: get(iS1Img) || undefined,
+                student1Name: get(iS1Name) || undefined,
+                student1Message: get(iS1Msg) || undefined,
+                student2ImageUrl: get(iS2Img) || undefined,
+                student2Name: get(iS2Name) || undefined,
+                student2Message: get(iS2Msg) || undefined,
+                // Speaking phase timing
+                duration: parseNum(get(iDuration)),
+                audioPlayDuration: parseNum(get(iAudioPlayDur)),
+                responseDelay: parseNum(get(iResponseDelay)),
+                stopDuration: parseNum(get(iStopDur)),
+                sentenceTimestamps: parseTimestamps(get(iTimestamps)),
                 ...(blanks ? { blanks } : {}),
-                ...(bsWords ? { words: bsWords } : {}),
-                ...(bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {}),
+                // 명시 words 가 있으면 자동 파생보다 우선
+                ...(explicitWords ? { words: explicitWords } : (bsWords ? { words: bsWords } : {})),
+                ...(explicitSentEnd ? { sentenceEnding: explicitSentEnd } : (bsSentenceEnding ? { sentenceEnding: bsSentenceEnding } : {})),
                 ...emailFields,
               } as TPOQuestion);
             }

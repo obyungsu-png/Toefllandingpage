@@ -946,12 +946,12 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
               <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 transition-all ${
                 isCurrent ? 'text-white shadow-sm' : isDone ? 'text-white/90' : 'text-gray-400 bg-gray-100'
               }`} style={isCurrent || isDone ? { backgroundColor: isCurrent ? theme.accent : '#9ca3af' } : undefined}>
-                <span className={`text-[10px] font-bold flex h-4 w-4 items-center justify-center rounded-full ${
+                <span className={`text-xs font-bold flex h-5 w-5 items-center justify-center rounded-full ${
                   isCurrent ? 'bg-white' : isDone ? 'bg-white/30' : 'bg-gray-300'
                 }`} style={isCurrent ? { color: theme.accent } : undefined}>
                   {isDone ? '✓' : stepNum}
                 </span>
-                <span className="text-[10px] font-semibold whitespace-nowrap">{label}</span>
+                <span className="text-xs md:text-sm font-semibold whitespace-nowrap">{label}</span>
               </div>
               {i < stepLabels.length - 1 && (
                 <div className={`h-0.5 flex-1 rounded ${isDone ? 'bg-gray-400' : 'bg-gray-200'}`} />
@@ -1007,7 +1007,7 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                   {isActive ? <span className="text-[9px]">■</span> : <Play className="h-3 w-3" />}
                 </button>
                 <span
-                  className={`flex-1 text-xs leading-5 cursor-pointer transition-colors ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#334155]'}`}
+                  className={`flex-1 text-sm md:text-base leading-6 cursor-pointer transition-colors ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#334155]'}`}
                   onClick={() => handleSentenceClick(idx)}
                 >
                   {renderSentenceWithMeanings(sentence, `list-${idx}`)}
@@ -1029,9 +1029,9 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
         </div>
       )}
 
-      {/* 빈칸 받아쓰기 본문 — 2단계 */}
+      {/* 빈칸 받아쓰기 본문 — 2단계. 가독성을 위해 모바일/데스크탑 모두 크게. */}
       <div className="rounded-xl border border-[#e5e7eb] bg-white px-4 py-4">
-        <div className="text-[14px] leading-8 text-[#1f2937] whitespace-pre-wrap">
+        <div className="text-base md:text-lg leading-9 text-[#1f2937] whitespace-pre-wrap">
           {dictationExercise.segments.map((segment, index) => (
             <span key={index}>
               <span>{segment}</span>
@@ -1060,28 +1060,28 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                         }
                       }
                     }}
-                    className={`inline-block h-7 border-b-2 bg-transparent px-1 py-0 text-center text-[14px] outline-none align-baseline ${
+                    className={`inline-block h-8 md:h-9 border-b-2 bg-transparent px-1 py-0 text-center text-base md:text-lg outline-none align-baseline ${
                       dictationChecked
                         ? isDictationCorrect(index) ? 'border-green-500 text-green-700' : 'border-red-500 text-red-600'
                         : 'border-[#94a3b8] text-[#1f2937]'
                     }`}
-                    style={{ width: `${Math.max(dictationExercise.blanks[index].length * 10, 64)}px` }}
+                    style={{ width: `${Math.max(dictationExercise.blanks[index].length * 12, 80)}px` }}
                   />
                   {/* 첫 글자 힌트 — 클릭 시 첫 글자 표시/숨김 */}
                   <button
                     type="button"
                     onClick={() => toggleHint(index)}
                     title={hintIndices.has(index) ? '힌트 숨기기' : '첫 글자 힌트'}
-                    className={`inline-flex h-5 min-w-[20px] shrink-0 items-center justify-center self-center rounded px-0.5 text-[10px] font-bold transition-colors ${
+                    className={`inline-flex h-6 min-w-[24px] shrink-0 items-center justify-center self-center rounded px-1 text-xs font-bold transition-colors ${
                       hintIndices.has(index)
                         ? 'bg-amber-100 text-amber-700 border border-amber-300'
-                        : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'
+                        : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'
                     }`}
                   >
-                    {hintIndices.has(index) ? dictationExercise.blanks[index].charAt(0).toUpperCase() : <Lightbulb className="h-3 w-3" />}
+                    {hintIndices.has(index) ? dictationExercise.blanks[index].charAt(0).toUpperCase() : <Lightbulb className="h-4 w-4" />}
                   </button>
                   {dictationChecked && !isDictationCorrect(index) && (
-                    <span className="self-center whitespace-nowrap text-xs font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
+                    <span className="self-center whitespace-nowrap text-sm font-semibold text-red-500">({dictationExercise.blanks[index]})</span>
                   )}
                 </span>
               )}
@@ -1223,13 +1223,13 @@ export function ReviewAssistantPanel({ section, variant, contentKey, questionTyp
                 }`}
                 onClick={() => handleSentenceClick(idx)}
               >
-                <span className="text-[10px] font-bold text-gray-300 mt-0.5 shrink-0 w-5">{idx + 1}</span>
+                <span className="text-xs font-bold text-gray-400 mt-1 shrink-0 w-5 tabular-nums">{idx + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <span className={`text-sm leading-6 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
+                  <span className={`text-base leading-7 transition-colors block ${isActive ? 'text-[#1d4ed8] font-semibold' : 'text-[#1f2937]'}`}>
                     {renderSentenceWithMeanings(sentence, `full-${idx}`)}
                   </span>
                   {translation && (
-                    <span className="text-xs leading-5 text-gray-500 mt-0.5 block border-l-2 border-blue-100 pl-2">
+                    <span className="text-sm leading-6 text-gray-500 mt-1 block border-l-2 border-blue-100 pl-2">
                       {translation}
                     </span>
                   )}
