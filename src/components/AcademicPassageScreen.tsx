@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { hideMobileBrowserChrome } from '../utils/fullscreen';
 import { ResizableReadingLayout } from './ResizableReadingLayout';
 import { ReadingFontControls } from './ReadingFontControls';
 import { RadioOption } from './RadioOption';
@@ -70,6 +71,11 @@ export function AcademicPassageScreen({
   const [clearTrigger, setClearTrigger] = useState(0);
 
   const { isOpen: isVolumeOpen, buttonRef: volumeButtonRef, toggleVolume, closeVolume } = useVolumeControl();
+
+  // 문제 화면 진입 시 URL바·하단 툴바 숨김 유지 (딥링크/복원 진입 커버)
+  useEffect(() => {
+    hideMobileBrowserChrome();
+  }, []);
 
   const handleWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey) {
