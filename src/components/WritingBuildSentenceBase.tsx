@@ -398,15 +398,18 @@ export function WritingBuildSentenceBase({
               </div>
             </div>
 
-            {/* 답변 영역 (avatar2) */}
+            {/* 답변 영역 (avatar2)
+                모바일: 아바타를 맨 위 왼쪽에 두고 그 아래로 빈칸이 깔리는 "메신저 말풍선" 형태.
+                        빈칸이 여러 줄로 랩되어도 아바타보다 위로 튀어오르지 않는다.
+                데스크탑: 기존 가로 배치(items-end) 유지. */}
             <div>
-              <div className="flex items-end gap-2.5 md:gap-6">
-                <div className="w-12 h-12 md:w-28 md:h-28 rounded-full overflow-hidden border-2 md:border-4 border-[#1e6b73] flex-shrink-0 mb-[-4px]">
+              <div className="flex md:items-end md:gap-6 flex-col md:flex-row gap-1.5">
+                <div className="w-10 h-10 md:w-28 md:h-28 rounded-full overflow-hidden border-2 md:border-4 border-[#1e6b73] flex-shrink-0 md:mb-[-4px]">
                   {avatar2ImageUrl ? (
                     <ImageWithFallback src={avatar2ImageUrl} alt="Answer person" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <svg className="w-8 h-8 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-6 h-6 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
                     </div>

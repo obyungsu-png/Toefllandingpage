@@ -126,54 +126,52 @@ export function WritingEmailQ1({ onBack, onNext, onHome, onVolumeClick, writingQ
         </div>
       </div>
 
-      {/* Tab with Question number and Timer */}
+      {/* Compact tab bar — 모바일에선 Writing/Q N·Passage/Response·Timer 를 한 줄에.
+          데스크탑은 기존처럼 두 영역 (Writing | Q + Timer). */}
       <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3 flex items-center justify-between">
-          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-            Writing | Question 1 of 2
+        <div className="px-3 md:px-8 h-10 md:h-auto md:py-3 flex items-center justify-between gap-2">
+          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold text-xs md:text-base whitespace-nowrap">
+            <span className="md:hidden">W · Q1/2</span>
+            <span className="hidden md:inline">Writing | Question 1 of 2</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-700 font-['Inter',_sans-serif]">
-              {!hideTime && formatTime(timeRemaining)}
-            </span>
+
+          {/* Mobile: Passage/Response 토글을 그 자리에 pill 형태로 */}
+          {isMobile && (
+            <div className="flex items-center gap-0.5 bg-gray-100 rounded-full p-0.5 text-[11px] font-semibold">
+              <button
+                onClick={() => setShowPassage(true)}
+                className={`px-2.5 py-0.5 rounded-full transition-colors ${showPassage ? 'bg-[#1e6b73] text-white' : 'text-gray-600'}`}
+              >
+                Passage
+              </button>
+              <button
+                onClick={() => setShowPassage(false)}
+                className={`px-2.5 py-0.5 rounded-full transition-colors ${!showPassage ? 'bg-[#1e6b73] text-white' : 'text-gray-600'}`}
+              >
+                Response
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+            {!hideTime && (
+              <span className="text-gray-700 font-['Inter',_sans-serif] text-[11px] md:text-base tabular-nums">
+                {formatTime(timeRemaining)}
+              </span>
+            )}
             <button
               onClick={() => setHideTime(!hideTime)}
-              className="flex items-center gap-2 text-[#1e6b73] hover:text-[#0A6068] transition-colors"
+              className="flex items-center gap-1 md:gap-2 text-[#1e6b73] hover:text-[#0A6068] transition-colors"
+              aria-label={hideTime ? 'Show time' : 'Hide time'}
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
               </svg>
-              <span className="font-['Inter',_sans-serif] font-semibold">{hideTime ? 'Show' : 'Hide'} Time</span>
+              <span className="hidden md:inline font-['Inter',_sans-serif] font-semibold">{hideTime ? 'Show' : 'Hide'} Time</span>
             </button>
           </div>
         </div>
       </div>
-
-      {/* Mobile Tabs for Passage/Response */}
-      {isMobile && (
-        <div className="bg-white border-b border-gray-300 flex">
-          <button
-            onClick={() => setShowPassage(true)}
-            className={`flex-1 px-4 py-3 font-semibold text-sm ${
-              showPassage
-                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
-                : 'text-gray-500'
-            }`}
-          >
-            Passage
-          </button>
-          <button
-            onClick={() => setShowPassage(false)}
-            className={`flex-1 px-4 py-3 font-semibold text-sm ${
-              !showPassage
-                ? 'text-[#1e6b73] border-b-2 border-[#1e6b73]'
-                : 'text-gray-500'
-            }`}
-          >
-            Response
-          </button>
-        </div>
-      )}
 
       {/* Main content - Split view */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden pb-16 md:pb-0">
