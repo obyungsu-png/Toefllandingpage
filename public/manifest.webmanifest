@@ -1,0 +1,19 @@
+{
+  "name": "TOEFL Allmyexam",
+  "short_name": "Allmyexam",
+  "description": "TOEFL practice and test prep",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#1e6b73",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

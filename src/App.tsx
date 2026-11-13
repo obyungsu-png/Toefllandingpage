@@ -90,6 +90,7 @@ import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
+import { requestFullscreen, isMobileViewport } from './utils/fullscreen';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
@@ -2462,6 +2463,12 @@ function AppContent() {
     setCurrentTest({ tpoNumber: testNumber, section });
     setTestBankType(bankType);
     testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
+
+    // 모바일에서 문제 풀기 진입 시 주소창(URL)을 숨긴 전체 화면으로 전환
+    // (iOS Safari는 웹 Fullscreen API 미지원 — 홈 화면 설치(PWA)로만 숨김 가능)
+    if (isMobileViewport()) {
+      requestFullscreen();
+    }
 
     // 섹션 전환 시 이전 섹션 화면 모두 초기화 (가림 방지)
     setShowReadingIntro(false);
