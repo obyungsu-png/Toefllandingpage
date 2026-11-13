@@ -28,10 +28,21 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
   const [audioElapsed, setAudioElapsed] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // 영상이 있으면 영상을 재생해 완료 후 녹음 단계로 자동 전환.
+  const hasVideo = !!videoUrl;
 
   useEffect(() => {
     let advanceTimer: ReturnType<typeof setTimeout>;
-    const soundSrc = audioUrl || videoUrl;
+
+    // ── 영상이 있는 경우: <video> 요소에서 재생·종료를 처리 (아래 markup 참고) ──
+    if (hasVideo) {
+      // 안전망 — 영상이 로드되지 않거나 autoplay 가 막혀도 5분 뒤 강제 진행.
+      advanceTimer = setTimeout(() => { onNext(); }, 300_000);
+      return () => clearTimeout(advanceTimer);
+    }
+
+    const soundSrc = audioUrl;
 
     if (soundSrc) {
       const audio = createCachedAudioSync(soundSrc);
@@ -158,12 +169,28 @@ export function SpeakingQ8Prep({ onNext, onHome, onVolumeClick, isVolumeOpen, vo
           <h1 className="text-lg md:text-2xl font-bold text-gray-900 text-center">Please answer the interviewer's questions.</h1>
         </div>
         <div className="flex justify-center mb-4 md:mb-8 flex-shrink-0">
-          <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center flex-shrink-0">
-            <ImageWithFallback
-              src={imageUrl}
-              alt="Interviewer"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-80 h-80 md:w-[460px] md:h-[460px] rounded-lg overflow-hidden border border-gray-300 bg-black flex items-center justify-center flex-shrink-0">
+            {videoUrl ? (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                autoPlay
+                playsInline
+                preload="auto"
+                className="w-full h-full object-cover"
+                onPlay={() => setIsAudioPlaying(true)}
+                onLoadedMetadata={(e) => setAudioDuration((e.currentTarget.duration || 0))}
+                onTimeUpdate={(e) => setAudioElapsed(e.currentTarget.currentTime || 0)}
+                onEnded={() => { setIsAudioPlaying(false); onNext(); }}
+                onError={() => { setIsAudioPlaying(false); onNext(); }}
+              />
+            ) : (
+              <ImageWithFallback
+                src={imageUrl}
+                alt="Interviewer"
+                className="w-full h-full object-cover bg-gray-50"
+              />
+            )}
           </div>
         </div>
         <div className="flex justify-center">

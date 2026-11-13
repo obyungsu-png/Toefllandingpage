@@ -178,25 +178,18 @@ export function pickBestBritishFemaleVoice(): SpeechSynthesisVoice | null {
 
 /**
  * Google Translate TTS 로 영국 여성 음성을 시도 — 모바일 브라우저의 기본
- * speechSynthesis 보다 훨씬 좋은 품질. 네트워크 재생이라 실패할 수 있으니
- * Promise 가 resolve 되어도 blob 이 없으면 false 리턴.
+ * speechSynthesis 보다 훨씬 좋은 품질. CORS 제한으로 fetch 는 막혀도
+ * `<audio src="...">` 직접 재생은 가능하다 (미디어 리소스는 CORS 면제).
+ * Returns the audio element. 재생이 실패하면 onerror 로 폴백 처리.
  */
-async function tryGoogleTranslateTts(text: string, volume: number): Promise<HTMLAudioElement | null> {
-  try {
-    // Google Translate 는 최대 ~200자 제한이므로 긴 텍스트는 문장 단위 분할해
-    // 순차 재생하는 쪽이 정석이지만, 인트로 안내 문구 길이면 보통 한 번에 통과.
-    const chunk = text.length > 190 ? text.slice(0, 190) : text;
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=en-GB&client=tw-ob`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'OBS' } });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    if (!blob || blob.size < 500) return null; // 너무 작은 응답은 실패
-    const audio = new Audio(URL.createObjectURL(blob));
-    audio.volume = volume;
-    return audio;
-  } catch {
-    return null;
-  }
+function createGoogleTranslateTtsAudio(text: string, volume: number): HTMLAudioElement {
+  // Google Translate 는 최대 ~200자 제한. 인트로 안내 문구는 보통 한 번에 통과.
+  const chunk = text.length > 190 ? text.slice(0, 190) : text;
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk)}&tl=en-GB&client=tw-ob`;
+  const audio = new Audio(url);
+  audio.volume = volume;
+  audio.preload = 'auto';
+  return audio;
 }
 
 /**
@@ -252,26 +245,29 @@ export function speakWithBritishFemaleVoice(options: SpeakOptions): () => void {
     window.speechSynthesis.speak(utterance);
   };
 
-  // 모바일에서는 Google Translate TTS 를 먼저 시도해서 음질 확보
+  // 모바일에서는 Google Translate TTS 를 먼저 시도해서 음질 확보.
+  // `<audio src>` 로 직접 로드하기 때문에 fetch 처럼 CORS 에 막히지 않지만,
+  // 중국 본토 등 접근이 막힌 네트워크에선 재생 자체가 실패 → onerror 로 폴백.
   const mobile = isMobile();
 
-  speakTimer = setTimeout(async () => {
+  speakTimer = setTimeout(() => {
     if (cancelled) return;
     if (mobile) {
-      const audio = await tryGoogleTranslateTts(text, resolvedVolume);
-      if (cancelled) { try { audio?.pause(); } catch {} return; }
-      if (audio) {
-        currentAudio = audio;
-        audio.onplay = () => onstart?.();
-        audio.onended = () => { onend?.(); };
-        audio.onerror = () => {
-          // 네트워크/CORS 등으로 Google TTS 실패 → 브라우저 TTS 로 폴백
-          fallbackToSpeechSynthesis();
-        };
-        audio.play().catch(() => fallbackToSpeechSynthesis());
-        return;
-      }
-      // Google TTS 실패 → 브라우저 TTS 폴백
+      const audio = createGoogleTranslateTtsAudio(text, resolvedVolume);
+      currentAudio = audio;
+      let settled = false;
+      const settle = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (!ok) fallbackToSpeechSynthesis();
+      };
+      audio.onplay = () => { settled = true; onstart?.(); };
+      audio.onended = () => { if (settled) onend?.(); };
+      audio.onerror = () => settle(false);
+      // 안전망 — 3초 안에 play 이벤트가 안 오면 폴백
+      setTimeout(() => settle(audio.readyState >= 2), 3000);
+      audio.play().catch(() => settle(false));
+      return;
     }
     fallbackToSpeechSynthesis();
   }, delay ?? 500);
