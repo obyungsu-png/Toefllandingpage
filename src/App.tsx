@@ -90,6 +90,7 @@ import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
+import { isMobileViewport, hideMobileBrowserChrome, restoreBrowserChrome } from './utils/fullscreen';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
@@ -874,6 +875,9 @@ function AppContent() {
   
   // Helper function to change tab with URL navigation
   const handleTabChange = (tab: TabType) => {
+    // 탭 이동(홈 복귀 포함) 시 테스트 중 숨긴 브라우저 UI(URL바·하단 툴바) 복원
+    restoreBrowserChrome();
+
     // Check if trying to access TOEFL Prep
     if (tab === 'TOEFL Prep' && !isPasswordCorrect) {
       setShowPasswordModal(true);
@@ -2462,6 +2466,11 @@ function AppContent() {
     setCurrentTest({ tpoNumber: testNumber, section });
     setTestBankType(bankType);
     testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
+
+    // 모바일: 문제 풀기 진입 시 URL바·하단 툴바를 자동으로 접어 숨김 (상태바는 유지)
+    if (isMobileViewport()) {
+      hideMobileBrowserChrome();
+    }
 
     // 섹션 전환 시 이전 섹션 화면 모두 초기화 (가림 방지)
     setShowReadingIntro(false);
