@@ -56,6 +56,17 @@ export function ResizableReadingLayout({
     setMobileTabState(tab);
   };
   const [passageExpanded, setPassageExpanded] = useState(false);
+  // 리딩 지문 글자 크기 조절 (A−/A+) — localStorage에 저장해 문제 간에도 유지
+  const [fontScale, setFontScaleState] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    const v = parseFloat(window.localStorage.getItem('readingFontScale') || '');
+    return Number.isFinite(v) && v >= 0.8 && v <= 2 ? v : 1;
+  });
+  const setFontScale = (next: number) => {
+    const clamped = Math.min(2, Math.max(0.8, Math.round(next * 10) / 10));
+    setFontScaleState(clamped);
+    try { window.localStorage.setItem('readingFontScale', String(clamped)); } catch { /* ignore */ }
+  };
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 640 : false);
   const [windowWidth, setWindowWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1024);
   const [timer, setTimer] = useState(0);
@@ -130,6 +141,23 @@ export function ResizableReadingLayout({
           >
             Questions
           </button>
+          {/* 글자 크기 조절 (A−/A+) — 지문 스크롤 컨테이너 안에서만 커지므로 틀이 깨지지 않음 */}
+          <div className="flex items-center gap-1 pr-2 flex-shrink-0">
+            <button
+              onClick={() => setFontScale(fontScale - 0.1)}
+              className="h-7 min-w-7 px-1.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="글자 크기 줄이기"
+            >
+              A−
+            </button>
+            <button
+              onClick={() => setFontScale(fontScale + 0.1)}
+              className="h-7 min-w-7 px-1.5 rounded border border-[#1e6b73] text-xs font-bold text-[#1e6b73] hover:bg-[#eef4f3]"
+              aria-label="글자 크기 키우기"
+            >
+              A+
+            </button>
+          </div>
         </div>
 
         {/* Content Area */}
@@ -143,7 +171,12 @@ export function ResizableReadingLayout({
                 </h2>
               )}
               <div style={zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.1s' } : undefined}>
-                {leftContent}
+                <div
+                  className="reading-passage-zoom"
+                  style={fontScale !== 1 ? { zoom: fontScale } : undefined}
+                >
+                  {leftContent}
+                </div>
               </div>
             </div>
           ) : (
@@ -170,7 +203,10 @@ export function ResizableReadingLayout({
                     /* Expanded: full passage content + collapse button inline */
                     <div>
                       <div className="mobile-expanded-passage max-h-[50vh] overflow-y-auto scrollbar-thin">
-                        <div className="text-base text-gray-800 dark:text-gray-100 font-['Inter',_sans-serif]">
+                        <div
+                          className="text-base text-gray-800 dark:text-gray-100 font-['Inter',_sans-serif] reading-passage-zoom"
+                          style={fontScale !== 1 ? { zoom: fontScale } : undefined}
+                        >
                           {leftContent}
                         </div>
                       </div>

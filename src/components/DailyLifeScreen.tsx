@@ -181,7 +181,7 @@ export function DailyLifeScreen({
                     {structured ? (
                       structured
                     ) : (
-                      <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                      <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                         {passageText}
                       </div>
                     )}
@@ -195,7 +195,7 @@ export function DailyLifeScreen({
                   {structured ? (
                     structured
                   ) : (
-                    <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                       {passageText}
                     </div>
                   )}

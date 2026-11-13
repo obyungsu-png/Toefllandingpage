@@ -329,6 +329,17 @@ html {
   }
 }
 
+/* 리딩 지문 가독성 — A−/A+ 배율과 함께 적용.
+   지문은 세로 스크롤 컨테이너 안이라 글자가 커져도 틀이 깨지지 않음. */
+.reading-passage-zoom {
+  overflow-wrap: break-word;
+}
+.reading-passage-zoom p,
+.reading-passage-zoom li,
+.reading-passage-zoom div {
+  line-height: 1.75;
+}
+
 /* ===== CSS Animations (replacing motion/react) ===== */
 @keyframes fadeIn {
   from { opacity: 0; }

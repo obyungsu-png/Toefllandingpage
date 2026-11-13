@@ -90,7 +90,6 @@ import { ShareConfig } from './components/ShareSettings';
 import { ReadDailyLifeTemplates, renderDailyLifePassage } from './components/ReadDailyLifeTemplates';
 import { isContentLocked } from './utils/subscriptionUtils';
 import { SERVER_BASE_URL, getServerHeaders } from './utils/apiConfig';
-import { requestFullscreen, isMobileViewport } from './utils/fullscreen';
 import { preloadAllMedia, getCacheStats } from './utils/mediaCache';
 import { ActivationModal } from './components/ActivationModal';
 import { isFreeContent, checkUserAccess, invalidateUserProfileCache } from './utils/licenseUtils';
@@ -2464,12 +2463,6 @@ function AppContent() {
     setTestBankType(bankType);
     testStartTimeRef.current = Date.now(); // 테스트 시작 시간 기록
 
-    // 모바일에서 문제 풀기 진입 시 주소창(URL)을 숨긴 전체 화면으로 전환
-    // (iOS Safari는 웹 Fullscreen API 미지원 — 홈 화면 설치(PWA)로만 숨김 가능)
-    if (isMobileViewport()) {
-      requestFullscreen();
-    }
-
     // 섹션 전환 시 이전 섹션 화면 모두 초기화 (가림 방지)
     setShowReadingIntro(false);
     setShowToeflTest(false);
@@ -3561,7 +3554,7 @@ function AppContent() {
               onWheel={handleWheel16}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                     {passageText}
                   </div>
                 </>
@@ -3732,11 +3725,11 @@ function AppContent() {
                 <>
                   {/* CMS PRIORITY: render passage from CMS if available */}
                   {parsedAC17?.passage ? (
-                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                       {parsedAC17!.passage}
                     </div>
                   ) : (
-                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                       <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
                       <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
                       <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
@@ -3911,11 +3904,11 @@ function AppContent() {
                 <>
                   {/* CMS PRIORITY: render passage from CMS if available */}
                   {parsedAC18?.passage ? (
-                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                       {parsedAC18!.passage}
                     </div>
                   ) : (
-                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                       <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
                       <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
                       <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
@@ -4091,11 +4084,11 @@ function AppContent() {
                 <>
                   {/* CMS PRIORITY: render passage from CMS if available */}
                   {parsedAC19?.passage ? (
-                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                       {parsedAC19!.passage}
                     </div>
                   ) : (
-                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                       <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
                       <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
                       <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
@@ -4272,11 +4265,11 @@ function AppContent() {
                 <>
                   {/* CMS PRIORITY: render passage from CMS if available */}
                   {parsedAC20?.passage ? (
-                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                    <div className="text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                       {parsedAC20!.passage}
                     </div>
                   ) : (
-                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                    <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                       <p>Very young children cannot recognize themselves in a mirror; they usually achieve this milestone around 18 months of age. The ability to recognize oneself in the mirror is considered to be a key component of self-awareness and consciousness for humans. But what about animals?</p>
                       <p>For many years, scientists have known that members of the great ape family could recognize themselves in mirrors. They measured this by the "mirror test," which involved putting a colored mark on an ape's body, and then showing the ape its reflection in a mirror. If the ape tried to remove the mark on its own body, the scientists knew that the ape was recognizing its reflection.</p>
                       <p>Apes are close relatives of humans, but in recent years, scientists have discovered that other animals also pass the "mirror test." Elephants and dolphins have shown signs of self-recognition. These, like apes, are highly intelligent animals. But in a more recent experiment, a type of fish called the cleaner fish tried to scrape a mark off its body when it saw itself in the mirror. This suggests that even less intelligent animals may possess more self-awareness than previously suspected.</p>
@@ -5853,7 +5846,7 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question16(false); setShowModule2Question17(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                     {cmsQ16.passageText || ''}
                   </div>
                 </>
@@ -6013,7 +6006,7 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question17(false); setShowModule2Question18(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -6182,7 +6175,7 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question18(false); setShowModule2Question19(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -6351,7 +6344,7 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question19(false); setShowModule2Question20(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>
@@ -6523,7 +6516,7 @@ function AppContent() {
               onSubmit={() => { setShowModule2Question20(false); { const rr = saveSectionResultToHistory('Reading', 20, 2); setSectionScores(prev => ({ ...prev, reading: rr as any })); } clearReadingProgress(); setShowEndModule2(true); }}
               leftContent={
                 <>
-                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg">
+                  <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg">
                   <p>
                     The paradox of choice, a concept popularized by psychologist Barry Schwartz, suggests that more options can lead to less satisfaction. While the freedom to choose is fundamental to consumer culture, an overabundance of choices—from groceries to electronics—can overwhelm individuals, causing anxiety and decision fatigue. This paradox implies that the vast array of possibilities available today might actually diminish consumer contentment, as the fear of making the wrong choice looms large.
                   </p>

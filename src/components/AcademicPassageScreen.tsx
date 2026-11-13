@@ -196,7 +196,7 @@ export function AcademicPassageScreen({
                   clearTrigger={clearTrigger}
                 />
               ) : (
-                <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-xs sm:text-sm md:text-base lg:text-lg whitespace-pre-wrap">
+                <div className="space-y-2 md:space-y-3 lg:space-y-4 text-black dark:text-gray-100 font-['Inter',_sans-serif] leading-relaxed text-base lg:text-lg whitespace-pre-wrap">
                   {passageText}
                 </div>
               )
