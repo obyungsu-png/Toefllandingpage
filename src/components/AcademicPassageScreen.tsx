@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { ResizableReadingLayout } from './ResizableReadingLayout';
+import { ReadingFontControls } from './ReadingFontControls';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
@@ -136,6 +137,7 @@ export function AcademicPassageScreen({
             <div className="text-gray-500 dark:text-gray-400 text-xs md:text-sm font-['Inter',_sans-serif] font-medium self-end pb-1 md:pb-2">
               Question {questionIndex + 1} of {totalQuestions}
             </div>
+            <ReadingFontControls />
             {isReviewMode && (
               <>
                 <button
@@ -176,7 +178,7 @@ export function AcademicPassageScreen({
       {/* Main content */}
       <div className="flex-1 p-1.5 md:p-4 lg:p-4 overflow-auto bg-white dark:bg-gray-900 border border-black dark:border-gray-700">
         <div className="max-w-screen-2xl mx-auto pl-0">
-          <h2 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-1 md:mb-4 lg:mb-8">{passageTitle}</h2>
+          <h2 className="text-base sm:text-lg md:text-2xl lg:text-3xl font-['Inter',_sans-serif] font-bold text-center text-gray-900 dark:text-gray-100 mb-1 md:mb-4 lg:mb-8">{passageTitle}</h2>
           <ResizableReadingLayout
             zoom={zoom}
             onWheel={handleWheel}
@@ -208,7 +210,7 @@ export function AcademicPassageScreen({
                   maxHeight="none"
                   toolsOpen={toolsOpen}
                 >
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <h3 className="text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {options.map((option, index) => (
                       <RadioOption
@@ -231,7 +233,7 @@ export function AcademicPassageScreen({
                 </ReadingReviewPassage>
               ) : (
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <h3 className="text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {options.map((option, index) => (
                       <RadioOption

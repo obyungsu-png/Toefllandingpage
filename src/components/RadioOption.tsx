@@ -15,7 +15,7 @@ export function RadioOption({ id, name, value, checked, onChange, label, size = 
     ? 'w-4 h-4 md:w-5 md:h-5'
     : 'w-5 h-5';
   const defaultLabel = size === 'sm'
-    ? 'text-sm sm:text-base md:text-lg'
+    ? 'text-base md:text-lg'
     : 'text-base md:text-lg';
 
   return (

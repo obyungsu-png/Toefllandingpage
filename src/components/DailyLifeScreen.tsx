@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { ResizableReadingLayout } from './ResizableReadingLayout';
+import { ReadingFontControls } from './ReadingFontControls';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
@@ -113,6 +114,7 @@ export function DailyLifeScreen({
             <div className="text-gray-500 dark:text-gray-400 text-sm font-['Inter',_sans-serif] font-medium self-end pb-2">
               Question {questionIndex + 1} of {totalQuestions}
             </div>
+            <ReadingFontControls />
             {isReviewMode && (
               <>
                 <button
@@ -209,7 +211,7 @@ export function DailyLifeScreen({
                   maxHeight="none"
                   toolsOpen={toolsOpen}
                 >
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <h3 className="text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {options.map((option, index) => (
                       <RadioOption
@@ -232,7 +234,7 @@ export function DailyLifeScreen({
                 </ReadingReviewPassage>
               ) : (
                 <>
-                  <h3 className="text-base sm:text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
+                  <h3 className="text-lg md:text-xl font-['Inter',_sans-serif] font-bold text-black dark:text-gray-100 mb-4 md:mb-6 lg:mb-8 mt-3">{question?.questionText}</h3>
                   <div className="space-y-3 md:space-y-4 lg:space-y-5">
                     {options.map((option, index) => (
                       <RadioOption
