@@ -11,6 +11,7 @@ import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
 import { TPOQuestion, TPOTest } from './ContentManagement';
+import { hideMobileBrowserChrome, isMobileViewport } from '../utils/fullscreen';
 
 // ============================================================================
 // Speaking Section - All Screens Wrapper (dynamic question counts)
@@ -131,6 +132,11 @@ export function SpeakingSectionWrapper({
       setScreen(savedProgress.currentScreen as SpeakingScreen);
     }
   }, []);
+
+  // 모바일 URL바·하단 툴바 숨김 — Speaking 섹션 진입 및 화면 전환 시마다 재적용.
+  useEffect(() => {
+    if (isMobileViewport()) hideMobileBrowserChrome();
+  }, [screen]);
 
   // Save test context so uploadRecording can tag files correctly
   useEffect(() => {

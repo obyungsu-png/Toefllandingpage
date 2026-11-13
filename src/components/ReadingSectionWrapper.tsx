@@ -3,6 +3,7 @@ import { ResizableReadingLayout } from './ResizableReadingLayout';
 import { RadioOption } from './RadioOption';
 import { MobileQuestionNav } from './MobileQuestionNav';
 import { VolumeControl, useVolumeControl } from './VolumeControl';
+import { hideMobileBrowserChrome, isMobileViewport } from '../utils/fullscreen';
 
 export type ReadingScreen =
   | 'intro' | 'm1-intro' | 'm1-details'
@@ -70,6 +71,11 @@ export function ReadingSectionWrapper({
       setCurrentScreen(screens[currentIndex - 1]);
     }
   };
+
+  // 모바일 URL바·하단 툴바 숨김 — Reading 섹션 진입 및 화면 전환 시마다 재적용.
+  useEffect(() => {
+    if (isMobileViewport()) hideMobileBrowserChrome();
+  }, [currentScreen]);
 
   // Hardware/browser Back button (dispatched from App.tsx) reuses this same goBack
   useEffect(() => {

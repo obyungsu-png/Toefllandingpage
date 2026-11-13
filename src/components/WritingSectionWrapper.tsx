@@ -9,6 +9,7 @@ import { WritingAcademicDiscussionQ2 } from './WritingAcademicDiscussionQ2';
 import { WritingEnd } from './WritingEnd';
 import { useTestProgress } from '../hooks/useTestProgress';
 import { TestProgressRestoreModal } from './TestProgressRestoreModal';
+import { hideMobileBrowserChrome, isMobileViewport } from '../utils/fullscreen';
 
 // ============================================================================
 // Writing Section - All Screens Wrapper
@@ -372,6 +373,11 @@ export function WritingSectionWrapper({
       setScreen(savedProgress.currentScreen as WritingScreen);
     }
   }, []);
+
+  // 모바일 URL바·하단 툴바 숨김 — Writing 섹션 진입 및 화면 전환 시마다 재적용.
+  useEffect(() => {
+    if (isMobileViewport()) hideMobileBrowserChrome();
+  }, [screen]);
 
   // 새 세션 시작 시 이전 Writing 응답 초기화 (EndWritingScreen AI 채점 데이터)
   useEffect(() => {

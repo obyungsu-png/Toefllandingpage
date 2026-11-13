@@ -6,6 +6,7 @@ import { VolumeControl, useVolumeControl } from './VolumeControl';
 import { createCachedAudio, stopAllAudio } from '../utils/mediaCache';
 import { speakHighQuality, stopAllSpeech } from '../utils/cloudTts';
 import { isModule2Question } from '../utils/readingQuestionUtils';
+import { hideMobileBrowserChrome, isMobileViewport } from '../utils/fullscreen';
 
 interface ListeningTestEngineProps {
   sectionData: any; // result of getCurrentSectionData('Listening')
@@ -81,6 +82,11 @@ export function ListeningTestEngine({
   onSegmentChange,
   isReviewMode = false,
 }: ListeningTestEngineProps) {
+  // 모바일 URL바·하단 툴바 숨김 유지 — 섹션 진입 및 재마운트 시마다 재적용.
+  useEffect(() => {
+    if (isMobileViewport()) hideMobileBrowserChrome();
+  }, []);
+
   const allQuestions: any[] = sectionData?.questions || [];
   const moduleQuestions = allQuestions
     .filter(q => {
