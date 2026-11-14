@@ -72,24 +72,26 @@ function requestFullscreenNow(): void {
   } catch { /* noop */ }
 }
 
-/** Fullscreen 모드에서 카메라/상태바 영역을 피하도록 #root 에 상단 padding 주입. */
+/** Fullscreen 모드에서 카메라/상태바 영역을 피하도록 fixed 오버레이들을 아래로 밀기.
+ *  html padding 은 position:fixed 요소에 영향을 주지 못하므로(초기 포함 블록 =
+ *  뷰포트), .fixed.inset-0 요소들의 top 을 직접 설정한다. */
 function installSafeAreaStyle(): void {
   if (typeof document === 'undefined') return;
   if (document.getElementById(SAFE_AREA_STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = SAFE_AREA_STYLE_ID;
-  // :fullscreen 셀렉터로 fullscreen 활성 시에만 safe-area 패딩 적용.
-  // 카메라/상태바 노치 영역만큼 콘텐츠를 아래로 밀어, "카메라 바로 아래"
-  // 부터 UI 가 시작되도록 한다. (viewport-fit=cover + Chrome fullscreen 조합)
+  // 노치/펀치홀 기기는 env(safe-area-inset-top) 이 ~40~50px 반환.
+  // Fullscreen 모드에서 safe-area 값이 0 으로 들어오는 기기도 있어 최소 28px 확보.
+  // Tailwind 의 `fixed inset-0` 조합(top:0;right:0;bottom:0;left:0) 중 top 만
+  // 안전 영역 아래로 밀어 overlay 전체가 카메라 구멍을 피해 시작되도록.
   style.textContent = `
     html:fullscreen, html:-webkit-full-screen {
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      box-sizing: border-box;
       background: #ffffff;
     }
-    html:fullscreen body, html:-webkit-full-screen body {
-      min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    html:fullscreen .fixed.inset-0,
+    html:-webkit-full-screen .fixed.inset-0 {
+      top: max(env(safe-area-inset-top, 0px), 28px) !important;
+      bottom: env(safe-area-inset-bottom, 0px) !important;
     }
   `;
   document.head.appendChild(style);
