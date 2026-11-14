@@ -1,23 +1,15 @@
-// 모바일 Chrome에서 URL바(주소창)와 하단 툴바를 숨기는 유틸.
+// 모바일 전체 화면 모드 — TPO 등 문제 풀이 섹션에서 URL바·하단 툴바를 숨긴다.
 //
-// 원리: Chrome Android는 페이지를 아래로 스크롤하면 상단 주소창과
-// 하단 툴바를 자동으로 접어서 숨겨 준다. 테스트 화면은 fixed 레이아웃이라
-// 문서 자체가 스크롤되지 않으므로, 문서를 살짝 스크롤 가능하게 만든 뒤
-// 아래로 스크롤시켜 UI를 접는다. (상태바는 유지됨)
-//
-// 주의: URL바/툴바가 접히면 뷰포트가 ~100px 이상 늘어난다. 여백이 그
-// 증가분보다 작으면 스크롤 위치가 0으로 clamp 되어 Chrome이 UI를 다시
-// 펼쳐버린다. 그래서 여백을 충분히 크게 잡고, 뷰포트 변화 시에도 스크롤
-// 위치를 다시 잡아 준다(keep-hidden).
-//
-// 안정성 강화 (사용자 보고: "맨처음에는 되었는데, 지금은 안돼네"):
-//   - visualViewport 이벤트도 함께 감시 → URL바가 다시 펼쳐지면(뷰포트 축소)
-//     즉시 아래로 스크롤.
-//   - 사용자 터치 종료 시 스크롤 위치 재확인 (fixed 오버레이 위에서 발생한
-//     터치는 body 스크롤을 건드리지 않지만, Chrome 이 touchend 를 신호로
-//     URL바 토글을 할 때가 있어 그 직후 재보정).
-//   - 짧은 간격 간헐 체크(최대 10초) — 섹션 전환 직후 React 가 레이아웃을
-//     다시 그릴 때 scrollY 가 0 으로 reset 되는 경우 대응.
+// 전략 (3중):
+//   1) 즉시 스크롤 트릭 — body 를 길게 만들고 아래로 스크롤해 Chrome 이
+//      URL바와 하단 툴바를 자동으로 접게 한다. 상태바는 유지됨.
+//   2) Fullscreen API — 스크롤 트릭이 안 먹히는 경우(최신 Chrome, Samsung
+//      Internet 등 일부 브라우저)를 위해, 사용자 제스처(터치/클릭) 안에서
+//      document.documentElement.requestFullscreen() 호출. 완전 immersive 로
+//      URL·하단 툴바 모두 제거.
+//   3) safe-area 패딩 — Fullscreen 모드일 때는 상태바/카메라 노치 영역이
+//      브라우저에 의해 가려지지 않으므로, #root 에 env(safe-area-inset-top)
+//      만큼 padding 을 주어 콘텐츠가 카메라 아래에서 시작되도록 한다.
 
 export function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false;
@@ -25,6 +17,7 @@ export function isMobileViewport(): boolean {
 }
 
 const SPACER_ID = 'browser-chrome-spacer';
+const SAFE_AREA_STYLE_ID = 'tpo-fullscreen-safe-area-style';
 // URL바+하단 툴바 접힘으로 늘어나는 뷰포트보다 충분히 큰 여유
 const SPACER_EXTRA = 260;
 // Chrome UI 가 다시 펼쳐지는 것을 복구하기 위한 최소 스크롤 위치
@@ -40,19 +33,104 @@ function ensureScrollableSpacer(): void {
     spacer.style.cssText = 'height:1px;width:100%;pointer-events:none;';
     doc.body.appendChild(spacer);
   }
-  // 뷰포트보다 충분히 길게 만든다 → UI가 접혀 뷰포트가 늘어난 뒤에도
-  // 스크롤 위치가 0으로 밀리지 않아 숨김 상태가 유지된다.
   const deficit = window.innerHeight + SPACER_EXTRA - doc.documentElement.scrollHeight;
   if (deficit > 0) spacer.style.height = deficit + 'px';
 }
 
-/** 아래로 스크롤해 URL바/툴바를 접는다. 숨김 유지에 필요한 최소량만. */
 function scrollToHide(): void {
   if (typeof document === 'undefined') return;
   const target = Math.max(MIN_HIDDEN_SCROLL, document.documentElement.scrollHeight - window.innerHeight);
   try { window.scrollTo(0, target); } catch { /* noop */ }
 }
 
+// ────── Fullscreen API helpers ──────
+function isFullscreen(): boolean {
+  if (typeof document === 'undefined') return false;
+  return !!(
+    document.fullscreenElement ||
+    (document as any).webkitFullscreenElement ||
+    (document as any).mozFullScreenElement ||
+    (document as any).msFullscreenElement
+  );
+}
+
+function canRequestFullscreen(): boolean {
+  if (typeof document === 'undefined') return false;
+  const el = document.documentElement as any;
+  return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen);
+}
+
+function requestFullscreenNow(): void {
+  if (typeof document === 'undefined') return;
+  if (isFullscreen()) return;
+  const el = document.documentElement as any;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (!req) return;
+  try {
+    const p = req.call(el);
+    if (p && typeof p.then === 'function') p.catch(() => { /* ignored — user may have denied */ });
+  } catch { /* noop */ }
+}
+
+/** Fullscreen 모드에서 카메라/상태바 영역을 피하도록 #root 에 상단 padding 주입. */
+function installSafeAreaStyle(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(SAFE_AREA_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = SAFE_AREA_STYLE_ID;
+  // :fullscreen 셀렉터로 fullscreen 활성 시에만 safe-area 패딩 적용.
+  // 카메라/상태바 노치 영역만큼 콘텐츠를 아래로 밀어, "카메라 바로 아래"
+  // 부터 UI 가 시작되도록 한다. (viewport-fit=cover + Chrome fullscreen 조합)
+  style.textContent = `
+    html:fullscreen, html:-webkit-full-screen {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+    html:fullscreen body, html:-webkit-full-screen body {
+      min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function removeSafeAreaStyle(): void {
+  const el = document.getElementById(SAFE_AREA_STYLE_ID);
+  if (el) el.remove();
+}
+
+// ────── 트리거: 사용자 제스처에서 한 번만 requestFullscreen 시도 ──────
+let gestureListenersInstalled = false;
+let gestureHandler: ((e: Event) => void) | null = null;
+
+function installFullscreenGestureTrigger(): void {
+  if (gestureListenersInstalled) return;
+  if (typeof document === 'undefined') return;
+  if (!canRequestFullscreen()) return;
+  if (isFullscreen()) return;
+
+  gestureHandler = () => {
+    if (!isFullscreen()) requestFullscreenNow();
+    cleanupGestureTrigger();
+    // Fullscreen 상태라도 스크롤 트릭을 한 번 더 — URL바가 혹시 남아 있으면 접기.
+    scrollToHide();
+  };
+  gestureListenersInstalled = true;
+  // 사용자 제스처 안에서 실행되어야 함 → capture 단계로 가장 먼저 잡는다.
+  document.addEventListener('touchend', gestureHandler, { capture: true, passive: true });
+  document.addEventListener('click', gestureHandler, { capture: true });
+}
+
+function cleanupGestureTrigger(): void {
+  if (!gestureListenersInstalled || !gestureHandler) return;
+  document.removeEventListener('touchend', gestureHandler, true);
+  document.removeEventListener('click', gestureHandler, true);
+  gestureHandler = null;
+  gestureListenersInstalled = false;
+}
+
+// ────── keep-hidden 핸들러 ──────
 let keepHiddenHandler: (() => void) | null = null;
 let touchKeepHandler: (() => void) | null = null;
 let vvKeepHandler: (() => void) | null = null;
@@ -61,7 +139,7 @@ let intervalEndsAt = 0;
 
 function attachKeepHidden(): void {
   if (typeof window === 'undefined') return;
-  if (keepHiddenHandler) return; // 이미 설치됨
+  if (keepHiddenHandler) return;
 
   keepHiddenHandler = () => {
     if (!isMobileViewport()) return;
@@ -71,7 +149,6 @@ function attachKeepHidden(): void {
   window.addEventListener('resize', keepHiddenHandler);
   window.addEventListener('orientationchange', keepHiddenHandler);
 
-  // visualViewport 는 URL바 토글 시 즉시 발생 → 가장 빠른 신호.
   if ('visualViewport' in window && window.visualViewport) {
     vvKeepHandler = () => {
       if (!isMobileViewport()) return;
@@ -82,11 +159,8 @@ function attachKeepHidden(): void {
     window.visualViewport.addEventListener('scroll', vvKeepHandler);
   }
 
-  // 터치 끝날 때마다 확인 — fixed 오버레이 위 터치여도 Chrome 이 자체적으로
-  // URL바를 토글할 때가 있어 한 번 더 보정.
   touchKeepHandler = () => {
     if (!isMobileViewport()) return;
-    // 터치 직후 Chrome 애니메이션이 끝나기를 기다림
     setTimeout(() => {
       if (window.scrollY < MIN_HIDDEN_SCROLL) scrollToHide();
     }, 120);
@@ -117,23 +191,29 @@ function detachKeepHidden(): void {
 }
 
 /**
- * 테스트 진입 시 호출 — URL바/하단 툴바를 자동으로 접어 숨김.
- * 섹션 전환이나 화면 전환 시 다시 호출해도 안전 (idempotent) — 짧은
- * 간헐 체크(약 10초)로 숨김 상태를 재확인한다.
+ * 테스트 진입 시 호출. 2단계로 작동:
+ *   (a) 즉시 스크롤 트릭으로 URL바/하단 툴바 접기 (상태바 유지).
+ *   (b) 사용자의 다음 터치/클릭에서 Fullscreen API 로 완전 immersive 전환
+ *       (스크롤 트릭이 안 먹히는 브라우저의 fallback).
  */
 export function hideMobileBrowserChrome(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (!isMobileViewport()) return;
 
-  // React 렌더 + 레이아웃 반영 이후 실행
+  installSafeAreaStyle();
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       if (!isMobileViewport()) return;
+      // (a) 스크롤 트릭 — 상태바는 유지한 채 URL바/툴바만 접기 시도
       ensureScrollableSpacer();
       scrollToHide();
       attachKeepHidden();
 
-      // 호출 후 ~10초간은 짧은 간격으로 스크롤 유지 체크 — React 가 섹션/
-      // 화면을 다시 렌더하며 scrollY 를 reset 하는 경우를 캐치.
+      // (b) 다음 사용자 제스처에서 Fullscreen API 폴백
+      installFullscreenGestureTrigger();
+
+      // 호출 후 ~10초간은 짧은 간격으로 스크롤 유지 체크
       intervalEndsAt = Date.now() + 10_000;
       if (!intervalId) {
         intervalId = setInterval(() => {
@@ -142,7 +222,7 @@ export function hideMobileBrowserChrome(): void {
             return;
           }
           if (!isMobileViewport()) return;
-          if (window.scrollY < MIN_HIDDEN_SCROLL) {
+          if (!isFullscreen() && window.scrollY < MIN_HIDDEN_SCROLL) {
             ensureScrollableSpacer();
             scrollToHide();
           }
@@ -152,11 +232,27 @@ export function hideMobileBrowserChrome(): void {
   });
 }
 
-/** 홈/탭 이동 등 테스트 화면을 벗어날 때 호출 — 숨김 해제 후 최상단 복원 */
+/** 홈/탭 이동 등 테스트 화면을 벗어날 때 호출 — 숨김 해제 후 복원. */
 export function restoreBrowserChrome(): void {
   if (typeof document === 'undefined') return;
   detachKeepHidden();
+  cleanupGestureTrigger();
   const spacer = document.getElementById(SPACER_ID);
   if (spacer) spacer.remove();
+  removeSafeAreaStyle();
+  // Fullscreen 상태였으면 명시적으로 종료.
+  if (isFullscreen()) {
+    const exit =
+      document.exitFullscreen ||
+      (document as any).webkitExitFullscreen ||
+      (document as any).mozCancelFullScreen ||
+      (document as any).msExitFullscreen;
+    if (exit) {
+      try {
+        const p = exit.call(document);
+        if (p && typeof p.then === 'function') p.catch(() => {});
+      } catch { /* noop */ }
+    }
+  }
   try { window.scrollTo(0, 0); } catch { /* noop */ }
 }
