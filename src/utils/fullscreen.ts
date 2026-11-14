@@ -84,9 +84,15 @@ function installSafeAreaStyle(): void {
   // Fullscreen 모드에서 safe-area 값이 0 으로 들어오는 기기도 있어 최소 28px 확보.
   // Tailwind 의 `fixed inset-0` 조합(top:0;right:0;bottom:0;left:0) 중 top 만
   // 안전 영역 아래로 밀어 overlay 전체가 카메라 구멍을 피해 시작되도록.
+  // 배경색 = TPO 상단 배너(bg-[#1e6b73]) 와 동일한 teal.
+  // 상단 safe-area 영역이 이 색으로 채워져 배너가 아래로 자연스럽게 이어진
+  // 것처럼 보임 (대안: 흰색/랜딩 배경이 보여 튀는 것을 방지).
   style.textContent = `
     html:fullscreen, html:-webkit-full-screen {
-      background: #ffffff;
+      background: #1e6b73;
+    }
+    html:fullscreen body, html:-webkit-full-screen body {
+      background: #1e6b73;
     }
     html:fullscreen .fixed.inset-0,
     html:-webkit-full-screen .fixed.inset-0 {
