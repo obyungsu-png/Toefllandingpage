@@ -18,10 +18,13 @@ export function isMobileViewport(): boolean {
 
 const SPACER_ID = 'browser-chrome-spacer';
 const SAFE_AREA_STYLE_ID = 'tpo-fullscreen-safe-area-style';
+const TOP_COVER_ID = 'tpo-fullscreen-top-cover';
 // URL바+하단 툴바 접힘으로 늘어나는 뷰포트보다 충분히 큰 여유
 const SPACER_EXTRA = 260;
 // Chrome UI 가 다시 펼쳐지는 것을 복구하기 위한 최소 스크롤 위치
 const MIN_HIDDEN_SCROLL = 60;
+// TPO 상단 배너 색 (bg-[#1e6b73] 과 동일)
+const TOP_BANNER_COLOR = '#1e6b73';
 
 function ensureScrollableSpacer(): void {
   const doc = document;
@@ -80,20 +83,7 @@ function installSafeAreaStyle(): void {
   if (document.getElementById(SAFE_AREA_STYLE_ID)) return;
   const style = document.createElement('style');
   style.id = SAFE_AREA_STYLE_ID;
-  // 노치/펀치홀 기기는 env(safe-area-inset-top) 이 ~40~50px 반환.
-  // Fullscreen 모드에서 safe-area 값이 0 으로 들어오는 기기도 있어 최소 28px 확보.
-  // Tailwind 의 `fixed inset-0` 조합(top:0;right:0;bottom:0;left:0) 중 top 만
-  // 안전 영역 아래로 밀어 overlay 전체가 카메라 구멍을 피해 시작되도록.
-  // 배경색 = TPO 상단 배너(bg-[#1e6b73]) 와 동일한 teal.
-  // 상단 safe-area 영역이 이 색으로 채워져 배너가 아래로 자연스럽게 이어진
-  // 것처럼 보임 (대안: 흰색/랜딩 배경이 보여 튀는 것을 방지).
   style.textContent = `
-    html:fullscreen, html:-webkit-full-screen {
-      background: #1e6b73;
-    }
-    html:fullscreen body, html:-webkit-full-screen body {
-      background: #1e6b73;
-    }
     html:fullscreen .fixed.inset-0,
     html:-webkit-full-screen .fixed.inset-0 {
       top: max(env(safe-area-inset-top, 0px), 28px) !important;
@@ -101,6 +91,54 @@ function installSafeAreaStyle(): void {
     }
   `;
   document.head.appendChild(style);
+}
+
+/** Fullscreen 상단의 safe-area 영역(카메라/노치)이 항상 TPO 상단 배너와 같은
+ *  teal 색으로 보이도록, 최상위 z-index 로 색 바를 하나 덮는다.
+ *  body 배경이나 html 배경이 아닌 "실제 색 바" 로 덮기 때문에 뒤에 어떤
+ *  랜딩/TPO 리스트 화면이 그려져 있어도 비치지 않는다. */
+function installTopCover(): void {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(TOP_COVER_ID)) return;
+  const bar = document.createElement('div');
+  bar.id = TOP_COVER_ID;
+  bar.setAttribute('aria-hidden', 'true');
+  bar.style.cssText = [
+    'position:fixed',
+    'top:0',
+    'left:0',
+    'right:0',
+    'height:max(env(safe-area-inset-top, 0px), 28px)',
+    `background:${TOP_BANNER_COLOR}`,
+    'z-index:2147483647', // 가능한 최대값
+    'pointer-events:none',
+    // 시각적으로 상단 배너와 자연스럽게 이어지도록 그림자 없음.
+    'box-shadow:none',
+  ].join(';');
+  document.body.appendChild(bar);
+}
+
+function removeTopCover(): void {
+  const el = document.getElementById(TOP_COVER_ID);
+  if (el) el.remove();
+}
+
+let fsChangeHandler: (() => void) | null = null;
+/** fullscreen 상태가 바뀌면 top cover 자동 설치/제거 */
+function installFullscreenChangeListener(): void {
+  if (fsChangeHandler || typeof document === 'undefined') return;
+  fsChangeHandler = () => {
+    if (isFullscreen()) installTopCover();
+    else removeTopCover();
+  };
+  document.addEventListener('fullscreenchange', fsChangeHandler);
+  document.addEventListener('webkitfullscreenchange', fsChangeHandler);
+}
+function removeFullscreenChangeListener(): void {
+  if (!fsChangeHandler) return;
+  document.removeEventListener('fullscreenchange', fsChangeHandler);
+  document.removeEventListener('webkitfullscreenchange', fsChangeHandler);
+  fsChangeHandler = null;
 }
 
 function removeSafeAreaStyle(): void {
@@ -123,6 +161,9 @@ function installFullscreenGestureTrigger(): void {
     cleanupGestureTrigger();
     // Fullscreen 상태라도 스크롤 트릭을 한 번 더 — URL바가 혹시 남아 있으면 접기.
     scrollToHide();
+    // Fullscreen 이 성공하면(비동기) fullscreenchange 리스너가 top cover 를 깐다.
+    // Fullscreen 거부/즉시 성공 모두 대응 — 여기서도 한번 시도.
+    if (isFullscreen()) installTopCover();
   };
   gestureListenersInstalled = true;
   // 사용자 제스처 안에서 실행되어야 함 → capture 단계로 가장 먼저 잡는다.
@@ -209,6 +250,10 @@ export function hideMobileBrowserChrome(): void {
   if (!isMobileViewport()) return;
 
   installSafeAreaStyle();
+  installFullscreenChangeListener();
+  // 이미 fullscreen 상태면 top cover 즉시 설치 (스크롤 트릭만으로는 안 생기지만,
+  // 이전 세션 상태를 그대로 받은 경우 대비).
+  if (isFullscreen()) installTopCover();
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -245,6 +290,8 @@ export function restoreBrowserChrome(): void {
   if (typeof document === 'undefined') return;
   detachKeepHidden();
   cleanupGestureTrigger();
+  removeTopCover();
+  removeFullscreenChangeListener();
   const spacer = document.getElementById(SPACER_ID);
   if (spacer) spacer.remove();
   removeSafeAreaStyle();
