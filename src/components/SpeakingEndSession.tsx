@@ -8,9 +8,11 @@ interface SpeakingEndSessionProps {
   onHome: () => void;
   onFinish: () => void;
   testData: TPOTest | null;
+  /** Speaking Review 모드에서만 PDF/단어 시험지 다운로드 섹션을 노출한다. */
+  isReviewMode?: boolean;
 }
 
-export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSessionProps) {
+export function SpeakingEndSession({ onHome, onFinish, testData, isReviewMode = false }: SpeakingEndSessionProps) {
   const [recordings, setRecordings] = useState<Record<string, string>>({});
   const [pdfMenuOpen, setPdfMenuOpen] = useState(false);
   const [vocabMenuOpen, setVocabMenuOpen] = useState(false);
@@ -125,9 +127,12 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
                 </div>
               )}
 
-              <p>You can download the full test materials created from the CMS content for this test.</p>
+              {isReviewMode && (
+                <p>You can download the full test materials created from the CMS content for this test.</p>
+              )}
 
-              {/* PDF Download Section — 탭 형태 */}
+              {/* PDF Download Section — Speaking Review 모드에서만 노출 */}
+              {isReviewMode && (
               <div className="rounded-2xl border border-gray-200 bg-white px-5 py-5">
                 {/* 탭 버튼 그룹 */}
                 <div className="flex gap-1 border-b-2 border-gray-200 mb-4">
@@ -312,6 +317,7 @@ export function SpeakingEndSession({ onHome, onFinish, testData }: SpeakingEndSe
                   </div>
                 )}
               </div>
+              )}
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
                 🔒 녹음 파일은 서비스 운영 및 개인정보 보호를 위해 <strong className="text-gray-600">10일 후 자동 파기</strong>됩니다.

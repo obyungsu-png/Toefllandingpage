@@ -255,7 +255,7 @@ export function SpeakingSectionWrapper({
       );
     }
     if (screen === 'end-session') {
-      return <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} />;
+      return <SpeakingEndSession onHome={onHome} onFinish={onComplete} testData={testData} isReviewMode={isReviewMode} />;
     }
 
     // Listen and Repeat: listen + record phases

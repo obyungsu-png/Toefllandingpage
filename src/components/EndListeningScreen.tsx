@@ -251,8 +251,10 @@ const EndListeningScreen: React.FC<EndListeningScreenProps> = ({
             </button>
           </div>
 
-          {/* PDF Download Section — 탭 형태 */}
-          {testData && (
+          {/* PDF Download Section — Listening 종료 화면에선 노출하지 않음.
+              사용자 요청: PDF/단어 시험지 다운로드는 Speaking Review 마지막
+              화면에서만 접근 가능하게 한다. */}
+          {false && testData && (
             <div className="mt-8 w-full">
               {/* 탭 버튼 그룹 */}
               <div className="flex gap-1 border-b-2 border-gray-200 mb-4">
