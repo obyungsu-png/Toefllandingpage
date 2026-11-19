@@ -45,6 +45,8 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
 
   // Review mode only: manual record start on button press
   const handleManualRecord = async () => {
+    if (startedRef.current || isRecording) return;
+    startedRef.current = true;
     uploadedRef.current = false;
     setShowStopOverlay(false);
     setTimeRemaining(duration || 8);
@@ -66,7 +68,7 @@ export function SpeakingQ2Record({ onNext, onHome, imageUrl, questionText, respo
               setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             } else {
               // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
+              setTimeout(() => { setShowStopOverlay(false); startedRef.current = false; }, 1800);
             }
             return 0;
           }

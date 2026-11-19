@@ -46,6 +46,8 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
 
   // Review mode only: manual record start on button press
   const handleManualRecord = async () => {
+    if (startedRef.current || isRecording) return;
+    startedRef.current = true;
     uploadedRef.current = false;
     setShowStopOverlay(false);
     setTimeRemaining(duration || 10);
@@ -67,7 +69,7 @@ export function SpeakingQ5Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
               setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             } else {
               // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
+              setTimeout(() => { setShowStopOverlay(false); startedRef.current = false; }, 1800);
             }
             return 0;
           }

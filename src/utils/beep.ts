@@ -11,8 +11,8 @@ let lastBeepAt = 0;
 
 export function playBeep(freq = 880, duration = 300, volume = 1.0): Promise<void> {
   const now = Date.now();
-  // 직전 beep로부터 (duration + 여유 150ms) 이내의 중복 호출은 무시
-  if (now - lastBeepAt < duration + 150) {
+  // 동일한 녹음 시작 전환에서 발생한 중복 beep를 억제한다.
+  if (now - lastBeepAt < duration + 1200) {
     return Promise.resolve();
   }
   lastBeepAt = now;

@@ -47,9 +47,8 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     const startDelayAndBeep = () => {
       if (startedRef.current) return; // 이미 예약됨 — 중복 호출 무시
       startedRef.current = true;
-      // 질문이 끝난 뒤 0.5초 뒤 삐 소리와 함께 녹음 시작 — 사용자 요청.
-      // CMS 가 responseDelay 를 지정했으면 그 값을 쓰고, 아니면 500ms.
-      const delay = responseDelay ? responseDelay * 1000 : 500;
+      // CMS가 responseDelay를 지정하면 500ms를 줄이고, 기본값은 즉시 시작한다.
+      const delay = Math.max(0, (responseDelay ?? 0.5) * 1000 - 500);
       startTimer = setTimeout(async () => {
         await playBeep();
         setIsRecording(true);
@@ -97,6 +96,8 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
 
   // Review mode only: manual record start on button press
   const handleManualRecord = async () => {
+    if (startedRef.current || isRecording) return;
+    startedRef.current = true;
     uploadedRef.current = false;
     setShowStopOverlay(false);
     setTimeRemaining(duration || 8);
@@ -118,7 +119,7 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
               setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
             } else {
               // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
+              setTimeout(() => { setShowStopOverlay(false); startedRef.current = false; }, 1800);
             }
             return 0;
           }
