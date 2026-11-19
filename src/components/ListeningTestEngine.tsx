@@ -995,14 +995,13 @@ function ListeningQuestionScreen({
             )}
 
             {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 질문+옵션 오른쪽) */}
-            {/* Conversation 그룹(Short/Campus Conversation)은 TPO 2처럼 더 큰 이미지 사용 */}
+            {/* 문제 이미지는 유형에 관계없이 같은 크기로 표시 */}
             {(() => {
-              const isConversation = ['Short Conversation', 'Campus Conversation'].includes(question?.questionType || '');
-              const imgWidth = isConversation ? '460px' : '280px';
-              const imgLeft = isConversation ? '12%' : '18%';
-              const imgMaxHeight = isConversation ? '560px' : '480px';
-              const optLeft = imageUrl ? (isConversation ? '56%' : '51%') : '10%';
-              const optWidth = imageUrl ? (isConversation ? '38%' : '42%') : '80%';
+              const imgWidth = '280px';
+              const imgLeft = '18%';
+              const imgMaxHeight = '480px';
+              const optLeft = imageUrl ? '51%' : '10%';
+              const optWidth = imageUrl ? '42%' : '80%';
               return (
                 <div className="relative" style={{minHeight: '420px'}}>
                   {imageUrl && (

@@ -511,11 +511,11 @@ function QuestionScreen({
 
             <div className="relative" style={{minHeight: '420px'}}>
               {displayImage && (
-                <div style={{position: 'absolute', left: [9,10,11,12].includes(data.questionNum) ? '12%' : '18%', top: 0, width: [9,10,11,12].includes(data.questionNum) ? '460px' : '280px'}}>
-                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: [9,10,11,12].includes(data.questionNum) ? '560px' : '480px'}} />
+                <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
+                  <img src={displayImage} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: '480px'}} />
                 </div>
               )}
-              <div style={{position: 'absolute', left: displayImage ? ([9,10,11,12].includes(data.questionNum) ? '56%' : '51%') : '10%', top: '8px', width: displayImage ? ([9,10,11,12].includes(data.questionNum) ? '38%' : '42%') : '80%'}}>
+              <div style={{position: 'absolute', left: displayImage ? '51%' : '10%', top: '8px', width: displayImage ? '42%' : '80%'}}>
                 <div className="space-y-7">
                   {displayOptions.map((option, index) => (
                     <RadioOption
@@ -865,7 +865,8 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
   // Restore progress on mount
   useEffect(() => {
     if (savedProgress && savedProgress.currentScreen) {
-      setCurrentScreen(savedProgress.currentScreen as M1Screen);
+      const restoredScreen = savedProgress.currentScreen as M1Screen;
+      setCurrentScreen(restoredScreen);
     }
   }, []);
 
@@ -962,8 +963,8 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
 
       {currentScreen === 'intro' && <IntroScreen onHome={onHome} onNext={goNext} />}
       {currentScreen === 'm1-intro' && <Module1IntroScreen onHome={onHome} onBack={goBack} onNext={goNext} skipSpeech={isRestored} />}
-      {currentScreen === 'end-m1' && <EndModule1Screen onHome={onHome} onBack={goBack} onNext={goNext} />}
       {currentScreen === 'module2-intro' && <Module2IntroScreen onHome={onHome} onBack={goBack} onNext={goNext} />}
+      {currentScreen === 'end-m1' && <EndModule1Screen onHome={onHome} onBack={goBack} onNext={goNext} />}
 
       {/* Interstitial screens */}
       {interstitialData[currentScreen] && (() => {
@@ -984,7 +985,7 @@ export function ListeningM1Wrapper({ initialScreen, onHome, onComplete, onScreen
             cmsImageUrl={cmsQ?.imageUrl}
             cmsAudioUrl={cmsQ?.audioUrl}
             cmsTitle={(cmsQ as any)?.interstitialTitle || undefined}
-            isLarge={currentScreen === 'conversation' || currentScreen === 'conversation2'}
+            isLarge={true}
             onHome={onHome}
             onBack={goBack}
             onNext={goNext}

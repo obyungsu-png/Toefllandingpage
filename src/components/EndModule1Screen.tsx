@@ -1,5 +1,5 @@
 import React from 'react';
-import { MobileQuestionNav } from './MobileQuestionNav';
+import { SectionCompletionScreen } from './SectionCompletionScreen';
 import { readingRawToBand, scaleRawScore } from '../utils/bandScore';
 
 interface ScoreData {
@@ -51,52 +51,23 @@ const EndModule1Screen: React.FC<EndModule1ScreenProps> = ({
   const bandScore = convertToBand(toeflEstimate);
   const cefrLevel = getCEFRLevel(bandScore);
 
+  const handleHome = () => {
+    setShowEndModule1(false);
+    handleTabChange(testBankType === 'tpo' ? 'TPO' : 'Test');
+  };
+  const handleNext = () => {
+    setShowEndModule1(false);
+    saveSectionResultToHistory('Reading', 20, 1);
+    setShowModule2(true);
+  };
+  const handleBack = () => {
+    setShowEndModule1(false);
+    setShowModule1Question20(true);
+  };
+
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-[#1e6b73] h-14 md:h-16 flex items-center justify-between px-3 md:px-8 shadow-lg">
-        <div className="flex items-center">
-          <div 
-            className="text-white text-base md:text-2xl font-['Inter',_sans-serif] font-bold tracking-wide cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5"
-            onClick={() => {
-              setShowEndModule1(false);
-              if (testBankType === 'tpo') {
-                handleTabChange('TPO');
-              } else {
-                handleTabChange('Test');
-              }
-            }}
-           title="홈으로 이동" role="button" aria-label="홈으로 이동"><svg className="w-4 h-4 md:w-5 md:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-5.5h4V20"/></svg><span>*toefl ibt</span></div>
-        </div>
-        <div className="flex items-center gap-1.5 md:gap-3">
-          {/* Next Button */}
-          <button 
-            className="flex items-center gap-1 md:gap-2 bg-white border-2 border-[#0A6068] rounded-lg px-2.5 py-1.5 md:px-5 md:py-2 hover:bg-gray-100 transition-colors"
-            onClick={() => {
-              setShowEndModule1(false);
-              const result = saveSectionResultToHistory('Reading', 20, 1);
-              setShowModule2(true);
-            }}
-          >
-            <span className="text-[#0A6068] font-['Inter',_sans-serif] font-semibold text-xs md:text-base">Next</span>
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#0A6068">
-              <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Tab */}
-      <div className="bg-white border-b border-gray-300">
-        <div className="px-8 py-3">
-          <div className="text-gray-700 font-['Inter',_sans-serif] font-bold">
-            Reading — Module 1 (Complete Words)
-          </div>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 p-12 overflow-auto bg-white flex items-center justify-center">
+    <SectionCompletionScreen section="Reading — Module 1" onHome={handleHome} onBack={handleBack} onNext={handleNext}>
+      <div className="min-h-full p-6 md:p-12 bg-white flex items-center justify-center">
         <div className="max-w-lg mx-auto text-center px-6">
           {/* Check icon */}
           <div className={`w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center ${
@@ -165,26 +136,7 @@ const EndModule1Screen: React.FC<EndModule1ScreenProps> = ({
           )}
         </div>
       </div>
-      
-      <MobileQuestionNav 
-        onBack={() => {
-          setShowEndModule1(false);
-          setShowModule1Question20(true);
-        }}
-        onHome={() => {
-          setShowEndModule1(false);
-          if (testBankType === 'tpo') {
-            handleTabChange('TPO');
-          } else {
-            handleTabChange('Test');
-          }
-        }}
-        onNext={() => {
-          setShowEndModule1(false);
-          setShowModule2(true);
-        }}
-      />
-    </div>
+    </SectionCompletionScreen>
   );
 };
 
