@@ -61,8 +61,10 @@ function getGroupIntroData(category: GroupCategory): { title: string } {
   }
 }
 
-/** 인트로와 문제 화면이 함께 쓰는 사진 틀 — 모바일 220 / 태블릿 300 / PC 380 정사각 */
+/** 문제 화면 사진 틀 — 모바일 220 / 태블릿 300 / PC 380 정사각 */
 const LISTENING_IMAGE_FRAME = 'w-[220px] h-[220px] md:w-[300px] md:h-[300px] lg:w-[380px] lg:h-[380px]';
+/** 대화·공지·강의 인트로 사진 틀 — 문제 화면보다 약간 크게: 모바일 260 / 태블릿 340 / PC 440 */
+const LISTENING_INTRO_IMAGE_FRAME = 'w-[260px] h-[260px] md:w-[340px] md:h-[340px] lg:w-[440px] lg:h-[440px]';
 
 /** 문항 화면에서 오디오 재생 중 여부 (전역) — 재생 중에는 자동 다음 이동 금지 */
 let listeningAudioActive = false;
@@ -590,31 +592,31 @@ function GroupIntroScreen({
 
       {/* Main content — 오디오 + 이미지 */}
       <div className="flex-1 flex flex-col p-4 md:p-8 overflow-auto bg-white border border-black">
-        <h1 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 md:mb-8 text-center mt-4">
+        {/* 모바일에서는 공지 제목이 두 줄이 되므로 두 줄 높이를 확보해 세 인트로 배치를 맞춤 */}
+        <h1 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-4 text-center mt-4 min-h-[4rem] md:min-h-0 flex items-center justify-center">
           {title}
         </h1>
-        <div className="flex-1 flex flex-col justify-center items-center gap-6">
-          {/* 오디오 재생 버튼 */}
-          {audioUrl && (
-            <div className="flex justify-center">
-              <button
-                onClick={handleReplay}
-                disabled={isPlaying}
-                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
-                  isPlaying
-                    ? 'bg-[#0d9488] text-white cursor-not-allowed'
-                    : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
-                }`}
-              >
-                <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
-                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-              </button>
-            </div>
-          )}
+        {/* 제목 바로 아래 Play Audio → 사진. 대화·공지·강의 인트로 모두 같은 배치 */}
+        <div className="flex flex-col items-center gap-5">
+          {/* 오디오 재생 버튼 — 오디오가 없어도 자리는 유지해 사진 위치가 같게 */}
+          <div className={`flex justify-center ${audioUrl ? '' : 'invisible'}`} aria-hidden={!audioUrl}>
+            <button
+              onClick={handleReplay}
+              disabled={isPlaying || !audioUrl}
+              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
+                isPlaying
+                  ? 'bg-[#0d9488] text-white cursor-not-allowed'
+                  : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'
+              }`}
+            >
+              <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
+              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+            </button>
+          </div>
 
-          {/* 이미지 — 문제 화면과 같은 틀 */}
+          {/* 이미지 */}
           {imageUrl && (
-            <div className={`${LISTENING_IMAGE_FRAME} shrink-0 flex items-center justify-center`}>
+            <div className={`${LISTENING_INTRO_IMAGE_FRAME} shrink-0 flex items-center justify-center`}>
               <img src={imageUrl} alt={title} className="w-full h-full object-contain" />
             </div>
           )}
