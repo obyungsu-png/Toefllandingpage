@@ -27,6 +27,14 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
   useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
+    // 다음 화면 전환은 한 번만 — 오디오 종료·오류·안전망 중 먼저 오는 것
+    let advanced = false;
+    const advance = (delay: number) => {
+      if (advanced || isReviewMode) return;
+      advanced = true;
+      advanceTimerRef.current = setTimeout(() => onNextRef.current?.(), delay);
+    };
+
     // ── Real audio from CMS ──────────────────────────────────────────────────
     if (introAudioUrl) {
       const audio = createCachedAudioSync(introAudioUrl);
@@ -35,17 +43,19 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
       audio.onplay  = () => setIsAudioPlaying(true);
       audio.onended = () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) advanceTimerRef.current = setTimeout(() => onNextRef.current?.(), 500);
+        advance(500);
       };
       audio.onerror = () => {
-        // fallback to TTS if audio fails
         setIsAudioPlaying(false);
-        if (!isReviewMode) onNextRef.current?.();
+        advance(0);
       };
 
-      const t = setTimeout(() => audio.play().catch(() => { if (!isReviewMode) onNextRef.current?.(); }), 500);
+      const t = setTimeout(() => audio.play().catch(() => advance(0)), 500);
+      // 안전망 — 오디오가 60초 안에 끝나지 않으면 진행
+      const safety = setTimeout(() => advance(0), 60_000);
       return () => {
         clearTimeout(t);
+        clearTimeout(safety);
         if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
         audio.pause();
         audio.src = '';
@@ -54,17 +64,28 @@ export function SpeakingQ1({ onNext, onHome, imageUrl, introAudioUrl, introText,
 
     // ── TTS fallback (no CMS audio) ──────────────────────────────────────────
     const textToRead = introText || questionText;
-    if (!textToRead) return;
+    if (!textToRead) {
+      // CMS 데이터가 비어 있어도 멈추지 않고 다음 문제로
+      advance(800);
+      return () => { if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current); };
+    }
 
     setIsAudioPlaying(true);
-    return speakWithBritishFemaleVoice({
+    const stopTts = speakWithBritishFemaleVoice({
       text: textToRead,
       onstart: () => setIsAudioPlaying(true),
       onend: () => {
         setIsAudioPlaying(false);
-        if (!isReviewMode) advanceTimerRef.current = setTimeout(() => onNextRef.current?.(), 500);
+        advance(500);
       },
     });
+    // 안전망 — 일부 모바일 브라우저는 TTS onend 가 오지 않음. 글자 수 기준 넉넉히 기다린 뒤 진행
+    const ttsSafety = setTimeout(() => advance(0), Math.max(20_000, textToRead.length * 120));
+    return () => {
+      clearTimeout(ttsSafety);
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+      stopTts();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [introAudioUrl, introText, questionText]);
 

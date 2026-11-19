@@ -7,6 +7,7 @@ import { useAudioRecorder } from './useAudioRecorder';
 import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
 import { MobileSectionHeader } from './MobileSectionHeader';
+import { resolveStopDelayMs } from '../utils/speakingTiming';
 
 interface SpeakingQ8RecordProps {
   onNext: () => void;
@@ -38,6 +39,8 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
   const recorder = useAudioRecorder();
   const uploadedRef = useRef(false);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep 중복 방지)
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     if (isReviewMode) return; // Review mode: wait for manual Record button click
@@ -69,29 +72,30 @@ export function SpeakingQ8Record({ onNext, onHome, onVolumeClick, isVolumeOpen, 
     recorder.startRecording();
   };
 
+  // 카운트다운 — 녹음 종료와 다음 화면 전환은 업데이터 밖에서 처리 (SpeakingQ1Record 와 동일).
   useEffect(() => {
-    if (isRecording && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsRecording(false);
-            recorder.stopRecording();
-            setShowStopOverlay(true);
-            if (!isReviewMode) {
-              setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
-            } else {
-              // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => setShowStopOverlay(false), 1800);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
+    if (!isRecording) return;
+    if (timeRemaining <= 0) {
+      setIsRecording(false);
+      recorder.stopRecording();
+      setShowStopOverlay(true);
+      return;
     }
-  }, [isRecording, timeRemaining, onNext]);
+    const timer = setInterval(() => setTimeRemaining(prev => (prev > 0 ? prev - 1 : 0)), 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRecording, timeRemaining]);
+
+  // Stop 오버레이가 뜨면 다음 화면으로. Review 모드는 잠깐 보여주고 숨김.
+  useEffect(() => {
+    if (!showStopOverlay) return;
+    if (isReviewMode) {
+      const hide = setTimeout(() => setShowStopOverlay(false), 1800);
+      return () => clearTimeout(hide);
+    }
+    const advance = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
+    return () => clearTimeout(advance);
+  }, [showStopOverlay, isReviewMode, stopDuration]);
 
   useEffect(() => {
     if (showStopOverlay && recorder.audioBlob && !uploadedRef.current) {

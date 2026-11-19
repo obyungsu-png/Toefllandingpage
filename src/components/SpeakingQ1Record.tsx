@@ -8,6 +8,7 @@ import { playBeep } from '../utils/beep';
 import { uploadRecording } from '../utils/uploadRecording';
 import { MobileSectionHeader } from './MobileSectionHeader';
 import { createCachedAudioSync } from '../utils/mediaCache';
+import { resolveStopDelayMs } from '../utils/speakingTiming';
 
 interface SpeakingQ1RecordProps {
   onNext: () => void;
@@ -36,6 +37,8 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
   const uploadedRef = useRef(false);
   const promptAudioRef = useRef<HTMLAudioElement | null>(null);
   const startedRef = useRef(false); // 자동 녹음 시작을 한 번만 (beep/녹음 중복 방지)
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   // Play the prompt audio first, THEN wait 0.5s, THEN beep
   useEffect(() => {
@@ -106,31 +109,32 @@ export function SpeakingQ1Record({ onNext, onHome, imageUrl, audioUrl, questionT
     recorder.startRecording();
   };
 
+  // 카운트다운 — interval 은 숫자만 줄이고, 녹음 종료는 effect 본문에서 처리.
+  // setState 업데이터 안에서 setTimeout 을 걸면 React 가 업데이터를 재실행·폐기할 때
+  // 다음 화면 전환이 유실되거나 중복돼 Stop Speaking 화면에 멈출 수 있다.
   useEffect(() => {
-    if (isRecording && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsRecording(false);
-            recorder.stopRecording();
-            setShowStopOverlay(true);
-            if (!isReviewMode) {
-              setTimeout(() => onNext(), stopDuration ? stopDuration * 1000 : 3000);
-            } else {
-              // Review mode: show briefly, then hide — do NOT auto-advance
-              setTimeout(() => { setShowStopOverlay(false); startedRef.current = false; }, 1800);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+    if (!isRecording) return;
+    if (timeRemaining <= 0) {
+      setIsRecording(false);
+      recorder.stopRecording();
+      setShowStopOverlay(true);
+      return;
     }
+    const timer = setInterval(() => setTimeRemaining(prev => (prev > 0 ? prev - 1 : 0)), 1000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRecording, timeRemaining, onNext]);
+  }, [isRecording, timeRemaining]);
+
+  // Stop 오버레이가 뜨면 다음 화면으로. Review 모드는 잠깐 보여준 뒤 숨기고 다시 녹음 가능.
+  useEffect(() => {
+    if (!showStopOverlay) return;
+    if (isReviewMode) {
+      const hide = setTimeout(() => { setShowStopOverlay(false); startedRef.current = false; }, 1800);
+      return () => clearTimeout(hide);
+    }
+    const advance = setTimeout(() => onNextRef.current(), resolveStopDelayMs(stopDuration));
+    return () => clearTimeout(advance);
+  }, [showStopOverlay, isReviewMode, stopDuration]);
 
   // Upload recording when blob is ready after stop
   useEffect(() => {
