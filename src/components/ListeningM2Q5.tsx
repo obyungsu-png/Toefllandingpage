@@ -137,17 +137,17 @@ export function ListeningM2Q5({ onBack, onNext, onHome, onVolumeClick, imageUrl,
               className="w-40 h-auto object-contain mb-6"
             />
             
-            {/* Play Audio Button */}
-            {audioUrl && (
-              <button
-                onClick={handlePlayAudio}
-                disabled={isPlaying}
-                className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base mb-6 transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
-              >
-                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
-                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-              </button>
-            )}
+            {/* Play Audio Button — audioUrl 없을 때도 레이아웃 유지 */}
+            <button
+              onClick={handlePlayAudio}
+              disabled={!audioUrl || isPlaying}
+              aria-hidden={!audioUrl}
+              tabIndex={audioUrl ? 0 : -1}
+              className={`flex items-center gap-3 px-8 py-3 rounded-full font-semibold text-base mb-6 transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'} ${!audioUrl ? 'invisible pointer-events-none' : ''}`}
+            >
+              <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
+              <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+            </button>
 
             <h2 className="text-lg font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 text-center px-4">
               {questionText || "Choose the best response."}
@@ -179,19 +179,19 @@ export function ListeningM2Q5({ onBack, onNext, onHome, onVolumeClick, imageUrl,
 
           {/* Desktop: Original layout */}
           <div className="hidden md:block">
-            {/* Play Audio Button - Desktop */}
-            {audioUrl && (
-              <div className="flex justify-center mb-8">
-                <button
-                  onClick={handlePlayAudio}
-                  disabled={isPlaying}
-                  className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
-                >
-                  <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
-                  <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
-                </button>
-              </div>
-            )}
+            {/* Play Audio Button - Desktop — audioUrl 없을 때도 레이아웃 유지 */}
+            <div className={`flex justify-center mb-8 ${!audioUrl ? 'invisible pointer-events-none' : ''}`}>
+              <button
+                onClick={handlePlayAudio}
+                disabled={!audioUrl || isPlaying}
+                aria-hidden={!audioUrl}
+                tabIndex={audioUrl ? 0 : -1}
+                className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${isPlaying ? 'bg-[#0d9488] text-white cursor-not-allowed' : 'bg-[#f0f0f0] text-[#1e293b] hover:bg-[#e2e8f0]'}`}
+              >
+                <span style={{fontSize:'0px',width:0,height:0,borderStyle:'solid',borderWidth:'7px 0 7px 12px',borderColor:`transparent transparent transparent ${isPlaying?'white':'#1e293b'}`,display:'inline-block'}} />
+                <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
+              </button>
+            </div>
                         <h2 className="text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-8 text-center">{questionText || "Choose the best response."}</h2>
             <div className="relative" style={{minHeight: '420px'}}>
               <div style={{position: 'absolute', left: '18%', top: 0, width: '280px'}}>
