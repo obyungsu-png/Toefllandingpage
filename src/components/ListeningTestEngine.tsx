@@ -35,27 +35,34 @@ const sortByNumber = (a: any, b: any) => {
 // ============================================================================
 // getGroupIntroData — questionType별 그룹 인트로 데이터
 // ============================================================================
-function getGroupIntroData(questionType: string): { title: string } {
-  switch (questionType) {
-    case 'Short Conversation':
-    case 'Campus Conversation':
+type GroupCategory = 'conversation' | 'announcement' | 'lecture';
+
+/** 지문 공유형 문항(대화/안내방송/강의) 판별 — 인트로에서 지문 오디오를 재생하고
+ *  문항 화면에서는 재생 버튼을 숨긴다. CSV 업로드 등으로 유형명이 조금 달라도
+ *  ('Academic Talks', 'Conversation 1' 등) 같은 그룹으로 인식한다.
+ *  Listen and Response/Choose a Response는 문항마다 개별 오디오라 제외. */
+function getGroupCategory(questionType: string): GroupCategory | null {
+  const t = (questionType || '').toLowerCase();
+  if (/listen\s*and\s*response|choose\s*a\s*response/.test(t)) return null;
+  if (t.includes('conversation')) return 'conversation';
+  if (t.includes('announcement')) return 'announcement';
+  if (t.includes('lecture') || t.includes('talk')) return 'lecture';
+  return null;
+}
+
+function getGroupIntroData(category: GroupCategory): { title: string } {
+  switch (category) {
+    case 'conversation':
       return { title: 'Listen to a conversation.' };
-    case 'Announcements':
+    case 'announcement':
       return { title: 'Listen to an announcement in a classroom.' };
-    case 'Academic Talk':
-    case 'Academic Lecture':
+    case 'lecture':
       return { title: 'Listen to an academic lecture.' };
-    case 'Listen and Response':
-      return { title: 'Listen and choose a response.' };
-    default:
-      return { title: 'Listen carefully.' };
   }
 }
 
-/** 지문 공유형 문항(대화/안내방송/강의) — 인트로에서 지문 오디오를 1회 재생하고
- *  개별 문항 화면에서는 재생 버튼을 숨긴다. Listen and Response/Choose a Response는
- *  문항마다 개별 오디오가 있으므로 그룹에서 제외. */
-const GROUP_AUDIO_TYPES = ['Short Conversation', 'Campus Conversation', 'Announcements', 'Academic Talk', 'Academic Lecture'];
+/** 인트로와 문제 화면이 함께 쓰는 사진 틀 — 모바일 220 / 태블릿 300 / PC 380 정사각 */
+const LISTENING_IMAGE_FRAME = 'w-[220px] h-[220px] md:w-[300px] md:h-[300px] lg:w-[380px] lg:h-[380px]';
 
 /** 문항 화면에서 오디오 재생 중 여부 (전역) — 재생 중에는 자동 다음 이동 금지 */
 let listeningAudioActive = false;
@@ -100,7 +107,7 @@ export function ListeningTestEngine({
     | { kind: 'section-intro'; legacyKey: string }
     | { kind: 'module-intro'; legacyKey: string }
     | { kind: 'group-intro'; title: string; imageUrl: string; audioUrl?: string; questionType: string; legacyKey: string }
-    | { kind: 'question'; question: any; suppressAudio?: boolean; legacyKey: string };
+    | { kind: 'question'; question: any; suppressAudio?: boolean; fallbackImageUrl?: string; legacyKey: string };
 
   const segments: Segment[] = [];
 
@@ -112,37 +119,54 @@ export function ListeningTestEngine({
   // Module 안내 페이지
   segments.push({ kind: 'module-intro', legacyKey: module === 2 ? 'm2-intro' : 'm1-intro' });
 
-  // 질문 + 그룹 인트로 (같은 지문 오디오를 공유하는 문항 묶음마다 인트로 페이지 삽입)
-  // - 대화/안내방송/강의(GROUP_AUDIO_TYPES)는 인트로 화면에서 지문 오디오를 1회 재생하고
-  //   이후 개별 문항 화면에서는 재생 버튼을 숨김·자동재생도 하지 않는다.
-  // - 새 지문 판정: 유형이 바뀌거나, 오디오 파일이 이전 문항과 다를 때 (첫 문항 포함).
-  //   오디오가 비어 있으면 이전 문항과 같은 지문으로 간주 (그룹의 2번째 문항).
-  let prevQuestionType: string | null = null;
-  let prevAudioUrl: string | null = null;
+  // 질문 + 그룹 인트로 — 대화/안내방송/강의는 항상 "인트로(지문 오디오 재생) → 문제" 순서.
+  // 문제 화면에서는 시험·리뷰 모두 재생 버튼을 숨기고 자동재생도 하지 않는다.
+  // 새 지문 판정 (첫 문항 포함):
+  //   - 그룹 유형이 바뀌면 새 지문
+  //   - introAudioUrl 이 있으면 그 값이 현재 지문과 다를 때만 새 지문
+  //   - introAudioUrl 로 시작된 지문 안에서는 문항별 audioUrl 이 달라도 같은 지문
+  //     (문항마다 질문 낭독 오디오가 있어도 인트로가 반복 삽입되지 않도록)
+  //   - introAudioUrl 을 쓰지 않는 예전 데이터는 audioUrl 이 바뀔 때 새 지문
+  let groupCategory: GroupCategory | null = null;
+  let groupAudioUrl = '';
+  let groupUsesIntroAudio = false;
+  let groupImageUrl = '';
   let questionIdx = 0;
   moduleQuestions.forEach((q) => {
-    const qt = q?.questionType || '';
-    const groupAudioUrl: string = q?.introAudioUrl || q?.audioUrl || '';
-    const isGroupType = GROUP_AUDIO_TYPES.includes(qt);
-    const isNewPassage = isGroupType && (qt !== prevQuestionType || (!!groupAudioUrl && groupAudioUrl !== prevAudioUrl));
-    if (isNewPassage) {
-      const intro = getGroupIntroData(qt);
+    const category = getGroupCategory(q?.questionType || '');
+    const introAudio: string = (q?.introAudioUrl || '').trim();
+    const plainAudio: string = (q?.audioUrl || '').trim();
+    let isNewPassage = false;
+    if (category) {
+      if (category !== groupCategory) isNewPassage = true;
+      else if (introAudio) isNewPassage = introAudio !== groupAudioUrl;
+      else if (plainAudio && !groupUsesIntroAudio) isNewPassage = plainAudio !== groupAudioUrl;
+    }
+    if (isNewPassage && category) {
+      groupAudioUrl = introAudio || plainAudio;
+      groupUsesIntroAudio = !!introAudio;
+      groupImageUrl = q?.introImageUrl || q?.imageUrl || '';
       segments.push({
         kind: 'group-intro',
-        title: intro.title,
-        imageUrl: q?.introImageUrl || q?.imageUrl || '',
+        title: getGroupIntroData(category).title,
+        imageUrl: groupImageUrl,
         audioUrl: groupAudioUrl,
-        questionType: qt,
+        questionType: q?.questionType || '',
         legacyKey: `group-intro-${questionIdx}`,
       });
     }
-    prevQuestionType = qt;
-    prevAudioUrl = groupAudioUrl || prevAudioUrl;
+    groupCategory = category;
+    if (!category) {
+      groupAudioUrl = '';
+      groupUsesIntroAudio = false;
+      groupImageUrl = '';
+    }
     segments.push({
       kind: 'question',
       question: q,
-      // 같은 지문을 공유하는 그룹 문항은 시험 모드에서 재생 버튼 숨김(인트로에서 이미 재생)
-      suppressAudio: isGroupType && !isReviewMode,
+      suppressAudio: !!category,
+      // 그룹 문항에 사진이 없으면 인트로 사진을 그대로 써서 틀이 흔들리지 않게 한다
+      fallbackImageUrl: category ? groupImageUrl : undefined,
       legacyKey: module === 2 ? `m2q${questionIdx + 1}` : `q${questionIdx + 1}`,
     });
     questionIdx++;
@@ -306,6 +330,7 @@ export function ListeningTestEngine({
         onNext={goNext}
         isReviewMode={isReviewMode}
         suppressAudio={current.suppressAudio}
+        fallbackImageUrl={current.fallbackImageUrl}
       />
     </div>
   );
@@ -563,7 +588,7 @@ function GroupIntroScreen({
         </div>
       </div>
 
-      {/* Main content — 큰 이미지 + 오디오 */}
+      {/* Main content — 오디오 + 이미지 */}
       <div className="flex-1 flex flex-col p-4 md:p-8 overflow-auto bg-white border border-black">
         <h1 className="text-2xl md:text-3xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 md:mb-8 text-center mt-4">
           {title}
@@ -587,9 +612,9 @@ function GroupIntroScreen({
             </div>
           )}
 
-          {/* 큰 이미지 */}
+          {/* 이미지 — 문제 화면과 같은 틀 */}
           {imageUrl && (
-            <div className="w-full max-w-2xl md:max-w-3xl aspect-[4/3] flex items-center justify-center">
+            <div className={`${LISTENING_IMAGE_FRAME} shrink-0 flex items-center justify-center`}>
               <img src={imageUrl} alt={title} className="w-full h-full object-contain" />
             </div>
           )}
@@ -701,8 +726,10 @@ interface ListeningQuestionScreenProps {
   /** Review 모드에서는 문제 오디오 자동 재생 안 함 (dictation 자막 정확도 우선) */
   isReviewMode?: boolean;
   /** 지문 공유형 그룹 문항 — 인트로에서 오디오를 이미 재생했으므로
-   *  시험 모드에서는 재생 버튼을 숨기고 자동재생도 하지 않음 (review는 그대로 노출) */
+   *  시험·리뷰 모두 재생 버튼을 숨기고 자동재생도 하지 않음 */
   suppressAudio?: boolean;
+  /** 문항에 사진이 없을 때 쓸 그룹 인트로 사진 */
+  fallbackImageUrl?: string;
 }
 
 function ListeningQuestionScreen({
@@ -715,6 +742,7 @@ function ListeningQuestionScreen({
   onNext,
   isReviewMode = false,
   suppressAudio = false,
+  fallbackImageUrl,
 }: ListeningQuestionScreenProps) {
   // 이전에 선택한 답이 있으면 복원 (Back → Next 로 돌아와도 클릭 상태 유지).
   // 저장 키는 answerKey(전역 슬롯) 우선, 없으면 qNum.
@@ -737,7 +765,8 @@ function ListeningQuestionScreen({
 
   const options: string[] = (question?.options && question.options.length > 0) ? question.options : [];
   const audioUrl: string = question?.audioUrl || '';
-  const imageUrl: string = question?.imageUrl || '';
+  const imageUrl: string = question?.imageUrl || fallbackImageUrl || '';
+  const showPlayButton = !!audioUrl && !suppressAudio;
   // Q1-8 (Listen and Response 유형)은 녹음 스크립트를 노출하지 않고
   // 헤더에 "Choose the best response." 만 표시.
   const rawQuestionType: string = (question?.questionType || '').toString();
@@ -914,7 +943,7 @@ function ListeningQuestionScreen({
               </div>
             </div>
             {/* 모바일 전용 작은 Play Audio 버튼 — 데스크탑은 본문 가운데에 큰 버튼 유지 */}
-            {audioUrl && !suppressAudio && (
+            {showPlayButton && (
               <button
                 type="button"
                 onClick={handlePlayAudio}
@@ -942,7 +971,7 @@ function ListeningQuestionScreen({
           <div className="md:hidden flex flex-col items-center">
             {/* Image */}
             {imageUrl && (
-              <div className="w-48 h-48 bg-white rounded-lg overflow-hidden border border-gray-300 mb-6">
+              <div className={`${LISTENING_IMAGE_FRAME} shrink-0 flex items-center justify-center mb-6`}>
                 <ImageWithFallback src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
               </div>
             )}
@@ -976,12 +1005,12 @@ function ListeningQuestionScreen({
 
           {/* Desktop: 이미지 왼쪽 + 질문(오른쪽 상단) + 옵션(오른쪽) */}
           <div className="hidden md:block">
-            {/* Play Audio Button - Desktop — 그룹 지문 문항은 시험 모드에서 숨김 (인트로에서 재생) */}
-            {audioUrl && !suppressAudio && (
-              <div className="flex justify-center mb-8">
+            {/* Play Audio Button - Desktop — 버튼이 없어도 줄 높이는 유지해 틀이 위로 올라가지 않게 함.
+                그룹 지문 문항은 인트로에서 재생하므로 숨김 */}
+            <div className={`flex justify-center mb-8 ${showPlayButton ? '' : 'invisible'}`} aria-hidden={!showPlayButton}>
                 <button
                   onClick={handlePlayAudio}
-                  disabled={isPlaying}
+                  disabled={isPlaying || !showPlayButton}
                   className={`flex items-center gap-3 px-10 py-3 rounded-full font-semibold text-base transition-all shadow-sm ${
                     isPlaying
                       ? 'bg-[#0d9488] text-white cursor-not-allowed'
@@ -991,49 +1020,38 @@ function ListeningQuestionScreen({
                   <span style={{fontSize: '0px', width: 0, height: 0, borderStyle: 'solid', borderWidth: '7px 0 7px 12px', borderColor: `transparent transparent transparent ${isPlaying ? 'white' : '#1e293b'}`, display: 'inline-block'}} />
                   <span>{isPlaying ? 'Playing...' : 'Play Audio'}</span>
                 </button>
-              </div>
-            )}
+            </div>
 
-            {/* TPO 2 절대 위치 레이아웃 (이미지 왼쪽, 질문+옵션 오른쪽) */}
-            {/* 문제 이미지는 유형에 관계없이 같은 크기로 표시 */}
-            {(() => {
-              const imgWidth = '280px';
-              const imgLeft = '18%';
-              const imgMaxHeight = '480px';
-              const optLeft = imageUrl ? '51%' : '10%';
-              const optWidth = imageUrl ? '42%' : '80%';
-              return (
-                <div className="relative" style={{minHeight: '420px'}}>
-                  {imageUrl && (
-                    <div style={{position: 'absolute', left: imgLeft, top: 0, width: imgWidth}}>
-                      <img src={imageUrl} alt="Listening" className="w-full object-contain object-top" style={{maxHeight: imgMaxHeight}} />
-                    </div>
-                  )}
-                  <div style={{position: 'absolute', left: optLeft, top: '8px', width: optWidth}}>
-                    <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 leading-snug">
-                      {questionText}
-                    </h2>
-                    <div className="space-y-5">
-                      {options.map((option, index) => (
-                        <RadioOption
-                          key={index}
-                          id={`lq-${qNum}-opt-${index}`}
-                          name={`lq-${qNum}`}
-                          value={option}
-                          checked={selectedAnswer === option}
-                          onChange={() => recordListeningAnswer(option)}
-                          label={formatOptionLabel(option, index)}
-                          labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
-                        />
-                      ))}
-                      {options.length === 0 && (
-                        <p className="text-sm text-gray-400 italic">옵션이 없습니다. CMS에서 옵션을 추가해주세요.</p>
-                      )}
-                    </div>
-                  </div>
+            {/* 이미지(왼쪽, 인트로와 같은 틀) + 질문·보기(오른쪽) — 가운데 정렬 2단 */}
+            <div className="flex items-start justify-center gap-10 lg:gap-14">
+              {imageUrl && (
+                <div className={`${LISTENING_IMAGE_FRAME} shrink-0 flex items-center justify-center`}>
+                  <img src={imageUrl} alt="Listening" className="w-full h-full object-contain" />
                 </div>
-              );
-            })()}
+              )}
+              <div className={`${imageUrl ? 'flex-1 max-w-xl' : 'w-full max-w-3xl'} min-w-0 pt-2`}>
+                <h2 className="text-2xl font-['Inter',_sans-serif] font-bold text-gray-800 mb-6 leading-snug">
+                  {questionText}
+                </h2>
+                <div className="space-y-5">
+                  {options.map((option, index) => (
+                    <RadioOption
+                      key={index}
+                      id={`lq-${qNum}-opt-${index}`}
+                      name={`lq-${qNum}`}
+                      value={option}
+                      checked={selectedAnswer === option}
+                      onChange={() => recordListeningAnswer(option)}
+                      label={formatOptionLabel(option, index)}
+                      labelClassName="text-lg font-['Inter',_sans-serif] text-gray-900"
+                    />
+                  ))}
+                  {options.length === 0 && (
+                    <p className="text-sm text-gray-400 italic">옵션이 없습니다. CMS에서 옵션을 추가해주세요.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Must Answer Modal — TPO 2 스타일 */}
